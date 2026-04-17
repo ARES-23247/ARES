@@ -1,8 +1,5 @@
 {
   "version": 1,
-  "include": ["/*"],
-  "exclude": ["/api/*"],
-  "redirects": {
-    "/assets/*": "/assets/:splat"
-  }
+  "include": ["/api/*"],
+  "exclude": []
 }
