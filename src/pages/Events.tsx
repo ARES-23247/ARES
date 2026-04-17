@@ -3,16 +3,16 @@ const events = [
   { id: 2, title: "STEM Night Outreach", date: "2026-03-08", type: "Outreach", description: "Demonstrating our driver station and chassis at the local middle school.", color: "bg-green-500/20 text-green-400 border-green-500/30" },
   { id: 3, title: "Silicon Valley Regional", date: "2026-03-12", type: "Qualifier", description: "Our first major competition event. Loading out starts Thursday morning.", color: "bg-ares-red/20 text-ares-red border-ares-red/30" },
   { id: 4, title: "Programming Subsystem Testing", date: "2026-03-18", type: "Team Meeting", description: "Testing path planner autonomous routines on the practice field.", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  { id: 5, title: "PNW District Championship", date: "2026-04-03", type: "Qualifier", description: "The ultimate showdown. Let's aim for Einstein!", color: "bg-ares-cyan/20 text-ares-cyan border-ares-cyan/30" },
+  { id: 5, title: "PNW District Championship", date: "2026-04-03", type: "Qualifier", description: "The ultimate showdown. Let's aim for Einstein!", color: "bg-ares-gold/20 text-ares-gold border-ares-gold/30" },
 ];
 
 export default function Events() {
   return (
     <div className="w-full max-w-7xl mx-auto px-6 py-12 md:py-24">
       <div className="mb-12">
-        <h3 className="text-ares-cyan font-bold uppercase tracking-widest text-sm mb-2">Schedule &amp; Planner</h3>
+        <h3 className="text-ares-gold font-bold uppercase tracking-widest text-sm mb-2">Schedule &amp; Planner</h3>
         <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter shadow-sm">
-          Upcoming <span className="text-ares-cyan">Events</span>
+          Upcoming <span className="text-ares-gold">Events</span>
         </h1>
         <p className="text-white/60 mt-4 max-w-2xl text-balance">
           Keep track of ARES 23247&apos;s upcoming robotic qualifiers, community outreach events, and team engineering workshops.
