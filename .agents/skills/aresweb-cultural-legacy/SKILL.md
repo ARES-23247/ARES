@@ -20,7 +20,11 @@ Always align our work and copy with the FIRST Core Values:
 - **Motto / Strategy to embed:** "Engineering The Future." 
 - **Application:** Use this quote when discussing our high-tech approach, precision robotics, or our Next.js edge-deployed web portal.
 
-## 3. The Core Vehicle Philosophy
+## 3. The Mountaineer Mindset
+Adopted directly from our Hall of Fame peers at MARS 2614, we embrace the "Mountaineer Mindset"—a dedication to **Grit, Determination, and Innovation**.
+- **Application:** Emphasize that robotics is hard, and code breaks. Use this mindset to highlight technical resilience, bouncing back from bugs, and pushing through complex infrastructure challenges without giving up.
+
+## 4. The Core Vehicle Philosophy
 - **Motto / Quote to embed:** "The robots are the vehicle; the students are the cargo."
 - **Application:** Use this quote to emphasize that the true product of ARES is the progression of our students into innovators and leaders, not just winning matches.
 
