@@ -75,7 +75,7 @@ app.post("/events", async (c) => {
 
   try {
     const { id, title, dateStart, dateEnd, location, description, coverImage } = await c.req.json();
-    
+
     if (!id || !title || !dateStart) {
       return c.json({ error: "Missing required fields" }, 400);
     }
@@ -97,7 +97,7 @@ app.post("/events", async (c) => {
 app.post("/posts", async (c) => {
   // Validate host header to prevent Zero Trust bypass via .pages.dev
   const host = c.req.header("host") || "";
-  const allowedHosts = ["aresweb.pages.dev", "aresfirst.org", "localhost"];
+  const allowedHosts = ["aresfirst.org", "localhost"];
   const isAllowed = allowedHosts.some((h) => host.startsWith(h));
   if (!isAllowed) {
     return c.json({ error: "Forbidden host" }, 403);
@@ -184,7 +184,7 @@ app.post("/upload", async (c) => {
   try {
     const body = await c.req.parseBody();
     const file = body["file"] as File;
-    
+
     if (!file) {
       return c.json({ error: "No file uploaded" }, 400);
     }
