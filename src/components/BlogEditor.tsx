@@ -9,7 +9,7 @@ export default function BlogEditor() {
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
-  const [coverImageUrl, setCoverImageUrl] = useState("/gallery_1.png");
+  const [coverImageUrl, setCoverImageUrl] = useState("/gallery_2.png");
   const [errorMsg, setErrorMsg] = useState("");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isUploadingInline, setIsUploadingInline] = useState(false);

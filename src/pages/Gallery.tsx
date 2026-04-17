@@ -1,5 +1,4 @@
 const photos = [
-  { src: "/gallery_1.png", alt: "Sleek robotic chassis in a dark lab", aspect: "aspect-[4/3]" },
   { src: "/gallery_2.png", alt: "FTC competition arena action shot", aspect: "aspect-video" },
   { src: "/gallery_3.png", alt: "Machining robotic joints with sparks", aspect: "aspect-[3/4]" },
   { src: "/gallery_4.png", alt: "Team editing code in neon layout", aspect: "aspect-[4/5]" },

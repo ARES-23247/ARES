@@ -40,7 +40,7 @@ export default function Home() {
 
       {/* ─── THE PEDESTAL: LEGACY SECTION ─── */}
       <section className="py-24 bg-marble text-obsidian overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+        <div className="max-w-4xl mx-auto px-6">
           <div className="relative">
             <div className="absolute -top-10 -left-10 w-40 h-40 border-t-8 border-l-8 border-ares-bronze/20"></div>
             <p className="text-ares-red uppercase tracking-[0.2em] text-sm font-black mb-4 font-heading">The Sibling Connection</p>
@@ -61,15 +61,6 @@ export default function Home() {
                 </a>
               </div>
             </div>
-          </div>
-          <div className="relative group">
-            <div className="absolute inset-0 bg-ares-red/10 group-hover:bg-ares-red/0 transition-colors duration-500 z-10"></div>
-            <img 
-              src="/gallery_1.png" 
-              alt="Team Collaboration" 
-              className="rounded-sm shadow-2xl grayscale group-hover:grayscale-0 transition-all duration-700"
-            />
-            <div className="absolute -bottom-6 -right-6 w-full h-full border-2 border-ares-bronze/30 -z-10"></div>
           </div>
         </div>
       </section>
@@ -123,7 +114,7 @@ export default function Home() {
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-ares-bronze to-transparent opacity-50"></div>
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <h2 className="text-4xl md:text-6xl font-black mb-8 font-heading">
-            Join the <span className="text-ares-red">Phalanx</span>
+            Join the <span className="text-ares-red">Society</span>
           </h2>
           <p className="text-marble/80 text-xl mb-12 leading-relaxed">
             Whether you&apos;re a student looking to build monsters of engineering or a sponsor looking to invest in the future of WV technology, there is a place for you at the table.

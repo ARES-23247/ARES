@@ -5,7 +5,7 @@ export default function About() {
       <section className="py-32 bg-obsidian text-marble relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 meander-border opacity-20"></div>
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <p className="text-ares-bronze uppercase tracking-[0.4em] text-xs font-black mb-6 font-heading">The Phalanx</p>
+          <p className="text-ares-bronze uppercase tracking-[0.4em] text-xs font-black mb-6 font-heading">The Society</p>
           <h1 className="text-5xl md:text-8xl font-black text-white mb-8 font-heading uppercase">About ARES</h1>
           <p className="text-marble/70 text-xl max-w-2xl mx-auto leading-relaxed border-t border-ares-bronze/20 pt-8 mt-8">
             We are the <span className="text-white font-bold">Appalachian Robotics & Engineering Society</span>. 
