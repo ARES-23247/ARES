@@ -38,6 +38,13 @@ export async function publishPostAction({
 
   if (!isDev) {
     const h = headers();
+    
+    // Prevent bypass via the unprotected .pages.dev default domain
+    const host = h.get("host");
+    if (host && host.includes("pages.dev")) {
+      return { success: false, error: "Unauthorized: Direct access via pages.dev is restricted." };
+    }
+
     const cfAccessEmail = h.get("cf-access-authenticated-user-email");
     if (!cfAccessEmail) {
       return { success: false, error: "Unauthorized: Cloudflare Zero Trust authentication failed. Route is protected by Cloudflare Access." };
