@@ -26,7 +26,17 @@ export async function publishPostAction({
   coverImageUrl: string;
   ast: ASTType;
 }) {
-  if (process.env.NODE_ENV !== "development") {
+  // Safely check for development mode (process does not exist on Cloudflare Edge Worker)
+  let isDev = false;
+  try {
+    if (typeof process !== "undefined" && typeof process.env !== "undefined") {
+      if (process.env.NODE_ENV === "development") {
+        isDev = true;
+      }
+    }
+  } catch (e) {}
+
+  if (!isDev) {
     const h = headers();
     const cfAccessEmail = h.get("cf-access-authenticated-user-email");
     if (!cfAccessEmail) {
