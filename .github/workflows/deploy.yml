@@ -38,4 +38,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Cloudflare dynamically detects the branch. If it's not 'main', it issues a Preview URL natively!
-          command: pages deploy .vercel/output/static --project-name ares-23247 --commit-dirty=true --branch ${{ github.head_ref || github.ref_name }}
+          command: pages deploy .vercel/output/static --project-name aresweb --commit-dirty=true --branch ${{ github.head_ref || github.ref_name }}
