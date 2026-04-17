@@ -46,6 +46,53 @@ app.get("/posts/:slug", async (c) => {
   }
 });
 
+// ── GET /api/events — list all events ──────────────────────────────────
+app.get("/events", async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id FROM events ORDER BY date_start ASC"
+    ).all();
+    return c.json({ events: results ?? [] });
+  } catch (err) {
+    console.error("D1 list error (events):", err);
+    return c.json({ events: [] });
+  }
+});
+
+// ── POST /api/events — create a new event (admin) ────────────────────
+app.post("/events", async (c) => {
+  const host = c.req.header("host") || "";
+  const allowedHosts = ["aresweb.pages.dev", "localhost"];
+  if (!allowedHosts.some((h) => host.startsWith(h))) {
+    return c.json({ error: "Forbidden host" }, 403);
+  }
+
+  const email = c.req.header("cf-access-authenticated-user-email");
+  // We only strictly require email if it's not localhost for development
+  if (!email && !host.startsWith("localhost")) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    const { id, title, dateStart, dateEnd, location, description, coverImage } = await c.req.json();
+    
+    if (!id || !title || !dateStart) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    await c.env.DB.prepare(
+      "INSERT INTO events (id, title, date_start, date_end, location, description, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+      .bind(id, title, dateStart, dateEnd || null, location || "", description || "", coverImage || "")
+      .run();
+
+    return c.json({ success: true, id });
+  } catch (err: unknown) {
+    console.error("D1 write error (events):", err);
+    return c.json({ success: false, error: (err as Error)?.message || "Event creation failed" }, 500);
+  }
+});
+
 // ── POST /api/posts — create a new blog post (admin) ────────────────
 app.post("/posts", async (c) => {
   // Validate host header to prevent Zero Trust bypass via .pages.dev

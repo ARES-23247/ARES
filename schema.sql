@@ -25,3 +25,15 @@ INSERT INTO posts (slug, title, date, snippet, thumbnail, ast) VALUES (
     '/news_2.png',
     '[{"type":"heading","level":2,"content":"Welcoming the New Equipment"},{"type":"paragraph","content":"The lab now features fully integrated industrial robotic manipulator test stands. This provides our CAD team and programmers instant verification mechanisms for their reverse-kinematic code!"},{"type":"image","src":"/gallery_3.png","alt":"Sparking machinery"},{"type":"paragraph","content":"Safety first, but speed close second."}]'
 );
+
+DROP TABLE IF EXISTS events;
+CREATE TABLE events (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    date_start TEXT NOT NULL,
+    date_end TEXT,
+    location TEXT,
+    description TEXT,
+    cover_image TEXT,
+    gcal_event_id TEXT
+);

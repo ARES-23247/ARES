@@ -1,4 +1,5 @@
 import BlogEditor from "@/components/BlogEditor";
+import EventEditor from "@/components/EventEditor";
 
 export default function Dashboard() {
   return (
@@ -13,8 +14,14 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="glass-card rounded-2xl p-6 md:p-8 border border-white/10">
-        <BlogEditor />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <div className="glass-card rounded-2xl p-6 md:p-8 border border-white/10 flex flex-col h-full">
+          <BlogEditor />
+        </div>
+        
+        <div className="glass-card rounded-2xl p-6 md:p-8 border border-white/10 flex flex-col h-full bg-ares-red/10">
+          <EventEditor />
+        </div>
       </div>
     </div>
   );

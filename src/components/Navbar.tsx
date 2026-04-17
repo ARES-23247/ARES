@@ -16,6 +16,7 @@ export default function Navbar() {
           <Link to="/about" className="text-white/80 hover:text-ares-gold transition-colors">About</Link>
           <Link to="/seasons" className="text-white/80 hover:text-ares-gold transition-colors">Seasons</Link>
           <Link to="/outreach" className="text-white/80 hover:text-ares-gold transition-colors">Outreach</Link>
+          <Link to="/events" className="text-white/80 hover:text-ares-gold transition-colors">Events</Link>
           <Link to="/blog" className="text-white/80 hover:text-ares-gold transition-colors">Blog</Link>
           <Link to="/contact" className="text-white/80 hover:text-ares-gold transition-colors">Contact</Link>
         </div>
@@ -39,6 +40,7 @@ export default function Navbar() {
           <Link to="/about" onClick={() => setOpen(false)} className="text-white/80">About</Link>
           <Link to="/seasons" onClick={() => setOpen(false)} className="text-white/80">Seasons</Link>
           <Link to="/outreach" onClick={() => setOpen(false)} className="text-white/80">Outreach</Link>
+          <Link to="/events" onClick={() => setOpen(false)} className="text-white/80">Events</Link>
           <Link to="/blog" onClick={() => setOpen(false)} className="text-white/80">Blog</Link>
           <Link to="/contact" onClick={() => setOpen(false)} className="text-white/80">Contact</Link>
         </div>
