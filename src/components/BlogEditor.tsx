@@ -1,5 +1,6 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -10,9 +11,55 @@ export default function BlogEditor() {
   const [author, setAuthor] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("/gallery_1.png");
   const [errorMsg, setErrorMsg] = useState("");
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingInline, setIsUploadingInline] = useState(false);
+
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 1920;
+          let width = img.width;
+          let height = img.height;
+  
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+  
+          canvas.width = width;
+          canvas.height = height;
+  
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject("Canvas ctx error");
+          ctx.drawImage(img, 0, 0, width, height);
+  
+          canvas.toBlob((blob) => blob ? resolve(blob) : reject("Blob error"), "image/webp", 0.8);
+        };
+        img.onerror = () => reject("Image load error");
+      };
+      reader.onerror = () => reject("Reader error");
+    });
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const compressedBlob = await compressImage(file);
+    const formData = new FormData();
+    formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ".webp"));
+    
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    const data = await res.json();
+    if (!data.url) throw new Error(data.error || "Upload failed");
+    return data.url;
+  };
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, Image.configure({ inline: true, HTMLAttributes: { class: 'rounded-xl max-w-full my-4 border border-white/10 shadow-lg' } })],
     content: "<p>Start drafting your robotics article here. Tell us about your journey to Einstein...</p>",
     editorProps: {
       attributes: {
@@ -82,15 +129,42 @@ export default function BlogEditor() {
           />
         </div>
         <div className="flex-1">
-          <label htmlFor="cover-asset" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Cover Asset URL</label>
-          <input
-            id="cover-asset"
-            type="text"
-            value={coverImageUrl}
-            onChange={(e) => setCoverImageUrl(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors lg:text-lg"
-            placeholder="/gallery_2.png"
-          />
+          <label htmlFor="cover-asset" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Cover Asset</label>
+          <div className="flex gap-2 relative">
+            <input
+              id="cover-asset"
+              type="text"
+              value={coverImageUrl}
+              onChange={(e) => setCoverImageUrl(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors lg:text-lg"
+              placeholder="/gallery_2.png"
+            />
+            <button 
+              className={`px-4 py-3 rounded-lg text-sm font-bold border border-white/10 transition-colors ${isUploadingCover ? "bg-white/20 text-white animate-pulse" : "bg-black/40 text-ares-gold hover:bg-ares-gold hover:text-black"}`}
+              onClick={() => document.getElementById('cover-upload')?.click()}
+            >
+              UPL
+            </button>
+            <input 
+              id="cover-upload" 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setIsUploadingCover(true);
+                try {
+                  const url = await uploadFile(file);
+                  setCoverImageUrl(url);
+                } catch(err) {
+                  setErrorMsg(String(err));
+                } finally {
+                  setIsUploadingCover(false);
+                }
+              }} 
+            />
+          </div>
         </div>
       </div>
 
@@ -104,6 +178,32 @@ export default function BlogEditor() {
         <button onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${editor.isActive("heading", { level: 3 }) ? "bg-white/20 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}>H3</button>
         <div className="w-px h-6 bg-white/10 mx-2"></div>
         <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`px-4 py-2 rounded-lg text-sm transition-all ${editor.isActive("bulletList") ? "bg-white/20 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}>Bullet List</button>
+        <div className="w-px h-6 bg-white/10 mx-2"></div>
+        <button 
+          className={`px-4 py-2 rounded-lg text-sm transition-all ${isUploadingInline ? "bg-white/20 text-white animate-pulse" : "text-ares-gold hover:bg-white/10 hover:text-ares-gold"}`}
+          onClick={() => document.getElementById('inline-img-upload')?.click()}
+        >
+          Add Image
+        </button>
+        <input 
+          id="inline-img-upload" 
+          type="file" 
+          accept="image/*" 
+          className="hidden" 
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setIsUploadingInline(true);
+            try {
+              const url = await uploadFile(file);
+              editor.chain().focus().setImage({ src: url }).run();
+            } catch(err) {
+              setErrorMsg(String(err));
+            } finally {
+              setIsUploadingInline(false);
+            }
+          }} 
+        />
       </div>
 
       {/* Editor */}

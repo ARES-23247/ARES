@@ -3,6 +3,7 @@ import { handle } from "hono/cloudflare-pages";
 
 type Bindings = {
   DB: D1Database;
+  ARES_STORAGE: R2Bucket;
 };
 
 const app = new Hono<{ Bindings: Bindings }>().basePath("/api");
@@ -117,6 +118,59 @@ app.post("/posts", async (c) => {
     console.error("D1 write error:", err);
     return c.json({ success: false, error: (err as Error)?.message || "Database write failed" }, 500);
   }
+});
+
+// ── File Upload via R2 ───────────────────────────────────────────────
+app.post("/upload", async (c) => {
+  // Validate host header
+  const host = c.req.header("host") || "";
+  if (!["aresweb.pages.dev", "localhost"].some((h) => host.startsWith(h))) {
+    return c.json({ error: "Forbidden host" }, 403);
+  }
+
+  // Check auth
+  const email = c.req.header("cf-access-authenticated-user-email");
+  if (!email && !host.startsWith("localhost")) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    const body = await c.req.parseBody();
+    const file = body["file"] as File;
+    
+    if (!file) {
+      return c.json({ error: "No file uploaded" }, 400);
+    }
+
+    const key = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+    const arrayBuffer = await file.arrayBuffer();
+
+    await c.env.ARES_STORAGE.put(key, arrayBuffer, {
+      httpMetadata: { contentType: file.type },
+    });
+
+    return c.json({ success: true, url: `/api/media/${key}` });
+  } catch (err) {
+    console.error("R2 upload error:", err);
+    return c.json({ error: "Storage upload failed" }, 500);
+  }
+});
+
+// ── GET /api/media/:key — proxy R2 images ─────────────────────────────
+app.get("/media/:key", async (c) => {
+  const key = c.req.param("key");
+  const object = await c.env.ARES_STORAGE.get(key);
+
+  if (!object) {
+    return c.text("Not found", 404);
+  }
+
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set("etag", object.httpEtag);
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+
+  return new Response(object.body, { headers });
 });
 
 export const onRequest = handle(app);
