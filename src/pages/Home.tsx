@@ -42,13 +42,13 @@ export default function Home() {
           </div>
           <div className="space-y-6 text-lg leading-relaxed">
             <p>
-              We are a community-based <em>FIRST</em> Tech Challenge (FTC) team that represents <em>FIRST</em>&apos;s impact in our state and how West Virginia&apos;s students can work across educational backgrounds to achieve something great.
+              We are a community-based <em>FIRST</em> Tech Challenge (FTC) team. We show <em>FIRST</em>&apos;s impact in our state. We show how West Virginia&apos;s students from different schools can work together to achieve something great.
             </p>
             <p>
-              ARES is the most recent chapter in North Central West Virginia&apos;s strong legacy in <em>FIRST</em> robotics. As part of the Mountaineer Area RoboticS (<em>MARS</em>) #2614 family, ARES is building on MARS&apos;s Hall of Fame legacy as West Virginia&apos;s flagship FIRST Robotics Competition program.
+              ARES is part of a strong robotics history in North Central West Virginia. We are part of the Mountaineer Area RoboticS (<em>MARS</em>) #2614 family. ARES is building on MARS&apos;s Hall of Fame history. MARS is West Virginia&apos;s leading FIRST Robotics Competition team.
             </p>
             <p>
-              2025 is <em>ARES</em>&apos;s rookie year, but we are backed by a history that represents the summit of what teams can achieve in <em>FIRST</em>.
+              2025 is our rookie year. However, we are backed by a team that has already reached the top of <em>FIRST</em> robotics.
             </p>
           </div>
         </div>
@@ -103,13 +103,13 @@ export default function Home() {
           </h2>
           <div className="space-y-6 text-lg leading-relaxed text-white/80">
             <p>
-              In Morgantown and the general North-Central West Virginia area, there is possibly the strongest <em>FIRST</em> culture out of any place in the state.
+              North-Central West Virginia has the strongest <em>FIRST</em> culture in the state.
             </p>
             <p>
-              Morgantown is home to Mountaineer Area RoboticS (MARS), the flagship <em>FIRST</em> Robotics Competition (FRC) program of the state. MARS is a great, internationally-recognized, FRC team who has won multiple awards and accolades. On top of that, MARS outreach involves hosting the <em>FIRST</em> LEGO League (FLL) competitions in the area, and even parenting some in-house teams.
+              Morgantown is home to Mountaineer Area RoboticS (MARS). MARS is the leading <em>FIRST</em> Robotics Competition (FRC) team in West Virginia. They are an internationally recognized team with many awards. MARS also hosts <em>FIRST</em> LEGO League (FLL) competitions and starts new local teams.
             </p>
             <p>
-              Alongside that, <em>FIRST</em> programs in the area are possibly the best way to cultivate certain technical skills, from more robotics-related things such as programming, design, and outreach, to other great skills, like content creation and digital art!
+              <em>FIRST</em> programs are the best way for students to learn technical skills. Students learn robotics skills like programming, building, and design. They also learn other great skills like video making and digital art!
             </p>
             <p className="text-white/50 text-sm italic">
               Photo: All members of the RoboCookies 2025 FLL team are sisters of MARS/ARES team members.
