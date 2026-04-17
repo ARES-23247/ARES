@@ -4,90 +4,113 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full">
       {/* ─── HERO ─── */}
-      <section className="relative w-full min-h-[90vh] flex items-center overflow-hidden bg-ares-red">
-        <div className="absolute inset-0 bg-gradient-to-b from-ares-red via-ares-red to-background"></div>
+      <section className="relative w-full min-h-[95vh] flex items-center overflow-hidden bg-obsidian">
+        {/* Motif Background */}
+        <div 
+          className="absolute inset-0 z-0 opacity-40 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/hero_motif.png')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-transparent z-1"></div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20 pb-16 flex flex-col items-center text-center">
-          <p className="text-white font-bold uppercase tracking-[0.3em] text-sm mb-6">
-            Appalachian Robotics &amp; Engineering Society
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20 pb-16 flex flex-col items-start text-left">
+          <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-sm mb-4 font-heading">
+            Appalachian Robotics & Engineering Society
           </p>
 
-          <h1 className="text-[8rem] md:text-[14rem] font-black text-ares-gold leading-none tracking-[0.05em] uppercase drop-shadow-2xl mb-2">
-            ARES
+          <h1 className="text-6xl md:text-[8rem] lg:text-[10rem] font-black text-white leading-[0.9] uppercase mb-6 font-heading">
+            Engineered <br />
+            <span className="text-ares-red">For Victory</span>
           </h1>
 
-          <p className="text-white text-2xl md:text-4xl italic font-light mb-2">
-            <span className="not-italic font-bold">FIRST</span> Tech Challenge Team #23247
+          <p className="text-marble/80 text-xl md:text-2xl font-medium max-w-2xl mb-10 leading-relaxed border-l-4 border-ares-bronze pl-6">
+            Building the future of West Virginia robotics with the <span className="text-white font-bold">Mountaineer Mindset</span>. 
+            FIRST Tech Challenge Team #23247.
           </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 items-center">
-            <span className="px-4 py-2 bg-white/10 border border-white/20 rounded-full text-white text-sm font-semibold uppercase tracking-wider">
-              2025/26 — Our Rookie Season
-            </span>
-            <a href="https://www.marsfirst.org" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-white/10 border border-white/20 rounded-full text-white text-sm font-semibold uppercase tracking-wider hover:bg-white/20 transition-colors underline">
-              Member of the MARS Family
-            </a>
+          <div className="flex flex-col sm:flex-row gap-6 mt-4">
+            <Link to="/about" className="clipped-button bg-ares-red text-white hover:bg-ares-bronze transition-all shadow-xl">
+              Meet the Team
+            </Link>
+            <Link to="/contact" className="clipped-button bg-transparent border-2 border-ares-bronze text-ares-bronze hover:bg-ares-bronze hover:text-white transition-all">
+              Support Our Mission
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ─── WHO WE ARE ─── */}
-      <section className="py-24 bg-white text-ares-gray">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
-          <div>
-            <p className="text-ares-gray uppercase tracking-widest text-sm font-bold mb-2">Who We Are</p>
-            <h2 className="text-4xl md:text-5xl font-black text-ares-red leading-tight mb-6">
-              Appalachian Robotics and Engineering Society
+      {/* ─── THE PEDESTAL: LEGACY SECTION ─── */}
+      <section className="py-24 bg-marble text-obsidian overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+          <div className="relative">
+            <div className="absolute -top-10 -left-10 w-40 h-40 border-t-8 border-l-8 border-ares-bronze/20"></div>
+            <p className="text-ares-red uppercase tracking-[0.2em] text-sm font-black mb-4 font-heading">The Sibling Connection</p>
+            <h2 className="text-4xl md:text-6xl font-black leading-tight mb-8 font-heading">
+              Built on a <br />
+              <span className="text-ares-bronze">Championship Legacy</span>
             </h2>
+            <div className="space-y-6 text-lg text-obsidian/80 leading-relaxed">
+              <p>
+                ARES 23247 isn&apos;t just another rookie team. We are the direct result of a decade of excellence in West Virginia robotics, serving as the official <em>FRC sibling team</em> to the Hall of Fame program, <strong>MARS 2614</strong>.
+              </p>
+              <p>
+                While our brothers and sisters on MARS tackle the giants of the <em>FIRST</em> Robotics Competition, we bring that same Mountaineer intensity to the <em>FIRST</em> Tech Challenge.
+              </p>
+              <div className="pt-4">
+                <a href="https://www.marsfirst.org" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-ares-red font-bold hover:translate-x-2 transition-transform">
+                  EXPLORE THE MARS LEGACY <span className="text-xl">→</span>
+                </a>
+              </div>
+            </div>
           </div>
-          <div className="space-y-6 text-lg leading-relaxed">
-            <p>
-              We are a community-based <em>FIRST</em> Tech Challenge (FTC) team. We show <em>FIRST</em>&apos;s impact in our state. We show how West Virginia&apos;s students from different schools can work together to achieve something great.
-            </p>
-            <p>
-              ARES is part of a strong robotics history in North Central West Virginia. We are part of the Mountaineer Area RoboticS (<em>MARS</em>) #2614 family. ARES is building on MARS&apos;s Hall of Fame history. MARS is West Virginia&apos;s leading FIRST Robotics Competition team.
-            </p>
-            <p>
-              2025 is our rookie year. However, we are backed by a team that has already reached the top of <em>FIRST</em> robotics.
-            </p>
+          <div className="relative group">
+            <div className="absolute inset-0 bg-ares-red/10 group-hover:bg-ares-red/0 transition-colors duration-500 z-10"></div>
+            <img 
+              src="/gallery_1.png" 
+              alt="Team Collaboration" 
+              className="rounded-sm shadow-2xl grayscale group-hover:grayscale-0 transition-all duration-700"
+            />
+            <div className="absolute -bottom-6 -right-6 w-full h-full border-2 border-ares-bronze/30 -z-10"></div>
           </div>
         </div>
       </section>
 
-      {/* ─── OUTREACH CARDS ─── */}
-      <section className="py-24 bg-ares-gold">
+      {/* ─── TECHNICAL SPECS (MARBLE CARDS) ─── */}
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-4xl md:text-5xl font-black text-ares-red text-center mb-4">Outreach</h2>
-          <p className="text-center text-ares-gray mb-16 max-w-2xl mx-auto">
-            Learn more about our team and how you can get involved.
-          </p>
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="max-w-2xl">
+              <h2 className="text-4xl md:text-5xl font-black mb-4 font-heading">Our Objectives</h2>
+              <p className="text-ares-gray text-lg">Engineering precision meets community impact in our quest for the 2026 season.</p>
+            </div>
+            <div className="h-1 flex-grow bg-ares-bronze/10 mx-8 mb-4 hidden md:block"></div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
               {
-                title: "Future Team Members",
-                body: "Learn more about our team and what to expect as a team member in FIRST Tech Challenge and then if it looks like a fit, reach out. We can&apos;t wait to meet you.",
+                title: "Engineering Excellence",
+                body: "We build advanced, reliable software and custom hardware. Our robot is a model of West Virginia engineering and speed.",
                 link: "/about",
-                linkText: "Learn More →",
+                linkText: "Subsystem Specs",
               },
               {
-                title: "Local Community",
-                body: "We&apos;re looking for opportunities to connect in north-central West Virginia. If you have a volunteer need or idea for our team, get in touch.",
-                link: "/contact",
-                linkText: "Contact Us →",
+                title: "Outreach & Impact",
+                body: "We share our mission with everyone. From the Spark! Center to local labs, we bring FIRST to all of West Virginia.",
+                link: "/outreach",
+                linkText: "Our Impact",
               },
               {
-                title: "STEAM Community",
-                body: "We need your help! You can join our team as a mentor, or give tours of your labs and show us robotics in use. You can also sponsor us through tax-deductible donations.",
+                title: "Mentorship Pipeline",
+                body: "Our team learns from the best. With help from MARS mentors and local experts, we are training the leaders of tomorrow.",
                 link: "/contact",
-                linkText: "Support Us →",
+                linkText: "Join the Mission",
               },
             ].map((card) => (
-              <div key={card.title} className="bg-ares-red rounded-2xl p-8 flex flex-col h-full shadow-xl hover:shadow-2xl transition-shadow duration-300 group">
-                <h3 className="text-ares-gold text-xl font-bold mb-4 group-hover:underline">{card.title}</h3>
-                <p className="text-white/90 text-base leading-relaxed flex-grow">{card.body}</p>
-                <Link to={card.link} className="mt-6 inline-block text-ares-gold font-bold text-sm hover:text-white transition-colors">
-                  {card.linkText}
+              <div key={card.title} className="marble-card p-10 flex flex-col h-full group">
+                <h3 className="text-ares-red text-2xl font-black mb-6 font-heading group-hover:text-ares-bronze transition-colors">{card.title}</h3>
+                <p className="text-obsidian/70 text-base leading-relaxed mb-8 flex-grow">{card.body}</p>
+                <Link to={card.link} className="text-ares-red font-black text-sm tracking-widest uppercase hover:translate-x-2 transition-transform inline-flex items-center gap-2">
+                  {card.linkText} <span>→</span>
                 </Link>
               </div>
             ))}
@@ -95,43 +118,41 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── STRONG FIRST CULTURE ─── */}
-      <section className="py-24 bg-background">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-8">
-            Strong <em className="text-ares-gold not-italic">FIRST</em> Culture
+      {/* ─── CALL TO ACTION SECTION ─── */}
+      <section className="py-24 obsidian-section relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-ares-bronze to-transparent opacity-50"></div>
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+          <h2 className="text-4xl md:text-6xl font-black mb-8 font-heading">
+            Join the <span className="text-ares-red">Phalanx</span>
           </h2>
-          <div className="space-y-6 text-lg leading-relaxed text-white/80">
-            <p>
-              North-Central West Virginia has the strongest <em>FIRST</em> culture in the state.
-            </p>
-            <p>
-              Morgantown is home to Mountaineer Area RoboticS (MARS). MARS is the leading <em>FIRST</em> Robotics Competition (FRC) team in West Virginia. They are an internationally recognized team with many awards. MARS also hosts <em>FIRST</em> LEGO League (FLL) competitions and starts new local teams.
-            </p>
-            <p>
-              <em>FIRST</em> programs are the best way for students to learn technical skills. Students learn robotics skills like programming, building, and design. They also learn other great skills like video making and digital art!
-            </p>
-            <p className="text-white/50 text-sm italic">
-              Photo: All members of the RoboCookies 2025 FLL team are sisters of MARS/ARES team members.
-            </p>
+          <p className="text-marble/80 text-xl mb-12 leading-relaxed">
+            Whether you&apos;re a student looking to build monsters of engineering or a sponsor looking to invest in the future of WV technology, there is a place for you at the table.
+          </p>
+          <div className="flex flex-wrap justify-center gap-6">
+            <Link to="/contact" className="clipped-button bg-ares-bronze text-white hover:bg-white hover:text-ares-red transition-all">
+              Become a Sponsor
+            </Link>
+            <Link to="/about" className="clipped-button bg-transparent border-2 border-white text-white hover:bg-white hover:text-obsidian transition-all">
+              Team Application
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ─── OUTREACH CALENDAR BANNER ─── */}
-      <section className="py-16 bg-ares-red">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h3 className="text-ares-gold text-3xl font-bold mb-4">Outreach Calendar</h3>
-          <p className="text-white/90 max-w-xl mx-auto mb-6">
-            Follow our outreach calendar to see upcoming demos, community events, and workshops.
-          </p>
+      <section className="py-20 bg-ares-red text-white">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="text-center md:text-left">
+            <h3 className="text-3xl md:text-4xl font-black mb-2 font-heading">Campaign Schedule</h3>
+            <p className="text-white/80 text-lg">Tracks our upcoming demos, qualifiers, and community workshops.</p>
+          </div>
           <a
             href="https://calendar.google.com/calendar/u/0/embed?src=af2d297c3425adaeafc13ddd48a582056404cbf16a6156d3925bb8f3b4affaa0@group.calendar.google.com&ctz=America/New_York"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block px-8 py-3 bg-ares-gold text-ares-red font-bold rounded-lg hover:bg-white transition-colors"
+            className="clipped-button bg-obsidian text-marble hover:bg-ares-bronze transition-all shadow-2xl"
           >
-            View Calendar
+            Open Deployment Map
           </a>
         </div>
       </section>

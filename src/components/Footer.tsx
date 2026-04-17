@@ -2,52 +2,65 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-ares-gold text-ares-gray border-t border-ares-gold/30 mt-0 pt-12 pb-8">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
-        {/* Brand */}
-        <div>
-          <Link to="/" className="block mb-4">
-            <h3 className="text-3xl font-black text-ares-red tracking-tight">ARES</h3>
-            <p className="text-ares-red/70 text-sm font-semibold">Appalachian Robotics &amp; Engineering Society</p>
-            <p className="text-ares-red/60 text-sm">FTC Team #23247</p>
+    <footer className="w-full bg-obsidian text-marble border-t border-ares-bronze/20 pt-16 pb-8 overflow-hidden relative">
+      {/* Meander accent for footer bottom */}
+      <div className="absolute bottom-0 left-0 w-full h-1 meander-border opacity-30"></div>
+
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
+        {/* Brand & Mission */}
+        <div className="md:col-span-2">
+          <Link to="/" className="block mb-6 group">
+            <h3 className="text-4xl font-black text-white font-heading tracking-tight group-hover:text-ares-red transition-colors">ARES</h3>
+            <p className="text-ares-bronze text-sm font-bold uppercase tracking-widest mt-1">Appalachian Robotics & Engineering Society</p>
+            <p className="text-marble/40 text-xs font-medium uppercase tracking-[0.2em]">FIRST Tech Challenge Team #23247</p>
           </Link>
-          <p className="text-ares-gray text-sm leading-relaxed">
-            We are a community-based FIRST Tech Challenge team located in Morgantown, WV. Our team competes in the FIRST Chesapeake Region and is for 6th to 12th graders.
+          <p className="text-marble/70 text-base leading-relaxed max-w-md border-l-2 border-ares-bronze/30 pl-6">
+            We are the official <span className="text-white font-bold italic">sibling team</span> to <strong>MARS 2614</strong>. 
+            Based in Morgantown, WV, we are engineering the next generation of Mountaineer innovators through the mission of <em>FIRST</em>.
           </p>
         </div>
 
-        {/* About ARES */}
+        {/* Quick Links */}
         <div>
-          <h4 className="text-ares-red font-bold uppercase text-sm tracking-wider mb-4">About ARES</h4>
-          <ul className="flex flex-col gap-2 text-sm text-ares-gray">
-            <li><Link to="/" className="hover:text-ares-red transition-colors">Home</Link></li>
-            <li><Link to="/about" className="hover:text-ares-red transition-colors">Who We Are</Link></li>
-            <li><Link to="/seasons" className="hover:text-ares-red transition-colors">Seasons</Link></li>
-            <li><Link to="/outreach" className="hover:text-ares-red transition-colors">Outreach</Link></li>
-            <li><Link to="/blog" className="hover:text-ares-red transition-colors">Team Blog</Link></li>
+          <h4 className="text-white font-black uppercase text-xs tracking-[0.3em] mb-6 font-heading border-b border-ares-bronze/20 pb-2 inline-block">The Vault</h4>
+          <ul className="flex flex-col gap-3 text-sm font-bold uppercase tracking-widest text-marble/60">
+            <li><Link to="/" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>//</span> Home</Link></li>
+            <li><Link to="/about" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>//</span> Who We Are</Link></li>
+            <li><Link to="/seasons" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>//</span> Seasons</Link></li>
+            <li><Link to="/outreach" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>//</span> Outreach</Link></li>
+            <li><Link to="/blog" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>//</span> Team Blog</Link></li>
           </ul>
         </div>
 
-        {/* Follow + Contact */}
+        {/* Intelligence / Contact */}
         <div>
-          <h4 className="text-ares-red font-bold uppercase text-sm tracking-wider mb-4">Follow Us</h4>
-          <ul className="flex flex-col gap-2 text-sm">
-            <li><a href="https://www.youtube.com/@ARESFTC" target="_blank" rel="noopener noreferrer" className="text-ares-gray hover:text-ares-red transition-colors underline">YouTube</a></li>
-            <li><a href="https://www.printables.com/@ARESFTC_3784306" target="_blank" rel="noopener noreferrer" className="text-ares-gray hover:text-ares-red transition-colors underline">Printables</a></li>
-            <li><a href="https://www.facebook.com/profile.php?id=61582749275287" target="_blank" rel="noopener noreferrer" className="text-ares-gray hover:text-ares-red transition-colors underline">Facebook</a></li>
-            <li><a href="https://tiktok.com/@ares234247" target="_blank" rel="noopener noreferrer" className="text-ares-gray hover:text-ares-red transition-colors underline">TikTok</a></li>
-            <li><a href="https://instagram.com/ares23247" target="_blank" rel="noopener noreferrer" className="text-ares-gray hover:text-ares-red transition-colors underline">Instagram</a></li>
-          </ul>
-
-          <h4 className="text-ares-red font-bold uppercase text-sm tracking-wider mt-6 mb-2">Get in Touch</h4>
-          <a href="mailto:ares23247wv@gmail.com" className="text-ares-gray hover:text-ares-red text-sm underline transition-colors">
+          <h4 className="text-white font-black uppercase text-xs tracking-[0.3em] mb-6 font-heading border-b border-ares-bronze/20 pb-2 inline-block">Intelligence</h4>
+          <div className="flex flex-wrap gap-4 mb-8">
+            <a href="https://instagram.com/ares23247" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-red transition-colors text-white" aria-label="Instagram">
+              <i className="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.youtube.com/@ARESFTC" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-red transition-colors text-white" aria-label="YouTube">
+              <i className="fab fa-youtube"></i>
+            </a>
+            <a href="mailto:ares23247wv@gmail.com" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-bronze transition-colors text-white" aria-label="Email">
+              <i className="fas fa-envelope"></i>
+            </a>
+          </div>
+          <p className="text-marble/40 text-xs font-bold uppercase tracking-widest">Ares HQ</p>
+          <a href="mailto:ares23247wv@gmail.com" className="text-marble/80 hover:text-ares-red text-sm font-bold transition-colors">
             ares23247wv@gmail.com
           </a>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 mt-12 text-center text-ares-gray text-xs">
-        © {new Date().getFullYear()} ARES 23247 — Appalachian Robotics &amp; Engineering Society. All rights reserved.
+      <div className="max-w-7xl mx-auto px-6 mt-20 pt-8 border-t border-marble/10 flex flex-col md:flex-row justify-between items-center gap-6">
+        <p className="text-marble/30 text-[10px] font-bold uppercase tracking-[0.3em]">
+          © {new Date().getFullYear()} ARES 23247. A member of the MARS 2614 Family.
+        </p>
+        <div className="flex gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-marble/30">
+          <Link to="/privacy" className="hover:text-white transition-colors">Privacy Privacy</Link>
+          <Link to="/sponsors" className="hover:text-white transition-colors">Support Us</Link>
+        </div>
       </div>
     </footer>
   );
