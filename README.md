@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ARES 23247 — Appalachian Robotics & Engineering Society
 
-## Getting Started
+The official web portal for ARES 23247, a community-based FIRST Tech Challenge team from Morgantown, WV. This site serves as our team's digital headquarters, managing our blog, event schedule, and outreach coordination.
 
-First, run the development server:
+## 🚀 Technology Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Frontend**: React 18 + Vite
+- **Backend/API**: Hono (running on Cloudflare Pages Functions)
+- **Database**: Cloudflare D1 (SQL)
+- **Storage**: Cloudflare R2
+- **Authentication**: Cloudflare Zero Trust (Access)
+- **Styling**: Tailwind CSS + Custom ARES Design System
+
+## 🛠 Features
+
+- **Dynamic Blog**: A full Tiptap-based CMS for team engineering journals and news.
+- **Events System**: Hero card layout with automatic sorting of upcoming and past events.
+- **Image Management**: Automated Cloudflare R2 storage with client-side WebP compression.
+- **Accessibility**: Built to WCAG 2.1 AA standards.
+- **Readability**: Content enforced at an 8th-grade reading level for total community accessibility.
+
+## 📦 Project Structure
+
+```text
+/
+├── functions/       # Cloudflare Pages Functions (Hono API)
+├── src/
+│   ├── components/  # Reusable React components
+│   ├── pages/       # Page layouts (Home, Blog, Events, etc.)
+│   └── main.tsx     # Application entry point
+├── schema.sql       # D1 database schema
+└── wrangler.toml    # Cloudflare configuration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠 Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Learn More
+2. Local development:
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+3. Preview with Cloudflare bindings:
+   ```bash
+   npm run preview
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The project is automatically deployed to Cloudflare Pages via GitHub Actions on every push to the `main` branch.
 
-## Deploy on Vercel
+```bash
+# Manual deploy (if needed)
+npm run deploy
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Part of the MARS Family. Inspired by the Mountaineer Mindset.*
