@@ -95,25 +95,28 @@ export default function EventEditor() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <h2 className="text-2xl font-black text-white">Publish Event</h2>
+    <div className="flex flex-col gap-6 w-full relative">
+      <div>
+        <h2 className="text-3xl font-black text-white tracking-tight mb-2">Publish Event</h2>
+        <p className="text-zinc-400 text-sm">Add upcoming competitions or outreach events to the portal.</p>
+      </div>
       
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-4 mt-2">
         <div className="flex-[2]">
-          <label htmlFor="event-title" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Event Title *</label>
+          <label htmlFor="event-title" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Event Title *</label>
           <input
             id="event-title" type="text"
             value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-ares-red/50 transition-colors"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
             placeholder="State Championship"
           />
         </div>
         <div className="flex-1">
-          <label htmlFor="event-location" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Location</label>
+          <label htmlFor="event-location" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Location</label>
           <input
             id="event-location" type="text"
             value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
-            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-ares-gold/50 transition-colors"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
             placeholder="Fairmont State University"
           />
         </div>
@@ -121,44 +124,44 @@ export default function EventEditor() {
 
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
-          <label htmlFor="event-start" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Start Date & Time *</label>
+          <label htmlFor="event-start" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Start Date & Time *</label>
           <input
             id="event-start" type="datetime-local"
             value={form.dateStart} onChange={(e) => setForm({ ...form, dateStart: e.target.value })}
-            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-white/30 transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
           />
         </div>
         <div className="flex-1">
-          <label htmlFor="event-end" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">End Date & Time</label>
+          <label htmlFor="event-end" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">End Date & Time</label>
           <input
             id="event-end" type="datetime-local"
             value={form.dateEnd} onChange={(e) => setForm({ ...form, dateEnd: e.target.value })}
-            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-white/30 transition-colors [&::-webkit-calendar-picker-indicator]:invert"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="event-desc" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Description</label>
+        <label htmlFor="event-desc" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Description</label>
         <textarea
           id="event-desc" rows={4}
           value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-white/30 transition-colors"
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner resize-y min-h-[120px]"
           placeholder="Come join us at our pit to see the newest autonomous capabilities..."
         />
       </div>
 
       <div>
-        <label htmlFor="event-cover" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Cover Asset</label>
+        <label htmlFor="event-cover" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Cover Asset</label>
         <div className="flex gap-2">
           <input
             id="event-cover" type="text"
             value={form.coverImage} onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
-            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-white/30 transition-colors"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
             placeholder="/gallery_2.png"
           />
           <button 
-            className={`px-6 py-3 rounded-lg text-sm font-bold border border-white/10 transition-colors ${isUploading ? "bg-white/20 animate-pulse text-white" : "bg-black/40 text-ares-gold hover:bg-ares-gold hover:text-black"}`}
+            className={`px-6 py-3 rounded-lg text-sm font-bold border border-zinc-700 transition-all focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900 ${isUploading ? "bg-zinc-800 animate-pulse text-zinc-500" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"}`}
             onClick={() => document.getElementById('event-img-upload')?.click()}
           >
             UPL
@@ -182,14 +185,16 @@ export default function EventEditor() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
-        <span className="text-ares-red/80 text-sm font-medium">{errorMsg}</span>
-        <span className="text-emerald-400 text-sm font-medium">{successMsg}</span>
+      <div className="flex items-center justify-between mt-6 pt-6 border-t border-zinc-800">
+        <div className="flex flex-col">
+          <span className="text-ares-red text-sm font-medium">{errorMsg}</span>
+          <span className="text-emerald-500 text-sm font-medium">{successMsg}</span>
+        </div>
         <button
           onClick={handlePublish}
           disabled={isPending}
-          className={`px-8 py-3.5 rounded-full font-black tracking-wide transition-all shadow-xl disabled:opacity-50 
-            ${isPending ? "bg-white/20 text-white animate-pulse" : "bg-white text-black hover:bg-ares-gold hover:text-white"}`}
+          className={`px-8 py-3.5 rounded-full font-black tracking-wide transition-all shadow-xl disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900
+            ${isPending ? "bg-zinc-800 text-zinc-500 animate-pulse" : "bg-white text-zinc-950 hover:bg-ares-red hover:text-white hover:-translate-y-0.5"}`}
         >
           {isPending ? "CREATING..." : "PUBLISH EVENT"}
         </button>
