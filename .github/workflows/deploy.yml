@@ -1,0 +1,41 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  deploy:
+    name: Build & Deploy Edge Backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install Application Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Execute Edge Compilation
+        run: npx @cloudflare/next-on-pages@1
+        env:
+          NODE_ENV: production
+
+      - name: Deploy to Cloudflare via Wrangler CLI
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Cloudflare dynamically detects the branch. If it's not 'main', it issues a Preview URL natively!
+          command: pages deploy .vercel/output/static --project-name ares --commit-dirty=true --branch ${{ github.head_ref || github.ref_name }}
