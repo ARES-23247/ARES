@@ -34,7 +34,7 @@ export async function publishPostAction({
         isDev = true;
       }
     }
-  } catch (e) {}
+  } catch {}
 
   if (!isDev) {
     const h = headers();
