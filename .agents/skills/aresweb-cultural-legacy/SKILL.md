@@ -17,7 +17,7 @@ Always align our work and copy with the FIRST Core Values:
 - **Fun:** We enjoy and celebrate what we do!
 
 ## 2. ARES 23247 Engineering Ethos
-- **Motto / Strategy to embed:** "Engineering The Future." 
+- **Motto / Strategy to embed:** "Be the Inspiration." 
 - **Application:** Use this quote when discussing our high-tech approach, precision robotics, or our Next.js edge-deployed web portal.
 
 ## 3. The Mountaineer Mindset
