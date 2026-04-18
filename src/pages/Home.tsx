@@ -7,20 +7,24 @@ export default function Home() {
       <section className="relative w-full min-h-[95vh] flex items-center overflow-hidden bg-obsidian">
         {/* Motif Background */}
         <div
-          className="absolute inset-0 z-0 opacity-40 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/hero_motif.png')" }}
+          className="absolute right-[-10%] top-[10%] w-[80%] h-[80%] z-0 opacity-[0.05] bg-contain bg-center bg-no-repeat rotate-12"
+          style={{ backgroundImage: "url('/favicon.png')" }}
         ></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-transparent z-1"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/90 to-transparent z-1"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20 pb-16 flex flex-col items-start text-left">
-          <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-sm mb-4 font-heading">
-            Appalachian Robotics & Engineering Society
-          </p>
-
-          <h1 className="text-6xl md:text-[8rem] lg:text-[10rem] font-black text-white leading-[0.9] uppercase mb-6 font-heading">
-            Engineered <br />
-            <span className="text-ares-red">To Inspire</span>
-          </h1>
+          <div className="flex items-center gap-6 mb-6">
+            <img src="/favicon.png" alt="ARES 23247 Logo" className="w-20 md:w-28 h-20 md:h-28 object-contain drop-shadow-[0_0_15px_rgba(192,0,0,0.5)]" />
+            <div>
+              <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-sm md:text-base font-heading mb-1">
+                Appalachian Robotics & Engineering Society
+              </p>
+              <h1 className="text-6xl md:text-[8rem] lg:text-[9rem] font-black text-white leading-[0.9] uppercase font-heading">
+                Engineered <br />
+                <span className="text-ares-red">To Inspire</span>
+              </h1>
+            </div>
+          </div>
 
           <p className="text-marble/80 text-xl md:text-2xl font-medium max-w-2xl mb-10 leading-relaxed border-l-4 border-ares-bronze pl-6">
             Building the future of West Virginia robotics with the <span className="text-white font-bold">Mountaineer Mindset</span>.
