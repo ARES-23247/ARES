@@ -627,6 +627,22 @@ apiRouter.delete("/admin/docs/:slug", async (c) => {
   }
 });
 
+// ── PATCH /api/admin/docs/:slug/sort — update doc sort_order ───────────────
+apiRouter.patch("/admin/docs/:slug/sort", async (c) => {
+  try {
+    const slug = c.req.param("slug");
+    const { sortOrder } = await c.req.json();
+    if (typeof sortOrder !== 'number') {
+      return c.json({ error: "Invalid sortOrder" }, 400);
+    }
+    await c.env.DB.prepare("UPDATE docs SET sort_order = ? WHERE slug = ?").bind(sortOrder, slug).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 doc sort update error:", err);
+    return c.json({ error: "Sort update failed" }, 500);
+  }
+});
+
 app.route("/api", apiRouter);
 app.route("/dashboard/api", apiRouter);
 

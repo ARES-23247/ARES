@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { ChevronUp, ChevronDown } from "lucide-react";
 
 interface EventItem {
   id: string;
@@ -127,6 +128,27 @@ export default function ContentManager({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docs"] });
       setConfirmId(null);
+    },
+    onError: (err) => {
+      alert(err.message);
+    }
+  });
+
+  const sortDocMutation = useMutation({
+    mutationFn: async ({ slug, sortOrder }: { slug: string, sortOrder: number }) => {
+      const res = await fetch(`/dashboard/api/admin/docs/${slug}/sort`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sortOrder })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to sort doc. Status: ${res.status}`);
+      }
+      return slug;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["docs"] });
     },
     onError: (err) => {
       alert(err.message);
@@ -300,8 +322,24 @@ export default function ContentManager({
                         <span className="text-[10px] text-ares-cyan/70 bg-ares-cyan/10 px-2 py-0.5 rounded-md truncate max-w-[120px]">
                           {doc.category}
                         </span>
-                        <span className="text-[10px] text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">
-                          Order: {doc.sort_order}
+                        <span className="flex items-center text-[10px] text-zinc-400 bg-zinc-900 border border-zinc-800 rounded-md overflow-hidden">
+                          <button 
+                            onClick={() => sortDocMutation.mutate({ slug: doc.slug, sortOrder: doc.sort_order - 1 })}
+                            disabled={sortDocMutation.isPending}
+                            className="px-1 py-0.5 hover:bg-zinc-800 hover:text-ares-cyan transition-colors disabled:opacity-50"
+                            aria-label="Move Up"
+                          >
+                            <ChevronUp size={12} />
+                          </button>
+                          <span className="px-2 border-x border-zinc-800">Order: {doc.sort_order}</span>
+                          <button 
+                            onClick={() => sortDocMutation.mutate({ slug: doc.slug, sortOrder: doc.sort_order + 1 })}
+                            disabled={sortDocMutation.isPending}
+                            className="px-1 py-0.5 hover:bg-zinc-800 hover:text-ares-red transition-colors disabled:opacity-50"
+                            aria-label="Move Down"
+                          >
+                            <ChevronDown size={12} />
+                          </button>
                         </span>
                       </div>
                     </div>

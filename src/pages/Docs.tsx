@@ -7,8 +7,11 @@ import rehypeRaw from "rehype-raw";
 import SwerveSimulator from "../components/SwerveSimulator";
 import SOTMSimulator from "../components/SOTMSimulator";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ChevronRight, ChevronDown, Menu, X, BookOpen, ExternalLink, Edit2, Link as LinkIcon, Copy, Check } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, Menu, X, BookOpen, ExternalLink, Edit2, Link as LinkIcon, Copy, Check, ArrowLeft, ArrowRight } from "lucide-react";
 import SEO from "../components/SEO";
+import ConfigVisualizer from "../components/docs/ConfigVisualizer";
+import CodePlayground from "../components/docs/CodePlayground";
+import ScreenshotGallery from "../components/docs/ScreenshotGallery";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -75,12 +78,6 @@ const SIDEBAR_ORDER = [
   "Reliability Track",
   "HMI & Control",
 ];
-
-const Placeholder = ({ name }: { name: string }) => (
-  <div className="p-4 my-6 border border-red-500/30 rounded-lg text-red-400 text-sm bg-red-500/10 flex justify-center items-center">
-    Interactive component `{name}` is not yet ported to this environment.
-  </div>
-);
 
 export default function Docs() {
   const { slug } = useParams<{ slug: string }>();
@@ -428,9 +425,9 @@ export default function Docs() {
                   components={{
                     swervesimulator: () => <SwerveSimulator />,
                     sotmsimulator: () => <SOTMSimulator />,
-                    configvisualizer: () => <Placeholder name="<ConfigVisualizer />" />,
-                    codeplayground: () => <Placeholder name="<CodePlayground />" />,
-                    screenshotgallery: () => <Placeholder name="<ScreenshotGallery />" />,
+                    configvisualizer: () => <ConfigVisualizer />,
+                    codeplayground: () => <CodePlayground />,
+                    screenshotgallery: () => <ScreenshotGallery />,
                     h1: ({ children }) => <h1 className="text-3xl font-bold font-heading mt-10 mb-4 text-white border-b border-white/10 pb-2">{children}</h1>,
                     h2: ({ children }) => {
                       const text = String(children);
@@ -497,6 +494,32 @@ export default function Docs() {
                 >
                   {currentDoc.content || ""}
                 </ReactMarkdown>
+
+                {/* Previous / Next Navigation */}
+                <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(() => {
+                    const currentIndex = allDocs.findIndex(d => d.slug === (slug || (allDocs.length > 0 ? allDocs[0].slug : "")));
+                    const prevDoc = currentIndex > 0 ? allDocs[currentIndex - 1] : null;
+                    const nextDoc = currentIndex !== -1 && currentIndex < allDocs.length - 1 ? allDocs[currentIndex + 1] : null;
+                    
+                    return (
+                      <>
+                        {prevDoc ? (
+                          <Link to={`/docs/${prevDoc.slug}`} className="flex flex-col p-4 rounded-xl border border-white/10 hover:border-ares-red/50 bg-black/20 hover:bg-black/40 transition-colors group">
+                            <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1"><ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" /> Previous</span>
+                            <span className="text-white font-bold group-hover:text-ares-red transition-colors">{prevDoc.title}</span>
+                          </Link>
+                        ) : <div />}
+                        {nextDoc ? (
+                          <Link to={`/docs/${nextDoc.slug}`} className="flex flex-col p-4 rounded-xl border border-white/10 hover:border-ares-cyan/50 bg-black/20 hover:bg-black/40 transition-colors group text-right items-end">
+                            <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1">Next <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" /></span>
+                            <span className="text-white font-bold group-hover:text-ares-cyan transition-colors">{nextDoc.title}</span>
+                          </Link>
+                        ) : <div />}
+                      </>
+                    );
+                  })()}
+                </div>
               </div>
 
               {/* Footer */}
