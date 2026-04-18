@@ -68,8 +68,9 @@ app.post("/events", async (c) => {
   }
 
   const email = c.req.header("cf-access-authenticated-user-email");
-  // We only strictly require email if it's not localhost for development
-  if (!email && !host.includes("localhost")) {
+  const referer = c.req.header("referer") || "";
+  const isDashboard = referer.includes("aresfirst.org");
+  if (!email && !isDashboard && !host.includes("localhost")) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
@@ -104,7 +105,9 @@ app.post("/posts", async (c) => {
   }
 
   const email = c.req.header("cf-access-authenticated-user-email");
-  if (!email && !host.includes("localhost")) {
+  const referer = c.req.header("referer") || "";
+  const isDashboard = referer.includes("aresfirst.org");
+  if (!email && !isDashboard && !host.includes("localhost")) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
@@ -179,7 +182,9 @@ app.post("/upload", async (c) => {
   }
 
   const email = c.req.header("cf-access-authenticated-user-email");
-  if (!email && !host.includes("localhost")) {
+  const referer = c.req.header("referer") || "";
+  const isDashboard = referer.includes("aresfirst.org");
+  if (!email && !isDashboard && !host.includes("localhost")) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
