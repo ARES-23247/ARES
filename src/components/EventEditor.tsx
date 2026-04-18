@@ -28,7 +28,7 @@ import { MentionList } from './editor/MentionList';
 import { suggestionRenderer } from './editor/suggestionRenderer';
 import 'katex/dist/katex.min.css';
 
-const lowlight = createLowlight(common);
+
 
 import AssetPickerModal from "./AssetPickerModal";
 import SimPickerModal from "./SimPickerModal";
@@ -41,6 +41,8 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
   const [isUploadingInline, setIsUploadingInline] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSimPickerOpen, setIsSimPickerOpen] = useState(false);
+
+  const lowlight = useMemo(() => createLowlight(common), []);
 
   const editor = useEditor({
     extensions: [
@@ -60,13 +62,13 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
       Subscript,
       Superscript,
       CharacterCount,
-      Image.configure({ inline: true, HTMLAttributes: { class: 'rounded-xl max-w-full my-4 border border-zinc-800 shadow-lg' } }),
-      Youtube.configure({ HTMLAttributes: { class: 'w-full aspect-video rounded-xl my-4 overflow-hidden border border-zinc-800 shadow-lg' } }),
-      Table.configure({ resizable: true, HTMLAttributes: { class: 'w-full text-left border-collapse border border-zinc-800 my-4' } }),
-      TableRow,
-      TableHeader.configure({ HTMLAttributes: { class: 'bg-zinc-900 border border-zinc-800 p-2 font-bold text-ares-gold' } }),
-      TableCell.configure({ HTMLAttributes: { class: 'border border-zinc-800 p-2' } }),
-      TaskList.configure({ HTMLAttributes: { class: 'list-none pl-0' } }),
+      Image.configure({ inline: false, HTMLAttributes: { class: 'rounded-xl border border-white/10 shadow-lg my-6 max-h-[600px] w-auto mx-auto object-contain bg-black/40' } }),
+      Youtube.configure({ inline: false, HTMLAttributes: { class: 'w-full aspect-video rounded-xl shadow-lg my-6 glass-card' } }),
+      Table.configure({ resizable: true, HTMLAttributes: { class: 'w-full text-left border-collapse border border-zinc-800 rounded-lg hidden-border-corners shadow-lg table-auto my-6' } }),
+      TableRow.configure({ HTMLAttributes: { class: 'border-b border-zinc-800 hover:bg-zinc-900/50 transition-colors odd:bg-black/20 even:bg-black/40' } }),
+      TableHeader.configure({ HTMLAttributes: { class: 'bg-zinc-900 border border-zinc-800 p-3 font-bold text-ares-gold whitespace-nowrap uppercase tracking-wider text-sm' } }),
+      TableCell.configure({ HTMLAttributes: { class: 'border border-zinc-800 p-3 text-zinc-300 align-top' } }),
+      TaskList.configure({ HTMLAttributes: { class: 'list-none pl-0 space-y-2 my-4 text-[#e6edf3]/80' } }),
       TaskItem.configure({ nested: true, HTMLAttributes: { class: 'flex items-start gap-2 mb-1' } }),
       Mathematics,
       Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-ares-cyan underline hover:text-white transition-colors' } }),
