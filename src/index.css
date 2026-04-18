@@ -51,7 +51,7 @@ h1, h2, h3, h4, .font-heading {
   }
 
   .marble-card {
-    @apply bg-[#FDFDFD] border border-ares-bronze/20 shadow-sm transition-all duration-300 hover:shadow-md;
+    @apply bg-marble border border-ares-bronze/20 shadow-sm transition-all duration-300 hover:shadow-md;
     border-left: 4px solid var(--ares-bronze);
   }
 

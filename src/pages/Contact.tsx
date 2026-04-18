@@ -35,7 +35,7 @@ export default function Contact() {
                 <label htmlFor="message-textarea" className="block text-sm font-bold text-ares-red uppercase tracking-wider mb-2">Message</label>
                 <textarea id="message-textarea" rows={5} className="w-full border border-ares-gray/30 rounded-lg px-4 py-3 text-ares-gray focus:outline-none focus:border-ares-red transition-colors resize-none" placeholder="Tell us about yourself..."></textarea>
               </div>
-              <button type="submit" className="px-8 py-3 bg-ares-red text-ares-gold font-bold rounded-lg hover:bg-ares-red-bright transition-colors shadow-lg w-full md:w-auto">
+              <button type="submit" className="px-8 py-3 bg-ares-red text-ares-gold font-bold rounded-lg hover:bg-ares-red hover:scale-105 transition-all shadow-lg w-full md:w-auto">
                 Send Message
               </button>
             </form>
@@ -43,7 +43,7 @@ export default function Contact() {
 
           <div className="text-center text-ares-gray">
             <p className="font-bold">Or email us directly:</p>
-            <a href="mailto:ares23247wv@gmail.com" className="text-ares-red text-lg font-bold underline hover:text-ares-red-bright transition-colors">
+            <a href="mailto:ares23247wv@gmail.com" className="text-ares-red text-lg font-bold underline hover:text-ares-gold transition-colors">
               ares23247wv@gmail.com
             </a>
           </div>
