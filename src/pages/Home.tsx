@@ -13,13 +13,17 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/90 to-transparent z-1"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20 pb-16 flex flex-col items-start text-left">
-          <div className="flex items-center gap-6 mb-6">
-            <img src="/favicon.png" alt="ARES 23247 Logo" className="w-20 md:w-28 h-20 md:h-28 object-contain drop-shadow-[0_0_15px_rgba(192,0,0,0.5)]" />
+          <div className="flex flex-col md:flex-row md:items-center gap-8 md:gap-12 lg:gap-16 mb-6">
+            <img 
+              src="/favicon.svg" 
+              alt="ARES 23247 Logo" 
+              className="w-32 md:w-56 lg:w-[22rem] h-32 md:h-56 lg:h-[22rem] object-contain drop-shadow-[0_0_25px_rgba(192,0,0,0.6)] shrink-0" 
+            />
             <div>
-              <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-sm md:text-base font-heading mb-1">
+              <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-sm md:text-base font-heading mb-3">
                 Appalachian Robotics & Engineering Society
               </p>
-              <h1 className="text-6xl md:text-[8rem] lg:text-[9rem] font-black text-white leading-[0.9] uppercase font-heading">
+              <h1 className="text-6xl md:text-[7rem] lg:text-[10rem] font-black text-white leading-[0.85] uppercase font-heading">
                 Engineered <br />
                 <span className="text-ares-red">To Inspire</span>
               </h1>
