@@ -162,7 +162,7 @@ app.post("/posts", async (c) => {
         body.coverImageUrl || "/gallery_1.png",
         snippet,
         astStr,
-        email
+        email || "anonymous_dashboard_user"
       )
       .run();
 
