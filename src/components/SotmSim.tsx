@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 
 export default function SotmSim() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,7 +70,7 @@ export default function SotmSim() {
       
       let virtualTarget = { x: HUB.x, y: HUB.y };
       let tof = 0;
-      let logs: string[] = [];
+      const logs: string[] = [];
       
       ctx.strokeStyle = "#555";
       ctx.setLineDash([5, 5]);

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function FlywheelKvSim() {
   const wCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -30,7 +30,6 @@ export default function FlywheelKvSim() {
     let fwAngle = 0;
     const fwHist: {v: number, s: number}[] = [];
     
-    let intervalId: number;
     let frameId: number;
 
     function simFlywheel() {
@@ -112,7 +111,7 @@ export default function FlywheelKvSim() {
       frameId = requestAnimationFrame(drawFlywheel);
     }
 
-    intervalId = window.setInterval(simFlywheel, 20);
+    const intervalId = window.setInterval(simFlywheel, 20);
     drawFlywheel();
 
     return () => {

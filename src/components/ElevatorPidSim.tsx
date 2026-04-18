@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ElevatorPidSim() {
   const eCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -38,7 +38,6 @@ export default function ElevatorPidSim() {
     const history: {p: number, s: number}[] = [];
     const dt = 0.02; // 50hz
     
-    let intervalId: number;
     let frameId: number;
 
     function simulate() {
@@ -131,7 +130,7 @@ export default function ElevatorPidSim() {
       frameId = requestAnimationFrame(draw);
     }
     
-    intervalId = window.setInterval(simulate, 20);
+    const intervalId = window.setInterval(simulate, 20);
     draw();
 
     return () => {
@@ -183,8 +182,8 @@ export default function ElevatorPidSim() {
         <div style={{ flex: 1, position: 'relative' }}>
           <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={gCanvasRef} width="100" height="260" style={{ display: 'block', width: '100%', background: '#1a1a1a', borderRadius: '4px' }} />
           <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '15px', fontFamily: '"Orbitron", sans-serif', fontSize: '12px' }}>
-            <span style={{ color: '#29b6f6' }}>■  Setpoint</span>
-            <span style={{ color: '#B32416' }}>■  Actual</span>
+            <span style={{ color: '#29b6f6' }}>■ Setpoint</span>
+            <span style={{ color: '#B32416' }}>■ Actual</span>
           </div>
         </div>
       </div>

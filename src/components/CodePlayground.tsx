@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 
 interface CodeExample {
   name: string;
@@ -318,7 +318,7 @@ public class SuperstructureSubsystem extends Subsystem {
   }
 ];
 
-export default function CodePlayground({ examples = EXAMPLES, defaultExample }: CodePlaygroundProps) {
+export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundProps) {
   const [selectedExample, setSelectedExample] = useState(0);
   const [code, setCode] = useState(examples[0].code);
   const [output, setOutput] = useState('');
@@ -412,10 +412,11 @@ export default function CodePlayground({ examples = EXAMPLES, defaultExample }: 
         gap: '10px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-          <label style={{ color: '#fff', fontFamily: '"Orbitron", sans-serif', fontSize: '14px' }}>
+          <label htmlFor="example-select" style={{ color: '#fff', fontFamily: '"Orbitron", sans-serif', fontSize: '14px' }}>
             Example:
           </label>
           <select
+            id="example-select"
             value={selectedExample}
             onChange={(e) => handleExampleChange(Number(e.target.value))}
             style={{

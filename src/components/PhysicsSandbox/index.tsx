@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import styles from './styles.module.css';
 
 export default function PhysicsSandbox(): JSX.Element {
@@ -12,7 +12,7 @@ export default function PhysicsSandbox(): JSX.Element {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let balls: any[] = [];
+    let balls: unknown[] = [];
     const robot = { x: 370, y: 170, w: 60, h: 60 };
     let isDragging = false;
     let dragOffsetX = 0;
@@ -80,14 +80,12 @@ export default function PhysicsSandbox(): JSX.Element {
       lastRobotY = robot.y;
 
       let logMsg = "Dyn4j Simulation Tracking...";
-      let collisionTriggered = false;
 
       balls.forEach((b) => {
         if (b.x - b.radius < goal.w && b.y > goal.y && b.y < goal.y + goal.h) {
           currentScore++;
           setScore(currentScore);
           logMsg = "⚽ GOAL SCORED! Resetting ball...";
-          collisionTriggered = true;
           b.x = 400 + Math.random() * 300;
           b.y = 50 + Math.random() * 300;
           b.vx = 0;
@@ -111,12 +109,11 @@ export default function PhysicsSandbox(): JSX.Element {
         let distance = Math.sqrt((distX * distX) + (distY * distY));
 
         if (distance < b.radius) {
-          collisionTriggered = true;
           logMsg = "💥 CONTINUOUS COLLISION DETECTED";
-          let overlap = b.radius - distance;
+          const overlap = b.radius - distance;
           if (distance === 0) { distX = 1; distY = 0; distance = 1; }
-          let nx = distX / distance;
-          let ny = distY / distance;
+          const nx = distX / distance;
+          const ny = distY / distance;
           b.x += nx * overlap;
           b.y += ny * overlap;
           if (isDragging) {
@@ -137,17 +134,16 @@ export default function PhysicsSandbox(): JSX.Element {
       // Ball to ball collision
       for (let i = 0; i < balls.length; i++) {
         for (let j = i + 1; j < balls.length; j++) {
-          let b1 = balls[i]; let b2 = balls[j];
+          const b1 = balls[i]; const b2 = balls[j];
           let dx = b2.x - b1.x; let dy = b2.y - b1.y;
           let dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < b1.radius + b2.radius) {
-            collisionTriggered = true;
-            let overlap = (b1.radius + b2.radius) - dist;
+            const overlap = (b1.radius + b2.radius) - dist;
             if (dist === 0) { dx = 1; dy = 0; dist = 1;}
-            let nx = dx / dist; let ny = dy / dist;
+            const nx = dx / dist; const ny = dy / dist;
             b1.x -= nx * overlap / 2; b1.y -= ny * overlap / 2;
             b2.x += nx * overlap / 2; b2.y += ny * overlap / 2;
-            let tx = b1.vx; let ty = b1.vy;
+            const tx = b1.vx; const ty = b1.vy;
             b1.vx += (b2.vx - b1.vx) * 0.8; b1.vy += (b2.vy - b1.vy) * 0.8;
             b2.vx += (tx - b2.vx) * 0.8; b2.vy += (ty - b2.vy) * 0.8;
           }

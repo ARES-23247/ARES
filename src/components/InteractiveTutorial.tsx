@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './InteractiveTutorial.css';
 
 export interface TutorialStep {
@@ -90,7 +90,7 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
       } else {
         setSyncStatus('error');
       }
-    } catch (e) {
+    } catch {
       setSyncStatus('error');
     }
   };
@@ -99,7 +99,9 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
   useEffect(() => {
     const saved = localStorage.getItem(`tutorial-${title}-progress`);
     if (saved) {
-      setCompletedSteps(new Set(JSON.parse(saved)));
+      setTimeout(() => {
+        setCompletedSteps(new Set(JSON.parse(saved)));
+      }, 0);
     }
   }, [title]);
 
@@ -226,7 +228,7 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
                       className="checkpoint-checkbox"
                     />
                     <label htmlFor="checkpoint" className="checkpoint-label">
-                      I've completed this step
+                      I&apos;ve completed this step
                     </label>
                   </div>
                 </div>

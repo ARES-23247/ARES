@@ -7,7 +7,7 @@ import rehypeRaw from "rehype-raw";
 import SwerveSimulator from "../components/SwerveSimulator";
 import SOTMSimulator from "../components/SOTMSimulator";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ChevronRight, ChevronDown, Menu, X, BookOpen, ExternalLink, Edit2 } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, Menu, X, BookOpen, ExternalLink, Edit2, Link as LinkIcon, Copy, Check } from "lucide-react";
 import SEO from "../components/SEO";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -20,6 +20,7 @@ interface DocRecord {
   description: string;
   content?: string;
   updated_at?: string;
+  snippet?: string;
 }
 
 interface SearchResult {
@@ -28,6 +29,38 @@ interface SearchResult {
   category: string;
   snippet: string;
 }
+
+const CodeBlock = ({ language, value, ...props }: { language?: string; value: string; [key: string]: unknown }) => {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative group my-4">
+      <button
+        onClick={handleCopy}
+        className="absolute top-2 right-2 p-2 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-md opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-sm shadow-md border border-white/10"
+        aria-label="Copy code"
+      >
+        {isCopied ? <Check size={14} className="text-ares-cyan" /> : <Copy size={14} />}
+      </button>
+      <SyntaxHighlighter
+        style={vscDarkPlus as unknown}
+        language={language || 'text'}
+        PreTag="div"
+        className="rounded-lg text-sm font-mono overflow-x-auto !bg-[#161b22] border border-white/8 shadow-lg !my-0"
+        showLineNumbers={true}
+        {...props}
+      >
+        {value}
+      </SyntaxHighlighter>
+    </div>
+  );
+};
 
 // ── Sidebar structure matching Starlight layout ──────────────────────
 const SIDEBAR_ORDER = [
@@ -402,12 +435,26 @@ export default function Docs() {
                     h2: ({ children }) => {
                       const text = String(children);
                       const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                      return <h2 id={id} className="text-2xl font-bold font-heading mt-8 mb-3 text-ares-gold scroll-m-24">{children}</h2>;
+                      return (
+                        <h2 id={id} className="text-2xl font-bold font-heading mt-8 mb-3 text-ares-gold scroll-m-24 group relative">
+                          <a href={`#${id}`} className="absolute -left-6 top-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-ares-cyan" aria-label="Link to section">
+                            <LinkIcon size={18} />
+                          </a>
+                          {children}
+                        </h2>
+                      );
                     },
                     h3: ({ children }) => {
                       const text = String(children);
                       const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                      return <h3 id={id} className="text-xl font-bold font-heading mt-6 mb-2 text-ares-red scroll-m-24">{children}</h3>;
+                      return (
+                        <h3 id={id} className="text-xl font-bold font-heading mt-6 mb-2 text-ares-red scroll-m-24 group relative">
+                          <a href={`#${id}`} className="absolute -left-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-ares-cyan" aria-label="Link to section">
+                            <LinkIcon size={16} />
+                          </a>
+                          {children}
+                        </h3>
+                      );
                     },
                     h4: ({ children }) => <h4 className="text-lg font-bold mt-4 mb-2 text-white/80">{children}</h4>,
                     p: ({ children }) => <p className="text-[#e6edf3]/80 leading-relaxed mb-4">{children}</p>,
@@ -429,16 +476,7 @@ export default function Docs() {
                         return <code className="bg-ares-red/10 text-ares-gold px-1.5 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>;
                       }
                       return (
-                        <SyntaxHighlighter
-                          style={vscDarkPlus as any}
-                          language={match[1]}
-                          PreTag="div"
-                          className="rounded-lg text-sm font-mono overflow-x-auto my-4 !bg-[#161b22] border border-white/8 shadow-lg"
-                          showLineNumbers={true}
-                          {...props}
-                        >
-                          {String(children).replace(/\n$/, '')}
-                        </SyntaxHighlighter>
+                        <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} {...props} />
                       );
                     },
                     pre: ({ children }) => <>{children}</>,

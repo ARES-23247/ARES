@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 
 export default function PowerSheddingSim() {
   const [loads, setLoads] = useState({
@@ -7,10 +7,6 @@ export default function PowerSheddingSim() {
     intake: false,
     compressor: false,
   });
-
-  const [voltage, setVoltage] = useState(12.5);
-  const [isShedding, setIsShedding] = useState(false);
-  const [isBrownout, setIsBrownout] = useState(false);
 
   const internalResistance = 0.015; // Ohms
   const nominalVoltage = 12.5;
@@ -23,33 +19,28 @@ export default function PowerSheddingSim() {
     compressor: 30,
   };
 
-  useEffect(() => {
-    let totalCurrent = 0;
-    
-    // Tier 1: Swerve (Never sheds)
-    if (loads.swerve) totalCurrent += loadValues.swerve;
-    
-    // Tier 2: Shooter (Scales slightly, but for sim we'll keep it simple)
-    if (loads.shooter) totalCurrent += loadValues.shooter;
+  let totalCurrent = 0;
+  
+  // Tier 1: Swerve (Never sheds)
+  if (loads.swerve) totalCurrent += loadValues.swerve;
+  
+  // Tier 2: Shooter (Scales slightly, but for sim we'll keep it simple)
+  if (loads.shooter) totalCurrent += loadValues.shooter;
 
-    // Initial check for potential voltage sag with T1/T2
-    let potentialVoltage = nominalVoltage - (totalCurrent * internalResistance);
-    
-    const sheddingActive = potentialVoltage < 9.5;
-    setIsShedding(sheddingActive);
+  // Initial check for potential voltage sag with T1/T2
+  const potentialVoltage = nominalVoltage - (totalCurrent * internalResistance);
+  const isShedding = potentialVoltage < 9.5;
 
-    // Tier 3: Intake / Compressor (Sheds heavily)
-    if (loads.intake) {
-      totalCurrent += sheddingActive ? (loadValues.intake * 0.1) : loadValues.intake;
-    }
-    if (loads.compressor) {
-      totalCurrent += sheddingActive ? (loadValues.compressor * 0.1) : loadValues.compressor;
-    }
+  // Tier 3: Intake / Compressor (Sheds heavily)
+  if (loads.intake) {
+    totalCurrent += isShedding ? (loadValues.intake * 0.1) : loadValues.intake;
+  }
+  if (loads.compressor) {
+    totalCurrent += isShedding ? (loadValues.compressor * 0.1) : loadValues.compressor;
+  }
 
-    const finalVoltage = nominalVoltage - (totalCurrent * internalResistance);
-    setVoltage(finalVoltage);
-    setIsBrownout(finalVoltage < 7.0);
-  }, [loads]);
+  const voltage = nominalVoltage - (totalCurrent * internalResistance);
+  const isBrownout = voltage < 7.0;
 
   const toggleLoad = (load: keyof typeof loads) => {
     setLoads(prev => ({ ...prev, [load]: !prev[load] }));

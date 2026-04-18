@@ -1,6 +1,42 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Point = { x: number, y: number };
+
+// Cubic Hermite Spline calculation
+function getSplinePoint(pts: Point[], t: number): Point {
+  const p0 = pts[0];
+  const p1 = pts[1];
+  const p2 = pts[2];
+  const p3 = pts[3];
+  
+  const t2 = t * t;
+  const t3 = t2 * t;
+
+  // Catmull-Rom math
+  const q0 = -0.5 * t3 + t2 - 0.5 * t;
+  const q1 = 1.5 * t3 - 2.5 * t2 + 1.0;
+  const q2 = -1.5 * t3 + 2.0 * t2 + 0.5 * t;
+  const q3 = 0.5 * t3 - 0.5 * t2;
+
+  const x = p0.x * q0 + p1.x * q1 + p2.x * q2 + p3.x * q3;
+  const y = p0.y * q0 + p1.y * q1 + p2.y * q2 + p3.y * q3;
+
+  return { x, y };
+}
+
+// Generate dense path
+function generatePath(points: Point[]): Point[] {
+  if (points.length < 4) return [];
+  const path: Point[] = [];
+  const pts = [points[0], ...points, points[points.length - 1]];
+  
+  for (let i = 1; i < pts.length - 2; i++) {
+    for (let t = 0; t <= 1; t += 0.05) {
+      path.push(getSplinePoint([pts[i-1], pts[i], pts[i+1], pts[i+2]], t));
+    }
+  }
+  return path;
+}
 
 export default function AutoSim() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -19,42 +55,6 @@ export default function AutoSim() {
   useEffect(() => {
     playRef.current = isPlaying;
   }, [isPlaying]);
-
-  // Cubic Hermite Spline calculation
-  function getSplinePoint(pts: Point[], t: number): Point {
-    const p0 = pts[0];
-    const p1 = pts[1];
-    const p2 = pts[2];
-    const p3 = pts[3];
-    
-    const t2 = t * t;
-    const t3 = t2 * t;
-
-    // Catmull-Rom math
-    const q0 = -0.5 * t3 + t2 - 0.5 * t;
-    const q1 = 1.5 * t3 - 2.5 * t2 + 1.0;
-    const q2 = -1.5 * t3 + 2.0 * t2 + 0.5 * t;
-    const q3 = 0.5 * t3 - 0.5 * t2;
-
-    const x = p0.x * q0 + p1.x * q1 + p2.x * q2 + p3.x * q3;
-    const y = p0.y * q0 + p1.y * q1 + p2.y * q2 + p3.y * q3;
-
-    return { x, y };
-  }
-
-  // Generate dense path
-  function generatePath(points: Point[]): Point[] {
-    if (points.length < 4) return [];
-    const path: Point[] = [];
-    const pts = [points[0], ...points, points[points.length - 1]];
-    
-    for (let i = 1; i < pts.length - 2; i++) {
-      for (let t = 0; t <= 1; t += 0.05) {
-        path.push(getSplinePoint([pts[i-1], pts[i], pts[i+1], pts[i+2]], t));
-      }
-    }
-    return path;
-  }
 
   useEffect(() => {
     const canvas = canvasRef.current;

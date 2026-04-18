@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 export default function SysIdSim() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,7 +45,7 @@ export default function SysIdSim() {
     resize();
 
     let animationFrameId: number;
-    let dt = 0.02; // 20ms loop
+    const dt = 0.02; // 20ms loop
 
     function loop() {
       const state = stateRef.current;
@@ -115,9 +115,9 @@ export default function SysIdSim() {
         ctx!.beginPath();
         ctx!.strokeStyle = '#e5e112'; // Yellow
         ctx!.lineWidth = 2;
-        let scaleX = graphW / 8.0; // Max 8 seconds
-        let scaleV = graphH / 12.0; // Max 12 volts
-        let scaleVel = graphH / 100.0; // Max 100 rad/s
+        const scaleX = graphW / 8.0; // Max 8 seconds
+        const scaleV = graphH / 12.0; // Max 12 volts
+        const scaleVel = graphH / 100.0; // Max 100 rad/s
         
         for(let i = 0; i < historyRef.current.length; i++) {
           const pt = historyRef.current[i];

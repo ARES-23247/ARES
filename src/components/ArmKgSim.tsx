@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ArmKgSim() {
   const aCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,7 +24,6 @@ export default function ArmKgSim() {
     let armAng = -45; 
     let armVel = 0;
     
-    let intervalId: number;
     let frameId: number;
 
     function simArm() {
@@ -38,7 +37,7 @@ export default function ArmKgSim() {
       const ffVoltage = kG * cosTheta;
       const pidVoltage = kP * error;
       
-      let voltage = ffVoltage + pidVoltage;
+      const voltage = ffVoltage + pidVoltage;
       
       const GRAVITY_PULL = -0.6 * cosTheta; 
       const MOTOR_PUSH = voltage * 1.0; 
@@ -86,7 +85,7 @@ export default function ArmKgSim() {
       frameId = requestAnimationFrame(drawArm);
     }
 
-    intervalId = window.setInterval(simArm, 20);
+    const intervalId = window.setInterval(simArm, 20);
     drawArm();
 
     return () => {

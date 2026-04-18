@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ZeroAllocationSim() {
   const loopCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -56,7 +56,7 @@ export default function ZeroAllocationSim() {
         const slice = lw / 250;
         lCtx.beginPath(); lCtx.moveTo(0, lh);
         for (let i = 0; i < loopTimes.length; i++) {
-            let y = lh - (loopTimes[i].ts / 80) * lh;
+            const y = lh - (loopTimes[i].ts / 80) * lh;
             lCtx.lineTo(i * slice, Math.max(0, y));
         }
         lCtx.lineTo((loopTimes.length > 0 ? loopTimes.length - 1 : 0) * slice, lh);
@@ -65,7 +65,7 @@ export default function ZeroAllocationSim() {
         
         lCtx.beginPath();
         for (let i = 0; i < loopTimes.length; i++) {
-            let y = lh - (loopTimes[i].ts / 80) * lh;
+            const y = lh - (loopTimes[i].ts / 80) * lh;
             if (i === 0) lCtx.moveTo(i * slice, Math.max(0, y));
             else lCtx.lineTo(i * slice, Math.max(0, y));
         }
@@ -73,7 +73,7 @@ export default function ZeroAllocationSim() {
         
         for (let i = 0; i < loopTimes.length; i++) {
             if (loopTimes[i].gc) {
-                let y = lh - (loopTimes[i].ts / 80) * lh;
+                const y = lh - (loopTimes[i].ts / 80) * lh;
                 lCtx.beginPath(); lCtx.arc(i * slice, Math.max(0, y), 4, 0, Math.PI * 2);
                 lCtx.fillStyle = '#ff4d4d'; // var(--mars-red-light)
                 lCtx.fill();

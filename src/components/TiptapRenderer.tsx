@@ -3,7 +3,7 @@ import React, { ReactNode, lazy, Suspense } from "react";
 const CodePlayground = lazy(() => import('./CodePlayground').catch(() => ({ default: () => <div className="text-red-500">Failed to load CodePlayground</div> })));
 const InteractiveTutorial = lazy(() => import('./InteractiveTutorial').catch(() => ({ default: () => <div className="text-red-500">Failed to load InteractiveTutorial</div> })));
 const CoreValueCallout = lazy(() => import('./CoreValueCallout').catch(() => ({ default: () => <div className="text-red-500">Failed to load CoreValueCallout</div> })));
-const ComponentMap: Record<string, React.LazyExoticComponent<any>> = {
+const ComponentMap: Record<string, React.LazyExoticComponent<unknown>> = {
   CodePlayground,
   InteractiveTutorial,
   CoreValueCallout,

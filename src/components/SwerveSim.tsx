@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function SwerveSim() {
   const canvasRef = useRef<HTMLCanvasElement>(null);

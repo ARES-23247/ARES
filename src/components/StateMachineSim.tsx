@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function StateMachineSim() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -26,7 +26,7 @@ export default function StateMachineSim() {
     const drawSMM = () => {
         let goalElev = 0;
         let goalPivot = 0;
-        let currentLogs: string[] = [];
+        const currentLogs: string[] = [];
         let isDone = false;
         
         const target = smTargetRef.current;
