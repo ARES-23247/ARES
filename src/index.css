@@ -60,11 +60,6 @@ h1, h2, h3, h4, .font-heading {
   }
 
   /* --- GREEK ARCHITECTURAL MOTIFS --- */
-  
-  .monumental-text {
-    letter-spacing: 0.08em;
-    text-shadow: 5px 5px 0px rgba(0, 0, 0, 0.9), 1px 1px 0px rgba(255, 255, 255, 0.1);
-  }
 
   .spartan-plate {
     clip-path: polygon(48px 0, 100% 0, 100% calc(100% - 48px), calc(100% - 48px) 100%, 0 100%, 0 48px);

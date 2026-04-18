@@ -23,7 +23,7 @@ export default function Home() {
               <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-sm md:text-base font-heading mb-3">
                 Appalachian Robotics & Engineering Society
               </p>
-              <h1 className="text-6xl md:text-[7rem] lg:text-[10rem] font-black text-white leading-[0.85] uppercase font-heading monumental-text">
+              <h1 className="text-6xl md:text-[7rem] lg:text-[10rem] font-black text-white leading-[0.85] uppercase font-heading relative z-10 w-full xl:w-2/3">
                 Engineered <br />
                 <span className="text-ares-red">To Inspire</span>
               </h1>
@@ -122,7 +122,7 @@ export default function Home() {
       <div className="meander-divider bg-marble opacity-70 relative -bottom-[1px] z-10 w-full"></div>
       <section className="py-24 obsidian-section relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-4xl md:text-6xl font-black mb-8 font-heading monumental-text">
+          <h2 className="text-4xl md:text-6xl font-black mb-8 font-heading">
             Join <span className="text-ares-red">ARES</span>
           </h2>
           <p className="text-marble/80 text-xl mb-12 leading-relaxed">

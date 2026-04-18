@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 interface EventItem {
   id: string;
@@ -42,7 +43,7 @@ export default function Events() {
     const timeStr = startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
     return (
-      <div className={`flex flex-col md:flex-row gap-6 bg-black/40 border ${isPast ? 'border-white/5 opacity-80' : 'border-ares-gold/30 shadow-lg shadow-ares-gold/10'} rounded-2xl overflow-hidden group hover:border-ares-gold/60 transition-all duration-300`}>
+      <Link to={`/events/${event.id}`} className={`flex flex-col md:flex-row gap-6 bg-black/40 border ${isPast ? 'border-white/5 opacity-80' : 'border-ares-gold/30 shadow-lg shadow-ares-gold/10'} rounded-2xl overflow-hidden group hover:border-ares-gold/60 transition-all duration-300 block cursor-pointer`}>
         {/* Date / Image Block */}
         <div className="md:w-1/3 relative overflow-hidden bg-ares-red/20 min-h-[200px] flex-shrink-0">
           {event.cover_image ? (
@@ -68,8 +69,11 @@ export default function Events() {
           <p className="text-marble/70 text-base leading-relaxed line-clamp-3">
             {event.description}
           </p>
+          <div className="mt-6 text-ares-gold uppercase tracking-widest text-xs font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform w-fit">
+            {isPast ? "Read Recap" : "View Details"} <span className="text-lg leading-none">&rarr;</span>
+          </div>
         </div>
-      </div>
+      </Link>
     );
   };
 

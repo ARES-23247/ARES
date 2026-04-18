@@ -1,10 +1,27 @@
 import { useState, useEffect } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 
 export default function EventEditor({ editId, onClearEdit }: { editId?: string | null; onClearEdit?: () => void }) {
   const [isPending, setIsPending] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingInline, setIsUploadingInline] = useState(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit, 
+      Image.configure({ inline: true, HTMLAttributes: { class: 'rounded-xl max-w-full my-4 border border-zinc-800 shadow-lg' } })
+    ],
+    content: "<p>Describe your upcoming event or write a full recap here...</p>",
+    editorProps: {
+      attributes: {
+        class: "prose prose-invert lg:prose-lg max-w-none focus:outline-none min-h-[250px] text-zinc-300 p-6",
+      },
+    },
+  });
 
   const [form, setForm] = useState({
     title: "",
@@ -30,6 +47,13 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
             description: data.event.description || "",
             coverImage: data.event.cover_image || "/gallery_2.png",
           });
+          if (editor) {
+            try {
+              editor.commands.setContent(JSON.parse(data.event.description));
+            } catch (e) {
+              editor.commands.setContent(`<p>${data.event.description}</p>`);
+            }
+          }
         }
       } catch (err) {
         console.error("Failed to load event for editing", err);
@@ -94,7 +118,8 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
 
     try {
       const id = form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
-      const payload = { ...form, id };
+      const finalDescription = editor ? JSON.stringify(editor.getJSON()) : form.description;
+      const payload = { ...form, id, description: finalDescription };
 
       const method = editId ? "PUT" : "POST";
       const url = editId ? `/api/events/${editId}` : "/api/events";
@@ -175,13 +200,47 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
       </div>
 
       <div>
-        <label htmlFor="event-desc" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Description</label>
-        <textarea
-          id="event-desc" rows={4}
-          value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner resize-y min-h-[120px]"
-          placeholder="Come join us at our pit to see the newest autonomous capabilities..."
-        />
+        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Event Description / Recap</label>
+        
+        {/* Editor Toolbar */}
+        {editor && (
+          <div className="bg-zinc-900 border border-zinc-800 p-2 rounded-xl flex flex-wrap gap-2 items-center backdrop-blur-md sticky top-4 z-10 shadow-lg mb-2">
+            <button onClick={() => editor.chain().focus().toggleBold().run()} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${editor.isActive("bold") ? "bg-ares-red text-white shadow-md" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>B</button>
+            <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`px-4 py-2 rounded-lg text-sm italic transition-all ${editor.isActive("italic") ? "bg-ares-gold text-white shadow-md" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>I</button>
+            <div className="w-px h-6 bg-zinc-800 mx-2"></div>
+            <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${editor.isActive("heading", { level: 2 }) ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>H2</button>
+            <button onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${editor.isActive("heading", { level: 3 }) ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>H3</button>
+            <div className="w-px h-6 bg-zinc-800 mx-2"></div>
+            <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`px-4 py-2 rounded-lg text-sm transition-all ${editor.isActive("bulletList") ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>List</button>
+            <div className="w-px h-6 bg-zinc-800 mx-2"></div>
+            <button 
+              className={`px-4 py-2 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ares-gold ${isUploadingInline ? "bg-zinc-800 text-zinc-500 animate-pulse" : "text-ares-gold hover:bg-zinc-800 hover:text-ares-gold"}`}
+              onClick={() => document.getElementById('inline-event-img-upload')?.click()}
+            >
+              Add Image
+            </button>
+            <input 
+              id="inline-event-img-upload" type="file" accept="image/*" className="hidden" 
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setIsUploadingInline(true);
+                try {
+                  const url = await uploadFile(file);
+                  editor.chain().focus().setImage({ src: url }).run();
+                } catch(err) {
+                  setErrorMsg(String(err));
+                } finally {
+                  setIsUploadingInline(false);
+                }
+              }} 
+            />
+          </div>
+        )}
+
+        <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl overflow-hidden shadow-inner focus-within:border-zinc-700 transition-colors">
+          <EditorContent editor={editor} />
+        </div>
       </div>
 
       <div>
