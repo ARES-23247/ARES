@@ -23,16 +23,19 @@ if (!email && !isDashboard) {
 ```
 
 ### ✅ Secure Pattern (ENFORCED)
-**Always require the cryptographic `cf-access-authenticated-user-email` header.**
-Because Cloudflare Access acts as a reverse proxy, it automatically wipes any manually injected `cf-access` headers from unauthenticated public traffic. The only way this header exists is if the user successfully passed the institutional login screen.
+**Always require the cryptographic `cf-access-authenticated-user-email` OR `cf-access-jwt-assertion` header.**
+Because Cloudflare Access acts as a reverse proxy, it automatically wipes any manually injected `cf-access` headers from unauthenticated public traffic. The only way these headers exist is if the user successfully passed the institutional login screen. 
+
+*Critical Warning:* Some Identity Providers (like GitHub, depending on public profile settings) DO NOT pass an email address to Cloudflare Access. If no email is provided, Cloudflare ZERO TRUST drops the `cf-access-authenticated-user-email` header entirely, causing artificial 401 Unauthorized errors for fully logged-in users. You MUST fallback to checking `cf-access-jwt-assertion` to cryptographically verify their active session.
 
 ```typescript
 // SECURE: Enforces that the request has mathematically passed Zero Trust
 const url = new URL(c.req.url);
 const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1";
 const email = c.req.header("cf-access-authenticated-user-email");
+const jwt = c.req.header("cf-access-jwt-assertion");
 
-if (!email && !isLocal) {
+if (!email && !jwt && !isLocal) {
   return c.json({ error: "Strict Context: Unauthorized. Cloudflare Zero Trust authentication required." }, 401);
 }
 ```
@@ -58,5 +61,27 @@ await c.env.DB.prepare(`DELETE FROM posts WHERE slug = '${slug}'`).run();
 await c.env.DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
 ```
 
+## 4. API Proxy Mounting & Cloudflare Edge Routing Tables
+When mounting internal or protected API routes (e.g., `/dashboard/api/*`), you **MUST** ensure the base path is explicitly whitelisted in `public/_routes.json`. 
+
+**The 405 Method Not Allowed Edge Trap:**
+Cloudflare Pages statically evaluates `public/_routes.json` to determine which paths hit the Functions (`functions/`) environment vs Cloudflare's static file cache.
+1. If your protected API proxy (`/dashboard/api/*`) is NOT listed in the `include` array of `_routes.json`, Cloudflare assumes it maps to a static asset.
+2. Cloudflare strictly rejects all mutating HTTP operations (`POST`, `PUT`, `DELETE`) against static URLs.
+3. Your secure API requests will fail on the Edge Network with a completely opaque `405 Method Not Allowed`, bypassing your actual backend code entirely.
+
+### ✅ Secure Routing Table
+Always verify `public/_routes.json` captures your proxy mounts:
+```json
+{
+  "version": 1,
+  "include": [
+    "/api/*",
+    "/dashboard/api/*"
+  ],
+  "exclude": []
+}
+```
+
 ## Action Summary
-Whenever you are operating within `functions/api/` or writing backend logic, you are to assume the posture of a strict Security Auditor. Assume all traffic is malicious unless cryptographically verified by Cloudflare.
+Whenever you are operating within `functions/api/` or writing backend logic, you are to assume the posture of a strict Security Auditor. Assume all traffic is malicious unless cryptographically verified by Cloudflare JWTs. Never implicitly trust internal Edge networking routes without explicit definitions in `_routes.json`.
