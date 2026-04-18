@@ -1,10 +1,10 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function BlogEditor() {
+export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: string | null; onClearEdit?: () => void }) {
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
@@ -68,6 +68,29 @@ export default function BlogEditor() {
     },
   });
 
+  useEffect(() => {
+    if (!editSlug) return;
+    const fetchPost = async () => {
+      try {
+        const res = await fetch(`/api/posts/${editSlug}`);
+        const data = await res.json();
+        if (data.post) {
+          setTitle(data.post.title || "");
+          if (editor) {
+            try {
+              editor.commands.setContent(JSON.parse(data.post.ast));
+            } catch (e) {
+              console.error("Failed to parse existing AST", e);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load post for editing", err);
+      }
+    };
+    fetchPost();
+  }, [editSlug, editor]);
+
   const handlePublish = async () => {
     if (!title || !editor) {
       setErrorMsg("Title and content are required.");
@@ -80,8 +103,11 @@ export default function BlogEditor() {
     try {
       const ast = editor.getJSON();
 
-      const res = await fetch("/api/posts", {
-        method: "POST",
+      const method = editSlug ? "PUT" : "POST";
+      const url = editSlug ? `/api/posts/${editSlug}` : "/api/posts";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, author, coverImageUrl, ast }),
       });
@@ -89,6 +115,7 @@ export default function BlogEditor() {
       const data = await res.json();
 
       if (data.success) {
+        if (onClearEdit) onClearEdit();
         navigate(`/blog/${data.slug}`);
       } else {
         setErrorMsg(data.error || "Failed to publish");
@@ -105,8 +132,12 @@ export default function BlogEditor() {
   return (
     <div className="flex flex-col gap-6 w-full relative">
       <div>
-        <h2 className="text-3xl font-black text-white tracking-tight mb-2">Publish Entry</h2>
-        <p className="text-zinc-400 text-sm">Draft rich-text engineering and outreach updates.</p>
+        <h2 className="text-3xl font-black text-white tracking-tight mb-2">
+          {editSlug ? "Edit Entry" : "Publish Entry"}
+        </h2>
+        <p className="text-zinc-400 text-sm">
+          {editSlug ? "Modify an existing engineering or outreach update." : "Draft rich-text engineering and outreach updates."}
+        </p>
       </div>
       {/* Settings Grid */}
       <div className="flex flex-col md:flex-row gap-4 mt-2">
@@ -141,7 +172,7 @@ export default function BlogEditor() {
               value={coverImageUrl}
               onChange={(e) => setCoverImageUrl(e.target.value)}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition-all shadow-inner lg:text-lg"
-              placeholder="/gallery_2.png"
+              placeholder="https://..."
             />
             <button 
               className={`px-4 py-3 rounded-lg text-sm font-bold border border-zinc-700 transition-all focus:outline-none focus:ring-2 focus:ring-ares-red ${isUploadingCover ? "bg-zinc-800 text-zinc-500 animate-pulse" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"}`}
@@ -224,7 +255,7 @@ export default function BlogEditor() {
           className={`flex items-center justify-center min-w-[200px] px-8 py-3.5 rounded-full font-black tracking-wide transition-all shadow-xl disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900
             ${isPending ? "bg-zinc-800 text-zinc-500 animate-pulse" : "bg-white text-zinc-950 hover:bg-ares-red hover:text-white hover:-translate-y-0.5"}`}
         >
-          {isPending ? "COMMITTING..." : "PUBLISH ENTRY"}
+          {isPending ? "COMMITTING..." : editSlug ? "UPDATE ENTRY" : "PUBLISH ENTRY"}
         </button>
       </div>
     </div>

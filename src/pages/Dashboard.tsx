@@ -7,6 +7,8 @@ type TabState = "blog" | "event" | "manager";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabState>("blog");
+  const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
+  const [editEventId, setEditEventId] = useState<string | null>(null);
 
   return (
     <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 py-8">
@@ -26,13 +28,13 @@ export default function Dashboard() {
             onClick={() => setActiveTab("blog")}
             className={`px-6 py-3 font-bold uppercase tracking-widest text-xs md:text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ${activeTab === "blog" ? "bg-ares-gold text-obsidian shadow-lg scale-105" : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800"}`}
           >
-            Publish Blog
+            {editPostSlug ? "Edit Blog" : "Publish Blog"}
           </button>
           <button
             onClick={() => setActiveTab("event")}
             className={`px-6 py-3 font-bold uppercase tracking-widest text-xs md:text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ${activeTab === "event" ? "bg-ares-red text-white shadow-[0_0_15px_rgba(192,0,0,0.4)] scale-105" : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800"}`}
           >
-            Publish Event
+            {editEventId ? "Edit Event" : "Publish Event"}
           </button>
           <button
             onClick={() => setActiveTab("manager")}
@@ -45,7 +47,7 @@ export default function Dashboard() {
         <div className="w-full">
           {activeTab === "blog" && (
             <div className="w-full glass-card rounded-3xl p-6 md:p-10 border border-zinc-800 flex flex-col bg-zinc-900 shadow-2xl">
-              <BlogEditor />
+              <BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} />
             </div>
           )}
 
@@ -53,14 +55,17 @@ export default function Dashboard() {
             <div className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-red/30 flex flex-col bg-zinc-900 relative shadow-2xl">
               <div className="absolute inset-0 bg-ares-red/5 rounded-3xl pointer-events-none mix-blend-screen" />
               <div className="relative z-10 w-full h-full">
-                <EventEditor />
+                <EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} />
               </div>
             </div>
           )}
 
           {activeTab === "manager" && (
             <div className="w-full glass-card rounded-3xl p-6 md:p-10 border border-zinc-800 flex flex-col bg-zinc-900 shadow-2xl">
-              <ContentManager />
+              <ContentManager 
+                onEditPost={(slug) => { setEditPostSlug(slug); setActiveTab("blog"); }}
+                onEditEvent={(id) => { setEditEventId(id); setActiveTab("event"); }}
+              />
             </div>
           )}
         </div>

@@ -14,7 +14,13 @@ interface PostItem {
   cf_email?: string;
 }
 
-export default function ContentManager() {
+export default function ContentManager({ 
+  onEditPost, 
+  onEditEvent 
+}: { 
+  onEditPost?: (slug: string) => void;
+  onEditEvent?: (id: string) => void;
+}) {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,7 +158,13 @@ export default function ContentManager() {
                         )}
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                      <button
+                        onClick={() => onEditEvent && onEditEvent(event.id)}
+                        className="text-xs font-bold text-zinc-400 hover:text-ares-cyan bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
+                      >
+                        EDIT
+                      </button>
                       <ClickToDeleteButton id={event.id} onDelete={() => handleDeleteEvent(event.id)} />
                     </div>
                   </div>
@@ -181,7 +193,13 @@ export default function ContentManager() {
                         )}
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                      <button
+                        onClick={() => onEditPost && onEditPost(post.slug)}
+                        className="text-xs font-bold text-zinc-400 hover:text-ares-cyan bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
+                      >
+                        EDIT
+                      </button>
                       <ClickToDeleteButton id={post.slug} onDelete={() => handleDeletePost(post.slug)} />
                     </div>
                   </div>

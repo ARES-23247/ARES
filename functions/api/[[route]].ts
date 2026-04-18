@@ -59,6 +59,22 @@ app.get("/events", async (c) => {
   }
 });
 
+// ── GET /api/events/:id — single event ─────────────────────────────────
+app.get("/events/:id", async (c) => {
+  const id = c.req.param("id");
+  try {
+    const row = await c.env.DB.prepare(
+      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email FROM events WHERE id = ?"
+    ).bind(id).first();
+
+    if (!row) return c.json({ error: "Event not found" }, 404);
+    return c.json({ event: row });
+  } catch (err) {
+    console.error("D1 read error:", err);
+    return c.json({ error: "Database error" }, 500);
+  }
+});
+
 // ── POST /api/events — create a new event (admin) ────────────────────
 app.post("/events", async (c) => {
   const host = c.req.header("host") || "";
@@ -173,6 +189,68 @@ app.post("/posts", async (c) => {
   }
 });
 
+// ── PUT /api/posts/:slug — edit a blog post (admin) ────────────────────
+app.put("/posts/:slug", async (c) => {
+  const host = c.req.header("host") || "";
+  const allowedHosts = ["aresfirst.org", "localhost"];
+  if (!allowedHosts.some((h) => host.includes(h))) {
+    return c.json({ error: "Forbidden host" }, 403);
+  }
+
+  const email = c.req.header("cf-access-authenticated-user-email");
+  const referer = c.req.header("referer") || "";
+  const isDashboard = referer.includes("aresfirst.org");
+  if (!email && !isDashboard && !host.includes("localhost")) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    const slug = c.req.param("slug");
+    const body = await c.req.json<{
+      title: string;
+      author?: string;
+      coverImageUrl?: string;
+      ast: unknown;
+    }>();
+
+    if (!body.title) {
+      return c.json({ success: false, error: "Title is required" }, 400);
+    }
+    const astStr = JSON.stringify(body.ast);
+
+    let snippet = "";
+    try {
+      type ASTNode = { text?: string; content?: ASTNode[] };
+      const extractText = (node: ASTNode): string => {
+        if (node.text) return node.text;
+        if (node.content) return node.content.map(extractText).join(" ");
+        return "";
+      };
+      snippet = extractText(body.ast as ASTNode).slice(0, 200);
+    } catch {
+      snippet = "";
+    }
+
+    await c.env.DB.prepare(
+      `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ? WHERE slug = ?`
+    )
+      .bind(
+        body.title,
+        body.author || "ARES Team",
+        body.coverImageUrl || "/gallery_1.png",
+        snippet,
+        astStr,
+        slug
+      )
+      .run();
+
+    return c.json({ success: true, slug });
+  } catch (err: unknown) {
+    console.error("D1 write error:", err);
+    return c.json({ success: false, error: (err as Error)?.message || "Database write failed" }, 500);
+  }
+});
+
 // ── File Upload via R2 ───────────────────────────────────────────────
 app.post("/upload", async (c) => {
   // Validate host header
@@ -274,6 +352,42 @@ app.delete("/posts/:slug", async (c) => {
   } catch (err) {
     console.error("D1 delete error (posts):", err);
     return c.json({ error: "Delete failed" }, 500);
+  }
+});
+
+// ── PUT /api/events/:id — edit an event (admin) ────────────────────────
+app.put("/events/:id", async (c) => {
+  const host = c.req.header("host") || "";
+  const allowedHosts = ["aresfirst.org", "localhost"];
+  if (!allowedHosts.some((h) => host.includes(h))) {
+    return c.json({ error: "Forbidden host" }, 403);
+  }
+
+  const email = c.req.header("cf-access-authenticated-user-email");
+  const referer = c.req.header("referer") || "";
+  const isDashboard = referer.includes("aresfirst.org");
+  if (!email && !isDashboard && !host.includes("localhost")) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    const paramId = c.req.param("id");
+    const { title, dateStart, dateEnd, location, description, coverImage } = await c.req.json();
+
+    if (!title || !dateStart) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    await c.env.DB.prepare(
+      `UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ? WHERE id = ?`
+    )
+      .bind(title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", paramId)
+      .run();
+
+    return c.json({ success: true, id: paramId });
+  } catch (err: unknown) {
+    console.error("D1 write error (events):", err);
+    return c.json({ success: false, error: (err as Error)?.message || "Event update failed" }, 500);
   }
 });
 

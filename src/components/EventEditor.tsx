@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function EventEditor() {
+export default function EventEditor({ editId, onClearEdit }: { editId?: string | null; onClearEdit?: () => void }) {
   const [isPending, setIsPending] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -14,6 +14,29 @@ export default function EventEditor() {
     description: "",
     coverImage: "/gallery_2.png",
   });
+
+  useEffect(() => {
+    if (!editId) return;
+    const fetchEvent = async () => {
+      try {
+        const res = await fetch(`/api/events/${editId}`);
+        const data = await res.json();
+        if (data.event) {
+          setForm({
+            title: data.event.title || "",
+            dateStart: data.event.date_start || "",
+            dateEnd: data.event.date_end || "",
+            location: data.event.location || "",
+            description: data.event.description || "",
+            coverImage: data.event.cover_image || "/gallery_2.png",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load event for editing", err);
+      }
+    };
+    fetchEvent();
+  }, [editId]);
 
   const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -73,8 +96,11 @@ export default function EventEditor() {
       const id = form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
       const payload = { ...form, id };
 
-      const res = await fetch("/api/events", {
-        method: "POST",
+      const method = editId ? "PUT" : "POST";
+      const url = editId ? `/api/events/${editId}` : "/api/events";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -82,8 +108,11 @@ export default function EventEditor() {
       const data = await res.json();
 
       if (data.success) {
-        setSuccessMsg("Event published successfully!");
-        setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: "" });
+        setSuccessMsg(editId ? "Event updated successfully!" : "Event published successfully!");
+        if (onClearEdit) onClearEdit();
+        if (!editId) {
+          setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: "/gallery_2.png" });
+        }
       } else {
         setErrorMsg(data.error || "Failed to publish event");
       }
@@ -97,8 +126,12 @@ export default function EventEditor() {
   return (
     <div className="flex flex-col gap-6 w-full relative">
       <div>
-        <h2 className="text-3xl font-black text-white tracking-tight mb-2">Publish Event</h2>
-        <p className="text-zinc-400 text-sm">Add upcoming competitions or outreach events to the portal.</p>
+        <h2 className="text-3xl font-black text-white tracking-tight mb-2">
+          {editId ? "Edit Event" : "Publish Event"}
+        </h2>
+        <p className="text-zinc-400 text-sm">
+          {editId ? "Update existing competition or outreach details." : "Add upcoming competitions or outreach events to the portal."}
+        </p>
       </div>
       
       <div className="flex flex-col md:flex-row gap-4 mt-2">
@@ -196,7 +229,7 @@ export default function EventEditor() {
           className={`px-8 py-3.5 rounded-full font-black tracking-wide transition-all shadow-xl disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900
             ${isPending ? "bg-zinc-800 text-zinc-500 animate-pulse" : "bg-white text-zinc-950 hover:bg-ares-red hover:text-white hover:-translate-y-0.5"}`}
         >
-          {isPending ? "CREATING..." : "PUBLISH EVENT"}
+          {isPending ? "COMMITTING..." : editId ? "UPDATE EVENT" : "PUBLISH EVENT"}
         </button>
       </div>
     </div>
