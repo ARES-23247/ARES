@@ -19,8 +19,8 @@ export default function Seasons() {
           </p>
 
           {/* FTC Decode */}
-          <div className="bg-black/40 rounded-2xl border border-white/10 p-8 mb-12">
-            <h3 className="text-3xl font-bold text-ares-green mb-4">FTC Decode 2025–2026 Season</h3>
+          <div className="bg-black/40 hero-card border border-white/10 p-8 mb-12 group">
+            <h3 className="text-3xl font-bold text-ares-green mb-4 group-hover:text-ares-gold transition-colors">FTC Decode 2025–2026 Season</h3>
             <p className="text-white/80 text-lg leading-relaxed mb-6">
               FTC DECODE is the 2025-2026 <em>FIRST</em> Tech Challenge season theme. It is focused on archaeology where we use STEAM to investigate artifacts, unlock mysteries, and build robots to collect and score colored balls (artifacts) in goals, create patterns, and manage endgame tasks like fitting robots in small spaces. The game requires advanced designs, coding, and collaboration with alliances.
             </p>
