@@ -19,6 +19,12 @@ import CharacterCount from '@tiptap/extension-character-count';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
+import { Callout } from './editor/extensions/Callout';
+import { SlashCommands } from './editor/extensions/SlashCommands';
+import Mention from '@tiptap/extension-mention';
+import { CommandsList } from './editor/CommandsList';
+import { MentionList } from './editor/MentionList';
+import { suggestionRenderer } from './editor/suggestionRenderer';
 import 'katex/dist/katex.min.css';
 
 const lowlight = createLowlight(common);
@@ -114,7 +120,26 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
       TaskItem.configure({ nested: true, HTMLAttributes: { class: 'flex items-start gap-2 mb-1' } }),
       Mathematics,
       Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-ares-cyan underline hover:text-white transition-colors' } }),
-      Mermaid
+      Mermaid.configure({
+        lowlight,
+        HTMLAttributes: { class: 'bg-[#1e1e1e] border border-zinc-700 rounded-xl p-4 my-4 font-mono text-sm shadow-inner' }
+      }),
+      Callout,
+
+      SlashCommands.configure({
+        suggestion: {
+          render: () => suggestionRenderer(CommandsList),
+        },
+      }),
+      Mention.configure({
+        HTMLAttributes: { class: 'bg-ares-red/10 text-ares-red font-bold py-0.5 px-2 rounded-md border border-ares-red/20' },
+        renderLabel({ node }) {
+          return `@${node.attrs.label ?? node.attrs.id}`;
+        },
+        suggestion: {
+          render: () => suggestionRenderer(MentionList),
+        },
+      })
     ],
     content: "<p>Start drafting your robotics article here. Tell us about your journey to Einstein...</p>",
     editorProps: {
@@ -291,6 +316,10 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
         <button onClick={() => editor.chain().focus().toggleHighlight().run()} className={`px-3 py-2 rounded-lg text-sm font-bold transition-all ${editor.isActive("highlight") ? "bg-ares-gold text-black" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>HL</button>
         <button onClick={() => editor.chain().focus().toggleSubscript().run()} className={`px-2 py-2 rounded-lg text-sm transition-all ${editor.isActive("subscript") ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800"}`}>Sub</button>
         <button onClick={() => editor.chain().focus().toggleSuperscript().run()} className={`px-2 py-2 rounded-lg text-sm transition-all ${editor.isActive("superscript") ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800"}`}>Super</button>
+        <div className="w-px h-6 bg-zinc-800 mx-2"></div>
+        <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'info' }).run()} className="px-3 py-2 border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Info</button>
+        <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'warning' }).run()} className="px-3 py-2 border border-ares-red/30 text-ares-red hover:bg-ares-red hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Warn</button>
+        <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'tip' }).run()} className="px-3 py-2 border border-ares-gold/30 text-ares-gold hover:bg-ares-gold hover:text-black rounded-lg text-sm font-bold transition-all shadow-sm">Tip</button>
         <div className="w-px h-6 bg-zinc-800 mx-2"></div>
         <button 
           className={`px-4 py-2 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ares-gold ${isUploadingInline ? "bg-zinc-800 text-zinc-300 animate-pulse" : "text-ares-gold hover:bg-zinc-800 hover:text-ares-gold"}`}

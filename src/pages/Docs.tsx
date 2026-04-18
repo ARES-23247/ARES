@@ -39,6 +39,7 @@ interface DocRecord {
   content?: string;
   updated_at?: string;
   snippet?: string;
+  cf_email?: string;
 }
 
 interface SearchResult {
@@ -71,6 +72,7 @@ export default function Docs() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
+  const [activeId, setActiveId] = useState<string>("");
 
   // Sync state variables for render-phase updates
   const [hasInitializedDocs, setHasInitializedDocs] = useState(false);
@@ -201,6 +203,25 @@ export default function Docs() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  // Intersection Observer for ToC scroll sync
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "0% 0% -80% 0%" }
+    );
+
+    const headings = document.querySelectorAll("h2[id], h3[id]");
+    headings.forEach((h) => observer.observe(h));
+
+    return () => observer.disconnect();
+  }, [currentDoc]);
 
   // ── 6. Render-Phase State Syncs ─────────────────────────────────────
   // Initial expansion of all categories (User requested start open)
@@ -563,10 +584,57 @@ export default function Docs() {
               </div>
 
               {currentDoc.updated_at && (
-                <div className="mt-12 pt-6 border-t border-white/8 text-xs text-white/20">
-                  Last updated: {new Date(currentDoc.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                <div className="mt-12 pt-6 border-t border-white/8 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-2 text-xs">
+                  <span className="text-white/20">
+                    Last updated: {new Date(currentDoc.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                  </span>
+                  {currentDoc.cf_email && (
+                    <span className="text-white/20 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                      Last edited by: <span className="text-white/40">{currentDoc.cf_email}</span>
+                    </span>
+                  )}
                 </div>
               )}
+
+              {/* ── Documentation Feedback ───────────────────────────── */}
+              <div className="mt-16 p-8 rounded-2xl bg-zinc-950/50 border border-white/5 relative overflow-hidden group/feedback">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/feedback:opacity-20 transition-opacity">
+                  <BookOpen size={64} className="text-ares-gold rotate-12" />
+                </div>
+                <div className="relative z-10">
+                  <h4 className="text-xl font-bold text-white mb-2">Was this helpful?</h4>
+                  <p className="text-white/50 text-sm mb-6 max-w-md">Your feedback helps our engineering team improve the documentation for the entire community.</p>
+                  <div className="flex flex-wrap gap-4">
+                    <button 
+                      onClick={async () => {
+                        await fetch(`/api/docs/${slug}/feedback`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ isHelpful: true })
+                        });
+                        alert('Thanks for your feedback!');
+                      }}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-ares-cyan/10 border border-ares-cyan/30 text-ares-cyan font-bold hover:bg-ares-cyan hover:text-black transition-all"
+                    >
+                      <span className="text-lg">👍</span> Yes, it was
+                    </button>
+                    <button 
+                      onClick={async () => {
+                        const comment = window.prompt("How can we improve this page?");
+                        await fetch(`/api/docs/${slug}/feedback`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ isHelpful: false, comment })
+                        });
+                        alert('Thank you! We will use your feedback to improve this page.');
+                      }}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-ares-red/10 border border-ares-red/30 text-ares-red font-bold hover:bg-ares-red hover:text-white transition-all"
+                    >
+                      <span className="text-lg">👎</span> No, it wasn't
+                    </button>
+                  </div>
+                </div>
+              </div>
             </motion.article>
           )}
         </main>
@@ -577,12 +645,18 @@ export default function Docs() {
             <nav className="flex flex-col gap-3 border-l border-white/10 pl-4">
               {tableOfContents.map((heading, i) => (
                 <a 
-                  key={i} 
-                  href={`#${heading.id}`}
-                  className={`text-sm transition-colors hover:text-ares-gold focus-visible:outline-none focus:text-ares-gold ${heading.level === 3 ? "pl-4 text-white/40" : "text-white/70"}`}
-                >
-                  {heading.text}
-                </a>
+                   key={i} 
+                   href={`#${heading.id}`}
+                   className={`text-sm transition-all duration-200 hover:text-ares-gold focus-visible:outline-none focus:text-ares-gold ${
+                     heading.level === 3 ? "pl-4" : "font-medium"
+                   } ${
+                     activeId === heading.id 
+                       ? "text-ares-gold translate-x-1" 
+                       : (heading.level === 3 ? "text-white/40" : "text-white/70")
+                   }`}
+                 >
+                   {heading.text}
+                 </a>
               ))}
             </nav>
           </aside>

@@ -15,6 +15,12 @@ type Bindings = {
 const app = new Hono<{ Bindings: Bindings }>();
 const apiRouter = new Hono<{ Bindings: Bindings }>();
 
+// ── Request Logger ────────────────────────────────────────────────────
+app.use("*", async (c, next) => {
+  console.log(`[${c.req.method}] ${c.req.url} (Path: ${c.req.path})`);
+  await next();
+});
+
 // ── Zero Trust Auth Middleware ────────────────────────────────────────
 const ensureAdmin = async (c: Context, next: Next) => {
   const url = new URL(c.req.url);
@@ -874,20 +880,42 @@ apiRouter.get("/docs/search", async (c) => {
     const mapped = (results ?? []).map((r: Record<string, unknown>) => {
       const content = String(r.content || "");
       const idx = content.toLowerCase().indexOf(q.toLowerCase());
-      const start = Math.max(0, idx - 80);
-      const end = Math.min(content.length, idx + q.length + 80);
+      const start = Math.max(0, idx - 100);
+      const end = Math.min(content.length, idx + q.length + 100);
+      
+      let snippet = idx >= 0 ? content.slice(start, end) : (r.description || "");
+      
+      // Keyword highlighting (simple HTML bold)
+      const regex = new RegExp(`(${q})`, "gi");
+      snippet = snippet.replace(regex, "**$1**");
+
       return {
         slug: r.slug,
         title: r.title,
         category: r.category,
         description: r.description,
-        snippet: idx >= 0 ? "..." + content.slice(start, end) + "..." : (r.description || ""),
+        snippet: idx >= 0 ? "..." + snippet + "..." : (r.description || ""),
       };
     });
     return c.json({ results: mapped });
   } catch (err) {
     console.error("D1 docs search error:", err);
     return c.json({ results: [] });
+  }
+});
+
+// ── POST /api/docs/:slug/feedback — Submit doc feedback ───────────────
+apiRouter.post("/docs/:slug/feedback", async (c) => {
+  try {
+    const slug = c.req.param("slug");
+    const { isHelpful, comment } = await c.req.json();
+    await c.env.DB.prepare(
+      "INSERT INTO docs_feedback (slug, is_helpful, comment) VALUES (?, ?, ?)"
+    ).bind(slug, isHelpful ? 1 : 0, comment || null).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 feedback error:", err);
+    return c.json({ error: "Feedback failed" }, 500);
   }
 });
 
@@ -909,13 +937,26 @@ apiRouter.get("/docs/:slug", async (c) => {
 // ── POST /api/admin/docs — create/update a doc (admin) ────────────────
 apiRouter.post("/admin/docs", async (c) => {
   try {
+    const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_admin";
     const { slug, title, category, sortOrder, description, content } = await c.req.json();
     if (!slug || !title || !category || !content) {
       return c.json({ error: "Missing required fields" }, 400);
     }
+
+    // Capture history before update
+    const existing = await c.env.DB.prepare("SELECT * FROM docs WHERE slug = ?").bind(slug).first();
+    if (existing) {
+       await c.env.DB.prepare(
+         `INSERT INTO docs_history (slug, title, category, description, content, author_email)
+          VALUES (?, ?, ?, ?, ?, ?)`
+       ).bind(existing.slug, existing.title, existing.category, existing.description, existing.content, existing.cf_email || "unknown").run();
+    }
+
     await c.env.DB.prepare(
-      `INSERT OR REPLACE INTO docs (slug, title, category, sort_order, description, content, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-    ).bind(slug, title, category, sortOrder || 0, description || "", content).run();
+      `INSERT OR REPLACE INTO docs (slug, title, category, sort_order, description, content, cf_email, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+    ).bind(slug, title, category, sortOrder || 0, description || "", content, email).run();
+    
     return c.json({ success: true, slug });
   } catch (err) {
     console.error("D1 doc write error:", err);

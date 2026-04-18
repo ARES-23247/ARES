@@ -174,6 +174,29 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
     case "codeBlock": return (
         <div className="my-4"><CodeBlock value={node.content?.[0]?.text || ""} language={node.attrs?.language as string} /></div>
     );
+    case "callout": {
+      const type = node.attrs?.type || "info";
+      let baseClass = "p-4 my-6 rounded-xl border flex gap-4";
+      let icon = "ℹ️";
+      
+      if (type === "info") {
+        baseClass += " bg-ares-cyan/10 border-ares-cyan/30 text-[#e6edf3]";
+        icon = "ℹ️";
+      } else if (type === "warning") {
+        baseClass += " bg-ares-red/10 border-ares-red/30 text-[#e6edf3]";
+        icon = "⚠️";
+      } else if (type === "tip") {
+        baseClass += " bg-ares-gold/10 border-ares-gold/30 text-[#e6edf3]";
+        icon = "💡";
+      }
+
+      return (
+        <div className={baseClass}>
+          <div className="text-xl flex-shrink-0">{icon}</div>
+          <div className="prose-direct-children">{children}</div>
+        </div>
+      );
+    }
     default: return <>{children}</>;
   }
 }
