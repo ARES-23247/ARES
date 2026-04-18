@@ -23,28 +23,32 @@ export default function ContentManager() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [eventsRes, postsRes] = await Promise.all([
-        fetch("/api/events"),
-        fetch("/api/posts"),
-      ]);
-
-      const eventsData = await eventsRes.json();
-      const postsData = await postsRes.json();
-
-      if (eventsData.events) setEvents(eventsData.events);
-      if (postsData.posts) setPosts(postsData.posts);
-    } catch (err) {
-      console.error("Failed to fetch content", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
+    let ignore = false;
+    
+    const loadContent = async () => {
+      try {
+        const [eventsRes, postsRes] = await Promise.all([
+          fetch("/api/events"),
+          fetch("/api/posts"),
+        ]);
+
+        if (ignore) return;
+        
+        const eventsData = await eventsRes.json();
+        const postsData = await postsRes.json();
+
+        if (eventsData.events) setEvents(eventsData.events);
+        if (postsData.posts) setPosts(postsData.posts);
+      } catch (err) {
+        console.error("Failed to fetch content", err);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+
+    loadContent();
+    return () => { ignore = true; };
   }, []);
 
   const handleDeleteEvent = async (id: string) => {
