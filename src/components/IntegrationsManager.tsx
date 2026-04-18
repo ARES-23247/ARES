@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Settings, Key, Share2, Save, CloudLightning, MessageSquare, Slack, Facebook, Users } from "lucide-react";
+import { Calendar, Settings, Key, Share2, Save, CloudLightning, MessageSquare, Hash, Square, Users } from "lucide-react";
 
 type SettingsData = Record<string, string>;
 
@@ -236,7 +236,7 @@ export default function IntegrationsManager() {
           <p className="text-xs text-zinc-500 mb-4 block">Standard webhooks for instant PR updates inside your team workspaces.</p>
           <div className="space-y-4">
             <div>
-              <label htmlFor="slack_webhook" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1"><Slack size={12}/> Slack</label>
+              <label htmlFor="slack_webhook" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1"><Hash size={12}/> Slack</label>
               <input
                 id="slack_webhook"
                 type="text"
@@ -275,7 +275,7 @@ export default function IntegrationsManager() {
         <div className="glass-card bg-black/40 p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#1877F2]/10 blur-3xl rounded-full pointer-events-none" />
           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Facebook size={20} className="text-[#1877F2]" /> Facebook Platform
+            <Square size={20} className="text-[#1877F2]" /> Facebook Platform
           </h3>
           <p className="text-xs text-zinc-500 mb-4 block">Requires a Page ID and an active Graph API Page Access Token.</p>
           <div className="space-y-4">

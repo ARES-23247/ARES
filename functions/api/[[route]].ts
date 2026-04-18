@@ -106,12 +106,21 @@ apiRouter.post("/admin/events", async (c) => {
 
     const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_dashboard_user";
 
+    const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+    const dbSettings: Record<string, string> = {};
+    for (const row of settingsRows as { key: string, value: string }[]) {
+       dbSettings[row.key] = row.value;
+    }
+    const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
+    const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
+    const calId = dbSettings["CALENDAR_ID"];
+
     let gcalId: string | undefined = undefined;
-    if (c.env.GCAL_SERVICE_ACCOUNT_EMAIL && c.env.GCAL_PRIVATE_KEY && c.env.CALENDAR_ID) {
+    if (gcalEmail && gcalKey && calId) {
       try {
         gcalId = await pushEventToGcal(
           { id, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage },
-          { email: c.env.GCAL_SERVICE_ACCOUNT_EMAIL, privateKey: c.env.GCAL_PRIVATE_KEY, calendarId: c.env.CALENDAR_ID as string }
+          { email: gcalEmail, privateKey: gcalKey, calendarId: calId }
         );
       } catch (err) {
         console.error("GCal create failed:", err);
@@ -510,15 +519,24 @@ apiRouter.delete("/admin/events/:id", async (c) => {
   try {
     const id = c.req.param("id");
     
+    const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+    const dbSettings: Record<string, string> = {};
+    for (const row of settingsRows as { key: string, value: string }[]) {
+       dbSettings[row.key] = row.value;
+    }
+    const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
+    const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
+    const calId = dbSettings["CALENDAR_ID"];
+    
     // Attempt GCal deletion
-    if (c.env.GCAL_SERVICE_ACCOUNT_EMAIL && c.env.GCAL_PRIVATE_KEY && c.env.CALENDAR_ID) {
+    if (gcalEmail && gcalKey && calId) {
       const row = await c.env.DB.prepare("SELECT gcal_event_id FROM events WHERE id = ?").bind(id).first<{gcal_event_id: string}>();
       if (row && row.gcal_event_id) {
         c.executionCtx.waitUntil(
           deleteEventFromGcal(row.gcal_event_id, {
-            email: c.env.GCAL_SERVICE_ACCOUNT_EMAIL,
-            privateKey: c.env.GCAL_PRIVATE_KEY,
-            calendarId: c.env.CALENDAR_ID
+            email: gcalEmail,
+            privateKey: gcalKey,
+            calendarId: calId
           }).catch(err => console.error("GCal delete error:", err))
         );
       }
@@ -554,14 +572,23 @@ apiRouter.put("/admin/events/:id", async (c) => {
       return c.json({ error: "Missing required fields" }, 400);
     }
 
+    const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+    const dbSettings: Record<string, string> = {};
+    for (const row of settingsRows as { key: string, value: string }[]) {
+       dbSettings[row.key] = row.value;
+    }
+    const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
+    const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
+    const calId = dbSettings["CALENDAR_ID"];
+
     // Attempt GCal update
     let gcalId: string | undefined = undefined;
-    if (c.env.GCAL_SERVICE_ACCOUNT_EMAIL && c.env.GCAL_PRIVATE_KEY && c.env.CALENDAR_ID) {
+    if (gcalEmail && gcalKey && calId) {
       const row = await c.env.DB.prepare("SELECT gcal_event_id FROM events WHERE id = ?").bind(paramId).first<{gcal_event_id: string}>();
       try {
         gcalId = await pushEventToGcal(
           { id: paramId, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage, gcal_event_id: row?.gcal_event_id },
-          { email: c.env.GCAL_SERVICE_ACCOUNT_EMAIL, privateKey: c.env.GCAL_PRIVATE_KEY, calendarId: c.env.CALENDAR_ID }
+          { email: gcalEmail, privateKey: gcalKey, calendarId: calId }
         );
       } catch (err) {
         console.error("GCal PUT update error:", err);
@@ -584,20 +611,27 @@ apiRouter.put("/admin/events/:id", async (c) => {
 // ── POST /api/events/sync — Google Calendar Sync (admin) ──────────────
 apiRouter.post("/admin/events/sync", async (c) => {
 
-  const CALENDAR_ID = c.env.CALENDAR_ID || "af2d297c3425adaeafc13ddd48a582056404cbf16a6156d3925bb8f3b4affaa0@group.calendar.google.com";
-  const ICS_URL = `https://calendar.google.com/calendar/ical/${encodeURIComponent(CALENDAR_ID)}/public/basic.ics`;
-  const email = c.req.header("cf-access-authenticated-user-email") || "sync";
-
   try {
+    const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+    const dbSettings: Record<string, string> = {};
+    for (const row of settingsRows as { key: string, value: string }[]) {
+       dbSettings[row.key] = row.value;
+    }
+    const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
+    const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
+    const CALENDAR_ID = dbSettings["CALENDAR_ID"] || "af2d297c3425adaeafc13ddd48a582056404cbf16a6156d3925bb8f3b4affaa0@group.calendar.google.com";
+    const ICS_URL = `https://calendar.google.com/calendar/ical/${encodeURIComponent(CALENDAR_ID)}/public/basic.ics`;
+    const email = c.req.header("cf-access-authenticated-user-email") || "sync";
+
     let newCount = 0;
     let upCount = 0;
 
     // Use fast realtime REST API if Authenticated
-    if (c.env.GCAL_SERVICE_ACCOUNT_EMAIL && c.env.GCAL_PRIVATE_KEY && c.env.CALENDAR_ID) {
+    if (gcalEmail && gcalKey && CALENDAR_ID) {
       const events = await pullEventsFromGcal({
-        email: c.env.GCAL_SERVICE_ACCOUNT_EMAIL,
-        privateKey: c.env.GCAL_PRIVATE_KEY,
-        calendarId: c.env.CALENDAR_ID
+        email: gcalEmail,
+        privateKey: gcalKey,
+        calendarId: CALENDAR_ID
       });
 
       for (const ev of events) {
