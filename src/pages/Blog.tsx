@@ -25,7 +25,7 @@ export default function Blog() {
       <div className="w-full max-w-7xl mx-auto px-6 py-12 md:py-24">
         <div className="mb-12">
           <h3 className="text-ares-gold font-bold uppercase tracking-widest text-sm mb-2">Engineering & Outreach</h3>
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter shadow-sm">
+          <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tighter shadow-sm">
             Team <span className="text-ares-red">Blog</span>
           </h1>
           <p className="text-white/60 mt-4 max-w-2xl text-balance">

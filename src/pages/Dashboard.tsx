@@ -15,7 +15,7 @@ export default function Dashboard() {
       <div className="w-full max-w-5xl mx-auto px-6 py-12 md:py-24">
         <div className="mb-12">
           <h3 className="text-ares-gold font-bold uppercase tracking-widest text-sm mb-2">Internal Systems</h3>
-          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter shadow-sm mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter shadow-sm mb-4">
             Publisher <span className="text-ares-red">Dashboard</span>
           </h1>
           <p className="text-zinc-400 max-w-2xl text-balance">

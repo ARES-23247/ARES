@@ -4,7 +4,7 @@ export default function Contact() {
       <section className="py-24 bg-ares-gold">
         <div className="max-w-3xl mx-auto px-6">
           <p className="text-ares-red uppercase tracking-widest text-sm font-bold mb-2">Get In Touch</p>
-          <h1 className="text-4xl md:text-5xl font-black text-ares-red mb-6">Contact ARES 23247</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-ares-red mb-6">Contact ARES 23247</h1>
           <p className="text-ares-gray text-lg mb-8">
             Have a question, want to join the team, or interested in sponsoring? Reach out and we&apos;ll get back to you.
           </p>

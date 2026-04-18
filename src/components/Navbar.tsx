@@ -7,7 +7,7 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 py-4 transition-all duration-500 overflow-hidden meander-border clipped-header">
       <div className="flex items-center justify-between">
-        <Link to="/" className="text-2xl font-black tracking-tighter text-white flex items-center gap-2 font-heading focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
+        <Link to="/" className="text-2xl font-bold tracking-tighter text-white flex items-center gap-2 font-heading focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
           ARES <span className="text-ares-red font-bold">23247</span>
         </Link>
 

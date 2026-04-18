@@ -3,7 +3,7 @@ export default function Seasons() {
     <div className="flex flex-col w-full">
       <section className="py-24 bg-ares-red">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-7xl font-black text-ares-gold mb-4">Seasons</h1>
+          <h1 className="text-5xl md:text-7xl font-bold text-ares-gold mb-4">Seasons</h1>
         </div>
       </section>
 
@@ -11,7 +11,7 @@ export default function Seasons() {
       <section className="py-20 bg-background">
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex items-baseline gap-4 mb-4">
-            <h2 className="text-4xl md:text-5xl font-black text-ares-gold">2025/26</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-ares-gold">2025/26</h2>
             <span className="text-ares-gold text-sm font-bold uppercase tracking-wider">Our Rookie Season</span>
           </div>
           <p className="text-white/80 text-lg leading-relaxed mb-12">
@@ -20,7 +20,7 @@ export default function Seasons() {
 
           {/* FTC Decode */}
           <div className="bg-black/40 rounded-2xl border border-white/10 p-8 mb-12">
-            <h3 className="text-3xl font-black text-ares-green mb-4">FTC Decode 2025–2026 Season</h3>
+            <h3 className="text-3xl font-bold text-ares-green mb-4">FTC Decode 2025–2026 Season</h3>
             <p className="text-white/80 text-lg leading-relaxed mb-6">
               FTC DECODE is the 2025-2026 <em>FIRST</em> Tech Challenge season theme. It is focused on archaeology where we use STEAM to investigate artifacts, unlock mysteries, and build robots to collect and score colored balls (artifacts) in goals, create patterns, and manage endgame tasks like fitting robots in small spaces. The game requires advanced designs, coding, and collaboration with alliances.
             </p>

@@ -23,7 +23,7 @@ export default function Home() {
               <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-sm md:text-base font-heading mb-3">
                 Appalachian Robotics & Engineering Society
               </p>
-              <h1 className="text-6xl md:text-[7rem] lg:text-[10rem] font-black text-white leading-[0.85] uppercase font-heading relative z-10 w-full xl:w-2/3">
+              <h1 className="text-6xl md:text-[7rem] lg:text-[10rem] font-bold text-white leading-[0.85] uppercase font-heading relative z-10 w-full xl:w-2/3">
                 Engineered <br />
                 <span className="text-ares-red">To Inspire</span>
               </h1>
@@ -52,8 +52,8 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-6">
           <div className="relative">
             <div className="absolute -top-10 -left-10 w-40 h-40 border-t-8 border-l-8 border-ares-bronze/20"></div>
-            <p className="text-ares-red uppercase tracking-[0.2em] text-sm font-black mb-4 font-heading">The Sibling Connection</p>
-            <h2 className="text-4xl md:text-6xl font-black leading-tight mb-8 font-heading">
+            <p className="text-ares-red uppercase tracking-[0.2em] text-sm font-bold mb-4 font-heading">The Sibling Connection</p>
+            <h2 className="text-4xl md:text-6xl font-bold leading-tight mb-8 font-heading">
               Built on a <br />
               <span className="text-ares-bronze">Championship Legacy</span>
             </h2>
@@ -79,7 +79,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div className="max-w-2xl">
-              <h2 className="text-4xl md:text-5xl font-black mb-4 font-heading">Our Objectives</h2>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading">Our Objectives</h2>
               <p className="text-ares-gray text-lg">Engineering precision meets community impact in our quest for the 2026 season.</p>
             </div>
             <div className="h-1 flex-grow bg-ares-bronze/10 mx-8 mb-4 hidden md:block"></div>
@@ -107,9 +107,9 @@ export default function Home() {
               },
             ].map((card) => (
               <div key={card.title} className="marble-card spartan-plate p-10 flex flex-col h-full group">
-                <h3 className="text-ares-red text-2xl font-black mb-6 font-heading group-hover:text-ares-bronze transition-colors">{card.title}</h3>
+                <h3 className="text-ares-red text-2xl font-bold mb-6 font-heading group-hover:text-ares-bronze transition-colors">{card.title}</h3>
                 <p className="text-obsidian/70 text-base leading-relaxed mb-8 flex-grow">{card.body}</p>
-                <Link to={card.link} className="text-ares-red font-black text-sm tracking-widest uppercase hover:translate-x-2 transition-transform inline-flex items-center gap-2">
+                <Link to={card.link} className="text-ares-red font-bold text-sm tracking-widest uppercase hover:translate-x-2 transition-transform inline-flex items-center gap-2">
                   {card.linkText} <span>→</span>
                 </Link>
               </div>
@@ -122,7 +122,7 @@ export default function Home() {
       <div className="meander-divider bg-marble opacity-70 relative -bottom-[1px] z-10 w-full"></div>
       <section className="py-24 obsidian-section relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-4xl md:text-6xl font-black mb-8 font-heading">
+          <h2 className="text-4xl md:text-6xl font-bold mb-8 font-heading">
             Join <span className="text-ares-red">ARES</span>
           </h2>
           <p className="text-marble/80 text-xl mb-12 leading-relaxed">
@@ -143,7 +143,7 @@ export default function Home() {
       <section className="py-20 bg-ares-red text-white">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-10">
           <div className="text-center md:text-left">
-            <h3 className="text-3xl md:text-4xl font-black mb-2 font-heading">Campaign Schedule</h3>
+            <h3 className="text-3xl md:text-4xl font-bold mb-2 font-heading">Campaign Schedule</h3>
             <p className="text-white/80 text-lg">Tracks our upcoming demos, qualifiers, and community workshops.</p>
           </div>
           <a

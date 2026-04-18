@@ -151,7 +151,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
   return (
     <div className="flex flex-col gap-6 w-full relative">
       <div>
-        <h2 className="text-3xl font-black text-white tracking-tight mb-2">
+        <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
           {editId ? "Edit Event" : "Publish Event"}
         </h2>
         <p className="text-zinc-400 text-sm">
@@ -285,7 +285,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
         <button
           onClick={handlePublish}
           disabled={isPending}
-          className={`px-8 py-3.5 rounded-full font-black tracking-wide transition-all shadow-xl disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900
+          className={`px-8 py-3.5 rounded-full font-bold tracking-wide transition-all shadow-xl disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900
             ${isPending ? "bg-zinc-800 text-zinc-300 animate-pulse" : "bg-white text-zinc-950 hover:bg-ares-red hover:text-white hover:-translate-y-0.5"}`}
         >
           {isPending ? "COMMITTING..." : editId ? "UPDATE EVENT" : "PUBLISH EVENT"}

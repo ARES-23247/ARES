@@ -127,7 +127,7 @@ export default function ContentManager({
   return (
     <div className="w-full h-full flex flex-col">
       <div className="mb-6">
-        <h2 className="text-2xl font-black text-white tracking-tighter">Manage Content</h2>
+        <h2 className="text-2xl font-bold text-white tracking-tighter">Manage Content</h2>
         <p className="text-zinc-300 text-sm mt-1">Review and delete explicitly verified Database entries.</p>
       </div>
 

@@ -10,7 +10,7 @@ export default function Footer() {
         {/* Brand & Mission */}
         <div className="md:col-span-2">
           <Link to="/" className="block mb-6 group">
-            <h3 className="text-4xl font-black text-white font-heading tracking-tight group-hover:text-ares-red transition-colors">ARES</h3>
+            <h3 className="text-4xl font-bold text-white font-heading tracking-tight group-hover:text-ares-red transition-colors">ARES</h3>
             <p className="text-ares-bronze text-sm font-bold uppercase tracking-widest mt-1">Appalachian Robotics & Engineering Society</p>
             <p className="text-marble/70 text-xs font-medium uppercase tracking-[0.2em]">FIRST Tech Challenge Team #23247</p>
           </Link>
@@ -22,7 +22,7 @@ export default function Footer() {
 
         {/* Quick Links */}
         <div>
-          <h4 className="text-white font-black uppercase text-xs tracking-[0.3em] mb-6 font-heading border-b border-ares-bronze/20 pb-2 inline-block">The Vault</h4>
+          <h4 className="text-white font-bold uppercase text-xs tracking-[0.3em] mb-6 font-heading border-b border-ares-bronze/20 pb-2 inline-block">The Vault</h4>
           <ul className="flex flex-col gap-3 text-sm font-bold uppercase tracking-widest text-marble/60">
             <li><Link to="/" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Home</Link></li>
             <li><Link to="/about" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Who We Are</Link></li>
@@ -34,7 +34,7 @@ export default function Footer() {
 
         {/* Intelligence / Contact */}
         <div>
-          <h4 className="text-white font-black uppercase text-xs tracking-[0.3em] mb-6 font-heading border-b border-ares-bronze/20 pb-2 inline-block">Intelligence</h4>
+          <h4 className="text-white font-bold uppercase text-xs tracking-[0.3em] mb-6 font-heading border-b border-ares-bronze/20 pb-2 inline-block">Intelligence</h4>
           <div className="flex flex-wrap gap-4 mb-8">
             <a href="https://instagram.com/ares23247" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-red transition-colors text-white" aria-label="Instagram">
               <i className="fab fa-instagram"></i>

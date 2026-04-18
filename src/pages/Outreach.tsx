@@ -4,7 +4,7 @@ export default function Outreach() {
       {/* Hero */}
       <section className="py-24 bg-obsidian">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-7xl font-black text-white mb-4">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
             We&apos;re passionate about <br/>STEAM in our local <span className="text-ares-gold">Community</span>.
           </h1>
           <p className="text-white/60 text-xl mt-4">
@@ -16,7 +16,7 @@ export default function Outreach() {
       {/* Spark! */}
       <section className="py-20 bg-white text-ares-gray">
         <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-black text-ares-red mb-4">Learn more about Spark!</h2>
+          <h2 className="text-3xl font-bold text-ares-red mb-4">Learn more about Spark!</h2>
           <p className="text-lg leading-relaxed mb-6">
             Spark! Imagination and Science Center is a non-profit children&apos;s museum in Morgantown, West Virginia. Spark! works to inspire people of all ages to explore art and science through various hands-on activities and programs that may spark a lifelong love for learning.
           </p>
@@ -29,7 +29,7 @@ export default function Outreach() {
       {/* Support & Mentoring */}
       <section className="py-20 bg-ares-red">
         <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-4xl font-black text-ares-gold mb-8">Support Our Team</h2>
+          <h2 className="text-4xl font-bold text-ares-gold mb-8">Support Our Team</h2>
           <p className="text-ares-gold/80 text-xl mb-8">
             Our success as a team relies on support from the STEAM community. You can mentor, donate financially, or help teach us about robotics by giving us a tour of your facilities.
           </p>

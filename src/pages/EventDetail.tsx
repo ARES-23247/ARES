@@ -60,11 +60,11 @@ export default function EventDetail() {
             <span>&larr;</span> Back to Archive
           </Link>
           <div className="flex items-center gap-4 mb-4">
-            <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${isPast ? "bg-zinc-800 text-zinc-400" : "bg-ares-red/20 text-ares-red border border-ares-red/50 shadow-[0_0_15px_rgba(192,0,0,0.4)]"}`}>
+            <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest ${isPast ? "bg-zinc-800 text-zinc-400" : "bg-ares-red/20 text-ares-red border border-ares-red/50 shadow-[0_0_15px_rgba(192,0,0,0.4)]"}`}>
               {isPast ? "Historical Record" : "Active Campaign"}
             </span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-black text-white leading-tight uppercase font-heading drop-shadow-2xl">
+          <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight uppercase font-heading drop-shadow-2xl">
             {event.title}
           </h1>
           <div className="mt-8 flex flex-col md:flex-row gap-6 text-ares-bronze font-medium text-lg lg:text-xl">
