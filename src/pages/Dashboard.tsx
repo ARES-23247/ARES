@@ -1,9 +1,10 @@
 import BlogEditor from "@/components/BlogEditor";
 import EventEditor from "@/components/EventEditor";
 import ContentManager from "@/components/ContentManager";
+import AssetManager from "@/components/AssetManager";
 import { useState } from "react";
 
-type TabState = "blog" | "event" | "manager";
+type TabState = "blog" | "event" | "manager" | "assets";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabState>("blog");
@@ -42,6 +43,12 @@ export default function Dashboard() {
           >
             Manage Content
           </button>
+          <button
+            onClick={() => setActiveTab("assets")}
+            className={`px-6 py-3 font-bold uppercase tracking-widest text-xs md:text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ${activeTab === "assets" ? "bg-ares-bronze text-white shadow-lg scale-105" : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800"}`}
+          >
+            Asset Vault
+          </button>
         </div>
 
         <div className="w-full">
@@ -66,6 +73,12 @@ export default function Dashboard() {
                 onEditPost={(slug) => { setEditPostSlug(slug); setActiveTab("blog"); }}
                 onEditEvent={(id) => { setEditEventId(id); setActiveTab("event"); }}
               />
+            </div>
+          )}
+
+          {activeTab === "assets" && (
+            <div className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-bronze/30 flex flex-col bg-zinc-900 shadow-2xl">
+              <AssetManager />
             </div>
           )}
         </div>

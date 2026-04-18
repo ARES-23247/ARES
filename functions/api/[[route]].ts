@@ -305,6 +305,52 @@ app.get("/media/:key", async (c) => {
   return new Response(object.body, { headers });
 });
 
+// ── GET /api/media — list all R2 objects ──────────────────────────────
+app.get("/media", async (c) => {
+  const host = c.req.header("host") || "";
+  if (!["aresfirst.org", "localhost"].some((h) => host.includes(h))) {
+    return c.json({ error: "Forbidden host" }, 403);
+  }
+
+  try {
+    const listed = await c.env.ARES_STORAGE.list({ limit: 500 });
+    const assets = listed.objects.map((obj) => ({
+      key: obj.key,
+      size: obj.size,
+      uploaded: obj.uploaded.toISOString(),
+      url: `/api/media/${obj.key}`,
+    }));
+    return c.json({ assets });
+  } catch (err) {
+    console.error("R2 list error:", err);
+    return c.json({ assets: [] });
+  }
+});
+
+// ── DELETE /api/media/:key — remove an R2 object ──────────────────────
+app.delete("/media/:key", async (c) => {
+  const host = c.req.header("host") || "";
+  if (!["aresfirst.org", "localhost"].some((h) => host.includes(h))) {
+    return c.json({ error: "Forbidden host" }, 403);
+  }
+
+  const email = c.req.header("cf-access-authenticated-user-email");
+  const referer = c.req.header("referer") || "";
+  const isDashboard = referer.includes("aresfirst.org");
+  if (!email && !isDashboard && !host.includes("localhost")) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  try {
+    const key = c.req.param("key");
+    await c.env.ARES_STORAGE.delete(key);
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("R2 delete error:", err);
+    return c.json({ error: "Delete failed" }, 500);
+  }
+});
+
 // ── DELETE /api/events/:id — delete an event (admin) ────────────────────
 app.delete("/events/:id", async (c) => {
   const host = c.req.header("host") || "";
