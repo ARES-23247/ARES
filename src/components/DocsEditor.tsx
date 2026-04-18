@@ -68,100 +68,100 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full relative">
+    <div className="flex flex-col gap-6 w-full relative bg-obsidian/60 glass-card p-6 md:p-8 rounded-2xl border border-white/10">
       <div>
         <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
           {editSlug ? "Edit Document" : "Publish Document"}
         </h2>
-        <p className="text-zinc-400 text-sm">
+        <p className="text-white/50 text-sm">
           {editSlug ? "Modify an existing ARESLib documentation page." : "Draft a new Markdown documentation page for the hub."}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-2">
         <div className="col-span-1 lg:col-span-2">
-          <label htmlFor="doc-title" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Title</label>
+          <label htmlFor="doc-title" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Title</label>
           <input
             id="doc-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
+            className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
             placeholder="e.g. Swerve Kinematics"
           />
         </div>
         
         <div className="col-span-1 lg:col-span-1">
-          <label htmlFor="doc-slug" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Slug</label>
+          <label htmlFor="doc-slug" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Slug</label>
           <input
             id="doc-slug"
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             disabled={!!editSlug}
-            className="w-full bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="e.g. swerve-kinematics"
           />
         </div>
 
         <div className="col-span-1 lg:col-span-1">
-          <label htmlFor="doc-category" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Category</label>
+          <label htmlFor="doc-category" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Category</label>
           <input
             id="doc-category"
             type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
+            className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
             placeholder="e.g. Tutorials"
           />
         </div>
         
         <div className="col-span-1 lg:col-span-1">
-          <label htmlFor="doc-sort" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Sort Order</label>
+          <label htmlFor="doc-sort" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Sort Order</label>
           <input
             id="doc-sort"
             type="number"
             value={sortOrder}
             onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)}
-            className="w-full bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
+            className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="doc-description" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Description / Summary</label>
+        <label htmlFor="doc-description" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Description / Summary</label>
         <input
           id="doc-description"
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
+          className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
           placeholder="Brief summary of what this document covers..."
         />
       </div>
 
       <div className="flex-1">
-        <label htmlFor="doc-content" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Markdown Content</label>
+        <label htmlFor="doc-content" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Markdown Content</label>
         <textarea
           id="doc-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full bg-[#161b22] border border-zinc-700 text-[#e6edf3] p-4 rounded-xl min-h-[400px] font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors resize-y"
+          className="w-full bg-[#0e0e0e] border border-white/10 text-[#e6edf3] p-4 rounded-xl min-h-[400px] font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors resize-y shadow-inner"
           placeholder="Write your Markdown and HTML here..."
         />
       </div>
 
       {errorMsg && (
-        <div className="p-4 rounded-xl bg-red-950/50 border border-red-500/50 text-red-200 text-sm">
+        <div className="p-4 rounded-xl bg-ares-red/10 border border-ares-red/30 text-red-200 text-sm">
           {errorMsg}
         </div>
       )}
 
-      <div className="flex justify-end gap-4 mt-4 border-t border-zinc-800 pt-6">
+      <div className="flex justify-end gap-4 mt-4 border-t border-white/10 pt-6">
         {editSlug && (
           <button
             onClick={() => onClearEdit && onClearEdit()}
-            className="px-6 py-2 rounded-xl text-zinc-400 hover:text-white font-bold tracking-wider text-sm transition-colors"
+            className="px-6 py-2 rounded-xl text-white/50 hover:text-white font-bold tracking-wider text-sm transition-colors"
           >
             Cancel
           </button>

@@ -107,6 +107,19 @@ export default function Docs() {
     return ordered;
   }, [allDocs]);
 
+  // ── Table of Contents Extraction ─────────────────────────────────────
+  let tableOfContents: Array<{level: number, text: string, id: string}> = [];
+  if (currentDoc?.content) {
+    const headings = Array.from(currentDoc.content.matchAll(/^(#{2,3})\s+(.+)$/gm));
+    tableOfContents = headings.map((match) => {
+      const level = match[1].length;
+      const text = match[2].trim();
+      // Generate URL-friendly slug manually
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return { level, text, id };
+    });
+  }
+
   // ── Toggle category ─────────────────────────────────────────────────
   const toggleCat = useCallback((cat: string) => {
     setExpandedCats((prev) => {
@@ -294,8 +307,9 @@ export default function Docs() {
           </div>
         </aside>
 
-        {/* ── Main Content ─────────────────────────────────────────── */}
-        <main className="flex-1 min-w-0 pt-24 pb-16 px-6 lg:px-12 max-w-4xl mx-auto">
+        {/* ── Main Content Layout ─────────────────────────────────────────── */}
+        <div className="flex-1 flex w-full">
+          <main className="flex-1 min-w-0 pt-24 pb-16 px-6 lg:px-12 max-w-4xl mx-auto xl:mx-0 xl:max-w-3xl">
           {docLoading && (
             <div className="flex justify-center items-center py-20">
               <div className="w-10 h-10 border-4 border-ares-red/30 border-t-ares-red rounded-full animate-spin"></div>
@@ -354,8 +368,16 @@ export default function Docs() {
                     codeplayground: () => <Placeholder name="<CodePlayground />" />,
                     screenshotgallery: () => <Placeholder name="<ScreenshotGallery />" />,
                     h1: ({ children }) => <h1 className="text-3xl font-bold font-heading mt-10 mb-4 text-white border-b border-white/10 pb-2">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-2xl font-bold font-heading mt-8 mb-3 text-ares-gold">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-xl font-bold font-heading mt-6 mb-2 text-ares-red">{children}</h3>,
+                    h2: ({ children }) => {
+                      const text = String(children);
+                      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                      return <h2 id={id} className="text-2xl font-bold font-heading mt-8 mb-3 text-ares-gold scroll-m-24">{children}</h2>;
+                    },
+                    h3: ({ children }) => {
+                      const text = String(children);
+                      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                      return <h3 id={id} className="text-xl font-bold font-heading mt-6 mb-2 text-ares-red scroll-m-24">{children}</h3>;
+                    },
                     h4: ({ children }) => <h4 className="text-lg font-bold mt-4 mb-2 text-white/80">{children}</h4>,
                     p: ({ children }) => <p className="text-[#e6edf3]/80 leading-relaxed mb-4">{children}</p>,
                     a: ({ href, children }) => (
@@ -409,6 +431,26 @@ export default function Docs() {
             </motion.article>
           )}
         </main>
+        
+        {/* ── Table of Contents (Right Sidebar) ───────────────────── */}
+        {currentDoc && tableOfContents.length > 0 && (
+          <aside className="hidden xl:block w-64 shrink-0 pt-24 px-6 pb-8 sticky xl:fixed right-0 top-0 h-screen overflow-y-auto mix-blend-screen">
+            <h3 className="text-white/60 font-bold mb-4 font-heading tracking-wide uppercase text-xs">On this page</h3>
+            <nav className="flex flex-col gap-3 border-l border-white/10 pl-4">
+              {tableOfContents.map((heading, i) => (
+                <a 
+                  key={i} 
+                  href={`#${heading.id}`}
+                  className={`text-sm transition-colors hover:text-ares-gold focus-visible:outline-none focus:text-ares-gold ${heading.level === 3 ? "pl-4 text-white/40" : "text-white/70"}`}
+                >
+                  {heading.text}
+                </a>
+              ))}
+            </nav>
+          </aside>
+        )}
+
+      </div>
       </div>
     </div>
   );
