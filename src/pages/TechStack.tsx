@@ -1,4 +1,4 @@
-import { Cloud, Zap, Database, GlobeLock, DollarSign } from "lucide-react";
+import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function TechStack() {
@@ -24,7 +24,7 @@ export default function TechStack() {
         </div>
 
         {/* Highlight Architecture */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
           <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl">
             <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
               <Cloud size={24} />
@@ -45,6 +45,17 @@ export default function TechStack() {
               We ditched expensive MongoDB and AWS RDS databases. Our entire blog, events, and asset metadata are stored in Cloudflare D1—a serverless SQLite database native to the Edge.
             </p>
             <div className="text-xs font-bold uppercase tracking-widest text-ares-gold">Cost: Free Tier</div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl">
+            <div className="w-12 h-12 rounded-full border border-orange-500/30 flex items-center justify-center bg-orange-500/10 text-orange-500 mb-6">
+              <HardDrive size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Cloudflare R2 Storage</h3>
+            <p className="text-marble/70 leading-relaxed mb-4">
+              We host all of our high-resolution imagery securely in Cloudflare R2 Object Storage. This acts identically to Amazon S3, powering our WebP conversion pipeline without the crippling egress bandwidth fees.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-orange-500">Cost: Free Tier</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl">
