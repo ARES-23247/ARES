@@ -27,7 +27,7 @@ import { MentionList } from './editor/MentionList';
 import { suggestionRenderer } from './editor/suggestionRenderer';
 import 'katex/dist/katex.min.css';
 
-const lowlight = createLowlight(common);
+
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -92,6 +92,8 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
     return { url: data.url, altText: data.altText };
   };
 
+  const lowlight = useMemo(() => createLowlight(common), []);
+
   const editor = useEditor({
     extensions: [
       GlobalDragHandle.configure({
@@ -110,13 +112,13 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
       Subscript,
       Superscript,
       CharacterCount,
-      Image.configure({ inline: true, HTMLAttributes: { class: 'rounded-xl max-w-full my-4 border border-zinc-800 shadow-lg' } }),
-      Youtube.configure({ HTMLAttributes: { class: 'w-full aspect-video rounded-xl my-4 overflow-hidden border border-zinc-800 shadow-lg' } }),
-      Table.configure({ resizable: true, HTMLAttributes: { class: 'w-full text-left border-collapse border border-zinc-800 my-4' } }),
-      TableRow,
-      TableHeader.configure({ HTMLAttributes: { class: 'bg-zinc-900 border border-zinc-800 p-2 font-bold text-ares-gold' } }),
-      TableCell.configure({ HTMLAttributes: { class: 'border border-zinc-800 p-2' } }),
-      TaskList.configure({ HTMLAttributes: { class: 'list-none pl-0' } }),
+      Image.configure({ inline: false, HTMLAttributes: { class: 'rounded-xl border border-white/10 shadow-lg my-6 max-h-[600px] w-auto mx-auto object-contain bg-black/40' } }),
+      Youtube.configure({ inline: false, HTMLAttributes: { class: 'w-full aspect-video rounded-xl shadow-lg my-6 glass-card' } }),
+      Table.configure({ resizable: true, HTMLAttributes: { class: 'w-full text-left border-collapse border border-zinc-800 rounded-lg hidden-border-corners shadow-lg table-auto my-6' } }),
+      TableRow.configure({ HTMLAttributes: { class: 'border-b border-zinc-800 hover:bg-zinc-900/50 transition-colors odd:bg-black/20 even:bg-black/40' } }),
+      TableHeader.configure({ HTMLAttributes: { class: 'bg-zinc-900 border border-zinc-800 p-3 font-bold text-ares-gold whitespace-nowrap uppercase tracking-wider text-sm' } }),
+      TableCell.configure({ HTMLAttributes: { class: 'border border-zinc-800 p-3 text-zinc-300 align-top' } }),
+      TaskList.configure({ HTMLAttributes: { class: 'list-none pl-0 space-y-2 my-4 text-[#e6edf3]/80' } }),
       TaskItem.configure({ nested: true, HTMLAttributes: { class: 'flex items-start gap-2 mb-1' } }),
       Mathematics,
       Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-ares-cyan underline hover:text-white transition-colors' } }),
@@ -318,9 +320,9 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
         <button onClick={() => editor.chain().focus().toggleSubscript().run()} className={`px-2 py-2 rounded-lg text-sm transition-all ${editor.isActive("subscript") ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800"}`}>Sub</button>
         <button onClick={() => editor.chain().focus().toggleSuperscript().run()} className={`px-2 py-2 rounded-lg text-sm transition-all ${editor.isActive("superscript") ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800"}`}>Super</button>
         <div className="w-px h-6 bg-zinc-800 mx-2"></div>
-        <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'info' }).run()} className="px-3 py-2 border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Info</button>
-        <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'warning' }).run()} className="px-3 py-2 border border-ares-red/30 text-ares-red hover:bg-ares-red hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Warn</button>
-        <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'tip' }).run()} className="px-3 py-2 border border-ares-gold/30 text-ares-gold hover:bg-ares-gold hover:text-black rounded-lg text-sm font-bold transition-all shadow-sm">Tip</button>
+        <button onClick={() => editor.chain().focus().setCallout({ type: 'info' }).run()} className="px-3 py-2 border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Info</button>
+        <button onClick={() => editor.chain().focus().setCallout({ type: 'warning' }).run()} className="px-3 py-2 border border-ares-red/30 text-ares-red hover:bg-ares-red hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Warn</button>
+        <button onClick={() => editor.chain().focus().setCallout({ type: 'tip' }).run()} className="px-3 py-2 border border-ares-gold/30 text-ares-gold hover:bg-ares-gold hover:text-black rounded-lg text-sm font-bold transition-all shadow-sm">Tip</button>
         <div className="w-px h-6 bg-zinc-800 mx-2"></div>
         <button 
           className={`px-4 py-2 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ares-gold ${isUploadingInline ? "bg-zinc-800 text-zinc-300 animate-pulse" : "text-ares-gold hover:bg-zinc-800 hover:text-ares-gold"}`}

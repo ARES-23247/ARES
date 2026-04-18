@@ -1,5 +1,14 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    callout: {
+      setCallout: (attributes: { type: string }) => ReturnType;
+      toggleCallout: (attributes: { type: string }) => ReturnType;
+    };
+  }
+}
+
 export const Callout = Node.create({
   name: 'callout',
   group: 'block',

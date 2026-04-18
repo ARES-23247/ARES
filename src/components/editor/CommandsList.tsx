@@ -1,14 +1,21 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Bold, Italic, Heading1, Heading2, List, ListTodo, Quote, Code, Image, Table, Sigma, Info, AlertTriangle, Lightbulb } from 'lucide-react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { Editor, Range } from '@tiptap/core';
+import { Heading1, Heading2, List, ListTodo, Quote, Code, Table, Info, AlertTriangle, Lightbulb } from 'lucide-react';
 
 interface CommandItem {
   title: string;
   description: string;
   icon: React.ReactNode;
-  command: (props: { editor: any, range: any }) => void;
+  command: (props: { editor: Editor, range: Range }) => void;
 }
 
-export const CommandsList = forwardRef((props: any, ref) => {
+interface CommandsListProps {
+  editor: Editor;
+  range: Range;
+  items: CommandItem[];
+}
+
+export const CommandsList = forwardRef<unknown, CommandsListProps>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const items: CommandItem[] = [

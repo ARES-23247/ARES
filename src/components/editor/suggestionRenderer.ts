@@ -1,9 +1,10 @@
 import { ReactRenderer } from '@tiptap/react';
-import tippy from 'tippy.js';
+import tippy, { Instance } from 'tippy.js';
+import { SuggestionProps } from '@tiptap/suggestion';
 
 export const suggestionRenderer = (component: any) => {
   return {
-    onStart: (props: any) => {
+    onStart: (props: SuggestionProps & { renderer: ReactRenderer, popup: Instance[] }) => {
       props.renderer = new ReactRenderer(component, {
         props,
         editor: props.editor,
@@ -14,17 +15,17 @@ export const suggestionRenderer = (component: any) => {
       }
 
       props.popup = tippy('body', {
-        getReferenceClientRect: props.clientRect,
+        getReferenceClientRect: props.clientRect as any,
         appendTo: () => document.body,
         content: props.renderer.element,
         showOnCreate: true,
         interactive: true,
         trigger: 'manual',
         placement: 'bottom-start',
-      });
+      }) as Instance[];
     },
 
-    onUpdate(props: any) {
+    onUpdate(props: SuggestionProps & { renderer: ReactRenderer, popup: Instance[] }) {
       props.renderer.updateProps(props);
 
       if (!props.clientRect) {
@@ -32,20 +33,20 @@ export const suggestionRenderer = (component: any) => {
       }
 
       props.popup[0].setProps({
-        getReferenceClientRect: props.clientRect,
+        getReferenceClientRect: props.clientRect as any,
       });
     },
 
-    onKeyDown(props: any) {
+    onKeyDown(props: SuggestionProps & { renderer: ReactRenderer, popup: Instance[] }) {
       if (props.event.key === 'Escape') {
         props.popup[0].hide();
         return true;
       }
 
-      return props.renderer.ref?.onKeyDown(props);
+      return (props.renderer.ref as any)?.onKeyDown(props);
     },
 
-    onExit(props: any) {
+    onExit(props: SuggestionProps & { renderer: ReactRenderer, popup: Instance[] }) {
       props.popup[0].destroy();
       props.renderer.destroy();
     },

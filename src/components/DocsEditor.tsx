@@ -29,7 +29,7 @@ import { MentionList } from './editor/MentionList';
 import { suggestionRenderer } from './editor/suggestionRenderer';
 import 'katex/dist/katex.min.css';
 
-const lowlight = createLowlight(common);
+
 
 
 import AssetPickerModal from "./AssetPickerModal";
@@ -48,6 +48,8 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
   const [errorMsg, setErrorMsg] = useState("");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSimPickerOpen, setIsSimPickerOpen] = useState(false);
+
+  const lowlight = useMemo(() => createLowlight(common), []);
 
   const editor = useEditor({
     extensions: [
@@ -275,9 +277,9 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
             <button onClick={() => setIsPickerOpen(true)} className="px-3 py-2 border border-ares-gold/30 text-ares-gold hover:bg-ares-gold hover:text-black rounded-lg text-sm font-bold transition-all shadow-sm flex items-center gap-2">🖼 Image</button>
             <button onClick={() => setIsSimPickerOpen(true)} className="px-3 py-2 border border-ares-red/30 text-ares-red hover:bg-ares-red hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm flex items-center gap-2">🕹 Simulator</button>
             <div className="w-px h-6 bg-zinc-800 mx-2"></div>
-            <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'info' }).run()} className="px-3 py-2 border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Info</button>
-            <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'warning' }).run()} className="px-3 py-2 border border-ares-red/30 text-ares-red hover:bg-ares-red hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Warn</button>
-            <button onClick={() => (editor.chain().focus() as any).setCallout({ type: 'tip' }).run()} className="px-3 py-2 border border-ares-gold/30 text-ares-gold hover:bg-ares-gold hover:text-black rounded-lg text-sm font-bold transition-all shadow-sm">Tip</button>
+            <button onClick={() => editor.chain().focus().setCallout({ type: 'info' }).run()} className="px-3 py-2 border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Info</button>
+            <button onClick={() => editor.chain().focus().setCallout({ type: 'warning' }).run()} className="px-3 py-2 border border-ares-red/30 text-ares-red hover:bg-ares-red hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Warn</button>
+            <button onClick={() => editor.chain().focus().setCallout({ type: 'tip' }).run()} className="px-3 py-2 border border-ares-gold/30 text-ares-gold hover:bg-ares-gold hover:text-black rounded-lg text-sm font-bold transition-all shadow-sm">Tip</button>
             <div className="w-px h-6 bg-zinc-800 mx-2"></div>
             
             <button onClick={() => {

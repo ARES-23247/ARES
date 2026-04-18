@@ -1,6 +1,14 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { Editor, Range } from '@tiptap/core';
 
-export const MentionList = forwardRef((props: any, ref) => {
+interface MentionListProps {
+  items: any[];
+  command: (props: { id: string }) => void;
+  editor: Editor;
+  range: Range;
+}
+
+export const MentionList = forwardRef<unknown, MentionListProps>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Mock team members - in a real app, this might come from props.items or an API

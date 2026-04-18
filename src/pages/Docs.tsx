@@ -630,7 +630,7 @@ export default function Docs() {
                       }}
                       className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-ares-red/10 border border-ares-red/30 text-ares-red font-bold hover:bg-ares-red hover:text-white transition-all"
                     >
-                      <span className="text-lg">👎</span> No, it wasn't
+                      <span className="text-lg">👎</span> No, it wasn&apos;t
                     </button>
                   </div>
                 </div>
