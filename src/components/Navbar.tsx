@@ -17,6 +17,7 @@ export default function Navbar() {
           <Link to="/seasons" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Seasons</Link>
           <Link to="/outreach" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Outreach</Link>
           <Link to="/events" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Events</Link>
+          <Link to="/tech-stack" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Tech Stack</Link>
           <Link to="/blog" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
         </div>
 
@@ -40,6 +41,7 @@ export default function Navbar() {
           <Link to="/seasons" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Seasons</Link>
           <Link to="/outreach" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Outreach</Link>
           <Link to="/events" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Events</Link>
+          <Link to="/tech-stack" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Tech Stack</Link>
           <Link to="/blog" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Blog</Link>
           <Link to="/contact" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Contact</Link>
         </div>

@@ -12,6 +12,7 @@ import Gallery from "./pages/Gallery";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Dashboard from "./pages/Dashboard";
+import TechStack from "./pages/TechStack";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/tech-stack" element={<TechStack />} />
         </Routes>
       </main>
       <Footer />

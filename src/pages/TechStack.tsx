@@ -1,0 +1,104 @@
+import { Cloud, Zap, Database, GlobeLock, DollarSign } from "lucide-react";
+
+export default function TechStack() {
+  return (
+    <div className="min-h-screen bg-obsidian text-white pt-24 pb-16">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        
+        {/* Header Section */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h1 className="text-4xl lg:text-6xl font-bold font-heading mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-ares-gold to-ares-red">
+            Built for the Future.
+          </h1>
+          <p className="text-xl text-marble/80">
+            ARES 23247&apos;s digital portal isn&apos;t just a website; it&apos;s a statement on <strong>Sustainability</strong>. 
+            By leveraging entirely free, serverless Edge architecture, we&apos;ve brought our operating costs down to <strong>$0.00</strong>, ensuring our team&apos;s digital presence survives forever.
+          </p>
+        </div>
+
+        {/* Highlight Architecture */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
+          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl">
+            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
+              <Cloud size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Cloudflare Pages</h3>
+            <p className="text-marble/70 leading-relaxed mb-4">
+              Our frontend is globally distributed across Cloudflare&apos;s Edge network. Because it&apos;s deployed as static assets with Edge functions, we get infinite scaling and ultra-fast load times globally without paying for traditional virtual private servers.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-ares-cyan">Cost: Free Tier</div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl">
+            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
+              <Database size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Cloudflare D1 SQL</h3>
+            <p className="text-marble/70 leading-relaxed mb-4">
+              We ditched expensive MongoDB and AWS RDS databases. Our entire blog, events, and asset metadata are stored in Cloudflare D1—a serverless SQLite database native to the Edge.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-ares-gold">Cost: Free Tier</div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl">
+            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6">
+              <Zap size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Vite + React</h3>
+            <p className="text-marble/70 leading-relaxed mb-4">
+              Our UI is built with React 18 and Vite. Using pure React without heavy SSR frameworks keeps our codebase incredibly lean, teachable to new students, and statically compilable.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-ares-red">Cost: Open Source</div>
+          </div>
+        </div>
+
+        {/* Sustainability Deep Dive */}
+        <div className="max-w-4xl mx-auto space-y-12">
+          
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="w-16 h-16 shrink-0 rounded-2xl bg-gradient-to-br from-green-500 to-green-900 flex items-center justify-center text-white shadow-lg">
+              <DollarSign size={28} />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold font-heading mb-4">Financial Sustainability</h2>
+              <p className="text-marble/70 text-lg leading-relaxed mb-4">
+                Many robotics teams struggle to maintain websites over the years because web hosting costs money. A standard WordPress or AWS environment might cost a team $200+ per year. By strategically selecting <strong>Serverless Edge Infrastructure</strong>, we&apos;ve entirely eliminated recurring hosting fees.
+              </p>
+              <p className="text-marble/70 leading-relaxed">
+                As long as our code is in GitHub, Cloudflare automatically builds and deploys our site for free. This means that even if our sponsorship funding fluctuates, the ARES 23247 portal will never go offline due to an unpaid hosting bill.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="w-16 h-16 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-900 flex items-center justify-center text-white shadow-lg">
+              <GlobeLock size={28} />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold font-heading mb-4">Zero Trust Security</h2>
+              <p className="text-marble/70 text-lg leading-relaxed mb-4">
+                We didn&apos;t just build it free; we built it secure. Our custom internal Content Management System (CMS) is protected by <strong>Cloudflare Zero Trust</strong>.
+              </p>
+              <p className="text-marble/70 leading-relaxed">
+                Rather than building a vulnerable password-login system, we rely on Cloudflare Access to authenticate our team mentors and captains via email pin codes BEFORE they ever reach our backend API. Our Hono web server then intercepts and validates the immutable `cf-access-authenticated-user-email` header, making our CMS entirely immune to spoofing or brute-force attacks.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border-l-4 border-ares-gold p-8 rounded-r-xl mt-16 shadow-2xl">
+            <h3 className="text-2xl font-bold font-heading mb-3 flex items-center gap-3">
+              The Sustain Award Ethos
+            </h3>
+            <p className="text-marble/80 text-lg leading-relaxed italic">
+              &quot;We expand our skillset and create reliable infrastructure so that our team and outreach efforts are sustained for generations.&quot;
+            </p>
+            <p className="mt-4 text-marble/60">
+              Our website infrastructure is a direct reflection of our dedication to the core values of FIRST Robotics. We don&apos;t just build robots; we engineer lasting digital legacies.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
