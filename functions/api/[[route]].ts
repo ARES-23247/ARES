@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, Context, Next } from "hono";
 import { handle } from "hono/cloudflare-pages";
 
 type Bindings = {
@@ -9,15 +9,19 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>().basePath("/api");
 
-// ── Auth middleware for admin routes ──────────────────────────────────
-app.use("/admin/*", async (c, next) => {
+// ── Zero Trust Auth Middleware ────────────────────────────────────────
+const ensureAdmin = async (c: Context, next: Next) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
   if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
     return c.json({ error: "Strict Context: Unauthorized. Cloudflare Zero Trust authentication required." }, 401);
   }
   await next();
-});
+};
+
+
+// ── Auth middleware for admin routes ──────────────────────────────────
+app.use("/admin/*", ensureAdmin);
 
 // ── GET /api/posts — list all blog posts ─────────────────────────────
 app.get("/posts", async (c) => {
@@ -78,7 +82,7 @@ app.get("/events/:id", async (c) => {
 });
 
 // ── POST /api/events — create a new event (admin) ────────────────────
-app.post("/events", async (c) => {
+app.post("/events", ensureAdmin, async (c) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
   if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
@@ -106,7 +110,7 @@ app.post("/events", async (c) => {
 });
 
 // ── POST /api/posts — create a new blog post (admin) ────────────────
-app.post("/posts", async (c) => {
+app.post("/posts", ensureAdmin, async (c) => {
   // Validate host header to prevent Zero Trust bypass via .pages.dev
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
@@ -195,7 +199,7 @@ app.post("/posts", async (c) => {
 });
 
 // ── PUT /api/posts/:slug — edit a blog post (admin) ────────────────────
-app.put("/posts/:slug", async (c) => {
+app.put("/posts/:slug", ensureAdmin, async (c) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
   if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
@@ -268,7 +272,7 @@ app.put("/posts/:slug", async (c) => {
 });
 
 // ── File Upload via R2 & AI Image Accessibility Generation ───────────
-app.post("/upload", async (c) => {
+app.post("/upload", ensureAdmin, async (c) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
   if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
@@ -405,17 +409,23 @@ app.get("/media/:key", async (c) => {
 });
 
 // ── GET /api/media — list all R2 objects ──────────────────────────────
-app.get("/media", async (c) => {
-  const url = new URL(c.req.url);
-  const email = c.req.header("cf-access-authenticated-user-email");
-  if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
-    return c.json({ error: "Strict Context: Unauthorized. Cloudflare Zero Trust authentication required." }, 401);
-  }
-
+app.get("/media", ensureAdmin, async (c) => {
   try {
-    const key = c.req.param("key");
+    const objects = await c.env.ARES_STORAGE.list();
+    return c.json({ media: objects.objects });
+  } catch (err) {
+    console.error("R2 list error:", err);
+    return c.json({ error: "List failed", media: [] }, 500);
+  }
+});
+
+// ── DELETE /api/media/:key — delete R2 object (admin) ─────────────────
+app.delete("/media/:key", ensureAdmin, async (c) => {
+  try {
+    const key = c.req.param("key") as string;
     await c.env.ARES_STORAGE.delete(key);
     return c.json({ success: true });
+
   } catch (err) {
     console.error("R2 delete error:", err);
     return c.json({ error: "Delete failed" }, 500);
@@ -423,7 +433,7 @@ app.get("/media", async (c) => {
 });
 
 // ── DELETE /api/events/:id — delete an event (admin) ────────────────────
-app.delete("/events/:id", async (c) => {
+app.delete("/events/:id", ensureAdmin, async (c) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
   if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
@@ -441,7 +451,7 @@ app.delete("/events/:id", async (c) => {
 });
 
 // ── DELETE /api/posts/:slug — delete a blog post (admin) ────────────────
-app.delete("/posts/:slug", async (c) => {
+app.delete("/posts/:slug", ensureAdmin, async (c) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
   if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
@@ -459,7 +469,7 @@ app.delete("/posts/:slug", async (c) => {
 });
 
 // ── PUT /api/events/:id — edit an event (admin) ────────────────────────
-app.put("/events/:id", async (c) => {
+app.put("/events/:id", ensureAdmin, async (c) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
   if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
@@ -488,7 +498,7 @@ app.put("/events/:id", async (c) => {
 });
 
 // ── POST /api/events/sync — Google Calendar Sync (admin) ──────────────
-app.post("/events/sync", async (c) => {
+app.post("/events/sync", ensureAdmin, async (c) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
   if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
@@ -564,6 +574,95 @@ app.post("/events/sync", async (c) => {
   } catch (err: unknown) {
     console.error("GCal sync error:", err);
     return c.json({ success: false, error: (err as Error)?.message || "Calendar sync failed" }, 500);
+  }
+});
+
+// ── DOCUMENTATION SYSTEM ──────────────────────────────────────────────
+
+// ── GET /api/docs — list all docs grouped by category ─────────────────
+app.get("/docs", async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      "SELECT slug, title, category, sort_order, description FROM docs ORDER BY category, sort_order ASC"
+    ).all();
+    return c.json({ docs: results ?? [] });
+  } catch (err) {
+    console.error("D1 docs list error:", err);
+    return c.json({ docs: [] });
+  }
+});
+
+// ── GET /api/docs/search?q=keyword — full-text search ─────────────────
+app.get("/docs/search", async (c) => {
+  const q = c.req.query("q");
+  if (!q || q.length < 2) return c.json({ results: [] });
+  try {
+    const { results } = await c.env.DB.prepare(
+      "SELECT slug, title, category, description, content FROM docs WHERE title LIKE ? OR content LIKE ? OR description LIKE ? ORDER BY category, sort_order ASC LIMIT 20"
+    ).bind(`%${q}%`, `%${q}%`, `%${q}%`).all();
+
+    // Return snippets, not full content
+    const mapped = (results ?? []).map((r: Record<string, unknown>) => {
+      const content = String(r.content || "");
+      const idx = content.toLowerCase().indexOf(q.toLowerCase());
+      const start = Math.max(0, idx - 80);
+      const end = Math.min(content.length, idx + q.length + 80);
+      return {
+        slug: r.slug,
+        title: r.title,
+        category: r.category,
+        description: r.description,
+        snippet: idx >= 0 ? "..." + content.slice(start, end) + "..." : (r.description || ""),
+      };
+    });
+    return c.json({ results: mapped });
+  } catch (err) {
+    console.error("D1 docs search error:", err);
+    return c.json({ results: [] });
+  }
+});
+
+// ── GET /api/docs/:slug — single doc page ─────────────────────────────
+app.get("/docs/:slug", async (c) => {
+  const slug = c.req.param("slug");
+  try {
+    const row = await c.env.DB.prepare(
+      "SELECT slug, title, category, description, content, updated_at FROM docs WHERE slug = ?"
+    ).bind(slug).first();
+    if (!row) return c.json({ error: "Doc not found" }, 404);
+    return c.json({ doc: row });
+  } catch (err) {
+    console.error("D1 doc read error:", err);
+    return c.json({ error: "Database error" }, 500);
+  }
+});
+
+// ── POST /api/admin/docs — create/update a doc (admin) ────────────────
+app.post("/admin/docs", async (c) => {
+  try {
+    const { slug, title, category, sortOrder, description, content } = await c.req.json();
+    if (!slug || !title || !category || !content) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+    await c.env.DB.prepare(
+      `INSERT OR REPLACE INTO docs (slug, title, category, sort_order, description, content, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+    ).bind(slug, title, category, sortOrder || 0, description || "", content).run();
+    return c.json({ success: true, slug });
+  } catch (err) {
+    console.error("D1 doc write error:", err);
+    return c.json({ error: "Write failed" }, 500);
+  }
+});
+
+// ── DELETE /api/admin/docs/:slug — delete a doc (admin) ───────────────
+app.delete("/admin/docs/:slug", async (c) => {
+  try {
+    const slug = c.req.param("slug");
+    await c.env.DB.prepare("DELETE FROM docs WHERE slug = ?").bind(slug).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 doc delete error:", err);
+    return c.json({ error: "Delete failed" }, 500);
   }
 });
 

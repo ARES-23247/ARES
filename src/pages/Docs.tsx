@@ -1,0 +1,390 @@
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, ChevronRight, ChevronDown, Menu, X, BookOpen, ExternalLink } from "lucide-react";
+import SEO from "../components/SEO";
+
+interface DocRecord {
+  slug: string;
+  title: string;
+  category: string;
+  sort_order: number;
+  description: string;
+  content?: string;
+  updated_at?: string;
+}
+
+interface SearchResult {
+  slug: string;
+  title: string;
+  category: string;
+  snippet: string;
+}
+
+// ── Sidebar structure matching Starlight layout ──────────────────────
+const SIDEBAR_ORDER = [
+  "Getting Started",
+  "Migration Guides",
+  "Support",
+  "Community",
+  "Reference",
+  "The ARESLib Standard",
+  "Foundation Track",
+  "Precision Track",
+  "Reliability Track",
+  "HMI & Control",
+];
+
+export default function Docs() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set(SIDEBAR_ORDER));
+
+  // ── Fetch all docs for sidebar ──────────────────────────────────────
+  const { data: allDocs = [] } = useQuery<DocRecord[]>({
+    queryKey: ["docs-list"],
+    queryFn: async () => {
+      const r = await fetch("/api/docs");
+      const data = await r.json();
+      return data.docs ?? [];
+    },
+  });
+
+  // ── Fetch single doc content ────────────────────────────────────────
+  const { data: currentDoc, isLoading: docLoading } = useQuery<DocRecord>({
+    queryKey: ["doc", slug],
+    queryFn: async () => {
+      const r = await fetch(`/api/docs/${slug}`);
+      if (!r.ok) throw new Error("Not found");
+      const data = await r.json();
+      return data.doc;
+    },
+    enabled: !!slug,
+  });
+
+  // ── Search ──────────────────────────────────────────────────────────
+  const { data: searchResults = [] } = useQuery<SearchResult[]>({
+    queryKey: ["docs-search", searchQuery],
+    queryFn: async () => {
+      const r = await fetch(`/api/docs/search?q=${encodeURIComponent(searchQuery)}`);
+      const data = await r.json();
+      return data.results ?? [];
+    },
+    enabled: searchQuery.length >= 2,
+  });
+
+  // ── Group docs by category ──────────────────────────────────────────
+  const groupedDocs = useMemo(() => {
+    const groups: Record<string, DocRecord[]> = {};
+    for (const doc of allDocs) {
+      if (!groups[doc.category]) groups[doc.category] = [];
+      groups[doc.category].push(doc);
+    }
+    // Sort by SIDEBAR_ORDER
+    const ordered: [string, DocRecord[]][] = [];
+    for (const cat of SIDEBAR_ORDER) {
+      if (groups[cat]) ordered.push([cat, groups[cat]]);
+    }
+    // Append any remaining categories not in the order
+    for (const [cat, docs] of Object.entries(groups)) {
+      if (!SIDEBAR_ORDER.includes(cat)) ordered.push([cat, docs]);
+    }
+    return ordered;
+  }, [allDocs]);
+
+  // ── Toggle category ─────────────────────────────────────────────────
+  const toggleCat = useCallback((cat: string) => {
+    setExpandedCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }, []);
+
+  // ── Keyboard shortcut: Ctrl+K for search ────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((o) => !o);
+      }
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+        setSearchQuery("");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // ── Auto-navigate to first doc if none selected ─────────────────────
+  useEffect(() => {
+    if (!slug && allDocs.length > 0) {
+      navigate(`/docs/${allDocs[0].slug}`, { replace: true });
+    }
+  }, [slug, allDocs, navigate]);
+
+  // ── Close mobile sidebar on navigation ──────────────────────────────
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSidebarOpen(false);
+  }, [slug]);
+
+  return (
+    <div className="min-h-screen bg-[#0d1117] text-[#e6edf3] flex flex-col">
+      <SEO title={currentDoc?.title ? `${currentDoc.title} — ARESLib Docs` : "ARESLib Documentation"} description={currentDoc?.description || "ARESLib documentation for the ARES 23247 FTC framework."} />
+
+      {/* ── Search Overlay ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-[15vh]"
+            onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+          >
+            <motion.div
+              initial={{ y: -20, scale: 0.95 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: -20, scale: 0.95 }}
+              className="w-full max-w-2xl bg-[#161b22] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+                <Search size={18} className="text-white/40" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search documentation..."
+                  className="flex-1 bg-transparent text-white outline-none text-lg placeholder:text-white/30"
+                />
+                <kbd className="text-[10px] bg-white/10 text-white/40 px-2 py-0.5 rounded font-mono">ESC</kbd>
+              </div>
+              {searchResults.length > 0 && (
+                <div className="max-h-80 overflow-y-auto">
+                  {searchResults.map((r) => (
+                    <button
+                      key={r.slug}
+                      className="w-full text-left px-4 py-3 hover:bg-white/5 border-b border-white/5 transition-colors"
+                      onClick={() => {
+                        navigate(`/docs/${r.slug}`);
+                        setSearchOpen(false);
+                        setSearchQuery("");
+                      }}
+                    >
+                      <div className="text-sm font-bold text-white">{r.title}</div>
+                      <div className="text-xs text-ares-gold/80 mb-1">{r.category}</div>
+                      <div className="text-xs text-white/40 line-clamp-2">{r.snippet}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {searchQuery.length >= 2 && searchResults.length === 0 && (
+                <div className="px-4 py-8 text-center text-white/30 text-sm">No results found.</div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-1">
+        {/* ── Sidebar ───────────────────────────────────────────────── */}
+        {/* Mobile toggle */}
+        <button
+          className="fixed bottom-6 right-6 z-40 lg:hidden bg-ares-red text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="Toggle sidebar"
+        >
+          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+
+        <aside className={`
+          fixed lg:sticky top-0 left-0 z-30 h-screen w-72 shrink-0
+          bg-[#0d1117] border-r border-white/8
+          overflow-y-auto overscroll-contain
+          transition-transform duration-300
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          pt-24 pb-8 px-4
+        `}>
+          {/* Logo area */}
+          <div className="mb-6 px-2">
+            <Link to="/docs" className="flex items-center gap-2 group">
+              <BookOpen size={20} className="text-ares-red" />
+              <span className="font-heading font-bold text-lg text-white group-hover:text-ares-gold transition-colors">ARESLib Docs</span>
+            </Link>
+          </div>
+
+          {/* Search trigger */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="w-full flex items-center gap-2 px-3 py-2 mb-6 rounded-lg bg-white/5 border border-white/10 text-white/40 text-sm hover:border-ares-red/40 transition-colors"
+          >
+            <Search size={14} />
+            <span className="flex-1 text-left">Search docs...</span>
+            <kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
+          </button>
+
+          {/* Navigation Tree */}
+          <nav className="space-y-1">
+            {groupedDocs.map(([category, docs]) => (
+              <div key={category}>
+                <button
+                  onClick={() => toggleCat(category)}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-bold uppercase tracking-widest text-white/40 hover:text-ares-gold transition-colors"
+                >
+                  {expandedCats.has(category) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                  {category}
+                </button>
+                <AnimatePresence>
+                  {expandedCats.has(category) && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      {docs.map((doc) => (
+                        <Link
+                          key={doc.slug}
+                          to={`/docs/${doc.slug}`}
+                          className={`block pl-6 pr-2 py-1.5 text-sm rounded-md transition-colors ${
+                            slug === doc.slug
+                              ? "bg-ares-red/15 text-ares-red font-bold border-l-2 border-ares-red"
+                              : "text-white/60 hover:text-white hover:bg-white/5"
+                          }`}
+                        >
+                          {doc.title}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </nav>
+
+          {/* Javadoc link */}
+          <div className="mt-8 px-2 border-t border-white/8 pt-4">
+            <a
+              href="https://ARES-23247.github.io/ARESLib/javadoc/index.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-white/40 hover:text-ares-gold transition-colors"
+            >
+              <ExternalLink size={14} />
+              API Javadoc
+            </a>
+          </div>
+        </aside>
+
+        {/* ── Main Content ─────────────────────────────────────────── */}
+        <main className="flex-1 min-w-0 pt-24 pb-16 px-6 lg:px-12 max-w-4xl mx-auto">
+          {docLoading && (
+            <div className="flex justify-center items-center py-20">
+              <div className="w-10 h-10 border-4 border-ares-red/30 border-t-ares-red rounded-full animate-spin"></div>
+            </div>
+          )}
+
+          {!slug && !docLoading && allDocs.length === 0 && (
+            <div className="text-center py-20">
+              <BookOpen size={48} className="text-white/20 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">No Documentation Yet</h2>
+              <p className="text-white/40">Documentation pages will appear here once they are seeded into the database.</p>
+            </div>
+          )}
+
+          {currentDoc && (
+            <motion.article
+              key={currentDoc.slug}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* Breadcrumb */}
+              <div className="flex items-center gap-2 text-xs text-white/30 mb-6">
+                <Link to="/docs" className="hover:text-ares-gold transition-colors">Docs</Link>
+                <ChevronRight size={12} />
+                <span className="text-ares-gold/60">{currentDoc.category}</span>
+                <ChevronRight size={12} />
+                <span className="text-white/60">{currentDoc.title}</span>
+              </div>
+
+              {/* Title */}
+              <h1 className="text-3xl lg:text-4xl font-bold font-heading mb-4 text-white">{currentDoc.title}</h1>
+              {currentDoc.description && (
+                <p className="text-lg text-white/50 mb-8 border-b border-white/8 pb-8">{currentDoc.description}</p>
+              )}
+
+              {/* Markdown Content */}
+              <div className="ares-docs-content">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => <h1 className="text-3xl font-bold font-heading mt-10 mb-4 text-white border-b border-white/10 pb-2">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-2xl font-bold font-heading mt-8 mb-3 text-ares-gold">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-xl font-bold font-heading mt-6 mb-2 text-ares-red">{children}</h3>,
+                    h4: ({ children }) => <h4 className="text-lg font-bold mt-4 mb-2 text-white/80">{children}</h4>,
+                    p: ({ children }) => <p className="text-[#e6edf3]/80 leading-relaxed mb-4">{children}</p>,
+                    a: ({ href, children }) => (
+                      <a href={href} className="text-ares-gold hover:text-white underline underline-offset-2 transition-colors" target={href?.startsWith("http") ? "_blank" : undefined} rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}>
+                        {children}
+                      </a>
+                    ),
+                    ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-4 text-[#e6edf3]/70 ml-2">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-4 text-[#e6edf3]/70 ml-2">{children}</ol>,
+                    li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                    blockquote: ({ children }) => (
+                      <blockquote className="border-l-4 border-ares-red/60 bg-ares-red/5 px-4 py-3 my-4 text-white/70 italic rounded-r-lg">{children}</blockquote>
+                    ),
+                    code: ({ className, children, ...props }) => {
+                      const isInline = !className;
+                      if (isInline) {
+                        return <code className="bg-ares-red/10 text-ares-gold px-1.5 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>;
+                      }
+                      return (
+                        <code className={`${className} block bg-[#161b22] border border-white/8 rounded-lg p-4 text-sm font-mono overflow-x-auto my-4 leading-relaxed`} {...props}>
+                          {children}
+                        </code>
+                      );
+                    },
+                    pre: ({ children }) => <pre className="bg-[#161b22] border border-white/8 rounded-lg p-4 text-sm font-mono overflow-x-auto my-4 leading-relaxed">{children}</pre>,
+                    table: ({ children }) => (
+                      <div className="overflow-x-auto my-4">
+                        <table className="w-full border-collapse border border-white/10 text-sm">{children}</table>
+                      </div>
+                    ),
+                    th: ({ children }) => <th className="border border-white/10 bg-ares-red/10 px-4 py-2 text-left font-bold text-ares-gold">{children}</th>,
+                    td: ({ children }) => <td className="border border-white/10 px-4 py-2 text-[#e6edf3]/70">{children}</td>,
+                    hr: () => <hr className="border-white/10 my-8" />,
+                    img: ({ src, alt }) => (
+                      <img src={src} alt={alt || "ARESLib documentation image"} className="rounded-lg border border-white/10 my-4 max-w-full" />
+                    ),
+                    strong: ({ children }) => <strong className="text-white font-bold">{children}</strong>,
+                    em: ({ children }) => <em className="text-ares-gold/80">{children}</em>,
+                  }}
+                >
+                  {currentDoc.content || ""}
+                </ReactMarkdown>
+              </div>
+
+              {/* Footer */}
+              {currentDoc.updated_at && (
+                <div className="mt-12 pt-6 border-t border-white/8 text-xs text-white/20">
+                  Last updated: {new Date(currentDoc.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                </div>
+              )}
+            </motion.article>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}

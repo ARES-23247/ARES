@@ -20,6 +20,7 @@ import Dashboard from "./pages/Dashboard";
 import TechStack from "./pages/TechStack";
 import Accessibility from "./pages/Accessibility";
 import Privacy from "./pages/Privacy";
+import Docs from "./pages/Docs";
 
 export default function App() {
   const location = useLocation();
@@ -46,6 +47,8 @@ export default function App() {
               <Route path="/tech-stack" element={<TechStack />} />
               <Route path="/accessibility" element={<Accessibility />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/docs" element={<Docs />} />
+              <Route path="/docs/:slug" element={<Docs />} />
             </Routes>
           </ErrorBoundary>
         </AnimatePresence>
