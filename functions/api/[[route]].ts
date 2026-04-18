@@ -185,50 +185,36 @@ apiRouter.get("/events/:id", async (c) => {
   }
 });
 
-// ── POST /api/events — create a new event (admin) ────────────────────
-apiRouter.post("/admin/events", async (c) => {
+async function getSocialConfig(c: any): Promise<any> {
   try {
-    const { id, title, dateStart, dateEnd, location, description, coverImage } = await c.req.json();
-
-    if (!id || !title || !dateStart) {
-      return c.json({ error: "Missing required fields" }, 400);
-    }
-
-    const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_dashboard_user";
-
     const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
     const dbSettings: Record<string, string> = {};
     for (const row of settingsRows as { key: string, value: string }[]) {
-       dbSettings[row.key] = row.value;
-    }
-    const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
-    const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
-    const calId = dbSettings["CALENDAR_ID"];
-
-    let gcalId: string | undefined = undefined;
-    if (gcalEmail && gcalKey && calId) {
-      try {
-        gcalId = await pushEventToGcal(
-          { id, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage },
-          { email: gcalEmail, privateKey: gcalKey, calendarId: calId }
-        );
-      } catch (err) {
-        console.error("GCal create failed:", err);
-      }
+      dbSettings[row.key] = row.value;
     }
 
-    await c.env.DB.prepare(
-      "INSERT INTO events (id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    )
-      .bind(id, title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, email)
-      .run();
-
-    return c.json({ success: true, id });
-  } catch (err: unknown) {
-    console.error("D1 write error (events):", err);
-    return c.json({ success: false, error: (err as Error)?.message || "Event creation failed" }, 500);
+    return {
+      DISCORD_WEBHOOK_URL: c.env.DISCORD_WEBHOOK_URL || dbSettings["DISCORD_WEBHOOK_URL"],
+      MAKE_WEBHOOK_URL: dbSettings["MAKE_WEBHOOK_URL"],
+      BLUESKY_HANDLE: dbSettings["BLUESKY_HANDLE"],
+      BLUESKY_APP_PASSWORD: dbSettings["BLUESKY_APP_PASSWORD"],
+      SLACK_WEBHOOK_URL: dbSettings["SLACK_WEBHOOK_URL"],
+      TEAMS_WEBHOOK_URL: dbSettings["TEAMS_WEBHOOK_URL"],
+      GCHAT_WEBHOOK_URL: dbSettings["GCHAT_WEBHOOK_URL"],
+      FACEBOOK_PAGE_ID: dbSettings["FACEBOOK_PAGE_ID"],
+      FACEBOOK_ACCESS_TOKEN: dbSettings["FACEBOOK_ACCESS_TOKEN"],
+      TWITTER_API_KEY: dbSettings["TWITTER_API_KEY"],
+      TWITTER_API_SECRET: dbSettings["TWITTER_API_SECRET"],
+      TWITTER_ACCESS_TOKEN: dbSettings["TWITTER_ACCESS_TOKEN"],
+      TWITTER_ACCESS_SECRET: dbSettings["TWITTER_ACCESS_SECRET"],
+      INSTAGRAM_ACCOUNT_ID: dbSettings["INSTAGRAM_ACCOUNT_ID"],
+      INSTAGRAM_ACCESS_TOKEN: dbSettings["INSTAGRAM_ACCESS_TOKEN"]
+    };
+  } catch (err) {
+    console.error("Failed to fetch settings for social integration:", err);
+    return {};
   }
-});
+}
 
 // ── POST /api/posts — create a new blog post (admin) ────────────────
 apiRouter.post("/admin/posts", async (c) => {
@@ -245,10 +231,17 @@ apiRouter.post("/admin/posts", async (c) => {
       return c.json({ success: false, error: "Title is required" }, 400);
     }
 
-    const slug = body.title
+    let slug = body.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
+
+    // ── Slug Collision Protection ──
+    const existingSlug = await c.env.DB.prepare("SELECT slug FROM posts WHERE slug = ?").bind(slug).first();
+    if (existingSlug) {
+      const suffix = Math.random().toString(36).substring(2, 6);
+      slug = `${slug}-${suffix}`;
+    }
 
     const dateStr = new Date().toLocaleDateString("en-US", {
       year: "numeric",
@@ -308,23 +301,8 @@ apiRouter.post("/admin/posts", async (c) => {
 
     // ── Phase 3: Omnichannel Social Media Integration ──
     try {
-      const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
-      const dbSettings: Record<string, string> = {};
-      for (const row of settingsRows as { key: string, value: string }[]) {
-         dbSettings[row.key] = row.value;
-      }
-
-      const socialConfig = {
-         DISCORD_WEBHOOK_URL: c.env.DISCORD_WEBHOOK_URL || dbSettings["DISCORD_WEBHOOK_URL"],
-         MAKE_WEBHOOK_URL: dbSettings["MAKE_WEBHOOK_URL"],
-         BLUESKY_HANDLE: dbSettings["BLUESKY_HANDLE"],
-         BLUESKY_APP_PASSWORD: dbSettings["BLUESKY_APP_PASSWORD"],
-         SLACK_WEBHOOK_URL: dbSettings["SLACK_WEBHOOK_URL"],
-         TEAMS_WEBHOOK_URL: dbSettings["TEAMS_WEBHOOK_URL"],
-         GCHAT_WEBHOOK_URL: dbSettings["GCHAT_WEBHOOK_URL"],
-         FACEBOOK_PAGE_ID: dbSettings["FACEBOOK_PAGE_ID"],
-         FACEBOOK_ACCESS_TOKEN: dbSettings["FACEBOOK_ACCESS_TOKEN"]
-      };
+      const socialConfig = await getSocialConfig(c);
+      const socialsFilter = (body as any).socials || null;
 
       c.executionCtx.waitUntil(
          dispatchSocials({
@@ -332,10 +310,10 @@ apiRouter.post("/admin/posts", async (c) => {
            url: `https://ares23247.com/blog/${slug}`,
            snippet: snippet || "Read the latest engineering update from ARES 23247!",
            coverImageUrl: body.coverImageUrl || "/gallery_1.png"
-         }, socialConfig).catch(err => console.error("Social dispatch returned top-level rejection:", err))
+         }, socialConfig, socialsFilter).catch(err => console.error("Social dispatch returned top-level rejection:", err))
       );
     } catch(err) {
-      console.error("Failed to fetch settings for social integration:", err);
+      console.error("Critical Social Dispatch Failure:", err);
     }
 
     return c.json({ success: true, slug });
@@ -726,6 +704,36 @@ apiRouter.delete("/admin/events/:id", async (c) => {
   }
 });
 
+// ── POST /api/events/:id/repush — manual social broadcast (admin) ──
+apiRouter.post("/admin/events/:id/repush", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const { socials } = await c.req.json<{ socials: Record<string, boolean> }>();
+    
+    const event = await c.env.DB.prepare(
+      "SELECT title, description, cover_image FROM events WHERE id = ?"
+    ).bind(id).first<{ title: string, description: string, cover_image: string }>();
+
+    if (!event) return c.json({ error: "Event not found" }, 404);
+
+    const socialConfig = await getSocialConfig(c);
+    
+    c.executionCtx.waitUntil(
+      dispatchSocials({
+        title: event.title,
+        url: `https://ares23247.com/events`, // Link to events page
+        snippet: event.description || "Join us for our upcoming event!",
+        coverImageUrl: event.cover_image || "/gallery_1.png"
+      }, socialConfig, socials).catch(err => console.error("Event repush failed:", err))
+    );
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("Event repush error:", err);
+    return c.json({ error: "Repush failed" }, 500);
+  }
+});
+
 // ── DELETE /api/posts/:slug — delete a blog post (admin) ────────────────
 apiRouter.delete("/admin/posts/:slug", async (c) => {
   try {
@@ -738,24 +746,51 @@ apiRouter.delete("/admin/posts/:slug", async (c) => {
   }
 });
 
+// ── POST /api/posts/:slug/repush — manual social broadcast (admin) ──
+apiRouter.post("/admin/posts/:slug/repush", async (c) => {
+  try {
+    const slug = c.req.param("slug");
+    const { socials } = await c.req.json<{ socials: Record<string, boolean> }>();
+    
+    const post = await c.env.DB.prepare(
+      "SELECT title, snippet, thumbnail FROM posts WHERE slug = ?"
+    ).bind(slug).first<{ title: string, snippet: string, thumbnail: string }>();
+
+    if (!post) return c.json({ error: "Post not found" }, 404);
+
+    const socialConfig = await getSocialConfig(c);
+    
+    c.executionCtx.waitUntil(
+      dispatchSocials({
+        title: post.title,
+        url: `https://ares23247.com/blog/${slug}`,
+        snippet: post.snippet || "Read the latest update from ARES 23247!",
+        coverImageUrl: post.thumbnail || "/gallery_1.png"
+      }, socialConfig, socials).catch(err => console.error("Post repush failed:", err))
+    );
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("Post repush error:", err);
+    return c.json({ error: "Repush failed" }, 500);
+  }
+});
+
 // ── PUT /api/events/:id — edit an event (admin) ────────────────────────
 apiRouter.put("/admin/events/:id", async (c) => {
   try {
     const paramId = c.req.param("id");
-    const { title, dateStart, dateEnd, location, description, coverImage } = await c.req.json();
+    const body = await c.req.json();
+    const { title, dateStart, dateEnd, location, description, coverImage, socials } = body;
 
     if (!title || !dateStart) {
       return c.json({ error: "Missing required fields" }, 400);
     }
 
-    const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
-    const dbSettings: Record<string, string> = {};
-    for (const row of settingsRows as { key: string, value: string }[]) {
-       dbSettings[row.key] = row.value;
-    }
-    const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
-    const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
-    const calId = dbSettings["CALENDAR_ID"];
+    const socialConfig = await getSocialConfig(c);
+    const gcalEmail = socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"];
+    const gcalKey = socialConfig["GCAL_PRIVATE_KEY"];
+    const calId = socialConfig["CALENDAR_ID"];
 
     // Attempt GCal update
     let gcalId: string | undefined = undefined;
@@ -776,6 +811,18 @@ apiRouter.put("/admin/events/:id", async (c) => {
     )
       .bind(title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, paramId)
       .run();
+
+    // ── Optional Social Syndication ──
+    if (socials) {
+       c.executionCtx.waitUntil(
+          dispatchSocials({
+            title: title,
+            url: `https://ares23247.com/events`,
+            snippet: description || "New event scheduled!",
+            coverImageUrl: coverImage || "/gallery_1.png"
+          }, socialConfig, socials).catch(err => console.error("Event update social dispatch failed:", err))
+       );
+    }
 
     return c.json({ success: true, id: paramId });
   } catch (err: unknown) {
@@ -1027,6 +1074,60 @@ apiRouter.patch("/admin/docs/:slug/sort", async (c) => {
   } catch (err) {
     console.error("D1 doc sort update error:", err);
     return c.json({ error: "Sort update failed" }, 500);
+  }
+});
+
+// ── POST /api/admin/events — manual event creation (admin) ─────────────
+apiRouter.post("/admin/events", async (c) => {
+  try {
+    const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_admin";
+    const body = await c.req.json();
+    const { title, dateStart, dateEnd, location, description, coverImage, socials } = body;
+
+    if (!title || !dateStart) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    const genId = crypto.randomUUID();
+    
+    // Sync to GCal if enabled
+    let gcalId: string | null = null;
+    const socialConfig = await getSocialConfig(c);
+    const gcalEmail = socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"];
+    const gcalKey = socialConfig["GCAL_PRIVATE_KEY"];
+    const calId = socialConfig["CALENDAR_ID"];
+
+    if (gcalEmail && gcalKey && calId) {
+      try {
+        gcalId = await pushEventToGcal(
+           { id: genId, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage },
+           { email: gcalEmail, privateKey: gcalKey, calendarId: calId }
+        );
+      } catch (err) {
+        console.error("GCal manual POST error:", err);
+      }
+    }
+
+    await c.env.DB.prepare(
+      "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).bind(genId, title, dateStart, dateEnd || null, location || "", description || "", gcalId, email, coverImage || null).run();
+
+    // Dispatch Socials
+    if (socials) {
+       c.executionCtx.waitUntil(
+          dispatchSocials({
+            title: title,
+            url: `https://ares23247.com/events`,
+            snippet: description || "New event scheduled!",
+            coverImageUrl: coverImage || "/gallery_1.png"
+          }, socialConfig, socials).catch(err => console.error("Event social dispatch failed:", err))
+       );
+    }
+
+    return c.json({ success: true, id: genId });
+  } catch (err: unknown) {
+    console.error("D1 manual event creation error:", err);
+    return c.json({ error: "Write failed" }, 500);
   }
 });
 

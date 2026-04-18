@@ -29,10 +29,19 @@ export interface PostPayload {
  * Pushes updates to all configured social channels simultaneously.
  * Fails gracefully on any single provider so others still execute.
  */
-export async function dispatchSocials(payload: PostPayload, config: SocialConfig) {
+export async function dispatchSocials(
+  payload: PostPayload, 
+  config: SocialConfig, 
+  socialsFilter: Record<string, boolean> | null = null
+) {
   const promises: Promise<unknown>[] = [];
 
-  if (config.DISCORD_WEBHOOK_URL && config.DISCORD_WEBHOOK_URL.trim() !== '') {
+  const isEnabled = (key: string) => {
+    if (!socialsFilter) return true;
+    return socialsFilter[key] === true;
+  };
+
+  if (config.DISCORD_WEBHOOK_URL && config.DISCORD_WEBHOOK_URL.trim() !== '' && isEnabled('discord')) {
     promises.push(
       fetch(config.DISCORD_WEBHOOK_URL, {
         method: "POST",
@@ -55,7 +64,7 @@ export async function dispatchSocials(payload: PostPayload, config: SocialConfig
     );
   }
 
-  if (config.MAKE_WEBHOOK_URL && config.MAKE_WEBHOOK_URL.trim() !== '') {
+  if (config.MAKE_WEBHOOK_URL && config.MAKE_WEBHOOK_URL.trim() !== '' && isEnabled('make')) {
     promises.push(
       fetch(config.MAKE_WEBHOOK_URL, {
         method: "POST",
@@ -65,7 +74,7 @@ export async function dispatchSocials(payload: PostPayload, config: SocialConfig
     );
   }
 
-  if (config.SLACK_WEBHOOK_URL && config.SLACK_WEBHOOK_URL.trim() !== '') {
+  if (config.SLACK_WEBHOOK_URL && config.SLACK_WEBHOOK_URL.trim() !== '' && isEnabled('slack')) {
     promises.push(
       fetch(config.SLACK_WEBHOOK_URL, {
         method: "POST",
@@ -77,7 +86,7 @@ export async function dispatchSocials(payload: PostPayload, config: SocialConfig
     );
   }
 
-  if (config.TEAMS_WEBHOOK_URL && config.TEAMS_WEBHOOK_URL.trim() !== '') {
+  if (config.TEAMS_WEBHOOK_URL && config.TEAMS_WEBHOOK_URL.trim() !== '' && isEnabled('teams')) {
     promises.push(
       fetch(config.TEAMS_WEBHOOK_URL, {
         method: "POST",
@@ -106,7 +115,7 @@ export async function dispatchSocials(payload: PostPayload, config: SocialConfig
     );
   }
 
-  if (config.GCHAT_WEBHOOK_URL && config.GCHAT_WEBHOOK_URL.trim() !== '') {
+  if (config.GCHAT_WEBHOOK_URL && config.GCHAT_WEBHOOK_URL.trim() !== '' && isEnabled('gchat')) {
     promises.push(
       fetch(config.GCHAT_WEBHOOK_URL, {
         method: "POST",
@@ -118,7 +127,7 @@ export async function dispatchSocials(payload: PostPayload, config: SocialConfig
     );
   }
 
-  if (config.FACEBOOK_PAGE_ID && config.FACEBOOK_ACCESS_TOKEN) {
+  if (config.FACEBOOK_PAGE_ID && config.FACEBOOK_ACCESS_TOKEN && isEnabled('facebook')) {
     const fbUrl = `https://graph.facebook.com/v19.0/${config.FACEBOOK_PAGE_ID}/feed`;
     const fbPayload = new URLSearchParams({
       message: `🚀 New Update: ${payload.title}\n\n${payload.snippet}`,
@@ -134,7 +143,7 @@ export async function dispatchSocials(payload: PostPayload, config: SocialConfig
     );
   }
 
-  if (config.BLUESKY_HANDLE && config.BLUESKY_APP_PASSWORD) {
+  if (config.BLUESKY_HANDLE && config.BLUESKY_APP_PASSWORD && isEnabled('bluesky')) {
     promises.push(
       (async () => {
         try {

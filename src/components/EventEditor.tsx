@@ -43,6 +43,17 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
   const [isImporting, setIsImporting] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSimPickerOpen, setIsSimPickerOpen] = useState(false);
+  const [socials, setSocials] = useState<Record<string, boolean>>({
+    discord: true,
+    bluesky: true,
+    slack: false,
+    teams: false,
+    gchat: false,
+    facebook: false,
+    twitter: false,
+    instagram: false
+  });
+  const [availableSocials, setAvailableSocials] = useState<string[]>([]);
 
   const lowlight = useMemo(() => createLowlight(common), []);
 
@@ -150,6 +161,31 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
     fetchEvent();
   }, [editId, editor]);
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/dashboard/api/admin/settings", { credentials: "include" });
+        const data = await res.json();
+        if (data.success && data.settings) {
+          const config = data.settings;
+          const available = [];
+          if (config.DISCORD_WEBHOOK_URL) available.push("discord");
+          if (config.BLUESKY_HANDLE && config.BLUESKY_APP_PASSWORD) available.push("bluesky");
+          if (config.SLACK_WEBHOOK_URL) available.push("slack");
+          if (config.TEAMS_WEBHOOK_URL) available.push("teams");
+          if (config.GCHAT_WEBHOOK_URL) available.push("gchat");
+          if (config.FACEBOOK_ACCESS_TOKEN) available.push("facebook");
+          if (config.TWITTER_ACCESS_TOKEN) available.push("twitter");
+          if (config.INSTAGRAM_ACCESS_TOKEN) available.push("instagram");
+          setAvailableSocials(available);
+        }
+      } catch (err) {
+        console.error("Failed to fetch available socials:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -249,7 +285,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, socials }),
       });
 
       const data = await res.json();
@@ -493,6 +529,34 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
           />
         </div>
       </div>
+
+      {/* Social Syndication Controls */}
+      {availableSocials.length > 0 && (
+        <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4 shadow-inner">
+          <div className="flex items-center gap-2 mb-3">
+             <div className="w-2 h-2 rounded-full bg-ares-cyan animate-pulse"></div>
+             <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Broadcast & Social Syndication</span>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {availableSocials.map(platform => (
+              <label key={platform} className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={socials[platform] || false}
+                  onChange={(e) => setSocials(prev => ({ ...prev, [platform]: e.target.checked }))}
+                  className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-ares-red focus:ring-ares-red transition-all cursor-pointer"
+                />
+                <span className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors capitalize">
+                  {platform}
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="text-[10px] text-zinc-500 mt-2 italic font-mono uppercase tracking-tighter">
+            * Selected platforms will receive a preview card and link immediately upon {editId ? "updating" : "publication"}.
+          </p>
+        </div>
+      )}
 
       <div className="flex items-center justify-between mt-6 pt-6 border-t border-zinc-800">
         <div className="flex flex-col">

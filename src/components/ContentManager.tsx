@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Radio } from "lucide-react";
+import BroadcastModal from "./BroadcastModal";
 
 interface EventItem {
   id: string;
@@ -37,6 +38,12 @@ export default function ContentManager({
 }) {
   const queryClient = useQueryClient();
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [broadcastData, setBroadcastData] = useState<{ isOpen: boolean, type: "blog" | "event", id: string, title: string }>({
+    isOpen: false,
+    type: "blog",
+    id: "",
+    title: ""
+  });
 
   const { data: events = [], isLoading: loadingEvents } = useQuery<EventItem[]>({
     queryKey: ["events"],
@@ -259,6 +266,13 @@ export default function ContentManager({
                       >
                         EDIT
                       </button>
+                      <button
+                        onClick={() => setBroadcastData({ isOpen: true, type: "event", id: event.id, title: event.title })}
+                        className="text-xs font-bold text-ares-gold/80 hover:text-ares-gold border border-ares-gold/20 hover:bg-ares-gold/10 px-3 py-1 rounded-md transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-gold"
+                      >
+                        <Radio size={12} className={broadcastData.isOpen && broadcastData.id === event.id ? "animate-pulse" : ""} />
+                        BROADCAST
+                      </button>
                       <ClickToDeleteButton 
                         id={event.id} 
                         onDelete={() => deleteEventMutation.mutate(event.id)} 
@@ -299,6 +313,13 @@ export default function ContentManager({
                         className="text-xs font-bold text-zinc-400 hover:text-ares-cyan bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
                       >
                         EDIT
+                      </button>
+                      <button
+                        onClick={() => setBroadcastData({ isOpen: true, type: "blog", id: post.slug, title: post.title })}
+                        className="text-xs font-bold text-ares-gold/80 hover:text-ares-gold border border-ares-gold/20 hover:bg-ares-gold/10 px-3 py-1 rounded-md transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-gold"
+                      >
+                        <Radio size={12} className={broadcastData.isOpen && broadcastData.id === post.slug ? "animate-pulse" : ""} />
+                        BROADCAST
                       </button>
                       <ClickToDeleteButton 
                         id={post.slug} 
@@ -374,6 +395,14 @@ export default function ContentManager({
 
         </div>
       )}
+
+      <BroadcastModal 
+        isOpen={broadcastData.isOpen}
+        onClose={() => setBroadcastData(prev => ({ ...prev, isOpen: false }))}
+        type={broadcastData.type}
+        id={broadcastData.id}
+        title={broadcastData.title}
+      />
     </div>
   );
 }
