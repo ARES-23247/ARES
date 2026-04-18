@@ -57,6 +57,11 @@ export default function Docs() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
 
+  // Sync state variables for render-phase updates
+  const [hasInitializedDocs, setHasInitializedDocs] = useState(false);
+  const [prevDocCategory, setPrevDocCategory] = useState<string | undefined>(undefined);
+  const [prevSlug, setPrevSlug] = useState<string | undefined>(slug);
+
   // ── 2. Data Fetching (useQuery) ──────────────────────────────────────
   const { data: allDocs = [] } = useQuery<DocRecord[]>({
     queryKey: ["docs-list"],
@@ -143,28 +148,30 @@ export default function Docs() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // ── 6. Render-Phase State Syncs ─────────────────────────────────────
   // Initial expansion of all categories (User requested start open)
-  useEffect(() => {
-    if (allDocs.length > 0) {
-      setExpandedCats(prev => {
-        const next = new Set(prev);
-        allDocs.forEach(d => next.add(d.category));
-        return next;
-      });
-    }
-  }, [allDocs]);
+  if (allDocs.length > 0 && !hasInitializedDocs) {
+    setHasInitializedDocs(true);
+    const next = new Set(expandedCats);
+    allDocs.forEach(d => next.add(d.category));
+    setExpandedCats(next);
+  }
 
   // Auto-expand category for active document
-  useEffect(() => {
-    if (currentDoc?.category) {
-      setExpandedCats(prev => {
-        if (prev.has(currentDoc.category)) return prev;
-        const next = new Set(prev);
-        next.add(currentDoc.category);
-        return next;
-      });
+  if (currentDoc?.category !== prevDocCategory) {
+    setPrevDocCategory(currentDoc?.category);
+    if (currentDoc?.category && !expandedCats.has(currentDoc.category)) {
+      const next = new Set(expandedCats);
+      next.add(currentDoc.category);
+      setExpandedCats(next);
     }
-  }, [currentDoc]);
+  }
+
+  // Sync Mobile Sidebar Toggle when navigating
+  if (slug !== prevSlug) {
+    setPrevSlug(slug);
+    setSidebarOpen(false);
+  }
 
   // Auto-navigate to first doc if homepage requested
   useEffect(() => {
@@ -172,11 +179,6 @@ export default function Docs() {
       navigate(`/docs/${allDocs[0].slug}`, { replace: true });
     }
   }, [slug, allDocs, navigate]);
-
-  // Sync Mobile Sidebar Toggle
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [slug]);
 
   const groupedDocs = groupedDocsList;
 
