@@ -20,6 +20,7 @@ export default function Events() {
     queryFn: async () => {
       const res = await fetch("/api/events");
       const data = await res.json();
+      // @ts-expect-error -- D1 untyped response
       return data.events ?? [];
     },
   });

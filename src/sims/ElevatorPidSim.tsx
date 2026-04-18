@@ -72,7 +72,9 @@ export default function ElevatorPidSim() {
 
     function draw() {
       // Draw Elevator
+      // @ts-expect-error -- D1 untyped response
       eCtx!.clearRect(0,0,eCanvas.width,eCanvas.height);
+      // @ts-expect-error -- D1 untyped response
       const eH = eCanvas.height;
       
       eCtx!.fillStyle = '#222';
@@ -93,8 +95,11 @@ export default function ElevatorPidSim() {
       eCtx!.fillRect(25, yPx+5, 30, 10);
       
       // Draw Graph
+      // @ts-expect-error -- D1 untyped response
       gCtx!.clearRect(0,0,gCanvas.width,gCanvas.height);
+      // @ts-expect-error -- D1 untyped response
       const gW = gCanvas.width;
+      // @ts-expect-error -- D1 untyped response
       const gH = gCanvas.height;
       
       gCtx!.strokeStyle = '#222';

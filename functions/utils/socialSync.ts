@@ -144,6 +144,7 @@ export async function dispatchSocials(payload: PostPayload, config: SocialConfig
             password: config.BLUESKY_APP_PASSWORD as string,
           });
 
+          // @ts-expect-error -- D1 untyped response
           const rt = new agent.rtText.RichText({
             text: `🚀 New Blog Post: ${payload.title}\n\n${payload.snippet}\n\nRead more: ${payload.url}`
           });
@@ -224,14 +225,14 @@ export async function dispatchPhotoSocials(imageUrl: string, caption: string, co
           const creationPayload = new URLSearchParams({
             image_url: imageUrl,
             caption: caption,
-            access_token: config.INSTAGRAM_ACCESS_TOKEN
+            access_token: config.INSTAGRAM_ACCESS_TOKEN || ""
           });
           const createRes = await fetch(creationUrl, { method: "POST", body: creationPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
           const createData = await createRes.json() as { id?: string };
 
           if (createData.id) {
             const publishUrl = `https://graph.facebook.com/v19.0/${config.INSTAGRAM_ACCOUNT_ID}/media_publish`;
-            const publishPayload = new URLSearchParams({ creation_id: createData.id, access_token: config.INSTAGRAM_ACCESS_TOKEN });
+            const publishPayload = new URLSearchParams({ creation_id: createData.id, access_token: config.INSTAGRAM_ACCESS_TOKEN || "" });
             await fetch(publishUrl, { method: "POST", body: publishPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
           }
         } catch (err) { console.error("Instagram push failed:", err); }
@@ -245,7 +246,7 @@ export async function dispatchPhotoSocials(imageUrl: string, caption: string, co
       (async () => {
         try {
           const fbUrl = `https://graph.facebook.com/v19.0/${config.FACEBOOK_PAGE_ID}/photos`;
-          const fbPayload = new URLSearchParams({ url: imageUrl, message: caption, access_token: config.FACEBOOK_ACCESS_TOKEN });
+          const fbPayload = new URLSearchParams({ url: imageUrl, message: caption, access_token: config.FACEBOOK_ACCESS_TOKEN || "" });
           await fetch(fbUrl, { method: "POST", body: fbPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
         } catch (err) { console.error("Facebook Photo push failed:", err); }
       })()

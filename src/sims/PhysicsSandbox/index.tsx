@@ -1,5 +1,12 @@
 import { useRef, useEffect, useState } from 'react';
-import styles from './styles.module.css';
+
+type Ball = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+};
 
 export default function PhysicsSandbox(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -12,7 +19,7 @@ export default function PhysicsSandbox(): JSX.Element {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let balls: unknown[] = [];
+    let balls: Ball[] = [];
     const robot = { x: 370, y: 170, w: 60, h: 60 };
     let isDragging = false;
     let dragOffsetX = 0;
@@ -206,18 +213,18 @@ export default function PhysicsSandbox(): JSX.Element {
   }, []);
 
   return (
-    <div className={styles.simulatorContainer}>
-      <div className={styles.header}>
+    <div className="bg-[#111] border border-zinc-700/50 rounded-xl p-5 my-10">
+      <div className="flex justify-between items-center mb-5">
         <div>
-          <h3>Interactive Collision Sandbox</h3>
-          <p>Drag the blue robot chassis to collide with the Fuel Balls. Hit them into the goal!</p>
+          <h3 className="m-0 text-white font-bold">Interactive Collision Sandbox</h3>
+          <p className="m-0 text-sm text-zinc-400">Drag the blue robot chassis to collide with the Fuel Balls. Hit them into the goal!</p>
         </div>
-        <div className={styles.scoreBoard}>
+        <div className="bg-ares-red/20 border border-ares-red px-4 py-2 rounded-lg font-heading font-bold text-white">
           SCORE: {score}
         </div>
       </div>
-      <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={canvasRef} width={800} height={400} className={styles.canvas} />
-      <div className={styles.footerLog}>
+      <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={canvasRef} width={800} height={400} className="w-full max-w-[800px] aspect-[2/1] h-auto block mx-auto bg-[#050505] rounded-lg border border-zinc-800 cursor-grab drop-shadow-2xl shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]" />
+      <div className="mt-4 p-3 bg-black/50 rounded-md font-mono text-sm text-zinc-400">
         {log}
       </div>
     </div>

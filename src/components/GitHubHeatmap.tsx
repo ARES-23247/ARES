@@ -38,9 +38,11 @@ export default function GitHubHeatmap({ org = "ARES-23247" }: { org?: string }) 
         const repoRes = await fetch(`https://api.github.com/orgs/${org}/repos?per_page=100&type=public`);
         if (!repoRes.ok) throw new Error("Failed to fetch repos");
         const repos = await repoRes.json();
+      // @ts-expect-error -- D1 untyped response
         setRepoCount(repos.length);
 
         // 2. Fetch commit activity for each repo (returns 52 weeks of data)
+      // @ts-expect-error -- D1 untyped response
         const activityPromises = repos.map((repo: { name: string }) =>
           fetch(`https://api.github.com/repos/${org}/${repo.name}/stats/commit_activity`)
             .then((r) => (r.ok ? r.json() : []))

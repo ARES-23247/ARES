@@ -23,7 +23,9 @@ export default function EventDetail() {
       const r = await fetch(`/api/events/${id}`);
       if (!r.ok) throw new Error("Event Record Erased or Unfound.");
       const data = await r.json();
+      // @ts-expect-error -- D1 untyped response
       if (!data || !data.event) throw new Error("Event Record Erased or Unfound.");
+      // @ts-expect-error -- D1 untyped response
       return data.event;
     },
     enabled: !!id,

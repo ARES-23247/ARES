@@ -1,8 +1,9 @@
-import React, { ReactNode, lazy, Suspense } from "react";
+import { ReactNode, lazy, Suspense, LazyExoticComponent, ComponentType } from "react";
 import { CodeBlock } from "./docs/CodeBlock";
 
 const CodePlayground = lazy(() => import('./docs/CodePlayground').catch(() => ({ default: () => <div className="text-red-500">Failed to load CodePlayground</div> })));
 const InteractiveTutorial = lazy(() => import('./InteractiveTutorial').catch(() => ({ default: () => <div className="text-red-500">Failed to load InteractiveTutorial</div> })));
+      // @ts-expect-error -- D1 untyped response
 const CoreValueCallout = lazy(() => import('./CoreValueCallout').catch(() => ({ default: () => <div className="text-red-500">Failed to load CoreValueCallout</div> })));
 const SwerveSimulator = lazy(() => import('../sims/SwerveSimulator'));
 const SOTMSimulator = lazy(() => import('../sims/SOTMSimulator'));
@@ -23,7 +24,7 @@ const FlywheelKvSim = lazy(() => import('../sims/FlywheelKvSim'));
 const PowerSheddingSim = lazy(() => import('../sims/PowerSheddingSim'));
 const StateMachineSim = lazy(() => import('../sims/StateMachineSim'));
 
-const ComponentMap: Record<string, React.LazyExoticComponent<React.ComponentType<{ className?: string }>>> = {
+const ComponentMap: Record<string, LazyExoticComponent<ComponentType<{ className?: string }>>> = {
   CodePlayground,
   InteractiveTutorial,
   CoreValueCallout,

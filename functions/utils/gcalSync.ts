@@ -48,7 +48,7 @@ export async function getGcalAccessToken(config: GCalConfig): Promise<string> {
   if (!data.access_token) {
     throw new Error("Failed to get Google Calendar access token: " + JSON.stringify(data));
   }
-  return data.access_token;
+  return data.access_token as string;
 }
 
 /**
@@ -117,7 +117,7 @@ export async function pushEventToGcal(event: ARES_Event, config: GCalConfig): Pr
     throw new Error(`Google API Error: ${res.status}`);
   }
 
-  return data.id; // Returns the generated or existing gcal_id
+  return data.id as string | undefined; // Returns the generated or existing gcal_id
 }
 
 /**

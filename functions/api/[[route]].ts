@@ -75,6 +75,36 @@ apiRouter.get("/auth-check", async (c) => {
   return c.json({ authenticated: false }, 401);
 });
 
+// ── GET /api/search — Global Platform Search ───────────────────────────
+apiRouter.get("/search", async (c) => {
+  try {
+    const q = c.req.query("q") || "";
+    if (q.length < 2) return c.json({ results: [] });
+
+    // Perform a naive LIKE query across posts and events
+    // In D1, we query both and merge.
+    const wildcard = `%${q}%`;
+    const [postsReq, eventsReq] = await Promise.all([
+      c.env.DB.prepare(
+        "SELECT 'blog' as type, slug as id, title, snippet as matched_text FROM posts WHERE title LIKE ? OR snippet LIKE ? LIMIT 5"
+      ).bind(wildcard, wildcard).all(),
+      c.env.DB.prepare(
+        "SELECT 'event' as type, id, title, description as matched_text FROM events WHERE title LIKE ? OR description LIKE ? LIMIT 5"
+      ).bind(wildcard, wildcard).all()
+    ]);
+
+    const results = [
+      ...(postsReq.results || []),
+      ...(eventsReq.results || [])
+    ];
+    
+    return c.json({ results });
+  } catch (err) {
+    console.error("D1 search error:", err);
+    return c.json({ results: [] }, 500);
+  }
+});
+
 // ── GET /api/posts — list all blog posts ─────────────────────────────
 apiRouter.get("/posts", async (c) => {
   try {
@@ -181,6 +211,7 @@ apiRouter.post("/admin/events", async (c) => {
 // ── POST /api/posts — create a new blog post (admin) ────────────────
 apiRouter.post("/admin/posts", async (c) => {
   try {
+    const email = c.req.header("cf-access-authenticated-user-email");
     const body = await c.req.json<{
       title: string;
       author?: string;

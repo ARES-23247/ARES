@@ -1,8 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Search } from "lucide-react";
+import GlobalSearchModal from "./GlobalSearchModal";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -29,7 +32,14 @@ export default function Navbar() {
           <Link to="/blog" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-4">
+          <button
+            onClick={() => setSearchOpen(true)}
+            aria-label="Open Site Search"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
+          >
+            <Search size={18} aria-hidden="true" />
+          </button>
           <Link to="/contact" className="clipped-button-sm bg-ares-red text-white hover:scale-105 hover:bg-ares-red transition-all shadow-[0_0_15px_rgba(192,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
             Support Us
           </Link>
@@ -49,19 +59,24 @@ export default function Navbar() {
 
       {open && (
         <div className="md:hidden mt-4 flex flex-col gap-4 text-sm font-bold uppercase tracking-widest px-2 pb-4 border-t border-white/10 pt-4">
-          <Link to="/" onClick={() => setOpen(false)} className="text-marble hover:text-ares-gold">Home</Link>
-          <Link to="/about" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">About</Link>
-          <Link to="/seasons" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Seasons</Link>
-          <Link to="/outreach" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Outreach</Link>
-          <Link to="/events" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Events</Link>
-          <Link to="/tech-stack" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Tech Stack</Link>
-          <Link to="/docs" onClick={() => setOpen(false)} className="hover:text-ares-gold transition-colors flex items-center">
+          <button onClick={() => { setOpen(false); setSearchOpen(true); }} className="text-left text-ares-gold flex items-center gap-2 mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">
+            <Search size={16} aria-hidden="true" /> Search Pipeline
+          </button>
+          <Link to="/" onClick={() => setOpen(false)} className="text-marble hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Home</Link>
+          <Link to="/about" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">About</Link>
+          <Link to="/seasons" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Seasons</Link>
+          <Link to="/outreach" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Outreach</Link>
+          <Link to="/events" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Events</Link>
+          <Link to="/tech-stack" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Tech Stack</Link>
+          <Link to="/docs" onClick={() => setOpen(false)} className="hover:text-ares-gold transition-colors flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">
             <span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span>
           </Link>
-          <Link to="/blog" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Blog</Link>
-          <Link to="/contact" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold">Contact</Link>
+          <Link to="/blog" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
+          <Link to="/contact" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Contact</Link>
         </div>
       )}
+
+      {searchOpen && <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />}
     </nav>
   );
 }

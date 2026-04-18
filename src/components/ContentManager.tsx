@@ -43,6 +43,7 @@ export default function ContentManager({
     queryFn: async () => {
       const res = await fetch("/api/events");
       const data = await res.json();
+      // @ts-expect-error -- D1 untyped response
       return data.events ?? [];
     },
   });
@@ -52,6 +53,7 @@ export default function ContentManager({
     queryFn: async () => {
       const res = await fetch("/api/posts");
       const data = await res.json();
+      // @ts-expect-error -- D1 untyped response
       return data.posts ?? [];
     },
   });
@@ -61,6 +63,7 @@ export default function ContentManager({
     queryFn: async () => {
       const res = await fetch("/api/docs");
       const data = await res.json();
+      // @ts-expect-error -- D1 untyped response
       return data.docs ?? [];
     },
   });
@@ -70,6 +73,7 @@ export default function ContentManager({
       const res = await fetch(`/dashboard/api/admin/events/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+      // @ts-expect-error -- D1 untyped response
         throw new Error(data.error || `Failed to delete event. Status: ${res.status}`);
       }
       return id;
@@ -91,6 +95,7 @@ export default function ContentManager({
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
+      // @ts-expect-error -- D1 untyped response
       alert(`Sync Complete! Fetched ${data.synced} events. (${data.newEvents} new, ${data.updatedEvents} updated)`);
     },
     onError: (err) => {
@@ -103,6 +108,7 @@ export default function ContentManager({
       const res = await fetch(`/dashboard/api/admin/posts/${slug}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+      // @ts-expect-error -- D1 untyped response
         throw new Error(data.error || `Failed to delete post. Status: ${res.status}`);
       }
       return slug;
@@ -121,6 +127,7 @@ export default function ContentManager({
       const res = await fetch(`/dashboard/api/admin/docs/${slug}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+      // @ts-expect-error -- D1 untyped response
         throw new Error(data.error || `Failed to delete doc. Status: ${res.status}`);
       }
       return slug;
@@ -143,6 +150,7 @@ export default function ContentManager({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+      // @ts-expect-error -- D1 untyped response
         throw new Error(data.error || `Failed to sort doc. Status: ${res.status}`);
       }
       return slug;

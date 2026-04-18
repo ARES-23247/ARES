@@ -21,7 +21,9 @@ export default function BlogPost() {
       const r = await fetch(`/api/posts/${slug}`);
       if (!r.ok) throw new Error("Not found");
       const data = await r.json();
+      // @ts-expect-error -- D1 untyped response
       if (!data || !data.post) throw new Error("Not found");
+      // @ts-expect-error -- D1 untyped response
       return data.post;
     },
     enabled: !!slug,

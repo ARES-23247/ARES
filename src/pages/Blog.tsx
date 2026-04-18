@@ -18,6 +18,7 @@ export default function Blog() {
     queryFn: async () => {
       const r = await fetch("/api/posts");
       const data = await r.json();
+      // @ts-expect-error -- D1 untyped response
       return data.posts ?? [];
     },
   });

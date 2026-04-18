@@ -158,10 +158,29 @@ export function calculatePerformanceMetrics(log: ParsedLog): PerformanceMetrics 
   const cpuUsages = getEntriesByKey(log.entries, 'Perf/CpuPercent');
   const memoryUsages = getEntriesByKey(log.entries, 'Perf/MemoryMB');
 
+  const loop = calculateStats(loopTimes.map((e) => e.value as number));
+  const cpu = calculateStats(cpuUsages.map((e) => e.value as number));
+  const mem = calculateStats(memoryUsages.map((e) => e.value as number));
+
   return {
-    loopTime: calculateStats(loopTimes.map(e => e.value as number)),
-    cpuUsage: calculateStats(cpuUsages.map(e => e.value as number)),
-    memoryUsage: calculateStats(memoryUsages.map(e => e.value as number)),
+    loopTime: {
+      averageMs: loop.average,
+      maxMs: loop.max,
+      minMs: loop.min,
+      stdDevMs: loop.stdDev,
+    },
+    cpuUsage: {
+      averagePercent: cpu.average,
+      maxPercent: cpu.max,
+      minPercent: cpu.min,
+      stdDevPercent: cpu.stdDev,
+    },
+    memoryUsage: {
+      averageMB: mem.average,
+      maxMB: mem.max,
+      minMB: mem.min,
+      stdDevMB: mem.stdDev,
+    },
   };
 }
 
