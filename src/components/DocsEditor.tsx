@@ -12,7 +12,7 @@ import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import Mathematics from '@tiptap/extension-mathematics';
 import { Link } from '@tiptap/extension-link';
-import { CodeBlockLowlightMermaid as Mermaid } from 'tiptap-extension-mermaid';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import Typography from '@tiptap/extension-typography';
 import Highlight from '@tiptap/extension-highlight';
 import Subscript from '@tiptap/extension-subscript';
@@ -76,9 +76,9 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
       TaskItem.configure({ nested: true, HTMLAttributes: { class: 'flex items-start gap-2 mb-1' } }),
       Mathematics,
       Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-ares-cyan underline hover:text-white transition-colors' } }),
-      Mermaid.configure({
+      CodeBlockLowlight.configure({
         lowlight,
-        HTMLAttributes: { class: 'bg-[#1e1e1e] border border-zinc-700 rounded-xl p-4 my-4 font-mono text-sm shadow-inner overflow-x-auto' }
+        // The HTMLAttributes CSS classes were moved to index.css!
       }),
       Callout,
 

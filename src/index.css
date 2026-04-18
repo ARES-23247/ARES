@@ -103,3 +103,11 @@ h1, h2, h3, h4, .font-heading {
 .callout-block[data-type="tip"]::before {
   content: "💡";
 }
+
+/* Tiptap CodeBlock syntax highlighting enforcement */
+.tiptap pre {
+  @apply bg-[#0d1117] border border-zinc-700/50 rounded-xl p-4 my-4 font-mono text-sm shadow-inner overflow-x-auto text-[#c9d1d9];
+}
+.tiptap pre code {
+  @apply bg-transparent p-0 text-inherit;
+}
