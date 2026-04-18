@@ -14,11 +14,13 @@ const apiRouter = new Hono<{ Bindings: Bindings }>();
 const ensureAdmin = async (c: Context, next: Next) => {
   const url = new URL(c.req.url);
   const email = c.req.header("cf-access-authenticated-user-email");
-  if (!email && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+  const jwt = c.req.header("cf-access-jwt-assertion");
+  if (!email && !jwt && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
     return c.json({ error: "Strict Context: Unauthorized. Cloudflare Zero Trust authentication required." }, 401);
   }
   await next();
 };
+
 
 
 // ── Auth middleware for admin routes ──────────────────────────────────
