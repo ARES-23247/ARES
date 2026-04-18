@@ -3,16 +3,28 @@ import EventEditor from "@/components/EventEditor";
 import ContentManager from "@/components/ContentManager";
 import AssetManager from "@/components/AssetManager";
 import DocsEditor from "@/components/DocsEditor";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 type TabState = "blog" | "event" | "manager" | "assets" | "docs";
 
 export default function Dashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabState>("blog");
   const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
   const [editEventId, setEditEventId] = useState<string | null>(null);
   const [editDocSlug, setEditDocSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    const docQuery = searchParams.get("editDoc");
+    if (docQuery) {
+      setEditDocSlug(docQuery);
+      setActiveTab("docs");
+      // Optional: Clear the param from the URL to avoid looping states on refresh
+      setSearchParams(new URLSearchParams());
+    }
+  }, [searchParams, setSearchParams]);
 
   return (
     <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 py-8">

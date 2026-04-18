@@ -7,7 +7,7 @@ import rehypeRaw from "rehype-raw";
 import SwerveSimulator from "../components/SwerveSimulator";
 import SOTMSimulator from "../components/SOTMSimulator";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ChevronRight, ChevronDown, Menu, X, BookOpen, ExternalLink } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, Menu, X, BookOpen, ExternalLink, Edit2 } from "lucide-react";
 import SEO from "../components/SEO";
 
 interface DocRecord {
@@ -317,13 +317,23 @@ export default function Docs() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-xs text-white/30 mb-6">
-                <Link to="/docs" className="hover:text-ares-gold transition-colors">Docs</Link>
-                <ChevronRight size={12} />
-                <span className="text-ares-gold/60">{currentDoc.category}</span>
-                <ChevronRight size={12} />
-                <span className="text-white/60">{currentDoc.title}</span>
+              {/* Breadcrumb & Admin Tools */}
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2 text-xs text-white/30">
+                  <Link to="/docs" className="hover:text-ares-gold transition-colors">Docs</Link>
+                  <ChevronRight size={12} />
+                  <span className="text-ares-gold/60">{currentDoc.category}</span>
+                  <ChevronRight size={12} />
+                  <span className="text-white/60">{currentDoc.title}</span>
+                </div>
+                
+                <Link 
+                  to={`/dashboard?editDoc=${currentDoc.slug}`}
+                  className="flex items-center gap-2 text-xs font-bold text-ares-cyan/70 hover:text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1.5 rounded-md transition-colors"
+                >
+                  <Edit2 size={12} />
+                  EDIT PAGE
+                </Link>
               </div>
 
               {/* Title */}
