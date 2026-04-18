@@ -174,6 +174,9 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
     case "codeBlock": return (
         <div className="my-4"><CodeBlock value={node.content?.[0]?.text || ""} language={node.attrs?.language as string} /></div>
     );
+    case "mermaidBlock": return (
+        <div className="my-4"><CodeBlock value={node.content?.[0]?.text || ""} language="mermaid" /></div>
+    );
     case "callout": {
       const type = node.attrs?.type || "info";
       let baseClass = "p-4 my-6 rounded-xl border flex gap-4";

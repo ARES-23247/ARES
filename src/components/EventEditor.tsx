@@ -22,6 +22,7 @@ import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { Callout } from './editor/extensions/Callout';
 import { SlashCommands } from './editor/extensions/SlashCommands';
 import Mention from '@tiptap/extension-mention';
+import { MermaidBlock } from './editor/extensions/MermaidBlock';
 import { CommandsList } from './editor/CommandsList';
 import { MentionList } from './editor/MentionList';
 import { suggestionRenderer } from './editor/suggestionRenderer';
@@ -69,6 +70,10 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
       Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-ares-cyan underline hover:text-white transition-colors' } }),
       CodeBlockLowlight.configure({
         lowlight,
+      }),
+      MermaidBlock.configure({
+        lowlight,
+        HTMLAttributes: { class: 'bg-[#1e1e1e] border border-zinc-700 rounded-xl p-4 my-4 font-mono text-sm shadow-inner overflow-x-auto' }
       }),
       Callout,
 

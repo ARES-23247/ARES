@@ -1,6 +1,6 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Editor, Range } from '@tiptap/core';
-import { Heading1, Heading2, List, ListTodo, Quote, Code, Table, Info, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Heading1, Heading2, List, ListTodo, Quote, Code, Table, Info, AlertTriangle, Lightbulb, Workflow } from 'lucide-react';
 
 interface CommandItem {
   title: string;
@@ -69,6 +69,14 @@ export const CommandsList = forwardRef<CommandsListRef, CommandsListProps>((prop
       icon: <Code size={18} />,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
+      },
+    },
+    {
+      title: 'Mermaid Diagram',
+      description: 'Live architecture diagram tool',
+      icon: <Workflow size={18} className="text-ares-cyan" />,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).setNode('mermaidBlock', { language: 'mermaid' }).run();
       },
     },
     {
