@@ -12,6 +12,21 @@ import SEO from "../components/SEO";
 import ConfigVisualizer from "../components/docs/ConfigVisualizer";
 import CodePlayground from "../components/docs/CodePlayground";
 import ScreenshotGallery from "../components/docs/ScreenshotGallery";
+import FaultSim from "../components/FaultSim";
+import PhysicsSim from "../components/PhysicsSim";
+import SysIdSim from "../components/SysIdSim";
+import VisionSim from "../components/VisionSim";
+import ZeroAllocationSim from "../components/ZeroAllocationSim";
+import FieldVisualizer from "../components/FieldVisualizer";
+import TroubleshootingWizard from "../components/TroubleshootingWizard";
+import PerformanceDashboard from "../components/PerformanceDashboard";
+import ArmKgSim from "../components/ArmKgSim";
+import AutoSim from "../components/AutoSim";
+import ElevatorPidSim from "../components/ElevatorPidSim";
+import FlywheelKvSim from "../components/FlywheelKvSim";
+import InteractiveTutorial from "../components/InteractiveTutorial";
+import PowerSheddingSim from "../components/PowerSheddingSim";
+import StateMachineSim from "../components/StateMachineSim";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -428,6 +443,21 @@ export default function Docs() {
                     configvisualizer: () => <ConfigVisualizer />,
                     codeplayground: () => <CodePlayground />,
                     screenshotgallery: () => <ScreenshotGallery />,
+                    faultsim: () => <FaultSim />,
+                    physicssim: () => <PhysicsSim />,
+                    sysidsim: () => <SysIdSim />,
+                    visionsim: () => <VisionSim />,
+                    zeroallocationsim: () => <ZeroAllocationSim />,
+                    fieldvisualizer: () => <FieldVisualizer />,
+                    troubleshootingwizard: () => <TroubleshootingWizard />,
+                    performancedashboard: () => <PerformanceDashboard />,
+                    armkgsim: () => <ArmKgSim />,
+                    autosim: () => <AutoSim />,
+                    elevatorpidsim: () => <ElevatorPidSim />,
+                    flywheelkvsim: () => <FlywheelKvSim />,
+                    interactivetutorial: () => <InteractiveTutorial />,
+                    powersheddingsim: () => <PowerSheddingSim />,
+                    statemachinesim: () => <StateMachineSim />,
                     h1: ({ children }) => <h1 className="text-3xl font-bold font-heading mt-10 mb-4 text-white border-b border-white/10 pb-2">{children}</h1>,
                     h2: ({ children }) => {
                       const text = String(children);

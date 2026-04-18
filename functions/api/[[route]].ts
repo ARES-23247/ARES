@@ -1,10 +1,14 @@
 import { Hono, Context, Next } from "hono";
 import { handle } from "hono/cloudflare-pages";
+import { pushEventToGcal, deleteEventFromGcal, pullEventsFromGcal } from "../utils/gcalSync";
 
 type Bindings = {
   DB: D1Database;
   ARES_STORAGE: R2Bucket;
   AI: { run: (model: string, input: unknown) => Promise<unknown> };
+  DISCORD_WEBHOOK_URL?: string;
+  GCAL_SERVICE_ACCOUNT_EMAIL?: string;
+  GCAL_PRIVATE_KEY?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -99,10 +103,24 @@ apiRouter.post("/admin/events", async (c) => {
       return c.json({ error: "Missing required fields" }, 400);
     }
 
+    const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_dashboard_user";
+
+    let gcalId: string | undefined = undefined;
+    if (c.env.GCAL_SERVICE_ACCOUNT_EMAIL && c.env.GCAL_PRIVATE_KEY && c.env.CALENDAR_ID) {
+      try {
+        gcalId = await pushEventToGcal(
+          { id, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage },
+          { email: c.env.GCAL_SERVICE_ACCOUNT_EMAIL, privateKey: c.env.GCAL_PRIVATE_KEY, calendarId: c.env.CALENDAR_ID as string }
+        );
+      } catch (err) {
+        console.error("GCal create failed:", err);
+      }
+    }
+
     await c.env.DB.prepare(
-      "INSERT INTO events (id, title, date_start, date_end, location, description, cover_image, cf_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO events (id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
-      .bind(id, title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", email || "anonymous_dashboard_user")
+      .bind(id, title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, email)
       .run();
 
     return c.json({ success: true, id });
@@ -186,6 +204,23 @@ apiRouter.post("/admin/posts", async (c) => {
         email || "anonymous_dashboard_user"
       )
       .run();
+
+    // ── Phase 2: Social Media Cross-Posting via Webhook ──
+    if (c.env.DISCORD_WEBHOOK_URL) {
+      const webhookUrl = c.env.DISCORD_WEBHOOK_URL as string;
+      const postUrl = `https://ares.pages.dev/blog/${slug}`;
+      const payload = {
+        content: `🚨 **New ARES Blog Post:** [${body.title}](<${postUrl}>)\n*By ${body.author || "ARES Team"}*\n\n> ${snippet || "Check out the latest update from ARES 23247!"}\n\nRead more: ${postUrl}`
+      };
+      
+      c.executionCtx.waitUntil(
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }).catch(err => console.error("Discord webhook delivery failed:", err))
+      );
+    }
 
     return c.json({ success: true, slug });
   } catch (err: unknown) {
