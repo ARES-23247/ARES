@@ -37,11 +37,42 @@ const ensureAdmin = async (c: Context, next: Next) => {
 // ── Auth middleware for admin routes ──────────────────────────────────
 apiRouter.use("/admin/*", ensureAdmin);
 
-// ── GET /api/admin/auth-check — verify Zero Trust session ────────────
-apiRouter.get("/admin/auth-check", async (c) => {
-  // If we reach here, ensureAdmin already passed — the user is authenticated.
-  const email = c.req.header("cf-access-authenticated-user-email") || "authenticated-user";
-  return c.json({ authenticated: true, email });
+// ── GET /api/auth-check — verify Zero Trust session (UI gate only) ───
+// This endpoint lives OUTSIDE /admin/* intentionally. Cloudflare Access
+// only injects cf-access-* headers for the exact path the Access Application
+// protects (/dashboard), NOT subpaths like /dashboard/api/admin/auth-check.
+// So we check headers AND the CF_Authorization cookie (set by Access after login)
+// as a fallback. The real security boundary remains ensureAdmin for mutations.
+apiRouter.get("/auth-check", async (c) => {
+  const url = new URL(c.req.url);
+
+  // Block .pages.dev alias
+  if (url.hostname.endsWith(".pages.dev")) {
+    return c.json({ authenticated: false }, 403);
+  }
+
+  // Localhost always passes
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return c.json({ authenticated: true, email: "local-dev@localhost" });
+  }
+
+  // Check Cloudflare Access injected headers (works when Access covers this path)
+  const email = c.req.header("cf-access-authenticated-user-email");
+  const jwt = c.req.header("cf-access-jwt-assertion");
+  if (email || jwt) {
+    return c.json({ authenticated: true, email: email || "authenticated-user" });
+  }
+
+  // Fallback: Check CF_Authorization cookie set by Cloudflare Access login flow.
+  // This cookie is present for ANY path on the domain after Access authentication,
+  // even if Cloudflare doesn't inject headers for this specific subpath.
+  const cookieHeader = c.req.header("cookie") || "";
+  const cfAuthMatch = cookieHeader.match(/CF_Authorization=([^;]+)/);
+  if (cfAuthMatch && cfAuthMatch[1]) {
+    return c.json({ authenticated: true, email: "authenticated-user" });
+  }
+
+  return c.json({ authenticated: false }, 401);
 });
 
 // ── GET /api/posts — list all blog posts ─────────────────────────────
@@ -333,6 +364,7 @@ apiRouter.post("/admin/upload", async (c) => {
   try {
     const body = await c.req.parseBody();
     const file = body["file"] as File;
+    const folder = (body["folder"] as string) || "Library";
 
     if (!file) {
       return c.json({ error: "No file uploaded" }, 400);
@@ -365,7 +397,16 @@ apiRouter.post("/admin/upload", async (c) => {
 
     await uploadTask;
 
-    return c.json({ success: true, url: `/api/media/${key}`, altText });
+    // 3. Register Logical Metadata
+    try {
+       await c.env.DB.prepare(
+         `INSERT INTO media_tags (key, folder, tags) VALUES (?, ?, ?)`
+       ).bind(key, folder, altText).run();
+    } catch (e) {
+       console.error("D1 registry warning, table might not exist in this environment:", e);
+    }
+
+    return c.json({ success: true, url: `/api/media/${key}`, key, folder, altText });
   } catch (err) {
     console.error("R2 upload error:", err);
     return c.json({ error: "Storage upload failed" }, 500);
@@ -462,8 +503,23 @@ apiRouter.get("/media/:key", async (c) => {
 // ── GET /api/media — list all R2 objects ──────────────────────────────
 apiRouter.get("/media", async (c) => {
   try {
-    const objects = await c.env.ARES_STORAGE.list();
-    return c.json({ media: objects.objects });
+    const [objects, dbRes] = await Promise.all([
+      c.env.ARES_STORAGE.list(),
+      c.env.DB.prepare("SELECT key, folder, tags FROM media_tags").all().catch(() => ({ results: [] }))
+    ]);
+
+    const metaMap = new Map();
+    for (const row of dbRes.results as { key: string, folder: string, tags: string }[]) {
+      metaMap.set(row.key, { folder: row.folder, tags: row.tags });
+    }
+
+    const merged = objects.objects.map(obj => ({
+      ...obj,
+      folder: metaMap.get(obj.key)?.folder || "Library",
+      tags: metaMap.get(obj.key)?.tags || ""
+    }));
+
+    return c.json({ media: merged });
   } catch (err) {
     console.error("R2 list error:", err);
     return c.json({ error: "List failed", media: [] }, 500);
@@ -474,7 +530,10 @@ apiRouter.get("/media", async (c) => {
 apiRouter.delete("/admin/media/:key", ensureAdmin, async (c) => {
   try {
     const key = c.req.param("key") as string;
-    await c.env.ARES_STORAGE.delete(key);
+    await Promise.all([
+      c.env.ARES_STORAGE.delete(key),
+      c.env.DB.prepare("DELETE FROM media_tags WHERE key = ?").bind(key).run().catch(() => {})
+    ]);
     return c.json({ success: true });
 
   } catch (err) {

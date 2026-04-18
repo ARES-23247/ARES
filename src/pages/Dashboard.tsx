@@ -35,7 +35,7 @@ export default function Dashboard() {
 
     const checkAuth = async () => {
       try {
-        const res = await fetch("/dashboard/api/admin/auth-check", {
+        const res = await fetch("/dashboard/api/auth-check", {
           credentials: "same-origin",
         });
         if (res.ok) {

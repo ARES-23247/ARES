@@ -3,6 +3,8 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import AssetPickerModal from "./AssetPickerModal";
+import SimPickerModal from "./SimPickerModal";
 
 export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: string | null; onClearEdit?: () => void }) {
   const navigate = useNavigate();
@@ -13,6 +15,8 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
   const [errorMsg, setErrorMsg] = useState("");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isUploadingInline, setIsUploadingInline] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isSimPickerOpen, setIsSimPickerOpen] = useState(false);
 
   const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -218,7 +222,20 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
           className={`px-4 py-2 rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-ares-gold ${isUploadingInline ? "bg-zinc-800 text-zinc-300 animate-pulse" : "text-ares-gold hover:bg-zinc-800 hover:text-ares-gold"}`}
           onClick={() => document.getElementById('inline-img-upload')?.click()}
         >
-          Add Image
+          Quick Upload
+        </button>
+        <button 
+          className="px-4 py-2 rounded-lg text-sm transition-all font-bold focus:outline-none focus:ring-2 focus:ring-ares-gold bg-ares-gold/20 text-ares-gold border border-ares-gold/30 hover:bg-ares-gold/30"
+          onClick={() => setIsPickerOpen(true)}
+        >
+          Open Asset Library
+        </button>
+        <div className="w-px h-6 bg-zinc-800 mx-2"></div>
+        <button 
+          className="px-4 py-2 rounded-lg text-sm transition-all font-bold focus:outline-none focus:ring-2 focus:ring-ares-red bg-ares-red/20 text-ares-red border border-ares-red/30 hover:bg-ares-red/30"
+          onClick={() => setIsSimPickerOpen(true)}
+        >
+          Inject Simulator
         </button>
         <input 
           id="inline-img-upload" 
@@ -240,6 +257,24 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
           }} 
         />
       </div>
+
+      <AssetPickerModal 
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={(url, altText) => {
+          editor.chain().focus().setImage({ src: url, alt: altText }).run();
+          setIsPickerOpen(false);
+        }}
+      />
+
+      <SimPickerModal 
+        isOpen={isSimPickerOpen}
+        onClose={() => setIsSimPickerOpen(false)}
+        onSelect={(simId) => {
+          editor.chain().focus().insertContent(`\n<${simId} />\n`).run();
+          setIsSimPickerOpen(false);
+        }}
+      />
 
       {/* Editor */}
       <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl overflow-hidden shadow-inner focus-within:border-zinc-700 transition-colors">

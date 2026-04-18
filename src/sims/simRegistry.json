@@ -1,0 +1,20 @@
+{
+  "simulators": [
+    { "id": "ArmKgSim", "name": "Arm Kinematics Gravity Model", "path": "./ArmKgSim", "requiresContext": false },
+    { "id": "AutoSim", "name": "Autonomous Visualizer", "path": "./AutoSim", "requiresContext": true },
+    { "id": "ElevatorPidSim", "name": "Elevator PID Tuning", "path": "./ElevatorPidSim", "requiresContext": false },
+    { "id": "FaultSim", "name": "Fault Tolerant State Manager", "path": "./FaultSim", "requiresContext": true },
+    { "id": "FieldVisualizer", "name": "PathPlanner Canvas Renderer", "path": "./FieldVisualizer", "requiresContext": true },
+    { "id": "FlywheelKvSim", "name": "Flywheel KV Optimization", "path": "./FlywheelKvSim", "requiresContext": false },
+    { "id": "PerformanceDashboard", "name": "AdvantageScope Telemetry Dashboard", "path": "./PerformanceDashboard", "requiresContext": true },
+    { "id": "PhysicsSim", "name": "Dyn4j Physics Subsystem", "path": "./PhysicsSim", "requiresContext": true },
+    { "id": "PowerSheddingSim", "name": "Brownout Protection Sandbox", "path": "./PowerSheddingSim", "requiresContext": false },
+    { "id": "SotmSim", "name": "Shoot-on-the-Move Analytics", "path": "./SotmSim", "requiresContext": true },
+    { "id": "StateMachineSim", "name": "State Machine Hierarchy Visualizer", "path": "./StateMachineSim", "requiresContext": false },
+    { "id": "SwerveSim", "name": "Swerve Kinematics Playground", "path": "./SwerveSim", "requiresContext": false },
+    { "id": "SysIdSim", "name": "System Identification Optimizer", "path": "./SysIdSim", "requiresContext": false },
+    { "id": "TroubleshootingWizard", "name": "MARSLib Error Triage Engine", "path": "./TroubleshootingWizard", "requiresContext": true },
+    { "id": "VisionSim", "name": "PhotonVision Pose Estimator", "path": "./VisionSim", "requiresContext": true },
+    { "id": "ZeroAllocationSim", "name": "Zero Allocation Memory Profiler", "path": "./ZeroAllocationSim", "requiresContext": true }
+  ]
+}

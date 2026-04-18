@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import AssetPickerModal from "./AssetPickerModal";
+import SimPickerModal from "./SimPickerModal";
 
 export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: string | null; onClearEdit?: () => void }) {
   const navigate = useNavigate();
@@ -13,6 +15,9 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isSimPickerOpen, setIsSimPickerOpen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!editSlug) return;
@@ -140,9 +145,26 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
         />
       </div>
 
-      <div className="flex-1">
-        <label htmlFor="doc-content" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Markdown Content</label>
+      <div className="flex-1 flex flex-col relative">
+        <div className="flex items-center justify-between mb-2">
+          <label htmlFor="doc-content" className="block text-xs font-bold text-ares-gold uppercase tracking-wider">Markdown Content</label>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsPickerOpen(true)}
+              className="px-3 py-1.5 text-xs font-bold bg-ares-gold/20 text-ares-gold border border-ares-gold/30 rounded-lg hover:bg-ares-gold/30 transition-all font-mono"
+            >
+              Insert Image
+            </button>
+            <button 
+              onClick={() => setIsSimPickerOpen(true)}
+              className="px-3 py-1.5 text-xs font-bold bg-ares-red/20 text-ares-red border border-ares-red/30 rounded-lg hover:bg-ares-red/30 transition-all font-mono"
+            >
+              Insert Simulator
+            </button>
+          </div>
+        </div>
         <textarea
+          ref={textareaRef}
           id="doc-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -150,6 +172,44 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
           placeholder="Write your Markdown and HTML here..."
         />
       </div>
+
+      <AssetPickerModal 
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={(url, altText) => {
+          const textarea = textareaRef.current;
+          if (!textarea) return;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const markdownImg = `\n![${altText || "ARES Media"}](${url})\n`;
+          const newContent = content.substring(0, start) + markdownImg + content.substring(end);
+          setContent(newContent);
+          setIsPickerOpen(false);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + markdownImg.length, start + markdownImg.length);
+          }, 0);
+        }}
+      />
+
+      <SimPickerModal 
+        isOpen={isSimPickerOpen}
+        onClose={() => setIsSimPickerOpen(false)}
+        onSelect={(simId) => {
+          const textarea = textareaRef.current;
+          if (!textarea) return;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const markdownSim = `\n<${simId} />\n`;
+          const newContent = content.substring(0, start) + markdownSim + content.substring(end);
+          setContent(newContent);
+          setIsSimPickerOpen(false);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + markdownSim.length, start + markdownSim.length);
+          }, 0);
+        }}
+      />
 
       {errorMsg && (
         <div className="p-4 rounded-xl bg-ares-red/10 border border-ares-red/30 text-red-200 text-sm">

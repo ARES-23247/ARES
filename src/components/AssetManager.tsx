@@ -15,27 +15,39 @@ export default function AssetManager() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [syndicateKey, setSyndicateKey] = useState<string | null>(null);
   const [syndicateCaption, setSyndicateCaption] = useState("");
+  const [activeFolder, setActiveFolder] = useState<string>("Library");
+  const [selectedFolderFilter, setSelectedFolderFilter] = useState<string>("All");
+  const [uploadProgress, setUploadProgress] = useState<{current: number, total: number} | null>(null);
 
-  const { data: assets = [], isLoading } = useQuery<R2Asset[]>({
+  const { data: mediaResponse, isLoading } = useQuery<{media: (R2Asset & { folder: string, tags: string })[]}>({
     queryKey: ["assets"],
     queryFn: async () => {
       const res = await fetch("/dashboard/api/admin/media");
       const data = await res.json();
-      return data.assets ?? [];
+      return data;
     },
   });
+  const assets = mediaResponse?.media ?? [];
 
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const compressed = await compressImage(file);
-      const formData = new FormData();
-      formData.append("file", compressed, file.name.replace(/\.[^/.]+$/, ".webp"));
-      const res = await fetch("/dashboard/api/admin/upload", { method: "POST", body: formData });
-      return res.json();
+    mutationFn: async (files: File[]) => {
+      setUploadProgress({ current: 0, total: files.length });
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const compressed = await compressImage(file);
+        const formData = new FormData();
+        formData.append("file", compressed, file.name.replace(/\.[^/.]+$/, ".webp"));
+        formData.append("folder", activeFolder);
+        const res = await fetch("/dashboard/api/admin/upload", { method: "POST", body: formData });
+        if (!res.ok) throw new Error("Upload failed");
+        setUploadProgress({ current: i + 1, total: files.length });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assets"] });
+      setTimeout(() => setUploadProgress(null), 1000);
     },
+    onError: () => setUploadProgress(null)
   });
 
   const deleteMutation = useMutation({
@@ -92,9 +104,9 @@ export default function AssetManager() {
   };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    uploadMutation.mutate(file, {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    uploadMutation.mutate(files, {
       onSettled: () => {
         e.target.value = "";
       }
@@ -114,29 +126,42 @@ export default function AssetManager() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const uniqueFolders = Array.from(new Set(assets.map(a => a.folder))).filter(Boolean);
+  const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter(a => a.folder === selectedFolderFilter);
+
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold text-white tracking-tighter">Asset Vault</h2>
           <p className="text-zinc-400 text-sm mt-1">
-            Manage images stored in the Cloudflare R2 bucket. {assets.length} asset{assets.length !== 1 && "s"} total.
+            {assets.length} asset{assets.length !== 1 && "s"} registered in the Edge.
           </p>
         </div>
-        <div>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            placeholder="Assign Tag/Folder (e.g., Outreach)"
+            value={activeFolder}
+            onChange={(e) => setActiveFolder(e.target.value)}
+            className="w-48 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-ares-gold hidden sm:block"
+          />
           <label
             htmlFor="asset-upload-input"
-            className={`px-6 py-3 rounded-2xl font-bold uppercase tracking-widest text-xs cursor-pointer transition-all focus-within:ring-2 focus-within:ring-ares-gold ${
+            className={`px-6 py-3 rounded-2xl font-bold uppercase tracking-widest text-xs cursor-pointer transition-all flex items-center gap-2 focus-within:ring-2 focus-within:ring-ares-gold ${
               uploadMutation.isPending
-                ? "bg-zinc-800 text-zinc-400 animate-pulse pointer-events-none"
+                ? "bg-zinc-800 text-zinc-400 pointer-events-none"
                 : "bg-ares-gold text-obsidian hover:bg-ares-gold/80 shadow-lg"
             }`}
           >
-            {uploadMutation.isPending ? "Uploading..." : "Upload Asset"}
+            {uploadMutation.isPending 
+              ? `Uploading ${uploadProgress?.current} / ${uploadProgress?.total}` 
+              : "Upload Bulk"}
             <input
               id="asset-upload-input"
               type="file"
               accept="image/*"
+              multiple
               className="hidden"
               onChange={handleUpload}
             />
@@ -153,8 +178,22 @@ export default function AssetManager() {
           <p className="text-zinc-400 text-sm italic">No assets found in R2. Upload an image to get started.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto max-h-[600px] pr-2">
-          {assets.map((asset) => (
+        <>
+          <div className="flex flex-wrap gap-2 mb-4 pb-2 border-b border-zinc-800/80">
+            <button 
+              onClick={() => setSelectedFolderFilter("All")}
+              className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border transition-all ${selectedFolderFilter === "All" ? "bg-ares-gold border-ares-gold text-black" : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-white"}`}
+            >All Gallery</button>
+            {uniqueFolders.map(folder => (
+              <button 
+                key={folder}
+                onClick={() => setSelectedFolderFilter(folder)}
+                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border shadow-sm transition-all ${selectedFolderFilter === folder ? "bg-white border-white text-black" : "bg-black/40 border-zinc-700 text-zinc-400 hover:text-white"}`}
+              >{folder}</button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto max-h-[600px] pr-2">
+            {filteredAssets.map((asset) => (
             <div
               key={asset.key}
               className="group relative bg-black/40 border border-zinc-800/60 rounded-xl overflow-hidden hover:border-zinc-700 transition-colors flex flex-col"
@@ -203,17 +242,25 @@ export default function AssetManager() {
               </div>
 
               {/* Info strip */}
-              <div className="p-2 flex flex-col gap-0.5">
-                <p className="text-zinc-300 text-[10px] font-bold truncate" title={asset.key}>
+              <div className="p-3 bg-zinc-900 border-t border-zinc-800/60">
+                <p className="text-white text-xs font-mono font-medium truncate w-full" title={asset.key}>
                   {asset.key}
                 </p>
-                <p className="text-zinc-500 text-[10px]">
-                  {formatSize(asset.size)} · {format(new Date(asset.uploaded), 'MMM do, yyyy')}
-                </p>
+                <div className="flex justify-between items-center mt-2 border-t border-zinc-800/50 pt-2">
+                  <p className="text-zinc-500 text-[10px] tracking-widest uppercase">
+                    {formatSize(asset.size)}
+                  </p>
+                  {asset.folder && (
+                    <span className="bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+                      {asset.folder}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Syndication Modal Overlay */}
