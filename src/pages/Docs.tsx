@@ -50,12 +50,14 @@ const Placeholder = ({ name }: { name: string }) => (
 export default function Docs() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  
+  // ── 1. State ────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set(SIDEBAR_ORDER));
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
 
-  // ── Fetch all docs for sidebar ──────────────────────────────────────
+  // ── 2. Data Fetching (useQuery) ──────────────────────────────────────
   const { data: allDocs = [] } = useQuery<DocRecord[]>({
     queryKey: ["docs-list"],
     queryFn: async () => {
@@ -65,7 +67,6 @@ export default function Docs() {
     },
   });
 
-  // ── Fetch single doc content ────────────────────────────────────────
   const { data: currentDoc, isLoading: docLoading } = useQuery<DocRecord>({
     queryKey: ["doc", slug],
     queryFn: async () => {
@@ -77,7 +78,6 @@ export default function Docs() {
     enabled: !!slug,
   });
 
-  // ── Search ──────────────────────────────────────────────────────────
   const { data: searchResults = [] } = useQuery<SearchResult[]>({
     queryKey: ["docs-search", searchQuery],
     queryFn: async () => {
@@ -88,39 +88,35 @@ export default function Docs() {
     enabled: searchQuery.length >= 2,
   });
 
-  // ── Group docs by category ──────────────────────────────────────────
-  const groupedDocs = useMemo(() => {
+  // ── 3. Computed Values (useMemo) ────────────────────────────────────
+  const groupedDocsList = useMemo(() => {
     const groups: Record<string, DocRecord[]> = {};
     for (const doc of allDocs) {
       if (!groups[doc.category]) groups[doc.category] = [];
       groups[doc.category].push(doc);
     }
-    // Sort by SIDEBAR_ORDER
     const ordered: [string, DocRecord[]][] = [];
     for (const cat of SIDEBAR_ORDER) {
       if (groups[cat]) ordered.push([cat, groups[cat]]);
     }
-    // Append any remaining categories not in the order
     for (const [cat, docs] of Object.entries(groups)) {
       if (!SIDEBAR_ORDER.includes(cat)) ordered.push([cat, docs]);
     }
     return ordered;
   }, [allDocs]);
 
-  // ── Table of Contents Extraction ─────────────────────────────────────
-  let tableOfContents: Array<{level: number, text: string, id: string}> = [];
-  if (currentDoc?.content) {
+  const tableOfContents = useMemo(() => {
+    if (!currentDoc?.content) return [];
     const headings = Array.from(currentDoc.content.matchAll(/^(#{2,3})\s+(.+)$/gm));
-    tableOfContents = headings.map((match) => {
+    return headings.map((match) => {
       const level = match[1].length;
       const text = match[2].trim();
-      // Generate URL-friendly slug manually
       const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       return { level, text, id };
     });
-  }
+  }, [currentDoc]);
 
-  // ── Toggle category ─────────────────────────────────────────────────
+  // ── 4. Callbacks (useCallback) ──────────────────────────────────────
   const toggleCat = useCallback((cat: string) => {
     setExpandedCats((prev) => {
       const next = new Set(prev);
@@ -130,7 +126,8 @@ export default function Docs() {
     });
   }, []);
 
-  // ── Keyboard shortcut: Ctrl+K for search ────────────────────────────
+  // ── 5. Effects (useEffect) ──────────────────────────────────────────
+  // Keyboard Search Shortcut
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -146,18 +143,44 @@ export default function Docs() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // ── Auto-navigate to first doc if none selected ─────────────────────
+  // Initial expansion of all categories (User requested start open)
+  useEffect(() => {
+    if (allDocs.length > 0) {
+      setExpandedCats(prev => {
+        const next = new Set(prev);
+        allDocs.forEach(d => next.add(d.category));
+        return next;
+      });
+    }
+  }, [allDocs]);
+
+  // Auto-expand category for active document
+  useEffect(() => {
+    if (currentDoc?.category) {
+      setExpandedCats(prev => {
+        if (prev.has(currentDoc.category)) return prev;
+        const next = new Set(prev);
+        next.add(currentDoc.category);
+        return next;
+      });
+    }
+  }, [currentDoc]);
+
+  // Auto-navigate to first doc if homepage requested
   useEffect(() => {
     if (!slug && allDocs.length > 0) {
       navigate(`/docs/${allDocs[0].slug}`, { replace: true });
     }
   }, [slug, allDocs, navigate]);
 
-  // ── Close mobile sidebar on navigation ──────────────────────────────
+  // Sync Mobile Sidebar Toggle
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSidebarOpen(false);
   }, [slug]);
+
+  const groupedDocs = groupedDocsList;
+
+
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-[#e6edf3] flex flex-col">
