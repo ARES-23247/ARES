@@ -553,8 +553,34 @@ apiRouter.get("/media/:key", async (c) => {
   return new Response(object.body, { headers });
 });
 
-// ── GET /api/media — list all R2 objects ──────────────────────────────
+// ── GET /api/media — list public R2 objects (Gallery only) ────────────
 apiRouter.get("/media", async (c) => {
+  try {
+    const [objects, dbRes] = await Promise.all([
+      c.env.ARES_STORAGE.list(),
+      c.env.DB.prepare("SELECT key, folder, tags FROM media_tags WHERE folder = 'Gallery'").all().catch(() => ({ results: [] }))
+    ]);
+
+    const publicKeys = new Set((dbRes.results || []).map((r: any) => r.key));
+
+    const merged = objects.objects
+      .filter(obj => publicKeys.has(obj.key))
+      .map(obj => ({
+        ...obj,
+        url: `/api/media/${obj.key}`,
+        folder: "Gallery",
+        tags: (dbRes.results || []).find((r: any) => r.key === obj.key)?.tags || ""
+      }));
+
+    return c.json({ media: merged });
+  } catch (err) {
+    console.error("R2 public list error:", err);
+    return c.json({ error: "List failed", media: [] }, 500);
+  }
+});
+
+// ── GET /admin/media — list all R2 objects (CMS Admins) ───────────────
+apiRouter.get("/admin/media", async (c) => {
   try {
     const [objects, dbRes] = await Promise.all([
       c.env.ARES_STORAGE.list(),
@@ -575,7 +601,7 @@ apiRouter.get("/media", async (c) => {
 
     return c.json({ media: merged });
   } catch (err) {
-    console.error("R2 list error:", err);
+    console.error("R2 admin list error:", err);
     return c.json({ error: "List failed", media: [] }, 500);
   }
 });
