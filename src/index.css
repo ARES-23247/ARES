@@ -58,4 +58,23 @@ h1, h2, h3, h4, .font-heading {
   .obsidian-section {
     @apply bg-obsidian text-marble;
   }
+
+  /* --- GREEK ARCHITECTURAL MOTIFS --- */
+  
+  .monumental-text {
+    letter-spacing: 0.08em;
+    text-shadow: 5px 5px 0px rgba(0, 0, 0, 0.9), 1px 1px 0px rgba(255, 255, 255, 0.1);
+  }
+
+  .spartan-plate {
+    clip-path: polygon(48px 0, 100% 0, 100% calc(100% - 48px), calc(100% - 48px) 100%, 0 100%, 0 48px);
+  }
+
+  .meander-divider {
+    height: 12px;
+    width: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='12' viewBox='0 0 60 12'%3E%3Cpath d='M0 0h9v3H3v6h6v3H0V0zm12 0h9v3H15v6h6v3H12V0zm12 0h9v3H27v6h6v3H24V0zm12 0h9v3H39v6h6v3H36V0zm12 0h9v3H51v6h6v3H48V0z' fill='%23cd7f32' fill-opacity='0.4'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-position: center;
+  }
 }
