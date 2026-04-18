@@ -35,24 +35,27 @@ export default function Outreach() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-            <div className="bg-obsidian/30 hero-card p-6 border border-white/10 group">
-              <h3 className="text-white text-xl font-bold mb-3">Become a Mentor</h3>
-              <p className="text-white/70 text-base leading-relaxed">
+            <a href="/contact" className="bg-obsidian/30 hero-card p-6 border border-white/10 group block">
+              <h3 className="text-white text-xl font-bold mb-3 group-hover:text-ares-gold transition-colors">Become a Mentor</h3>
+              <p className="text-white/70 text-base leading-relaxed mb-4">
                 Mentors with FIRST are building more than robots. Engineering, animation, design, communications &amp; business planning — we need mentors of all kinds.
               </p>
-            </div>
-            <div className="bg-obsidian/30 hero-card p-6 border border-white/10 group">
-              <h3 className="text-white text-xl font-bold mb-3">Sponsor Us</h3>
-              <p className="text-white/70 text-base leading-relaxed">
+              <span className="text-ares-gold text-sm font-bold uppercase tracking-wider group-hover:tracking-widest transition-all">Get In Touch →</span>
+            </a>
+            <a href="/contact" className="bg-obsidian/30 hero-card p-6 border border-white/10 group block">
+              <h3 className="text-white text-xl font-bold mb-3 group-hover:text-ares-gold transition-colors">Sponsor Us</h3>
+              <p className="text-white/70 text-base leading-relaxed mb-4">
                 Robot parts, equipment, competitions, travel, and training cost money. We rely on sponsors. Please get in touch if you&apos;d like to collaborate.
               </p>
-            </div>
-            <div className="bg-obsidian/30 hero-card p-6 border border-white/10 group">
-              <h3 className="text-white text-xl font-bold mb-3">Give Us a Tour</h3>
-              <p className="text-white/70 text-base leading-relaxed">
+              <span className="text-ares-gold text-sm font-bold uppercase tracking-wider group-hover:tracking-widest transition-all">Get In Touch →</span>
+            </a>
+            <a href="/contact" className="bg-obsidian/30 hero-card p-6 border border-white/10 group block">
+              <h3 className="text-white text-xl font-bold mb-3 group-hover:text-ares-gold transition-colors">Give Us a Tour</h3>
+              <p className="text-white/70 text-base leading-relaxed mb-4">
                 Help us experience robotics in the workforce. We would love to see how key aspects like sensors or coding influence your robots!
               </p>
-            </div>
+              <span className="text-ares-gold text-sm font-bold uppercase tracking-wider group-hover:tracking-widest transition-all">Get In Touch →</span>
+            </a>
           </div>
         </div>
       </section>
