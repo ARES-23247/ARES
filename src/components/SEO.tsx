@@ -1,5 +1,4 @@
 import { Helmet } from 'react-helmet-async';
-import { useEffect, useState } from 'react';
 
 interface SEOProps {
   title: string;
@@ -18,13 +17,7 @@ export default function SEO({
 }: SEOProps) {
   
   const siteTitle = `${title} | ARES 23247`;
-  const [currentUrl, setCurrentUrl] = useState(url || "https://ares23247.com");
-
-  useEffect(() => {
-    if (!url && typeof window !== 'undefined') {
-      setCurrentUrl(window.location.href);
-    }
-  }, [url]);
+  const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : "https://ares23247.com");
 
   const organizationSchema = {
     "@context": "https://schema.org",

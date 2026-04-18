@@ -76,7 +76,7 @@ export default function Accessibility() {
             </div>
             <h3 className="text-2xl font-bold mb-3 text-white">8th-Grade Readability</h3>
             <p className="text-zinc-400 leading-relaxed">
-              We enforce Flesch-Kincaid 8th Grade Reading constraints across our technical blog and Outreach portals. We believe FTC mechanisms shouldn't be gated behind excessive jargon.
+              We enforce Flesch-Kincaid 8th Grade Reading constraints across our technical blog and Outreach portals. We believe FTC mechanisms shouldn&apos;t be gated behind excessive jargon.
             </p>
           </motion.div>
 

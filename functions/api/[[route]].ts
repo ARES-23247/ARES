@@ -4,7 +4,7 @@ import { handle } from "hono/cloudflare-pages";
 type Bindings = {
   DB: D1Database;
   ARES_STORAGE: R2Bucket;
-  AI: any;
+  AI: { run: (model: string, input: unknown) => Promise<unknown> };
 };
 
 const app = new Hono<{ Bindings: Bindings }>().basePath("/api");
@@ -158,7 +158,7 @@ app.post("/posts", async (c) => {
                 { role: "user", content: rawText.slice(0, 2000) }
               ]
             });
-            snippet = (aiResponse as any).response?.trim() || rawText.slice(0, 200);
+            snippet = (aiResponse as { response?: string }).response?.trim() || rawText.slice(0, 200);
           } else {
             snippet = rawText.slice(0, 200);
           }
@@ -234,7 +234,7 @@ app.put("/posts/:slug", async (c) => {
                 { role: "user", content: rawText.slice(0, 2000) }
               ]
             });
-            snippet = (aiResponse as any).response?.trim() || rawText.slice(0, 200);
+            snippet = (aiResponse as { response?: string }).response?.trim() || rawText.slice(0, 200);
           } else {
             snippet = rawText.slice(0, 200);
           }
@@ -300,8 +300,8 @@ app.post("/upload", async (c) => {
           prompt: 'Describe this image for screen readers in 1 sentence. Make it helpful, concise, and focused on robotics if applicable.',
           image: uint8
         });
-        if ((aiResponse as any)?.description) {
-          altText = String((aiResponse as any).description).trim();
+        if ((aiResponse as { description?: string })?.description) {
+          altText = String((aiResponse as { description?: string }).description).trim();
         }
       }
     } catch (aiErr) {
@@ -353,10 +353,19 @@ app.get("/sitemap.xml", async (c) => {
     <priority>0.9</priority>
   </url>`;
 
-    for (const post of (posts as any)) {
+    for (const post of (posts as { slug: string }[])) {
       xml += `
   <url>
     <loc>${baseUrl}/blog/${post.slug}</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    }
+
+    for (const event of (events as { id: string }[])) {
+      xml += `
+  <url>
+    <loc>${baseUrl}/events/${event.id}</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`;
