@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -15,24 +16,28 @@ import Dashboard from "./pages/Dashboard";
 import TechStack from "./pages/TechStack";
 
 export default function App() {
+  const location = useLocation();
+  
   return (
     <>
       <Navbar />
       <main className="flex-1 flex flex-col pt-16">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/seasons" element={<Seasons />} />
-          <Route path="/outreach" element={<Outreach />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/events/:id" element={<EventDetail />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/tech-stack" element={<TechStack />} />
-        </Routes>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/seasons" element={<Seasons />} />
+            <Route path="/outreach" element={<Outreach />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/events/:id" element={<EventDetail />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/tech-stack" element={<TechStack />} />
+          </Routes>
+        </AnimatePresence>
       </main>
       <Footer />
     </>

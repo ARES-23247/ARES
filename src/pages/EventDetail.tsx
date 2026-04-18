@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { format, isBefore } from "date-fns";
+import { motion } from "framer-motion";
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 
 interface EventRow {
@@ -14,30 +16,25 @@ interface EventRow {
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
-  const [event, setEvent] = useState<EventRow | null>(null);
-  const [notFound, setNotFound] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [isPast, setIsPast] = useState(false);
 
-  useEffect(() => {
-    if (!id) return;
-    fetch(`/api/events/${id}`)
-      .then((r) => { if (!r.ok) { setNotFound(true); setLoading(false); return null; } return r.json(); })
-      .then((data) => {
-        if (data && data.event) {
-          setEvent(data.event);
-          setIsPast(new Date(data.event.date_start).getTime() < Date.now());
-        } else {
-          setNotFound(true);
-        }
-        setLoading(false);
-      })
-      .catch(() => { setNotFound(true); setLoading(false); });
-  }, [id]);
+  const { data: event, isLoading, isError } = useQuery<EventRow>({
+    queryKey: ["event", id],
+    queryFn: async () => {
+      const r = await fetch(`/api/events/${id}`);
+      if (!r.ok) throw new Error("Event Record Erased or Unfound.");
+      const data = await r.json();
+      if (!data || !data.event) throw new Error("Event Record Erased or Unfound.");
+      return data.event;
+    },
+    enabled: !!id,
+    retry: false, // Don't retry 404s
+  });
 
-  if (loading) return <div className="w-full min-h-[50vh] flex items-center justify-center text-ares-gold animate-pulse font-heading tracking-widest">Consulting the Oracle...</div>;
-  if (notFound || !event) return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white/80 font-mono text-center">Event Record Erased or Unfound.</div>;
+  if (isLoading) return <div className="w-full min-h-[50vh] flex items-center justify-center text-ares-gold animate-pulse font-heading tracking-widest">Consulting the Oracle...</div>;
+  if (isError || !event) return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white/80 font-mono text-center">Event Record Erased or Unfound.</div>;
 
+  const isPast = isBefore(new Date(event.date_start), new Date());
+  
   // Try to parse description as Tiptap AST. If it fails, treat as a legacy plain-text description.
   let parsedAst: ASTNode | null = null;
   try {
@@ -50,7 +47,12 @@ export default function EventDetail() {
   const startDate = new Date(event.date_start);
 
   return (
-    <div className="w-full min-h-screen bg-obsidian text-marble">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="w-full min-h-screen bg-obsidian text-marble"
+    >
       {/* ─── STANDALONE EVENT HERO ─── */}
       <section className="relative w-full h-[50vh] min-h-[400px] flex items-center overflow-hidden bg-obsidian border-b-[8px] border-ares-bronze/40 meander-divider">
         {event.cover_image ? (
@@ -63,8 +65,13 @@ export default function EventDetail() {
         {/* Motif: Glowing shield orb (Aegis) overlay */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vh] h-[80vh] rounded-full border border-ares-gold/10 shadow-[0_0_120px_rgba(192,0,0,0.15)] pointer-events-none mix-blend-screen animate-pulse-slow" aria-hidden="true"></div>
         
-        <div className="relative z-10 max-w-5xl mx-auto px-6 w-full mt-16">
-          <Link to="/events" className="text-ares-gold hover:text-white uppercase tracking-widest text-xs font-bold transition-all flex items-center gap-2 mb-6">
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="relative z-10 max-w-5xl mx-auto px-6 w-full mt-16"
+        >
+          <Link to="/events" className="text-ares-gold hover:text-white uppercase tracking-widest text-xs font-bold transition-all flex items-center gap-2 mb-6 w-fit">
             <span>&larr;</span> Back to Archive
           </Link>
           <div className="flex items-center gap-4 mb-4">
@@ -77,7 +84,7 @@ export default function EventDetail() {
           </h1>
           <div className="mt-8 flex flex-col md:flex-row gap-6 text-ares-bronze font-medium text-lg lg:text-xl">
             <p className="flex items-center gap-2">
-              <span className="text-white/70">Date:</span> {startDate.toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+              <span className="text-white/70">Date:</span> {format(startDate, 'EEEE, MMMM do, yyyy')}
             </p>
             {event.location && (
               <p className="flex items-center gap-2">
@@ -85,7 +92,7 @@ export default function EventDetail() {
               </p>
             )}
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ─── EVENT CONTENT BODY ─── */}
@@ -97,14 +104,19 @@ export default function EventDetail() {
           <div className="w-8 h-4 border-t-2 border-ares-bronze/10 rounded-b-lg mt-2"></div>
         </div>
 
-        <article className="prose prose-invert lg:prose-lg max-w-none w-full prose-headings:text-white prose-headings:font-heading prose-headings:uppercase prose-p:text-white/80 prose-a:text-ares-gold prose-img:rounded-2xl prose-img:border prose-img:border-zinc-800">
+        <motion.article 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="prose prose-invert lg:prose-lg max-w-none w-full prose-headings:text-white prose-headings:font-heading prose-headings:uppercase prose-p:text-white/80 prose-a:text-ares-gold prose-img:rounded-2xl prose-img:border prose-img:border-zinc-800"
+        >
           {parsedAst ? (
             <TiptapRenderer node={parsedAst} />
           ) : (
             <p className="whitespace-pre-wrap text-xl leading-relaxed">{event.description}</p>
           )}
-        </article>
+        </motion.article>
       </section>
-    </div>
+    </motion.div>
   );
 }

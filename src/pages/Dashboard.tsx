@@ -3,6 +3,7 @@ import EventEditor from "@/components/EventEditor";
 import ContentManager from "@/components/ContentManager";
 import AssetManager from "@/components/AssetManager";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type TabState = "blog" | "event" | "manager" | "assets";
 
@@ -52,35 +53,65 @@ export default function Dashboard() {
         </div>
 
         <div className="w-full">
-          {activeTab === "blog" && (
-            <div className="w-full glass-card rounded-3xl p-6 md:p-10 border border-zinc-800 flex flex-col bg-zinc-900 shadow-2xl">
-              <BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} />
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {activeTab === "blog" && (
+              <motion.div 
+                key="blog"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-zinc-800 flex flex-col bg-zinc-900 shadow-2xl"
+              >
+                <BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} />
+              </motion.div>
+            )}
 
-          {activeTab === "event" && (
-            <div className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-red/30 flex flex-col bg-zinc-900 relative shadow-2xl">
-              <div className="absolute inset-0 bg-ares-red/5 rounded-3xl pointer-events-none mix-blend-screen" />
-              <div className="relative z-10 w-full h-full">
-                <EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} />
-              </div>
-            </div>
-          )}
+            {activeTab === "event" && (
+              <motion.div 
+                key="event"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-red/30 flex flex-col bg-zinc-900 relative shadow-2xl"
+              >
+                <div className="absolute inset-0 bg-ares-red/5 rounded-3xl pointer-events-none mix-blend-screen" />
+                <div className="relative z-10 w-full h-full">
+                  <EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} />
+                </div>
+              </motion.div>
+            )}
 
-          {activeTab === "manager" && (
-            <div className="w-full glass-card rounded-3xl p-6 md:p-10 border border-zinc-800 flex flex-col bg-zinc-900 shadow-2xl">
-              <ContentManager 
-                onEditPost={(slug) => { setEditPostSlug(slug); setActiveTab("blog"); }}
-                onEditEvent={(id) => { setEditEventId(id); setActiveTab("event"); }}
-              />
-            </div>
-          )}
+            {activeTab === "manager" && (
+              <motion.div 
+                key="manager"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-zinc-800 flex flex-col bg-zinc-900 shadow-2xl"
+              >
+                <ContentManager 
+                  onEditPost={(slug) => { setEditPostSlug(slug); setActiveTab("blog"); }}
+                  onEditEvent={(id) => { setEditEventId(id); setActiveTab("event"); }}
+                />
+              </motion.div>
+            )}
 
-          {activeTab === "assets" && (
-            <div className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-bronze/30 flex flex-col bg-zinc-900 shadow-2xl">
-              <AssetManager />
-            </div>
-          )}
+            {activeTab === "assets" && (
+              <motion.div 
+                key="assets"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-bronze/30 flex flex-col bg-zinc-900 shadow-2xl"
+              >
+                <AssetManager />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

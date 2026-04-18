@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 
 interface EventItem {
   id: string;
@@ -21,79 +23,67 @@ export default function ContentManager({
   onEditPost?: (slug: string) => void;
   onEditEvent?: (id: string) => void;
 }) {
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [posts, setPosts] = useState<PostItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Deletion logic statuses
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let ignore = false;
-    
-    const loadContent = async () => {
-      try {
-        const [eventsRes, postsRes] = await Promise.all([
-          fetch("/api/events"),
-          fetch("/api/posts"),
-        ]);
+  const { data: events = [], isLoading: loadingEvents } = useQuery<EventItem[]>({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const res = await fetch("/api/events");
+      const data = await res.json();
+      return data.events ?? [];
+    },
+  });
 
-        if (ignore) return;
-        
-        const eventsData = await eventsRes.json();
-        const postsData = await postsRes.json();
+  const { data: posts = [], isLoading: loadingPosts } = useQuery<PostItem[]>({
+    queryKey: ["posts"],
+    queryFn: async () => {
+      const res = await fetch("/api/posts");
+      const data = await res.json();
+      return data.posts ?? [];
+    },
+  });
 
-        if (eventsData.events) setEvents(eventsData.events);
-        if (postsData.posts) setPosts(postsData.posts);
-      } catch (err) {
-        console.error("Failed to fetch content", err);
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    };
-
-    loadContent();
-    return () => { ignore = true; };
-  }, []);
-
-  const handleDeleteEvent = async (id: string) => {
-    setDeletingId(id);
-    try {
+  const deleteEventMutation = useMutation({
+    mutationFn: async (id: string) => {
       const res = await fetch(`/api/events/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setEvents((prev) => prev.filter((e) => e.id !== id));
-        setConfirmId(null);
-      } else {
-        alert("Failed to delete event. Unauthorized.");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDeletingId(null);
+      if (!res.ok) throw new Error("Failed to delete event. Unauthorized.");
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      setConfirmId(null);
+    },
+    onError: (err) => {
+      alert(err.message);
     }
-  };
+  });
 
-  const handleDeletePost = async (slug: string) => {
-    setDeletingId(slug);
-    try {
+  const deletePostMutation = useMutation({
+    mutationFn: async (slug: string) => {
       const res = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
-      if (res.ok) {
-        setPosts((prev) => prev.filter((p) => p.slug !== slug));
-        setConfirmId(null);
-      } else {
-        alert("Failed to delete post. Unauthorized.");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDeletingId(null);
+      if (!res.ok) throw new Error("Failed to delete post. Unauthorized.");
+      return slug;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      setConfirmId(null);
+    },
+    onError: (err) => {
+      alert(err.message);
     }
-  };
+  });
 
-  const ClickToDeleteButton = ({ id, onDelete }: { id: string; onDelete: () => void }) => {
+  const ClickToDeleteButton = ({ 
+    id, 
+    onDelete, 
+    isDeleting 
+  }: { 
+    id: string; 
+    onDelete: () => void; 
+    isDeleting: boolean; 
+  }) => {
     const isConfirming = confirmId === id;
-    const isDeleting = deletingId === id;
 
     if (isDeleting) {
       return (
@@ -124,6 +114,8 @@ export default function ContentManager({
     );
   };
 
+  const isLoading = loadingEvents || loadingPosts;
+
   return (
     <div className="w-full h-full flex flex-col">
       <div className="mb-6">
@@ -131,7 +123,7 @@ export default function ContentManager({
         <p className="text-zinc-300 text-sm mt-1">Review and delete explicitly verified Database entries.</p>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex-1 flex items-center justify-center min-h-[300px]">
           <div className="w-8 h-8 md:w-12 md:h-12 border-4 border-zinc-800 border-t-ares-red rounded-full animate-spin"></div>
         </div>
@@ -150,7 +142,7 @@ export default function ContentManager({
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-zinc-200 truncate">{event.title}</div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded-md">{new Date(event.date_start).toLocaleDateString()}</span>
+                        <span className="text-xs text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded-md">{format(new Date(event.date_start), 'MMM do, yyyy')}</span>
                         {event.cf_email && (
                           <span className="text-[10px] text-ares-gold/70 bg-ares-gold/10 px-2 py-0.5 rounded-md truncate max-w-[150px]">
                             {event.cf_email}
@@ -165,7 +157,11 @@ export default function ContentManager({
                       >
                         EDIT
                       </button>
-                      <ClickToDeleteButton id={event.id} onDelete={() => handleDeleteEvent(event.id)} />
+                      <ClickToDeleteButton 
+                        id={event.id} 
+                        onDelete={() => deleteEventMutation.mutate(event.id)} 
+                        isDeleting={deleteEventMutation.isPending && deleteEventMutation.variables === event.id} 
+                      />
                     </div>
                   </div>
                 ))
@@ -185,7 +181,7 @@ export default function ContentManager({
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-zinc-200 truncate">{post.title}</div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded-md">{new Date(post.date).toLocaleDateString()}</span>
+                        <span className="text-xs text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded-md">{format(new Date(post.date), 'MMM do, yyyy')}</span>
                         {post.cf_email && (
                           <span className="text-[10px] text-ares-gold/70 bg-ares-gold/10 px-2 py-0.5 rounded-md truncate max-w-[150px]">
                             {post.cf_email}
@@ -200,7 +196,11 @@ export default function ContentManager({
                       >
                         EDIT
                       </button>
-                      <ClickToDeleteButton id={post.slug} onDelete={() => handleDeletePost(post.slug)} />
+                      <ClickToDeleteButton 
+                        id={post.slug} 
+                        onDelete={() => deletePostMutation.mutate(post.slug)} 
+                        isDeleting={deletePostMutation.isPending && deletePostMutation.variables === post.slug} 
+                      />
                     </div>
                   </div>
                 ))

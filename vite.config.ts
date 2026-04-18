@@ -15,6 +15,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           editor: ["@tiptap/react", "@tiptap/starter-kit"],
+          router: ["react-router-dom"],
+          motion: ["framer-motion"]
         },
       },
     },

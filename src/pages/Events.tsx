@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { format, isAfter, subDays } from "date-fns";
+import { motion } from "framer-motion";
 
 interface EventItem {
   id: string;
@@ -12,35 +14,27 @@ interface EventItem {
 }
 
 export default function Events() {
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/events")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.events) {
-          setEvents(data.events);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: events = [], isLoading } = useQuery<EventItem[]>({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const res = await fetch("/api/events");
+      const data = await res.json();
+      return data.events ?? [];
+    },
+  });
 
   const now = new Date();
-
-  // Separate events into upcoming and past based on date_start
-  // We'll consider an event "past" if its date_start is before yesterday to give some buffer
-  const bufferTime = now.getTime() - 24 * 60 * 60 * 1000;
+  
+  // Consider an event "past" if its date_start is before yesterday
+  const bufferTime = subDays(now, 1);
   
   const sortedEvents = [...events].sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime());
   
-  const upcomingEvents = sortedEvents.filter((e) => new Date(e.date_start).getTime() >= bufferTime);
-  const pastEvents = sortedEvents.filter((e) => new Date(e.date_start).getTime() < bufferTime).reverse(); // Newest past events first
+  const upcomingEvents = sortedEvents.filter((e) => isAfter(new Date(e.date_start), bufferTime));
+  const pastEvents = sortedEvents.filter((e) => !isAfter(new Date(e.date_start), bufferTime)).reverse();
 
   const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean }) => {
     const startDate = new Date(event.date_start);
-    const timeStr = startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
     return (
       <Link to={`/events/${event.id}`} className={`flex flex-col md:flex-row gap-6 bg-black/40 border ${isPast ? 'border-white/5 opacity-80' : 'border-ares-gold/30 shadow-lg shadow-ares-gold/10'} rounded-2xl overflow-hidden group hover:border-ares-gold/60 transition-all duration-300 block cursor-pointer`}>
@@ -54,15 +48,15 @@ export default function Events() {
             </div>
           )}
           <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 text-center">
-            <div className={`text-2xl font-bold ${isPast ? 'text-white/80' : 'text-ares-gold'}`}>{startDate.getDate()}</div>
-            <div className={`text-xs font-bold uppercase tracking-widest ${isPast ? 'text-white/80' : 'text-ares-red'}`}>{startDate.toLocaleDateString('en-US', { month: 'short' })}</div>
+            <div className={`text-2xl font-bold ${isPast ? 'text-white/80' : 'text-ares-gold'}`}>{format(startDate, 'd')}</div>
+            <div className={`text-xs font-bold uppercase tracking-widest ${isPast ? 'text-white/80' : 'text-ares-red'}`}>{format(startDate, 'MMM')}</div>
           </div>
         </div>
 
         {/* Content Block */}
         <div className="p-6 md:p-8 flex-1 flex flex-col justify-center">
           <div className="flex items-center gap-4 mb-3 text-sm font-semibold uppercase tracking-wider text-marble/60">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-ares-red"></span> {timeStr}</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-ares-red"></span> {format(startDate, 'h:mm a')}</span>
             {event.location && <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-ares-gold"></span> {event.location}</span>}
           </div>
           <h3 className={`text-2xl md:text-3xl font-bold mb-4 ${isPast ? 'text-white/90' : 'text-white'} group-hover:text-ares-gold transition-colors`}>{event.title}</h3>
@@ -78,7 +72,12 @@ export default function Events() {
   };
 
   return (
-    <div className="w-full flex-grow flex flex-col bg-obsidian min-h-screen">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="w-full flex-grow flex flex-col bg-obsidian min-h-screen"
+    >
       {/* ─── HEADER ─── */}
       <section className="relative w-full py-24 px-6 overflow-hidden flex flex-col items-center text-center">
         <div className="absolute inset-0 w-full h-full">
@@ -86,24 +85,33 @@ export default function Events() {
           <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-ares-red/20 to-transparent pointer-events-none blur-3xl"></div>
         </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto space-y-6">
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="relative z-10 max-w-4xl mx-auto space-y-6"
+        >
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
             Team <span className="text-ares-gold">Events</span>
           </h1>
           <p className="text-xl md:text-2xl text-ares-gray font-medium max-w-2xl mx-auto">
             Join us at our upcoming competitions, community outreach demos, and robotics workshops.
           </p>
-        </div>
+        </motion.div>
       </section>
 
       {/* ─── EVENTS CONTAINER ─── */}
       <section className="w-full max-w-5xl mx-auto px-6 pb-32 flex flex-col gap-16">
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center items-center py-20">
             <div className="w-12 h-12 border-4 border-ares-gold/30 border-t-ares-gold rounded-full animate-spin"></div>
           </div>
         ) : (
-          <>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             {/* Upcoming Events */}
             <div className="flex flex-col gap-8">
               <div className="flex items-center gap-4">
@@ -135,9 +143,9 @@ export default function Events() {
                 </div>
               </div>
             )}
-          </>
+          </motion.div>
         )}
       </section>
-    </div>
+    </motion.div>
   );
 }

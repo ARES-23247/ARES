@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 
 interface R2Asset {
   key: string;
@@ -8,32 +10,43 @@ interface R2Asset {
 }
 
 export default function AssetManager() {
-  const [assets, setAssets] = useState<R2Asset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
+  const queryClient = useQueryClient();
   const [confirmKey, setConfirmKey] = useState<string | null>(null);
-  const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchAssets = async () => {
-      try {
-        const res = await fetch("/api/media");
-        const data = await res.json();
-        if (!cancelled) setAssets(data.assets ?? []);
-      } catch (err) {
-        console.error("Failed to load assets", err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    fetchAssets();
-    return () => { cancelled = true; };
-  }, [refreshKey]);
+  const { data: assets = [], isLoading } = useQuery<R2Asset[]>({
+    queryKey: ["assets"],
+    queryFn: async () => {
+      const res = await fetch("/api/media");
+      const data = await res.json();
+      return data.assets ?? [];
+    },
+  });
 
-  const refetch = () => setRefreshKey((k) => k + 1);
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const compressed = await compressImage(file);
+      const formData = new FormData();
+      formData.append("file", compressed, file.name.replace(/\.[^/.]+$/, ".webp"));
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (key: string) => {
+      const res = await fetch(`/api/media/${key}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      return key;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+      setConfirmKey(null);
+    },
+  });
 
   const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -59,40 +72,14 @@ export default function AssetManager() {
     });
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsUploading(true);
-    try {
-      const compressed = await compressImage(file);
-      const formData = new FormData();
-      formData.append("file", compressed, file.name.replace(/\.[^/.]+$/, ".webp"));
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.success) {
-        refetch();
+    uploadMutation.mutate(file, {
+      onSettled: () => {
+        e.target.value = "";
       }
-    } catch (err) {
-      console.error("Upload failed", err);
-    } finally {
-      setIsUploading(false);
-      e.target.value = "";
-    }
-  };
-
-  const handleDelete = async (key: string) => {
-    setDeletingKey(key);
-    try {
-      const res = await fetch(`/api/media/${key}`, { method: "DELETE" });
-      if (res.ok) {
-        setAssets((prev) => prev.filter((a) => a.key !== key));
-        setConfirmKey(null);
-      }
-    } catch (err) {
-      console.error("Delete failed", err);
-    } finally {
-      setDeletingKey(null);
-    }
+    });
   };
 
   const copyUrl = (url: string, key: string) => {
@@ -121,12 +108,12 @@ export default function AssetManager() {
           <label
             htmlFor="asset-upload-input"
             className={`px-6 py-3 rounded-2xl font-bold uppercase tracking-widest text-xs cursor-pointer transition-all focus-within:ring-2 focus-within:ring-ares-gold ${
-              isUploading
+              uploadMutation.isPending
                 ? "bg-zinc-800 text-zinc-400 animate-pulse pointer-events-none"
                 : "bg-ares-gold text-obsidian hover:bg-ares-gold/80 shadow-lg"
             }`}
           >
-            {isUploading ? "Uploading..." : "Upload Asset"}
+            {uploadMutation.isPending ? "Uploading..." : "Upload Asset"}
             <input
               id="asset-upload-input"
               type="file"
@@ -138,7 +125,7 @@ export default function AssetManager() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex-1 flex items-center justify-center min-h-[300px]">
           <div className="w-8 h-8 md:w-12 md:h-12 border-4 border-zinc-800 border-t-ares-gold rounded-full animate-spin"></div>
         </div>
@@ -171,11 +158,11 @@ export default function AssetManager() {
                   </button>
                   {confirmKey === asset.key ? (
                     <button
-                      onClick={() => handleDelete(asset.key)}
-                      disabled={deletingKey === asset.key}
+                      onClick={() => deleteMutation.mutate(asset.key)}
+                      disabled={deleteMutation.isPending}
                       className="px-3 py-1.5 bg-ares-red text-white text-xs font-bold rounded-lg animate-pulse shadow-[0_0_10px_rgba(192,0,0,0.5)]"
                     >
-                      {deletingKey === asset.key ? "..." : "Confirm"}
+                      {deleteMutation.isPending ? "..." : "Confirm"}
                     </button>
                   ) : (
                     <button
@@ -194,7 +181,7 @@ export default function AssetManager() {
                   {asset.key}
                 </p>
                 <p className="text-zinc-500 text-[10px]">
-                  {formatSize(asset.size)} · {new Date(asset.uploaded).toLocaleDateString()}
+                  {formatSize(asset.size)} · {format(new Date(asset.uploaded), 'MMM do, yyyy')}
                 </p>
               </div>
             </div>
