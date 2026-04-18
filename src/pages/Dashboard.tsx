@@ -5,20 +5,53 @@ import AssetManager from "@/components/AssetManager";
 import DocsEditor from "@/components/DocsEditor";
 import IntegrationsManager from "@/components/IntegrationsManager";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings } from "lucide-react";
+import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings, ShieldAlert, Lock, RefreshCw } from "lucide-react";
 
 type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets" | "integrations";
+type AuthState = "checking" | "authenticated" | "unauthorized";
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const initialDoc = searchParams.get("editDoc");
 
+  const [authState, setAuthState] = useState<AuthState>("checking");
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabState>(initialDoc ? "docs" : "blog");
   const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
   const [editEventId, setEditEventId] = useState<string | null>(null);
   const [editDocSlug, setEditDocSlug] = useState<string | null>(initialDoc);
+
+  // ── Zero Trust Auth Gate ───────────────────────────────────────────
+  useEffect(() => {
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (isLocal) {
+      setAuthState("authenticated");
+      setAuthEmail("local-dev@localhost");
+      return;
+    }
+
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/dashboard/api/admin/auth-check", {
+          credentials: "same-origin",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAuthState("authenticated");
+          setAuthEmail(data.email || "authenticated-user");
+        } else {
+          setAuthState("unauthorized");
+        }
+      } catch {
+        setAuthState("unauthorized");
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     if (initialDoc) {
@@ -28,6 +61,84 @@ export default function Dashboard() {
       return () => clearTimeout(timer);
     }
   }, [initialDoc, setSearchParams]);
+
+  // ── Loading State ──────────────────────────────────────────────────
+  if (authState === "checking") {
+    return (
+      <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-6 z-10"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          >
+            <RefreshCw size={48} className="text-ares-gold" />
+          </motion.div>
+          <p className="text-zinc-400 text-lg font-medium">Verifying Zero Trust Session...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Unauthorized Gate ──────────────────────────────────────────────
+  if (authState === "unauthorized") {
+    return (
+      <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden">
+        {/* Background glow effects */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
+        <div className="absolute top-40 -left-64 w-96 h-96 bg-ares-gold/10 blur-[120px] rounded-full pointer-events-none opacity-40" />
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative z-10 max-w-lg w-full mx-4"
+        >
+          <div className="bg-black/60 backdrop-blur-2xl rounded-3xl border border-red-500/20 p-10 md:p-14 shadow-2xl text-center">
+            <div className="mb-8 flex justify-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ares-red/30 to-red-900/20 border border-red-500/30 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.3)]">
+                <ShieldAlert size={40} className="text-red-400" />
+              </div>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-3">
+              Authentication Required
+            </h1>
+            <p className="text-zinc-400 text-base leading-relaxed mb-8">
+              The ARES Dashboard is protected by Cloudflare Zero Trust. You must authenticate with an authorized identity provider to access internal systems.
+            </p>
+
+            <div className="space-y-4">
+              <a
+                href="/cdn-cgi/access/login"
+                className="group flex items-center justify-center gap-3 w-full px-6 py-4 bg-gradient-to-r from-ares-red to-red-700 hover:from-red-600 hover:to-red-800 text-white font-bold text-base rounded-2xl transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(220,38,38,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-gold"
+              >
+                <Lock size={18} />
+                Sign In with Cloudflare Access
+              </a>
+
+              <button
+                onClick={() => navigate("/")}
+                className="w-full px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-white font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500"
+              >
+                Return to Home
+              </button>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-white/5">
+              <p className="text-zinc-600 text-xs">
+                Protected by Cloudflare Zero Trust &middot; ARES 23247 Internal Systems
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 py-8 relative overflow-hidden">

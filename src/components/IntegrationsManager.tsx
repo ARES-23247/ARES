@@ -304,6 +304,94 @@ export default function IntegrationsManager() {
           </div>
         </div>
 
+        {/* Instagram Setup */}
+        <div className="glass-card bg-black/40 p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 opacity-10 blur-3xl rounded-full pointer-events-none" />
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Camera size={20} className="text-pink-500" /> Instagram Platform
+          </h3>
+          <p className="text-xs text-zinc-500 mb-4 block">Requires an Instagram Professional Account linked to a Facebook Page ID.</p>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="instagram_account_id" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Instagram Account ID</label>
+              <input
+                id="instagram_account_id"
+                type="text"
+                placeholder="178414XXXXXXXXX"
+                value={localSettings["INSTAGRAM_ACCOUNT_ID"] || ""}
+                onChange={(e) => handleChange("INSTAGRAM_ACCOUNT_ID", e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="instagram_access_token" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Graph Access Token</label>
+              <input
+                id="instagram_access_token"
+                type="text"
+                placeholder="EAABXXXXXXXXXXXXXXXX..."
+                value={localSettings["INSTAGRAM_ACCESS_TOKEN"] || ""}
+                onChange={(e) => handleChange("INSTAGRAM_ACCESS_TOKEN", e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* X / Twitter Setup */}
+        <div className="glass-card bg-black/40 p-6 rounded-2xl border border-white/5 relative overflow-hidden group lg:col-span-2">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-zinc-400/10 blur-3xl rounded-full pointer-events-none" />
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Share2 size={20} className="text-zinc-400" /> X (Twitter) API v2
+          </h3>
+          <p className="text-xs text-zinc-500 mb-4 block">Utilizes strict OAuth 1.0A PKCE parameters for Native Edge Cryptography integration.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="twitter_api_key" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">API Key (Consumer Key)</label>
+              <input
+                id="twitter_api_key"
+                type="text"
+                placeholder="XXXXXXXXXXXXXXXXXXXXXXXXX"
+                value={localSettings["TWITTER_API_KEY"] || ""}
+                onChange={(e) => handleChange("TWITTER_API_KEY", e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-zinc-400 transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="twitter_api_secret" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">API Key Secret</label>
+              <input
+                id="twitter_api_secret"
+                type="text"
+                placeholder="••••••••••••••••"
+                value={localSettings["TWITTER_API_SECRET"] || ""}
+                onChange={(e) => handleChange("TWITTER_API_SECRET", e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-zinc-400 transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="twitter_access_token" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Access Token</label>
+              <input
+                id="twitter_access_token"
+                type="text"
+                placeholder="111111111111111111-XXXXXXXXXXXXXXXX"
+                value={localSettings["TWITTER_ACCESS_TOKEN"] || ""}
+                onChange={(e) => handleChange("TWITTER_ACCESS_TOKEN", e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-zinc-400 transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="twitter_access_secret" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Access Token Secret</label>
+              <input
+                id="twitter_access_secret"
+                type="text"
+                placeholder="••••••••••••••••"
+                value={localSettings["TWITTER_ACCESS_SECRET"] || ""}
+                onChange={(e) => handleChange("TWITTER_ACCESS_SECRET", e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-zinc-400 transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

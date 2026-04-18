@@ -37,6 +37,13 @@ const ensureAdmin = async (c: Context, next: Next) => {
 // ── Auth middleware for admin routes ──────────────────────────────────
 apiRouter.use("/admin/*", ensureAdmin);
 
+// ── GET /api/admin/auth-check — verify Zero Trust session ────────────
+apiRouter.get("/admin/auth-check", async (c) => {
+  // If we reach here, ensureAdmin already passed — the user is authenticated.
+  const email = c.req.header("cf-access-authenticated-user-email") || "authenticated-user";
+  return c.json({ authenticated: true, email });
+});
+
 // ── GET /api/posts — list all blog posts ─────────────────────────────
 apiRouter.get("/posts", async (c) => {
   try {
