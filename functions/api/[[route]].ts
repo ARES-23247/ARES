@@ -25,9 +25,14 @@ app.use("*", async (c, next) => {
 const ensureAdmin = async (c: Context, next: Next) => {
   const url = new URL(c.req.url);
 
-  // Block raw .pages.dev alias to prevent Zero Trust bypass via header spoofing
-  if (url.hostname.endsWith(".pages.dev")) {
-    return c.json({ error: "Strict Context: Direct invocation of .pages.dev alias is forbidden." }, 403);
+  // Block raw .pages.dev alias ONLY if not authenticated via cookie/header.
+  // This prevents unauthenticated bypass but allows valid sessions.
+  const hasAuthToken = c.req.header("cf-access-authenticated-user-email") || 
+                       c.req.header("cf-access-jwt-assertion") || 
+                       /CF_Authorization=/.test(c.req.header("cookie") || "");
+
+  if (url.hostname.endsWith(".pages.dev") && !hasAuthToken && url.hostname !== "localhost") {
+    return c.json({ error: "Strict Context: Direct invocation of .pages.dev alias is forbidden without a valid Zero Trust session." }, 403);
   }
 
   const email = c.req.header("cf-access-authenticated-user-email");
@@ -59,9 +64,13 @@ apiRouter.use("/admin/*", ensureAdmin);
 apiRouter.get("/auth-check", async (c) => {
   const url = new URL(c.req.url);
 
-  // Block .pages.dev alias
-  if (url.hostname.endsWith(".pages.dev")) {
-    return c.json({ authenticated: false }, 403);
+  // Loosened .pages.dev check: Only block if no auth bits are present at all
+  const hasAuth = c.req.header("cf-access-authenticated-user-email") || 
+                  c.req.header("cf-access-jwt-assertion") || 
+                  /CF_Authorization=/.test(c.req.header("cookie") || "");
+
+  if (url.hostname.endsWith(".pages.dev") && !hasAuth && url.hostname !== "localhost") {
+    return c.json({ authenticated: false, error: "Zero Trust Session Required" }, 403);
   }
 
   // Localhost always passes

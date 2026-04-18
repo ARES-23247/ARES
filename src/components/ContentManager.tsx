@@ -70,7 +70,7 @@ export default function ContentManager({
 
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/dashboard/api/admin/events/${id}`, { method: "DELETE" });
+      const res = await fetch(`/dashboard/api/admin/events/${id}`, { method: "DELETE", credentials: "include" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
       // @ts-expect-error -- D1 untyped response
@@ -89,7 +89,7 @@ export default function ContentManager({
 
   const syncGcalMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/dashboard/api/admin/events/sync`, { method: "POST" });
+      const res = await fetch(`/dashboard/api/admin/events/sync`, { method: "POST", credentials: "include" });
       if (!res.ok) throw new Error("Sync failed. Check permissions.");
       return res.json();
     },
@@ -105,7 +105,7 @@ export default function ContentManager({
 
   const deletePostMutation = useMutation({
     mutationFn: async (slug: string) => {
-      const res = await fetch(`/dashboard/api/admin/posts/${slug}`, { method: "DELETE" });
+      const res = await fetch(`/dashboard/api/admin/posts/${slug}`, { method: "DELETE", credentials: "include" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
       // @ts-expect-error -- D1 untyped response
@@ -124,7 +124,7 @@ export default function ContentManager({
 
   const deleteDocMutation = useMutation({
     mutationFn: async (slug: string) => {
-      const res = await fetch(`/dashboard/api/admin/docs/${slug}`, { method: "DELETE" });
+      const res = await fetch(`/dashboard/api/admin/docs/${slug}`, { method: "DELETE", credentials: "include" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
       // @ts-expect-error -- D1 untyped response
@@ -146,6 +146,7 @@ export default function ContentManager({
       const res = await fetch(`/dashboard/api/admin/docs/${slug}/sort`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ sortOrder })
       });
       if (!res.ok) {
