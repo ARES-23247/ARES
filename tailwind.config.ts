@@ -22,7 +22,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        heading: ["Outfit", "Inter", "sans-serif"],
+        heading: ["League Spartan", "Inter", "sans-serif"],
       },
     },
   },

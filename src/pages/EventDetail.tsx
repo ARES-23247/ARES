@@ -17,12 +17,21 @@ export default function EventDetail() {
   const [event, setEvent] = useState<EventRow | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isPast, setIsPast] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     fetch(`/api/events/${id}`)
       .then((r) => { if (!r.ok) { setNotFound(true); setLoading(false); return null; } return r.json(); })
-      .then((data) => { if (data && data.event) { setEvent(data.event); } else { setNotFound(true); } setLoading(false); })
+      .then((data) => {
+        if (data && data.event) {
+          setEvent(data.event);
+          setIsPast(new Date(data.event.date_start).getTime() < Date.now());
+        } else {
+          setNotFound(true);
+        }
+        setLoading(false);
+      })
       .catch(() => { setNotFound(true); setLoading(false); });
   }, [id]);
 
@@ -33,13 +42,12 @@ export default function EventDetail() {
   let parsedAst: ASTNode | null = null;
   try {
     parsedAst = JSON.parse(event.description);
-    if (!parsedAst || parsedAst.type !== "doc") parsedAst = null; // Basic validation
+    if (!parsedAst || parsedAst.type !== "doc") parsedAst = null;
   } catch {
     parsedAst = null;
   }
 
   const startDate = new Date(event.date_start);
-  const isPast = startDate.getTime() < Date.now();
 
   return (
     <div className="w-full min-h-screen bg-obsidian text-marble">
@@ -53,7 +61,7 @@ export default function EventDetail() {
         <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/70 to-transparent"></div>
         
         {/* Motif: Glowing shield orb (Aegis) overlay */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vh] h-[80vh] rounded-full border border-ares-gold/10 shadow-[0_0_120px_rgba(192,0,0,0.15)] pointer-events-none mix-blend-screen animate-pulse-slow"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vh] h-[80vh] rounded-full border border-ares-gold/10 shadow-[0_0_120px_rgba(192,0,0,0.15)] pointer-events-none mix-blend-screen animate-pulse-slow" aria-hidden="true"></div>
         
         <div className="relative z-10 max-w-5xl mx-auto px-6 w-full mt-16">
           <Link to="/events" className="text-ares-gold hover:text-white uppercase tracking-widest text-xs font-bold transition-all flex items-center gap-2 mb-6">
@@ -83,7 +91,7 @@ export default function EventDetail() {
       {/* ─── EVENT CONTENT BODY ─── */}
       <section className="relative w-full max-w-5xl mx-auto px-6 py-16 flex flex-col md:flex-row gap-12">
         {/* Motif: Ionic Pillar Divider on Desktop */}
-        <div className="hidden md:flex flex-col items-center shrink-0 w-8 opacity-20">
+        <div className="hidden md:flex flex-col items-center shrink-0 w-8 opacity-20" aria-hidden="true">
           <div className="w-8 h-4 border-b-2 border-ares-gold rounded-t-lg mb-2"></div>
           <div className="w-2 flex-1 bg-gradient-to-b from-ares-gold to-ares-bronze/10 rounded-full"></div>
           <div className="w-8 h-4 border-t-2 border-ares-bronze/10 rounded-b-lg mt-2"></div>

@@ -50,7 +50,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
           if (editor) {
             try {
               editor.commands.setContent(JSON.parse(data.event.description));
-            } catch (e) {
+            } catch {
               editor.commands.setContent(`<p>${data.event.description}</p>`);
             }
           }
@@ -60,7 +60,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
       }
     };
     fetchEvent();
-  }, [editId]);
+  }, [editId, editor]);
 
   const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -200,7 +200,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Event Description / Recap</label>
+        <label htmlFor="event-desc-editor" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Event Description / Recap</label>
         
         {/* Editor Toolbar */}
         {editor && (
@@ -238,7 +238,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
           </div>
         )}
 
-        <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl overflow-hidden shadow-inner focus-within:border-zinc-700 transition-colors">
+        <div id="event-desc-editor" className="bg-zinc-950/50 border border-zinc-800 rounded-2xl overflow-hidden shadow-inner focus-within:border-zinc-700 transition-colors">
           <EditorContent editor={editor} />
         </div>
       </div>
