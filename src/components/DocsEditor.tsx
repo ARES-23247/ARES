@@ -20,9 +20,6 @@ import Superscript from '@tiptap/extension-superscript';
 import CharacterCount from '@tiptap/extension-character-count';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
-import Mention from '@tiptap/extension-mention';
-import SlashCommands, { slashCommandsSuggestion } from './tiptap/SlashCommands';
-import { mentionsSuggestionOptions } from './tiptap/MentionsList';
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import 'katex/dist/katex.min.css';
 
@@ -51,9 +48,6 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
         dragHandleWidth: 20,
         scrollTreshold: 100,
       }),
-      SlashCommands.configure({
-        suggestion: slashCommandsSuggestion,
-      }),
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
         codeBlock: false,
@@ -62,10 +56,6 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
       CodeBlockLowlight.configure({
         lowlight,
         HTMLAttributes: { class: 'bg-[#1e1e1e] border border-zinc-700 rounded-xl p-4 my-4 font-mono text-sm shadow-inner overflow-x-auto' }
-      }),
-      Mention.configure({
-        HTMLAttributes: { class: 'bg-ares-red/20 text-ares-red font-bold px-1 rounded-sm' },
-        suggestion: mentionsSuggestionOptions,
       }),
       Typography,
       Highlight.configure({ HTMLAttributes: { class: 'bg-ares-gold/30 text-black rounded-sm px-1' } }),
