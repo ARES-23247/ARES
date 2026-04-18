@@ -60,12 +60,12 @@ export default function Events() {
 
         {/* Content Block */}
         <div className="p-6 md:p-8 flex-1 flex flex-col justify-center">
-          <div className="flex items-center gap-4 mb-3 text-sm font-semibold uppercase tracking-wider text-ares-gray">
+          <div className="flex items-center gap-4 mb-3 text-sm font-semibold uppercase tracking-wider text-marble/60">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-ares-red"></span> {timeStr}</span>
             {event.location && <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-ares-gold"></span> {event.location}</span>}
           </div>
           <h3 className={`text-2xl md:text-3xl font-black mb-4 ${isPast ? 'text-white/90' : 'text-white'} group-hover:text-ares-gold transition-colors`}>{event.title}</h3>
-          <p className="text-ares-gray text-base leading-relaxed line-clamp-3">
+          <p className="text-marble/70 text-base leading-relaxed line-clamp-3">
             {event.description}
           </p>
         </div>
@@ -109,7 +109,7 @@ export default function Events() {
               
               {upcomingEvents.length === 0 ? (
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
-                  <p className="text-ares-gray text-lg">No upcoming events are currently scheduled. Check back soon!</p>
+                  <p className="text-marble/70 text-lg">No upcoming events are currently scheduled. Check back soon!</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-6">

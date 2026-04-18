@@ -14,6 +14,8 @@ const config: Config = {
         foreground: "var(--foreground)",
         "ares-red": "#C00000",
         "ares-bronze": "#CD7F32",
+        "ares-gold": "#FFB81C",
+        "ares-cyan": "#00E5FF",
         "obsidian": "#1A1A1A",
         "marble": "#F9F9F9",
         "ares-gray": "var(--ares-gray)",
