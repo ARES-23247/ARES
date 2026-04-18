@@ -185,6 +185,22 @@ apiRouter.get("/events/:id", async (c) => {
   }
 });
 
+function extractAstText(jsonStr: string): string {
+  try {
+    const ast = JSON.parse(jsonStr);
+    if (ast && ast.type === "doc") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const extract = (node: any): string => {
+        if (node.text) return node.text;
+        if (node.content) return node.content.map(extract).join(" ");
+        return "";
+      };
+      return extract(ast).trim();
+    }
+  } catch {}
+  return jsonStr;
+}
+
 async function getSocialConfig(c: Context<{ Bindings: Bindings }>): Promise<Record<string, string | undefined>> {
   try {
     const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
@@ -309,7 +325,8 @@ apiRouter.post("/admin/posts", async (c) => {
            title: body.title,
            url: `https://aresfirst.org/blog/${slug}`,
            snippet: snippet || "Read the latest engineering update from ARES 23247!",
-           coverImageUrl: body.coverImageUrl || "/gallery_1.png"
+           coverImageUrl: body.coverImageUrl || "/gallery_1.png",
+           baseUrl: new URL(c.req.url).origin
          }, socialConfig, socialsFilter).catch(err => console.error("Social dispatch returned top-level rejection:", err))
       );
     } catch(err) {
@@ -723,8 +740,9 @@ apiRouter.post("/admin/events/:id/repush", async (c) => {
       dispatchSocials({
         title: event.title,
         url: `https://aresfirst.org/events`, // Link to events page
-        snippet: event.description || "Join us for our upcoming event!",
-        coverImageUrl: event.cover_image || "/gallery_1.png"
+        snippet: extractAstText(event.description).substring(0, 250) || "Join us for our upcoming event!",
+        coverImageUrl: event.cover_image || "/gallery_1.png",
+        baseUrl: new URL(c.req.url).origin
       }, socialConfig, socials).catch(err => console.error("Event repush failed:", err))
     );
 
@@ -766,7 +784,8 @@ apiRouter.post("/admin/posts/:slug/repush", async (c) => {
         title: post.title,
         url: `https://aresfirst.org/blog/${slug}`,
         snippet: post.snippet || "Read the latest update from ARES 23247!",
-        coverImageUrl: post.thumbnail || "/gallery_1.png"
+        coverImageUrl: post.thumbnail || "/gallery_1.png",
+        baseUrl: new URL(c.req.url).origin
       }, socialConfig, socials).catch(err => console.error("Post repush failed:", err))
     );
 
@@ -819,8 +838,9 @@ apiRouter.put("/admin/events/:id", async (c) => {
           dispatchSocials({
             title: title,
             url: `https://aresfirst.org/events`,
-            snippet: description || "New event scheduled!",
-            coverImageUrl: coverImage || "/gallery_1.png"
+            snippet: extractAstText(description).substring(0, 250) || "New event scheduled!",
+            coverImageUrl: coverImage || "/gallery_1.png",
+            baseUrl: new URL(c.req.url).origin
           }, socialConfig, socials).catch(err => console.error("Event update social dispatch failed:", err))
        );
     }
@@ -1119,8 +1139,9 @@ apiRouter.post("/admin/events", async (c) => {
           dispatchSocials({
             title: title,
             url: `https://aresfirst.org/events`,
-            snippet: description || "New event scheduled!",
-            coverImageUrl: coverImage || "/gallery_1.png"
+            snippet: extractAstText(description).substring(0, 250) || "New event scheduled!",
+            coverImageUrl: coverImage || "/gallery_1.png",
+            baseUrl: new URL(c.req.url).origin
           }, socialConfig, socials).catch(err => console.error("Event social dispatch failed:", err))
        );
     }

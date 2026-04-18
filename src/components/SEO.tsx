@@ -11,20 +11,20 @@ interface SEOProps {
 export default function SEO({ 
   title, 
   description = "ARES 23247 - Appalachian Robotics & Engineering Society. FIRST® Tech Challenge Team based in Morgantown, WV.", 
-  image = "https://ares23247.com/ares_hero.png", 
+  image = "https://aresfirst.org/ares_hero.png", 
   url,
   type = "website"
 }: SEOProps) {
   
   const siteTitle = `${title} | ARES 23247`;
-  const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : "https://ares23247.com");
+  const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : "https://aresfirst.org");
 
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "ARES 23247 (Appalachian Robotics & Engineering Society)",
-    "url": "https://ares23247.com",
-    "logo": "https://ares23247.com/ares_hero.png",
+    "url": "https://aresfirst.org",
+    "logo": "https://aresfirst.org/ares_hero.png",
     "description": "FIRST® Tech Challenge (FTC) Robotics Team based in Morgantown, West Virginia.",
     "sameAs": [
       "https://github.com/ARES23247"

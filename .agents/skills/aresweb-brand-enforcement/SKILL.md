@@ -56,5 +56,11 @@ To maintain championship-level professionalism, specific organizations and techn
   - ✅ **AUTHORIZED**: `LLaVA` (Large Language-and-Vision Assistant)
   - ❌ **BANNED**: `LLaMa`, `LLava`, `llama`
 
-## 8. Execution
-Whenever you encounter UI files that violate these protocols, treat it as a critical architectural defect. You must proactively sweep the file and replace the banned colors, nomenclature, or fractured geometry containers with their authorized ARES equivalents before declaring the task complete.
+## 8. Canonical Domain Enforcement
+The official top-level domain for the team is `aresfirst.org`. 
+When writing SEO schemas, webhook payloads, social media syndicators, or any hardcoded hyperlinks targeting the production site, you **MUST** use `https://aresfirst.org`.
+- ❌ **BANNED**: `ares23247.com`, `ares.com`
+- ✅ **AUTHORIZED**: `aresfirst.org`
+
+## 9. Execution
+Whenever you encounter UI files that violate these protocols, treat it as a critical architectural defect. You must proactively sweep the file and replace the banned colors, nomenclature, fractured geometry containers, or outdated domains with their authorized ARES equivalents before declaring the task complete.

@@ -23,6 +23,7 @@ export interface PostPayload {
   url: string;
   snippet: string;
   coverImageUrl?: string;
+  baseUrl?: string;
 }
 
 /**
@@ -175,7 +176,7 @@ export async function dispatchSocials(
           let embed = undefined;
           if (payload.coverImageUrl) {
             const resolvedImageUrl = payload.coverImageUrl.startsWith('http') ? payload.coverImageUrl
-            : `https://ares23247.com${payload.coverImageUrl.startsWith('/') ? '' : '/'}${payload.coverImageUrl}`;
+            : `${payload.baseUrl || 'https://aresfirst.org'}${payload.coverImageUrl.startsWith('/') ? '' : '/'}${payload.coverImageUrl}`;
             
             try {
               const imgRes = await fetch(resolvedImageUrl);

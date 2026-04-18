@@ -14,6 +14,21 @@ interface EventItem {
   cover_image: string | null;
 }
 
+const extractPlainText = (jsonStr: string) => {
+  try {
+    const ast = JSON.parse(jsonStr);
+    if (ast && ast.type === "doc") {
+      const extract = (node: any): string => {
+        if (node.text) return node.text;
+        if (node.content) return node.content.map(extract).join(" ");
+        return "";
+      };
+      return extract(ast);
+    }
+  } catch {}
+  return jsonStr;
+};
+
 export default function Events() {
   const { data: events = [], isLoading } = useQuery<EventItem[]>({
     queryKey: ["events"],
@@ -63,7 +78,7 @@ export default function Events() {
           </div>
           <h3 className={`text-2xl md:text-3xl font-bold mb-4 ${isPast ? 'text-white/90' : 'text-white'} group-hover:text-ares-gold transition-colors`}>{event.title}</h3>
           <p className="text-marble/70 text-base leading-relaxed line-clamp-3">
-            {event.description}
+            {extractPlainText(event.description)}
           </p>
           <div className="mt-6 text-ares-gold uppercase tracking-widest text-xs font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform w-fit">
             {isPast ? "Read Recap" : "View Details"} <span className="text-lg leading-none">&rarr;</span>
