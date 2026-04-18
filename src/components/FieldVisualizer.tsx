@@ -290,8 +290,6 @@ export default function FieldVisualizer({
     };
     window.addEventListener('resize', handleResize);
 
-    const currentCanvas = canvasRef.current;
-    
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);

@@ -3,12 +3,13 @@ import EventEditor from "@/components/EventEditor";
 import ContentManager from "@/components/ContentManager";
 import AssetManager from "@/components/AssetManager";
 import DocsEditor from "@/components/DocsEditor";
+import IntegrationsManager from "@/components/IntegrationsManager";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3 } from "lucide-react";
+import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings } from "lucide-react";
 
-type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets";
+type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets" | "integrations";
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -117,6 +118,13 @@ export default function Dashboard() {
                 <Image size={16} />
                 Gallery
               </button>
+              <button
+                onClick={() => setActiveTab("integrations")}
+                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${activeTab === "integrations" ? "bg-gradient-to-b from-purple-500/20 to-purple-500/5 border border-purple-500/50 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
+              >
+                <Settings size={16} />
+                Integrations
+              </button>
             </div>
           </div>
         </div>
@@ -200,6 +208,19 @@ export default function Dashboard() {
                 className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-bronze/30 flex flex-col bg-zinc-900 shadow-2xl"
               >
                 <AssetManager />
+              </motion.div>
+            )}
+
+            {activeTab === "integrations" && (
+              <motion.div 
+                key="integrations"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-purple-500/30 flex flex-col bg-zinc-900 shadow-2xl"
+              >
+                <IntegrationsManager />
               </motion.div>
             )}
           </AnimatePresence>

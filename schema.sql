@@ -50,3 +50,10 @@ CREATE TABLE docs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_docs_category ON docs(category);
+
+DROP TABLE IF EXISTS settings;
+CREATE TABLE settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT DEFAULT (datetime('now'))
+);

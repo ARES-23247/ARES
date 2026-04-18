@@ -7,7 +7,7 @@ import rehypeRaw from "rehype-raw";
 import SwerveSimulator from "../components/SwerveSimulator";
 import SOTMSimulator from "../components/SOTMSimulator";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ChevronRight, ChevronDown, Menu, X, BookOpen, ExternalLink, Edit2, Link as LinkIcon, Copy, Check, ArrowLeft, ArrowRight } from "lucide-react";
+import { Search, BookOpen, Link as LinkIcon, Edit2, ChevronRight, ChevronDown, Menu, X, ExternalLink, ArrowLeft, ArrowRight } from "lucide-react";
 import SEO from "../components/SEO";
 import ConfigVisualizer from "../components/docs/ConfigVisualizer";
 import CodePlayground from "../components/docs/CodePlayground";
@@ -27,8 +27,8 @@ import FlywheelKvSim from "../components/FlywheelKvSim";
 import InteractiveTutorial from "../components/InteractiveTutorial";
 import PowerSheddingSim from "../components/PowerSheddingSim";
 import StateMachineSim from "../components/StateMachineSim";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import TiptapRenderer from "../components/TiptapRenderer";
+import { CodeBlock } from "../components/docs/CodeBlock";
 
 interface DocRecord {
   slug: string;
@@ -47,38 +47,6 @@ interface SearchResult {
   category: string;
   snippet: string;
 }
-
-const CodeBlock = ({ language, value, ...props }: { language?: string; value: string; [key: string]: unknown }) => {
-  const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  return (
-    <div className="relative group my-4">
-      <button
-        onClick={handleCopy}
-        className="absolute top-2 right-2 p-2 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-md opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-sm shadow-md border border-white/10"
-        aria-label="Copy code"
-      >
-        {isCopied ? <Check size={14} className="text-ares-cyan" /> : <Copy size={14} />}
-      </button>
-      <SyntaxHighlighter
-        style={vscDarkPlus as unknown}
-        language={language || 'text'}
-        PreTag="div"
-        className="rounded-lg text-sm font-mono overflow-x-auto !bg-[#161b22] border border-white/8 shadow-lg !my-0"
-        showLineNumbers={true}
-        {...props}
-      >
-        {value}
-      </SyntaxHighlighter>
-    </div>
-  );
-};
 
 // ── Sidebar structure matching Starlight layout ──────────────────────
 const SIDEBAR_ORDER = [
@@ -159,6 +127,29 @@ export default function Docs() {
 
   const tableOfContents = useMemo(() => {
     if (!currentDoc?.content) return [];
+    
+    // Check if it's Tiptap JSON
+    try {
+      const parsed = JSON.parse(currentDoc.content);
+      if (parsed.type === "doc" && parsed.content) {
+        const headings: { level: number; text: string; id: string }[] = [];
+        const findHeadings = (node: { type?: string; attrs?: { level?: number }; content?: { text?: string }[] }) => {
+          if (node.type === "heading" && (node.attrs?.level === 2 || node.attrs?.level === 3)) {
+            const text = node.content?.map((c) => c.text || "").join("") || "";
+            const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            headings.push({ level: node.attrs.level, text, id });
+          }
+          if (node.content && Array.isArray(node.content)) {
+            node.content.forEach(c => findHeadings(c as typeof node));
+          }
+        };
+        findHeadings(parsed as never);
+        return headings;
+      }
+    } catch (_) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      // Not JSON, treat as Markdown
+    }
+
     const headings = Array.from(currentDoc.content.matchAll(/^(#{2,3})\s+(.+)$/gm));
     return headings.map((match) => {
       const level = match[1].length;
@@ -229,8 +220,6 @@ export default function Docs() {
 
   const groupedDocs = groupedDocsList;
 
-
-
   return (
     <div className="min-h-screen bg-[#0d1117] text-[#e6edf3] flex flex-col">
       <SEO title={currentDoc?.title ? `${currentDoc.title} — ARESLib` : "ARESLib Documentation"} description={currentDoc?.description || "ARESLib documentation for the ARES 23247 FTC framework."} />
@@ -291,7 +280,6 @@ export default function Docs() {
 
       <div className="flex flex-1">
         {/* ── Sidebar ───────────────────────────────────────────────── */}
-        {/* Mobile toggle */}
         <button
           className="fixed bottom-6 right-6 z-40 lg:hidden bg-ares-red text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -308,7 +296,6 @@ export default function Docs() {
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           pt-24 pb-8 px-4
         `}>
-          {/* Logo area */}
           <div className="mb-6 px-2">
             <Link to="/docs" className="flex items-center gap-2 group">
               <BookOpen size={20} className="text-ares-red" />
@@ -318,7 +305,6 @@ export default function Docs() {
             </Link>
           </div>
 
-          {/* Search trigger */}
           <button
             onClick={() => setSearchOpen(true)}
             className="w-full flex items-center gap-2 px-3 py-2 mb-6 rounded-lg bg-white/5 border border-white/10 text-white/40 text-sm hover:border-ares-red/40 transition-colors"
@@ -328,7 +314,6 @@ export default function Docs() {
             <kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
           </button>
 
-          {/* Navigation Tree */}
           <nav className="space-y-1">
             {groupedDocs.map(([category, docs]) => (
               <div key={category}>
@@ -367,7 +352,6 @@ export default function Docs() {
             ))}
           </nav>
 
-          {/* Javadoc link */}
           <div className="mt-8 px-2 border-t border-white/8 pt-4">
             <a
               href="https://ARES-23247.github.io/ARESLib/javadoc/index.html"
@@ -381,7 +365,6 @@ export default function Docs() {
           </div>
         </aside>
 
-        {/* ── Main Content Layout ─────────────────────────────────────────── */}
         <div className="flex-1 flex w-full">
           <main className="flex-1 min-w-0 pt-24 pb-16 px-6 lg:px-12 max-w-4xl mx-auto xl:mx-0 xl:max-w-3xl">
           {docLoading && (
@@ -405,7 +388,6 @@ export default function Docs() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Breadcrumb & Admin Tools */}
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2 text-xs text-white/30">
                   <Link to="/docs" className="hover:text-ares-gold transition-colors flex items-center">
@@ -426,106 +408,115 @@ export default function Docs() {
                 </Link>
               </div>
 
-              {/* Title */}
               <h1 className="text-3xl lg:text-4xl font-bold font-heading mb-4 text-white">{currentDoc.title}</h1>
               {currentDoc.description && (
                 <p className="text-lg text-white/50 mb-8 border-b border-white/8 pb-8">{currentDoc.description}</p>
               )}
 
-              {/* Markdown Content */}
               <div className="ares-docs-content">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                  components={{
-                    swervesimulator: () => <SwerveSimulator />,
-                    sotmsimulator: () => <SOTMSimulator />,
-                    configvisualizer: () => <ConfigVisualizer />,
-                    codeplayground: () => <CodePlayground />,
-                    screenshotgallery: () => <ScreenshotGallery />,
-                    faultsim: () => <FaultSim />,
-                    physicssim: () => <PhysicsSim />,
-                    sysidsim: () => <SysIdSim />,
-                    visionsim: () => <VisionSim />,
-                    zeroallocationsim: () => <ZeroAllocationSim />,
-                    fieldvisualizer: () => <FieldVisualizer />,
-                    troubleshootingwizard: () => <TroubleshootingWizard />,
-                    performancedashboard: () => <PerformanceDashboard />,
-                    armkgsim: () => <ArmKgSim />,
-                    autosim: () => <AutoSim />,
-                    elevatorpidsim: () => <ElevatorPidSim />,
-                    flywheelkvsim: () => <FlywheelKvSim />,
-                    interactivetutorial: () => <InteractiveTutorial />,
-                    powersheddingsim: () => <PowerSheddingSim />,
-                    statemachinesim: () => <StateMachineSim />,
-                    h1: ({ children }) => <h1 className="text-3xl font-bold font-heading mt-10 mb-4 text-white border-b border-white/10 pb-2">{children}</h1>,
-                    h2: ({ children }) => {
-                      const text = String(children);
-                      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                      return (
-                        <h2 id={id} className="text-2xl font-bold font-heading mt-8 mb-3 text-ares-gold scroll-m-24 group relative">
-                          <a href={`#${id}`} className="absolute -left-6 top-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-ares-cyan" aria-label="Link to section">
-                            <LinkIcon size={18} />
-                          </a>
-                          {children}
-                        </h2>
-                      );
-                    },
-                    h3: ({ children }) => {
-                      const text = String(children);
-                      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                      return (
-                        <h3 id={id} className="text-xl font-bold font-heading mt-6 mb-2 text-ares-red scroll-m-24 group relative">
-                          <a href={`#${id}`} className="absolute -left-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-ares-cyan" aria-label="Link to section">
-                            <LinkIcon size={16} />
-                          </a>
-                          {children}
-                        </h3>
-                      );
-                    },
-                    h4: ({ children }) => <h4 className="text-lg font-bold mt-4 mb-2 text-white/80">{children}</h4>,
-                    p: ({ children }) => <p className="text-[#e6edf3]/80 leading-relaxed mb-4">{children}</p>,
-                    a: ({ href, children }) => (
-                      <a href={href} className="text-ares-gold hover:text-white underline underline-offset-2 transition-colors" target={href?.startsWith("http") ? "_blank" : undefined} rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}>
-                        {children}
-                      </a>
-                    ),
-                    ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-4 text-[#e6edf3]/70 ml-2">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-4 text-[#e6edf3]/70 ml-2">{children}</ol>,
-                    li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-                    blockquote: ({ children }) => (
-                      <blockquote className="border-l-4 border-ares-red/60 bg-ares-red/5 px-4 py-3 my-4 text-white/70 italic rounded-r-lg">{children}</blockquote>
-                    ),
-                    code: ({ className, children, ...props }) => {
-                      const match = /language-(\w+)/.exec(className || '');
-                      const isInline = !match;
-                      if (isInline) {
-                        return <code className="bg-ares-red/10 text-ares-gold px-1.5 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>;
-                      }
-                      return (
-                        <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} {...props} />
-                      );
-                    },
-                    pre: ({ children }) => <>{children}</>,
-                    table: ({ children }) => (
-                      <div className="overflow-x-auto my-4">
-                        <table className="w-full border-collapse border border-white/10 text-sm">{children}</table>
-                      </div>
-                    ),
-                    th: ({ children }) => <th className="border border-white/10 bg-ares-red/10 px-4 py-2 text-left font-bold text-ares-gold">{children}</th>,
-                    td: ({ children }) => <td className="border border-white/10 px-4 py-2 text-[#e6edf3]/70">{children}</td>,
-                    hr: () => <hr className="border-white/10 my-8" />,
-                    img: ({ src, alt }) => (
-                      <img src={src} alt={alt || "ARESLib documentation image"} className="rounded-lg border border-white/10 my-4 max-w-full" />
-                    ),
-                    strong: ({ children }) => <strong className="text-white font-bold">{children}</strong>,
-                    em: ({ children }) => <em className="text-ares-gold/80">{children}</em>,
-                  }}
-                >
-                  {currentDoc.content || ""}
-                </ReactMarkdown>
+                {(() => {
+                  try {
+                    const parsed = JSON.parse(currentDoc.content || "");
+                    if (parsed.type === "doc") {
+                      return <TiptapRenderer node={parsed} />;
+                    }
+                  } catch (_) { // eslint-disable-line @typescript-eslint/no-unused-vars
+                    // ignore parse failure
+                  }
 
-                {/* Previous / Next Navigation */}
+                  return (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw]}
+                      components={{
+                        swervesimulator: () => <SwerveSimulator />,
+                        sotmsimulator: () => <SOTMSimulator />,
+                        configvisualizer: () => <ConfigVisualizer />,
+                        codeplayground: () => <CodePlayground />,
+                        screenshotgallery: () => <ScreenshotGallery />,
+                        faultsim: () => <FaultSim />,
+                        physicssim: () => <PhysicsSim />,
+                        sysidsim: () => <SysIdSim />,
+                        visionsim: () => <VisionSim />,
+                        zeroallocationsim: () => <ZeroAllocationSim />,
+                        fieldvisualizer: () => <FieldVisualizer />,
+                        troubleshootingwizard: () => <TroubleshootingWizard />,
+                        performancedashboard: () => <PerformanceDashboard />,
+                        armkgsim: () => <ArmKgSim />,
+                        autosim: () => <AutoSim />,
+                        elevatorpidsim: () => <ElevatorPidSim />,
+                        flywheelkvsim: () => <FlywheelKvSim />,
+                        interactivetutorial: () => <InteractiveTutorial />,
+                        powersheddingsim: () => <PowerSheddingSim />,
+                        statemachinesim: () => <StateMachineSim />,
+                        h1: ({ children }) => <h1 className="text-3xl font-bold font-heading mt-10 mb-4 text-white border-b border-white/10 pb-2">{children}</h1>,
+                        h2: ({ children }) => {
+                          const text = String(children);
+                          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                          return (
+                            <h2 id={id} className="text-2xl font-bold font-heading mt-8 mb-3 text-ares-gold scroll-m-24 group relative">
+                              <a href={`#${id}`} className="absolute -left-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-ares-cyan" aria-label="Link to section">
+                                <LinkIcon size={18} />
+                              </a>
+                              {children}
+                            </h2>
+                          );
+                        },
+                        h3: ({ children }) => {
+                          const text = String(children);
+                          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                          return (
+                            <h3 id={id} className="text-xl font-bold font-heading mt-6 mb-2 text-ares-red scroll-m-24 group relative">
+                              <a href={`#${id}`} className="absolute -left-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-ares-cyan" aria-label="Link to section">
+                                <LinkIcon size={16} />
+                              </a>
+                              {children}
+                            </h3>
+                          );
+                        },
+                        h4: ({ children }) => <h4 className="text-lg font-bold mt-4 mb-2 text-white/80">{children}</h4>,
+                        p: ({ children }) => <p className="text-[#e6edf3]/80 leading-relaxed mb-4">{children}</p>,
+                        a: ({ href, children }) => (
+                          <a href={href} className="text-ares-gold hover:text-white underline underline-offset-2 transition-colors" target={href?.startsWith("http") ? "_blank" : undefined} rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}>
+                            {children}
+                          </a>
+                        ),
+                        ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-4 text-[#e6edf3]/70 ml-2">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-4 text-[#e6edf3]/70 ml-2">{children}</ol>,
+                        li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                        blockquote: ({ children }) => (
+                          <blockquote className="border-l-4 border-ares-red/60 bg-ares-red/5 px-4 py-3 my-4 text-white/70 italic rounded-r-lg">{children}</blockquote>
+                        ),
+                        code: ({ className, children, ...props }) => {
+                          const match = /language-(\w+)/.exec(className || '');
+                          const isInline = !match;
+                          if (isInline) {
+                            return <code className="bg-ares-red/10 text-ares-gold px-1.5 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>;
+                          }
+                          return (
+                            <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} {...props} />
+                          );
+                        },
+                        table: ({ children }) => (
+                          <div className="overflow-x-auto my-4">
+                            <table className="w-full border-collapse border border-white/10 text-sm">{children}</table>
+                          </div>
+                        ),
+                        th: ({ children }) => <th className="border border-white/10 bg-ares-red/10 px-4 py-2 text-left font-bold text-ares-gold">{children}</th>,
+                        td: ({ children }) => <td className="border border-white/10 px-4 py-2 text-[#e6edf3]/70">{children}</td>,
+                        hr: () => <hr className="border-white/10 my-8" />,
+                        img: ({ src, alt }) => (
+                          <img src={src} alt={alt || "ARESLib documentation image"} className="rounded-lg border border-white/10 my-4 max-w-full" />
+                        ),
+                        strong: ({ children }) => <strong className="text-white font-bold">{children}</strong>,
+                        em: ({ children }) => <em className="text-ares-gold/80">{children}</em>,
+                      }}
+                    >
+                      {currentDoc.content || ""}
+                    </ReactMarkdown>
+                  );
+                })()}
+
                 <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(() => {
                     const currentIndex = allDocs.findIndex(d => d.slug === (slug || (allDocs.length > 0 ? allDocs[0].slug : "")));
@@ -552,7 +543,6 @@ export default function Docs() {
                 </div>
               </div>
 
-              {/* Footer */}
               {currentDoc.updated_at && (
                 <div className="mt-12 pt-6 border-t border-white/8 text-xs text-white/20">
                   Last updated: {new Date(currentDoc.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
@@ -562,9 +552,8 @@ export default function Docs() {
           )}
         </main>
         
-        {/* ── Table of Contents (Right Sidebar) ───────────────────── */}
         {currentDoc && tableOfContents.length > 0 && (
-          <aside className="hidden xl:block w-64 shrink-0 pt-24 px-6 pb-8 sticky xl:fixed right-0 top-0 h-screen overflow-y-auto mix-blend-screen">
+          <aside className="hidden xl:block w-64 shrink-0 pt-24 px-6 pb-8 sticky right-0 top-0 h-screen overflow-y-auto">
             <h3 className="text-white/60 font-bold mb-4 font-heading tracking-wide uppercase text-xs">On this page</h3>
             <nav className="flex flex-col gap-3 border-l border-white/10 pl-4">
               {tableOfContents.map((heading, i) => (
@@ -579,7 +568,6 @@ export default function Docs() {
             </nav>
           </aside>
         )}
-
       </div>
       </div>
     </div>

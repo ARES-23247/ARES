@@ -44,7 +44,7 @@ export async function getGcalAccessToken(config: GCalConfig): Promise<string> {
     }),
   });
 
-  const data = (await res.json()) as any;
+  const data = (await res.json()) as Record<string, unknown>;
   if (!data.access_token) {
     throw new Error("Failed to get Google Calendar access token: " + JSON.stringify(data));
   }
@@ -111,7 +111,7 @@ export async function pushEventToGcal(event: ARES_Event, config: GCalConfig): Pr
     body: JSON.stringify(payload),
   });
 
-  const data = (await res.json()) as any;
+  const data = (await res.json()) as Record<string, unknown>;
   if (!res.ok) {
     console.error("Failed to push to GCal:", data);
     throw new Error(`Google API Error: ${res.status}`);
@@ -159,8 +159,9 @@ export async function pullEventsFromGcal(config: GCalConfig): Promise<ARES_Event
     throw new Error(`Failed to pull from GCal: ${res.status}`);
   }
 
-  const data = (await res.json()) as any;
-  const items: any[] = data.items || [];
+  const data = (await res.json()) as Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items = (data.items as any[]) || [];
 
   return items.map((item) => ({
     id: `gcal-${item.id}`,

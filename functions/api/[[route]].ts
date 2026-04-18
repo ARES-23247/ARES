@@ -1,6 +1,7 @@
 import { Hono, Context, Next } from "hono";
 import { handle } from "hono/cloudflare-pages";
 import { pushEventToGcal, deleteEventFromGcal, pullEventsFromGcal } from "../utils/gcalSync";
+import { dispatchSocials } from "../utils/socialSync";
 
 type Bindings = {
   DB: D1Database;
@@ -205,21 +206,31 @@ apiRouter.post("/admin/posts", async (c) => {
       )
       .run();
 
-    // ── Phase 2: Social Media Cross-Posting via Webhook ──
-    if (c.env.DISCORD_WEBHOOK_URL) {
-      const webhookUrl = c.env.DISCORD_WEBHOOK_URL as string;
-      const postUrl = `https://ares.pages.dev/blog/${slug}`;
-      const payload = {
-        content: `🚨 **New ARES Blog Post:** [${body.title}](<${postUrl}>)\n*By ${body.author || "ARES Team"}*\n\n> ${snippet || "Check out the latest update from ARES 23247!"}\n\nRead more: ${postUrl}`
+    // ── Phase 3: Omnichannel Social Media Integration ──
+    try {
+      const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+      const dbSettings: Record<string, string> = {};
+      for (const row of settingsRows as { key: string, value: string }[]) {
+         dbSettings[row.key] = row.value;
+      }
+
+      const socialConfig = {
+         DISCORD_WEBHOOK_URL: c.env.DISCORD_WEBHOOK_URL || dbSettings["DISCORD_WEBHOOK_URL"],
+         MAKE_WEBHOOK_URL: dbSettings["MAKE_WEBHOOK_URL"],
+         BLUESKY_HANDLE: dbSettings["BLUESKY_HANDLE"],
+         BLUESKY_APP_PASSWORD: dbSettings["BLUESKY_APP_PASSWORD"]
       };
-      
+
       c.executionCtx.waitUntil(
-        fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }).catch(err => console.error("Discord webhook delivery failed:", err))
+         dispatchSocials({
+           title: body.title,
+           url: `https://ares23247.com/blog/${slug}`,
+           snippet: snippet || "Read the latest engineering update from ARES 23247!",
+           coverImageUrl: body.coverImageUrl || "/gallery_1.png"
+         }, socialConfig).catch(err => console.error("Social dispatch returned top-level rejection:", err))
       );
+    } catch(err) {
+      console.error("Failed to fetch settings for social integration:", err);
     }
 
     return c.json({ success: true, slug });
@@ -428,7 +439,7 @@ apiRouter.get("/media/:key", async (c) => {
 });
 
 // ── GET /api/media — list all R2 objects ──────────────────────────────
-apiRouter.get("/media", ensureAdmin, async (c) => {
+apiRouter.get("/media", async (c) => {
   try {
     const objects = await c.env.ARES_STORAGE.list();
     return c.json({ media: objects.objects });
@@ -451,10 +462,63 @@ apiRouter.delete("/admin/media/:key", ensureAdmin, async (c) => {
   }
 });
 
+// ── GET /admin/settings — Get obscured settings (admin) ─────────────────
+apiRouter.get("/admin/settings", async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+    const settingsObj: Record<string, string> = {};
+    for (const row of results as { key: string, value: string }[]) {
+      if (row.value && row.value.trim() !== "") {
+        settingsObj[row.key] = "••••••••••••••••";
+      } else {
+        settingsObj[row.key] = "";
+      }
+    }
+    return c.json({ success: true, settings: settingsObj });
+  } catch (err) {
+    console.error("D1 get settings error:", err);
+    return c.json({ error: "Failed to fetch settings" }, 500);
+  }
+});
+
+// ── POST /admin/settings — Update settings (admin) ──────────────────────
+apiRouter.post("/admin/settings", async (c) => {
+  try {
+    const body = await c.req.json();
+    for (const [key, value] of Object.entries(body)) {
+      // Never overwrite with dummy obfuscated strings
+      if (value !== "••••••••••••••••") {
+        await c.env.DB.prepare(
+          "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')"
+        ).bind(key, String(value)).run();
+      }
+    }
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 update settings error:", err);
+    return c.json({ error: "Failed to update settings" }, 500);
+  }
+});
+
 // ── DELETE /api/events/:id — delete an event (admin) ────────────────────
 apiRouter.delete("/admin/events/:id", async (c) => {
   try {
     const id = c.req.param("id");
+    
+    // Attempt GCal deletion
+    if (c.env.GCAL_SERVICE_ACCOUNT_EMAIL && c.env.GCAL_PRIVATE_KEY && c.env.CALENDAR_ID) {
+      const row = await c.env.DB.prepare("SELECT gcal_event_id FROM events WHERE id = ?").bind(id).first<{gcal_event_id: string}>();
+      if (row && row.gcal_event_id) {
+        c.executionCtx.waitUntil(
+          deleteEventFromGcal(row.gcal_event_id, {
+            email: c.env.GCAL_SERVICE_ACCOUNT_EMAIL,
+            privateKey: c.env.GCAL_PRIVATE_KEY,
+            calendarId: c.env.CALENDAR_ID
+          }).catch(err => console.error("GCal delete error:", err))
+        );
+      }
+    }
+
     await c.env.DB.prepare("DELETE FROM events WHERE id = ?").bind(id).run();
     return c.json({ success: true });
   } catch (err) {
@@ -485,10 +549,24 @@ apiRouter.put("/admin/events/:id", async (c) => {
       return c.json({ error: "Missing required fields" }, 400);
     }
 
+    // Attempt GCal update
+    let gcalId: string | undefined = undefined;
+    if (c.env.GCAL_SERVICE_ACCOUNT_EMAIL && c.env.GCAL_PRIVATE_KEY && c.env.CALENDAR_ID) {
+      const row = await c.env.DB.prepare("SELECT gcal_event_id FROM events WHERE id = ?").bind(paramId).first<{gcal_event_id: string}>();
+      try {
+        gcalId = await pushEventToGcal(
+          { id: paramId, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage, gcal_event_id: row?.gcal_event_id },
+          { email: c.env.GCAL_SERVICE_ACCOUNT_EMAIL, privateKey: c.env.GCAL_PRIVATE_KEY, calendarId: c.env.CALENDAR_ID }
+        );
+      } catch (err) {
+        console.error("GCal PUT update error:", err);
+      }
+    }
+
     await c.env.DB.prepare(
-      `UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ? WHERE id = ?`
+      `UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id) WHERE id = ?`
     )
-      .bind(title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", paramId)
+      .bind(title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, paramId)
       .run();
 
     return c.json({ success: true, id: paramId });
@@ -501,68 +579,92 @@ apiRouter.put("/admin/events/:id", async (c) => {
 // ── POST /api/events/sync — Google Calendar Sync (admin) ──────────────
 apiRouter.post("/admin/events/sync", async (c) => {
 
-  const CALENDAR_ID = "af2d297c3425adaeafc13ddd48a582056404cbf16a6156d3925bb8f3b4affaa0@group.calendar.google.com";
+  const CALENDAR_ID = c.env.CALENDAR_ID || "af2d297c3425adaeafc13ddd48a582056404cbf16a6156d3925bb8f3b4affaa0@group.calendar.google.com";
   const ICS_URL = `https://calendar.google.com/calendar/ical/${encodeURIComponent(CALENDAR_ID)}/public/basic.ics`;
+  const email = c.req.header("cf-access-authenticated-user-email") || "sync";
 
   try {
-    const icsResponse = await fetch(ICS_URL);
-    if (!icsResponse.ok) throw new Error("Failed to fetch Google Calendar ICS");
-    const icsText = await icsResponse.text();
-
-    const parseICSDate = (icsDate: string) => {
-      // Basic ics date conversion: "20240417T183459Z" -> ISO 8601
-      if (!icsDate) return null;
-      const clean = icsDate.replace(/[^0-9TZ]/g, "");
-      if (clean.length === 8) { // YYYYMMDD
-        return `${clean.substring(0,4)}-${clean.substring(4,6)}-${clean.substring(6,8)}T00:00:00Z`;
-      }
-      if (clean.length >= 15) {
-        return `${clean.substring(0,4)}-${clean.substring(4,6)}-${clean.substring(6,8)}T${clean.substring(9,11)}:${clean.substring(11,13)}:${clean.substring(13,15)}Z`;
-      }
-      return null;
-    };
-
-    const extractField = (block: string, field: string) => {
-      // match FIELD:value or FIELD;TZID=...:value
-      const regex = new RegExp(`^${field}(?:;[^:]+)?:(.*)$`, "m");
-      const match = block.match(regex);
-      return match ? match[1].trim().replace(/\\,/g, ",").replace(/\\n/g, "\n") : null;
-    };
-
-    const blocks = icsText.split("BEGIN:VEVENT");
-    blocks.shift(); // Remove header
-
     let newCount = 0;
     let upCount = 0;
 
-    for (const block of blocks) {
-      const uid = extractField(block, "UID");
-      if (!uid) continue;
+    // Use fast realtime REST API if Authenticated
+    if (c.env.GCAL_SERVICE_ACCOUNT_EMAIL && c.env.GCAL_PRIVATE_KEY && c.env.CALENDAR_ID) {
+      const events = await pullEventsFromGcal({
+        email: c.env.GCAL_SERVICE_ACCOUNT_EMAIL,
+        privateKey: c.env.GCAL_PRIVATE_KEY,
+        calendarId: c.env.CALENDAR_ID
+      });
 
-      const title = extractField(block, "SUMMARY") || "Untitled Event";
-      const start = extractField(block, "DTSTART");
-      const end = extractField(block, "DTEND");
-      const location = extractField(block, "LOCATION") || "";
-      const description = extractField(block, "DESCRIPTION") || "";
+      for (const ev of events) {
+        const existing = await c.env.DB.prepare("SELECT id FROM events WHERE gcal_event_id = ?").bind(ev.gcal_event_id).first();
+        if (existing) {
+          await c.env.DB.prepare(
+            "UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ? WHERE gcal_event_id = ?"
+          ).bind(ev.title, ev.date_start, ev.date_end || null, ev.location, ev.description, ev.gcal_event_id).run();
+          upCount++;
+        } else {
+          const genId = crypto.randomUUID();
+          await c.env.DB.prepare(
+            "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          ).bind(genId, ev.title, ev.date_start, ev.date_end || null, ev.location, ev.description, ev.gcal_event_id, email, null).run();
+          newCount++;
+        }
+      }
+    } else {
+      // Fallback: Public ICS polling
+      const icsResponse = await fetch(ICS_URL);
+      if (!icsResponse.ok) throw new Error("Failed to fetch Google Calendar ICS");
+      const icsText = await icsResponse.text();
 
-      const parsedStart = parseICSDate(start || "");
-      const parsedEnd = parseICSDate(end || "");
+      const parseICSDate = (icsDate: string) => {
+        if (!icsDate) return null;
+        const clean = icsDate.replace(/[^0-9TZ]/g, "");
+        if (clean.length === 8) {
+          return `${clean.substring(0,4)}-${clean.substring(4,6)}-${clean.substring(6,8)}T00:00:00Z`;
+        }
+        if (clean.length >= 15) {
+          return `${clean.substring(0,4)}-${clean.substring(4,6)}-${clean.substring(6,8)}T${clean.substring(9,11)}:${clean.substring(11,13)}:${clean.substring(13,15)}Z`;
+        }
+        return null;
+      };
 
-      if (!parsedStart) continue;
+      const extractField = (block: string, field: string) => {
+        const regex = new RegExp(`^${field}(?:;[^:]+)?:(.*)$`, "m");
+        const match = block.match(regex);
+        return match ? match[1].trim().replace(/\\,/g, ",").replace(/\\n/g, "\n") : null;
+      };
 
-      const existing = await c.env.DB.prepare("SELECT id FROM events WHERE gcal_event_id = ?").bind(uid).first();
+      const blocks = icsText.split("BEGIN:VEVENT");
+      blocks.shift();
 
-      if (existing) {
-        await c.env.DB.prepare(
-          "UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ? WHERE gcal_event_id = ?"
-        ).bind(title, parsedStart, parsedEnd, location, description, uid).run();
-        upCount++;
-      } else {
-        const genId = crypto.randomUUID();
-        await c.env.DB.prepare(
-          "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        ).bind(genId, title, parsedStart, parsedEnd, location, description, uid, email || "sync", null).run();
-        newCount++;
+      for (const block of blocks) {
+        const uid = extractField(block, "UID");
+        if (!uid) continue;
+
+        const title = extractField(block, "SUMMARY") || "Untitled Event";
+        const start = extractField(block, "DTSTART");
+        const end = extractField(block, "DTEND");
+        const location = extractField(block, "LOCATION") || "";
+        const description = extractField(block, "DESCRIPTION") || "";
+
+        const parsedStart = parseICSDate(start || "");
+        const parsedEnd = parseICSDate(end || "");
+
+        if (!parsedStart) continue;
+
+        const existing = await c.env.DB.prepare("SELECT id FROM events WHERE gcal_event_id = ?").bind(uid).first();
+        if (existing) {
+          await c.env.DB.prepare(
+            "UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ? WHERE gcal_event_id = ?"
+          ).bind(title, parsedStart, parsedEnd, location, description, uid).run();
+          upCount++;
+        } else {
+          const genId = crypto.randomUUID();
+          await c.env.DB.prepare(
+            "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          ).bind(genId, title, parsedStart, parsedEnd, location, description, uid, email, null).run();
+          newCount++;
+        }
       }
     }
 
