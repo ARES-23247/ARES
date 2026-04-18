@@ -13,6 +13,8 @@ export default function AssetManager() {
   const queryClient = useQueryClient();
   const [confirmKey, setConfirmKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [syndicateKey, setSyndicateKey] = useState<string | null>(null);
+  const [syndicateCaption, setSyndicateCaption] = useState("");
 
   const { data: assets = [], isLoading } = useQuery<R2Asset[]>({
     queryKey: ["assets"],
@@ -45,6 +47,23 @@ export default function AssetManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assets"] });
       setConfirmKey(null);
+    },
+  });
+
+  const syndicateMutation = useMutation({
+    mutationFn: async ({ key, caption }: { key: string, caption: string }) => {
+      const res = await fetch(`/dashboard/api/admin/media/syndicate`, { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, caption }) 
+      });
+      if (!res.ok) throw new Error("Syndication failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      setSyndicateKey(null);
+      setSyndicateCaption("");
+      // Perhaps a success toast could go here
     },
   });
 
@@ -149,29 +168,37 @@ export default function AssetManager() {
                   loading="lazy"
                 />
                 {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center gap-2 p-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => copyUrl(asset.url, asset.key)}
+                      className="px-3 py-1.5 bg-white text-obsidian text-xs font-bold rounded-lg hover:bg-ares-gold transition-colors flex-1 text-center"
+                    >
+                      {copiedKey === asset.key ? "Copied!" : "Copy URL"}
+                    </button>
+                    {confirmKey === asset.key ? (
+                      <button
+                        onClick={() => deleteMutation.mutate(asset.key)}
+                        disabled={deleteMutation.isPending}
+                        className="px-3 py-1.5 bg-ares-red text-white text-xs font-bold rounded-lg animate-pulse flex-1 text-center"
+                      >
+                        {deleteMutation.isPending ? "..." : "Confirm"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmKey(asset.key)}
+                        className="px-3 py-1.5 bg-zinc-700 text-zinc-300 text-xs font-bold rounded-lg hover:bg-ares-red hover:text-white transition-colors flex-1 text-center"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                   <button
-                    onClick={() => copyUrl(asset.url, asset.key)}
-                    className="px-3 py-1.5 bg-white text-obsidian text-xs font-bold rounded-lg hover:bg-ares-gold transition-colors"
+                    onClick={() => setSyndicateKey(asset.key)}
+                    className="w-full mt-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold rounded-lg hover:from-blue-400 hover:to-purple-500 transition-all text-center shadow-lg"
                   >
-                    {copiedKey === asset.key ? "Copied!" : "Copy URL"}
+                    📢 Broadcast
                   </button>
-                  {confirmKey === asset.key ? (
-                    <button
-                      onClick={() => deleteMutation.mutate(asset.key)}
-                      disabled={deleteMutation.isPending}
-                      className="px-3 py-1.5 bg-ares-red text-white text-xs font-bold rounded-lg animate-pulse shadow-[0_0_10px_rgba(192,0,0,0.5)]"
-                    >
-                      {deleteMutation.isPending ? "..." : "Confirm"}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmKey(asset.key)}
-                      className="px-3 py-1.5 bg-zinc-700 text-zinc-300 text-xs font-bold rounded-lg hover:bg-ares-red hover:text-white transition-colors"
-                    >
-                      Delete
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -186,6 +213,60 @@ export default function AssetManager() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Syndication Modal Overlay */}
+      {syndicateKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-obsidian border border-zinc-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full pointer-events-none" />
+            
+            <h3 className="text-xl font-bold text-white mb-2">Broadcast Media</h3>
+            <p className="text-sm text-zinc-400 mb-6">
+              Dispatch this asset to Instagram, X, Facebook, and Discord securely. Make sure your Integration Keys are populated.
+            </p>
+            
+            <div className="mb-6 bg-black/50 border border-white/10 rounded-lg p-2 flex justify-center">
+              <img 
+                src={`/api/media/${syndicateKey}`} 
+                alt="Broadcast target" 
+                className="h-32 object-contain rounded" 
+              />
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="captionInput" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Social Caption</label>
+              <textarea
+                id="captionInput"
+                value={syndicateCaption}
+                onChange={(e) => setSyndicateCaption(e.target.value)}
+                rows={4}
+                placeholder="Draft an engaging caption for your followers..."
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors resize-none"
+              />
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setSyndicateKey(null); setSyndicateCaption(""); }}
+                className="px-4 py-2 font-medium text-zinc-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => syndicateMutation.mutate({ key: syndicateKey, caption: syndicateCaption })}
+                disabled={syndicateMutation.isPending || syndicateCaption.trim() === ""}
+                className={`px-6 py-2 rounded-xl font-bold transition-all shadow-lg ${
+                  syndicateMutation.isPending || syndicateCaption.trim() === ""
+                   ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                   : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:scale-105"
+                }`}
+              >
+                {syndicateMutation.isPending ? "Dispatching..." : "Launch Payload"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

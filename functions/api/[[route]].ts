@@ -483,6 +483,36 @@ apiRouter.delete("/admin/media/:key", ensureAdmin, async (c) => {
   }
 });
 
+// ── POST /admin/media/syndicate — Cross-post Asset to Socials (admin) ─
+apiRouter.post("/admin/media/syndicate", async (c) => {
+  try {
+    const { key, caption } = await c.req.json();
+    if (!key || !caption) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+    
+    // Retrieve Configuration
+    const { results } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+    const config: Record<string, string> = {};
+    for (const row of results as { key: string, value: string }[]) {
+      config[row.key] = row.value;
+    }
+    
+    const imageUrl = `https://ares23247.com/api/media/${key}`;
+    const { dispatchPhotoSocials } = await import("../utils/socialSync");
+    
+    // Offload the slow, heavily cryptographic dispatches to edge context background
+    c.executionCtx.waitUntil(
+      dispatchPhotoSocials(imageUrl, caption, config)
+    );
+    
+    return c.json({ success: true, message: "Syndication dispatched to background worker" });
+  } catch (err) {
+    console.error("Syndicate dispatch error:", err);
+    return c.json({ error: "Failed to dispatch syndication hook" }, 500);
+  }
+});
+
 // ── GET /admin/settings — Get obscured settings (admin) ─────────────────
 apiRouter.get("/admin/settings", async (c) => {
   try {

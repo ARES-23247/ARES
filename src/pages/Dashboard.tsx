@@ -12,13 +12,18 @@ import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings
 type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets" | "integrations";
 type AuthState = "checking" | "authenticated" | "unauthorized";
 
+/* Compute localhost bypass at module level so it can seed initial state
+   without triggering a synchronous setState inside an effect body. */
+const isLocalDev =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const initialDoc = searchParams.get("editDoc");
 
-  const [authState, setAuthState] = useState<AuthState>("checking");
-  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [authState, setAuthState] = useState<AuthState>(isLocalDev ? "authenticated" : "checking");
   const [activeTab, setActiveTab] = useState<TabState>(initialDoc ? "docs" : "blog");
   const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
   const [editEventId, setEditEventId] = useState<string | null>(null);
@@ -26,12 +31,7 @@ export default function Dashboard() {
 
   // ── Zero Trust Auth Gate ───────────────────────────────────────────
   useEffect(() => {
-    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    if (isLocal) {
-      setAuthState("authenticated");
-      setAuthEmail("local-dev@localhost");
-      return;
-    }
+    if (isLocalDev) return;
 
     const checkAuth = async () => {
       try {
@@ -39,9 +39,7 @@ export default function Dashboard() {
           credentials: "same-origin",
         });
         if (res.ok) {
-          const data = await res.json();
           setAuthState("authenticated");
-          setAuthEmail(data.email || "authenticated-user");
         } else {
           setAuthState("unauthorized");
         }
