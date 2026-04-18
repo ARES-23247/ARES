@@ -32,7 +32,7 @@ export default function About() {
                 In the <em>FIRST</em> Tech Challenge, we don&apos;t just build robots; we build systems. Our members compete for awards recognized at the highest levels of global STEM competition, focusing on machine logic, creative engineering, and radical community impact.
               </p>
               <div className="bg-white border-l-4 border-ares-red hero-card p-8 shadow-sm group hover:border-ares-red">
-                <h3 className="text-ares-red font-bold text-xs tracking-widest uppercase mb-6 font-heading">What You'll Learn</h3>
+                <h3 className="text-ares-red font-bold text-xs tracking-widest uppercase mb-6 font-heading">What You&apos;ll Learn</h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm font-bold uppercase tracking-wider text-obsidian/60">
                   {[
                     "Mechanical Systems", "Electrical Engineering", "Java Programming", "CAD & 3D Design", 
