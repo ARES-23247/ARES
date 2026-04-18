@@ -108,7 +108,7 @@ export default function Home() {
                 linkText: "Join the Mission",
               },
             ].map((card) => (
-              <div key={card.title} className="marble-card spartan-plate p-10 flex flex-col h-full group">
+              <div key={card.title} className="marble-card hero-card p-10 flex flex-col h-full group">
                 <h3 className="text-ares-red text-2xl font-bold mb-6 font-heading group-hover:text-ares-bronze transition-colors">{card.title}</h3>
                 <p className="text-obsidian/70 text-base leading-relaxed mb-8 flex-grow">{card.body}</p>
                 <Link to={card.link} className="text-ares-red font-bold text-sm tracking-widest uppercase hover:translate-x-2 transition-transform inline-flex items-center gap-2">

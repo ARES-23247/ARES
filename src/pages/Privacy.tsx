@@ -27,7 +27,7 @@ export default function Privacy() {
         </div>
 
         <div className="space-y-12">
-          <section className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl relative overflow-hidden">
+          <section className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-ares-cyan/5 rounded-bl-full -z-10"></div>
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan">
@@ -45,7 +45,7 @@ export default function Privacy() {
             </ul>
           </section>
 
-          <section className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl relative overflow-hidden">
+          <section className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-ares-gold/5 rounded-bl-full -z-10"></div>
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold">
@@ -62,7 +62,7 @@ export default function Privacy() {
             </ul>
           </section>
 
-          <section className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl relative overflow-hidden">
+          <section className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-bl-full -z-10"></div>
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 rounded-full border border-purple-500/30 flex items-center justify-center bg-purple-500/10 text-purple-500">
@@ -75,7 +75,7 @@ export default function Privacy() {
             </p>
           </section>
 
-          <section className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl relative overflow-hidden">
+          <section className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-ares-red/5 rounded-bl-full -z-10"></div>
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red">

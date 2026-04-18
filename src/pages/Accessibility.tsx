@@ -34,7 +34,7 @@ export default function Accessibility() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl"
+            className="bg-zinc-900 border border-zinc-800 p-8 hero-card"
           >
             <div className="bg-ares-red/10 w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-ares-red">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -52,7 +52,7 @@ export default function Accessibility() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl"
+            className="bg-zinc-900 border border-zinc-800 p-8 hero-card"
           >
             <div className="bg-ares-gold/10 w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-ares-gold">
               <span className="font-bold font-mono">10.0</span>
@@ -67,7 +67,7 @@ export default function Accessibility() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl"
+            className="bg-zinc-900 border border-zinc-800 p-8 hero-card"
           >
             <div className="bg-blue-500/10 w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-blue-500">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,7 +84,7 @@ export default function Accessibility() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl"
+            className="bg-zinc-900 border border-zinc-800 p-8 hero-card"
           >
             <div className="bg-green-500/10 w-12 h-12 rounded-lg flex items-center justify-center mb-6 text-green-500">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,7 +102,7 @@ export default function Accessibility() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-center p-8 rounded-2xl border border-dashed border-zinc-800"
+          className="text-center p-8 hero-card border border-dashed border-zinc-800"
         >
           <div className="flex gap-6 justify-center items-center mb-6 border-b border-zinc-800/50 pb-4 max-w-sm mx-auto">
             <span className="font-mono text-sm tracking-widest text-zinc-500 mr-2">SCANNED BY</span>

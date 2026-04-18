@@ -25,7 +25,7 @@ export default function TechStack() {
 
         {/* Highlight Architecture */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
-          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl">
             <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
               <Cloud size={24} />
             </div>
@@ -36,7 +36,7 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-ares-cyan">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl flex flex-col">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
             <div className="w-12 h-12 rounded-full border border-purple-500/30 flex items-center justify-center bg-purple-500/10 text-purple-500 mb-6">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -49,7 +49,7 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-purple-500 mt-auto">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl flex flex-col">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
             <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
               <Database size={24} />
             </div>
@@ -60,7 +60,7 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-ares-gold mt-auto">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl flex flex-col">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
             <div className="w-12 h-12 rounded-full border border-orange-500/30 flex items-center justify-center bg-orange-500/10 text-orange-500 mb-6">
               <HardDrive size={24} />
             </div>
@@ -71,7 +71,7 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-orange-500 mt-auto">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl flex flex-col">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
             <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6">
               <Zap size={24} />
             </div>
@@ -82,7 +82,7 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-ares-red mt-auto">Cost: Open Source</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm shadow-xl flex flex-col">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
             <div className="w-12 h-12 rounded-full border border-green-500/30 flex items-center justify-center bg-green-500/10 text-green-500 mb-6">
               <GlobeLock size={24} />
             </div>
@@ -127,7 +127,7 @@ export default function TechStack() {
             </div>
           </div>
 
-          <div className="bg-white/5 border-l-4 border-ares-gold p-8 rounded-r-xl mt-16 shadow-2xl">
+          <div className="bg-white/5 border-l-4 border-ares-gold p-8 hero-card mt-16 shadow-2xl">
             <h3 className="text-2xl font-bold font-heading mb-3 flex items-center gap-3">
               The Sustain Award Ethos
             </h3>
