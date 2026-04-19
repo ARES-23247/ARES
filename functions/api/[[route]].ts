@@ -312,22 +312,7 @@ apiRouter.post("/admin/posts", async (c) => {
       };
       const rawText = extractText(body.ast as ASTNode);
       if (rawText) {
-        try {
-          if (c.env.AI) {
-            const aiResponse = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
-              messages: [
-                { role: "system", content: "You are an expert SEO assistant. Summarize the provided blog text into an engaging, keyword-optimized meta-description of exactly 1-2 sentences. Max 150 chars. Return only the summary text without quotes." },
-                { role: "user", content: rawText.slice(0, 2000) }
-              ]
-            });
-            snippet = (aiResponse as { response?: string }).response?.trim() || rawText.slice(0, 200);
-          } else {
-            snippet = rawText.slice(0, 200);
-          }
-        } catch (aiErr) {
-          console.error("AI summarization failed:", aiErr);
-          snippet = rawText.slice(0, 200);
-        }
+        snippet = rawText.length > 200 ? rawText.slice(0, 200).trim() + "..." : rawText.trim();
       }
     } catch {
       snippet = "";
@@ -403,22 +388,7 @@ apiRouter.put("/admin/posts/:slug", async (c) => {
       };
       const rawText = extractText(body.ast as ASTNode);
       if (rawText) {
-        try {
-          if (c.env.AI) {
-            const aiResponse = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
-              messages: [
-                { role: "system", content: "You are an expert SEO assistant. Summarize the provided blog text into an engaging, keyword-optimized meta-description of exactly 1-2 sentences. Max 150 chars. Return only the summary text without quotes." },
-                { role: "user", content: rawText.slice(0, 2000) }
-              ]
-            });
-            snippet = (aiResponse as { response?: string }).response?.trim() || rawText.slice(0, 200);
-          } else {
-            snippet = rawText.slice(0, 200);
-          }
-        } catch (aiErr) {
-          console.error("AI summarization failed:", aiErr);
-          snippet = rawText.slice(0, 200);
-        }
+        snippet = rawText.length > 200 ? rawText.slice(0, 200).trim() + "..." : rawText.trim();
       }
     } catch {
       snippet = "";
