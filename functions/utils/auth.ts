@@ -29,7 +29,10 @@ export const getAuth = (db: D1Database, env: Record<string, string>, requestUrl?
             "http://localhost:8788", 
             "http://127.0.0.1:8788", 
             "http://localhost:5173", 
-            "http://127.0.0.1:5173"
+            "http://127.0.0.1:5173",
+            // Dynamically trust the origin of the current request
+            // so production Cloudflare Pages domains always pass CSRF
+            ...(requestUrl ? [new URL(requestUrl).origin] : []),
         ],
         advanced: {
             crossSubDomain: true
