@@ -481,7 +481,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
               Inject Simulator
             </button>
             <input 
-              id="inline-event-img-upload" type="file" accept="image/*" className="hidden" 
+              id="inline-event-img-upload" type="file" accept="image/*,.heic,.heif" className="hidden" 
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -562,7 +562,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
             Library
           </button>
           <input 
-            id="event-img-upload" type="file" accept="image/*" className="hidden" 
+            id="event-img-upload" type="file" accept="image/*,.heic,.heif" className="hidden" 
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
