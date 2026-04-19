@@ -50,6 +50,10 @@ export default function ProfilePage() {
   const memberLabel = { student: "Student", alumni: "Alumni", mentor: "Mentor", coach: "Coach" }[profile.member_type] || "Member";
   const memberIcon = { student: "📚", alumni: "🎓", mentor: "🔧", coach: "🏆" }[profile.member_type] || "👤";
 
+  const subteams = typeof profile.subteams === "string" ? JSON.parse(profile.subteams || "[]") : (profile.subteams || []);
+  const colleges = typeof profile.colleges === "string" ? JSON.parse(profile.colleges || "[]") : (profile.colleges || []);
+  const employers = typeof profile.employers === "string" ? JSON.parse(profile.employers || "[]") : (profile.employers || []);
+
   return (
     <div className="min-h-screen bg-obsidian">
       <div className="max-w-3xl mx-auto px-6 py-16">
@@ -70,7 +74,7 @@ export default function ProfilePage() {
                 <span className="px-3 py-1 bg-ares-red/20 border border-ares-red/30 rounded-full text-xs font-bold text-ares-red">
                   {memberIcon} {memberLabel}
                 </span>
-                {profile.subteams?.map(team => (
+                {subteams.length > 0 && subteams.map((team: string) => (
                   <span key={team} className="px-3 py-1 bg-ares-gold/10 border border-ares-gold/20 rounded-full text-xs font-bold text-ares-gold">
                     {team}
                   </span>
@@ -110,11 +114,11 @@ export default function ProfilePage() {
           </div>
 
           {/* Colleges */}
-          {profile.colleges && profile.colleges.length > 0 && (
+          {colleges && colleges.length > 0 && (
             <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 mb-4">
               <h3 className="text-xs font-bold text-ares-red uppercase tracking-wider mb-4 flex items-center gap-2"><GraduationCap size={14} /> Education</h3>
               <div className="space-y-3">
-                {profile.colleges.map((col, i) => (
+                {colleges.map((col: { domain: string, name: string, degree: string, years: string }, i: number) => (
                   <div key={i} className="flex items-center gap-3">
                     <img src={`https://logo.clearbit.com/${col.domain}`} alt="" className="w-8 h-8 rounded-lg bg-white p-0.5" onError={e => { (e.target as HTMLImageElement).src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; }} />
                     <div>
@@ -128,11 +132,11 @@ export default function ProfilePage() {
           )}
 
           {/* Employers */}
-          {profile.employers && profile.employers.length > 0 && (
+          {employers && employers.length > 0 && (
             <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
               <h3 className="text-xs font-bold text-ares-red uppercase tracking-wider mb-4 flex items-center gap-2"><Briefcase size={14} /> Career</h3>
               <div className="space-y-3">
-                {profile.employers.map((emp, i) => (
+                {employers.map((emp: { domain: string, name: string, current: boolean, title: string, years: string }, i: number) => (
                   <div key={i} className="flex items-center gap-3">
                     <img src={`https://logo.clearbit.com/${emp.domain}`} alt="" className="w-8 h-8 rounded-lg bg-white p-0.5" onError={e => { (e.target as HTMLImageElement).src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; }} />
                     <div>
