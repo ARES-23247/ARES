@@ -23,6 +23,7 @@ import Privacy from "./pages/Privacy";
 import Docs from "./pages/Docs";
 import Login from "./pages/Login";
 import ProfilePage from "./pages/ProfilePage";
+import BugReport from "./pages/BugReport";
 
 export default function App() {
   const location = useLocation();
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/docs" element={<Docs />} />
               <Route path="/docs/:slug" element={<Docs />} />
+              <Route path="/bug-report" element={<BugReport />} />
             </Routes>
           </ErrorBoundary>
         </AnimatePresence>

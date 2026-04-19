@@ -86,6 +86,7 @@ export default function Footer() {
           </div>
           <div className="flex gap-8">
             <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link to="/bug-report" className="hover:text-ares-red transition-colors text-ares-red/80 font-bold uppercase tracking-widest text-[10px]">Report Bug</Link>
             <Link to="/docs" className="hover:text-white transition-colors flex items-center"><span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span></Link>
             <Link to="/sponsors" className="hover:text-white transition-colors">Support Us</Link>
           </div>
