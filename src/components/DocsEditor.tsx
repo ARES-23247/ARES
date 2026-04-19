@@ -22,6 +22,7 @@ import CharacterCount from '@tiptap/extension-character-count';
 import { common, createLowlight } from 'lowlight';
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { Callout } from './editor/extensions/Callout';
+import { Reveal } from './editor/extensions/Reveal';
 import { SlashCommands } from './editor/extensions/SlashCommands';
 import Mention from '@tiptap/extension-mention';
 import { MermaidBlock } from './editor/extensions/MermaidBlock';
@@ -157,6 +158,7 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
         HTMLAttributes: { class: 'bg-[#1e1e1e] border border-zinc-700 rounded-xl p-4 my-4 font-mono text-sm shadow-inner overflow-x-auto' }
       }),
       Callout,
+      Reveal,
 
       SlashCommands.configure({
         suggestion: {
@@ -355,6 +357,10 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
             <button onClick={() => editor.chain().focus().toggleCallout({ type: 'info' }).run()} className="px-3 py-2 border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Info</button>
             <button onClick={() => editor.chain().focus().toggleCallout({ type: 'warning' }).run()} className="px-3 py-2 border border-ares-red/30 text-ares-red hover:bg-ares-red hover:text-white rounded-lg text-sm font-bold transition-all shadow-sm">Warn</button>
             <button onClick={() => editor.chain().focus().toggleCallout({ type: 'tip' }).run()} className="px-3 py-2 border border-ares-gold/30 text-ares-gold hover:bg-ares-gold hover:text-black rounded-lg text-sm font-bold transition-all shadow-sm">Tip</button>
+            <button onClick={() => {
+              const summary = window.prompt("Expand Button Label:", "Show Answer");
+              if (summary !== null) editor.chain().focus().toggleReveal({ summary }).run();
+            }} className="px-3 py-2 border border-white/20 text-white hover:bg-white hover:text-black rounded-lg text-sm font-bold transition-all shadow-sm">Reveal</button>
             <div className="w-px h-6 bg-zinc-800 mx-2"></div>
             
             <button onClick={() => {

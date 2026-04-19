@@ -1,4 +1,6 @@
-import { ReactNode, lazy, Suspense } from "react";
+import { ReactNode, lazy, Suspense, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, Eye } from "lucide-react";
 import { CodeBlock } from "./docs/CodeBlock";
 
 const CodePlayground = lazy(() => import('./docs/CodePlayground').catch(() => ({ default: () => <div className="text-red-500">Failed to load CodePlayground</div> })));
@@ -200,6 +202,57 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
         </div>
       );
     }
+    case "reveal": {
+      console.log("Rendering reveal block:", node.attrs?.summary);
+      const summary = (node.attrs?.summary || "Show Answer") as string;
+      return <RevealBlock summary={summary}>{children}</RevealBlock>;
+    }
     default: return <>{children}</>;
   }
+}
+
+function RevealBlock({ summary, children }: { summary: string, children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="my-6 rounded-xl border border-white/10 bg-black/20 overflow-hidden shadow-lg transition-all hover:border-ares-gold/30">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-6 py-4 text-left group transition-colors hover:bg-white/5"
+      >
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg transition-colors ${isOpen ? 'bg-ares-gold text-black' : 'bg-white/5 text-ares-gold'}`}>
+            <Eye size={18} />
+          </div>
+          <span className={`font-bold tracking-wide transition-colors ${isOpen ? 'text-white' : 'text-white/70 group-hover:text-ares-gold'}`}>
+            {summary}
+          </span>
+        </div>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+          className="text-white/40"
+        >
+          <ChevronDown size={20} />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <div className="px-6 py-6 border-t border-white/5 bg-gradient-to-b from-white/2 to-transparent">
+              <div className="prose-direct-children">
+                {children}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

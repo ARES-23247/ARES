@@ -7,7 +7,8 @@ import IntegrationsManager from "@/components/IntegrationsManager";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings, ShieldAlert, Lock, RefreshCw } from "lucide-react";
+import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings, ShieldAlert, Lock, RefreshCw, LogOut } from "lucide-react";
+import { useSession, signOut } from "../utils/auth-client";
 
 type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets" | "integrations";
 type AuthState = "checking" | "authenticated" | "unauthorized";
@@ -23,33 +24,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const initialDoc = searchParams.get("editDoc");
 
-  const [authState, setAuthState] = useState<AuthState>(isLocalDev ? "authenticated" : "checking");
+  const { data: session, isPending, error } = useSession();
   const [activeTab, setActiveTab] = useState<TabState>(initialDoc ? "docs" : "blog");
   const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
   const [editEventId, setEditEventId] = useState<string | null>(null);
   const [editDocSlug, setEditDocSlug] = useState<string | null>(initialDoc);
-
-  // ── Zero Trust Auth Gate ───────────────────────────────────────────
-  useEffect(() => {
-    if (isLocalDev) return;
-
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/dashboard/api/auth-check", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          setAuthState("authenticated");
-        } else {
-          setAuthState("unauthorized");
-        }
-      } catch {
-        setAuthState("unauthorized");
-      }
-    };
-
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     if (initialDoc) {
@@ -61,7 +40,7 @@ export default function Dashboard() {
   }, [initialDoc, setSearchParams]);
 
   // ── Loading State ──────────────────────────────────────────────────
-  if (authState === "checking") {
+  if (isPending) {
     return (
       <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
@@ -76,14 +55,15 @@ export default function Dashboard() {
           >
             <RefreshCw size={48} className="text-ares-gold" />
           </motion.div>
-          <p className="text-zinc-400 text-lg font-medium">Verifying Zero Trust Session...</p>
+          <p className="text-zinc-400 text-lg font-medium">Verifying ARES Session...</p>
         </motion.div>
       </div>
     );
   }
 
   // ── Unauthorized Gate ──────────────────────────────────────────────
-  if (authState === "unauthorized") {
+  // @ts-ignore
+  if (!session || !session.user || (session.user.role !== "admin" && !isLocalDev)) {
     return (
       <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden">
         {/* Background glow effects */}
@@ -104,20 +84,20 @@ export default function Dashboard() {
             </div>
 
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-3">
-              Authentication Required
+              Restricted Access
             </h1>
             <p className="text-zinc-400 text-base leading-relaxed mb-8">
-              The ARES Dashboard is protected by Cloudflare Zero Trust. You must authenticate with an authorized identity provider to access internal systems.
+              {!session ? "The ARES Dashboard is protected by Internal Authentication. Please log in with an authorized identity to continue." : "Your account does not have administrator privileges. Please contact the lead engineer if this is an error."}
             </p>
 
             <div className="space-y-4">
-              <a
-                href="/cdn-cgi/access/login"
+              <button
+                onClick={() => navigate("/login")}
                 className="group flex items-center justify-center gap-3 w-full px-6 py-4 bg-gradient-to-r from-ares-red to-red-700 hover:from-red-600 hover:to-red-800 text-white font-bold text-base rounded-2xl transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(220,38,38,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-gold"
               >
                 <Lock size={18} />
-                Sign In with Cloudflare Access
-              </a>
+                Sign In with ARES ID
+              </button>
 
               <button
                 onClick={() => navigate("/")}
@@ -128,8 +108,8 @@ export default function Dashboard() {
             </div>
 
             <div className="mt-8 pt-6 border-t border-white/5">
-              <p className="text-zinc-600 text-xs">
-                Protected by Cloudflare Zero Trust &middot; ARES 23247 Internal Systems
+              <p className="text-zinc-600 text-xs text-balance">
+                Protected by Better Auth &middot; ARES 23247 Internal Systems
               </p>
             </div>
           </div>
@@ -157,6 +137,16 @@ export default function Dashboard() {
             <p className="text-zinc-400 max-w-2xl text-balance leading-relaxed">
               Manage D1 Database content natively at the Cloudflare Edge. Draft engineering blogs, schedule events, and maintain team documentation.
             </p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <span className="text-zinc-500 text-xs font-medium">Logged in as {session?.user?.email}</span>
+            <button 
+              onClick={() => signOut({ fetchOptions: { onSuccess: () => navigate("/") } })}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-zinc-400 hover:text-red-400 text-xs font-bold rounded-xl transition-all"
+            >
+              <LogOut size={14} />
+              Sign Out
+            </button>
           </div>
         </div>
 

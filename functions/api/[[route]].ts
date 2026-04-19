@@ -2,6 +2,7 @@ import { Hono, Context, Next } from "hono";
 import { handle } from "hono/cloudflare-pages";
 import { pushEventToGcal, deleteEventFromGcal, pullEventsFromGcal } from "../utils/gcalSync";
 import { dispatchSocials } from "../utils/socialSync";
+import { getAuth } from "../utils/auth";
 
 type Bindings = {
   DB: D1Database;
@@ -10,6 +11,14 @@ type Bindings = {
   DISCORD_WEBHOOK_URL?: string;
   GCAL_SERVICE_ACCOUNT_EMAIL?: string;
   GCAL_PRIVATE_KEY?: string;
+  BETTER_AUTH_SECRET: string;
+  BETTER_AUTH_URL: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  GITHUB_CLIENT_ID: string;
+  GITHUB_CLIENT_SECRET: string;
+  ZULIP_CLIENT_ID: string;
+  ZULIP_CLIENT_SECRET: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -21,77 +30,66 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-// ── Zero Trust Auth Middleware ────────────────────────────────────────
-const ensureAdmin = async (c: Context, next: Next) => {
+// ── Better Auth Middleware ───────────────────────────────────────────
+const ensureAdmin = async (c: Context<{ Bindings: Bindings }>, next: Next) => {
   const url = new URL(c.req.url);
-
-  // Block raw .pages.dev alias ONLY if not authenticated via cookie/header.
-  // This prevents unauthenticated bypass but allows valid sessions.
-  const hasAuthToken = c.req.header("cf-access-authenticated-user-email") || 
-                       c.req.header("cf-access-jwt-assertion") || 
-                       /CF_Authorization=/.test(c.req.header("cookie") || "");
-
-  if (url.hostname.endsWith(".pages.dev") && !hasAuthToken && url.hostname !== "localhost") {
-    return c.json({ error: "Strict Context: Direct invocation of .pages.dev alias is forbidden without a valid Zero Trust session." }, 403);
-  }
-
-  const email = c.req.header("cf-access-authenticated-user-email");
-  const jwt = c.req.header("cf-access-jwt-assertion");
   
-  // Cloudflare occasionally strips Access headers on API subpaths, fallback to checking the JWT cookie
-  const cookieHeader = c.req.header("cookie") || "";
-  const hasAuthCookie = /CF_Authorization=/.test(cookieHeader);
-
-  if (!email && !jwt && !hasAuthCookie && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
-    console.warn(`[Auth Check] Access Denied for ${url.pathname}. 
-Headers: ${JSON.stringify(Object.fromEntries(c.req.header()))}`);
-    return c.json({ error: "Strict Context: Unauthorized. Cloudflare Zero Trust authentication required." }, 401);
+  // Local development bypass
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return await next();
   }
+
+  const auth = getAuth(c.env.DB, c.env);
+  const session = await auth.api.getSession({
+    headers: c.req.raw.headers,
+  });
+
+  if (!session || !session.user) {
+    return c.json({ error: "Unauthorized: Please log in." }, 401);
+  }
+
+  // RBAC: Check for admin role
+  // @ts-ignore - Better Auth additional fields
+  if (session.user.role !== "admin") {
+     console.warn(`[Auth Check] Access Denied for ${session.user.email}. Role: ${session.user.role}`);
+     return c.json({ error: "Forbidden: Administrator privileges required." }, 403);
+  }
+
   await next();
 };
 
 
 
+// ── Better Auth Routes ────────────────────────────────────────────────
+apiRouter.on(["POST", "GET"], "/auth/*", (c) => {
+  const auth = getAuth(c.env.DB, c.env);
+  return auth.handler(c.req.raw);
+});
+
 // ── Auth middleware for admin routes ──────────────────────────────────
 apiRouter.use("/admin/*", ensureAdmin);
 
-// ── GET /api/auth-check — verify Zero Trust session (UI gate only) ───
-// This endpoint lives OUTSIDE /admin/* intentionally. Cloudflare Access
-// only injects cf-access-* headers for the exact path the Access Application
-// protects (/dashboard), NOT subpaths like /dashboard/api/admin/auth-check.
-// So we check headers AND the CF_Authorization cookie (set by Access after login)
-// as a fallback. The real security boundary remains ensureAdmin for mutations.
+// ── GET /api/auth-check — verify session (UI gate only) ────────────────
 apiRouter.get("/auth-check", async (c) => {
   const url = new URL(c.req.url);
 
-  // Loosened .pages.dev check: Only block if no auth bits are present at all
-  const hasAuth = c.req.header("cf-access-authenticated-user-email") || 
-                  c.req.header("cf-access-jwt-assertion") || 
-                  /CF_Authorization=/.test(c.req.header("cookie") || "");
-
-  if (url.hostname.endsWith(".pages.dev") && !hasAuth && url.hostname !== "localhost") {
-    return c.json({ authenticated: false, error: "Zero Trust Session Required" }, 403);
-  }
-
   // Localhost always passes
   if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
-    return c.json({ authenticated: true, email: "local-dev@localhost" });
+    return c.json({ authenticated: true, email: "local-dev@localhost", role: "admin" });
   }
 
-  // Check Cloudflare Access injected headers (works when Access covers this path)
-  const email = c.req.header("cf-access-authenticated-user-email");
-  const jwt = c.req.header("cf-access-jwt-assertion");
-  if (email || jwt) {
-    return c.json({ authenticated: true, email: email || "authenticated-user" });
-  }
+  const auth = getAuth(c.env.DB, c.env);
+  const session = await auth.api.getSession({
+    headers: c.req.raw.headers,
+  });
 
-  // Fallback: Check CF_Authorization cookie set by Cloudflare Access login flow.
-  // This cookie is present for ANY path on the domain after Access authentication,
-  // even if Cloudflare doesn't inject headers for this specific subpath.
-  const cookieHeader = c.req.header("cookie") || "";
-  const cfAuthMatch = cookieHeader.match(/CF_Authorization=([^;]+)/);
-  if (cfAuthMatch && cfAuthMatch[1]) {
-    return c.json({ authenticated: true, email: "authenticated-user" });
+  if (session && session.user) {
+    return c.json({ 
+      authenticated: true, 
+      email: session.user.email,
+      // @ts-ignore
+      role: session.user.role 
+    });
   }
 
   return c.json({ authenticated: false }, 401);
