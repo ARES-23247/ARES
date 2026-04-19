@@ -380,7 +380,7 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
             <input 
               id="cover-upload" 
               type="file" 
-              accept="image/*" 
+              accept="image/*,.heic,.heif" 
               className="hidden" 
               onChange={async (e) => {
                 const file = e.target.files?.[0];
@@ -506,7 +506,7 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
         <input 
           id="inline-img-upload" 
           type="file" 
-          accept="image/*" 
+          accept="image/*,.heic,.heif" 
           className="hidden" 
           onChange={async (e) => {
             const file = e.target.files?.[0];
