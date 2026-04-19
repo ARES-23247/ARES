@@ -166,7 +166,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
     const fetchSettings = async () => {
       try {
         const res = await fetch("/dashboard/api/admin/settings", { credentials: "include" });
-        const data = await res.json();
+        const data = await res.json() as { success?: boolean; settings?: Record<string, string> };
         if (data.success && data.settings) {
           const config = data.settings;
           const available = [];
@@ -241,7 +241,8 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
     try {
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ arrayBuffer }, {
-        convertImage: mammoth.images.inline(async (element) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        convertImage: (mammoth as any).images.inline(async (element: any) => {
           const buffer = await element.read();
           const blob = new Blob([buffer], { type: element.contentType });
           const imageFile = new File([blob], `imported_image_${Date.now()}.${element.contentType.split('/')[1]}`, { type: element.contentType });

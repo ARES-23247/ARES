@@ -11,12 +11,15 @@ const MEMBER_TYPES = [
   { value: "parent", label: "Parent", icon: "👪" },
 ];
 
+const DIETARY_OPTIONS = ["Gluten-Free", "Kosher", "Halal", "Vegetarian", "Vegan", "Nut-free", "No-pork", "No-Beef"];
+
 interface CollegeEntry { name: string; domain: string; years: string; degree: string; }
 interface EmployerEntry { name: string; domain: string; title: string; current: boolean; years: string; }
 
 interface ProfileData {
   nickname: string;
   phone: string;
+  contact_email: string;
   show_email: boolean;
   show_phone: boolean;
   pronouns: string;
@@ -25,20 +28,28 @@ interface ProfileData {
   member_type: string;
   bio: string;
   favorite_food: string;
-  dietary_restrictions: string;
+  dietary_restrictions: string[];
   favorite_first_thing: string;
   fun_fact: string;
   colleges: CollegeEntry[];
   employers: EmployerEntry[];
-  show_on_about: boolean;
+  favorite_robot_mechanism: string;
+  pre_match_superstition: string;
+  leadership_role: string;
+  rookie_year: string;
+  tshirt_size: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
 }
 
 const DEFAULT_PROFILE: ProfileData = {
-  nickname: "", phone: "", show_email: false, show_phone: false,
+  nickname: "", phone: "", contact_email: "", show_email: false, show_phone: false,
   pronouns: "", grade_year: "", subteams: [], member_type: "student",
-  bio: "", favorite_food: "", dietary_restrictions: "",
+  bio: "", favorite_food: "", dietary_restrictions: [],
   favorite_first_thing: "", fun_fact: "",
   colleges: [], employers: [], show_on_about: true,
+  favorite_robot_mechanism: "", pre_match_superstition: "", leadership_role: "", rookie_year: "",
+  tshirt_size: "", emergency_contact_name: "", emergency_contact_phone: "",
 };
 
 export default function ProfileEditor() {
@@ -52,17 +63,27 @@ export default function ProfileEditor() {
   useEffect(() => {
     fetch("/api/profile/me", { credentials: "include" })
       .then(r => r.json())
-      .then((data: Record<string, unknown>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((data: any) => {
         if (data && !data.error) {
           setProfile({
             ...DEFAULT_PROFILE,
             ...data,
             subteams: typeof data.subteams === "string" ? JSON.parse(data.subteams as string) : (data.subteams as string[]) || [],
+            dietary_restrictions: typeof data.dietary_restrictions === "string" ? JSON.parse((data.dietary_restrictions as string) || "[]") : (data.dietary_restrictions as string[]) || [],
             colleges: typeof data.colleges === "string" ? JSON.parse(data.colleges as string) : (data.colleges as CollegeEntry[]) || [],
             employers: typeof data.employers === "string" ? JSON.parse(data.employers as string) : (data.employers as EmployerEntry[]) || [],
+            contact_email: data.contact_email || "",
             show_email: Boolean(data.show_email),
             show_phone: Boolean(data.show_phone),
             show_on_about: data.show_on_about !== undefined ? Boolean(data.show_on_about) : true,
+            favorite_robot_mechanism: data.favorite_robot_mechanism || "",
+            pre_match_superstition: data.pre_match_superstition || "",
+            leadership_role: data.leadership_role || "",
+            rookie_year: data.rookie_year || "",
+            tshirt_size: data.tshirt_size || "",
+            emergency_contact_name: data.emergency_contact_name || "",
+            emergency_contact_phone: data.emergency_contact_phone || "",
           });
         }
         setIsLoading(false);
@@ -81,6 +102,7 @@ export default function ProfileEditor() {
         body: JSON.stringify({
           ...profile,
           subteams: JSON.stringify(profile.subteams),
+          dietary_restrictions: JSON.stringify(profile.dietary_restrictions),
           colleges: JSON.stringify(profile.colleges),
           employers: JSON.stringify(profile.employers),
           show_email: profile.show_email ? 1 : 0,
@@ -103,6 +125,28 @@ export default function ProfileEditor() {
         ? prev.subteams.filter(t => t !== team)
         : [...prev.subteams, team],
     }));
+  };
+
+  const toggleDietary = (item: string) => {
+    setProfile(prev => ({
+      ...prev,
+      dietary_restrictions: prev.dietary_restrictions.includes(item)
+        ? prev.dietary_restrictions.filter(t => t !== item)
+        : [...prev.dietary_restrictions, item],
+    }));
+  };
+
+  const getOtherDietary = () => {
+    const other = profile.dietary_restrictions.find(t => t.startsWith("Other:"));
+    return other ? other.replace("Other:", "").trim() : "";
+  };
+
+  const setOtherDietary = (val: string) => {
+    setProfile(prev => {
+      const filtered = prev.dietary_restrictions.filter(t => !t.startsWith("Other:"));
+      if (!val) return { ...prev, dietary_restrictions: filtered };
+      return { ...prev, dietary_restrictions: [...filtered, `Other: ${val}`] };
+    });
   };
 
   const addCollege = () => setProfile(prev => ({ ...prev, colleges: [...prev.colleges, { name: "", domain: "", years: "", degree: "" }] }));
@@ -202,6 +246,16 @@ export default function ProfileEditor() {
             <input id="pe-grade" className={inputClass} placeholder="e.g. 10th Grade, Class of 2025" value={profile.grade_year} onChange={e => setProfile({...profile, grade_year: e.target.value})} />
           </div>
         )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="pe-role" className={labelClass}>Leadership Role</label>
+            <input id="pe-role" className={inputClass} placeholder="e.g. Build Lead, Captain (Optional)" value={profile.leadership_role} onChange={e => setProfile({...profile, leadership_role: e.target.value})} />
+          </div>
+          <div>
+            <label htmlFor="pe-rookie" className={labelClass}>Rookie Year</label>
+            <input id="pe-rookie" className={inputClass} placeholder="e.g. 2023" value={profile.rookie_year} onChange={e => setProfile({...profile, rookie_year: e.target.value})} />
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           <input type="checkbox" id="showAbout" checked={profile.show_on_about} onChange={e => setProfile({...profile, show_on_about: e.target.checked})} className="w-4 h-4 accent-ares-red" />
           <label htmlFor="showAbout" className="text-sm text-zinc-300">Show me on the About Us page</label>
@@ -222,8 +276,9 @@ export default function ProfileEditor() {
               </label>
             </div>
             <div>
-              <span className={labelClass}>Email Visibility</span>
-              <label className="flex items-center gap-2 mt-3 text-xs text-zinc-500">
+              <label htmlFor="pe-contact-email" className={labelClass}>Contact Email</label>
+              <input id="pe-contact-email" className={inputClass} placeholder="Optional. Replaces login email." value={profile.contact_email} onChange={e => setProfile({...profile, contact_email: e.target.value})} />
+              <label className="flex items-center gap-2 mt-2 text-xs text-zinc-500">
                 <input type="checkbox" checked={profile.show_email} onChange={e => setProfile({...profile, show_email: e.target.checked})} className="accent-ares-red" />
                 Show email on public profile
               </label>
@@ -241,12 +296,71 @@ export default function ProfileEditor() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
+            <label htmlFor="pe-fav-mech" className={labelClass}>Favorite Robot Mechanism</label>
+            <input id="pe-fav-mech" className={inputClass} placeholder="e.g. 2022 Turret" value={profile.favorite_robot_mechanism} onChange={e => setProfile({...profile, favorite_robot_mechanism: e.target.value})} />
+          </div>
+          <div>
+            <label htmlFor="pe-superstition" className={labelClass}>Pre-Match Superstition</label>
+            <input id="pe-superstition" className={inputClass} placeholder="e.g. Taping the battery 3 times" value={profile.pre_match_superstition} onChange={e => setProfile({...profile, pre_match_superstition: e.target.value})} />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <label htmlFor="pe-food" className={labelClass}>Favorite Food</label>
             <input id="pe-food" className={inputClass} placeholder="Pizza, tacos..." value={profile.favorite_food} onChange={e => setProfile({...profile, favorite_food: e.target.value})} />
           </div>
           <div>
-            <label htmlFor="pe-dietary" className={labelClass}>Dietary Restrictions</label>
-            <input id="pe-dietary" className={inputClass} placeholder="Vegetarian, gluten-free, none..." value={profile.dietary_restrictions} onChange={e => setProfile({...profile, dietary_restrictions: e.target.value})} />
+            <span className={labelClass}>Dietary Restrictions</span>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {DIETARY_OPTIONS.map(opt => (
+                <label key={opt} className="flex items-center gap-2 text-sm text-zinc-300">
+                  <input type="checkbox" checked={profile.dietary_restrictions.includes(opt)} onChange={() => toggleDietary(opt)} className="accent-ares-red rounded w-4 h-4" />
+                  {opt}
+                </label>
+              ))}
+              <div className="col-span-2 mt-1">
+                <label className="flex items-center gap-2 text-sm text-zinc-300 mb-1">
+                  <input type="checkbox" checked={profile.dietary_restrictions.some(t => t.startsWith("Other:"))} onChange={(e) => { if (!e.target.checked) setOtherDietary(""); else setOtherDietary("Optional Details"); }} className="accent-ares-red rounded w-4 h-4" />
+                  Other
+                </label>
+                {profile.dietary_restrictions.some(t => t.startsWith("Other:")) && (
+                  <input className={`${inputClass} !py-2`} placeholder="Please specify..." value={getOtherDietary()} onChange={e => setOtherDietary(e.target.value)} />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Internal Logistics (Private) */}
+      <div className={sectionClass}>
+        <div className="flex items-center gap-2 mb-2 text-sm font-black uppercase tracking-wider text-ares-red">
+          <Shield size={16} /> Team Logistics (Private)
+        </div>
+        <p className="text-xs text-zinc-400 mb-4">This information is strictly for event organization and travel. It will NEVER be shown publicly.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-1">
+            <label htmlFor="pe-tshirt" className={labelClass}>T-Shirt Size</label>
+            <select id="pe-tshirt" className={inputClass} value={profile.tshirt_size} onChange={e => setProfile({...profile, tshirt_size: e.target.value})}>
+              <option value="" disabled>Select Size...</option>
+              <option value="Youth Medium">Youth Medium</option>
+              <option value="Youth Large">Youth Large</option>
+              <option value="Adult Small">Adult Small</option>
+              <option value="Adult Medium">Adult Medium</option>
+              <option value="Adult Large">Adult Large</option>
+              <option value="Adult XL">Adult XL</option>
+              <option value="Adult 2XL">Adult 2XL</option>
+              <option value="Adult 3XL">Adult 3XL</option>
+            </select>
+          </div>
+          <div className="md:col-span-1">
+            <label htmlFor="pe-ec-name" className={labelClass}>Emergency Contact Name</label>
+            <input id="pe-ec-name" className={inputClass} placeholder="Parent/Guardian Name" value={profile.emergency_contact_name} onChange={e => setProfile({...profile, emergency_contact_name: e.target.value})} />
+          </div>
+          <div className="md:col-span-1">
+            <label htmlFor="pe-ec-phone" className={labelClass}>Emergency Contact Phone</label>
+            <input id="pe-ec-phone" className={inputClass} placeholder="(304) 555-1234" value={profile.emergency_contact_phone} onChange={e => setProfile({...profile, emergency_contact_phone: e.target.value})} />
           </div>
         </div>
       </div>

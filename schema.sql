@@ -92,3 +92,33 @@ CREATE TABLE media_tags (
     folder TEXT DEFAULT 'Library',
     tags TEXT
 );
+
+DROP TABLE IF EXISTS user_profiles;
+CREATE TABLE user_profiles (
+    user_id TEXT PRIMARY KEY,
+    nickname TEXT,
+    phone TEXT,
+    contact_email TEXT,
+    show_email INTEGER DEFAULT 0,
+    show_phone INTEGER DEFAULT 0,
+    pronouns TEXT,
+    grade_year TEXT,
+    subteams TEXT DEFAULT '[]',
+    member_type TEXT DEFAULT 'student',
+    bio TEXT,
+    favorite_food TEXT,
+    dietary_restrictions TEXT,
+    favorite_first_thing TEXT,
+    fun_fact TEXT,
+    colleges TEXT DEFAULT '[]',
+    employers TEXT DEFAULT '[]',
+    show_on_about INTEGER DEFAULT 1,
+    favorite_robot_mechanism TEXT,
+    pre_match_superstition TEXT,
+    leadership_role TEXT,
+    rookie_year TEXT,
+    tshirt_size TEXT,
+    emergency_contact_name TEXT,
+    emergency_contact_phone TEXT,
+    updated_at TEXT DEFAULT (datetime('now'))
+);

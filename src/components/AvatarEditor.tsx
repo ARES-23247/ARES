@@ -20,6 +20,8 @@ const AVATAAARS_OPTIONS = {
   hairColor: ["2c1b18","4a312c","724133","a55728","b58143","c93305","d6b370","e8e1e1","ecdcbf","f59797"],
   skinColor: ["614335","ae5d29","d08b5b","edb98a","f8d25c","fd9841","ffdbb4"],
   clothesColor: ["3c4f5c","65c9ff","262e33","5199e4","25557c","929598","a7ffc4","e6e6e6","ff5c5c","ff488e","ffffff"],
+  facialHairColor: ["2c1b18","4a312c","724133","a55728","b58143","c93305","d6b370","e8e1e1","ecdcbf","f59797"],
+  accessoriesColor: ["3c4f5c","65c9ff","262e33","5199e4","25557c","929598","a7ffc4","e6e6e6","ff5c5c","ff488e","ffffff"],
 };
 
 const BOTTTS_OPTIONS = {
@@ -50,7 +52,9 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
     clothesColor: getRandom(AVATAAARS_OPTIONS.clothesColor),
     skinColor: getRandom(AVATAAARS_OPTIONS.skinColor),
     facialHair: getRandom(AVATAAARS_OPTIONS.facialHair),
+    facialHairColor: getRandom(AVATAAARS_OPTIONS.facialHairColor),
     accessories: getRandom(AVATAAARS_OPTIONS.accessories),
+    accessoriesColor: getRandom(AVATAAARS_OPTIONS.accessoriesColor),
     showFacialHair: false,
     showAccessories: true,
   });
@@ -81,7 +85,9 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
         clothesColor: getRandom(AVATAAARS_OPTIONS.clothesColor),
         skinColor: getRandom(AVATAAARS_OPTIONS.skinColor),
         facialHair: getRandom(AVATAAARS_OPTIONS.facialHair),
+        facialHairColor: getRandom(AVATAAARS_OPTIONS.facialHairColor),
         accessories: getRandom(AVATAAARS_OPTIONS.accessories),
+        accessoriesColor: getRandom(AVATAAARS_OPTIONS.accessoriesColor),
         showFacialHair: Math.random() > 0.5,
         showAccessories: Math.random() > 0.3,
       });
@@ -113,12 +119,14 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
       // Probability-gated features
       if (avaState.showAccessories) {
         params.set("accessories", avaState.accessories);
+        params.set("accessoriesColor", avaState.accessoriesColor);
         params.set("accessoriesProbability", "100");
       } else {
         params.set("accessoriesProbability", "0");
       }
       if (avaState.showFacialHair) {
         params.set("facialHair", avaState.facialHair);
+        params.set("facialHairColor", avaState.facialHairColor);
         params.set("facialHairProbability", "100");
       } else {
         params.set("facialHairProbability", "0");
@@ -208,7 +216,7 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-4xl bg-zinc-950 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[85vh]"
+          className="w-full max-w-4xl bg-zinc-950 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[95vh] md:max-h-[85vh]"
         >
           {/* Left Panel: Preview */}
           <div className="w-full md:w-2/5 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 relative overflow-hidden">
@@ -235,7 +243,7 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
           </div>
 
           {/* Right Panel: Editor Controls */}
-          <div className="w-full md:w-3/5 flex flex-col h-full bg-zinc-900/50">
+          <div className="w-full md:w-3/5 flex flex-col h-full bg-zinc-900/50 min-h-0">
             <div className="flex items-center justify-between p-5 border-b border-white/5">
               <h2 className="text-lg font-black flex items-center gap-2 tracking-tight">
                 <ImageIcon className="text-ares-red" size={20} />
@@ -281,9 +289,20 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
                     </div>
                     <div className="border-t border-white/5 pt-4 space-y-2">
                       {renderToggle("Show Accessories", avaState.showAccessories, (val) => setAvaState({...avaState, showAccessories: val}))}
-                      {avaState.showAccessories && renderSelect("Accessory Type", avaState.accessories, AVATAAARS_OPTIONS.accessories, (val) => setAvaState({...avaState, accessories: val}))}
+                      {avaState.showAccessories && (
+                        <>
+                          {renderSelect("Accessory Type", avaState.accessories, AVATAAARS_OPTIONS.accessories, (val) => setAvaState({...avaState, accessories: val}))}
+                          {renderColorSelect("Accessory Color", avaState.accessoriesColor, AVATAAARS_OPTIONS.accessoriesColor, (val) => setAvaState({...avaState, accessoriesColor: val}))}
+                        </>
+                      )}
+                      
                       {renderToggle("Show Facial Hair", avaState.showFacialHair, (val) => setAvaState({...avaState, showFacialHair: val}))}
-                      {avaState.showFacialHair && renderSelect("Facial Hair Style", avaState.facialHair, AVATAAARS_OPTIONS.facialHair, (val) => setAvaState({...avaState, facialHair: val}))}
+                      {avaState.showFacialHair && (
+                        <>
+                          {renderSelect("Facial Hair Style", avaState.facialHair, AVATAAARS_OPTIONS.facialHair, (val) => setAvaState({...avaState, facialHair: val}))}
+                          {renderColorSelect("Facial Hair Color", avaState.facialHairColor, AVATAAARS_OPTIONS.facialHairColor, (val) => setAvaState({...avaState, facialHairColor: val}))}
+                        </>
+                      )}
                     </div>
                   </>
                 )}

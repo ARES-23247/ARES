@@ -1299,6 +1299,10 @@ function sanitizeProfileForPublic(profile: Record<string, unknown>, memberType: 
     favorite_first_thing: profile.favorite_first_thing,
     fun_fact: profile.fun_fact,
     show_on_about: profile.show_on_about,
+    favorite_robot_mechanism: profile.favorite_robot_mechanism,
+    pre_match_superstition: profile.pre_match_superstition,
+    leadership_role: profile.leadership_role,
+    rookie_year: profile.rookie_year,
   };
   // Students & parents: NEVER expose PII or career/education fields
   if (memberType === "student" || memberType === "parent") {
@@ -1307,7 +1311,7 @@ function sanitizeProfileForPublic(profile: Record<string, unknown>, memberType: 
   // Adults: include optional fields if user opted in
   return {
     ...safe,
-    email: Number(profile.show_email) ? profile.email : undefined,
+    email: Number(profile.show_email) ? (profile.contact_email || profile.email) : undefined,
     phone: Number(profile.show_phone) ? profile.phone : undefined,
     colleges: profile.colleges,
     employers: profile.employers,
@@ -1338,19 +1342,26 @@ apiRouter.put("/profile/me", async (c) => {
   try {
     const body = await c.req.json() as Record<string, unknown>;
     await c.env.DB.prepare(`
-      INSERT INTO user_profiles (user_id, nickname, phone, show_email, show_phone, pronouns, grade_year, subteams, member_type, bio, favorite_food, dietary_restrictions, favorite_first_thing, fun_fact, colleges, employers, show_on_about, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO user_profiles (
+        user_id, nickname, phone, contact_email, show_email, show_phone, pronouns, grade_year, subteams, member_type, bio, favorite_food, dietary_restrictions, favorite_first_thing, fun_fact, colleges, employers, show_on_about,
+        favorite_robot_mechanism, pre_match_superstition, leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(user_id) DO UPDATE SET
-        nickname=excluded.nickname, phone=excluded.phone, show_email=excluded.show_email, show_phone=excluded.show_phone,
+        nickname=excluded.nickname, phone=excluded.phone, contact_email=excluded.contact_email, show_email=excluded.show_email, show_phone=excluded.show_phone,
         pronouns=excluded.pronouns, grade_year=excluded.grade_year, subteams=excluded.subteams, member_type=excluded.member_type,
         bio=excluded.bio, favorite_food=excluded.favorite_food, dietary_restrictions=excluded.dietary_restrictions,
         favorite_first_thing=excluded.favorite_first_thing, fun_fact=excluded.fun_fact,
         colleges=excluded.colleges, employers=excluded.employers, show_on_about=excluded.show_on_about,
+        favorite_robot_mechanism=excluded.favorite_robot_mechanism, pre_match_superstition=excluded.pre_match_superstition,
+        leadership_role=excluded.leadership_role, rookie_year=excluded.rookie_year, tshirt_size=excluded.tshirt_size,
+        emergency_contact_name=excluded.emergency_contact_name, emergency_contact_phone=excluded.emergency_contact_phone,
         updated_at=datetime('now')
     `).bind(
       user.id,
       (body.nickname as string) || null,
       (body.phone as string) || null,
+      (body.contact_email as string) || null,
       Number(body.show_email) || 0,
       Number(body.show_phone) || 0,
       (body.pronouns as string) || null,
@@ -1365,6 +1376,13 @@ apiRouter.put("/profile/me", async (c) => {
       (body.colleges as string) || "[]",
       (body.employers as string) || "[]",
       Number(body.show_on_about) ?? 1,
+      (body.favorite_robot_mechanism as string) || null,
+      (body.pre_match_superstition as string) || null,
+      (body.leadership_role as string) || null,
+      (body.rookie_year as string) || null,
+      (body.tshirt_size as string) || null,
+      (body.emergency_contact_name as string) || null,
+      (body.emergency_contact_phone as string) || null
     ).run();
     return c.json({ success: true });
   } catch (err) {
