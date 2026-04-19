@@ -4,10 +4,21 @@ import { motion } from "framer-motion";
 
 export default function Login() {
   const handleLogin = async (provider: "google" | "github" | "zulip") => {
-    await signIn.social({
-      provider,
-      callbackURL: "/dashboard",
-    });
+    try {
+      const { data, error } = await signIn.social({
+        provider,
+        callbackURL: "/dashboard",
+      });
+      if (error) {
+        console.error("Login Error:", error);
+        alert(`Login failed: ${error.message} (${error.status})`);
+      } else {
+        console.log("Login initiated:", data);
+      }
+    } catch (e) {
+      console.error("Critical Login Exception:", e);
+      alert("Registration system unreachable.");
+    }
   };
 
   return (
