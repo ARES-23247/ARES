@@ -48,11 +48,21 @@ const ensureAdmin = async (c: Context<{ Bindings: Bindings }>, next: Next) => {
     return c.json({ error: "Unauthorized: Please log in." }, 401);
   }
 
-  // RBAC: Check for admin role
+  // RBAC: Granular path-based role checks
   // @ts-expect-error - Better Auth additional fields
-  if (session.user.role !== "admin") {
-     console.warn(`[Auth Check] Access Denied for ${session.user.email}. Role: ${session.user.role}`);
-     return c.json({ error: "Forbidden: Administrator privileges required." }, 403);
+  const role = (session.user.role as string) || "user";
+  let allowedRoles = ["admin"];
+
+  // Authors can manage posts and media
+  if (url.pathname.includes("/admin/posts") || 
+      url.pathname.includes("/admin/upload") || 
+      url.pathname.includes("/admin/media")) {
+    allowedRoles = ["admin", "author"];
+  }
+
+  if (!allowedRoles.includes(role)) {
+     console.warn(`[Auth Check] Access Denied for ${session.user.email}. Role: ${role}. Path: ${url.pathname}`);
+     return c.json({ error: `Forbidden: Requires one of [${allowedRoles.join(", ")}] privileges.` }, 403);
   }
 
   await next();
