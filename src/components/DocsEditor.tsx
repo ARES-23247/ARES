@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import mammoth from "mammoth";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -38,6 +39,7 @@ import AssetPickerModal from "./AssetPickerModal";
 import SimPickerModal from "./SimPickerModal";
 
 export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: string | null; onClearEdit?: () => void }) {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
   
@@ -246,6 +248,8 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
 
       // @ts-expect-error -- D1 untyped response
       if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ["docs"] });
+        queryClient.invalidateQueries({ queryKey: ["admin_docs"] });
         if (onClearEdit) onClearEdit();
       // @ts-expect-error -- D1 untyped response
         navigate(`/docs/${data.slug}`);

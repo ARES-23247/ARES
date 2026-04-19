@@ -27,15 +27,15 @@ import { MentionList } from './editor/MentionList';
 import { suggestionRenderer } from './editor/suggestionRenderer';
 import 'katex/dist/katex.min.css';
 
-
-
 import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import mammoth from "mammoth";
 import AssetPickerModal from "./AssetPickerModal";
 import SimPickerModal from "./SimPickerModal";
 
 export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: string | null; onClearEdit?: () => void }) {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
@@ -282,6 +282,8 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
 
       // @ts-expect-error -- D1 untyped response
       if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ["posts"] });
+        queryClient.invalidateQueries({ queryKey: ["admin_posts"] });
         if (onClearEdit) onClearEdit();
       // @ts-expect-error -- D1 untyped response
         navigate(`/blog/${data.slug}`);
