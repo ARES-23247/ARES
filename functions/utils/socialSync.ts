@@ -174,12 +174,11 @@ export async function dispatchSocials(
           await rt.detectFacets(agent);
 
           let embed = undefined;
-          if (payload.coverImageUrl) {
-            const resolvedImageUrl = payload.coverImageUrl.startsWith('http') ? payload.coverImageUrl
-            : `${payload.baseUrl || 'https://aresfirst.org'}${payload.coverImageUrl.startsWith('/') ? '' : '/'}${payload.coverImageUrl}`;
-            
+          // Only attempt to fetch and upload the image to BlueSky if it's an explicit, absolute, external URL.
+          // Fetching internal/relative URLs (like /gallery_1.png) via external loopback violently crashes Cloudflare Workers due to Subrequest recursion caps.
+          if (payload.coverImageUrl && payload.coverImageUrl.startsWith('http')) {
             try {
-              const imgRes = await fetch(resolvedImageUrl);
+              const imgRes = await fetch(payload.coverImageUrl);
               if (imgRes.ok) {
                 const imgBuffer = await imgRes.arrayBuffer();
                 const mimeType = imgRes.headers.get("content-type") || "image/jpeg";
