@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
+import CommentSection from "../components/CommentSection";
 
 interface PostRow {
   slug: string;
@@ -61,6 +62,9 @@ export default function BlogPost() {
           className="prose prose-invert lg:prose-lg max-w-none prose-headings:text-white prose-p:text-white/80 prose-a:text-ares-gold prose-a:focus-visible:outline-none prose-a:focus-visible:ring-2 prose-a:focus-visible:ring-ares-cyan prose-a:rounded"
         >
           <TiptapRenderer node={parsedAst} />
+
+          {/* Comments (auth-gated) */}
+          {slug && <CommentSection targetType="post" targetId={slug} />}
         </motion.article>
       </div>
     </motion.div>

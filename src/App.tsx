@@ -22,6 +22,7 @@ import Accessibility from "./pages/Accessibility";
 import Privacy from "./pages/Privacy";
 import Docs from "./pages/Docs";
 import Login from "./pages/Login";
+import ProfilePage from "./pages/ProfilePage";
 
 export default function App() {
   const location = useLocation();
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/profile/:userId" element={<ProfilePage />} />
               <Route path="/tech-stack" element={<TechStack />} />
               <Route path="/accessibility" element={<Accessibility />} />
               <Route path="/privacy" element={<Privacy />} />

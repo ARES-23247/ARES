@@ -5,13 +5,15 @@ import AssetManager from "@/components/AssetManager";
 import DocsEditor from "@/components/DocsEditor";
 import IntegrationsManager from "@/components/IntegrationsManager";
 import AvatarEditor from "@/components/AvatarEditor";
+import ProfileEditor from "@/components/ProfileEditor";
+import AdminUsers from "@/components/AdminUsers";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings, ShieldAlert, Lock, RefreshCw, LogOut } from "lucide-react";
+import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings, ShieldAlert, Lock, RefreshCw, LogOut, User, Users } from "lucide-react";
 import { useSession, signOut } from "../utils/auth-client";
 
-type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets" | "integrations";
+type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets" | "integrations" | "profile" | "users";
 
 /* Compute localhost bypass at module level so it can seed initial state
    without triggering a synchronous setState inside an effect body. */
@@ -25,7 +27,7 @@ export default function Dashboard() {
   const initialDoc = searchParams.get("editDoc");
 
   const { data: session, isPending } = useSession();
-  const [activeTab, setActiveTab] = useState<TabState>(initialDoc ? "docs" : "blog");
+  const [activeTab, setActiveTab] = useState<TabState>(initialDoc ? "docs" : "profile");
   const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
   const [editEventId, setEditEventId] = useState<string | null>(null);
   const [editDocSlug, setEditDocSlug] = useState<string | null>(initialDoc);
@@ -68,7 +70,7 @@ export default function Dashboard() {
   const isAdmin = role === "admin" || isLocalDev;
   const isAuthorized = isAdmin || role === "author";
 
-  if (!session || !session.user || !isAuthorized) {
+  if (!session || !session.user) {
     return (
       <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden">
         {/* Background glow effects */}
@@ -177,7 +179,8 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          {/* Create New Panel */}
+          {/* Create New Panel (CMS authors/admins only) */}
+          {isAuthorized && (
           <div className="bg-black/40 backdrop-blur-xl p-5 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden flex flex-col">
             <div className="absolute top-0 right-0 w-32 h-32 bg-ares-gold/20 blur-3xl rounded-full" />
             <h4 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2 z-10">
@@ -207,8 +210,10 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
+          )}
 
-          {/* Manage Current Panel */}
+          {/* Manage Current Panel (CMS authors/admins only) */}
+          {isAuthorized && (
           <div className="bg-black/40 backdrop-blur-xl p-5 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden flex flex-col">
             <div className="absolute top-0 right-0 w-32 h-32 bg-ares-bronze/20 blur-3xl rounded-full" />
             <h4 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2 z-10">
@@ -250,6 +255,33 @@ export default function Dashboard() {
                 <Settings size={16} />
                 Integrations
               </button>
+            </div>
+          </div>
+          )}
+
+          {/* Community Panel (all authenticated users) */}
+          <div className={`bg-black/40 backdrop-blur-xl p-5 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden flex flex-col ${!isAuthorized ? "md:col-span-2" : ""}`}>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full" />
+            <h4 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2 z-10">
+              <User size={14} /> Community
+            </h4>
+            <div className="flex flex-wrap gap-3 z-10">
+              <button
+                onClick={() => setActiveTab("profile")}
+                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === "profile" ? "bg-gradient-to-b from-emerald-500/20 to-emerald-500/5 border border-emerald-500/50 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
+              >
+                <User size={16} />
+                My Profile
+              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => setActiveTab("users")}
+                  className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${activeTab === "users" ? "bg-gradient-to-b from-orange-500/20 to-orange-500/5 border border-orange-500/50 text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
+                >
+                  <Users size={16} />
+                  Users
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -346,6 +378,32 @@ export default function Dashboard() {
                 className="w-full glass-card rounded-3xl p-6 md:p-10 border border-purple-500/30 flex flex-col bg-zinc-900 shadow-2xl"
               >
                 <IntegrationsManager />
+              </motion.div>
+            )}
+
+            {activeTab === "profile" && (
+              <motion.div 
+                key="profile"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-emerald-500/30 flex flex-col bg-zinc-900 shadow-2xl"
+              >
+                <ProfileEditor />
+              </motion.div>
+            )}
+
+            {activeTab === "users" && isAdmin && (
+              <motion.div 
+                key="users"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-orange-500/30 flex flex-col bg-zinc-900 shadow-2xl"
+              >
+                <AdminUsers />
               </motion.div>
             )}
           </AnimatePresence>

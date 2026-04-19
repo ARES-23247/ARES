@@ -1,12 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, LayoutDashboard } from "lucide-react";
 import GlobalSearchModal from "./GlobalSearchModal";
+import { useSession } from "../utils/auth-client";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
+  const { data: session, isPending } = useSession();
+
+  const isSignedIn = !isPending && session?.user;
+  const userImage = session?.user?.image;
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 py-4 transition-all duration-500 overflow-hidden meander-border rounded-bl-xl rounded-br-[2.5rem]">
@@ -40,6 +45,16 @@ export default function Navbar() {
           >
             <Search size={18} aria-hidden="true" />
           </button>
+          {isSignedIn && (
+            <Link to="/dashboard" className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all group" aria-label="Dashboard">
+              <img 
+                src={userImage || `https://api.dicebear.com/9.x/bottts/svg?seed=${session?.user?.id}`} 
+                alt="" 
+                className="w-6 h-6 rounded-full bg-zinc-800" 
+              />
+              <span className="text-xs font-bold text-zinc-300 group-hover:text-white uppercase tracking-wider">Dashboard</span>
+            </Link>
+          )}
           <Link to="/contact" className="clipped-button-sm bg-ares-red text-white hover:scale-105 hover:bg-ares-red transition-all shadow-[0_0_15px_rgba(192,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
             Support Us
           </Link>
@@ -72,6 +87,11 @@ export default function Navbar() {
             <span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span>
           </Link>
           <Link to="/blog" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
+          {isSignedIn && (
+            <Link to="/dashboard" onClick={() => setOpen(false)} className="text-ares-gold hover:text-white flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">
+              <LayoutDashboard size={16} /> Dashboard
+            </Link>
+          )}
           <Link to="/contact" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Contact</Link>
         </div>
       )}

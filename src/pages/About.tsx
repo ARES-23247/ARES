@@ -1,4 +1,84 @@
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+
+interface TeamMember {
+  user_id: string;
+  nickname: string;
+  avatar: string;
+  pronouns?: string;
+  subteams?: string;
+  member_type: string;
+  bio?: string;
+  fun_fact?: string;
+  favorite_first_thing?: string;
+  colleges?: string;
+  employers?: string;
+}
+
+const SECTION_ORDER = [
+  { type: "coach", title: "Our Coaches", icon: "🏆", desc: "The strategic leaders guiding ARES to championship-grade performance." },
+  { type: "mentor", title: "Our Mentors", icon: "🔧", desc: "Technical experts shaping the next generation of West Virginia engineers." },
+  { type: "student", title: "Our Students", icon: "📚", desc: "The innovators, builders, and dreamers who bring ARES to life." },
+  { type: "alumni", title: "Our Alumni", icon: "🎓", desc: "Where the ARES legacy carries forward — in classrooms, labs, and careers." },
+];
+
+function MemberCard({ member }: { member: TeamMember }) {
+  const subteams = typeof member.subteams === "string" ? JSON.parse(member.subteams || "[]") : (member.subteams || []);
+  const colleges = typeof member.colleges === "string" ? JSON.parse(member.colleges || "[]") : [];
+
+  return (
+    <Link to={`/profile/${member.user_id}`} className="group block">
+      <div className="hero-card bg-white border border-ares-bronze/10 p-6 text-center transition-all duration-300 group-hover:border-ares-red/30 group-hover:shadow-lg">
+        <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-marble border border-ares-bronze/20 overflow-hidden p-2 group-hover:scale-105 transition-transform">
+          <img
+            src={member.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${member.user_id}`}
+            alt=""
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <h4 className="text-obsidian font-bold text-base mb-0.5 group-hover:text-ares-red transition-colors">
+          {member.nickname || "ARES Member"}
+        </h4>
+        {member.pronouns && (
+          <p className="text-obsidian/40 text-xs mb-2">{member.pronouns}</p>
+        )}
+        {subteams.length > 0 && (
+          <div className="flex flex-wrap gap-1 justify-center mb-2">
+            {(subteams as string[]).slice(0, 3).map((team: string) => (
+              <span key={team} className="px-2 py-0.5 bg-ares-red/5 text-ares-red/70 text-[9px] font-bold rounded-full uppercase tracking-wider">
+                {team}
+              </span>
+            ))}
+          </div>
+        )}
+        {member.member_type === "alumni" && colleges.length > 0 && (
+          <div className="flex justify-center gap-1.5 mt-2">
+            {(colleges as { domain: string }[]).slice(0, 3).map((col: { domain: string }, i: number) => (
+              col.domain && <img key={i} src={`https://logo.clearbit.com/${col.domain}`} alt="" className="w-5 h-5 rounded bg-white" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            ))}
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 export default function About() {
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/team-roster")
+      .then(r => r.json())
+      .then((data) => { setMembers((data as { members: TeamMember[] }).members || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const grouped = SECTION_ORDER.map(section => ({
+    ...section,
+    items: members.filter(m => m.member_type === section.type),
+  })).filter(section => section.items.length > 0);
+
   return (
     <div className="flex flex-col w-full">
       {/* ─── HERO ─── */}
@@ -67,6 +147,60 @@ export default function About() {
         </div>
       </section>
 
+      {/* ─── DYNAMIC TEAM ROSTER ─── */}
+      {grouped.length > 0 && grouped.map(section => (
+        <section key={section.type} className={`py-24 ${section.type === "coach" || section.type === "student" ? "bg-white" : section.type === "alumni" ? "bg-obsidian text-marble" : "bg-marble"}`}>
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <span className="text-4xl mb-4 block">{section.icon}</span>
+              <h2 className={`text-4xl md:text-5xl font-bold mb-4 font-heading uppercase ${section.type === "alumni" ? "text-white" : "text-obsidian"}`}>
+                {section.title}
+              </h2>
+              <p className={`text-lg max-w-2xl mx-auto ${section.type === "alumni" ? "text-marble/60" : "text-obsidian/50"}`}>
+                {section.desc}
+              </p>
+              <div className="w-24 h-1 bg-ares-red mx-auto mt-6"></div>
+            </div>
+            <div className={`grid gap-6 ${section.items.length <= 2 ? "grid-cols-1 md:grid-cols-2 max-w-2xl mx-auto" : section.items.length <= 4 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-5"}`}>
+              {section.items.map(member => (
+                <MemberCard key={member.user_id} member={member} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ))}
+
+      {/* Fallback if no profiles exist yet */}
+      {loading && (
+        <section className="py-24 bg-obsidian text-marble">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <div className="animate-spin w-8 h-8 border-2 border-ares-red border-t-transparent rounded-full mx-auto" />
+          </div>
+        </section>
+      )}
+
+      {!loading && grouped.length === 0 && (
+        <section className="py-24 bg-obsidian text-marble">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading uppercase">Our Mentors</h2>
+              <div className="w-24 h-1 bg-ares-red mx-auto"></div>
+            </div>
+            <div className="bg-marble/5 border border-ares-bronze/20 hero-card p-12 text-center group hover:border-ares-red/50">
+              <h3 className="text-4xl font-bold text-ares-bronze mb-6 font-heading group-hover:text-white transition-colors">Dave Huss & Kelley Burd-Huss</h3>
+              <div className="space-y-6 text-lg text-marble/60 leading-relaxed max-w-2xl mx-auto italic">
+                <p>
+                  Founding mentors and architects of the ARES community. In 2022, the Huss family integrated into the <em>FIRST</em>® ecosystem, and robotics has since redefined their community impact.
+                </p>
+                <p>
+                  Active across <em>FIRST</em>® LEGO League and <em>FIRST</em>® Robotics Challenge, Dave and Kelley are dedicated to ensuring every student finds their place in the Mountaineer engineering legacy.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ─── QUICK ANSWERS (FAQS) ─── */}
       <section className="py-24 bg-white border-t border-ares-bronze/10">
         <div className="max-w-7xl mx-auto px-6">
@@ -92,27 +226,6 @@ export default function About() {
                 <p className="text-obsidian/70 text-base leading-relaxed">{faq.a}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── OUR MENTORS ─── */}
-      <section className="py-24 bg-obsidian text-marble">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading uppercase">Our Mentors</h2>
-            <div className="w-24 h-1 bg-ares-red mx-auto"></div>
-          </div>
-          <div className="bg-marble/5 border border-ares-bronze/20 hero-card p-12 text-center group hover:border-ares-red/50">
-            <h3 className="text-4xl font-bold text-ares-bronze mb-6 font-heading group-hover:text-white transition-colors">Dave Huss & Kelley Burd-Huss</h3>
-            <div className="space-y-6 text-lg text-marble/60 leading-relaxed max-w-2xl mx-auto italic">
-              <p>
-                Founding mentors and architects of the ARES community. In 2022, the Huss family integrated into the <em>FIRST</em>® ecosystem, and robotics has since redefined their community impact.
-              </p>
-              <p>
-                Active across <em>FIRST</em>® LEGO League and <em>FIRST</em>® Robotics Challenge, Dave and Kelley are dedicated to ensuring every student finds their place in the Mountaineer engineering legacy.
-              </p>
-            </div>
           </div>
         </div>
       </section>

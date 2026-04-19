@@ -1,29 +1,35 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, RefreshCw, Save, Image as ImageIcon, Shuffle } from "lucide-react";
+import { X, RefreshCw, Save, Image as ImageIcon, Shuffle, ToggleLeft, ToggleRight } from "lucide-react";
 import { authClient } from "../utils/auth-client";
 
 interface AvatarEditorProps {
   onClose: () => void;
 }
 
+/* ─── DiceBear 9.x Official Parameters ──────────────────────────── */
+
 const AVATAAARS_OPTIONS = {
-  top: ["bob", "bun", "curly", "dreads", "frida", "fro", "shaggy", "shaggyMullet", "longHair", "shortHair", "eyepatch", "hat", "hijab", "turban", "winterHat1"],
-  hairColor: ["2c1b18", "4a3123", "b58143", "d6b370", "724133", "a55728", "c93305", "e8e1e1", "f59797", "ec36b5", "592454"],
-  clothing: ["blazerAndShirt", "blazerAndSweater", "collarAndSweater", "graphicShirt", "hoodie", "overall", "shirtCrewNeck", "shirtVNeck"],
-  clothingColor: ["3c4f5c", "65c9ff", "262e33", "ff5c5c", "ff488e", "a1d821", "5199e4", "e6e6e6", "929598"],
-  skinColor: ["f8d25c", "fd9841", "f8d25c", "ffdbb4", "edb98a", "d08b5b", "ae5d29", "614335"],
-  accessories: ["blank", "prescription01", "prescription02", "round", "sunglasses", "wayfarers"],
-  facialHair: ["blank", "beardMedium", "beardLight", "beardMagestic", "moustacheFancy", "moustacheMagnum"]
+  top: ["bigHair","bob","bun","curly","curvy","dreads","dreads01","dreads02","frida","frizzle","fro","froBand","hat","hijab","longButNotTooLong","miaWallace","shaggy","shaggyMullet","shavedSides","shortCurly","shortFlat","shortRound","shortWaved","sides","straight01","straight02","straightAndStrand","theCaesar","theCaesarAndSidePart","turban","winterHat1","winterHat02","winterHat03"],
+  eyes: ["closed","cry","default","eyeRoll","happy","hearts","side","squint","surprised","wink","winkWacky","xDizzy"],
+  eyebrows: ["angry","angryNatural","default","defaultNatural","flatNatural","frownNatural","raisedExcited","raisedExcitedNatural","sadConcerned","sadConcernedNatural","unibrowNatural","upDown","upDownNatural"],
+  mouth: ["concerned","default","disbelief","eating","grimace","sad","screamOpen","serious","smile","tongue","twinkle","vomit"],
+  facialHair: ["beardLight","beardMajestic","beardMedium","moustacheFancy","moustacheMagnum"],
+  accessories: ["eyepatch","kurt","prescription01","prescription02","round","sunglasses","wayfarers"],
+  clothing: ["blazerAndShirt","blazerAndSweater","collarAndSweater","graphicShirt","hoodie","overall","shirtCrewNeck","shirtScoopNeck","shirtVNeck"],
+  hairColor: ["2c1b18","4a312c","724133","a55728","b58143","c93305","d6b370","e8e1e1","ecdcbf","f59797"],
+  skinColor: ["614335","ae5d29","d08b5b","edb98a","f8d25c","fd9841","ffdbb4"],
+  clothesColor: ["3c4f5c","65c9ff","262e33","5199e4","25557c","929598","a7ffc4","e6e6e6","ff5c5c","ff488e","ffffff"],
 };
 
 const BOTTTS_OPTIONS = {
-  base: ["cranial", "dsquad", "fractal", "glow", "jolie", "spider", "cranial"],
-  eyes: ["bulging", "dizzy", "eva", "frame1", "frame2", "glow", "happy", "robocop", "round", "sensor", "shade01"],
-  mouth: ["bite", "diagram", "grill", "grill01", "grill02", "smile", "square", "square01"],
-  top: ["antenna", "antennaCrooked", "bulb", "glowing", "horns", "radar", "round", "square", "squareAntenna"],
-  texture: ["camo", "circuits", "dirty", "dots", "grunge"],
-  primaryColor: ["1e293b", "dc2626", "2563eb", "16a34a", "ca8a04", "9333ea", "db2777"]
+  face: ["round01","round02","square01","square02","square03","square04"],
+  eyes: ["bulging","dizzy","eva","frame1","frame2","glow","happy","hearts","robocop","round","roundFrame01","roundFrame02","sensor","shade01"],
+  mouth: ["bite","diagram","grill01","grill02","grill03","smile01","smile02","square01","square02"],
+  top: ["antenna","antennaCrooked","bulb01","glowingBulb01","glowingBulb02","horns","lights","pyramid","radar"],
+  sides: ["antenna01","antenna02","cables01","cables02","round","square","squareAssymetric"],
+  texture: ["camo01","camo02","circuits","dirty01","dirty02","dots","grunge01","grunge02"],
+  baseColor: ["00acc1","1e88e5","5e35b1","6d4c41","7cb342","8e24aa","039be5","43a047","546e7a","00897b","3949ab","757575","c0ca33","d81b60","e53935","f4511e","fb8c00","fdd835","ffb300"],
 };
 
 function getRandom<T>(arr: T[]): T {
@@ -31,27 +37,33 @@ function getRandom<T>(arr: T[]): T {
 }
 
 export default function AvatarEditor({ onClose }: AvatarEditorProps) {
-  const [styleMode, setStyleMode] = useState<"bottts" | "avataaars">("bottts");
+  const [styleMode, setStyleMode] = useState<"bottts" | "avataaars">("avataaars");
 
   // Avataaar State
   const [avaState, setAvaState] = useState({
     top: getRandom(AVATAAARS_OPTIONS.top),
+    eyes: getRandom(AVATAAARS_OPTIONS.eyes),
+    eyebrows: getRandom(AVATAAARS_OPTIONS.eyebrows),
+    mouth: getRandom(AVATAAARS_OPTIONS.mouth),
     hairColor: getRandom(AVATAAARS_OPTIONS.hairColor),
     clothing: getRandom(AVATAAARS_OPTIONS.clothing),
-    clothingColor: getRandom(AVATAAARS_OPTIONS.clothingColor),
+    clothesColor: getRandom(AVATAAARS_OPTIONS.clothesColor),
     skinColor: getRandom(AVATAAARS_OPTIONS.skinColor),
+    facialHair: getRandom(AVATAAARS_OPTIONS.facialHair),
     accessories: getRandom(AVATAAARS_OPTIONS.accessories),
-    facialHair: getRandom(AVATAAARS_OPTIONS.facialHair)
+    showFacialHair: false,
+    showAccessories: true,
   });
 
   // Bottt State
   const [botState, setBotState] = useState({
-    base: getRandom(BOTTTS_OPTIONS.base),
+    face: getRandom(BOTTTS_OPTIONS.face),
     eyes: getRandom(BOTTTS_OPTIONS.eyes),
     mouth: getRandom(BOTTTS_OPTIONS.mouth),
     top: getRandom(BOTTTS_OPTIONS.top),
+    sides: getRandom(BOTTTS_OPTIONS.sides),
     texture: getRandom(BOTTTS_OPTIONS.texture),
-    primaryColor: getRandom(BOTTTS_OPTIONS.primaryColor)
+    baseColor: getRandom(BOTTTS_OPTIONS.baseColor),
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -61,33 +73,71 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
     if (styleMode === "avataaars") {
       setAvaState({
         top: getRandom(AVATAAARS_OPTIONS.top),
+        eyes: getRandom(AVATAAARS_OPTIONS.eyes),
+        eyebrows: getRandom(AVATAAARS_OPTIONS.eyebrows),
+        mouth: getRandom(AVATAAARS_OPTIONS.mouth),
         hairColor: getRandom(AVATAAARS_OPTIONS.hairColor),
         clothing: getRandom(AVATAAARS_OPTIONS.clothing),
-        clothingColor: getRandom(AVATAAARS_OPTIONS.clothingColor),
+        clothesColor: getRandom(AVATAAARS_OPTIONS.clothesColor),
         skinColor: getRandom(AVATAAARS_OPTIONS.skinColor),
+        facialHair: getRandom(AVATAAARS_OPTIONS.facialHair),
         accessories: getRandom(AVATAAARS_OPTIONS.accessories),
-        facialHair: getRandom(AVATAAARS_OPTIONS.facialHair)
+        showFacialHair: Math.random() > 0.5,
+        showAccessories: Math.random() > 0.3,
       });
     } else {
       setBotState({
-        base: getRandom(BOTTTS_OPTIONS.base),
+        face: getRandom(BOTTTS_OPTIONS.face),
         eyes: getRandom(BOTTTS_OPTIONS.eyes),
         mouth: getRandom(BOTTTS_OPTIONS.mouth),
         top: getRandom(BOTTTS_OPTIONS.top),
+        sides: getRandom(BOTTTS_OPTIONS.sides),
         texture: getRandom(BOTTTS_OPTIONS.texture),
-        primaryColor: getRandom(BOTTTS_OPTIONS.primaryColor)
+        baseColor: getRandom(BOTTTS_OPTIONS.baseColor),
       });
     }
   };
 
   const currentUrl = useMemo(() => {
     if (styleMode === "avataaars") {
-      const q = new URLSearchParams(avaState as Record<string, string>);
-      // Dicebear 9.x avataaars
-      return `https://api.dicebear.com/9.x/avataaars/svg?backgroundColor=transparent&${q.toString()}`;
+      const params = new URLSearchParams();
+      params.set("backgroundColor", "transparent");
+      params.set("top", avaState.top);
+      params.set("eyes", avaState.eyes);
+      params.set("eyebrows", avaState.eyebrows);
+      params.set("mouth", avaState.mouth);
+      params.set("hairColor", avaState.hairColor);
+      params.set("clothing", avaState.clothing);
+      params.set("clothesColor", avaState.clothesColor);
+      params.set("skinColor", avaState.skinColor);
+      // Probability-gated features
+      if (avaState.showAccessories) {
+        params.set("accessories", avaState.accessories);
+        params.set("accessoriesProbability", "100");
+      } else {
+        params.set("accessoriesProbability", "0");
+      }
+      if (avaState.showFacialHair) {
+        params.set("facialHair", avaState.facialHair);
+        params.set("facialHairProbability", "100");
+      } else {
+        params.set("facialHairProbability", "0");
+      }
+      return `https://api.dicebear.com/9.x/avataaars/svg?${params.toString()}`;
     } else {
-      const q = new URLSearchParams(botState as Record<string, string>);
-      return `https://api.dicebear.com/9.x/bottts/svg?backgroundColor=transparent&${q.toString()}`;
+      const params = new URLSearchParams();
+      params.set("backgroundColor", "transparent");
+      params.set("face", botState.face);
+      params.set("eyes", botState.eyes);
+      params.set("mouth", botState.mouth);
+      params.set("top", botState.top);
+      params.set("sides", botState.sides);
+      params.set("texture", botState.texture);
+      params.set("baseColor", botState.baseColor);
+      params.set("textureProbability", "100");
+      params.set("sidesProbability", "100");
+      params.set("mouthProbability", "100");
+      return `https://api.dicebear.com/9.x/bottts/svg?${params.toString()}`;
     }
   }, [styleMode, avaState, botState]);
 
@@ -98,7 +148,6 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
       const { error: apiError } = await authClient.updateUser({
         image: currentUrl
       });
-      
       if (apiError) throw new Error(apiError.message || "Failed to update profile image");
       window.location.reload();
     } catch (err) {
@@ -109,16 +158,42 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
 
   const renderSelect = (label: string, value: string, options: string[], onChange: (val: string) => void) => (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">{label.replace(/([A-Z])/g, ' $1').trim()}</label>
+      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-ares-red appearance-none custom-select"
       >
         {options.map((opt) => (
-          <option key={opt} value={opt}>{opt.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</option>
+          <option key={opt} value={opt}>{opt.replace(/([A-Z0-9])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim()}</option>
         ))}
       </select>
+    </div>
+  );
+
+  const renderColorSelect = (label: string, value: string, options: string[], onChange: (val: string) => void) => (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((hex) => (
+          <button
+            key={hex}
+            onClick={() => onChange(hex)}
+            className={`w-7 h-7 rounded-lg border-2 transition-all ${value === hex ? "border-white scale-110 shadow-lg" : "border-transparent hover:border-white/30"}`}
+            style={{ backgroundColor: `#${hex}` }}
+            aria-label={`Color #${hex}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderToggle = (label: string, value: boolean, onChange: (val: boolean) => void) => (
+    <div className="flex items-center justify-between py-2">
+      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>
+      <button onClick={() => onChange(!value)} className="text-white">
+        {value ? <ToggleRight size={28} className="text-ares-red" /> : <ToggleLeft size={28} className="text-zinc-600" />}
+      </button>
     </div>
   );
 
@@ -136,10 +211,10 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
           className="w-full max-w-4xl bg-zinc-950 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[85vh]"
         >
           {/* Left Panel: Preview */}
-          <div className="w-full md:w-1/2 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 relative overflow-hidden">
+          <div className="w-full md:w-2/5 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-ares-red/10 to-transparent pointer-events-none" />
             
-            <div className="relative group w-48 h-48 md:w-64 md:h-64 mb-8">
+            <div className="relative group w-44 h-44 md:w-56 md:h-56 mb-6">
               <div className="absolute inset-0 bg-gradient-to-br from-ares-red/30 to-ares-gold/30 blur-2xl rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative w-full h-full rounded-3xl bg-zinc-900 border border-white/10 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] flex items-center justify-center p-4 z-10 backdrop-blur-xl">
                 <img
@@ -160,10 +235,10 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
           </div>
 
           {/* Right Panel: Editor Controls */}
-          <div className="w-full md:w-1/2 flex flex-col h-full bg-zinc-900/50">
-            <div className="flex items-center justify-between p-6 border-b border-white/5">
-              <h2 className="text-xl font-black flex items-center gap-2 tracking-tight">
-                <ImageIcon className="text-ares-red" />
+          <div className="w-full md:w-3/5 flex flex-col h-full bg-zinc-900/50">
+            <div className="flex items-center justify-between p-5 border-b border-white/5">
+              <h2 className="text-lg font-black flex items-center gap-2 tracking-tight">
+                <ImageIcon className="text-ares-red" size={20} />
                 Character Creator
               </h2>
               <button onClick={onClose} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors">
@@ -171,59 +246,71 @@ export default function AvatarEditor({ onClose }: AvatarEditorProps) {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+            <div className="p-5 overflow-y-auto flex-1 custom-scrollbar">
               {/* Archetype Selector */}
-              <div className="flex bg-black/50 p-1 rounded-2xl mb-8 border border-white/5">
+              <div className="flex bg-black/50 p-1 rounded-2xl mb-6 border border-white/5">
                 <button
                   onClick={() => setStyleMode("avataaars")}
                   className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${styleMode === "avataaars" ? "bg-ares-red text-white shadow-lg" : "text-zinc-500 hover:text-white"}`}
                 >
-                  Human (Avataaar)
+                  👤 Human
                 </button>
                 <button
                   onClick={() => setStyleMode("bottts")}
                   className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${styleMode === "bottts" ? "bg-ares-gold text-black shadow-lg" : "text-zinc-500 hover:text-white"}`}
                 >
-                  Robot (Bottts)
+                  🤖 Robot
                 </button>
               </div>
 
               {/* Dynamic Property Grids */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-5">
                 {styleMode === "avataaars" && (
                   <>
-                    {renderSelect("Top/Hair", avaState.top, AVATAAARS_OPTIONS.top, (val) => setAvaState({...avaState, top: val}))}
-                    {renderSelect("Hair Color", avaState.hairColor, AVATAAARS_OPTIONS.hairColor, (val) => setAvaState({...avaState, hairColor: val}))}
-                    {renderSelect("Clothing", avaState.clothing, AVATAAARS_OPTIONS.clothing, (val) => setAvaState({...avaState, clothing: val}))}
-                    {renderSelect("Fabric Color", avaState.clothingColor, AVATAAARS_OPTIONS.clothingColor, (val) => setAvaState({...avaState, clothingColor: val}))}
-                    {renderSelect("Skin Tone", avaState.skinColor, AVATAAARS_OPTIONS.skinColor, (val) => setAvaState({...avaState, skinColor: val}))}
-                    {renderSelect("Facial Hair", avaState.facialHair, AVATAAARS_OPTIONS.facialHair, (val) => setAvaState({...avaState, facialHair: val}))}
-                    <div className="col-span-2">
-                       {renderSelect("Accessories", avaState.accessories, AVATAAARS_OPTIONS.accessories, (val) => setAvaState({...avaState, accessories: val}))}
+                    <div className="grid grid-cols-2 gap-4">
+                      {renderSelect("Hair Style", avaState.top, AVATAAARS_OPTIONS.top, (val) => setAvaState({...avaState, top: val}))}
+                      {renderSelect("Eyes", avaState.eyes, AVATAAARS_OPTIONS.eyes, (val) => setAvaState({...avaState, eyes: val}))}
+                      {renderSelect("Eyebrows", avaState.eyebrows, AVATAAARS_OPTIONS.eyebrows, (val) => setAvaState({...avaState, eyebrows: val}))}
+                      {renderSelect("Mouth", avaState.mouth, AVATAAARS_OPTIONS.mouth, (val) => setAvaState({...avaState, mouth: val}))}
+                      {renderSelect("Clothing", avaState.clothing, AVATAAARS_OPTIONS.clothing, (val) => setAvaState({...avaState, clothing: val}))}
+                    </div>
+                    <div className="space-y-3">
+                      {renderColorSelect("Hair Color", avaState.hairColor, AVATAAARS_OPTIONS.hairColor, (val) => setAvaState({...avaState, hairColor: val}))}
+                      {renderColorSelect("Skin Tone", avaState.skinColor, AVATAAARS_OPTIONS.skinColor, (val) => setAvaState({...avaState, skinColor: val}))}
+                      {renderColorSelect("Clothes Color", avaState.clothesColor, AVATAAARS_OPTIONS.clothesColor, (val) => setAvaState({...avaState, clothesColor: val}))}
+                    </div>
+                    <div className="border-t border-white/5 pt-4 space-y-2">
+                      {renderToggle("Show Accessories", avaState.showAccessories, (val) => setAvaState({...avaState, showAccessories: val}))}
+                      {avaState.showAccessories && renderSelect("Accessory Type", avaState.accessories, AVATAAARS_OPTIONS.accessories, (val) => setAvaState({...avaState, accessories: val}))}
+                      {renderToggle("Show Facial Hair", avaState.showFacialHair, (val) => setAvaState({...avaState, showFacialHair: val}))}
+                      {avaState.showFacialHair && renderSelect("Facial Hair Style", avaState.facialHair, AVATAAARS_OPTIONS.facialHair, (val) => setAvaState({...avaState, facialHair: val}))}
                     </div>
                   </>
                 )}
 
                 {styleMode === "bottts" && (
                   <>
-                    {renderSelect("Chassis Base", botState.base, BOTTTS_OPTIONS.base, (val) => setBotState({...botState, base: val}))}
-                    {renderSelect("Ocular Set", botState.eyes, BOTTTS_OPTIONS.eyes, (val) => setBotState({...botState, eyes: val}))}
-                    {renderSelect("Mouth/Grill", botState.mouth, BOTTTS_OPTIONS.mouth, (val) => setBotState({...botState, mouth: val}))}
-                    {renderSelect("Antenna Array", botState.top, BOTTTS_OPTIONS.top, (val) => setBotState({...botState, top: val}))}
-                    {renderSelect("Paint Texture", botState.texture, BOTTTS_OPTIONS.texture, (val) => setBotState({...botState, texture: val}))}
-                    {renderSelect("Primary Paint", botState.primaryColor, BOTTTS_OPTIONS.primaryColor, (val) => setBotState({...botState, primaryColor: val}))}
+                    <div className="grid grid-cols-2 gap-4">
+                      {renderSelect("Chassis", botState.face, BOTTTS_OPTIONS.face, (val) => setBotState({...botState, face: val}))}
+                      {renderSelect("Eyes", botState.eyes, BOTTTS_OPTIONS.eyes, (val) => setBotState({...botState, eyes: val}))}
+                      {renderSelect("Mouth", botState.mouth, BOTTTS_OPTIONS.mouth, (val) => setBotState({...botState, mouth: val}))}
+                      {renderSelect("Antenna", botState.top, BOTTTS_OPTIONS.top, (val) => setBotState({...botState, top: val}))}
+                      {renderSelect("Side Modules", botState.sides, BOTTTS_OPTIONS.sides, (val) => setBotState({...botState, sides: val}))}
+                      {renderSelect("Surface Texture", botState.texture, BOTTTS_OPTIONS.texture, (val) => setBotState({...botState, texture: val}))}
+                    </div>
+                    {renderColorSelect("Base Color", botState.baseColor, BOTTTS_OPTIONS.baseColor, (val) => setBotState({...botState, baseColor: val}))}
                   </>
                 )}
               </div>
 
               {error && (
-                <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-semibold">
+                <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-semibold">
                   {error}
                 </div>
               )}
             </div>
 
-            <div className="p-6 border-t border-white/5 bg-black/20">
+            <div className="p-5 border-t border-white/5 bg-black/20">
               <button
                 onClick={handleSave}
                 disabled={isSaving}

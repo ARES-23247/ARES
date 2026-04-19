@@ -102,7 +102,10 @@ apiRouter.get("/auth-check", async (c) => {
   if (session && session.user) {
     return c.json({ 
       authenticated: true, 
+      id: session.user.id,
       email: session.user.email,
+      name: session.user.name,
+      image: session.user.image,
       // @ts-expect-error - Better Auth role type extension
       role: session.user.role 
     });
@@ -1255,9 +1258,305 @@ apiRouter.post("/admin/events", async (c) => {
   }
 });
 
+
+// ══════════════════════════════════════════════════════════════════════
+// ── PROFILE & COMMUNITY ENDPOINTS ─────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+
+/* Helper: Session extraction (returns null if not authenticated) */
+async function getSessionUser(c: Context<{ Bindings: Bindings }>) {
+  const url = new URL(c.req.url);
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin" };
+  }
+  try {
+    const auth = getAuth(c.env.DB, c.env, c.req.url);
+    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    if (session && session.user) {
+      return {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        image: session.user.image,
+        // @ts-expect-error - Better Auth role extension
+        role: (session.user.role as string) || "user",
+      };
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+/* Helper: Server-side PII stripping per FIRST YPP */
+function sanitizeProfileForPublic(profile: Record<string, unknown>, memberType: string) {
+  const safe: Record<string, unknown> = {
+    user_id: profile.user_id,
+    nickname: profile.nickname || "ARES Member",
+    avatar: profile.avatar,
+    pronouns: profile.pronouns,
+    subteams: profile.subteams,
+    member_type: profile.member_type,
+    bio: profile.bio,
+    favorite_first_thing: profile.favorite_first_thing,
+    fun_fact: profile.fun_fact,
+    show_on_about: profile.show_on_about,
+  };
+  // Students & parents: NEVER expose PII or career/education fields
+  if (memberType === "student" || memberType === "parent") {
+    return safe;
+  }
+  // Adults: include optional fields if user opted in
+  return {
+    ...safe,
+    email: Number(profile.show_email) ? profile.email : undefined,
+    phone: Number(profile.show_phone) ? profile.phone : undefined,
+    colleges: profile.colleges,
+    employers: profile.employers,
+    grade_year: profile.grade_year,
+  };
+}
+
+// ── GET /api/profile/me — own profile (auth required) ─────────────────
+apiRouter.get("/profile/me", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  try {
+    const row = await c.env.DB.prepare(
+      "SELECT p.*, u.email, u.image as avatar FROM user_profiles p LEFT JOIN user u ON p.user_id = u.id WHERE p.user_id = ?"
+    ).bind(user.id).first();
+    if (!row) return c.json({ user_id: user.id, member_type: "student" });
+    return c.json({ ...row, avatar: row.avatar });
+  } catch (err) {
+    console.error("[Profile GET me]", err);
+    return c.json({ error: "Failed to fetch profile" }, 500);
+  }
+});
+
+// ── PUT /api/profile/me — update own profile ──────────────────────────
+apiRouter.put("/profile/me", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  try {
+    const body = await c.req.json() as Record<string, unknown>;
+    await c.env.DB.prepare(`
+      INSERT INTO user_profiles (user_id, nickname, phone, show_email, show_phone, pronouns, grade_year, subteams, member_type, bio, favorite_food, dietary_restrictions, favorite_first_thing, fun_fact, colleges, employers, show_on_about, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(user_id) DO UPDATE SET
+        nickname=excluded.nickname, phone=excluded.phone, show_email=excluded.show_email, show_phone=excluded.show_phone,
+        pronouns=excluded.pronouns, grade_year=excluded.grade_year, subteams=excluded.subteams, member_type=excluded.member_type,
+        bio=excluded.bio, favorite_food=excluded.favorite_food, dietary_restrictions=excluded.dietary_restrictions,
+        favorite_first_thing=excluded.favorite_first_thing, fun_fact=excluded.fun_fact,
+        colleges=excluded.colleges, employers=excluded.employers, show_on_about=excluded.show_on_about,
+        updated_at=datetime('now')
+    `).bind(
+      user.id,
+      (body.nickname as string) || null,
+      (body.phone as string) || null,
+      Number(body.show_email) || 0,
+      Number(body.show_phone) || 0,
+      (body.pronouns as string) || null,
+      (body.grade_year as string) || null,
+      (body.subteams as string) || "[]",
+      (body.member_type as string) || "student",
+      (body.bio as string) || null,
+      (body.favorite_food as string) || null,
+      (body.dietary_restrictions as string) || null,
+      (body.favorite_first_thing as string) || null,
+      (body.fun_fact as string) || null,
+      (body.colleges as string) || "[]",
+      (body.employers as string) || "[]",
+      Number(body.show_on_about) ?? 1,
+    ).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Profile PUT me]", err);
+    return c.json({ error: "Save failed" }, 500);
+  }
+});
+
+// ── GET /api/profile/:userId — public profile ─────────────────────────
+apiRouter.get("/profile/:userId", async (c) => {
+  const userId = c.req.param("userId");
+  try {
+    const row = await c.env.DB.prepare(
+      "SELECT p.*, u.email, u.image as avatar FROM user_profiles p LEFT JOIN user u ON p.user_id = u.id WHERE p.user_id = ?"
+    ).bind(userId).first() as Record<string, unknown> | null;
+    if (!row) return c.json({ error: "Not found" }, 404);
+    return c.json(sanitizeProfileForPublic(row, (row.member_type as string) || "student"));
+  } catch (err) {
+    console.error("[Profile GET public]", err);
+    return c.json({ error: "Failed" }, 500);
+  }
+});
+
+// ── GET /api/team-roster — public About Us data ───────────────────────
+apiRouter.get("/team-roster", async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      "SELECT p.*, u.image as avatar FROM user_profiles p LEFT JOIN user u ON p.user_id = u.id WHERE p.show_on_about = 1 AND p.member_type != 'parent'"
+    ).all();
+    const sanitized = (results || []).map((r: Record<string, unknown>) =>
+      sanitizeProfileForPublic(r, (r.member_type as string) || "student")
+    );
+    return c.json({ members: sanitized });
+  } catch (err) {
+    console.error("[Team Roster]", err);
+    return c.json({ members: [] }, 500);
+  }
+});
+
+// ── Admin Users ───────────────────────────────────────────────────────
+apiRouter.get("/admin/users", async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      "SELECT u.id, u.name, u.email, u.image, u.role, u.createdAt, p.nickname, p.member_type FROM user u LEFT JOIN user_profiles p ON u.id = p.user_id ORDER BY u.createdAt DESC"
+    ).all();
+    return c.json({ users: results || [] });
+  } catch (err) {
+    console.error("[Admin Users GET]", err);
+    return c.json({ error: "Failed" }, 500);
+  }
+});
+
+apiRouter.put("/admin/users/:id/role", async (c) => {
+  const id = c.req.param("id");
+  const { role } = await c.req.json() as { role: string };
+  if (!["user", "author", "admin"].includes(role)) return c.json({ error: "Invalid role" }, 400);
+  try {
+    await c.env.DB.prepare("UPDATE user SET role = ? WHERE id = ?").bind(role, id).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Admin Role Update]", err);
+    return c.json({ error: "Failed" }, 500);
+  }
+});
+
+apiRouter.delete("/admin/users/:id", async (c) => {
+  const id = c.req.param("id");
+  try {
+    await c.env.DB.batch([
+      c.env.DB.prepare("DELETE FROM user_profiles WHERE user_id = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM session WHERE userId = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM account WHERE userId = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM user WHERE id = ?").bind(id),
+    ]);
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Admin User Delete]", err);
+    return c.json({ error: "Failed" }, 500);
+  }
+});
+
+// ── Comments ──────────────────────────────────────────────────────────
+apiRouter.get("/comments/:targetType/:targetId", async (c) => {
+  const targetType = c.req.param("targetType");
+  const targetId = c.req.param("targetId");
+  const user = await getSessionUser(c);
+  try {
+    const { results } = await c.env.DB.prepare(
+      `SELECT c.*, p.nickname, u.image as avatar FROM comments c
+       LEFT JOIN user_profiles p ON c.user_id = p.user_id
+       LEFT JOIN user u ON c.user_id = u.id
+       WHERE c.target_type = ? AND c.target_id = ? AND c.is_deleted = 0
+       ORDER BY c.created_at ASC`
+    ).bind(targetType, targetId).all();
+    const comments = (results || []).map((r: Record<string, unknown>) => ({
+      ...r,
+      nickname: r.nickname || "ARES Member",
+      is_own: user ? r.user_id === user.id : false,
+    }));
+    return c.json({ comments, authenticated: !!user });
+  } catch (err) {
+    console.error("[Comments GET]", err);
+    return c.json({ comments: [], authenticated: false }, 500);
+  }
+});
+
+apiRouter.post("/comments/:targetType/:targetId", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  const targetType = c.req.param("targetType");
+  const targetId = c.req.param("targetId");
+  const { content } = await c.req.json() as { content: string };
+  if (!content || content.trim().length === 0) return c.json({ error: "Empty comment" }, 400);
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO comments (target_type, target_id, user_id, content) VALUES (?, ?, ?, ?)"
+    ).bind(targetType, targetId, user.id, content.trim()).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Comments POST]", err);
+    return c.json({ error: "Failed" }, 500);
+  }
+});
+
+apiRouter.delete("/admin/comments/:id", async (c) => {
+  const id = c.req.param("id");
+  try {
+    await c.env.DB.prepare("UPDATE comments SET is_deleted = 1 WHERE id = ?").bind(id).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Comments DELETE]", err);
+    return c.json({ error: "Failed" }, 500);
+  }
+});
+
+// ── Event Sign-Ups ────────────────────────────────────────────────────
+apiRouter.get("/events/:id/signups", async (c) => {
+  const eventId = c.req.param("id");
+  const user = await getSessionUser(c);
+  try {
+    const { results } = await c.env.DB.prepare(
+      `SELECT s.*, p.nickname, u.image as avatar FROM event_signups s
+       LEFT JOIN user_profiles p ON s.user_id = p.user_id
+       LEFT JOIN user u ON s.user_id = u.id
+       WHERE s.event_id = ? ORDER BY s.created_at ASC`
+    ).bind(eventId).all();
+    const signups = (results || []).map((r: Record<string, unknown>) => ({
+      ...r,
+      nickname: r.nickname || "ARES Member",
+      is_own: user ? r.user_id === user.id : false,
+    }));
+    return c.json({ signups, authenticated: !!user });
+  } catch (err) {
+    console.error("[Signups GET]", err);
+    return c.json({ signups: [], authenticated: false }, 500);
+  }
+});
+
+apiRouter.post("/events/:id/signups", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  const eventId = c.req.param("id");
+  const { bringing, notes } = await c.req.json() as { bringing: string; notes: string };
+  try {
+    await c.env.DB.prepare(
+      `INSERT INTO event_signups (event_id, user_id, bringing, notes) VALUES (?, ?, ?, ?)
+       ON CONFLICT(event_id, user_id) DO UPDATE SET bringing=excluded.bringing, notes=excluded.notes`
+    ).bind(eventId, user.id, bringing || "", notes || "").run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Signups POST]", err);
+    return c.json({ error: "Failed" }, 500);
+  }
+});
+
+apiRouter.delete("/events/:id/signups/me", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  const eventId = c.req.param("id");
+  try {
+    await c.env.DB.prepare("DELETE FROM event_signups WHERE event_id = ? AND user_id = ?").bind(eventId, user.id).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Signups DELETE me]", err);
+    return c.json({ error: "Failed" }, 500);
+  }
+});
+
 app.route("/api", apiRouter);
 app.route("/dashboard/api", apiRouter);
 
 export const onRequest = handle(app);
 
 export default app;
+

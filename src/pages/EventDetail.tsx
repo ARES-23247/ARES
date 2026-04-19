@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { format, isBefore } from "date-fns";
 import { motion } from "framer-motion";
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
+import CommentSection from "../components/CommentSection";
+import EventSignups from "../components/EventSignups";
 
 interface EventRow {
   id: string;
@@ -117,6 +119,10 @@ export default function EventDetail() {
           ) : (
             <p className="whitespace-pre-wrap text-xl leading-relaxed">{event.description}</p>
           )}
+
+          {/* Sign-Up Sheet & Comments (auth-gated) */}
+          {id && <EventSignups eventId={id} />}
+          {id && <CommentSection targetType="event" targetId={id} />}
         </motion.article>
       </section>
     </motion.div>

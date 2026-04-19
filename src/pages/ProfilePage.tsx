@@ -1,0 +1,158 @@
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { GraduationCap, Briefcase, ArrowLeft, Shield } from "lucide-react";
+
+interface ProfilePublic {
+  nickname: string;
+  avatar: string;
+  pronouns: string;
+  subteams: string[];
+  member_type: string;
+  bio: string;
+  favorite_first_thing: string;
+  fun_fact: string;
+  grade_year?: string;
+  email?: string;
+  phone?: string;
+  colleges?: { name: string; domain: string; years: string; degree: string }[];
+  employers?: { name: string; domain: string; title: string; current: boolean; years: string }[];
+}
+
+export default function ProfilePage() {
+  const { userId } = useParams();
+  const [profile, setProfile] = useState<ProfilePublic | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/profile/${userId}`)
+      .then(r => r.json())
+      .then((data) => { setProfile(data as ProfilePublic); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-obsidian flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-ares-red border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-obsidian flex items-center justify-center text-marble">
+        <p>Profile not found.</p>
+      </div>
+    );
+  }
+
+  const memberLabel = { student: "Student", alumni: "Alumni", mentor: "Mentor", coach: "Coach" }[profile.member_type] || "Member";
+  const memberIcon = { student: "📚", alumni: "🎓", mentor: "🔧", coach: "🏆" }[profile.member_type] || "👤";
+
+  return (
+    <div className="min-h-screen bg-obsidian">
+      <div className="max-w-3xl mx-auto px-6 py-16">
+        <Link to="/about" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm font-bold mb-8 transition-colors">
+          <ArrowLeft size={16} /> Back to Team
+        </Link>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          {/* Header Card */}
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 flex flex-col md:flex-row items-center md:items-start gap-8 mb-8">
+            <div className="w-32 h-32 rounded-2xl bg-zinc-800 border border-zinc-700 overflow-hidden p-3 flex-shrink-0">
+              <img src={profile.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${userId}`} alt="Avatar" className="w-full h-full object-contain" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-black text-white mb-1">{profile.nickname || "ARES Member"}</h1>
+              {profile.pronouns && <p className="text-zinc-400 text-sm mb-3">{profile.pronouns}</p>}
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-4">
+                <span className="px-3 py-1 bg-ares-red/20 border border-ares-red/30 rounded-full text-xs font-bold text-ares-red">
+                  {memberIcon} {memberLabel}
+                </span>
+                {profile.subteams?.map(team => (
+                  <span key={team} className="px-3 py-1 bg-ares-gold/10 border border-ares-gold/20 rounded-full text-xs font-bold text-ares-gold">
+                    {team}
+                  </span>
+                ))}
+              </div>
+              {profile.bio && <p className="text-zinc-300 text-sm leading-relaxed">{profile.bio}</p>}
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {profile.favorite_first_thing && (
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+                <p className="text-[10px] font-bold text-ares-red uppercase tracking-wider mb-2">Favorite Thing About FIRST</p>
+                <p className="text-zinc-300 text-sm">{profile.favorite_first_thing}</p>
+              </div>
+            )}
+            {profile.fun_fact && (
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+                <p className="text-[10px] font-bold text-ares-gold uppercase tracking-wider mb-2">Fun Fact</p>
+                <p className="text-zinc-300 text-sm">{profile.fun_fact}</p>
+              </div>
+            )}
+            {profile.grade_year && (
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Class</p>
+                <p className="text-zinc-300 text-sm">{profile.grade_year}</p>
+              </div>
+            )}
+            {(profile.email || profile.phone) && (
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Contact</p>
+                {profile.email && <p className="text-zinc-300 text-sm">{profile.email}</p>}
+                {profile.phone && <p className="text-zinc-400 text-sm">{profile.phone}</p>}
+              </div>
+            )}
+          </div>
+
+          {/* Colleges */}
+          {profile.colleges && profile.colleges.length > 0 && (
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 mb-4">
+              <h3 className="text-xs font-bold text-ares-red uppercase tracking-wider mb-4 flex items-center gap-2"><GraduationCap size={14} /> Education</h3>
+              <div className="space-y-3">
+                {profile.colleges.map((col, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <img src={`https://logo.clearbit.com/${col.domain}`} alt="" className="w-8 h-8 rounded-lg bg-white p-0.5" onError={e => { (e.target as HTMLImageElement).src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; }} />
+                    <div>
+                      <p className="text-white text-sm font-bold">{col.name}</p>
+                      <p className="text-zinc-400 text-xs">{[col.degree, col.years].filter(Boolean).join(" · ")}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Employers */}
+          {profile.employers && profile.employers.length > 0 && (
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+              <h3 className="text-xs font-bold text-ares-red uppercase tracking-wider mb-4 flex items-center gap-2"><Briefcase size={14} /> Career</h3>
+              <div className="space-y-3">
+                {profile.employers.map((emp, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <img src={`https://logo.clearbit.com/${emp.domain}`} alt="" className="w-8 h-8 rounded-lg bg-white p-0.5" onError={e => { (e.target as HTMLImageElement).src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; }} />
+                    <div>
+                      <p className="text-white text-sm font-bold">{emp.name} {emp.current && <span className="text-green-400 text-[10px] ml-1">● Current</span>}</p>
+                      <p className="text-zinc-400 text-xs">{[emp.title, emp.years].filter(Boolean).join(" · ")}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Student Safety Notice */}
+          {profile.member_type === "student" && (
+            <div className="mt-8 flex items-center gap-2 text-zinc-600 text-xs">
+              <Shield size={12} /> Contact information protected per FIRST Youth Protection guidelines.
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
