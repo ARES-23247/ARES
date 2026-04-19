@@ -226,7 +226,10 @@ async function getSocialConfig(c: Context<{ Bindings: Bindings }>): Promise<Reco
       TWITTER_ACCESS_TOKEN: dbSettings["TWITTER_ACCESS_TOKEN"],
       TWITTER_ACCESS_SECRET: dbSettings["TWITTER_ACCESS_SECRET"],
       INSTAGRAM_ACCOUNT_ID: dbSettings["INSTAGRAM_ACCOUNT_ID"],
-      INSTAGRAM_ACCESS_TOKEN: dbSettings["INSTAGRAM_ACCESS_TOKEN"]
+      INSTAGRAM_ACCESS_TOKEN: dbSettings["INSTAGRAM_ACCESS_TOKEN"],
+      CALENDAR_ID: dbSettings["CALENDAR_ID"],
+      GCAL_SERVICE_ACCOUNT_EMAIL: dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"],
+      GCAL_PRIVATE_KEY: dbSettings["GCAL_PRIVATE_KEY"]
     };
   } catch (err) {
     console.error("Failed to fetch settings for social integration:", err);
