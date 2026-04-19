@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ClipboardList, Plus, Save, RefreshCw, Trash2 } from "lucide-react";
 
 interface SignupEntry {
@@ -22,7 +22,7 @@ export default function EventSignups({ eventId }: EventSignupsProps) {
   const [mySignup, setMySignup] = useState<{ bringing: string; notes: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const fetchSignups = () => {
+  const fetchSignups = useCallback(() => {
     fetch(`/api/events/${eventId}/signups`, { credentials: "include" })
       .then(r => r.json())
       .then((data) => {
@@ -34,9 +34,9 @@ export default function EventSignups({ eventId }: EventSignupsProps) {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  };
+  }, [eventId]);
 
-  useEffect(() => { fetchSignups(); }, [eventId]);
+  useEffect(() => { fetchSignups(); }, [fetchSignups]);
 
   const handleSignUp = async () => {
     setIsSaving(true);

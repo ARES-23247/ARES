@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Shield, Trash2, ChevronDown } from "lucide-react";
 
 interface UserRow {
@@ -19,15 +19,15 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUsers = () => {
+  const fetchUsers = useCallback(() => {
     setLoading(true);
     fetch("/api/admin/users", { credentials: "include" })
       .then(r => r.json())
       .then((data) => { setUsers((data as { users: UserRow[] }).users || []); setLoading(false); })
       .catch(() => { setError("Failed to load users."); setLoading(false); });
-  };
+  }, []);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const changeRole = async (userId: string, newRole: string) => {
     await fetch(`/api/admin/users/${userId}/role`, {

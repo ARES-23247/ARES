@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Search, LayoutDashboard, LogIn } from "lucide-react";
 import GlobalSearchModal from "./GlobalSearchModal";
 import { useSession } from "../utils/auth-client";

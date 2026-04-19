@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Send, Trash2, RefreshCw } from "lucide-react";
 
 interface Comment {
@@ -25,7 +25,7 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
   const [posting, setPosting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const fetchComments = () => {
+  const fetchComments = useCallback(() => {
     fetch(`/api/comments/${targetType}/${targetId}`, { credentials: "include" })
       .then(r => r.json())
       .then((data) => {
@@ -35,9 +35,9 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  };
+  }, [targetType, targetId]);
 
-  useEffect(() => { fetchComments(); }, [targetType, targetId]);
+  useEffect(() => { fetchComments(); }, [fetchComments]);
 
   const submitComment = async () => {
     if (!newComment.trim()) return;

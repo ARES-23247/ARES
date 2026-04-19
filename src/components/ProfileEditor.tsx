@@ -47,7 +47,6 @@ export default function ProfileEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const isStudent = profile.member_type === "student";
   const isMinor = profile.member_type === "student"; // Only students get PII-hidden treatment
 
   useEffect(() => {
@@ -152,21 +151,21 @@ export default function ProfileEditor() {
         <h3 className="text-sm font-black uppercase tracking-wider text-ares-red flex items-center gap-2"><User size={16} /> Identity</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Nickname (Public Display Name)</label>
-            <input className={inputClass} placeholder="e.g. Sparky, RoboKid42" value={profile.nickname} onChange={e => setProfile({...profile, nickname: e.target.value})} />
+            <label htmlFor="pe-nickname" className={labelClass}>Nickname (Public Display Name)</label>
+            <input id="pe-nickname" className={inputClass} placeholder="e.g. Sparky, RoboKid42" value={profile.nickname} onChange={e => setProfile({...profile, nickname: e.target.value})} />
           </div>
           <div>
-            <label className={labelClass}>Pronouns</label>
-            <input className={inputClass} placeholder="e.g. he/him, she/her, they/them" value={profile.pronouns} onChange={e => setProfile({...profile, pronouns: e.target.value})} />
+            <label htmlFor="pe-pronouns" className={labelClass}>Pronouns</label>
+            <input id="pe-pronouns" className={inputClass} placeholder="e.g. he/him, she/her, they/them" value={profile.pronouns} onChange={e => setProfile({...profile, pronouns: e.target.value})} />
           </div>
         </div>
         <div>
-          <label className={labelClass}>Bio</label>
-          <textarea className={`${inputClass} min-h-[80px] resize-none`} placeholder="Tell us about yourself (keep it PII-free!)" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
+          <label htmlFor="pe-bio" className={labelClass}>Bio</label>
+          <textarea id="pe-bio" className={`${inputClass} min-h-[80px] resize-none`} placeholder="Tell us about yourself (keep it PII-free!)" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />
         </div>
         <div>
-          <label className={labelClass}>Fun Fact</label>
-          <input className={inputClass} placeholder="Something cool about you!" value={profile.fun_fact} onChange={e => setProfile({...profile, fun_fact: e.target.value})} />
+          <label htmlFor="pe-funfact" className={labelClass}>Fun Fact</label>
+          <input id="pe-funfact" className={inputClass} placeholder="Something cool about you!" value={profile.fun_fact} onChange={e => setProfile({...profile, fun_fact: e.target.value})} />
         </div>
       </div>
 
@@ -174,7 +173,7 @@ export default function ProfileEditor() {
       <div className={sectionClass}>
         <h3 className="text-sm font-black uppercase tracking-wider text-ares-red">Team Role</h3>
         <div>
-          <label className={labelClass}>Member Type</label>
+          <span className={labelClass}>Member Type</span>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {MEMBER_TYPES.map(mt => (
               <button key={mt.value} onClick={() => setProfile({...profile, member_type: mt.value})}
@@ -186,7 +185,7 @@ export default function ProfileEditor() {
           </div>
         </div>
         <div>
-          <label className={labelClass}>Subteams (select all that apply)</label>
+          <span className={labelClass}>Subteams (select all that apply)</span>
           <div className="flex flex-wrap gap-2">
             {SUBTEAM_OPTIONS.map(team => (
               <button key={team} onClick={() => toggleSubteam(team)}
@@ -199,8 +198,8 @@ export default function ProfileEditor() {
         </div>
         {(profile.member_type === "student" || profile.member_type === "alumni") && (
           <div>
-            <label className={labelClass}>Grade / Graduation Year</label>
-            <input className={inputClass} placeholder="e.g. 10th Grade, Class of 2025" value={profile.grade_year} onChange={e => setProfile({...profile, grade_year: e.target.value})} />
+            <label htmlFor="pe-grade" className={labelClass}>Grade / Graduation Year</label>
+            <input id="pe-grade" className={inputClass} placeholder="e.g. 10th Grade, Class of 2025" value={profile.grade_year} onChange={e => setProfile({...profile, grade_year: e.target.value})} />
           </div>
         )}
         <div className="flex items-center gap-3">
@@ -215,15 +214,15 @@ export default function ProfileEditor() {
           <h3 className="text-sm font-black uppercase tracking-wider text-ares-red">Contact (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Phone</label>
-              <input className={inputClass} placeholder="(304) 555-1234" value={profile.phone} onChange={e => setProfile({...profile, phone: e.target.value})} />
+              <label htmlFor="pe-phone" className={labelClass}>Phone</label>
+              <input id="pe-phone" className={inputClass} placeholder="(304) 555-1234" value={profile.phone} onChange={e => setProfile({...profile, phone: e.target.value})} />
               <label className="flex items-center gap-2 mt-2 text-xs text-zinc-500">
                 <input type="checkbox" checked={profile.show_phone} onChange={e => setProfile({...profile, show_phone: e.target.checked})} className="accent-ares-red" />
                 Show on public profile
               </label>
             </div>
             <div>
-              <label className={labelClass}>Email Visibility</label>
+              <span className={labelClass}>Email Visibility</span>
               <label className="flex items-center gap-2 mt-3 text-xs text-zinc-500">
                 <input type="checkbox" checked={profile.show_email} onChange={e => setProfile({...profile, show_email: e.target.checked})} className="accent-ares-red" />
                 Show email on public profile
@@ -237,17 +236,17 @@ export default function ProfileEditor() {
       <div className={sectionClass}>
         <h3 className="text-sm font-black uppercase tracking-wider text-ares-red">FIRST & Fun</h3>
         <div>
-          <label className={labelClass}>Favorite thing about FIRST / ARES</label>
-          <input className={inputClass} placeholder="Building robots with friends!" value={profile.favorite_first_thing} onChange={e => setProfile({...profile, favorite_first_thing: e.target.value})} />
+          <label htmlFor="pe-fav-first" className={labelClass}>Favorite thing about FIRST / ARES</label>
+          <input id="pe-fav-first" className={inputClass} placeholder="Building robots with friends!" value={profile.favorite_first_thing} onChange={e => setProfile({...profile, favorite_first_thing: e.target.value})} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Favorite Food</label>
-            <input className={inputClass} placeholder="Pizza, tacos..." value={profile.favorite_food} onChange={e => setProfile({...profile, favorite_food: e.target.value})} />
+            <label htmlFor="pe-food" className={labelClass}>Favorite Food</label>
+            <input id="pe-food" className={inputClass} placeholder="Pizza, tacos..." value={profile.favorite_food} onChange={e => setProfile({...profile, favorite_food: e.target.value})} />
           </div>
           <div>
-            <label className={labelClass}>Dietary Restrictions</label>
-            <input className={inputClass} placeholder="Vegetarian, gluten-free, none..." value={profile.dietary_restrictions} onChange={e => setProfile({...profile, dietary_restrictions: e.target.value})} />
+            <label htmlFor="pe-dietary" className={labelClass}>Dietary Restrictions</label>
+            <input id="pe-dietary" className={inputClass} placeholder="Vegetarian, gluten-free, none..." value={profile.dietary_restrictions} onChange={e => setProfile({...profile, dietary_restrictions: e.target.value})} />
           </div>
         </div>
       </div>
@@ -301,8 +300,8 @@ export default function ProfileEditor() {
                 <input className={inputClass} placeholder="Years" value={emp.years} onChange={e => updateEmployer(i, "years", e.target.value)} />
               </div>
               <div className="flex flex-col items-center gap-1">
-                <label className="text-[9px] text-zinc-500">Current</label>
-                <input type="checkbox" checked={emp.current} onChange={e => updateEmployer(i, "current", e.target.checked)} className="accent-ares-red" />
+                <label htmlFor={`pe-emp-current-${i}`} className="text-[9px] text-zinc-500">Current</label>
+                <input id={`pe-emp-current-${i}`} type="checkbox" checked={emp.current} onChange={e => updateEmployer(i, "current", e.target.checked)} className="accent-ares-red" />
               </div>
               <button onClick={() => removeEmployer(i)} className="text-red-500 hover:text-red-400 p-1"><Trash2 size={16} /></button>
             </div>
