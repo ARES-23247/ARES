@@ -19,6 +19,12 @@ export const getAuth = (db: D1Database, env: Record<string, string>) => {
         },
         secret: env.BETTER_AUTH_SECRET,
         baseURL: env.BETTER_AUTH_URL || "http://localhost:5173",
+        trustedOrigins: [
+            "http://localhost:8788", 
+            "http://127.0.0.1:8788", 
+            "http://localhost:5173", 
+            "http://127.0.0.1:5173"
+        ],
         socialProviders: {
             ...(env.GOOGLE_CLIENT_ID ? {
                 google: {
@@ -57,7 +63,7 @@ export const getAuth = (db: D1Database, env: Record<string, string>) => {
                             if (currentUser && currentUser.role !== "admin") {
                                 const account = await db.prepare("SELECT accessToken FROM account WHERE userId = ? AND providerId = 'github'").bind(session.userId).first<{accessToken: string}>();
                                 if (account && account.accessToken) {
-                                    const res = await fetch("https://api.github.com/user/orgs", {
+                                    const res = await fetch("https://api.github.com/user/memberships/orgs/ARES-23247", {
                                         headers: {
                                             "Authorization": `Bearer ${account.accessToken}`,
                                             "Accept": "application/vnd.github.v3+json",
@@ -65,15 +71,18 @@ export const getAuth = (db: D1Database, env: Record<string, string>) => {
                                         }
                                     });
                                     if (res.ok) {
-                                        const orgs = await res.json() as { login: string }[];
-                                        if (orgs.some(o => o.login === "ARES-23247")) {
-                                            console.log(`[GitHub Auth] Verified ${session.userId} as ARES-23247 org member. Promoting to author.`);
-                                            await db.prepare("UPDATE user SET role = 'author' WHERE id = ?").bind(session.userId).run();
-                                        } else {
-                                            console.warn(`[GitHub Auth] User ${session.userId} successfully authenticated via GitHub but is NOT a member of ARES-23247.`);
+                                        const membership = await res.json() as { state: string, role: string };
+                                        if (membership.state === "active") {
+                                            if (membership.role === "admin") {
+                                                console.log(`[GitHub Auth] Verified ${session.userId} as ARES-23247 Org Owner. Promoting to Admin.`);
+                                                await db.prepare("UPDATE user SET role = 'admin' WHERE id = ?").bind(session.userId).run();
+                                            } else {
+                                                console.log(`[GitHub Auth] Verified ${session.userId} as ARES-23247 Org Member. Promoting to Author.`);
+                                                await db.prepare("UPDATE user SET role = 'author' WHERE id = ?").bind(session.userId).run();
+                                            }
                                         }
                                     } else {
-                                        console.error(`[GitHub Auth] Failed to verify orgs. GitHub API returned: ${res.status}`);
+                                        console.warn(`[GitHub Auth] User ${session.userId} is NOT a member of ARES-23247 or API failed (${res.status}).`);
                                     }
                                 }
                             }
