@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { format, isAfter, subDays } from "date-fns";
+import { format, isAfter, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday, isSameDay } from "date-fns";
 import { motion } from "framer-motion";
 import SEO from "../components/SEO";
 
@@ -43,16 +43,16 @@ export default function Events() {
     },
   });
 
-  const { data: calendarData } = useQuery<{ calendarId: string }>({
-    queryKey: ["calendarConfig"],
-    queryFn: async () => {
-      const res = await fetch("/api/calendar");
-      if (!res.ok) return { calendarId: "" };
-      return res.json();
-    },
-  });
-
   const now = new Date();
+  
+  // Custom Sync-Native Calendar Setup
+  // Automatically draws from Google Calendar synced events via D1, avoiding iframe permission issues.
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+  
+  const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
   
   // Consider an event "past" if its date_start is before yesterday
   const bufferTime = subDays(now, 1);
@@ -145,22 +145,53 @@ export default function Events() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            {/* Google Calendar Embed */}
-            {calendarData?.calendarId && (
-              <div className="flex flex-col gap-8 mb-16">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-3xl font-bold text-white">Full Calendar</h2>
-                  <div className="h-px flex-1 bg-gradient-to-r from-ares-gold/50 to-transparent"></div>
+            {/* Sync-Native Custom Calendar Grid */}
+            <div className="flex flex-col gap-8 mb-16">
+              <div className="flex items-center gap-4">
+                <h2 className="text-3xl font-bold text-white">Full Calendar</h2>
+                <div className="h-px flex-1 bg-gradient-to-r from-ares-gold/50 to-transparent"></div>
+              </div>
+              <div className="w-full bg-black/40 border border-ares-gold/30 rounded-xl overflow-hidden shadow-lg p-4 md:p-6">
+                {/* Calendar Header */}
+                <div className="flex justify-between items-center mb-6 px-2">
+                  <h3 className="text-2xl font-bold text-white">{format(monthStart, "MMMM yyyy")}</h3>
                 </div>
-                <div className="w-full bg-black/40 border border-ares-gold/30 rounded-xl overflow-hidden shadow-lg p-2 aspect-[4/3] md:aspect-[2/1] lg:aspect-video">
-                  <iframe 
-                    src={`https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=America%2FNew_York&showTitle=0&showPrint=0&color=%23D50000&src=${encodeURIComponent(calendarData.calendarId)}`}
-                    className="w-full h-full border-0 bg-white rounded-lg invert hue-rotate-180 contrast-[1.05]"
-                    title="ARES Google Calendar"
-                  />
+                
+                {/* Days of Week Row */}
+                <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+                    <div key={d} className="text-center text-xs md:text-sm font-semibold text-marble/60 pb-2 border-b border-white/10">{d}</div>
+                  ))}
+                </div>
+                
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1 md:gap-2">
+                  {calendarDays.map((day, idx) => {
+                    const dayEvents = events.filter(e => isSameDay(new Date(e.date_start), day));
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`min-h-[60px] md:min-h-[100px] p-1 md:p-2 rounded-lg border ${
+                          isToday(day) ? "bg-ares-gold/20 border-ares-gold" : 
+                          isSameMonth(day, monthStart) ? "bg-white/5 border-white/5" : "opacity-30 bg-transparent border-transparent"
+                        } flex flex-col gap-1 transition-colors hover:bg-white/10`}
+                      >
+                        <div className={`text-xs font-bold text-right ${isToday(day) ? "text-ares-gold" : "text-marble/80"}`}>
+                          {format(day, "d")}
+                        </div>
+                        <div className="flex flex-col gap-1 mt-1 overflow-y-auto max-h-[80px] scrollbar-hide">
+                          {dayEvents.map(evt => (
+                            <div key={evt.id} className="text-[9px] md:text-xs leading-tight px-1 py-0.5 md:px-1.5 md:py-1 rounded bg-ares-red/20 text-red-200 border border-ares-red/30 truncate" title={evt.title}>
+                              {evt.title}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Upcoming Events */}
             <div className="flex flex-col gap-8">
