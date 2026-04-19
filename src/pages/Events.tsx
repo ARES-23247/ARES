@@ -52,8 +52,11 @@ export default function Events() {
     },
   });
 
-  const now = new Date();
   const iframeSrc = calendarId ? `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}&bgcolor=%23ffffff&showPrint=0&showTabs=1&showCalendars=0` : "";
+  
+  // Consider an event "past" if its date_start is before yesterday
+  const now = new Date();
+  const bufferTime = subDays(now, 1);
   
   // Filter out routine practices so they only appear on the Google Calendar iframe, not as major event cards.
   const majorEvents = [...events]
