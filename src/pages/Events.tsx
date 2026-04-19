@@ -155,7 +155,7 @@ export default function Events() {
                 <div className="w-full bg-black/40 border border-ares-gold/30 rounded-xl overflow-hidden shadow-lg p-2 aspect-[4/3] md:aspect-[2/1] lg:aspect-video">
                   <iframe 
                     src={`https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=America%2FNew_York&showTitle=0&showPrint=0&color=%23D50000&src=${encodeURIComponent(calendarData.calendarId)}`}
-                    className="w-full h-full border-0 bg-white rounded-lg"
+                    className="w-full h-full border-0 bg-white rounded-lg invert hue-rotate-180 contrast-[1.05]"
                     title="ARES Google Calendar"
                   />
                 </div>
