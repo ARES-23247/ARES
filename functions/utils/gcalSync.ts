@@ -50,6 +50,24 @@ export async function getGcalAccessToken(config: GCalConfig): Promise<string> {
   return data.access_token as string;
 }
 
+function parseAstToText(jsonStr: string): string {
+  if (!jsonStr) return "";
+  try {
+    const ast = JSON.parse(jsonStr);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const extractText = (node: any): string => {
+      if (node.text) return node.text;
+      if (node.content && Array.isArray(node.content)) {
+        return node.content.map(extractText).join(" ");
+      }
+      return "";
+    };
+    return extractText(ast) || jsonStr;
+  } catch {
+    return jsonStr;
+  }
+}
+
 /**
  * Prepare ARES Event format for Google Calendar payload
  */
@@ -80,10 +98,12 @@ function prepareGcalPayload(event: ARES_Event) {
     }
   }
 
+  const cleanDescription = parseAstToText(event.description || "");
+
   return {
     summary: event.title,
     location: event.location || "",
-    description: event.description || "",
+    description: cleanDescription,
     start: startObj,
     end: endObj,
   };
