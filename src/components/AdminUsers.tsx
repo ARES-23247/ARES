@@ -20,7 +20,6 @@ export default function AdminUsers() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = useCallback(() => {
-    setLoading(true);
     fetch("/api/admin/users", { credentials: "include" })
       .then(r => r.json())
       .then((data) => { setUsers((data as { users: UserRow[] }).users || []); setLoading(false); })
