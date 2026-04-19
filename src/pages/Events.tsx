@@ -63,7 +63,12 @@ export default function Events() {
     .filter((e) => !e.title.toLowerCase().includes("practice"))
     .sort((a, b) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime());
   
+  const practices = [...events]
+    .filter((e) => e.title.toLowerCase().includes("practice"))
+    .sort((a, b) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime());
+  
   const upcomingEvents = majorEvents.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
+  const upcomingPractices = practices.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
   const pastEvents = majorEvents.filter((e) => !isAfter(parseISO(e.date_start), bufferTime)).reverse();
 
   const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean }) => {
@@ -186,6 +191,20 @@ export default function Events() {
                 </div>
               )}
             </div>
+
+            {/* Upcoming Practices */}
+            {upcomingPractices.length > 0 && (
+              <div className="flex flex-col gap-8 mt-12">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-bold text-white/90">Upcoming Practices</h2>
+                  <div className="h-px flex-1 bg-gradient-to-r from-ares-red/50 to-transparent"></div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {upcomingPractices.map(evt => <EventCard key={evt.id} event={evt} isPast={false} />)}
+                </div>
+              </div>
+            )}
 
             {/* Past Events */}
             {pastEvents.length > 0 && (
