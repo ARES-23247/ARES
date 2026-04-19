@@ -24,9 +24,21 @@ export default function AdminUsers() {
 
   const fetchUsers = useCallback(() => {
     fetch("/api/admin/users", { credentials: "include" })
-      .then(r => r.json())
-      .then((data) => { setUsers((data as { users: UserRow[] }).users || []); setLoading(false); })
-      .catch(() => { setError("Failed to load users."); setLoading(false); });
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({}));
+          throw new Error(body.error || `HTTP ${r.status}`);
+        }
+        return r.json();
+      })
+      .then((data) => {
+        setUsers((data as { users: UserRow[] }).users || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to load users.");
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
