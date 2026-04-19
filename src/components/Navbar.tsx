@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Search, LayoutDashboard } from "lucide-react";
+import { Search, LayoutDashboard, LogIn } from "lucide-react";
 import GlobalSearchModal from "./GlobalSearchModal";
 import { useSession } from "../utils/auth-client";
 
@@ -55,6 +55,12 @@ export default function Navbar() {
               <span className="text-xs font-bold text-zinc-300 group-hover:text-white uppercase tracking-wider">Dashboard</span>
             </Link>
           )}
+          {!isPending && !isSignedIn && (
+            <Link to="/login" className="flex items-center gap-2 px-4 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-ares-gold/30 rounded-full transition-all group" aria-label="Sign In">
+              <LogIn size={14} className="text-ares-gold" />
+              <span className="text-xs font-bold text-zinc-300 group-hover:text-ares-gold uppercase tracking-wider">Sign In</span>
+            </Link>
+          )}
           <Link to="/contact" className="clipped-button-sm bg-ares-red text-white hover:scale-105 hover:bg-ares-red transition-all shadow-[0_0_15px_rgba(192,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
             Support Us
           </Link>
@@ -90,6 +96,11 @@ export default function Navbar() {
           {isSignedIn && (
             <Link to="/dashboard" onClick={() => setOpen(false)} className="text-ares-gold hover:text-white flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">
               <LayoutDashboard size={16} /> Dashboard
+            </Link>
+          )}
+          {!isPending && !isSignedIn && (
+            <Link to="/login" onClick={() => setOpen(false)} className="text-ares-gold hover:text-white flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">
+              <LogIn size={16} /> Sign In
             </Link>
           )}
           <Link to="/contact" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Contact</Link>

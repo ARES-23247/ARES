@@ -13,6 +13,7 @@ import ConfigVisualizer from "../components/docs/ConfigVisualizer";
 import CodePlayground from "../components/docs/CodePlayground";
 import ScreenshotGallery from "../components/docs/ScreenshotGallery";
 import FaultSim from "../sims/FaultSim";
+import { useSession } from "../utils/auth-client";
 import PhysicsSim from "../sims/PhysicsSim";
 import SysIdSim from "../sims/SysIdSim";
 import VisionSim from "../sims/VisionSim";
@@ -66,7 +67,12 @@ const SIDEBAR_ORDER = [
 export default function Docs() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { data: session } = useSession();
   
+  // @ts-expect-error - Better Auth session type overrides
+  const userRole = (session?.user?.role as string) || "user";
+  const isEditor = userRole === "admin" || userRole === "author";
+
   // ── 1. State ────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -436,6 +442,7 @@ export default function Docs() {
                   <span className="text-white/60">{currentDoc.title}</span>
                 </div>
                 
+                {isEditor && (
                 <Link 
                   to={`/dashboard?editDoc=${currentDoc.slug}`}
                   className="flex items-center gap-2 text-xs font-bold text-ares-cyan/70 hover:text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1.5 rounded-md transition-colors"
@@ -443,6 +450,7 @@ export default function Docs() {
                   <Edit2 size={12} />
                   EDIT PAGE
                 </Link>
+                )}
               </div>
 
               <h1 className="text-3xl lg:text-4xl font-bold font-heading mb-4 text-white">{currentDoc.title}</h1>
