@@ -3,12 +3,18 @@ import { kyselyAdapter } from "@better-auth/kysely-adapter";
 import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
 
-export const getAuth = (db: D1Database, env: Record<string, string>) => {
+export const getAuth = (db: D1Database, env: Record<string, string>, requestUrl?: string) => {
     const kyselyDb = new Kysely({
         dialect: new D1Dialect({
             database: db,
         }),
     });
+
+    let baseURL = env.BETTER_AUTH_URL || "http://localhost:5173";
+    if (requestUrl) {
+        const url = new URL(requestUrl);
+        baseURL = `${url.protocol}//${url.host}/api/auth`;
+    }
 
     return betterAuth({
         database: kyselyAdapter(kyselyDb, {
@@ -18,13 +24,16 @@ export const getAuth = (db: D1Database, env: Record<string, string>) => {
             throw: true,
         },
         secret: env.BETTER_AUTH_SECRET,
-        baseURL: env.BETTER_AUTH_URL || "http://localhost:5173",
+        baseURL,
         trustedOrigins: [
             "http://localhost:8788", 
             "http://127.0.0.1:8788", 
             "http://localhost:5173", 
             "http://127.0.0.1:5173"
         ],
+        advanced: {
+            crossSubDomain: true
+        },
         socialProviders: {
             ...(env.GOOGLE_CLIENT_ID ? {
                 google: {

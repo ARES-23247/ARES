@@ -39,7 +39,7 @@ const ensureAdmin = async (c: Context<{ Bindings: Bindings }>, next: Next) => {
     return await next();
   }
 
-  const auth = getAuth(c.env.DB, c.env);
+  const auth = getAuth(c.env.DB, c.env, c.req.url);
   const session = await auth.api.getSession({
     headers: c.req.raw.headers,
   });
@@ -69,7 +69,7 @@ const ensureAdmin = async (c: Context<{ Bindings: Bindings }>, next: Next) => {
 // ── Better Auth Routes ────────────────────────────────────────────────
 apiRouter.on(["POST", "GET"], "/auth/*", async (c) => {
   try {
-    const auth = getAuth(c.env.DB, c.env);
+    const auth = getAuth(c.env.DB, c.env, c.req.url);
     return await auth.handler(c.req.raw);
   } catch (error: unknown) {
     const err = error as Error & { status?: number };
@@ -94,7 +94,7 @@ apiRouter.get("/auth-check", async (c) => {
     return c.json({ authenticated: true, email: "local-dev@localhost", role: "admin" });
   }
 
-  const auth = getAuth(c.env.DB, c.env);
+  const auth = getAuth(c.env.DB, c.env, c.req.url);
   const session = await auth.api.getSession({
     headers: c.req.raw.headers,
   });
