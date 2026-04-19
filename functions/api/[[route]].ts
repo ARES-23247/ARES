@@ -197,7 +197,7 @@ function extractAstText(jsonStr: string): string {
       };
       return extract(ast).trim();
     }
-  } catch (err) {
+  } catch {
     // Ignore JSON parse errors for raw text bodies
   }
   return jsonStr;

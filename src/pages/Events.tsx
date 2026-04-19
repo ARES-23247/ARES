@@ -26,7 +26,7 @@ const extractPlainText = (jsonStr: string) => {
       };
       return extract(ast);
     }
-  } catch (err) {
+  } catch {
     // Ignore parse errors to return raw string
   }
   return jsonStr;
