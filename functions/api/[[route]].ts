@@ -741,15 +741,18 @@ apiRouter.post("/admin/events/:id/repush", async (c) => {
 
     const socialConfig = await getSocialConfig(c);
     
-    c.executionCtx.waitUntil(
-      dispatchSocials({
+    try {
+      await dispatchSocials({
         title: event.title,
         url: `https://aresfirst.org/events`, // Link to events page
         snippet: extractAstText(event.description).substring(0, 250) || "Join us for our upcoming event!",
         coverImageUrl: event.cover_image || "/gallery_1.png",
         baseUrl: new URL(c.req.url).origin
-      }, socialConfig, socials).catch(err => console.error("Event repush failed:", err))
-    );
+      }, socialConfig, socials);
+    } catch (err: unknown) {
+      console.error("Event repush failed:", err);
+      return c.json({ error: `Network Repush Failed: ${(err as Error)?.message || String(err)}` }, 502);
+    }
 
     return c.json({ success: true });
   } catch (err) {
@@ -784,15 +787,18 @@ apiRouter.post("/admin/posts/:slug/repush", async (c) => {
 
     const socialConfig = await getSocialConfig(c);
     
-    c.executionCtx.waitUntil(
-      dispatchSocials({
+    try {
+      await dispatchSocials({
         title: post.title,
         url: `https://aresfirst.org/blog/${slug}`,
         snippet: post.snippet || "Read the latest update from ARES 23247!",
         coverImageUrl: post.thumbnail || "/gallery_1.png",
         baseUrl: new URL(c.req.url).origin
-      }, socialConfig, socials).catch(err => console.error("Post repush failed:", err))
-    );
+      }, socialConfig, socials);
+    } catch (err: unknown) {
+      console.error("Post repush failed:", err);
+      return c.json({ error: `Network Repush Failed: ${(err as Error)?.message || String(err)}` }, 502);
+    }
 
     return c.json({ success: true });
   } catch (err) {

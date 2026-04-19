@@ -124,7 +124,7 @@ export async function dispatchSocials(
         body: JSON.stringify({
           text: `🚀 *New Web Update: ${payload.title}*\n${payload.snippet}\nRead more: ${payload.url}`
         })
-      }).catch(err => console.error("Google Chat webhook failed:", err))
+      }).then(res => { if (!res.ok) throw new Error(`GChat: ${res.status}`); })
     );
   }
 
@@ -140,7 +140,7 @@ export async function dispatchSocials(
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: fbPayload.toString()
-      }).catch(err => console.error("Facebook post failed:", err))
+      }).then(res => { if (!res.ok) throw new Error(`Facebook: ${res.status}`); })
     );
   }
 
@@ -225,12 +225,24 @@ export async function dispatchSocials(
           });
         } catch (err: unknown) {
           console.error("Bluesky post failed:", (err as Error)?.message || err);
+          throw new Error(`Bluesky: ${(err as Error)?.message || String(err)}`);
         }
       })()
     );
   }
 
-  await Promise.allSettled(promises);
+  const results = await Promise.allSettled(promises);
+  const failures: string[] = [];
+  
+  results.forEach(result => {
+    if (result.status === 'rejected') {
+      failures.push(String(result.reason?.message || result.reason));
+    }
+  });
+
+  if (failures.length > 0) {
+    throw new Error(`Syndication partial failure: ${failures.join(" | ")}`);
+  }
 }
 
 /**
