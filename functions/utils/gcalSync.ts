@@ -29,7 +29,6 @@ export async function getGcalAccessToken(config: GCalConfig): Promise<string> {
   const jwt = await new SignJWT({ scope: "https://www.googleapis.com/auth/calendar" })
     .setProtectedHeader({ alg, typ: "JWT" })
     .setIssuer(config.email)
-    .setSubject(config.email)
     .setAudience("https://oauth2.googleapis.com/token")
     .setIssuedAt()
     .setExpirationTime("1h")
@@ -71,8 +70,14 @@ function prepareGcalPayload(event: ARES_Event) {
       ? { dateTime: new Date(event.date_end).toISOString() }
       : { date: event.date_end.split("T")[0] };
   } else {
-    // If no end date, make it exactly match start
-    endObj = startObj;
+    // If no end date, make it a 1 hour event from start, or all day.
+    if (hasTime) {
+      const d = new Date(baseStart);
+      d.setHours(d.getHours() + 1);
+      endObj = { dateTime: d.toISOString() };
+    } else {
+      endObj = startObj;
+    }
   }
 
   return {

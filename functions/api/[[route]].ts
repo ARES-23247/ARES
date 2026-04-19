@@ -823,8 +823,9 @@ apiRouter.put("/admin/events/:id", async (c) => {
           { id: paramId, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage, gcal_event_id: row?.gcal_event_id },
           { email: gcalEmail, privateKey: gcalKey, calendarId: calId }
         );
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("GCal PUT update error:", err);
+        return c.json({ error: `Google Calendar Auth Failed: ${(err as Error)?.message || "Unknown GCal Error"}` }, 502);
       }
     }
 
@@ -1126,8 +1127,9 @@ apiRouter.post("/admin/events", async (c) => {
            { id: genId, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage },
            { email: gcalEmail, privateKey: gcalKey, calendarId: calId }
         );
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("GCal manual POST error:", err);
+        return c.json({ error: `Google Calendar Auth Failed: ${(err as Error)?.message || "Unknown GCal Error"}` }, 502);
       }
     }
 
