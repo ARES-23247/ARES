@@ -50,7 +50,7 @@ export async function getGcalAccessToken(config: GCalConfig): Promise<string> {
   return data.access_token as string;
 }
 
-function parseAstToText(ast: unknown): string {
+export function parseAstToText(ast: unknown): string {
   if (!ast) return "";
   
   // If it's already a string, we assume it's legacy content or needs parsing
