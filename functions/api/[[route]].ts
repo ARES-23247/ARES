@@ -422,13 +422,19 @@ apiRouter.post("/admin/upload", async (c) => {
     let altText = "ARES 23247 Team Media Image";
     try {
       if (c.env.AI) {
-        const uint8 = [...new Uint8Array(arrayBuffer)];
-        const aiResponse = await c.env.AI.run('@cf/llava-1.5-7b-hf', {
-          prompt: 'Describe this image for screen readers in 1 sentence. Make it helpful, concise, and focused on robotics if applicable.',
-          image: uint8
-        });
-        if ((aiResponse as { description?: string })?.description) {
-          altText = String((aiResponse as { description?: string }).description).trim();
+        // Prevent V8 isolate collapse: Skip Edge AI vision for payloads > 2.5MB
+        if (arrayBuffer.byteLength > 2.5 * 1024 * 1024) {
+          console.warn("Image exceeds Edge AI memory threshold. Falling back to generic alt text.");
+        } else {
+          // Use Array.from() to prevent 'Maximum call stack size exceeded' caused by array spreads
+          const uint8 = Array.from(new Uint8Array(arrayBuffer));
+          const aiResponse = await c.env.AI.run('@cf/llava-1.5-7b-hf', {
+            prompt: 'Describe this image for screen readers in 1 sentence. Make it helpful, concise, and focused on robotics if applicable.',
+            image: uint8
+          });
+          if ((aiResponse as { description?: string })?.description) {
+            altText = String((aiResponse as { description?: string }).description).trim();
+          }
         }
       }
     } catch (aiErr) {
