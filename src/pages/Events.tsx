@@ -50,7 +50,8 @@ export default function Events() {
   const { data: calendarData = null } = useQuery({
     queryKey: ["calendar_config"],
     queryFn: async () => {
-      const res = await fetch("/api/calendar");
+      const res = await fetch("/api/events/calendar");
+      if (!res.ok) return {};
       return await res.json() as { calendarIdInternal?: string, calendarIdOutreach?: string, calendarIdExternal?: string };
     },
   });
