@@ -172,7 +172,7 @@ export default function SponsorEditor() {
                   {s.tier}
                 </span>
               </div>
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-2 transition-opacity">
                 <button
                   onClick={() => {
                     setFormData(s);
