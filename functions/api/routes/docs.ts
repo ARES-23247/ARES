@@ -124,7 +124,7 @@ docsRouter.get("/admin/docs/export-all", ensureAdmin, async (c) => {
 docsRouter.post("/admin/docs", async (c) => {
   try {
     const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_admin";
-    const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary } = await c.req.json();
+    const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = await c.req.json();
     if (!slug || !title || !category || !content) {
       return c.json({ error: "Missing required fields" }, 400);
     }
@@ -151,7 +151,7 @@ docsRouter.post("/admin/docs", async (c) => {
        return c.json({ success: true, slug: revSlug });
     }
 
-    const status = user?.role === "admin" ? "published" : "pending";
+    const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
     await c.env.DB.prepare(
       `INSERT OR REPLACE INTO docs (slug, title, category, sort_order, description, content, cf_email, updated_at, is_portfolio, is_executive_summary, status) 

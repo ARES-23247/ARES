@@ -122,7 +122,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     fetchSettings();
   }, []);
 
-  const handlePublish = async () => {
+  const handlePublish = async (isDraft: boolean = false) => {
     if (!form.title || !form.dateStart) {
       setErrorMsg("Title and Start Date are required.");
       return;
@@ -136,7 +136,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     try {
       const id = form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
       const finalDescription = editor ? JSON.stringify(editor.getJSON()) : form.description;
-      const payload = { ...form, id, description: finalDescription };
+      const payload = { ...form, id, description: finalDescription, isDraft };
 
       const method = editId ? "PUT" : "POST";
       const url = editId ? `/dashboard/api/admin/events/${editId}` : "/dashboard/api/admin/events";
@@ -385,9 +385,16 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
           </div>
         )}
 
-        <div className="flex items-center justify-end pt-4 border-t border-zinc-800/50">
+        <div className="flex items-center justify-end pt-4 border-t border-zinc-800/50 gap-4">
           <button
-            onClick={handlePublish}
+            onClick={() => handlePublish(true)}
+            disabled={isPending}
+            className={`px-8 py-4 rounded-2xl font-black tracking-widest transition-all shadow-xl disabled:opacity-50 border border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800`}
+          >
+            {isPending ? "SAVING..." : "SAVE AS DRAFT"}
+          </button>
+          <button
+            onClick={() => handlePublish(false)}
             disabled={isPending}
             className={`px-10 py-4 rounded-2xl font-black tracking-widest transition-all shadow-xl disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900
               ${isPending ? "bg-zinc-800 text-zinc-300 animate-pulse cursor-wait" : "bg-white text-zinc-950 hover:bg-ares-red hover:text-white hover:-translate-y-1 active:translate-y-0"}`}

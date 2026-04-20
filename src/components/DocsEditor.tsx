@@ -64,7 +64,7 @@ export default function DocsEditor({ editSlug, onClearEdit, userRole }: { editSl
     fetchDoc();
   }, [editSlug, editor]);
 
-  const handlePublish = async () => {
+  const handlePublish = async (isDraft: boolean = false) => {
     if (!editor) return;
     if (!slug || !title || !category) {
       setErrorMsg("Slug, title, and category are required.");
@@ -89,7 +89,8 @@ export default function DocsEditor({ editSlug, onClearEdit, userRole }: { editSl
           description, 
           content: jsonAST,
           isPortfolio,
-          isExecutiveSummary
+          isExecutiveSummary,
+          isDraft
         }),
       });
 
@@ -237,7 +238,14 @@ export default function DocsEditor({ editSlug, onClearEdit, userRole }: { editSl
           </button>
         )}
         <button
-          onClick={handlePublish}
+          onClick={() => handlePublish(true)}
+          disabled={isPending}
+          className="bg-black border border-zinc-700 hover:bg-zinc-800 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isPending ? "Connecting..." : "Save as Draft"}
+        </button>
+        <button
+          onClick={() => handlePublish(false)}
           disabled={isPending}
           className="bg-ares-gold hover:bg-white text-obsidian px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(255,184,28,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)]"
         >
