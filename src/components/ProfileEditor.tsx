@@ -272,11 +272,11 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
         {profile.member_type === "student" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-              <label htmlFor="pe-parents-name" className={labelClass}>Parent's Name</label>
+              <label htmlFor="pe-parents-name" className={labelClass}>Parent&apos;s Name</label>
               <input id="pe-parents-name" className={inputClass} placeholder="e.g. Jane Doe" value={profile.parents_name || ""} onChange={e => setProfile({...profile, parents_name: e.target.value})} />
             </div>
             <div>
-              <label htmlFor="pe-parents-email" className={labelClass}>Parent's Email</label>
+              <label htmlFor="pe-parents-email" className={labelClass}>Parent&apos;s Email</label>
               <input id="pe-parents-email" className={inputClass} placeholder="jane.doe@example.com" value={profile.parents_email || ""} onChange={e => setProfile({...profile, parents_email: e.target.value})} />
             </div>
           </div>
@@ -285,11 +285,11 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
         {profile.member_type === "parent" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-              <label htmlFor="pe-students-name" className={labelClass}>Student's Name</label>
+              <label htmlFor="pe-students-name" className={labelClass}>Student&apos;s Name</label>
               <input id="pe-students-name" className={inputClass} placeholder="e.g. John Doe" value={profile.students_name || ""} onChange={e => setProfile({...profile, students_name: e.target.value})} />
             </div>
             <div>
-              <label htmlFor="pe-students-email" className={labelClass}>Student's Email</label>
+              <label htmlFor="pe-students-email" className={labelClass}>Student&apos;s Email</label>
               <input id="pe-students-email" className={inputClass} placeholder="john.doe@example.com" value={profile.students_email || ""} onChange={e => setProfile({...profile, students_email: e.target.value})} />
             </div>
           </div>
