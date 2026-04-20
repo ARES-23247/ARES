@@ -18,6 +18,8 @@ interface EventRow {
   is_potluck: number | null;
 }
 
+import { Calendar } from "lucide-react";
+
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
 
@@ -41,6 +43,41 @@ export default function EventDetail() {
 
   const isPast = isBefore(new Date(event.date_start), new Date());
   
+  const handleSaveToCalendar = () => {
+    if (!event) return;
+    const startStr = new Date(event.date_start).toISOString().replace(/-|:|\.\d+/g, '');
+    let endStr = startStr;
+    if (event.date_end) {
+      endStr = new Date(event.date_end).toISOString().replace(/-|:|\.\d+/g, '');
+    } else {
+      const end = new Date(event.date_start);
+      end.setHours(end.getHours() + 2);
+      endStr = end.toISOString().replace(/-|:|\.\d+/g, '');
+    }
+
+    const icsData = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `DTSTART:${startStr}`,
+      `DTEND:${endStr}`,
+      `SUMMARY:${event.title}`,
+      `LOCATION:${event.location || ''}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${event.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   // Try to parse description as Tiptap AST. If it fails, treat as a legacy plain-text description.
   let parsedAst: ASTNode | null = null;
   try {
@@ -76,10 +113,19 @@ export default function EventDetail() {
           <Link to="/events" className="text-ares-gold hover:text-white uppercase tracking-widest text-xs font-bold transition-all flex items-center gap-2 mb-6 w-fit">
             <span>&larr;</span> Back to Archive
           </Link>
-          <div className="flex items-center gap-4 mb-4">
-            <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest ${isPast ? "bg-zinc-800 text-zinc-400" : "bg-ares-red/20 text-ares-red border border-ares-red/50 shadow-[0_0_15px_rgba(192,0,0,0.4)]"}`}>
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+            <span className={`w-fit px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest ${isPast ? "bg-zinc-800 text-zinc-400" : "bg-ares-red/20 text-ares-red border border-ares-red/50 shadow-[0_0_15px_rgba(192,0,0,0.4)]"}`}>
               {isPast ? "Historical Record" : "Upcoming Event"}
             </span>
+            
+            {!isPast && (
+              <button 
+                onClick={handleSaveToCalendar}
+                className="w-fit flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-zinc-800/80 hover:bg-ares-gold text-zinc-300 hover:text-black border border-zinc-700 hover:border-ares-gold transition-all shadow-lg backdrop-blur-sm"
+              >
+                <Calendar size={14} /> Add to Calendar
+              </button>
+            )}
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight uppercase font-heading drop-shadow-2xl">
             {event.title}
