@@ -11,7 +11,7 @@ commentsRouter.get("/comments/:targetType/:targetId", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       `SELECT c.id, c.content, c.created_at, c.user_id,
-              p.nickname, u.image as avatar
+              p.nickname, COALESCE(p.avatar, u.image) as avatar
        FROM comments c
        JOIN user u ON c.user_id = u.id
        LEFT JOIN user_profiles p ON c.user_id = p.user_id
@@ -59,12 +59,11 @@ commentsRouter.post("/comments/:targetType/:targetId", async (c) => {
   }
 
   try {
-    const id = crypto.randomUUID();
     await c.env.DB.prepare(
-      "INSERT INTO comments (id, target_type, target_id, user_id, content) VALUES (?, ?, ?, ?, ?)"
-    ).bind(id, targetType, targetId, user.id, content.trim()).run();
+      "INSERT INTO comments (target_type, target_id, user_id, content) VALUES (?, ?, ?, ?)"
+    ).bind(targetType, targetId, user.id, content.trim()).run();
 
-    return c.json({ success: true, id });
+    return c.json({ success: true });
   } catch (err) {
     console.error("D1 comment create error:", err);
     return c.json({ error: "Comment creation failed" }, 500);
