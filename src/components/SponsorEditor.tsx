@@ -49,6 +49,9 @@ export default function SponsorEditor() {
       });
       if (!r.ok) throw new Error("Failed to save sponsor");
     },
+    onError: (err: Error) => {
+      alert(`[Failure Exposure] Sponsor sync failed: \n${err.message}`);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
       setIsAdding(false);
