@@ -41,7 +41,7 @@ export default function Home() {
             <Link to="/about" className="clipped-button bg-ares-red text-white hover:bg-ares-bronze transition-all shadow-xl">
               Meet the Team
             </Link>
-            <Link to="/contact" className="clipped-button bg-transparent border-2 border-ares-bronze text-ares-bronze hover:bg-ares-bronze hover:text-white transition-all">
+            <Link to="/sponsors" className="clipped-button bg-transparent border-2 border-ares-bronze text-ares-bronze hover:bg-ares-bronze hover:text-white transition-all">
               Support Our Mission
             </Link>
           </div>
@@ -76,7 +76,7 @@ export default function Home() {
               {
                 title: "Mentorship Pipeline",
                 body: "Our team learns from the best. With help from MARS mentors and local experts, we are training the leaders of tomorrow.",
-                link: "/contact",
+                link: "/join",
                 linkText: "Join the Mission",
               },
             ].map((card) => (
@@ -103,10 +103,10 @@ export default function Home() {
             Whether you&apos;re a student looking to build monsters of engineering or a sponsor looking to invest in the future of WV technology, there is a place for you at the table.
           </p>
           <div className="flex flex-wrap justify-center gap-6">
-            <Link to="/contact" className="clipped-button bg-ares-bronze text-obsidian hover:bg-white hover:text-ares-red transition-all">
+            <Link to="/sponsors" className="clipped-button bg-ares-bronze text-obsidian hover:bg-white hover:text-ares-red transition-all">
               Become a Sponsor
             </Link>
-            <Link to="/about" className="clipped-button bg-transparent border-2 border-white text-white hover:bg-white hover:text-obsidian transition-all">
+            <Link to="/join" className="clipped-button bg-transparent border-2 border-white text-white hover:bg-white hover:text-obsidian transition-all">
               Team Application
             </Link>
           </div>
@@ -120,14 +120,12 @@ export default function Home() {
             <h3 className="text-3xl md:text-4xl font-bold mb-2 font-heading">Event Calendar</h3>
             <p className="text-white/80 text-lg">Tracks our upcoming demos, qualifiers, and community workshops.</p>
           </div>
-          <a
-            href="https://calendar.google.com/calendar/u/0/embed?src=af2d297c3425adaeafc13ddd48a582056404cbf16a6156d3925bb8f3b4affaa0@group.calendar.google.com&ctz=America/New_York"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/events"
             className="clipped-button bg-obsidian text-marble hover:bg-ares-bronze transition-all shadow-2xl"
           >
             Open Event Calendar
-          </a>
+          </Link>
         </div>
       </section>
     </div>
