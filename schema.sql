@@ -182,3 +182,11 @@ CREATE TABLE inquiries (
     status TEXT DEFAULT 'pending',
     created_at TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS locations (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    address TEXT,
+    maps_url TEXT,
+    is_deleted INTEGER DEFAULT 0
+);
