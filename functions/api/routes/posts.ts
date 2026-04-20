@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings, getSocialConfig, extractAstText, getSessionUser } from "./_shared";
+import { Bindings, getSocialConfig, extractAstText, getSessionUser, ensureAdmin } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
 
 const postsRouter = new Hono<{ Bindings: Bindings }>();
@@ -7,14 +7,16 @@ const postsRouter = new Hono<{ Bindings: Bindings }>();
 // ── GET /posts — list all blog posts ─────────────────────────────────
 postsRouter.get("/posts", async (c) => {
   try {
+    const limit = Math.min(Number(c.req.query("limit") || "10"), 100);
+    const offset = Number(c.req.query("offset") || "0");
     const { results } = await c.env.DB.prepare(
       `SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail, p.cf_email,
               uP.nickname as author_nickname, COALESCE(uP.avatar, u.image) as author_avatar
        FROM posts p
        LEFT JOIN user u ON p.cf_email = u.email
        LEFT JOIN user_profiles uP ON u.id = uP.user_id
-       WHERE p.is_deleted = 0 AND p.status = 'published' ORDER BY p.date DESC`
-    ).all();
+       WHERE p.is_deleted = 0 AND p.status = 'published' ORDER BY p.date DESC LIMIT ? OFFSET ?`
+    ).bind(limit, offset).all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
     console.error("D1 list error:", err);
@@ -46,9 +48,11 @@ postsRouter.get("/posts/:slug", async (c) => {
 // ── GET /admin/posts — list all blog posts (admin) ──────────────────────
 postsRouter.get("/admin/posts", async (c) => {
   try {
+    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
+    const offset = Number(c.req.query("offset") || "0");
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, cf_email, is_deleted, status, revision_of FROM posts ORDER BY date DESC"
-    ).all();
+      "SELECT slug, title, date, snippet, thumbnail, cf_email, is_deleted, status, revision_of FROM posts ORDER BY date DESC LIMIT ? OFFSET ?"
+    ).bind(limit, offset).all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
     console.error("D1 admin list error (posts):", err);
@@ -355,6 +359,54 @@ postsRouter.post("/admin/posts/:slug/repush", async (c) => {
   } catch (err) {
     console.error("Post repush error:", err);
     return c.json({ error: "Repush failed" }, 500);
+  }
+});
+
+// ── GET /admin/posts/:slug/history — list post history (admin) ─────────
+postsRouter.get("/admin/posts/:slug/history", async (c) => {
+  try {
+    const slug = c.req.param("slug");
+    const { results } = await c.env.DB.prepare(
+      "SELECT id, title, author, author_email, created_at FROM posts_history WHERE slug = ? ORDER BY created_at DESC LIMIT 50"
+    ).bind(slug).all();
+    return c.json({ history: results ?? [] });
+  } catch (err) {
+    console.error("D1 post history error:", err);
+    return c.json({ history: [] });
+  }
+});
+
+// ── PATCH /admin/posts/:slug/history/:id/restore — restore from history (admin) ──
+postsRouter.patch("/admin/posts/:slug/history/:id/restore", ensureAdmin, async (c) => {
+  try {
+    const slug = c.req.param("slug");
+    const id = c.req.param("id");
+    
+    const row = await c.env.DB.prepare(
+      "SELECT title, author, thumbnail, snippet, ast FROM posts_history WHERE id = ? AND slug = ?"
+    ).bind(id, slug).first<any>();
+
+    if (!row) return c.json({ error: "Version not found" }, 404);
+
+    const user = await getSessionUser(c);
+    const email = user?.email || "anonymous_admin";
+
+    // Capture CURRENT as history before restoring
+    const current = await c.env.DB.prepare("SELECT slug, title, author, thumbnail, snippet, ast, cf_email FROM posts WHERE slug = ?").bind(slug).first<any>();
+    if (current) {
+        await c.env.DB.prepare(
+          "INSERT INTO posts_history (slug, title, author, thumbnail, snippet, ast, author_email) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        ).bind(current.slug, current.title, current.author, current.thumbnail, current.snippet, current.ast, current.cf_email || "unknown").run();
+    }
+
+    await c.env.DB.prepare(
+      "UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, cf_email = ? WHERE slug = ?"
+    ).bind(row.title, row.author, row.thumbnail, row.snippet, row.ast, email, slug).run();
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 post restore error:", err);
+    return c.json({ error: "Restore failed" }, 500);
   }
 });
 

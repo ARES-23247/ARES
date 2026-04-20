@@ -23,9 +23,11 @@ locationsRouter.get("/admin/locations", async (c) => {
     if (!session || session.role === UserRole.UNVERIFIED) {
       return c.json({ error: "Unauthorized" }, 401);
     }
+    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
+    const offset = Number(c.req.query("offset") || "0");
     const { results } = await c.env.DB.prepare(
-      "SELECT * FROM locations ORDER BY is_deleted ASC, name ASC"
-    ).all();
+      "SELECT id, name, address, maps_url, is_deleted FROM locations ORDER BY is_deleted ASC, name ASC LIMIT ? OFFSET ?"
+    ).bind(limit, offset).all();
     return c.json({ locations: results ?? [] });
   } catch (err) {
     console.error("D1 admin list error (locations):", err);

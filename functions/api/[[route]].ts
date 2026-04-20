@@ -10,7 +10,7 @@ import tbaRouter from "./routes/tba";
 import outreachRouter from "./routes/outreach";
 import awardsRouter from "./routes/awards";
 import postsRouter from "./routes/posts";
-import eventsRouter from "./routes/events";
+import eventsRouter from "./routes/events/index";
 import docsRouter from "./routes/docs";
 import mediaRouter from "./routes/media";
 import settingsRouter from "./routes/settings";
@@ -20,6 +20,7 @@ import commentsRouter from "./routes/comments";
 import inquiriesRouter from "./routes/inquiries";
 import badgesRouter from "./routes/badges";
 import { locationsRouter } from "./routes/locations";
+import sitemapRouter from "./routes/sitemap";
 const app = new Hono<{ Bindings: Bindings }>();
 const apiRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -58,7 +59,7 @@ apiRouter.route("/", tbaRouter);
 apiRouter.route("/", settingsRouter);
 apiRouter.route("/", judgesRouter);
 
-// Users & Profiles
+apiRouter.route("/", sitemapRouter);
 apiRouter.route("/", profilesRouter);
 apiRouter.route("/", badgesRouter);
 
@@ -91,7 +92,7 @@ apiRouter.get("/admin/audit-log", async (c) => {
     const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
     const offset = Number(c.req.query("offset") || "0");
     const { results } = await c.env.DB.prepare(
-      "SELECT * FROM audit_log ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+      "SELECT id, action, target_type, target_id, actor_email, actor_role, details, timestamp FROM audit_log ORDER BY timestamp DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ logs: results || [] });
   } catch (err) {

@@ -105,12 +105,13 @@ docsRouter.get("/docs/:slug", async (c) => {
   }
 });
 
-// ── GET /admin/docs — list all docs (admin) ───────────────────────────
 docsRouter.get("/admin/docs", async (c) => {
   try {
+    const limit = Math.min(Number(c.req.query("limit") || "100"), 500);
+    const offset = Number(c.req.query("offset") || "0");
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, category, sort_order, description, is_portfolio, is_executive_summary, is_deleted, status, revision_of FROM docs ORDER BY category, sort_order ASC"
-    ).all();
+      "SELECT slug, title, category, sort_order, description, is_portfolio, is_executive_summary, is_deleted, status, revision_of FROM docs ORDER BY category, sort_order ASC LIMIT ? OFFSET ?"
+    ).bind(limit, offset).all();
     return c.json({ docs: results ?? [] });
   } catch (err) {
     console.error("D1 admin docs list error:", err);
@@ -156,7 +157,7 @@ docsRouter.post("/admin/docs", async (c) => {
     const email = user?.email || "anonymous_admin";
 
     // Capture history before update
-    const existing = await c.env.DB.prepare("SELECT * FROM docs WHERE slug = ?").bind(slug).first();
+    const existing = await c.env.DB.prepare("SELECT slug, title, category, description, content, cf_email, is_portfolio, is_executive_summary FROM docs WHERE slug = ?").bind(slug).first();
     if (existing) {
        await c.env.DB.prepare(
          `INSERT INTO docs_history (slug, title, category, description, content, author_email)
@@ -249,7 +250,7 @@ docsRouter.patch("/admin/docs/:slug/approve", async (c) => {
     const slug = c.req.param("slug");
 
     type DocRow = { revision_of?: string; title: string; category: string; sort_order: number; description: string; content: string; is_portfolio: number; is_executive_summary: number };
-    const row = await c.env.DB.prepare("SELECT * FROM docs WHERE slug = ?").bind(slug).first<DocRow>();
+    const row = await c.env.DB.prepare("SELECT revision_of, title, category, sort_order, description, content, is_portfolio, is_executive_summary FROM docs WHERE slug = ?").bind(slug).first<DocRow>();
 
     if (row && row.revision_of) {
       await c.env.DB.prepare(
@@ -283,6 +284,54 @@ docsRouter.patch("/admin/docs/:slug/reject", async (c) => {
   } catch (err) {
     console.error("D1 reject error (docs):", err);
     return c.json({ error: "Rejection failed" }, 500);
+  }
+});
+
+// ── GET /admin/docs/:slug/history — list doc history (admin) ──────────
+docsRouter.get("/admin/docs/:slug/history", async (c) => {
+  try {
+    const slug = c.req.param("slug");
+    const { results } = await c.env.DB.prepare(
+      "SELECT id, title, category, description, author_email, created_at FROM docs_history WHERE slug = ? ORDER BY created_at DESC LIMIT 50"
+    ).bind(slug).all();
+    return c.json({ history: results ?? [] });
+  } catch (err) {
+    console.error("D1 doc history error:", err);
+    return c.json({ history: [] });
+  }
+});
+
+// ── PATCH /admin/docs/:slug/history/:id/restore — restore from history (admin) ──
+docsRouter.patch("/admin/docs/:slug/history/:id/restore", ensureAdmin, async (c) => {
+  try {
+    const slug = c.req.param("slug");
+    const id = c.req.param("id");
+    
+    const row = await c.env.DB.prepare(
+      "SELECT title, category, description, content FROM docs_history WHERE id = ? AND slug = ?"
+    ).bind(id, slug).first<any>();
+
+    if (!row) return c.json({ error: "Version not found" }, 404);
+
+    const user = await getSessionUser(c);
+    const email = user?.email || "anonymous_admin";
+
+    // Capture CURRENT as history before restoring
+    const current = await c.env.DB.prepare("SELECT slug, title, category, description, content, cf_email FROM docs WHERE slug = ?").bind(slug).first<any>();
+    if (current) {
+        await c.env.DB.prepare(
+          "INSERT INTO docs_history (slug, title, category, description, content, author_email) VALUES (?, ?, ?, ?, ?, ?)"
+        ).bind(current.slug, current.title, current.category, current.description, current.content, current.cf_email || "unknown").run();
+    }
+
+    await c.env.DB.prepare(
+      "UPDATE docs SET title = ?, category = ?, description = ?, content = ?, cf_email = ?, updated_at = datetime('now') WHERE slug = ?"
+    ).bind(row.title, row.category, row.description, row.content, email, slug).run();
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 doc restore error:", err);
+    return c.json({ error: "Restore failed" }, 500);
   }
 });
 

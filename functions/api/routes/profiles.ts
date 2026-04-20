@@ -11,7 +11,7 @@ profilesRouter.get("/profile/me", async (c) => {
 
   try {
     const profile = await c.env.DB.prepare(
-      "SELECT * FROM user_profiles WHERE user_id = ?"
+      "SELECT user_id, first_name, last_name, nickname, phone, contact_email, show_email, show_phone, pronouns, grade_year, subteams, member_type, bio, favorite_food, dietary_restrictions, favorite_first_thing, fun_fact, colleges, employers, show_on_about, favorite_robot_mechanism, pre_match_superstition, leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone, avatar, updated_at FROM user_profiles WHERE user_id = ?"
     ).bind(user.id).first();
 
     const { results: rawBadges } = await c.env.DB.prepare(
@@ -132,7 +132,7 @@ profilesRouter.get("/profile/:userId", async (c) => {
   const userId = c.req.param("userId");
   try {
     const profile = await c.env.DB.prepare(
-      "SELECT * FROM user_profiles WHERE user_id = ? AND show_on_about = 1"
+      "SELECT user_id, first_name, last_name, nickname, phone, contact_email, show_email, show_phone, pronouns, grade_year, subteams, member_type, bio, favorite_food, dietary_restrictions, favorite_first_thing, fun_fact, colleges, employers, show_on_about, favorite_robot_mechanism, pre_match_superstition, leadership_role, rookie_year, avatar FROM user_profiles WHERE user_id = ? AND show_on_about = 1"
     ).bind(userId).first();
 
     if (!profile) return c.json({ error: "Profile not found or private" }, 404);

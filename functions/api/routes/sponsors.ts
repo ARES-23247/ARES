@@ -16,14 +16,15 @@ sponsorsRouter.get("/sponsors", async (c) => {
   }
 });
 
-// ── GET /admin/sponsors — list all sponsors for management (admin) ─
 sponsorsRouter.get("/admin/sponsors", async (c) => {
   try {
-    const { results } = await c.env.DB.prepare("SELECT * FROM sponsors ORDER BY created_at DESC").all();
+    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
+    const offset = Number(c.req.query("offset") || "0");
+    const { results } = await c.env.DB.prepare("SELECT id, name, tier, logo_url, website_url, is_active, created_at FROM sponsors ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
     return c.json({ sponsors: results || [] });
   } catch (err) {
     console.error("D1 admin sponsors list error:", err);
-    return c.json({ sponsors: [] }, 500);
+    return c.json({ sponsors: [] });
   }
 });
 

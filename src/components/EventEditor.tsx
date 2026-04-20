@@ -1,4 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import AssetPickerModal from "./AssetPickerModal";
@@ -12,9 +13,31 @@ interface LocationRow {
   address: string;
 }
 
+interface EventData {
+  id: string;
+  title: string;
+  date_start: string;
+  date_end: string;
+  location: string;
+  description: string;
+  cover_image: string;
+  category: string;
+  is_potluck: number;
+  is_volunteer: number;
+  is_deleted: number;
+  status: string;
+  revision_of?: string;
+}
+
+interface SyncResponse {
+  success: boolean;
+  id?: string;
+  error?: string;
+  warning?: string;
+}
+
 export default function EventEditor({ editId, onClearEdit, userRole }: { editId?: string | null; onClearEdit?: () => void; userRole?: string | unknown }) {
   const queryClient = useQueryClient();
-  const [isPending, setIsPending] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [warningMsg, setWarningMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -37,7 +60,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     queryFn: async () => {
       const r = await fetch("/api/locations");
       if (!r.ok) return [];
-      const d = await r.json();
+      const d = await r.json() as { locations?: LocationRow[] };
       return d.locations || [];
     }
   });
@@ -62,59 +85,43 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     const formData = new FormData();
     formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ext));
     const res = await fetch("/dashboard/api/admin/upload", { method: "POST", credentials: "include", body: formData });
-    const data = await res.json();
-    // @ts-expect-error -- D1 untyped response
+    const data = await res.json() as { url?: string; altText?: string; error?: string };
     if (!data.url) throw new Error(data.error || "Upload failed");
-    // @ts-expect-error -- D1 untyped response
     return { url: data.url, altText: data.altText };
   };
 
-  useEffect(() => {
-    if (!editId) return;
-    const fetchEvent = async () => {
-      try {
-        const res = await fetch(`/api/admin/events/${editId}`);
-        const data = await res.json();
-      // @ts-expect-error -- D1 untyped response
-        if (data.event) {
-      // @ts-expect-error -- D1 untyped response
-          setIsDeleted(data.event.is_deleted === 1);
-          setForm({
-      // @ts-expect-error -- D1 untyped response
-            title: data.event.title || "",
-      // @ts-expect-error -- D1 untyped response
-            dateStart: data.event.date_start || "",
-      // @ts-expect-error -- D1 untyped response
-            dateEnd: data.event.date_end || "",
-      // @ts-expect-error -- D1 untyped response
-            location: data.event.location || "",
-      // @ts-expect-error -- D1 untyped response
-            description: data.event.description || "",
-      // @ts-expect-error -- D1 untyped response
-            coverImage: data.event.cover_image || DEFAULT_COVER_IMAGE,
-      // @ts-expect-error -- D1 untyped response
-            category: data.event.category || "internal",
-      // @ts-expect-error -- D1 untyped response
-            isPotluck: data.event.is_potluck === 1,
-      // @ts-expect-error -- D1 untyped response
-            isVolunteer: data.event.is_volunteer === 1,
-          });
-          if (editor) {
-            try {
-      // @ts-expect-error -- D1 untyped response
-              editor.commands.setContent(JSON.parse(data.event.description));
-            } catch {
-      // @ts-expect-error -- D1 untyped response
-              editor.commands.setContent(`<p>${data.event.description}</p>`);
-            }
+  // Fetch event data if editing
+  useQuery({
+    queryKey: ["event", editId],
+    queryFn: async () => {
+      if (!editId) return null;
+      const res = await fetch(`/dashboard/api/admin/events/${editId}`, { credentials: "include" });
+      const data = await res.json() as { event?: EventData };
+      if (data.event) {
+        setIsDeleted(data.event.is_deleted === 1);
+        setForm({
+          title: data.event.title || "",
+          dateStart: data.event.date_start || "",
+          dateEnd: data.event.date_end || "",
+          location: data.event.location || "",
+          description: data.event.description || "",
+          coverImage: data.event.cover_image || DEFAULT_COVER_IMAGE,
+          category: data.event.category || "internal",
+          isPotluck: data.event.is_potluck === 1,
+          isVolunteer: data.event.is_volunteer === 1,
+        });
+        if (editor) {
+          try {
+            editor.commands.setContent(JSON.parse(data.event.description));
+          } catch {
+            editor.commands.setContent(`<p>${data.event.description}</p>`);
           }
         }
-      } catch (err) {
-        console.error("Failed to load event for editing", err);
       }
-    };
-    fetchEvent();
-  }, [editId, editor]);
+      return data.event;
+    },
+    enabled: !!editId && !!editor,
+  });
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -141,21 +148,15 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     fetchSettings();
   }, []);
 
-  const handlePublish = async (isDraft: boolean = false) => {
-    if (!form.title || !form.dateStart) {
-      setErrorMsg("Title and Start Date are required.");
-      return;
-    }
-
-    setIsPending(true);
-    setErrorMsg("");
-    setWarningMsg("");
-    setSuccessMsg("");
-
-    try {
-      const id = form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+  const mutation = useMutation({
+    mutationFn: async (isDraft: boolean) => {
       const finalDescription = editor ? JSON.stringify(editor.getJSON()) : form.description;
-      const payload = { ...form, id, description: finalDescription, isDraft };
+      const payload = { 
+        ...form, 
+        description: finalDescription, 
+        isDraft,
+        socials 
+      };
 
       const method = editId ? "PUT" : "POST";
       const url = editId ? `/dashboard/api/admin/events/${editId}` : "/dashboard/api/admin/events";
@@ -164,42 +165,58 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ ...payload, socials }),
+        body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      if (!res.ok && res.status !== 207) {
+        const errorData = await res.json() as { error?: string };
+        throw new Error(errorData.error || "Failed to save event");
+      }
 
-      // @ts-expect-error -- D1 untyped response
+      return await res.json() as SyncResponse;
+    },
+    onSuccess: (data, isDraft) => {
       if (data.success) {
         setSuccessMsg(editId ? "Event updated successfully!" : "Event published successfully!");
-        // Cloudflare D1 uses asynchronous replication to edge read-nodes. 
-        // If social syndication resolves instantly (e.g. Bluesky is omitted),
-        // we must wait for the D1 write to propagate before invalidating the React Query cache.
-        queryClient.invalidateQueries({ queryKey: ["events"] });
-        setTimeout(() => queryClient.invalidateQueries({ queryKey: ["events"] }), 1500);
-        setTimeout(() => queryClient.invalidateQueries({ queryKey: ["events"] }), 3000);
-        queryClient.invalidateQueries({ queryKey: ["admin_events"] });
-        if (onClearEdit) onClearEdit();
+        setWarningMsg(data.warning || "");
         
-      // @ts-expect-error -- D1 untyped response
-        if (data.warning) {
-      // @ts-expect-error -- D1 untyped response
-          setWarningMsg(data.warning);
-        }
+        queryClient.invalidateQueries({ queryKey: ["events"] });
+        queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+        
+        // Multi-stage invalidation to account for D1 propagation delay
+        setTimeout(() => queryClient.invalidateQueries({ queryKey: ["events"] }), 1500);
+
+        if (onClearEdit) onClearEdit();
 
         if (!editId) {
-          setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: DEFAULT_COVER_IMAGE, category: "internal", isPotluck: false, isVolunteer: false });
+          setForm({ 
+            title: "", dateStart: "", dateEnd: "", location: "", 
+            description: "", coverImage: DEFAULT_COVER_IMAGE, 
+            category: "internal", isPotluck: false, isVolunteer: false 
+          });
+          if (editor) editor.commands.clearContent();
         }
       } else {
-      // @ts-expect-error -- D1 untyped response
         setErrorMsg(data.error || "Failed to publish event");
       }
-    } catch {
-      setErrorMsg("Network error — could not reach the API.");
-    } finally {
-      setIsPending(false);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.message || "Network error — could not reach the API.");
     }
+  });
+
+  const handlePublish = (isDraft: boolean = false) => {
+    if (!form.title || !form.dateStart) {
+      setErrorMsg("Title and Start Date are required.");
+      return;
+    }
+    setErrorMsg("");
+    setWarningMsg("");
+    setSuccessMsg("");
+    mutation.mutate(isDraft);
   };
+
+  const isPending = mutation.isPending;
 
   return (
     <div className="flex flex-col gap-6 w-full relative">
@@ -274,7 +291,6 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
                  type="text"
                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-zinc-100 text-sm focus:border-ares-red outline-none"
                  placeholder="Enter custom location/address..."
-
                  onBlur={(e) => {
                    if (e.target.value.trim()) setForm({...form, location: e.target.value});
                  }}
@@ -342,8 +358,6 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
 
       <div>
         <label htmlFor="event-desc-editor" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Event Description / Recap</label>
-        
-        {/* ===== Unified Rich Editor ===== */}
         {editor && <RichEditorToolbar editor={editor} documentTitle={form.title} />}
       </div>
 
@@ -387,7 +401,6 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
         </div>
       </div>
 
-      {/* Social Syndication Controls */}
       {availableSocials.length > 0 && (
         <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4 shadow-inner">
           <div className="flex items-center gap-2 mb-3">

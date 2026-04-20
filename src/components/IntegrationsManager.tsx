@@ -13,16 +13,27 @@ export default function IntegrationsManager() {
   const { data, isLoading, isError, error } = useQuery<{ settings: SettingsData }, Error>({
     queryKey: ["admin_settings"],
     queryFn: async () => {
-      const res = await fetch("/dashboard/api/admin/settings", { credentials: "include" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      return res.json();
+      try {
+        const res = await fetch("/dashboard/api/admin/settings", { credentials: "include" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const json = await res.json();
+        return json;
+      } catch (err) {
+        console.error("[IntegrationsManager] Fetch error:", err);
+        throw err;
+      }
     }
   });
 
   useEffect(() => {
     if (data?.settings) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLocalSettings(data.settings);
+      // EFF-01: Map legacy keys for backward compatibility
+      const merged: SettingsData = { ...data.settings };
+      if (merged["CALENDAR_ID"] && !merged["CALENDAR_ID_INTERNAL"]) {
+        merged["CALENDAR_ID_INTERNAL"] = merged["CALENDAR_ID"];
+      }
+      
+      setLocalSettings(merged);
       setIsDirty(false);
     }
   }, [data]);
@@ -71,6 +82,8 @@ export default function IntegrationsManager() {
       </div>
     );
   }
+
+  if (!localSettings) return null;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">

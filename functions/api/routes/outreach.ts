@@ -30,10 +30,9 @@ function mergeAndSort(logs: Record<string, unknown>[], volunteerEvents: Record<s
 // ── GET /outreach — list all outreach logs for public report ──────────
 outreachRouter.get("/outreach", async (c) => {
   try {
-    const { results: logs } = await c.env.DB.prepare(
-      "SELECT id, title, date, location, students_count, hours_logged, reach_count, description FROM outreach_logs ORDER BY date DESC"
-    ).all();
-
+    const limit = Math.min(Number(c.req.query("limit") || "10"), 100);
+    const offset = Number(c.req.query("offset") || "0");
+    const { results: logs } = await c.env.DB.prepare("SELECT id, title, date, location, students_count, hours_logged, reach_count, description FROM outreach_logs ORDER BY date DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
     const volunteerEvents = await fetchVolunteerEvents(c.env.DB);
     return c.json({ logs: mergeAndSort((logs || []) as Record<string, unknown>[], volunteerEvents) });
   } catch (err) {
@@ -45,7 +44,9 @@ outreachRouter.get("/outreach", async (c) => {
 // ── GET /admin/outreach — list all outreach logs for management ───────
 outreachRouter.get("/admin/outreach", async (c) => {
   try {
-    const { results: logs } = await c.env.DB.prepare("SELECT * FROM outreach_logs ORDER BY date DESC").all();
+    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
+    const offset = Number(c.req.query("offset") || "0");
+    const { results: logs } = await c.env.DB.prepare("SELECT id, title, date, location, students_count, hours_logged, reach_count, description FROM outreach_logs ORDER BY date DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
     const volunteerEvents = await fetchVolunteerEvents(c.env.DB);
     return c.json({ logs: mergeAndSort((logs || []) as Record<string, unknown>[], volunteerEvents) });
   } catch (err) {

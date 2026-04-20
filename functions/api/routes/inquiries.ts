@@ -6,9 +6,11 @@ const inquiriesRouter = new Hono<{ Bindings: Bindings }>();
 // ── GET /admin/inquiries — List all inquiries ──────────────────────────
 inquiriesRouter.get("/admin/inquiries", async (c) => {
   try {
+    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
+    const offset = Number(c.req.query("offset") || "0");
     const { results } = await c.env.DB.prepare(
-      "SELECT * FROM inquiries ORDER BY created_at DESC"
-    ).all();
+      "SELECT id, type, name, email, metadata, status, created_at FROM inquiries ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    ).bind(limit, offset).all();
     return c.json({ inquiries: results });
   } catch (err) {
     console.error("D1 inquiry list error:", err);

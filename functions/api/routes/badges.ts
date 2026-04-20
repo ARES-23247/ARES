@@ -7,7 +7,7 @@ const badgesRouter = new Hono<{ Bindings: Bindings }>();
 badgesRouter.get("/badges", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT * FROM badges ORDER BY created_at ASC"
+      "SELECT id, name, description, icon, color_theme, created_at FROM badges ORDER BY created_at ASC"
     ).all();
     return c.json({ badges: results || [] });
   } catch (err) {

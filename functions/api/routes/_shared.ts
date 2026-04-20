@@ -146,8 +146,10 @@ export async function getSessionUser(c: Context<{ Bindings: Bindings }>) {
 export async function getDbSettings(c: Context<{ Bindings: Bindings }>): Promise<Record<string, string>> {
   const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
   const settings: Record<string, string> = {};
-  for (const row of settingsRows as { key: string, value: string }[]) {
-    settings[row.key] = row.value;
+  if (settingsRows) {
+    for (const row of settingsRows as { key: string, value: string }[]) {
+      settings[row.key] = row.value;
+    }
   }
   return settings;
 }
