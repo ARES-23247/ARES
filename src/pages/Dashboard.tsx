@@ -68,9 +68,12 @@ export default function Dashboard() {
   // ── Unauthorized Gate ──────────────────────────────────────────────
   // @ts-expect-error - Better Auth session type overrides
   const role = (session?.user?.role as string) || "unverified";
+  // @ts-expect-error - member_type extension
+  const memberType = (session?.user?.member_type as string) || "student";
   const isAdmin = role === "admin" || isLocalDev;
   const isAuthorized = isAdmin || role === "author";
   const isUnverified = role === "unverified" && !isLocalDev;
+  const canSeeLogistics = isAdmin || ["parent", "coach", "mentor"].includes(memberType);
 
   if (!session || !session.user) {
     return (
@@ -310,13 +313,15 @@ export default function Dashboard() {
                   Users
                 </button>
               )}
-              <button
-                onClick={() => setActiveTab("logistics")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-red ${activeTab === "logistics" ? "bg-gradient-to-b from-ares-red/20 to-ares-red/5 border border-ares-red/50 text-ares-red shadow-[0_0_20px_rgba(220,38,38,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Utensils size={16} />
-                Logistics
-              </button>
+              {canSeeLogistics && (
+                <button
+                  onClick={() => setActiveTab("logistics")}
+                  className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-red ${activeTab === "logistics" ? "bg-gradient-to-b from-ares-red/20 to-ares-red/5 border border-ares-red/50 text-ares-red shadow-[0_0_20px_rgba(220,38,38,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
+                >
+                  <Utensils size={16} />
+                  Logistics
+                </button>
+              )}
             </div>
           </div>
         </div>

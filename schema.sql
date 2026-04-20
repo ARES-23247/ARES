@@ -124,3 +124,16 @@ CREATE TABLE user_profiles (
     emergency_contact_phone TEXT,
     updated_at TEXT DEFAULT (datetime('now'))
 );
+
+-- Event Sign-Ups / Potluck / Attendance
+CREATE TABLE IF NOT EXISTS event_signups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    bringing TEXT,
+    notes TEXT,
+    attended INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(event_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_signups_event ON event_signups(event_id);

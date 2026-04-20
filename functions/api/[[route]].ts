@@ -87,31 +87,12 @@ apiRouter.use("/admin/*", ensureAdmin);
 
 // ── GET /api/auth-check — verify session (UI gate only) ────────────────
 apiRouter.get("/auth-check", async (c) => {
-  const url = new URL(c.req.url);
-
-  // Localhost always passes
-  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
-    return c.json({ authenticated: true, email: "local-dev@localhost", role: "admin" });
-  }
-
-  const auth = getAuth(c.env.DB, c.env, c.req.url);
-  const session = await auth.api.getSession({
-    headers: c.req.raw.headers,
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ authenticated: false }, 401);
+  return c.json({ 
+    authenticated: true, 
+    user
   });
-
-  if (session && session.user) {
-    return c.json({ 
-      authenticated: true, 
-      id: session.user.id,
-      email: session.user.email,
-      name: session.user.name,
-      image: session.user.image,
-      // @ts-expect-error - Better Auth role type extension
-      role: session.user.role 
-    });
-  }
-
-  return c.json({ authenticated: false }, 401);
 });
 
 // ── GET /api/search — Global Platform Search ───────────────────────────
@@ -1371,12 +1352,17 @@ apiRouter.post("/admin/events", async (c) => {
 async function getSessionUser(c: Context<{ Bindings: Bindings }>) {
   const url = new URL(c.req.url);
   if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
-    return { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin" };
+    return { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin", member_type: "mentor" };
   }
   try {
     const auth = getAuth(c.env.DB, c.env, c.req.url);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (session && session.user) {
+      // Fetch member_type from profile
+      const profile = await c.env.DB.prepare(
+        "SELECT member_type FROM user_profiles WHERE user_id = ?"
+      ).bind(session.user.id).first<{ member_type: string }>();
+
       return {
         id: session.user.id,
         email: session.user.email,
@@ -1384,6 +1370,7 @@ async function getSessionUser(c: Context<{ Bindings: Bindings }>) {
         image: session.user.image,
         // @ts-expect-error - Better Auth role extension
         role: (session.user.role as string) || "unverified",
+        member_type: profile?.member_type || "student",
       };
     }
   } catch { /* ignore */ }
@@ -1451,6 +1438,12 @@ apiRouter.get("/profile/me", async (c) => {
 apiRouter.get("/logistics/summary", async (c) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+  // Restricted to Leadership: Admin, Parent, Coach, Mentor
+  const isAuthorized = user.role === "admin" || ["parent", "coach", "mentor"].includes(user.member_type);
+  if (!isAuthorized) {
+    return c.json({ error: "Forbidden: Leadership access required" }, 403);
+  }
 
   try {
     const { results } = await c.env.DB.prepare(
@@ -1768,22 +1761,57 @@ apiRouter.delete("/admin/comments/:id", async (c) => {
 apiRouter.get("/events/:id/signups", async (c) => {
   const eventId = c.req.param("id");
   const user = await getSessionUser(c);
+
   try {
+    const isVerified = user && user.role !== "unverified";
+    const isManagement = user && (user.role === "admin" || ["coach", "mentor"].includes(user.member_type));
+
+    // Fetch the signup list (excluding unverified users)
     const { results } = await c.env.DB.prepare(
       `SELECT s.*, p.nickname, u.image as avatar FROM event_signups s
-       LEFT JOIN user_profiles p ON s.user_id = p.user_id
-       LEFT JOIN user u ON s.user_id = u.id
+       JOIN user_profiles p ON s.user_id = p.user_id
+       JOIN user u ON s.user_id = u.id
        WHERE s.event_id = ? AND u.role NOT IN ('unverified') ORDER BY s.created_at ASC`
     ).bind(eventId).all();
-    const signups = (results || []).map((r: Record<string, unknown>) => ({
+
+    const signups = (results || []).map((r: any) => ({
       ...r,
       nickname: r.nickname || "ARES Member",
       is_own: user ? r.user_id === user.id : false,
+      attended: !!r.attended,
     }));
-    return c.json({ signups, authenticated: !!user, role: user?.role });
+
+    // Aggregate dietary info for verified users (Anonymous)
+    let dietarySummary: Record<string, number> = {};
+    if (isVerified) {
+      const { results: profiles } = await c.env.DB.prepare(
+        `SELECT p.dietary_restrictions FROM event_signups s
+         JOIN user_profiles p ON s.user_id = p.user_id
+         JOIN user u ON s.user_id = u.id
+         WHERE s.event_id = ? AND u.role NOT IN ('unverified')`
+      ).bind(eventId).all();
+
+      for (const p of (profiles || []) as any) {
+        try {
+          const restrictions = JSON.parse(p.dietary_restrictions || "[]") as string[];
+          for (const r of restrictions) {
+            dietarySummary[r] = (dietarySummary[r] || 0) + 1;
+          }
+        } catch { /* ignore */ }
+      }
+    }
+
+    return c.json({
+      signups,
+      dietary_summary: isVerified ? dietarySummary : null,
+      authenticated: !!user,
+      role: user?.role || null,
+      member_type: user?.member_type || null,
+      can_manage: isManagement,
+    });
   } catch (err) {
     console.error("[Signups GET]", err);
-    return c.json({ signups: [], authenticated: false }, 500);
+    return c.json({ error: "Failed to fetch signups" }, 500);
   }
 });
 
@@ -1816,6 +1844,46 @@ apiRouter.delete("/events/:id/signups/me", async (c) => {
   } catch (err) {
     console.error("[Signups DELETE me]", err);
     return c.json({ error: "Failed" }, 500);
+  }
+});
+
+// ── PATCH /api/events/:id/signups/me/attendance — Self Check-in ────────
+apiRouter.patch("/events/:id/signups/me/attendance", async (c) => {
+  const eventId = c.req.param("id");
+  const user = await getSessionUser(c);
+  if (!user || user.role === "unverified") return c.json({ error: "Unauthorized" }, 401);
+
+  try {
+    await c.env.DB.prepare(
+      `INSERT INTO event_signups (event_id, user_id, attended) VALUES (?, ?, 1)
+       ON CONFLICT(event_id, user_id) DO UPDATE SET attended = 1`
+    ).bind(eventId, user.id).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Attendance Self PATCH]", err);
+    return c.json({ error: "Failed to update attendance" }, 500);
+  }
+});
+
+// ── PATCH /api/events/:id/signups/:userId/attendance — Leader Check-in ──
+apiRouter.patch("/events/:id/signups/:userId/attendance", async (c) => {
+  const eventId = c.req.param("id");
+  const userId = c.req.param("userId");
+  const leader = await getSessionUser(c);
+
+  if (!leader) return c.json({ error: "Unauthorized" }, 401);
+  const isManagement = leader.role === "admin" || ["coach", "mentor"].includes(leader.member_type);
+  if (!isManagement) return c.json({ error: "Forbidden" }, 403);
+
+  try {
+    const body = await c.req.json() as { attended: boolean };
+    await c.env.DB.prepare(
+      "UPDATE event_signups SET attended = ? WHERE event_id = ? AND user_id = ?"
+    ).bind(body.attended ? 1 : 0, eventId, userId).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("[Attendance Leader PATCH]", err);
+    return c.json({ error: "Failed to update attendance" }, 500);
   }
 });
 
