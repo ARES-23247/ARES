@@ -63,11 +63,26 @@ inquiriesRouter.post("/inquiries", async (c) => {
       }
     }
 
-    // Optional webhook notification
+    // Webhook or Email Notification
     try {
       const social = await getSocialConfig(c);
       const msg = `🔔 *New ${type.toUpperCase()} Inquiry*\n*Name:* ${name}\n*Email:* ${email}\n*Data:* \`${JSON.stringify(metadata)}\``;
       
+      let notified = false;
+
+      // 1. Discord
+      if (social.DISCORD_WEBHOOK_URL) {
+        c.executionCtx.waitUntil(
+          fetch(social.DISCORD_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: msg })
+          }).catch(console.error)
+        );
+        notified = true;
+      }
+
+      // 2. Slack
       if (social.SLACK_WEBHOOK_URL) {
         c.executionCtx.waitUntil(
           fetch(social.SLACK_WEBHOOK_URL, {
@@ -76,18 +91,38 @@ inquiriesRouter.post("/inquiries", async (c) => {
             body: JSON.stringify({ text: msg })
           }).catch(console.error)
         );
+        notified = true;
       }
       
+      // 3. Teams
       if (social.TEAMS_WEBHOOK_URL) {
         c.executionCtx.waitUntil(
           fetch(social.TEAMS_WEBHOOK_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // Teams uses text parameter
             body: JSON.stringify({ text: msg })
           }).catch(console.error)
         );
+        notified = true;
       }
+
+      // Fallback to Cloudflare's free MailChannels if no webhooks are configured
+      if (!notified) {
+         // You can customize the from/to email to a configured settings address if needed
+         c.executionCtx.waitUntil(
+            fetch("https://api.mailchannels.net/tx/v1/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                personalizations: [{ to: [{ email: "info@aresfirst.org", name: "ARES Admissions" }] }],
+                from: { email: "noreply@aresfirst.org", name: "ARES Website Portal" },
+                subject: `New ${type.toUpperCase()} Inquiry Submission`,
+                content: [{ type: "text/plain", value: `You received a new ${type} inquiry from ${name} (${email}).\n\nPayload:\n${JSON.stringify(metadata, null, 2)}` }]
+              })
+            }).catch(console.error)
+         );
+      }
+
     } catch { /* ignore webhook error */ }
 
     return c.json({ success: true, id });
