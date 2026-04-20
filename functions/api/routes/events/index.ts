@@ -21,6 +21,25 @@ eventsRouter.get("/", async (c) => {
   }
 });
 
+// ── GET /calendar — public calendar configuration ──────────────────────
+// Mounted at /events/calendar
+eventsRouter.get("/calendar", async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      "SELECT key, value FROM settings WHERE key IN ('CALENDAR_ID', 'CALENDAR_ID_INTERNAL', 'CALENDAR_ID_OUTREACH', 'CALENDAR_ID_EXTERNAL')"
+    ).all<{key: string, value: string}>();
+    const map = (results || []).reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {} as Record<string, string>);
+    return c.json({ 
+      calendarIdInternal: map['CALENDAR_ID_INTERNAL'] || map['CALENDAR_ID'] || "",
+      calendarIdOutreach: map['CALENDAR_ID_OUTREACH'] || "",
+      calendarIdExternal: map['CALENDAR_ID_EXTERNAL'] || "",
+    });
+  } catch (err) {
+    console.error("D1 read error:", err);
+    return c.json({ error: "Database error" }, 500);
+  }
+});
+
 // ── GET /events/:id — single event ─────────────────────────────────────
 eventsRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
@@ -36,25 +55,6 @@ eventsRouter.get("/:id", async (c) => {
 
     if (!row) return c.json({ error: "Event not found" }, 404);
     return c.json({ event: row });
-  } catch (err) {
-    console.error("D1 read error:", err);
-    return c.json({ error: "Database error" }, 500);
-  }
-});
-
-// ── GET /calendar — public calendar configuration ──────────────────────
-// Mounted at /events/calendar
-eventsRouter.get("/calendar", async (c) => {
-  try {
-    const { results } = await c.env.DB.prepare(
-      "SELECT key, value FROM settings WHERE key IN ('CALENDAR_ID', 'CALENDAR_ID_INTERNAL', 'CALENDAR_ID_OUTREACH', 'CALENDAR_ID_EXTERNAL')"
-    ).all<{key: string, value: string}>();
-    const map = (results || []).reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {} as Record<string, string>);
-    return c.json({ 
-      calendarIdInternal: map['CALENDAR_ID_INTERNAL'] || map['CALENDAR_ID'] || "",
-      calendarIdOutreach: map['CALENDAR_ID_OUTREACH'] || "",
-      calendarIdExternal: map['CALENDAR_ID_EXTERNAL'] || "",
-    });
   } catch (err) {
     console.error("D1 read error:", err);
     return c.json({ error: "Database error" }, 500);
