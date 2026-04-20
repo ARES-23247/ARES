@@ -47,16 +47,21 @@ export default function Events() {
     },
   });
 
-  const { data: calendarId = "" } = useQuery({
+  const { data: calendarData = null } = useQuery({
     queryKey: ["calendar_config"],
     queryFn: async () => {
       const res = await fetch("/api/calendar");
-      const data = await res.json() as { calendarId?: string };
-      return data.calendarId || "";
+      return await res.json() as { calendarIdInternal?: string, calendarIdOutreach?: string, calendarIdExternal?: string };
     },
   });
 
-  const iframeSrc = calendarId ? `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}&bgcolor=%23ffffff&showPrint=0&showTabs=1&showCalendars=0` : "";
+  const calendars = calendarData 
+    ? [calendarData.calendarIdInternal, calendarData.calendarIdOutreach, calendarData.calendarIdExternal].filter(Boolean)
+    : [];
+
+  const iframeSrc = calendars.length > 0 
+    ? `https://calendar.google.com/calendar/embed?${calendars.map(c => `src=${encodeURIComponent(c as string)}`).join("&")}&ctz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}&bgcolor=%23ffffff&showPrint=0&showTabs=1&showCalendars=1` 
+    : "";
   
   // Consider an event "past" if its date_start is before yesterday
   const now = new Date();
@@ -170,7 +175,7 @@ export default function Events() {
                 <h2 className="text-3xl font-bold text-white">Full Calendar</h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-ares-gold/50 to-transparent"></div>
               </div>
-              {calendarId ? (
+              {calendars.length > 0 ? (
                 <div className="w-full bg-black/40 border border-white/10 rounded-xl overflow-hidden shadow-lg">
                   <iframe 
                     title="Google Calendar"
