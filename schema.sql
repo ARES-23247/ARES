@@ -166,3 +166,15 @@ CREATE TABLE IF NOT EXISTS user_badges (
     UNIQUE(user_id, badge_id)
 );
 CREATE INDEX IF NOT EXISTS idx_user_badges_user ON user_badges(user_id);
+
+
+DROP TABLE IF EXISTS inquiries;
+CREATE TABLE inquiries (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    metadata TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at TEXT DEFAULT (datetime('now'))
+);
