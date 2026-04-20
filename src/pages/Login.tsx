@@ -80,7 +80,7 @@ export default function Login() {
         )}
 
         <p className="mt-10 text-center text-zinc-500 text-xs text-balance">
-          Protected by ARES Zero-Trust Architecture. <br/>
+          Protected by ARES Authentication Architecture. <br/>
           By signing in, you agree to our Code of Conduct.
         </p>
       </motion.div>

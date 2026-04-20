@@ -6,7 +6,7 @@ export default function Accessibility() {
     <main className="min-h-screen bg-zinc-950 text-white selection:bg-ares-gold selection:text-zinc-950 pt-24 pb-20">
       <SEO 
         title="Accessibility & Web Standards" 
-        description="ARES 23247's commitment to web accessibility, Zero-Trust standards, and AI-powered ARIA compliance."
+        description="ARES 23247's commitment to web accessibility and AI-powered ARIA compliance."
       />
       <div className="max-w-5xl mx-auto px-6 lg:px-8">
         

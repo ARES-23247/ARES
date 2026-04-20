@@ -22,7 +22,7 @@ export default function Privacy() {
             Privacy Policy
           </h1>
           <p className="text-xl text-marble/80 border-l-2 border-ares-cyan/30 pl-6">
-            ARES 23247 is committed to engineering privacy. We operate under a <strong>Zero-Trust Architecture</strong> and employ <strong>Cookie-Free Analytics</strong> to protect our students and global visitors.
+            ARES 23247 is committed to engineering privacy. We employ <strong>Cookie-Free Analytics</strong> to protect our students and global visitors.
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export default function Privacy() {
               <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red">
                 <Lock size={24} />
               </div>
-              <h2 className="text-2xl font-bold font-heading">4. Zero-Trust Administration</h2>
+              <h2 className="text-2xl font-bold font-heading">4. Secure Administration</h2>
             </div>
             <p className="text-marble/70 leading-relaxed">
               Our internal content management system and API bounds are strictly locked behind Cloudflare Access. We do not maintain unencrypted login portals or traditional session limits. Access requires direct verification through authorized ARES 23247 / MARS 2614 email payloads intercepted at the proxy edge layer.
