@@ -92,7 +92,6 @@ function buildSnippet(ast: unknown): string {
 // ── POST /admin/posts — create a new blog post (admin) ────────────────
 postsRouter.post("/admin/posts", async (c) => {
   try {
-    const email = c.req.header("cf-access-authenticated-user-email");
     const body = await c.req.json<{
       title: string;
       author?: string;
@@ -126,6 +125,7 @@ postsRouter.post("/admin/posts", async (c) => {
     const snippet = buildSnippet(body.ast);
     
     const user = await getSessionUser(c);
+    const email = user?.email || "anonymous_dashboard_user";
     const status = body.isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
     await c.env.DB.prepare(
@@ -140,7 +140,7 @@ postsRouter.post("/admin/posts", async (c) => {
         body.coverImageUrl || "/gallery_1.png",
         snippet,
         astStr,
-        email || "anonymous_dashboard_user",
+        email,
         status
       )
       .run();
@@ -153,7 +153,7 @@ postsRouter.post("/admin/posts", async (c) => {
       try {
         await dispatchSocials({
            title: body.title,
-           url: `https://aresfirst.org/blog/${slug}`,
+           url: `${new URL(c.req.url).origin}/blog/${slug}`,
            snippet: snippet || "Read the latest engineering update from ARES 23247!",
            coverImageUrl: body.coverImageUrl || "/gallery_1.png",
            baseUrl: new URL(c.req.url).origin
@@ -305,6 +305,25 @@ postsRouter.patch("/admin/posts/:slug/approve", async (c) => {
   }
 });
 
+// ── PATCH /admin/posts/:slug/reject — reject pending post (admin) ─────
+postsRouter.patch("/admin/posts/:slug/reject", async (c) => {
+  try {
+    const user = await getSessionUser(c);
+    if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
+    const slug = c.req.param("slug");
+    const body = await c.req.json().catch(() => ({})) as { reason?: string };
+    
+    await c.env.DB.prepare(
+      "UPDATE posts SET status = 'rejected' WHERE slug = ?"
+    ).bind(slug).run();
+
+    return c.json({ success: true, reason: body.reason || "No reason provided" });
+  } catch (err) {
+    console.error("D1 reject error (posts):", err);
+    return c.json({ error: "Rejection failed" }, 500);
+  }
+});
+
 // ── POST /admin/posts/:slug/repush — manual social broadcast (admin) ──
 postsRouter.post("/admin/posts/:slug/repush", async (c) => {
   try {
@@ -322,7 +341,7 @@ postsRouter.post("/admin/posts/:slug/repush", async (c) => {
     try {
       await dispatchSocials({
         title: post.title,
-        url: `https://aresfirst.org/blog/${slug}`,
+        url: `${new URL(c.req.url).origin}/blog/${slug}`,
         snippet: extractAstText(post.snippet || "").substring(0, 250) || "Read the latest update from ARES 23247!",
         coverImageUrl: post.thumbnail || "/gallery_1.png",
         baseUrl: new URL(c.req.url).origin

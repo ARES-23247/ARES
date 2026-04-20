@@ -19,7 +19,7 @@ import profilesRouter from "./routes/profiles";
 import commentsRouter from "./routes/comments";
 import inquiriesRouter from "./routes/inquiries";
 import badgesRouter from "./routes/badges";
-
+import { locationsRouter } from "./routes/locations";
 const app = new Hono<{ Bindings: Bindings }>();
 const apiRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -42,6 +42,7 @@ apiRouter.route("/", eventsRouter);
 apiRouter.route("/", docsRouter);
 apiRouter.route("/", commentsRouter);
 apiRouter.route("/", inquiriesRouter);
+apiRouter.route("/", locationsRouter);
 
 // Media & Assets
 apiRouter.route("/", mediaRouter);
@@ -65,7 +66,7 @@ apiRouter.route("/", badgesRouter);
 apiRouter.get("/search", async (c) => {
   try {
     const q = c.req.query("q") || "";
-    if (q.length < 2) return c.json({ results: [] });
+    if (q.length < 3) return c.json({ results: [] });
 
     const wildcard = `%${q}%`;
     const [postsReq, eventsReq] = await Promise.all([
@@ -81,6 +82,21 @@ apiRouter.get("/search", async (c) => {
   } catch (err) {
     console.error("D1 search error:", err);
     return c.json({ results: [] }, 500);
+  }
+});
+
+// ── GAP-01: Audit Log Viewer (admin only) ────────────────────────────
+apiRouter.get("/admin/audit-log", async (c) => {
+  try {
+    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
+    const offset = Number(c.req.query("offset") || "0");
+    const { results } = await c.env.DB.prepare(
+      "SELECT * FROM audit_log ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+    ).bind(limit, offset).all();
+    return c.json({ logs: results || [] });
+  } catch (err) {
+    console.error("Audit log read error:", err);
+    return c.json({ logs: [] }, 500);
   }
 });
 

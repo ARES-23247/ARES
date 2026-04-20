@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings, getSessionUser } from "./_shared";
+import { Bindings, getSessionUser, MAX_INPUT_LENGTHS } from "./_shared";
 
 const commentsRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -61,6 +61,9 @@ commentsRouter.post("/comments/:targetType/:targetId", async (c) => {
   if (!content || typeof content !== "string" || content.trim().length === 0) {
     return c.json({ error: "Comment content is required" }, 400);
   }
+  if (content.length > MAX_INPUT_LENGTHS.comment) {
+    return c.json({ error: `Comment exceeds maximum length of ${MAX_INPUT_LENGTHS.comment} characters` }, 400);
+  }
 
   try {
     await c.env.DB.prepare(
@@ -85,6 +88,9 @@ commentsRouter.put("/comments/:id", async (c) => {
 
   if (!content || typeof content !== "string" || content.trim().length === 0) {
     return c.json({ error: "Comment content is required" }, 400);
+  }
+  if (content.length > MAX_INPUT_LENGTHS.comment) {
+    return c.json({ error: `Comment exceeds maximum length of ${MAX_INPUT_LENGTHS.comment} characters` }, 400);
   }
 
   try {

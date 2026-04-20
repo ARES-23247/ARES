@@ -8,6 +8,7 @@ judgesRouter.post("/judges/login", async (c) => {
   try {
     const { code } = await c.req.json();
     if (!code) return c.json({ error: "Code required" }, 400);
+    if (code.length > 50) return c.json({ error: "Invalid code format" }, 400);
 
     const row = await c.env.DB.prepare(
       "SELECT code, label, expires_at FROM judge_access_codes WHERE code = ? AND (expires_at IS NULL OR expires_at > datetime('now'))"
@@ -83,7 +84,7 @@ judgesRouter.get("/admin/judges/codes", ensureAdmin, async (c) => {
 judgesRouter.post("/admin/judges/codes", ensureAdmin, async (c) => {
   try {
     const { label, expiresAt } = await c.req.json();
-    const code = crypto.randomUUID().slice(0, 8).toUpperCase();
+    const code = (crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')).slice(0, 12).toUpperCase();
     const id = crypto.randomUUID();
 
     await c.env.DB.prepare(

@@ -26,6 +26,7 @@ import BugReport from "./pages/BugReport";
 import Sponsors from "./pages/Sponsors";
 import JudgesHub from "./pages/JudgesHub";
 import Join from "./pages/Join";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   const location = useLocation();
@@ -59,6 +60,7 @@ export default function App() {
               <Route path="/sponsors" element={<Sponsors />} />
               <Route path="/join" element={<Join />} />
               <Route path="/judges" element={<JudgesHub />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </ErrorBoundary>
         </AnimatePresence>

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings } from "./_shared";
+import { Bindings, MAX_INPUT_LENGTHS, validateLength } from "./_shared";
 
 const inquiriesRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -24,6 +24,20 @@ inquiriesRouter.post("/inquiries", async (c) => {
 
     if (!type || !name || !email) {
       return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    // SEC-04: Input length validation
+    const nameErr = validateLength(name, MAX_INPUT_LENGTHS.name, "Name");
+    const emailErr = validateLength(email, MAX_INPUT_LENGTHS.email, "Email");
+    if (nameErr) return c.json({ error: nameErr }, 400);
+    if (emailErr) return c.json({ error: emailErr }, 400);
+
+    // SEC-07: Simple time-based cooldown — prevent rapid-fire spam from same email
+    const recentSubmission = await c.env.DB.prepare(
+      "SELECT id FROM inquiries WHERE email = ? AND created_at > datetime('now', '-2 minutes') LIMIT 1"
+    ).bind(email).first();
+    if (recentSubmission) {
+      return c.json({ error: "Please wait a few minutes before submitting another inquiry." }, 429);
     }
 
     const id = crypto.randomUUID();

@@ -1,10 +1,16 @@
-import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import AssetPickerModal from "./AssetPickerModal";
+import { MapPin } from "lucide-react";
 import { compressImage } from "../utils/imageProcessor";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
+
+interface LocationRow {
+  id: string;
+  name: string;
+  address: string;
+}
 
 export default function EventEditor({ editId, onClearEdit, userRole }: { editId?: string | null; onClearEdit?: () => void; userRole?: string | unknown }) {
   const queryClient = useQueryClient();
@@ -25,6 +31,16 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     instagram: false
   });
   const [availableSocials, setAvailableSocials] = useState<string[]>([]);
+
+  const { data: locations = [] } = useQuery<LocationRow[]>({
+    queryKey: ["locations"],
+    queryFn: async () => {
+      const r = await fetch("/api/locations");
+      if (!r.ok) return [];
+      const d = await r.json();
+      return d.locations || [];
+    }
+  });
 
   const editor = useRichEditor({ placeholder: "<p>Describe your upcoming event or write a full recap here...</p>" });
 
@@ -224,19 +240,48 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
             onChange={(e) => setForm({ ...form, category: e.target.value })}
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none"
           >
-            <option value="internal">Internal Practice</option>
-            <option value="outreach">Outreach / Volunteer</option>
-            <option value="external">External / Community</option>
+            <option value="internal">ARES Practices</option>
+            <option value="outreach">ARES Outreach &amp; Volunteer</option>
+            <option value="external">ARES Community Spotlight</option>
           </select>
         </div>
         <div className="flex-1">
-          <label htmlFor="event-location" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Location</label>
-          <input
-            id="event-location" type="text"
-            value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
-            placeholder="Fairmont State University"
-          />
+          <label htmlFor="event-location" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>Location</span>
+            <span className="text-[10px] text-zinc-500 font-normal normal-case">Pick from registry</span>
+          </label>
+          <div className="relative group">
+            <select
+              id="event-location"
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none pr-10"
+            >
+              <option value="">-- Select a Venue --</option>
+              {locations.map(l => (
+                <option key={l.id} value={l.address}>{l.name} ({l.address})</option>
+              ))}
+              <option value="CUSTOM">--- Manual Entry / New Venue ---</option>
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-600 group-hover:text-ares-red transition-colors">
+              <MapPin size={16} />
+            </div>
+          </div>
+          
+          {form.location === "CUSTOM" && (
+             <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+               <input
+                 type="text"
+                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-zinc-100 text-sm focus:border-ares-red outline-none"
+                 placeholder="Enter custom location/address..."
+
+                 onBlur={(e) => {
+                   if (e.target.value.trim()) setForm({...form, location: e.target.value});
+                 }}
+               />
+               <p className="text-[10px] text-zinc-500 mt-1 italic">Tip: Use the &apos;Location Manager&apos; tab to permanently save venues.</p>
+             </div>
+          )}
         </div>
       </div>
 

@@ -152,6 +152,16 @@ export default function ContentManager({
     clearConfirm: false,
   });
 
+  const rejectMutation = useContentMutation<{ type: "event" | "post" | "doc", id: string }>({
+    endpoint: ({ type, id }) => {
+      const base = type === "event" ? "events" : type === "post" ? "posts" : "docs";
+      return `/dashboard/api/admin/${base}/${id}/reject`;
+    },
+    method: "PATCH",
+    invalidateKeys: ["events", "posts", "docs"],
+    clearConfirm: false,
+  });
+
   // ── Export Helpers ─────────────────────────────────────────────────
   const exportSingleDoc = async (slug: string) => {
     try {
@@ -233,7 +243,7 @@ export default function ContentManager({
 
   const contentFilter = (item: { is_deleted?: number, status?: string }) => {
     if (view === 'trash') return item.is_deleted === 1;
-    if (view === 'pending') return item.is_deleted !== 1 && item.status === 'pending';
+    if (view === 'pending') return item.is_deleted !== 1 && (item.status === 'pending' || item.status === 'rejected');
     return item.is_deleted !== 1 && (item.status === 'published' || !item.status);
   };
 
@@ -304,6 +314,7 @@ export default function ContentManager({
                         {event.title}
                         {event.is_deleted === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
                         {event.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
+                        {event.status === 'rejected' && <span className="text-[9px] font-bold text-orange-400 bg-orange-400/10 border border-orange-400/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">{format(new Date(event.date_start), 'MMM do, yyyy')}</span>
@@ -319,6 +330,7 @@ export default function ContentManager({
                             EDIT
                           </button>
                           {view === 'pending' ? (
+                            <>
                             <button
                               onClick={() => approveMutation.mutate({ type: 'event', id: event.id })}
                               disabled={approveMutation.isPending}
@@ -326,6 +338,14 @@ export default function ContentManager({
                             >
                               APPROVE
                             </button>
+                            <button
+                              onClick={() => rejectMutation.mutate({ type: 'event', id: event.id })}
+                              disabled={rejectMutation.isPending}
+                              className="text-xs font-bold text-orange-400 hover:text-white bg-orange-400/10 hover:bg-orange-400/40 border border-orange-400/20 px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                            >
+                              REJECT
+                            </button>
+                            </>
                           ) : (
                             <button
                               onClick={() => setBroadcastData({ isOpen: true, type: "event", id: event.id, title: event.title })}
@@ -382,6 +402,7 @@ export default function ContentManager({
                         {post.title}
                         {post.is_deleted === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
                         {post.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
+                        {post.status === 'rejected' && <span className="text-[9px] font-bold text-orange-400 bg-orange-400/10 border border-orange-400/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">{format(new Date(post.date), 'MMM do, yyyy')}</span>
@@ -397,6 +418,7 @@ export default function ContentManager({
                             EDIT
                           </button>
                           {view === 'pending' ? (
+                            <>
                             <button
                               onClick={() => approveMutation.mutate({ type: 'post', id: post.slug })}
                               disabled={approveMutation.isPending}
@@ -404,6 +426,14 @@ export default function ContentManager({
                             >
                               APPROVE
                             </button>
+                            <button
+                              onClick={() => rejectMutation.mutate({ type: 'post', id: post.slug })}
+                              disabled={rejectMutation.isPending}
+                              className="text-xs font-bold text-orange-400 hover:text-white bg-orange-400/10 hover:bg-orange-400/40 border border-orange-400/20 px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                            >
+                              REJECT
+                            </button>
+                            </>
                           ) : (
                             <button
                               onClick={() => setBroadcastData({ isOpen: true, type: "blog", id: post.slug, title: post.title })}
@@ -532,6 +562,7 @@ export default function ContentManager({
                             EDIT
                           </button>
                           {view === 'pending' ? (
+                            <>
                             <button
                               onClick={() => approveMutation.mutate({ type: 'doc', id: doc.slug })}
                               disabled={approveMutation.isPending}
@@ -539,6 +570,14 @@ export default function ContentManager({
                             >
                               APPROVE
                             </button>
+                            <button
+                              onClick={() => rejectMutation.mutate({ type: 'doc', id: doc.slug })}
+                              disabled={rejectMutation.isPending}
+                              className="text-xs font-bold text-orange-400 hover:text-white bg-orange-400/10 hover:bg-orange-400/40 border border-orange-400/20 px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                            >
+                              REJECT
+                            </button>
+                            </>
                           ) : (
                             <button
                               onClick={() => exportSingleDoc(doc.slug)}

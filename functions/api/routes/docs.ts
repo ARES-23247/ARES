@@ -24,21 +24,15 @@ docsRouter.get("/docs", async (c) => {
 // ── GET /docs/search?q=keyword — full-text search ─────────────────────
 docsRouter.get("/docs/search", async (c) => {
   const q = c.req.query("q");
-  if (!q || q.length < 2) return c.json({ results: [] });
+  if (!q || q.length < 3) return c.json({ results: [] });
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, category, description, content FROM docs WHERE is_deleted = 0 AND status = 'published' AND (title LIKE ? OR content LIKE ? OR description LIKE ?) ORDER BY category, sort_order ASC LIMIT 20"
+      "SELECT slug, title, category, description FROM docs WHERE is_deleted = 0 AND status = 'published' AND (title LIKE ? OR content LIKE ? OR description LIKE ?) ORDER BY category, sort_order ASC LIMIT 20"
     ).bind(`%${q}%`, `%${q}%`, `%${q}%`).all();
 
     const mapped = (results ?? []).map((r: Record<string, unknown>) => {
-      const content = String(r.content || "");
-      const idx = content.toLowerCase().indexOf(q.toLowerCase());
-      const start = Math.max(0, idx - 100);
-      const end = Math.min(content.length, idx + q.length + 100);
-      
-      let snippet = idx >= 0 ? content.slice(start, end) : (String(r.description || ""));
-      
-      const regex = new RegExp(`(${q})`, "gi");
+      let snippet = String(r.description || "");
+      const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
       snippet = snippet.replace(regex, "**$1**");
 
       return {
@@ -46,7 +40,7 @@ docsRouter.get("/docs/search", async (c) => {
         title: r.title,
         category: r.category,
         description: r.description,
-        snippet: idx >= 0 ? "..." + snippet + "..." : (r.description || ""),
+        snippet,
       };
     });
     return c.json({ results: mapped });
@@ -60,7 +54,14 @@ docsRouter.get("/docs/search", async (c) => {
 docsRouter.post("/docs/:slug/feedback", async (c) => {
   try {
     const slug = c.req.param("slug");
-    const { isHelpful, comment } = await c.req.json();
+    const body = await c.req.json();
+    const { isHelpful, comment } = body;
+
+    // SEC-04: Validate comment length
+    if (comment && typeof comment === "string" && comment.length > 2000) {
+      return c.json({ error: "Comment too long" }, 400);
+    }
+
     await c.env.DB.prepare(
       "INSERT INTO docs_feedback (slug, is_helpful, comment) VALUES (?, ?, ?)"
     ).bind(slug, isHelpful ? 1 : 0, comment || null).run();
@@ -146,11 +147,13 @@ docsRouter.get("/admin/docs/export-all", ensureAdmin, async (c) => {
 // ── POST /admin/docs — create/update a doc (admin) ────────────────────
 docsRouter.post("/admin/docs", async (c) => {
   try {
-    const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_admin";
     const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = await c.req.json();
     if (!slug || !title || !category || !content) {
       return c.json({ error: "Missing required fields" }, 400);
     }
+
+    const user = await getSessionUser(c);
+    const email = user?.email || "anonymous_admin";
 
     // Capture history before update
     const existing = await c.env.DB.prepare("SELECT * FROM docs WHERE slug = ?").bind(slug).first();
@@ -160,8 +163,6 @@ docsRouter.post("/admin/docs", async (c) => {
           VALUES (?, ?, ?, ?, ?, ?)`
        ).bind(existing.slug, existing.title, existing.category, existing.description, existing.content, existing.cf_email || "unknown").run();
     }
-
-    const user = await getSessionUser(c);
     
     if (user?.role !== "admin" && existing) {
        // ── Shadow Revision Logic (Student Edits) ──
@@ -263,6 +264,25 @@ docsRouter.patch("/admin/docs/:slug/approve", async (c) => {
   } catch (err) {
     console.error("D1 approve error (docs):", err);
     return c.json({ error: "Approval failed" }, 500);
+  }
+});
+
+// ── PATCH /admin/docs/:slug/reject — reject pending doc (admin) ─────
+docsRouter.patch("/admin/docs/:slug/reject", async (c) => {
+  try {
+    const user = await getSessionUser(c);
+    if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
+    const slug = c.req.param("slug");
+    const body = await c.req.json().catch(() => ({})) as { reason?: string };
+    
+    await c.env.DB.prepare(
+      "UPDATE docs SET status = 'rejected' WHERE slug = ?"
+    ).bind(slug).run();
+
+    return c.json({ success: true, reason: body.reason || "No reason provided" });
+  } catch (err) {
+    console.error("D1 reject error (docs):", err);
+    return c.json({ error: "Rejection failed" }, 500);
   }
 });
 

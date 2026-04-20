@@ -190,6 +190,42 @@ export default function Events() {
                   <div className="w-8 h-8 border-2 border-ares-gold/30 border-t-ares-gold rounded-full animate-spin"></div>
                 </div>
               )}
+
+              {/* Subscribe Buttons */}
+              {calendars.length > 0 && (
+                <div className="bg-black/40 border border-white/10 rounded-xl p-6">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Subscribe to Our Calendars</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      { id: calendarData?.calendarIdInternal, name: "ARES Practices" },
+                      { id: calendarData?.calendarIdOutreach, name: "ARES Outreach & Volunteer" },
+                      { id: calendarData?.calendarIdExternal, name: "ARES Community Spotlight" },
+                    ].filter(c => c.id).map((cal) => (
+                      <div key={cal.name} className="flex flex-col gap-2 bg-zinc-900/50 rounded-lg p-4 border border-white/5">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">{cal.name}</span>
+                        <div className="flex gap-2">
+                          <a
+                            href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(cal.id as string)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 text-center px-3 py-2 bg-ares-red/20 hover:bg-ares-red/40 text-ares-red border border-ares-red/30 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                          >
+                            + Google
+                          </a>
+                          <a
+                            href={`https://calendar.google.com/calendar/ical/${encodeURIComponent(cal.id as string)}/public/basic.ics`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 text-center px-3 py-2 bg-ares-gold/10 hover:bg-ares-gold/20 text-ares-gold border border-ares-gold/20 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                          >
+                            + iCal
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Upcoming Outreach Events */}

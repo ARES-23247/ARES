@@ -18,14 +18,57 @@ export type Bindings = {
   GITHUB_CLIENT_SECRET: string;
   ZULIP_CLIENT_ID: string;
   ZULIP_CLIENT_SECRET: string;
+  DEV_BYPASS?: string;
 };
+
+// ── Content Status Constants ─────────────────────────────────────────
+export const ContentStatus = {
+  PUBLISHED: "published",
+  PENDING: "pending",
+  REJECTED: "rejected",
+} as const;
+export type ContentStatusType = typeof ContentStatus[keyof typeof ContentStatus];
+
+export const UserRole = {
+  ADMIN: "admin",
+  AUTHOR: "author",
+  UNVERIFIED: "unverified",
+} as const;
+
+// ── Input Validation Helpers ─────────────────────────────────────────
+export const MAX_INPUT_LENGTHS = {
+  title: 500,
+  comment: 5000,
+  description: 50000,
+  content: 500000,
+  name: 200,
+  email: 320,
+  address: 1000,
+  slug: 200,
+  code: 50,
+  generic: 10000,
+} as const;
+
+export function validateLength(value: string | undefined | null, maxLength: number, fieldName: string): string | null {
+  if (!value) return null;
+  if (value.length > maxLength) {
+    return `${fieldName} exceeds maximum length of ${maxLength} characters`;
+  }
+  return null;
+}
+
+// ── Localhost Dev Bypass Check ────────────────────────────────────────
+function isDevBypassEnabled(c: Context<{ Bindings: Bindings }>): boolean {
+  const url = new URL(c.req.url);
+  const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  // SEC-03: Only bypass auth in local dev when DEV_BYPASS env var is set
+  return isLocalhost && (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1");
+}
 
 // ── Admin Auth Middleware ─────────────────────────────────────────────
 export const ensureAdmin = async (c: Context<{ Bindings: Bindings }>, next: Next) => {
-  const url = new URL(c.req.url);
-
-  // Local development bypass
-  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+  if (isDevBypassEnabled(c)) {
+    c.set("sessionUser", { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin", member_type: "mentor" });
     return await next();
   }
 
@@ -39,24 +82,42 @@ export const ensureAdmin = async (c: Context<{ Bindings: Bindings }>, next: Next
   }
 
   // RBAC: Granular path-based role checks
-  const role = (session.user.role as string) || "unverified";
+  const url = new URL(c.req.url);
+  const role = (session.user.role as string) || UserRole.UNVERIFIED;
 
   // Authors can do everything EXCEPT manage users
   const isSuperAdminRoute = url.pathname.includes("/admin/users") || url.pathname.includes("/admin/roles");
-  const allowedRoles = isSuperAdminRoute ? ["admin"] : ["admin", "author"];
+  const allowedRoles = isSuperAdminRoute ? [UserRole.ADMIN] : [UserRole.ADMIN, UserRole.AUTHOR];
 
   if (!allowedRoles.includes(role)) {
      console.warn(`[Auth Check] Access Denied for ${session.user.email}. Role: ${role}. Path: ${url.pathname}`);
      return c.json({ error: `Forbidden: Requires one of [${allowedRoles.join(", ")}] privileges.` }, 403);
   }
 
+  // EFF-05: Store session in context so handlers don't need to re-fetch
+  const profile = await c.env.DB.prepare(
+    "SELECT member_type FROM user_profiles WHERE user_id = ?"
+  ).bind(session.user.id).first<{ member_type: string }>();
+
+  c.set("sessionUser", {
+    id: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+    image: session.user.image,
+    role,
+    member_type: profile?.member_type || "student",
+  });
+
   await next();
 };
 
 // ── Session Helper ───────────────────────────────────────────────────
 export async function getSessionUser(c: Context<{ Bindings: Bindings }>) {
-  const url = new URL(c.req.url);
-  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+  // Check if ensureAdmin already stored session in context
+  const cached = c.get("sessionUser");
+  if (cached) return cached;
+
+  if (isDevBypassEnabled(c)) {
     return { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin", member_type: "mentor" };
   }
   try {
@@ -73,7 +134,7 @@ export async function getSessionUser(c: Context<{ Bindings: Bindings }>) {
         email: session.user.email,
         name: session.user.name,
         image: session.user.image,
-        role: (session.user.role as string) || "unverified",
+        role: (session.user.role as string) || UserRole.UNVERIFIED,
         member_type: profile?.member_type || "student",
       };
     }
@@ -81,14 +142,20 @@ export async function getSessionUser(c: Context<{ Bindings: Bindings }>) {
   return null;
 }
 
+// ── Centralized Settings Fetch (EFF-01) ──────────────────────────────
+export async function getDbSettings(c: Context<{ Bindings: Bindings }>): Promise<Record<string, string>> {
+  const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+  const settings: Record<string, string> = {};
+  for (const row of settingsRows as { key: string, value: string }[]) {
+    settings[row.key] = row.value;
+  }
+  return settings;
+}
+
 // ── Social Config Helper ─────────────────────────────────────────────
 export async function getSocialConfig(c: Context<{ Bindings: Bindings }>): Promise<Record<string, string | undefined>> {
   try {
-    const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
-    const dbSettings: Record<string, string> = {};
-    for (const row of settingsRows as { key: string, value: string }[]) {
-      dbSettings[row.key] = row.value;
-    }
+    const dbSettings = await getDbSettings(c);
 
     return {
       DISCORD_WEBHOOK_URL: c.env.DISCORD_WEBHOOK_URL || dbSettings["DISCORD_WEBHOOK_URL"],
@@ -160,4 +227,30 @@ export function sanitizeProfileForPublic(profile: Record<string, unknown>, membe
     employers: profile.employers,
     grade_year: profile.grade_year,
   };
+}
+
+// ── Audit Log Helper (GAP-01) ────────────────────────────────────────
+export async function logAuditAction(
+  c: Context<{ Bindings: Bindings }>,
+  action: string,
+  targetType: string,
+  targetId: string | null,
+  details?: string
+) {
+  try {
+    const user = await getSessionUser(c);
+    await c.env.DB.prepare(
+      "INSERT INTO audit_log (action, target_type, target_id, actor_email, actor_role, details) VALUES (?, ?, ?, ?, ?, ?)"
+    ).bind(
+      action,
+      targetType,
+      targetId,
+      user?.email || "system",
+      user?.role || "unknown",
+      details || null
+    ).run();
+  } catch (err) {
+    // Never let audit logging break the main request
+    console.error("[AuditLog] Failed to log action:", err);
+  }
 }

@@ -274,8 +274,18 @@ profilesRouter.patch("/admin/users/:id", ensureAdmin, async (c) => {
 profilesRouter.delete("/admin/users/:id", ensureAdmin, async (c) => {
   try {
     const id = c.req.param("id");
-    await c.env.DB.prepare("DELETE FROM user WHERE id = ?").bind(id).run();
-    await c.env.DB.prepare("DELETE FROM user_profiles WHERE user_id = ?").bind(id).run();
+    
+    // GAP-03: Cascade delete all related user data
+    await c.env.DB.batch([
+      c.env.DB.prepare("DELETE FROM comments WHERE user_id = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM event_signups WHERE user_id = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM user_badges WHERE user_id = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM user_profiles WHERE user_id = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM session WHERE userId = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM account WHERE userId = ?").bind(id),
+      c.env.DB.prepare("DELETE FROM user WHERE id = ?").bind(id),
+    ]);
+    
     return c.json({ success: true });
   } catch (err) {
     console.error("D1 admin user delete error:", err);

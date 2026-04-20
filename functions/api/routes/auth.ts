@@ -14,8 +14,6 @@ authRouter.on(["POST", "GET"], "/auth/*", async (c) => {
     console.error("[Auth Handler] Internal Exception:", err);
     return c.json({ 
       error: "Internal Server Error during Authentication", 
-      message: err.message || String(error),
-      stack: err.stack
     }, 500);
   }
 });

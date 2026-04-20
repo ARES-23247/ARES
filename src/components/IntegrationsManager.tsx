@@ -192,7 +192,7 @@ export default function IntegrationsManager() {
           </h3>
           <div className="space-y-4">
             <div>
-              <label htmlFor="cal_id_internal" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Internal Calendar ID</label>
+              <label htmlFor="cal_id_internal" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">ARES Practices — Calendar ID</label>
               <input
                 id="cal_id_internal"
                 type="text"
@@ -203,7 +203,7 @@ export default function IntegrationsManager() {
               />
             </div>
             <div>
-              <label htmlFor="cal_id_outreach" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Outreach Calendar ID</label>
+              <label htmlFor="cal_id_outreach" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">ARES Outreach &amp; Volunteer — Calendar ID</label>
               <input
                 id="cal_id_outreach"
                 type="text"
@@ -214,7 +214,7 @@ export default function IntegrationsManager() {
               />
             </div>
             <div>
-              <label htmlFor="cal_id_external" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">External Calendar ID</label>
+              <label htmlFor="cal_id_external" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">ARES Community Spotlight — Calendar ID</label>
               <input
                 id="cal_id_external"
                 type="text"

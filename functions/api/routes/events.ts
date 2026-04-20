@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings, getSocialConfig, extractAstText, getSessionUser } from "./_shared";
+import { Bindings, getSocialConfig, extractAstText, getSessionUser, getDbSettings } from "./_shared";
 import { pushEventToGcal, deleteEventFromGcal, pullEventsFromGcal } from "../../utils/gcalSync";
 import { dispatchSocials } from "../../utils/socialSync";
 
@@ -87,7 +87,6 @@ eventsRouter.get("/admin/events/:id", async (c) => {
 // ── POST /admin/events — manual event creation (admin) ─────────────────
 eventsRouter.post("/admin/events", async (c) => {
   try {
-    const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_admin";
     const body = await c.req.json();
     const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft } = body;
 
@@ -119,6 +118,8 @@ eventsRouter.post("/admin/events", async (c) => {
       }
     }
 
+    const user = await getSessionUser(c);
+    const email = user?.email || "anonymous_admin";
     const status = isDraft ? "pending" : "published";
 
     await c.env.DB.prepare(
@@ -269,11 +270,7 @@ eventsRouter.delete("/admin/events/:id/purge", async (c) => {
     const id = c.req.param("id");
     
     // GCal cleanup if possible
-    const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
-    const dbSettings: Record<string, string> = {};
-    for (const row of settingsRows as { key: string, value: string }[]) {
-       dbSettings[row.key] = row.value;
-    }
+    const dbSettings = await getDbSettings(c);
     const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
     const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
     
@@ -332,6 +329,25 @@ eventsRouter.patch("/admin/events/:id/approve", async (c) => {
   }
 });
 
+// ── PATCH /admin/events/:id/reject — reject pending event (admin) ───
+eventsRouter.patch("/admin/events/:id/reject", async (c) => {
+  try {
+    const user = await getSessionUser(c);
+    if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
+    const id = c.req.param("id");
+    const body = await c.req.json().catch(() => ({})) as { reason?: string };
+    
+    await c.env.DB.prepare(
+      "UPDATE events SET status = 'rejected' WHERE id = ?"
+    ).bind(id).run();
+
+    return c.json({ success: true, reason: body.reason || "No reason provided" });
+  } catch (err) {
+    console.error("D1 reject error (events):", err);
+    return c.json({ error: "Rejection failed" }, 500);
+  }
+});
+
 // ── POST /admin/events/:id/repush — manual social broadcast (admin) ──
 eventsRouter.post("/admin/events/:id/repush", async (c) => {
   try {
@@ -369,16 +385,12 @@ eventsRouter.post("/admin/events/:id/repush", async (c) => {
 // ── POST /admin/events/sync — Google Calendar Sync (admin) ──────────────
 eventsRouter.post("/admin/events/sync", async (c) => {
   try {
-    const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
-    const dbSettings: Record<string, string> = {};
-    for (const row of settingsRows as { key: string, value: string }[]) {
-       dbSettings[row.key] = row.value;
-    }
+    const dbSettings = await getDbSettings(c);
     const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
     const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
     const CALENDAR_ID = dbSettings["CALENDAR_ID"] || "af2d297c3425adaeafc13ddd48a582056404cbf16a6156d3925bb8f3b4affaa0@group.calendar.google.com";
     const ICS_URL = `https://calendar.google.com/calendar/ical/${encodeURIComponent(CALENDAR_ID)}/public/basic.ics`;
-    const email = c.req.header("cf-access-authenticated-user-email") || "sync";
+    const email = (await getSessionUser(c))?.email || "sync";
 
     let newCount = 0;
     let upCount = 0;

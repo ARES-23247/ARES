@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings, ensureAdmin } from "./_shared";
+import { Bindings, ensureAdmin, getDbSettings } from "./_shared";
 import { getAuth } from "../../utils/auth";
 
 const mediaRouter = new Hono<{ Bindings: Bindings }>();
@@ -13,6 +13,11 @@ mediaRouter.post("/admin/upload", async (c) => {
 
     if (!file) {
       return c.json({ error: "No file uploaded" }, 400);
+    }
+
+    // GAP-07: Enforce 10MB upload limit
+    if (file.size > 10 * 1024 * 1024) {
+      return c.json({ error: "File too large. Maximum size is 10MB." }, 413);
     }
 
     const key = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
@@ -189,13 +194,9 @@ mediaRouter.post("/admin/media/syndicate", async (c) => {
       return c.json({ error: "Missing required fields" }, 400);
     }
     
-    const { results } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
-    const config: Record<string, string> = {};
-    for (const row of results as { key: string, value: string }[]) {
-      config[row.key] = row.value;
-    }
+    const config = await getDbSettings(c);
     
-    const imageUrl = `https://aresfirst.org/api/media/${key}`;
+    const imageUrl = `${new URL(c.req.url).origin}/api/media/${key}`;
     const { dispatchPhotoSocials } = await import("../../utils/socialSync");
     
     try {

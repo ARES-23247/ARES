@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, 
   ShieldAlert, Lock, RefreshCw, LogOut, User, Users, Utensils, BarChart3, 
-  Gem, Target, Trophy, Menu, X, Folders, Award
+  Gem, Target, Trophy, Menu, X, Folders, Award, MapPin
 } from "lucide-react";
 
 // ── Lazy-loaded Tab Components ───────────────────────────────────────
@@ -24,8 +24,9 @@ const OutreachTracker = lazy(() => import("@/components/OutreachTracker"));
 const AwardEditor = lazy(() => import("@/components/AwardEditor"));
 const MemberImpactOverview = lazy(() => import("@/components/MemberImpactOverview"));
 const BadgeManager = lazy(() => import("@/components/BadgeManager"));
+const LocationsManager = lazy(() => import("@/components/LocationsManager"));
 
-type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets" | "integrations" | "profile" | "users" | "logistics" | "analytics" | "sponsors" | "outreach" | "legacy" | "impact_roster" | "badges";
+type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "locations" | "assets" | "integrations" | "profile" | "users" | "logistics" | "analytics" | "sponsors" | "outreach" | "legacy" | "impact_roster" | "badges";
 
 // ── NavButton Component ────────────────────────────────────────────
 const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false, activeTab, onNavigate }: { tab: TabState, icon?: React.ElementType, label: string, disabled?: boolean, sub?: boolean, activeTab: TabState, onNavigate: (tab: TabState) => void }) => {
@@ -260,6 +261,16 @@ export default function Dashboard() {
             <AwardEditor />
           </>
         );
+      case "locations":
+        return (
+          <>
+            <div className="mb-6 pb-6 border-b border-white/5">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3"><MapPin className="text-ares-red" /> Team Locations</h2>
+              <p className="text-zinc-500 text-sm mt-1">Manage physical meeting points, shops, and outreach sites.</p>
+            </div>
+            <LocationsManager />
+          </>
+        );
       default:
         return null;
     }
@@ -363,6 +374,7 @@ export default function Dashboard() {
                 
                 <div className="h-px bg-white/5 my-3 mx-4" />
                 <NavButton tab="assets" icon={Image} label="Media Gallery" activeTab={activeTab} onNavigate={handleNavigate} />
+                <NavButton tab="locations" icon={MapPin} label="Location Manager" activeTab={activeTab} onNavigate={handleNavigate} />
                 <NavButton tab="legacy" icon={Trophy} label="Trophy Case Archive" activeTab={activeTab} onNavigate={handleNavigate} />
               </div>
             </div>
@@ -374,6 +386,7 @@ export default function Dashboard() {
               <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Operations</h4>
               <div className="space-y-1 px-3">
                 <NavButton tab="outreach" icon={Target} label="Outreach Tracker" activeTab={activeTab} onNavigate={handleNavigate} />
+                <NavButton tab="locations" icon={MapPin} label="Meeting Locations" activeTab={activeTab} onNavigate={handleNavigate} />
                 <NavButton tab="sponsors" icon={Gem} label="Sponsors & Funding" activeTab={activeTab} onNavigate={handleNavigate} />
                 <NavButton tab="analytics" icon={BarChart3} label="Analytics" activeTab={activeTab} onNavigate={handleNavigate} />
               </div>
