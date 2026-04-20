@@ -7,7 +7,12 @@ const docsRouter = new Hono<{ Bindings: Bindings }>();
 docsRouter.get("/docs", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, category, sort_order, description, is_portfolio, is_executive_summary FROM docs WHERE is_deleted = 0 AND status = 'published' ORDER BY category, sort_order ASC"
+      `SELECT d.slug, d.title, d.category, d.sort_order, d.description, d.is_portfolio, d.is_executive_summary,
+              p.nickname as original_author_nickname, COALESCE(p.avatar, u.image) as original_author_avatar
+       FROM docs d
+       LEFT JOIN user u ON d.cf_email = u.email
+       LEFT JOIN user_profiles p ON u.id = p.user_id
+       WHERE d.is_deleted = 0 AND d.status = 'published' ORDER BY d.category, d.sort_order ASC`
     ).all();
     return c.json({ docs: results ?? [] });
   } catch (err) {
@@ -71,10 +76,28 @@ docsRouter.get("/docs/:slug", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT slug, title, category, description, content, updated_at, is_portfolio, is_executive_summary FROM docs WHERE slug = ? AND is_deleted = 0 AND status = 'published'"
+      `SELECT d.slug, d.title, d.category, d.description, d.content, d.updated_at, d.is_portfolio, d.is_executive_summary,
+              p.nickname as original_author_nickname, COALESCE(p.avatar, u.image) as original_author_avatar
+       FROM docs d
+       LEFT JOIN user u ON d.cf_email = u.email
+       LEFT JOIN user_profiles p ON u.id = p.user_id
+       WHERE d.slug = ? AND d.is_deleted = 0 AND d.status = 'published'`
     ).bind(slug).first();
     if (!row) return c.json({ error: "Doc not found" }, 404);
-    return c.json({ doc: row });
+
+    // Fetch contributors from history
+    const { results: historyKeys } = await c.env.DB.prepare(
+      `SELECT DISTINCT h.author_email, p.nickname, COALESCE(p.avatar, u.image) as avatar
+       FROM docs_history h
+       LEFT JOIN user u ON h.author_email = u.email
+       LEFT JOIN user_profiles p ON u.id = p.user_id
+       WHERE h.slug = ? AND h.author_email IS NOT NULL`
+    ).bind(slug).all();
+
+    return c.json({ 
+      doc: row,
+      contributors: historyKeys ?? []
+    });
   } catch (err) {
     console.error("D1 doc read error:", err);
     return c.json({ error: "Database error" }, 500);

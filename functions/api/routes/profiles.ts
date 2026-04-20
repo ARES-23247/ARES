@@ -49,9 +49,9 @@ profilesRouter.put("/profile/me", async (c) => {
       bio, subteams, dietary_restrictions,
       show_on_about, show_email, show_phone,
       member_type, grade_year, colleges, employers,
-      favorite_first_thing, fun_fact, avatar,
+      favorite_first_thing, fun_fact,
       favorite_robot_mechanism, pre_match_superstition,
-      leadership_role, rookie_year,
+      leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone
     } = body;
 
     const dietaryStr = Array.isArray(dietary_restrictions)
@@ -66,10 +66,10 @@ profilesRouter.put("/profile/me", async (c) => {
         bio, subteams, dietary_restrictions,
         show_on_about, show_email, show_phone,
         member_type, grade_year, colleges, employers,
-        favorite_first_thing, fun_fact, avatar,
+        favorite_first_thing, fun_fact,
         favorite_robot_mechanism, pre_match_superstition,
-        leadership_role, rookie_year
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET
         nickname=excluded.nickname, first_name=excluded.first_name, last_name=excluded.last_name,
         pronouns=excluded.pronouns, phone=excluded.phone, contact_email=excluded.contact_email,
@@ -77,10 +77,13 @@ profilesRouter.put("/profile/me", async (c) => {
         show_on_about=excluded.show_on_about, show_email=excluded.show_email, show_phone=excluded.show_phone,
         member_type=excluded.member_type, grade_year=excluded.grade_year, colleges=excluded.colleges,
         employers=excluded.employers, favorite_first_thing=excluded.favorite_first_thing,
-        fun_fact=excluded.fun_fact, avatar=excluded.avatar,
+        fun_fact=excluded.fun_fact,
         favorite_robot_mechanism=excluded.favorite_robot_mechanism,
         pre_match_superstition=excluded.pre_match_superstition,
-        leadership_role=excluded.leadership_role, rookie_year=excluded.rookie_year`
+        leadership_role=excluded.leadership_role, rookie_year=excluded.rookie_year,
+        tshirt_size=excluded.tshirt_size,
+        emergency_contact_name=excluded.emergency_contact_name,
+        emergency_contact_phone=excluded.emergency_contact_phone`
     ).bind(
       user.id,
       nickname || "", first_name || "", last_name || "", pronouns || "",
@@ -88,9 +91,10 @@ profilesRouter.put("/profile/me", async (c) => {
       bio || "", subteamsStr, dietaryStr,
       show_on_about ? 1 : 0, show_email ? 1 : 0, show_phone ? 1 : 0,
       member_type || "student", grade_year || "", colleges || "", employers || "",
-      favorite_first_thing || "", fun_fact || "", avatar || null,
+      favorite_first_thing || "", fun_fact || "",
       favorite_robot_mechanism || "", pre_match_superstition || "",
-      leadership_role || "", rookie_year || ""
+      leadership_role || "", rookie_year || "",
+      tshirt_size || "", emergency_contact_name || "", emergency_contact_phone || ""
     ).run();
 
     return c.json({ success: true });
@@ -115,10 +119,6 @@ profilesRouter.put("/profile/avatar", async (c) => {
       headers: c.req.raw.headers,
       body: { image: image || null }
     });
-    // Also update profile avatar
-    await c.env.DB.prepare(
-      "UPDATE user_profiles SET avatar = ? WHERE user_id = ?"
-    ).bind(image || null, user.id).run();
 
     return c.json({ success: true });
   } catch (err) {
@@ -159,10 +159,10 @@ profilesRouter.get("/team-roster", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       `SELECT p.user_id, p.nickname, p.bio, p.pronouns, p.subteams, p.member_type,
-              p.avatar, p.favorite_first_thing, p.fun_fact, p.show_email, p.contact_email,
+              p.favorite_first_thing, p.fun_fact, p.show_email, p.contact_email,
               p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role,
-              p.rookie_year,
-              u.image, u.name
+              p.rookie_year, p.colleges, p.employers,
+              u.image as avatar, u.name
        FROM user_profiles p
        JOIN user u ON p.user_id = u.id
        WHERE p.show_on_about = 1 AND u.role NOT IN ('unverified')`

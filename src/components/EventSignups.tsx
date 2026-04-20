@@ -173,15 +173,14 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
               {/* Self Check-in Button */}
               <button 
                 onClick={selfCheckIn}
-                disabled={myEntry?.attended}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
                   myEntry?.attended 
-                  ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" 
+                  ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20" 
                   : "bg-ares-gold hover:bg-yellow-400 text-black shadow-lg shadow-ares-gold/20"
                 }`}
               >
                 <CheckCircle2 size={14} />
-                {myEntry?.attended ? "Checked In" : "Check In Now"}
+                {myEntry?.attended ? "Checked In (Undo)" : "Check In Now"}
               </button>
             </div>
 

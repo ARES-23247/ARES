@@ -8,7 +8,12 @@ const postsRouter = new Hono<{ Bindings: Bindings }>();
 postsRouter.get("/posts", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, cf_email FROM posts WHERE is_deleted = 0 AND status = 'published' ORDER BY date DESC"
+      `SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail, p.cf_email,
+              uP.nickname as author_nickname, COALESCE(uP.avatar, u.image) as author_avatar
+       FROM posts p
+       LEFT JOIN user u ON p.cf_email = u.email
+       LEFT JOIN user_profiles uP ON u.id = uP.user_id
+       WHERE p.is_deleted = 0 AND p.status = 'published' ORDER BY p.date DESC`
     ).all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
@@ -22,7 +27,12 @@ postsRouter.get("/posts/:slug", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT slug, title, date, ast FROM posts WHERE slug = ? AND is_deleted = 0 AND status = 'published'"
+      `SELECT p.slug, p.title, p.date, p.ast, p.cf_email,
+              uP.nickname as author_nickname, COALESCE(uP.avatar, u.image) as author_avatar
+       FROM posts p
+       LEFT JOIN user u ON p.cf_email = u.email
+       LEFT JOIN user_profiles uP ON u.id = uP.user_id
+       WHERE p.slug = ? AND p.is_deleted = 0 AND p.status = 'published'`
     ).bind(slug).first();
 
     if (!row) return c.json({ error: "Post not found" }, 404);
