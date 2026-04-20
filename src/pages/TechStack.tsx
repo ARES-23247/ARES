@@ -1,4 +1,4 @@
-import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive } from "lucide-react";
+import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard } from "lucide-react";
 import { motion } from "framer-motion";
 import GitHubHeatmap from "../components/GitHubHeatmap";
 
@@ -87,6 +87,17 @@ export default function TechStack() {
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
+            <div className="w-12 h-12 rounded-full border border-blue-500/30 flex items-center justify-center bg-blue-500/10 text-blue-500 mb-6">
+              <LayoutDashboard size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Headless CMS</h3>
+            <p className="text-marble/70 leading-relaxed mb-4 flex-1">
+              The portal features a fully bespoke, role-based Content Management System. It inherently supports abstract syntax trees, intelligent cross-posting (Discord, Bluesky), and a tiered review pipeline allowing students to submit articles for mentor approval.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-blue-500 mt-auto">Cost: Custom Built</div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
             <div className="w-12 h-12 rounded-full border border-green-500/30 flex items-center justify-center bg-green-500/10 text-green-500 mb-6">
               <GlobeLock size={24} />
             </div>
@@ -126,15 +137,15 @@ export default function TechStack() {
               <GlobeLock size={28} />
             </div>
             <div>
-              <h2 className="text-3xl font-bold font-heading mb-4">Zero Trust Security</h2>
+              <h2 className="text-3xl font-bold font-heading mb-4">Next-Gen Authentication</h2>
               <p className="text-marble/70 text-lg leading-relaxed mb-4">
-                We didn&apos;t just build it free; we built it secure. Our custom internal Content Management System (CMS) is protected by <strong>Cloudflare Zero Trust</strong>.
+                We didn&apos;t just build it free; we built it secure. Our custom Content Management System (CMS) is protected by <strong>Better-Auth</strong> session management and strict role-based access controls.
               </p>
               <div className="mb-6 p-4 bg-white/5 border-l-2 border-purple-500 text-sm text-marble/60 italic">
-                <strong>What this means:</strong> We don&apos;t just use passwords. We verify the identity of every team member through secure email codes before they can change any content.
+                <strong>What this means:</strong> We implement verified session boundaries. Only authorized, verified team members can interact with sensitive robotics data, RSVP for events, or publish content.
               </div>
               <p className="text-marble/70 leading-relaxed">
-                Rather than building a vulnerable password-login system, we rely on Cloudflare Access to authenticate our team mentors and captains via email pin codes BEFORE they ever reach our backend API.
+                Rather than relying on legacy access models, our portal features a full permission system with tiered approval workflows, ensuring that student submissions are securely vetted by mentors before publication.
               </p>
             </div>
           </div>
