@@ -14,15 +14,17 @@ interface SignupEntry {
 
 interface EventSignupsProps {
   eventId: string;
+  isPotluck: boolean;
 }
 
-export default function EventSignups({ eventId }: EventSignupsProps) {
+export default function EventSignups({ eventId, isPotluck }: EventSignupsProps) {
   const [signups, setSignups] = useState<SignupEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [canManage, setCanManage] = useState(false);
   const [dietarySummary, setDietarySummary] = useState<Record<string, number> | null>(null);
+  const [teamDietarySummary, setTeamDietarySummary] = useState<Record<string, number> | null>(null);
   const [mySignup, setMySignup] = useState<{ bringing: string; notes: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -36,12 +38,14 @@ export default function EventSignups({ eventId }: EventSignupsProps) {
           role: string | null; 
           can_manage: boolean;
           dietary_summary: Record<string, number> | null;
+          team_dietary_summary: Record<string, number> | null;
         };
         setSignups(typed.signups || []);
         setIsAuthenticated(typed.authenticated);
         setUserRole(typed.role);
         setCanManage(typed.can_manage);
         setDietarySummary(typed.dietary_summary);
+        setTeamDietarySummary(typed.team_dietary_summary);
         
         const own = (typed.signups || []).find((s: SignupEntry) => s.is_own);
         if (own) setMySignup({ bringing: own.bringing, notes: own.notes });
@@ -96,36 +100,54 @@ export default function EventSignups({ eventId }: EventSignupsProps) {
   return (
     <div className="mt-10 border-t border-zinc-800 pt-8 space-y-8">
       {/* Attendance & Provisions Summary (Visible to verified users) */}
-      {dietarySummary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-zinc-900/40 border border-zinc-800 p-5 rounded-2xl">
-            <h4 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
-              <Users size={14} className="text-ares-gold" /> Attendance Stats
-            </h4>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">{totalAttending}</span>
-              <span className="text-zinc-500 text-sm font-bold">/ {signups.length} present</span>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-zinc-900/40 border border-zinc-800 p-5 rounded-2xl">
+          <h4 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+            <Users size={14} className="text-ares-gold" /> Attendance Stats
+          </h4>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-white">{totalAttending}</span>
+            <span className="text-zinc-500 text-sm font-bold">/ {signups.length} present</span>
           </div>
-          
+        </div>
+        
+        {dietarySummary && (
           <div className="bg-zinc-900/40 border border-zinc-800 p-5 rounded-2xl">
             <h4 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
-              <AlertCircle size={14} className="text-ares-red" /> Event Provisions
+              <AlertCircle size={14} className="text-ares-red" /> Dietary Restrictions
             </h4>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(dietarySummary).length > 0 ? (
-                Object.entries(dietarySummary).map(([restriction, count]) => (
-                  <span key={restriction} className="px-2 py-1 bg-ares-red/10 border border-ares-red/20 rounded-md text-[10px] font-bold text-ares-red">
-                    {count} {restriction}
-                  </span>
-                ))
-              ) : (
-                <span className="text-zinc-600 text-[10px] font-medium leading-relaxed">No specific dietary restrictions reported.</span>
+            <div className="flex flex-col gap-4">
+              <div>
+                <span className="text-xs text-white/50 block mb-2 font-bold uppercase tracking-widest">RSVP'd Members</span>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(dietarySummary).length > 0 ? (
+                    Object.entries(dietarySummary).map(([restriction, count]) => (
+                      <span key={`rsvp-${restriction}`} className="px-2 py-1 bg-ares-red/10 border border-ares-red/20 rounded-md text-[10px] font-bold text-ares-red">
+                        {count} {restriction}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-zinc-600 text-[10px] font-medium leading-relaxed">No dietary restrictions among RSVPs.</span>
+                  )}
+                </div>
+              </div>
+              
+              {teamDietarySummary && Object.entries(teamDietarySummary).length > 0 && (
+                <div>
+                  <span className="text-xs text-white/50 block mb-2 font-bold uppercase tracking-widest">Entire Team Roster</span>
+                  <div className="flex flex-wrap gap-2 opacity-70 grayscale">
+                    {Object.entries(teamDietarySummary).map(([restriction, count]) => (
+                      <span key={`team-${restriction}`} className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded-md text-[10px] font-bold text-zinc-300">
+                        {count} {restriction}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div>
         <div className="flex items-center justify-between mb-6">
@@ -158,7 +180,7 @@ export default function EventSignups({ eventId }: EventSignupsProps) {
               <tr className="border-b border-zinc-800 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                 <th className="text-left py-3 px-4">Status</th>
                 <th className="text-left py-3 px-4">Who</th>
-                <th className="text-left py-3 px-4">Bringing</th>
+                {isPotluck && <th className="text-left py-3 px-4">Bringing</th>}
                 <th className="text-left py-3 px-4">Notes</th>
               </tr>
             </thead>
@@ -186,7 +208,7 @@ export default function EventSignups({ eventId }: EventSignupsProps) {
                       <span className={`text-sm font-bold ${entry.attended ? "text-white" : "text-zinc-400"}`}>{entry.nickname || "ARES Member"}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-sm text-zinc-300">{entry.bringing || "—"}</td>
+                  {isPotluck && <td className="py-3 px-4 text-sm text-zinc-300">{entry.bringing || "—"}</td>}
                   <td className="py-3 px-4 text-sm text-zinc-400">{entry.notes || "—"}</td>
                 </tr>
               ))}
@@ -214,17 +236,20 @@ export default function EventSignups({ eventId }: EventSignupsProps) {
               <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">ARES Event Protocol v3.0</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {isPotluck && (
+                <input
+                  placeholder="What are you bringing? (e.g. chips & salsa)"
+                  value={mySignup?.bringing || ""}
+                  onChange={e => setMySignup(prev => ({ bringing: e.target.value, notes: prev?.notes || "" }))}
+                  className="w-full bg-zinc-800/40 border border-zinc-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
+                />
+              )}
               <input
-                placeholder="What are you bringing? (e.g. chips & salsa)"
-                value={mySignup?.bringing || ""}
-                onChange={e => setMySignup(prev => ({ bringing: e.target.value, notes: prev?.notes || "" }))}
-                className="w-full bg-zinc-800/40 border border-zinc-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
-              />
-              <input
-                placeholder="Notes (dietary info, arrival time...)"
+                placeholder={isPotluck ? "Notes (dietary info, arrival time...)" : "Notes (arrival time, etc...)"}
                 value={mySignup?.notes || ""}
                 onChange={e => setMySignup(prev => ({ bringing: prev?.bringing || "", notes: e.target.value }))}
-                className="w-full bg-zinc-800/40 border border-zinc-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
+                className="w-full md:col-span-1 bg-zinc-800/40 border border-zinc-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
+                style={!isPotluck ? { gridColumn: 'span 2' } : {}}
               />
             </div>
             <div className="flex gap-3">

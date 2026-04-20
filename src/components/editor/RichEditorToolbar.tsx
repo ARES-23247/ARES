@@ -110,7 +110,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
     try {
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ arrayBuffer }, {
-        convertImage: mammoth.images.inline(async (element) => {
+        convertImage: (mammoth as any).images.inline(async (element: any) => {
           const buffer = await element.read();
           const blob = new Blob([buffer], { type: element.contentType });
           const imageFile = new File([blob], `imported_image_${Date.now()}.${element.contentType.split('/')[1]}`, { type: element.contentType });

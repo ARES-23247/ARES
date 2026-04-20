@@ -19,7 +19,7 @@ export default function Outreach() {
     queryKey: ["public-outreach"],
     queryFn: async () => {
       const r = await fetch("/api/outreach");
-      const d = await r.json();
+      const d = await r.json() as { logs?: OutreachLog[] };
       return d.logs || [];
     }
   });

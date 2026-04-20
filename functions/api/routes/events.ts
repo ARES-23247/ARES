@@ -9,7 +9,7 @@ const eventsRouter = new Hono<{ Bindings: Bindings }>();
 eventsRouter.get("/events", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email FROM events WHERE is_deleted = 0 ORDER BY date_start ASC"
+      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck FROM events WHERE is_deleted = 0 AND status = 'published' ORDER BY date_start ASC"
     ).all();
     return c.json({ events: results ?? [] });
   } catch (err) {
@@ -23,7 +23,7 @@ eventsRouter.get("/events/:id", async (c) => {
   const id = c.req.param("id");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email FROM events WHERE id = ? AND is_deleted = 0"
+      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck FROM events WHERE id = ? AND is_deleted = 0 AND status = 'published'"
     ).bind(id).first();
 
     if (!row) return c.json({ error: "Event not found" }, 404);
@@ -49,7 +49,7 @@ eventsRouter.get("/calendar", async (c) => {
 eventsRouter.get("/admin/events", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted FROM events ORDER BY date_start ASC"
+      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck FROM events ORDER BY date_start ASC"
     ).all();
     return c.json({ events: results ?? [] });
   } catch (err) {
@@ -63,7 +63,7 @@ eventsRouter.get("/admin/events/:id", async (c) => {
   const id = c.req.param("id");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted FROM events WHERE id = ?"
+      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck FROM events WHERE id = ?"
     ).bind(id).first();
 
     if (!row) return c.json({ error: "Event not found" }, 404);
@@ -79,7 +79,7 @@ eventsRouter.post("/admin/events", async (c) => {
   try {
     const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_admin";
     const body = await c.req.json();
-    const { title, dateStart, dateEnd, location, description, coverImage, socials } = body;
+    const { title, dateStart, dateEnd, location, description, coverImage, socials, isPotluck } = body;
 
     if (!title || !dateStart) {
       return c.json({ error: "Missing required fields" }, 400);
@@ -97,19 +97,22 @@ eventsRouter.post("/admin/events", async (c) => {
 
     if (gcalEmail && gcalKey && calId) {
       try {
-        gcalId = await pushEventToGcal(
-           { id: genId, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage },
+        gcalId = (await pushEventToGcal(
+           { id: genId, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage ?? null },
            { email: gcalEmail, privateKey: gcalKey, calendarId: calId }
-        );
+        )) || null;
       } catch (err: unknown) {
         console.error("GCal manual POST error:", err);
         warnings.push(`Google Calendar Auth Failed: ${(err as Error)?.message || "Unknown GCal Error"}`);
       }
     }
 
+    const user = await getSessionUser(c);
+    const status = user?.role === "admin" ? "published" : "pending";
+
     await c.env.DB.prepare(
-      "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).bind(genId, title, dateStart, dateEnd || null, location || "", description || "", gcalId, email, coverImage || null).run();
+      "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image, status, is_potluck) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).bind(genId, title, dateStart, dateEnd || null, location || "", description || "", gcalId, email, coverImage || null, status, isPotluck ? 1 : 0).run();
 
     // Dispatch Socials
     if (socials) {
@@ -140,7 +143,7 @@ eventsRouter.put("/admin/events/:id", async (c) => {
   try {
     const paramId = c.req.param("id");
     const body = await c.req.json();
-    const { title, dateStart, dateEnd, location, description, coverImage, socials } = body;
+    const { title, dateStart, dateEnd, location, description, coverImage, socials, isPotluck } = body;
 
     if (!title || !dateStart) {
       return c.json({ error: "Missing required fields" }, 400);
@@ -153,24 +156,27 @@ eventsRouter.put("/admin/events/:id", async (c) => {
     const calId = socialConfig["CALENDAR_ID"];
 
     // Attempt GCal update
-    let gcalId: string | undefined = undefined;
+    let gcalId: string | null = null;
     if (gcalEmail && gcalKey && calId) {
       const row = await c.env.DB.prepare("SELECT gcal_event_id FROM events WHERE id = ?").bind(paramId).first<{gcal_event_id: string}>();
       try {
-        gcalId = await pushEventToGcal(
+        gcalId = (await pushEventToGcal(
           { id: paramId, title, date_start: dateStart, date_end: dateEnd, location, description, cover_image: coverImage, gcal_event_id: row?.gcal_event_id },
           { email: gcalEmail, privateKey: gcalKey, calendarId: calId }
-        );
+        )) || null;
       } catch (err: unknown) {
         console.error("GCal PUT update error:", err);
         warnings.push(`Google Calendar Auth Failed: ${(err as Error)?.message || "Unknown GCal Error"}`);
       }
     }
 
+    const user = await getSessionUser(c);
+    const status = user?.role === "admin" ? "published" : "pending";
+
     await c.env.DB.prepare(
-      `UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id) WHERE id = ?`
+      `UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ? WHERE id = ?`
     )
-      .bind(title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, paramId)
+      .bind(title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, status, isPotluck ? 1 : 0, paramId)
       .run();
 
     // ── Optional Social Syndication ──
@@ -259,6 +265,20 @@ eventsRouter.delete("/admin/events/:id/purge", async (c) => {
   }
 });
 
+// ── PATCH /admin/events/:id/approve — approve pending event (admin) ───
+eventsRouter.patch("/admin/events/:id/approve", async (c) => {
+  try {
+    const user = await getSessionUser(c);
+    if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
+    const id = c.req.param("id");
+    await c.env.DB.prepare("UPDATE events SET status = 'published' WHERE id = ?").bind(id).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 approve error (events):", err);
+    return c.json({ error: "Approval failed" }, 500);
+  }
+});
+
 // ── POST /admin/events/:id/repush — manual social broadcast (admin) ──
 eventsRouter.post("/admin/events/:id/repush", async (c) => {
   try {
@@ -328,7 +348,7 @@ eventsRouter.post("/admin/events/sync", async (c) => {
         } else {
           const genId = crypto.randomUUID();
           await c.env.DB.prepare(
-            "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')"
           ).bind(genId, ev.title, ev.date_start, ev.date_end || null, ev.location, ev.description, ev.gcal_event_id, email, null).run();
           newCount++;
         }
@@ -384,7 +404,7 @@ eventsRouter.post("/admin/events/sync", async (c) => {
         } else {
           const genId = crypto.randomUUID();
           await c.env.DB.prepare(
-            "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published')"
           ).bind(genId, title, parsedStart, parsedEnd, location, description, uid, email, null).run();
           newCount++;
         }
@@ -423,7 +443,9 @@ eventsRouter.get("/events/:id/signups", async (c) => {
 
     // Aggregate dietary info for verified users (Anonymous)
     const dietarySummary: Record<string, number> = {};
+    const teamDietarySummary: Record<string, number> = {};
     if (isVerified) {
+      // 1. Dietary restrictions for RSVP'd members
       const { results: profiles } = await c.env.DB.prepare(
         `SELECT p.dietary_restrictions FROM event_signups s
          JOIN user_profiles p ON s.user_id = p.user_id
@@ -439,11 +461,28 @@ eventsRouter.get("/events/:id/signups", async (c) => {
           }
         } catch { /* ignore */ }
       }
+      
+      // 2. Dietary restrictions for the entire verified team
+      const { results: allProfiles } = await c.env.DB.prepare(
+        `SELECT p.dietary_restrictions FROM user_profiles p
+         JOIN user u ON p.user_id = u.id
+         WHERE u.role NOT IN ('unverified')`
+      ).all();
+
+      for (const p of (allProfiles || []) as Array<{ dietary_restrictions?: string }>) {
+        try {
+          const restrictions = JSON.parse(p.dietary_restrictions || "[]") as string[];
+          for (const r of restrictions) {
+            teamDietarySummary[r] = (teamDietarySummary[r] || 0) + 1;
+          }
+        } catch { /* ignore */ }
+      }
     }
 
     return c.json({
       signups,
       dietary_summary: isVerified ? dietarySummary : null,
+      team_dietary_summary: isVerified ? teamDietarySummary : null,
       authenticated: !!user,
       role: user?.role || null,
       member_type: user?.member_type || null,

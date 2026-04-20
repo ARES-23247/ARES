@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings, getSocialConfig, extractAstText } from "./_shared";
+import { Bindings, getSocialConfig, extractAstText, getSessionUser } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
 
 const postsRouter = new Hono<{ Bindings: Bindings }>();
@@ -8,7 +8,7 @@ const postsRouter = new Hono<{ Bindings: Bindings }>();
 postsRouter.get("/posts", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, cf_email FROM posts WHERE is_deleted = 0 ORDER BY date DESC"
+      "SELECT slug, title, date, snippet, thumbnail, cf_email FROM posts WHERE is_deleted = 0 AND status = 'published' ORDER BY date DESC"
     ).all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
@@ -22,7 +22,7 @@ postsRouter.get("/posts/:slug", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT slug, title, date, ast FROM posts WHERE slug = ? AND is_deleted = 0"
+      "SELECT slug, title, date, ast FROM posts WHERE slug = ? AND is_deleted = 0 AND status = 'published'"
     ).bind(slug).first();
 
     if (!row) return c.json({ error: "Post not found" }, 404);
@@ -37,7 +37,7 @@ postsRouter.get("/posts/:slug", async (c) => {
 postsRouter.get("/admin/posts", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, cf_email, is_deleted FROM posts ORDER BY date DESC"
+      "SELECT slug, title, date, snippet, thumbnail, cf_email, is_deleted, status FROM posts ORDER BY date DESC"
     ).all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
@@ -51,7 +51,7 @@ postsRouter.get("/admin/posts/:slug", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, content, is_deleted FROM posts WHERE slug = ?"
+      "SELECT slug, title, date, snippet, thumbnail, content, is_deleted, status FROM posts WHERE slug = ?"
     ).bind(slug).first();
 
     if (!row) return c.json({ error: "Post not found" }, 404);
@@ -114,10 +114,13 @@ postsRouter.post("/admin/posts", async (c) => {
 
     const astStr = JSON.stringify(body.ast);
     const snippet = buildSnippet(body.ast);
+    
+    const user = await getSessionUser(c);
+    const status = user?.role === "admin" ? "published" : "pending";
 
     await c.env.DB.prepare(
-      `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
       .bind(
         slug,
@@ -127,7 +130,8 @@ postsRouter.post("/admin/posts", async (c) => {
         body.coverImageUrl || "/gallery_1.png",
         snippet,
         astStr,
-        email || "anonymous_dashboard_user"
+        email || "anonymous_dashboard_user",
+        status
       )
       .run();
 
@@ -176,8 +180,11 @@ postsRouter.put("/admin/posts/:slug", async (c) => {
     const astStr = JSON.stringify(body.ast);
     const snippet = buildSnippet(body.ast);
 
+    const user = await getSessionUser(c);
+    const status = user?.role === "admin" ? "published" : "pending";
+
     await c.env.DB.prepare(
-      `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ? WHERE slug = ?`
+      `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = ? WHERE slug = ?`
     )
       .bind(
         body.title,
@@ -185,6 +192,7 @@ postsRouter.put("/admin/posts/:slug", async (c) => {
         body.coverImageUrl || "/gallery_1.png",
         snippet,
         astStr,
+        status,
         slug
       )
       .run();
@@ -229,6 +237,20 @@ postsRouter.delete("/admin/posts/:slug/purge", async (c) => {
   } catch (err) {
     console.error("D1 purge error (posts):", err);
     return c.json({ error: "Purge failed" }, 500);
+  }
+});
+
+// ── PATCH /admin/posts/:slug/approve — approve pending post (admin) ─────
+postsRouter.patch("/admin/posts/:slug/approve", async (c) => {
+  try {
+    const user = await getSessionUser(c);
+    if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
+    const slug = c.req.param("slug");
+    await c.env.DB.prepare("UPDATE posts SET status = 'published' WHERE slug = ?").bind(slug).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 approve error (posts):", err);
+    return c.json({ error: "Approval failed" }, 500);
   }
 });
 

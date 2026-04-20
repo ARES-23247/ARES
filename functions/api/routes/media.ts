@@ -140,7 +140,6 @@ mediaRouter.delete("/admin/media/:key", ensureAdmin, async (c) => {
     const auth = getAuth(c.env.DB, c.env);
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     const isLocalDev = new URL(c.req.url).hostname === "localhost" || new URL(c.req.url).hostname === "127.0.0.1";
-    // @ts-expect-error - Better Auth session type lacks role but D1 query adds it
     const role = isLocalDev ? "admin" : ((session?.user?.role as string) || "user");
 
     if (role === "admin") {

@@ -3,7 +3,7 @@ import { kyselyAdapter } from "@better-auth/kysely-adapter";
 import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
 
-export const getAuth = (db: D1Database, env: Record<string, string>, requestUrl?: string) => {
+export const getAuth = (db: D1Database, env: Record<string, any>, requestUrl?: string) => {
     const kyselyDb = new Kysely({
         dialect: new D1Dialect({
             database: db,
@@ -18,7 +18,6 @@ export const getAuth = (db: D1Database, env: Record<string, string>, requestUrl?
 
     return betterAuth({
         database: kyselyAdapter(kyselyDb, {
-            provider: "sqlite",
         }),
         onAPIError: {
             throw: true,
@@ -35,7 +34,6 @@ export const getAuth = (db: D1Database, env: Record<string, string>, requestUrl?
             ...(requestUrl ? [new URL(requestUrl).origin] : []),
         ],
         advanced: {
-            crossSubDomain: true
         },
         socialProviders: {
             ...(env.GOOGLE_CLIENT_ID ? {

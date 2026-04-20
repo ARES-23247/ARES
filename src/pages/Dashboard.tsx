@@ -1,7 +1,11 @@
 import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings, ShieldAlert, Lock, RefreshCw, LogOut, User, Users, Utensils, BarChart3, Gem, Target, Trophy } from "lucide-react";
+import { 
+  PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, 
+  ShieldAlert, Lock, RefreshCw, LogOut, User, Users, Utensils, BarChart3, 
+  Gem, Target, Trophy, Menu, X, Folders  
+} from "lucide-react";
 
 // ── Lazy-loaded Tab Components ───────────────────────────────────────
 const BlogEditor = lazy(() => import("@/components/BlogEditor"));
@@ -27,35 +31,17 @@ const isLocalDev =
   typeof window !== "undefined" &&
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
-// ── Tab-to-border color map ──────────────────────────────────────────
-const TAB_BORDER: Record<TabState, string> = {
-  blog: "border-zinc-800",
-  event: "border-ares-red/30",
-  docs: "border-ares-cyan/30",
-  manage_blog: "border-ares-gold/30",
-  manage_event: "border-ares-red/30",
-  manage_docs: "border-ares-cyan/30",
-  assets: "border-ares-bronze/30",
-  integrations: "border-purple-500/30",
-  profile: "border-emerald-500/30",
-  users: "border-orange-500/30",
-  logistics: "border-ares-red/30",
-  analytics: "border-ares-cyan/30",
-  sponsors: "border-ares-cyan/30",
-  outreach: "border-ares-cyan/30",
-  legacy: "border-ares-cyan/30",
-};
-
 // ── Suspense Spinner ─────────────────────────────────────────────────
 function TabLoader() {
   return (
-    <div className="flex justify-center items-center py-24">
+    <div className="flex justify-center flex-col gap-4 items-center py-32">
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
       >
-        <RefreshCw size={32} className="text-ares-gold" />
+        <RefreshCw size={32} className="text-ares-red/50" />
       </motion.div>
+      <p className="text-sm font-bold text-zinc-500 animate-pulse uppercase tracking-widest">Loading Module...</p>
     </div>
   );
 }
@@ -65,15 +51,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const initialDoc = searchParams.get("editDoc");
 
-  // ── Custom Enriched Authentication ─────────────────────────────────
+  // ── State ──────────────────────────────────────────────────────────
   const [enrichedSession, setEnrichedSession] = useState<{user: Record<string, unknown>, authenticated: boolean} | null>(null);
   const [isPending, setIsPending] = useState(true);
-
   const [activeTab, setActiveTab] = useState<TabState>(initialDoc ? "docs" : "profile");
   const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
   const [editEventId, setEditEventId] = useState<string | null>(null);
   const [editDocSlug, setEditDocSlug] = useState<string | null>(initialDoc);
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth-check")
@@ -81,7 +67,7 @@ export default function Dashboard() {
         if (!res.ok) throw new Error("Not Authenticated");
         return res.json();
       })
-      .then((data) => {
+      .then((data: any) => {
         setEnrichedSession(data);
         setIsPending(false);
       })
@@ -105,8 +91,8 @@ export default function Dashboard() {
   // ── Loading State ──────────────────────────────────────────────────
   if (isPending) {
     return (
-      <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
+      <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden font-sans">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -116,9 +102,9 @@ export default function Dashboard() {
             animate={{ rotate: 360 }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
           >
-            <RefreshCw size={48} className="text-ares-gold" />
+            <RefreshCw size={48} className="text-ares-red" />
           </motion.div>
-          <p className="text-zinc-400 text-lg font-medium">Verifying ARES Session...</p>
+          <p className="text-zinc-400 text-sm font-bold tracking-widest uppercase">Verifying ARES Session...</p>
         </motion.div>
       </div>
     );
@@ -134,52 +120,28 @@ export default function Dashboard() {
 
   if (!session || !session.user) {
     return (
-      <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden">
+      <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden font-sans">
         {/* Background glow effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
-        <div className="absolute top-40 -left-64 w-96 h-96 bg-ares-gold/10 blur-[120px] rounded-full pointer-events-none opacity-40" />
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative z-10 max-w-lg w-full mx-4"
-        >
-          <div className="bg-black/60 backdrop-blur-2xl rounded-3xl border border-red-500/20 p-10 md:p-14 shadow-2xl text-center">
-            <div className="mb-8 flex justify-center">
+        
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative z-10 max-w-lg w-full mx-4">
+          <div className="bg-black/60 backdrop-blur-2xl rounded-3xl border border-red-500/20 p-10 shadow-2xl text-center">
+            <div className="mb-6 flex justify-center">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ares-red/30 to-red-900/20 border border-red-500/30 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.3)]">
                 <ShieldAlert size={40} className="text-red-400" />
               </div>
             </div>
-
-            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-3">
-              Restricted Access
-            </h1>
-            <p className="text-zinc-400 text-base leading-relaxed mb-8">
-              {!session ? "The ARES Dashboard is protected by Internal Authentication. Please log in with an authorized identity to continue." : "Your account does not have administrator privileges. Please contact the lead engineer if this is an error."}
+            <h1 className="text-3xl font-black text-white tracking-tight mb-3">Restricted Access</h1>
+            <p className="text-zinc-400 text-sm leading-relaxed mb-8">
+              {!session ? "The ARES Dashboard is protected by Internal Authentication. Please log in with an authorized identity." : "Your account does not have administrator privileges."}
             </p>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => navigate("/login")}
-                className="group flex items-center justify-center gap-3 w-full px-6 py-4 bg-gradient-to-r from-ares-red to-red-700 hover:from-red-600 hover:to-red-800 text-white font-bold text-base rounded-2xl transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(220,38,38,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-gold"
-              >
-                <Lock size={18} />
-                Sign In with ARES ID
+            <div className="space-y-3">
+              <button onClick={() => navigate("/login")} className="w-full px-6 py-4 bg-gradient-to-r from-ares-red to-red-800 text-white font-bold text-sm rounded-xl transition-all shadow-[0_0_20px_rgba(220,38,38,0.2)] hover:shadow-[0_0_30px_rgba(220,38,38,0.4)]">
+                <Lock size={16} className="inline mr-2 -mt-1" /> Sign In with ARES ID
               </button>
-
-              <button
-                onClick={() => navigate("/")}
-                className="w-full px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-white font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500"
-              >
+              <button onClick={() => navigate("/")} className="w-full px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-white font-bold text-sm rounded-xl transition-all">
                 Return to Home
               </button>
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-white/5">
-              <p className="text-zinc-600 text-xs text-balance">
-                Protected by Better Auth &middot; ARES 23247 Internal Systems
-              </p>
             </div>
           </div>
         </motion.div>
@@ -191,11 +153,11 @@ export default function Dashboard() {
   const renderTabContent = () => {
     switch (activeTab) {
       case "blog":
-        return <BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} />;
+        return <BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} userRole={session?.user?.role} />;
       case "event":
-        return <EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} />;
+        return <EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} userRole={session?.user?.role} />;
       case "docs":
-        return <DocsEditor editSlug={editDocSlug} onClearEdit={() => setEditDocSlug(null)} />;
+        return <DocsEditor editSlug={editDocSlug} onClearEdit={() => setEditDocSlug(null)} userRole={session?.user?.role} />;
       case "manage_blog":
       case "manage_event":
       case "manage_docs":
@@ -218,12 +180,9 @@ export default function Dashboard() {
       case "logistics":
         return (
           <>
-            <div className="mb-8">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                <Utensils className="text-ares-red" />
-                Team Logistics Summary
-              </h2>
-              <p className="text-zinc-500 text-sm mt-1">Aggregated data for event planning and team management.</p>
+            <div className="mb-6 pb-6 border-b border-white/5">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3"><Utensils className="text-ares-red" /> Team Logistics Summary</h2>
+              <p className="text-zinc-500 text-sm mt-1">Aggregated dietary data for event planning and team management.</p>
             </div>
             <DietarySummary />
           </>
@@ -231,11 +190,8 @@ export default function Dashboard() {
       case "analytics":
         return (
           <>
-            <div className="mb-8">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                <BarChart3 className="text-ares-cyan" />
-                Community Engagement
-              </h2>
+            <div className="mb-6 pb-6 border-b border-white/5">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3"><BarChart3 className="text-ares-cyan" /> Community Engagement</h2>
               <p className="text-zinc-500 text-sm mt-1">Real-time data on documentation and blog utility.</p>
             </div>
             <AnalyticsDashboard />
@@ -244,11 +200,8 @@ export default function Dashboard() {
       case "sponsors":
         return (
           <>
-            <div className="mb-8">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                <Gem className="text-ares-cyan" />
-                Sponsor Recognition
-              </h2>
+            <div className="mb-6 pb-6 border-b border-white/5">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3"><Gem className="text-ares-cyan" /> Sponsor Recognition</h2>
               <p className="text-zinc-500 text-sm mt-1">Manage and showcase our funding partners.</p>
             </div>
             <SponsorEditor />
@@ -257,11 +210,8 @@ export default function Dashboard() {
       case "outreach":
         return (
           <>
-            <div className="mb-8">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                <Target className="text-ares-cyan" />
-                Community Impact Tracker
-              </h2>
+            <div className="mb-6 pb-6 border-b border-white/5">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3"><Target className="text-ares-cyan" /> Community Impact Tracker</h2>
               <p className="text-zinc-500 text-sm mt-1">Log outreach events and student service hours.</p>
             </div>
             <OutreachTracker />
@@ -270,11 +220,8 @@ export default function Dashboard() {
       case "legacy":
         return (
           <>
-            <div className="mb-8">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                <Trophy className="text-ares-gold" />
-                Team Legacy Archive
-              </h2>
+            <div className="mb-6 pb-6 border-b border-white/5">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3"><Trophy className="text-ares-gold" /> Team Legacy Archive</h2>
               <p className="text-zinc-500 text-sm mt-1">Manage seasonal achievements and awards.</p>
             </div>
             <AwardEditor />
@@ -285,264 +232,218 @@ export default function Dashboard() {
     }
   };
 
-  // ── Overlay effects for special tabs ───────────────────────────────
-  const hasOverlay = activeTab === "event" || activeTab === "docs";
-  const overlayColor = activeTab === "event" ? "bg-ares-red/5" : "bg-ares-cyan/5";
+  // ── NavButton Component ────────────────────────────────────────────
+  const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false }: { tab: TabState, icon?: any, label: string, disabled?: boolean, sub?: boolean }) => {
+    const isActive = activeTab === tab;
+    return (
+      <button
+        onClick={() => { 
+          if (!disabled) { 
+            setActiveTab(tab); 
+            setIsSidebarOpen(false); // Close mobile sidebar
+            // Clear any edit IDs if navigating to a "new" tab
+            if (tab === "blog") setEditPostSlug(null);
+            if (tab === "event") setEditEventId(null);
+            if (tab === "docs") setEditDocSlug(null);
+          } 
+        }}
+        disabled={disabled}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all font-semibold ${
+          isActive 
+            ? "bg-ares-red/10 text-white border border-ares-red/30 shadow-[0_0_15px_rgba(192,0,0,0.1)]" 
+            : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200 border border-transparent"
+        } ${sub ? "pl-11 text-sm font-bold" : "text-sm"} ${disabled ? "opacity-30 cursor-not-allowed" : ""}`}
+      >
+        {Icon && <Icon size={18} className={isActive ? "text-ares-red" : "text-zinc-500"} />}
+        <span className="truncate">{label}</span>
+      </button>
+    );
+  };
 
   return (
-    <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 py-8 relative overflow-hidden">
+    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
       {isAvatarEditorOpen && (
         <Suspense fallback={null}>
           <AvatarEditor currentImage={session?.user?.image as string | null} onClose={() => setIsAvatarEditorOpen(false)} />
         </Suspense>
       )}
-      
-      {/* Background glow effects */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
-      <div className="absolute top-40 -left-64 w-96 h-96 bg-ares-gold/10 blur-[120px] rounded-full pointer-events-none opacity-40" />
 
-      <div className="w-full max-w-5xl mx-auto px-6 py-12 md:py-24 relative z-10">
-        <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-          <div>
-            <h3 className="text-ares-gold font-bold uppercase tracking-widest text-sm mb-2 flex items-center gap-2">
-              <LayoutGrid size={16} className="text-ares-gold" />
-              Internal Systems
-            </h3>
-            <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-zinc-500 tracking-tighter mb-4 pb-1">
-              ARES <span className="text-transparent bg-clip-text bg-gradient-to-br from-ares-red to-red-900">Dashboard</span>
-            </h1>
-            <p className="text-zinc-400 max-w-2xl text-balance leading-relaxed">
-              Manage D1 Database content natively at the Cloudflare Edge. Draft engineering blogs, schedule events, and maintain team documentation.
-            </p>
+      {/* Mobile Top Header */}
+      <div className="md:hidden fixed top-0 w-full h-16 bg-black/80 backdrop-blur-xl border-b border-white/10 z-40 flex items-center justify-between px-4 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-ares-red to-red-900 border border-red-500/30 flex items-center justify-center">
+            <AppWindow size={16} className="text-white" />
           </div>
-          <div className="flex flex-col items-end gap-3">
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 pr-3 pl-1 py-1 rounded-full shadow-lg backdrop-blur-sm">
-              <button 
-                onClick={() => setIsAvatarEditorOpen(true)}
-                className="relative group block w-8 h-8 rounded-full overflow-hidden border border-white/20 hover:border-ares-gold transition-colors focus:outline-none"
-                title="Customize Identity"
-              >
-                <img 
-                  src={session?.user?.image || `https://api.dicebear.com/9.x/bottts/svg?seed=${session?.user?.id}`} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Edit3 size={12} className="text-white" />
-                </div>
-              </button>
-              <div className="flex flex-col">
-                <span className="text-zinc-300 text-xs font-bold leading-tight">{session?.user?.name || "ARES User"}</span>
-                <span className="text-zinc-500 text-[10px] font-medium leading-tight">{session?.user?.email}</span>
-              </div>
-            </div>
+          <h1 className="text-lg font-black tracking-tighter text-white">ARES<span className="text-zinc-500 font-bold">Workspace</span></h1>
+        </div>
+        <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-zinc-300 transition-colors">
+          <Menu size={20} />
+        </button>
+      </div>
+
+      {/* Overlay for mobile sidebar */}
+      {isSidebarOpen && (
+        <div className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={() => setIsSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar Navigation */}
+      <aside className={`fixed md:relative top-0 left-0 z-50 w-72 h-full bg-obsidian border-r border-white/5 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+        {/* Profile Header */}
+        <div className="p-6 border-b border-white/5 shrink-0 flex flex-col gap-4">
+          <div className="flex items-center justify-between md:hidden pb-2 mb-2 border-b border-white/5">
+             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Navigation Menu</span>
+             <button className="text-zinc-400 p-1 bg-white/5 rounded-md hover:text-white" onClick={() => setIsSidebarOpen(false)}><X size={16}/></button>
+          </div>
+          
+          <div className="flex items-center gap-3 relative">
             <button 
-              onClick={() => {
-                fetch('/api/auth/sign-out', { method: 'POST' }).then(() => {
-                  window.location.href = '/';
-                });
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 text-zinc-400 hover:text-red-400 text-xs font-bold rounded-xl transition-all"
+              onClick={() => setIsAvatarEditorOpen(true)}
+              className="relative group block w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shadow-lg hover:border-ares-red transition-all focus:outline-none shrink-0"
+              title="Customize Identity"
             >
-              <LogOut size={14} />
-              Sign Out
+              <img src={(session?.user?.image as string) || `https://api.dicebear.com/9.x/bottts/svg?seed=${session?.user?.id}`} alt="Profile" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Edit3 size={14} className="text-white" />
+              </div>
             </button>
-          </div>
-        </div>
-
-        {isUnverified && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-10 p-6 bg-ares-red/10 border border-ares-red/30 rounded-[2rem] relative overflow-hidden group"
-          >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-ares-red/5 blur-3xl rounded-full -mr-20 -mt-20 group-hover:bg-ares-red/10 transition-colors duration-500" />
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-ares-red/20 to-red-900/40 border border-ares-red/30 flex items-center justify-center shadow-xl flex-shrink-0">
-                <ShieldAlert size={32} className="text-ares-red" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-black text-white tracking-tight mb-1">Account Verification Pending</h3>
-                <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl">
-                  Your identity has been registered, but you are currently in a <span className="text-ares-red font-bold">view-only</span> state. 
-                  A team administrator must verify your membership before you can post comments, sign up for events, or appear on the public roster.
-                </p>
-              </div>
-              <div className="flex flex-col items-center md:items-end gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-ares-red/60 px-3 py-1 border border-ares-red/20 rounded-full bg-ares-red/5">Status: Locked</span>
-                <p className="text-[10px] text-zinc-600 font-medium">Auto-refreshing session...</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          {/* Create New Panel (CMS authors/admins only) */}
-          {isAuthorized && (
-          <div className="bg-black/40 backdrop-blur-xl p-5 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden flex flex-col">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-ares-gold/20 blur-3xl rounded-full" />
-            <h4 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2 z-10">
-              <PlusCircle size={14} /> Create Content
-            </h4>
-            <div className="flex flex-wrap gap-3 z-10">
-              <button
-                onClick={() => setActiveTab("blog")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-gold ${activeTab === "blog" ? "bg-gradient-to-b from-ares-gold/20 to-ares-gold/5 border border-ares-gold/50 text-ares-gold shadow-[0_0_20px_rgba(255,191,0,0.15)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <PenTool size={16} />
-                {editPostSlug ? "Edit Blog" : "Blog Post"}
-              </button>
-              <button
-                onClick={() => setActiveTab("event")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-red ${activeTab === "event" ? "bg-gradient-to-b from-ares-red/20 to-ares-red/5 border border-ares-red/50 text-ares-red shadow-[0_0_20px_rgba(192,0,0,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Calendar size={16} />
-                {editEventId ? "Edit Event" : "Event"}
-              </button>
-              <button
-                onClick={() => setActiveTab("docs")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ${activeTab === "docs" ? "bg-gradient-to-b from-ares-cyan/20 to-ares-cyan/5 border border-ares-cyan/50 text-ares-cyan shadow-[0_0_20px_rgba(0,183,235,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Book size={16} />
-                {editDocSlug ? "Edit Doc" : "Document"}
-              </button>
-            </div>
-          </div>
-          )}
-
-          {/* Manage Current Panel (CMS authors/admins only) */}
-          {isAuthorized && (
-          <div className="bg-black/40 backdrop-blur-xl p-5 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden flex flex-col">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-ares-bronze/20 blur-3xl rounded-full" />
-            <h4 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2 z-10">
-              <Edit3 size={14} /> Manage Assets
-            </h4>
-            <div className="flex flex-wrap gap-3 z-10">
-              <button
-                onClick={() => setActiveTab("manage_blog")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${activeTab === "manage_blog" ? "bg-white/10 border border-white/20 text-white shadow-lg" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <PenTool size={16} />
-                Blogs
-              </button>
-              <button
-                onClick={() => setActiveTab("manage_event")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${activeTab === "manage_event" ? "bg-white/10 border border-white/20 text-white shadow-lg" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Calendar size={16} />
-                Events
-              </button>
-              <button
-                onClick={() => setActiveTab("manage_docs")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${activeTab === "manage_docs" ? "bg-white/10 border border-white/20 text-white shadow-lg" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Book size={16} />
-                <span className="flex items-center"><span className="text-ares-red normal-case">ARES</span><span className="text-white normal-case">Lib</span></span>
-              </button>
-              <button
-                onClick={() => setActiveTab("assets")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-bronze ${activeTab === "assets" ? "bg-gradient-to-b from-ares-bronze/20 to-ares-bronze/5 border border-ares-bronze/50 text-ares-bronze shadow-[0_0_20px_rgba(205,127,50,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Image size={16} />
-                Gallery
-              </button>
-              <button
-                onClick={() => setActiveTab("integrations")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${activeTab === "integrations" ? "bg-gradient-to-b from-purple-500/20 to-purple-500/5 border border-purple-500/50 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Settings size={16} />
-                Integrations
-              </button>
-              <button
-                onClick={() => setActiveTab("analytics")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ${activeTab === "analytics" ? "bg-gradient-to-b from-ares-cyan/20 to-ares-cyan/5 border border-ares-cyan/50 text-ares-cyan shadow-[0_0_20px_rgba(0,183,235,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <BarChart3 size={16} />
-                Analytics
-              </button>
-              <button
-                onClick={() => setActiveTab("sponsors")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ${activeTab === "sponsors" ? "bg-gradient-to-b from-ares-cyan/20 to-ares-cyan/5 border border-ares-cyan/50 text-ares-cyan shadow-[0_0_20px_rgba(0,183,235,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Gem size={16} />
-                Sponsors
-              </button>
-              <button
-                onClick={() => setActiveTab("outreach")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ${activeTab === "outreach" ? "bg-gradient-to-b from-ares-cyan/20 to-ares-cyan/5 border border-ares-cyan/50 text-ares-cyan shadow-[0_0_20px_rgba(0,183,235,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Target size={16} />
-                Outreach (Impact)
-              </button>
-              <button
-                onClick={() => setActiveTab("legacy")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ${activeTab === "legacy" ? "bg-gradient-to-b from-ares-cyan/20 to-ares-cyan/5 border border-ares-cyan/50 text-ares-cyan shadow-[0_0_20px_rgba(0,183,235,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <Trophy size={16} />
-                Trophy Case
-              </button>
-            </div>
-          </div>
-          )}
-
-          {/* Community Panel (all authenticated users) */}
-          <div className={`bg-black/40 backdrop-blur-xl p-5 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden flex flex-col ${!isAuthorized ? "md:col-span-2" : ""}`}>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full" />
-            <h4 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2 z-10">
-              <User size={14} /> Community
-            </h4>
-            <div className="flex flex-wrap gap-3 z-10">
-              <button
-                onClick={() => setActiveTab("profile")}
-                className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === "profile" ? "bg-gradient-to-b from-emerald-500/20 to-emerald-500/5 border border-emerald-500/50 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-              >
-                <User size={16} />
-                My Profile
-              </button>
-              {isAdmin && (
-                <button
-                  onClick={() => setActiveTab("users")}
-                  className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${activeTab === "users" ? "bg-gradient-to-b from-orange-500/20 to-orange-500/5 border border-orange-500/50 text-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-                >
-                  <Users size={16} />
-                  Users
-                </button>
-              )}
-              {canSeeLogistics && (
-                <button
-                  onClick={() => setActiveTab("logistics")}
-                  className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm rounded-2xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-red ${activeTab === "logistics" ? "bg-gradient-to-b from-ares-red/20 to-ares-red/5 border border-ares-red/50 text-ares-red shadow-[0_0_20px_rgba(220,38,38,0.2)]" : "bg-white/5 border border-white/5 text-zinc-400 hover:text-white hover:bg-white/10"}`}
-                >
-                  <Utensils size={16} />
-                  Logistics
-                </button>
-              )}
+            <div className="flex flex-col min-w-0">
+              <span className="text-white text-sm font-bold truncate tracking-tight">{(session?.user?.name as string) || "ARES Member"}</span>
+              <span className="text-ares-gold text-[10px] font-black uppercase tracking-widest truncate">{role} • {memberType}</span>
             </div>
           </div>
         </div>
 
-        <div className="w-full">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={activeTab}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.2 }}
-              className={`w-full glass-card rounded-3xl p-6 md:p-10 border flex flex-col bg-zinc-900 shadow-2xl relative ${TAB_BORDER[activeTab] || "border-zinc-800"}`}
+        {/* Scrollable Navigation */}
+        <div className="flex-1 overflow-y-auto py-6 space-y-8 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+          
+          {/* PERSONAL */}
+          <div>
+            <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Personal</h4>
+            <div className="space-y-1 px-3">
+              <NavButton tab="profile" icon={User} label="My Profile" />
+            </div>
+          </div>
+
+          {/* AUTHORING */}
+          {isAuthorized && (
+            <div>
+              <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6 flex items-center gap-2"><PlusCircle size={12} className="text-ares-red" /> Quick Create</h4>
+              <div className="space-y-1 px-3">
+                <NavButton tab="blog" icon={PenTool} label={editPostSlug ? "Edit Post (Active)" : "New Blog Post"} />
+                <NavButton tab="event" icon={Calendar} label={editEventId ? "Edit Event (Active)" : "New Event"} />
+                <NavButton tab="docs" icon={Book} label={editDocSlug ? "Edit Doc (Active)" : "New Document"} />
+              </div>
+            </div>
+          )}
+
+          {/* CONTENT HUB */}
+          {isAuthorized && (
+            <div>
+              <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Content Hub</h4>
+              <div className="space-y-1 px-3">
+                <div className="flex items-center gap-3 px-4 py-2 mt-1 mb-1 text-[11px] font-black uppercase tracking-wider text-zinc-500">
+                  <Folders size={14} className="text-zinc-600" /> Database Manager
+                </div>
+                <NavButton tab="manage_blog" label="1. Blogs / News" sub={true} />
+                <NavButton tab="manage_event" label="2. Calendar Events" sub={true} />
+                <NavButton tab="manage_docs" label="3. ARESLib Docs" sub={true} />
+                
+                <div className="h-px bg-white/5 my-3 mx-4" />
+                <NavButton tab="assets" icon={Image} label="Media Gallery" />
+                <NavButton tab="legacy" icon={Trophy} label="Trophy Case Archive" />
+              </div>
+            </div>
+          )}
+
+          {/* OPERATIONS */}
+          {isAuthorized && (
+            <div>
+              <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Operations</h4>
+              <div className="space-y-1 px-3">
+                <NavButton tab="outreach" icon={Target} label="Outreach Tracker" />
+                <NavButton tab="sponsors" icon={Gem} label="Sponsors & Funding" />
+                <NavButton tab="analytics" icon={BarChart3} label="Analytics" />
+              </div>
+            </div>
+          )}
+
+          {/* ADMINISTRATION */}
+          {(isAdmin || canSeeLogistics) && (
+            <div>
+              <h4 className="text-[10px] uppercase font-black tracking-widest text-ares-red/80 mb-2 px-6">Administration</h4>
+              <div className="space-y-1 px-3">
+                {isAdmin && <NavButton tab="users" icon={Users} label="User Roles & Sync" />}
+                {isAdmin && <NavButton tab="integrations" icon={Settings} label="System Integrations" />}
+                {canSeeLogistics && <NavButton tab="logistics" icon={Utensils} label="Dietary / Logistics" />}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-white/5 shrink-0 bg-black/20">
+          <button 
+              onClick={() => { fetch('/api/auth/sign-out', { method: 'POST' }).then(() => { window.location.href = '/'; }); }}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/40 rounded-xl transition-all text-xs font-black uppercase tracking-wider"
             >
-              {hasOverlay && (
-                <div className={`absolute inset-0 ${overlayColor} rounded-3xl pointer-events-none mix-blend-screen`} />
-              )}
-              <div className={hasOverlay ? "relative z-10 w-full h-full" : "w-full"}>
+              <LogOut size={16} /> Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 h-full overflow-y-auto relative bg-zinc-950">
+        {/* Ambient Desktop Background effects */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-ares-red/5 blur-[150px] rounded-full pointer-events-none opacity-60 mix-blend-screen" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-ares-gold/5 blur-[150px] rounded-full pointer-events-none opacity-40 mix-blend-screen" />
+        
+        <div className="max-w-[1500px] mx-auto w-full min-h-full flex flex-col p-4 pt-24 md:p-8 relative z-10">
+          
+          {/* Main Desktop Header */}
+          <div className="hidden md:flex items-center justify-between mb-8">
+             <div className="flex items-center gap-4">
+               <div className="w-12 h-12 bg-gradient-to-br from-ares-red to-red-900 rounded-2xl flex items-center justify-center shadow-lg shadow-ares-red/20 border border-red-500/30">
+                 <AppWindow className="text-white" size={24} />
+               </div>
+               <div>
+                  <h1 className="text-3xl font-black tracking-tight text-white mb-1 leading-none">
+                    ARES Workspace
+                  </h1>
+                  <p className="text-zinc-500 text-xs font-black uppercase tracking-widest">Internal Systems Portal</p>
+               </div>
+             </div>
+             
+             {isUnverified && (
+               <span className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold rounded-full uppercase tracking-wider animate-pulse flex items-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+                 <ShieldAlert size={14} /> Locked: View Only
+               </span>
+             )}
+          </div>
+
+          <div className="flex-1 w-full bg-obsidian border border-white/5 rounded-3xl md:rounded-[2rem] shadow-2xl relative overflow-hidden flex flex-col">
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="w-full h-full p-4 sm:p-6 md:p-10 overflow-y-auto"
+              >
                 <Suspense fallback={<TabLoader />}>
                   {renderTabContent()}
                 </Suspense>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Footer inside content area */}
+          <div className="mt-6 flex items-center justify-between text-zinc-600 text-[10px] font-bold uppercase tracking-widest px-4 pb-4">
+             <span>ARES Robotics 23247</span>
+             <span>D1 Edge Server</span>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

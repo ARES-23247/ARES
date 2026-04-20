@@ -39,7 +39,6 @@ export const ensureAdmin = async (c: Context<{ Bindings: Bindings }>, next: Next
   }
 
   // RBAC: Granular path-based role checks
-  // @ts-expect-error - Better Auth additional fields
   const role = (session.user.role as string) || "unverified";
 
   // Authors can do everything EXCEPT manage users
@@ -74,7 +73,6 @@ export async function getSessionUser(c: Context<{ Bindings: Bindings }>) {
         email: session.user.email,
         name: session.user.name,
         image: session.user.image,
-        // @ts-expect-error - Better Auth role extension
         role: (session.user.role as string) || "unverified",
         member_type: profile?.member_type || "student",
       };

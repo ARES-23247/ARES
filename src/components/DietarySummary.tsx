@@ -17,7 +17,7 @@ export default function DietarySummary() {
     fetch("/api/logistics/summary", { credentials: "include" })
       .then(async (res) => {
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
+          const errData = await res.json().catch(() => ({})) as { error?: string };
           throw new Error(errData.error || `HTTP ${res.status}`);
         }
         return res.json();

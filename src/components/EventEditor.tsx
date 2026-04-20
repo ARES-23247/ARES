@@ -6,7 +6,7 @@ import AssetPickerModal from "./AssetPickerModal";
 import { compressImage } from "../utils/imageProcessor";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 
-export default function EventEditor({ editId, onClearEdit }: { editId?: string | null; onClearEdit?: () => void }) {
+export default function EventEditor({ editId, onClearEdit, userRole }: { editId?: string | null; onClearEdit?: () => void; userRole?: string | unknown }) {
   const queryClient = useQueryClient();
   const [isPending, setIsPending] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -36,6 +36,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
     location: "",
     description: "",
     coverImage: DEFAULT_COVER_IMAGE,
+    isPotluck: false,
   });
 
   const uploadFile = async (file: File): Promise<{url: string, altText?: string}> => {
@@ -73,6 +74,8 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
             description: data.event.description || "",
       // @ts-expect-error -- D1 untyped response
             coverImage: data.event.cover_image || DEFAULT_COVER_IMAGE,
+      // @ts-expect-error -- D1 untyped response
+            isPotluck: data.event.is_potluck === 1,
           });
           if (editor) {
             try {
@@ -163,7 +166,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
         }
 
         if (!editId) {
-          setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: DEFAULT_COVER_IMAGE });
+          setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: DEFAULT_COVER_IMAGE, isPotluck: false });
         }
       } else {
       // @ts-expect-error -- D1 untyped response
@@ -235,6 +238,23 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
           />
         </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <input 
+            type="checkbox" 
+            checked={form.isPotluck}
+            onChange={(e) => setForm({ ...form, isPotluck: e.target.checked })}
+            className="w-5 h-5 rounded border-zinc-700 bg-zinc-950 text-ares-red focus:ring-ares-red transition-all cursor-pointer"
+          />
+          <span className="text-sm font-bold text-zinc-300 group-hover:text-white transition-colors uppercase tracking-wider">
+            Potluck Event
+          </span>
+        </label>
+        <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-tighter">
+          Check this to enable the food sign-up sheet and dietary restriction tracking for this event.
+        </p>
       </div>
 
       <div>
@@ -350,7 +370,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
             className={`px-10 py-4 rounded-2xl font-black tracking-widest transition-all shadow-xl disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900
               ${isPending ? "bg-zinc-800 text-zinc-300 animate-pulse cursor-wait" : "bg-white text-zinc-950 hover:bg-ares-red hover:text-white hover:-translate-y-1 active:translate-y-0"}`}
           >
-            {isPending ? "COMMITTING..." : editId ? "UPDATE EVENT" : "PUBLISH EVENT"}
+            {isPending ? "COMMITTING..." : editId ? "UPDATE EVENT" : (userRole === "author" ? "SUBMIT FOR REVIEW" : "PUBLISH EVENT")}
           </button>
         </div>
       </div>

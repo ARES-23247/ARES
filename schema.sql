@@ -8,7 +8,8 @@ CREATE TABLE posts (
     author TEXT,
     cf_email TEXT,
     ast TEXT,
-    is_deleted INTEGER DEFAULT 0
+    is_deleted INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'published'
 );
 
 INSERT INTO posts (slug, title, date, snippet, thumbnail, ast) VALUES (
@@ -40,7 +41,9 @@ CREATE TABLE events (
     cover_image TEXT,
     gcal_event_id TEXT,
     cf_email TEXT,
-    is_deleted INTEGER DEFAULT 0
+    is_deleted INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'published',
+    is_potluck INTEGER DEFAULT 0
 );
 
 DROP TABLE IF EXISTS docs;
@@ -53,7 +56,8 @@ CREATE TABLE docs (
     content TEXT NOT NULL,
     cf_email TEXT,
     updated_at TEXT DEFAULT (datetime('now')),
-    is_deleted INTEGER DEFAULT 0
+    is_deleted INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'published'
 );
 
 CREATE TABLE docs_history (

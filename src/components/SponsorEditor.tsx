@@ -35,7 +35,7 @@ export default function SponsorEditor() {
     queryKey: ["admin-sponsors"],
     queryFn: async () => {
       const r = await fetch("/api/admin/sponsors");
-      const d = await r.json();
+      const d = await r.json() as { sponsors?: Sponsor[] };
       return d.sponsors || [];
     }
   });

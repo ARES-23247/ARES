@@ -229,7 +229,7 @@ export async function dispatchSocials(
           await agent.post({
             text: rt.text,
             facets: rt.facets,
-            embed: embed,
+            embed: embed as any,
             createdAt: new Date().toISOString()
           });
         } catch (err: unknown) {

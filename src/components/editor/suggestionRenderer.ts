@@ -8,9 +8,12 @@ interface SuggestionComponentRef {
 }
 
 export const suggestionRenderer = (component: ComponentType<SuggestionProps>) => {
+  let renderer: ReactRenderer | null = null;
+  let popup: Instance[] | null = null;
+
   return {
-    onStart: (props: SuggestionProps & { renderer: ReactRenderer, popup: Instance[] }) => {
-      props.renderer = new ReactRenderer(component, {
+    onStart: (props: SuggestionProps) => {
+      renderer = new ReactRenderer(component, {
         props,
         editor: props.editor,
       });
@@ -19,25 +22,25 @@ export const suggestionRenderer = (component: ComponentType<SuggestionProps>) =>
         return;
       }
 
-      props.popup = tippy('body', {
+      popup = tippy('body', {
         getReferenceClientRect: props.clientRect as GetReferenceClientRect,
         appendTo: () => document.body,
-        content: props.renderer.element,
+        content: renderer.element,
         showOnCreate: true,
         interactive: true,
         trigger: 'manual',
         placement: 'bottom-start',
-      }) as Instance[];
+      }) as unknown as Instance[];
     },
 
-    onUpdate(props: SuggestionProps & { renderer: ReactRenderer, popup: Instance[] }) {
-      props.renderer.updateProps(props);
+    onUpdate(props: SuggestionProps) {
+      renderer?.updateProps(props);
 
       if (!props.clientRect) {
         return;
       }
 
-      const tippyInstance = props.popup[0];
+      const tippyInstance = popup?.[0];
       if (tippyInstance) {
         tippyInstance.setProps({
           getReferenceClientRect: props.clientRect as GetReferenceClientRect,
@@ -45,24 +48,26 @@ export const suggestionRenderer = (component: ComponentType<SuggestionProps>) =>
       }
     },
 
-    onKeyDown(props: SuggestionProps & { renderer: ReactRenderer, popup: Instance[] }) {
+    onKeyDown(props: any) {
       if (props.event.key === 'Escape') {
-        const tippyInstance = props.popup[0];
+        const tippyInstance = popup?.[0];
         if (tippyInstance) {
           tippyInstance.hide();
         }
         return true;
       }
 
-      return (props.renderer.ref as SuggestionComponentRef)?.onKeyDown(props);
+      return (renderer?.ref as any)?.onKeyDown(props);
     },
 
-    onExit(props: SuggestionProps & { renderer: ReactRenderer, popup: Instance[] }) {
-      const tippyInstance = props.popup[0];
+    onExit() {
+      const tippyInstance = popup?.[0];
       if (tippyInstance) {
         tippyInstance.destroy();
       }
-      props.renderer.destroy();
+      renderer?.destroy();
+      renderer = null;
+      popup = null;
     },
   };
 };

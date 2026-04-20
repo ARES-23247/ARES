@@ -37,7 +37,7 @@ export default function JudgesHub() {
       const res = await fetch("/api/judges/portfolio", {
         headers: { "Authorization": `Bearer ${code}` }
       });
-      const data = await res.json();
+      const data = await res.json() as PortfolioData;
       if (res.ok) {
         setPortfolio(data);
       }
@@ -59,8 +59,7 @@ export default function JudgesHub() {
         body: JSON.stringify({ code }),
       });
 
-      const data = await res.json();
-
+      const data = await res.json() as { success: boolean, error?: string };
       if (res.ok && data.success) {
         localStorage.setItem("ares_judge_code", code);
         setIsAuthenticated(true);

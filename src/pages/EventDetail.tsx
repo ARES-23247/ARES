@@ -15,6 +15,7 @@ interface EventRow {
   location: string | null;
   description: string;
   cover_image: string | null;
+  is_potluck: number | null;
 }
 
 export default function EventDetail() {
@@ -118,7 +119,7 @@ export default function EventDetail() {
           )}
 
           {/* Sign-Up Sheet & Comments (auth-gated) */}
-          {id && <EventSignups eventId={id} />}
+          {id && <EventSignups eventId={id} isPotluck={event.is_potluck === 1} />}
           {id && <CommentSection targetType="event" targetId={id} />}
         </motion.article>
       </section>

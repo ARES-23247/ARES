@@ -11,6 +11,7 @@ interface EventItem {
   date_start: string;
   cf_email?: string;
   is_deleted?: number;
+  status?: string;
 }
 
 interface PostItem {
@@ -19,6 +20,7 @@ interface PostItem {
   date: string;
   cf_email?: string;
   is_deleted?: number;
+  status?: string;
 }
 
 interface DocItem {
@@ -29,6 +31,7 @@ interface DocItem {
   is_deleted?: number;
   is_portfolio?: number;
   is_executive_summary?: number;
+  status?: string;
 }
 
 export default function ContentManager({ 
@@ -43,7 +46,7 @@ export default function ContentManager({
   mode?: "all" | "blog" | "event" | "docs";
 }) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [view, setView] = useState<"active" | "trash">("active");
+  const [view, setView] = useState<"active" | "trash" | "pending">("active");
   const [broadcastData, setBroadcastData] = useState<{ isOpen: boolean, type: "blog" | "event", id: string, title: string }>({
     isOpen: false,
     type: "blog",
@@ -56,8 +59,7 @@ export default function ContentManager({
     queryKey: ["events"],
     queryFn: async () => {
       const res = await fetch("/dashboard/api/admin/events", { credentials: "include" });
-      const data = await res.json();
-      // @ts-expect-error -- D1 untyped response
+      const data = await res.json() as { events?: EventItem[] };
       return data.events ?? [];
     },
   });
@@ -66,8 +68,7 @@ export default function ContentManager({
     queryKey: ["posts"],
     queryFn: async () => {
       const res = await fetch("/dashboard/api/admin/posts", { credentials: "include" });
-      const data = await res.json();
-      // @ts-expect-error -- D1 untyped response
+      const data = await res.json() as { posts?: PostItem[] };
       return data.posts ?? [];
     },
   });
@@ -75,9 +76,8 @@ export default function ContentManager({
   const { data: docs = [], isLoading: loadingDocs } = useQuery<DocItem[]>({
     queryKey: ["docs"],
     queryFn: async () => {
-      const res = await fetch("/api/docs");
-      const data = await res.json();
-      // @ts-expect-error -- D1 untyped response
+      const res = await fetch("/dashboard/api/admin/docs", { credentials: "include" });
+      const data = await res.json() as { docs?: DocItem[] };
       return data.docs ?? [];
     },
   });
@@ -136,6 +136,16 @@ export default function ContentManager({
     method: "PATCH",
     invalidateKeys: ["docs"],
     body: ({ sortOrder }) => ({ sortOrder }),
+    clearConfirm: false,
+  });
+
+  const approveMutation = useContentMutation<{ type: "event" | "post" | "doc", id: string }>({
+    endpoint: ({ type, id }) => {
+      const base = type === "event" ? "events" : type === "post" ? "posts" : "docs";
+      return `/dashboard/api/admin/${base}/${id}/approve`;
+    },
+    method: "PATCH",
+    invalidateKeys: ["events", "posts", "docs"],
     clearConfirm: false,
   });
 
@@ -218,6 +228,12 @@ export default function ContentManager({
 
   const isLoading = loadingEvents || loadingPosts || loadingDocs;
 
+  const contentFilter = (item: { is_deleted?: number, status?: string }) => {
+    if (view === 'trash') return item.is_deleted === 1;
+    if (view === 'pending') return item.is_deleted !== 1 && item.status === 'pending';
+    return item.is_deleted !== 1 && (item.status === 'published' || !item.status);
+  };
+
   return (
     <div className="w-full h-full flex flex-col">
       {mode === "all" && (
@@ -233,6 +249,12 @@ export default function ContentManager({
               className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === "active" ? 'bg-zinc-800 text-ares-cyan border border-zinc-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               ACTIVE
+            </button>
+            <button 
+              onClick={() => setView("pending")}
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === "pending" ? 'bg-ares-gold/10 text-ares-gold border border-ares-gold/20 shadow-sm' : 'text-zinc-500 hover:text-ares-gold/60'}`}
+            >
+              PENDING
             </button>
             <button 
               onClick={() => setView("trash")}
@@ -255,8 +277,8 @@ export default function ContentManager({
           {(mode === "all" || mode === "event") && (
           <div className="flex flex-col">
             <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-              <h3 className={`font-bold uppercase tracking-widest text-xs ${view === 'trash' ? 'text-ares-red' : 'text-ares-gold'}`}>
-                {view === 'active' ? 'Active Events' : 'Trashed Events'}
+              <h3 className={`font-bold uppercase tracking-widest text-xs ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-ares-gold'}`}>
+                {view === 'active' ? 'Active Events' : view === 'pending' ? 'Pending Events' : 'Trashed Events'}
               </h3>
               {view === 'active' && (
                 <button 
@@ -269,10 +291,10 @@ export default function ContentManager({
               )}
             </div>
             <div className="flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar">
-              {events.filter(ev => view === 'active' ? ev.is_deleted !== 1 : ev.is_deleted === 1).length === 0 ? (
+              {events.filter(contentFilter).length === 0 ? (
                 <div className="text-zinc-500 text-xs italic py-4 text-center border border-dashed border-zinc-800/50 rounded-xl">No {view} events found.</div>
               ) : (
-                events.filter(ev => view === 'active' ? ev.is_deleted !== 1 : ev.is_deleted === 1).map((event) => (
+                events.filter(contentFilter).map((event) => (
                   <div key={event.id} className={`bg-black/40 border ${event.is_deleted === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-zinc-800/60'} rounded-xl p-4 flex flex-col justify-between gap-4 hover:border-zinc-700 transition-colors`}>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-zinc-200 truncate flex items-center gap-2">
@@ -284,7 +306,7 @@ export default function ContentManager({
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/50">
-                      {view === 'active' ? (
+                      {view === 'active' || view === 'pending' ? (
                         <>
                           <button
                             onClick={() => onEditEvent && onEditEvent(event.id)}
@@ -292,13 +314,23 @@ export default function ContentManager({
                           >
                             EDIT
                           </button>
-                          <button
-                            onClick={() => setBroadcastData({ isOpen: true, type: "event", id: event.id, title: event.title })}
-                            className="text-xs font-bold text-ares-gold/80 hover:text-ares-gold border border-ares-gold/20 hover:bg-ares-gold/10 px-3 py-1 rounded-md transition-all flex items-center gap-1.5"
-                          >
-                            <Radio size={12} className={broadcastData.isOpen && broadcastData.id === event.id ? "animate-pulse" : ""} />
-                            SEND
-                          </button>
+                          {view === 'pending' ? (
+                            <button
+                              onClick={() => approveMutation.mutate({ type: 'event', id: event.id })}
+                              disabled={approveMutation.isPending}
+                              className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan/40 border border-ares-cyan/20 px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                            >
+                              APPROVE
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setBroadcastData({ isOpen: true, type: "event", id: event.id, title: event.title })}
+                              className="text-xs font-bold text-ares-gold/80 hover:text-ares-gold border border-ares-gold/20 hover:bg-ares-gold/10 px-3 py-1 rounded-md transition-all flex items-center gap-1.5"
+                            >
+                              <Radio size={12} className={broadcastData.isOpen && broadcastData.id === event.id ? "animate-pulse" : ""} />
+                              SEND
+                            </button>
+                          )}
                           <ClickToDeleteButton 
                             id={event.id} 
                             onDelete={() => deleteEventMutation.mutate(event.id)} 
@@ -332,14 +364,14 @@ export default function ContentManager({
           {/* Published Blog Posts Column */}
           {(mode === "all" || mode === "blog") && (
           <div className="flex flex-col">
-            <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-zinc-800 pb-2 ${view === 'trash' ? 'text-ares-red' : 'text-zinc-100'}`}>
-               {view === 'active' ? 'Published Blog Posts' : 'Trashed Posts'}
+            <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-zinc-800 pb-2 ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-zinc-100'}`}>
+               {view === 'active' ? 'Published Blog Posts' : view === 'pending' ? 'Pending Posts' : 'Trashed Posts'}
             </h3>
             <div className="flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar">
-              {posts.filter(p => view === 'active' ? p.is_deleted !== 1 : p.is_deleted === 1).length === 0 ? (
+              {posts.filter(contentFilter).length === 0 ? (
                 <div className="text-zinc-500 text-xs italic py-4 text-center border border-dashed border-zinc-800/50 rounded-xl">No {view} posts found.</div>
               ) : (
-                posts.filter(p => view === 'active' ? p.is_deleted !== 1 : p.is_deleted === 1).map((post) => (
+                posts.filter(contentFilter).map((post) => (
                   <div key={post.slug} className={`bg-black/40 border ${post.is_deleted === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-zinc-800/60'} rounded-xl p-4 flex flex-col justify-between gap-4 hover:border-zinc-700 transition-colors`}>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-zinc-200 truncate flex items-center gap-2">
@@ -351,7 +383,7 @@ export default function ContentManager({
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/50">
-                      {view === 'active' ? (
+                      {view === 'active' || view === 'pending' ? (
                         <>
                           <button
                             onClick={() => onEditPost && onEditPost(post.slug)}
@@ -359,13 +391,23 @@ export default function ContentManager({
                           >
                             EDIT
                           </button>
-                          <button
-                            onClick={() => setBroadcastData({ isOpen: true, type: "blog", id: post.slug, title: post.title })}
-                            className="text-xs font-bold text-ares-gold/80 hover:text-ares-gold border border-ares-gold/20 hover:bg-ares-gold/10 px-3 py-1 rounded-md transition-all flex items-center gap-1.5"
-                          >
-                            <Radio size={12} className={broadcastData.isOpen && broadcastData.id === post.slug ? "animate-pulse" : ""} />
-                            SEND
-                          </button>
+                          {view === 'pending' ? (
+                            <button
+                              onClick={() => approveMutation.mutate({ type: 'post', id: post.slug })}
+                              disabled={approveMutation.isPending}
+                              className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan/40 border border-ares-cyan/20 px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                            >
+                              APPROVE
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setBroadcastData({ isOpen: true, type: "blog", id: post.slug, title: post.title })}
+                              className="text-xs font-bold text-ares-gold/80 hover:text-ares-gold border border-ares-gold/20 hover:bg-ares-gold/10 px-3 py-1 rounded-md transition-all flex items-center gap-1.5"
+                            >
+                              <Radio size={12} className={broadcastData.isOpen && broadcastData.id === post.slug ? "animate-pulse" : ""} />
+                              SEND
+                            </button>
+                          )}
                           <ClickToDeleteButton 
                             id={post.slug} 
                             onDelete={() => deletePostMutation.mutate(post.slug)} 
@@ -399,12 +441,12 @@ export default function ContentManager({
           {/* Documentation Column */}
           {(mode === "all" || mode === "docs") && (
           <div className="flex flex-col">
-            <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-zinc-800 pb-2 ${view === 'trash' ? 'text-ares-red' : 'text-zinc-500'}`}>
+            <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-zinc-800 pb-2 ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-zinc-500'}`}>
               <span className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   {view === 'active' ? (
                     <><span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span>&nbsp;Documentation</>
-                  ) : 'Trashed Docs'}
+                  ) : view === 'pending' ? 'Pending Docs' : 'Trashed Docs'}
                 </span>
                 <div className="flex items-center gap-2">
                   {view === 'active' && (
@@ -415,7 +457,7 @@ export default function ContentManager({
                           if (code !== null) {
                             fetch("/dashboard/api/admin/judges/codes", { method: "POST", credentials: "include" })
                               .then(res => res.json())
-                              .then(data => alert(`JUDGE ACCESS CODE: ${data.code}\nExpires: ${new Date(data.expiresAt).toLocaleDateString()}`));
+                              .then((data: any) => alert(`JUDGE ACCESS CODE: ${data.code}\nExpires: ${new Date(data.expiresAt).toLocaleDateString()}`));
                           }
                         }}
                         className="text-[10px] font-bold text-ares-gold bg-ares-gold/10 hover:bg-ares-gold/20 px-2 py-1 rounded-md transition-colors border border-ares-gold/20"
@@ -435,10 +477,10 @@ export default function ContentManager({
               </span>
             </h3>
             <div className="flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar">
-              {docs.filter(d => view === 'active' ? d.is_deleted !== 1 : d.is_deleted === 1).length === 0 ? (
+              {docs.filter(contentFilter).length === 0 ? (
                 <div className="text-zinc-500 text-xs italic py-4 text-center border border-dashed border-zinc-800/50 rounded-xl">No {view} docs found.</div>
               ) : (
-                docs.filter(d => view === 'active' ? d.is_deleted !== 1 : d.is_deleted === 1).map((doc) => (
+                docs.filter(contentFilter).map((doc) => (
                   <div key={doc.slug} className={`bg-black/40 border ${doc.is_deleted === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-zinc-800/60'} rounded-xl p-4 flex flex-col justify-between gap-4 hover:border-zinc-700 transition-colors`}>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-zinc-200 truncate flex items-center gap-2">
@@ -475,7 +517,7 @@ export default function ContentManager({
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/50">
-                      {view === 'active' ? (
+                      {view === 'active' || view === 'pending' ? (
                         <>
                           <button
                             onClick={() => onEditDoc && onEditDoc(doc.slug)}
@@ -483,13 +525,23 @@ export default function ContentManager({
                           >
                             EDIT
                           </button>
-                          <button
-                            onClick={() => exportSingleDoc(doc.slug)}
-                            className="text-xs font-bold text-zinc-400 hover:text-ares-gold bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 rounded-md transition-colors flex items-center gap-1"
-                          >
-                            <Download size={10} />
-                            EXPORT
-                          </button>
+                          {view === 'pending' ? (
+                            <button
+                              onClick={() => approveMutation.mutate({ type: 'doc', id: doc.slug })}
+                              disabled={approveMutation.isPending}
+                              className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan/40 border border-ares-cyan/20 px-3 py-1 rounded-md transition-colors disabled:opacity-50"
+                            >
+                              APPROVE
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => exportSingleDoc(doc.slug)}
+                              className="text-xs font-bold text-zinc-400 hover:text-ares-gold bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 rounded-md transition-colors flex items-center gap-1"
+                            >
+                              <Download size={10} />
+                              EXPORT
+                            </button>
+                          )}
                           <ClickToDeleteButton 
                             id={doc.slug} 
                             onDelete={() => deleteDocMutation.mutate(doc.slug)} 

@@ -7,7 +7,7 @@ import AssetPickerModal from "./AssetPickerModal";
 import { compressImage } from "../utils/imageProcessor";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 
-export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: string | null; onClearEdit?: () => void }) {
+export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSlug?: string | null; onClearEdit?: () => void; userRole?: string | unknown }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
@@ -73,7 +73,7 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
     const fetchSettings = async () => {
       try {
         const res = await fetch("/dashboard/api/admin/settings", { credentials: "include" });
-        const data = await res.json();
+        const data = await res.json() as { success: boolean, settings: Record<string, string> };
         if (data.success && data.settings) {
           const config = data.settings;
           const available = [];
@@ -278,7 +278,7 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
           className={`flex items-center justify-center min-w-[200px] px-8 py-3.5 rounded-full font-bold tracking-wide transition-all shadow-xl disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900
             ${isPending ? "bg-zinc-800 text-zinc-300 animate-pulse" : "bg-white text-zinc-950 hover:bg-ares-red hover:text-white hover:-translate-y-0.5"}`}
         >
-          {isPending ? "COMMITTING..." : editSlug ? "UPDATE ENTRY" : "PUBLISH ENTRY"}
+          {isPending ? "COMMITTING..." : editSlug ? "UPDATE ENTRY" : (userRole === "author" ? "SUBMIT FOR REVIEW" : "PUBLISH ENTRY")}
         </button>
       </div>
     </div>

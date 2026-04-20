@@ -23,7 +23,7 @@ interface TBAMatch {
 
 export default function CompetitionBanner({ eventKey, teamKey = "frc23247" }: CompetitionBannerProps) {
   // Fetch Rankings
-  const { data: rankingsData } = useQuery<{ rankings?: TBARanking[] }>({
+  const { data: rankingsData } = useQuery<{ rankings?: TBARanking[] } | null>({
     queryKey: ["tba-rankings", eventKey],
     queryFn: async () => {
       const r = await fetch(`/api/tba/rankings/${eventKey}`);
@@ -33,7 +33,7 @@ export default function CompetitionBanner({ eventKey, teamKey = "frc23247" }: Co
   });
 
   // Fetch Matches
-  const { data: matchesData } = useQuery<{ matches?: TBAMatch[] }>({
+  const { data: matchesData } = useQuery<{ matches?: TBAMatch[] } | null>({
     queryKey: ["tba-matches", eventKey],
     queryFn: async () => {
       const r = await fetch(`/api/tba/matches/${eventKey}`);

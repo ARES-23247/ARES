@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 
-export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: string | null; onClearEdit?: () => void }) {
+export default function DocsEditor({ editSlug, onClearEdit, userRole }: { editSlug?: string | null; onClearEdit?: () => void; userRole?: string | unknown }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
@@ -241,7 +241,7 @@ export default function DocsEditor({ editSlug, onClearEdit }: { editSlug?: strin
           disabled={isPending}
           className="bg-ares-gold hover:bg-white text-obsidian px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(255,184,28,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)]"
         >
-          {isPending ? "Connecting..." : editSlug ? "Update Document" : "Publish Document"}
+          {isPending ? "Connecting..." : editSlug ? "Update Document" : (userRole === "author" ? "Submit for Review" : "Publish Document")}
         </button>
       </div>
     </div>

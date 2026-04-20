@@ -32,7 +32,7 @@ export default function OutreachTracker() {
     queryKey: ["admin-outreach"],
     queryFn: async () => {
       const r = await fetch("/api/admin/outreach");
-      const d = await r.json();
+      const d = await r.json() as { logs?: OutreachLog[] };
       return d.logs || [];
     }
   });

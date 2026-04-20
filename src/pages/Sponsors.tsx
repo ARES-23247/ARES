@@ -47,7 +47,7 @@ export default function Sponsors() {
     queryKey: ["public-sponsors"],
     queryFn: async () => {
       const r = await fetch("/api/sponsors");
-      const d = await r.json();
+      const d = await r.json() as { sponsors?: Sponsor[] };
       return d.sponsors || [];
     }
   });

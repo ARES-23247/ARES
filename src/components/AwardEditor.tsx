@@ -28,7 +28,7 @@ export default function AwardEditor() {
     queryKey: ["admin-awards"],
     queryFn: async () => {
       const r = await fetch("/api/admin/awards");
-      const d = await r.json();
+      const d = await r.json() as { awards: Award[] };
       return d.awards || [];
     }
   });
