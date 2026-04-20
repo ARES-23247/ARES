@@ -12,6 +12,7 @@ interface EventItem {
   cf_email?: string;
   is_deleted?: number;
   status?: string;
+  revision_of?: string;
 }
 
 interface PostItem {
@@ -21,6 +22,7 @@ interface PostItem {
   cf_email?: string;
   is_deleted?: number;
   status?: string;
+  revision_of?: string;
 }
 
 interface DocItem {
@@ -32,6 +34,7 @@ interface DocItem {
   is_portfolio?: number;
   is_executive_summary?: number;
   status?: string;
+  revision_of?: string;
 }
 
 export default function ContentManager({ 
@@ -300,6 +303,7 @@ export default function ContentManager({
                       <div className="font-bold text-zinc-200 truncate flex items-center gap-2">
                         {event.title}
                         {event.is_deleted === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
+                        {event.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">{format(new Date(event.date_start), 'MMM do, yyyy')}</span>
@@ -377,6 +381,7 @@ export default function ContentManager({
                       <div className="font-bold text-zinc-200 truncate flex items-center gap-2">
                         {post.title}
                         {post.is_deleted === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
+                        {post.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-md">{format(new Date(post.date), 'MMM do, yyyy')}</span>
@@ -486,6 +491,7 @@ export default function ContentManager({
                       <div className="font-bold text-zinc-200 truncate flex items-center gap-2">
                         {doc.title}
                         {doc.is_deleted === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
+                        {doc.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
                         {doc.is_executive_summary === 1 && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Exec Summary</span>}
                         {doc.is_portfolio === 1 && <span className="text-[9px] font-bold text-ares-cyan bg-ares-cyan/10 border border-ares-cyan/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Portfolio</span>}
                       </div>

@@ -61,7 +61,7 @@ export default function Navbar() {
               <span className="text-xs font-bold text-zinc-300 group-hover:text-ares-gold uppercase tracking-wider">Sign In</span>
             </Link>
           )}
-          <Link to="/contact" className="clipped-button-sm bg-ares-red text-white hover:scale-105 hover:bg-ares-red transition-all shadow-[0_0_15px_rgba(192,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+          <Link to="/sponsors" className="clipped-button-sm bg-ares-red text-white hover:scale-105 hover:bg-ares-red transition-all shadow-[0_0_15px_rgba(192,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
             Support Us
           </Link>
         </div>

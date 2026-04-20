@@ -37,7 +37,7 @@ postsRouter.get("/posts/:slug", async (c) => {
 postsRouter.get("/admin/posts", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, cf_email, is_deleted, status FROM posts ORDER BY date DESC"
+      "SELECT slug, title, date, snippet, thumbnail, cf_email, is_deleted, status, revision_of FROM posts ORDER BY date DESC"
     ).all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
@@ -51,7 +51,7 @@ postsRouter.get("/admin/posts/:slug", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, content, is_deleted, status FROM posts WHERE slug = ?"
+      "SELECT slug, title, date, snippet, thumbnail, content, is_deleted, status, revision_of FROM posts WHERE slug = ?"
     ).bind(slug).first();
 
     if (!row) return c.json({ error: "Post not found" }, 404);
@@ -181,8 +181,33 @@ postsRouter.put("/admin/posts/:slug", async (c) => {
     const snippet = buildSnippet(body.ast);
 
     const user = await getSessionUser(c);
-    const status = user?.role === "admin" ? "published" : "pending";
+    
+    if (user?.role !== "admin") {
+      // ── Shadow Revision Logic (Student Edits) ──
+      const suffix = Math.random().toString(36).substring(2, 6);
+      const revSlug = `${slug}-rev-${suffix}`;
+      const dateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "2-digit" });
 
+      await c.env.DB.prepare(
+        `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, revision_of)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
+      ).bind(
+        revSlug,
+        body.title,
+        body.author || "ARES Team",
+        dateStr,
+        body.coverImageUrl || "/gallery_1.png",
+        snippet,
+        astStr,
+        user?.email || "anonymous_author",
+        slug
+      ).run();
+
+      return c.json({ success: true, slug: revSlug });
+    }
+
+    // ── Direct Update Logic (Admin Edits) ──
+    const status = "published";
     await c.env.DB.prepare(
       `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = ? WHERE slug = ?`
     )
@@ -246,6 +271,21 @@ postsRouter.patch("/admin/posts/:slug/approve", async (c) => {
     const user = await getSessionUser(c);
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
     const slug = c.req.param("slug");
+    
+    type PostRow = { revision_of?: string; title: string; author: string; thumbnail: string; snippet: string; ast: string };
+    const row = await c.env.DB.prepare(
+      "SELECT revision_of, title, author, thumbnail, snippet, ast FROM posts WHERE slug = ?"
+    ).bind(slug).first<PostRow>();
+
+    if (row && row.revision_of) {
+      // Merge shadow revision into original, then delete shadow
+      await c.env.DB.prepare(
+        "UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = 'published' WHERE slug = ?"
+      ).bind(row.title, row.author || "ARES Team", row.thumbnail, row.snippet, row.ast, row.revision_of).run();
+      await c.env.DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
+      return c.json({ success: true });
+    }
+
     await c.env.DB.prepare("UPDATE posts SET status = 'published' WHERE slug = ?").bind(slug).run();
     return c.json({ success: true });
   } catch (err) {

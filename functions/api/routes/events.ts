@@ -49,7 +49,7 @@ eventsRouter.get("/calendar", async (c) => {
 eventsRouter.get("/admin/events", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck FROM events ORDER BY date_start ASC"
+      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, revision_of FROM events ORDER BY date_start ASC"
     ).all();
     return c.json({ events: results ?? [] });
   } catch (err) {
@@ -171,7 +171,23 @@ eventsRouter.put("/admin/events/:id", async (c) => {
     }
 
     const user = await getSessionUser(c);
-    const status = user?.role === "admin" ? "published" : "pending";
+
+    if (user?.role !== "admin") {
+      // ── Shadow Revision Logic (Student Edits) ──
+      const revId = `${paramId}-rev-${Math.random().toString(36).substring(2, 6)}`;
+      await c.env.DB.prepare(
+        `INSERT INTO events (id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, revision_of)
+         VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?)`
+      ).bind(
+        revId, title, dateStart, dateEnd || null, location || "", description || "", coverImage || "",
+        gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, paramId
+      ).run();
+      
+      const finalStatus = warnings.length > 0 ? 207 : 200;
+      return c.json({ success: true, id: revId, warning: warnings.length > 0 ? warnings.join(" | ") : undefined }, finalStatus as 200 | 207);
+    }
+
+    const status = "published";
 
     await c.env.DB.prepare(
       `UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ? WHERE id = ?`
@@ -271,6 +287,18 @@ eventsRouter.patch("/admin/events/:id/approve", async (c) => {
     const user = await getSessionUser(c);
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
+
+    type EventRow = { revision_of?: string; title: string; date_start: string; date_end: string; location: string; description: string; cover_image: string; gcal_event_id: string; is_potluck: number };
+    const row = await c.env.DB.prepare("SELECT * FROM events WHERE id = ?").bind(id).first<EventRow>();
+
+    if (row && row.revision_of) {
+      await c.env.DB.prepare(
+        "UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = 'published', is_potluck = ? WHERE id = ?"
+      ).bind(row.title, row.date_start, row.date_end, row.location, row.description, row.cover_image, row.gcal_event_id, row.is_potluck, row.revision_of).run();
+      await c.env.DB.prepare("DELETE FROM events WHERE id = ?").bind(id).run();
+      return c.json({ success: true });
+    }
+
     await c.env.DB.prepare("UPDATE events SET status = 'published' WHERE id = ?").bind(id).run();
     return c.json({ success: true });
   } catch (err) {

@@ -145,17 +145,72 @@ export default function Sponsors() {
         <motion.footer 
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          className="mt-32 p-12 rounded-[3rem] bg-gradient-to-br from-ares-red/20 to-zinc-900 border border-ares-red/20 text-center"
+          className="mt-32 p-12 rounded-[3rem] bg-gradient-to-br from-ares-red/20 to-zinc-900 border border-ares-red/20 text-left flex flex-col lg:flex-row gap-12 overflow-hidden relative"
         >
-          <h3 className="text-3xl font-black text-white mb-4">Join our engineering journey.</h3>
-          <p className="text-zinc-400 mb-8 max-w-xl mx-auto">Help us build the next generation of robotics. We are always looking for partners who share our passion for excellence.</p>
-          <a 
-            href="mailto:ares@aresfirst.org"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-ares-red text-white font-black rounded-2xl hover:shadow-[0_0_40px_rgba(220,38,38,0.4)] transition-all"
-          >
-            Become a Sponsor
-            <ArrowRight size={20} />
-          </a>
+          {/* Subtle grid pattern background */}
+          <div className="absolute inset-0 bg-[url('https://api.aresfirst.org/assets/grid.svg')] opacity-5 mix-blend-overlay pointer-events-none"></div>
+
+          <div className="flex-1 relative z-10 flex flex-col justify-between">
+            <div>
+              <h3 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter drop-shadow-lg">Join the<br/><span className="text-ares-red italic">Engineering Journey.</span></h3>
+              <p className="text-zinc-400 text-lg mb-8 max-w-xl leading-relaxed">
+                Help us build the next generation of robotics. We are always looking for partners who share our passion for excellence, education, and innovation. Whether you can provide mentorship, machining, material donations, or financial grants, your support is the foundation of our success.
+              </p>
+            </div>
+            
+            <div className="mt-12 lg:mt-0">
+              <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs mb-3">Or email the executive board directly</p>
+              <a href="mailto:ares@aresfirst.org" className="text-2xl font-bold text-ares-red hover:text-white transition-colors flex items-center gap-3 w-fit group">
+                ares@aresfirst.org <span className="group-hover:translate-x-1 transition-transform"><ArrowRight size={20} /></span>
+              </a>
+            </div>
+          </div>
+          
+          <div className="flex-1 relative z-10 bg-zinc-950/80 p-8 rounded-3xl border border-white/5 shadow-2xl backdrop-blur-md">
+            <h4 className="text-xl font-black text-white mb-6 uppercase tracking-widest flex items-center gap-3">
+              <Heart size={20} className="text-ares-red fill-ares-red/20" /> Become a Sponsor
+            </h4>
+            <form className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="name-input" className="block text-xs font-bold text-ares-red uppercase tracking-widest mb-1.5 ml-1">Company / Name</label>
+                  <input id="name-input" type="text" className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="Stark Industries" />
+                </div>
+                <div>
+                  <label htmlFor="email-input" className="block text-xs font-bold text-ares-red uppercase tracking-widest mb-1.5 ml-1">Email</label>
+                  <input id="email-input" type="email" className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="you@stark.com" />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="subject-select" className="block text-xs font-bold text-ares-red uppercase tracking-widest mb-1.5 ml-1">Sponsorship Level</label>
+                <div className="relative">
+                  <select id="subject-select" className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner appearance-none">
+                    <option>Interested in Details</option>
+                    <option>Titanium Tier ($5000+)</option>
+                    <option>Gold Tier ($2500+)</option>
+                    <option>Silver Tier ($1000+)</option>
+                    <option>Bronze Tier (Other)</option>
+                    <option>In-Kind Donation / Mentorship</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-zinc-600">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="message-textarea" className="block text-xs font-bold text-ares-red uppercase tracking-widest mb-1.5 ml-1">Message</label>
+                <textarea id="message-textarea" rows={4} className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all resize-none shadow-inner" placeholder="We'd love to partner with Team ARES to..."></textarea>
+              </div>
+              <div className="pt-2">
+                <button onClick={(e) => { e.preventDefault(); alert("Thanks for your interest! A student or mentor will email you shortly."); }} className="px-8 py-3.5 w-full bg-ares-red text-white font-black uppercase tracking-widest rounded-xl hover:bg-red-600 hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3">
+                  Submit Interest Request <ArrowRight size={18} />
+                </button>
+                <p className="text-center text-[10px] text-zinc-600 font-mono uppercase tracking-tighter mt-4">
+                  ARES 23247 operates under a 501(c)(3) nonprofit umbrella. All donations are tax-deductible.
+                </p>
+              </div>
+            </form>
+          </div>
         </motion.footer>
       </div>
     </div>

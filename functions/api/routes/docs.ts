@@ -85,7 +85,7 @@ docsRouter.get("/docs/:slug", async (c) => {
 docsRouter.get("/admin/docs", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, category, sort_order, description, is_portfolio, is_executive_summary, is_deleted, status FROM docs ORDER BY category, sort_order ASC"
+      "SELECT slug, title, category, sort_order, description, is_portfolio, is_executive_summary, is_deleted, status, revision_of FROM docs ORDER BY category, sort_order ASC"
     ).all();
     return c.json({ docs: results ?? [] });
   } catch (err) {
@@ -139,6 +139,18 @@ docsRouter.post("/admin/docs", async (c) => {
     }
 
     const user = await getSessionUser(c);
+    
+    if (user?.role !== "admin" && existing) {
+       // ── Shadow Revision Logic (Student Edits) ──
+       const revSlug = `${slug}-rev-${Math.random().toString(36).substring(2, 6)}`;
+       await c.env.DB.prepare(
+        `INSERT INTO docs (slug, title, category, sort_order, description, content, cf_email, updated_at, is_portfolio, is_executive_summary, status, revision_of) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, 'pending', ?)`
+       ).bind(revSlug, title, category, sortOrder || 0, description || "", content, email, isPortfolio ? 1 : 0, isExecutiveSummary ? 1 : 0, slug).run();
+       
+       return c.json({ success: true, slug: revSlug });
+    }
+
     const status = user?.role === "admin" ? "published" : "pending";
 
     await c.env.DB.prepare(
@@ -211,6 +223,18 @@ docsRouter.patch("/admin/docs/:slug/approve", async (c) => {
     const user = await getSessionUser(c);
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
     const slug = c.req.param("slug");
+
+    type DocRow = { revision_of?: string; title: string; category: string; sort_order: number; description: string; content: string; is_portfolio: number; is_executive_summary: number };
+    const row = await c.env.DB.prepare("SELECT * FROM docs WHERE slug = ?").bind(slug).first<DocRow>();
+
+    if (row && row.revision_of) {
+      await c.env.DB.prepare(
+        "UPDATE docs SET title = ?, category = ?, sort_order = ?, description = ?, content = ?, is_portfolio = ?, is_executive_summary = ?, status = 'published', updated_at = datetime('now') WHERE slug = ?"
+      ).bind(row.title, row.category, row.sort_order, row.description, row.content, row.is_portfolio ? 1 : 0, row.is_executive_summary ? 1 : 0, row.revision_of).run();
+      await c.env.DB.prepare("DELETE FROM docs WHERE slug = ?").bind(slug).run();
+      return c.json({ success: true });
+    }
+
     await c.env.DB.prepare("UPDATE docs SET status = 'published' WHERE slug = ?").bind(slug).run();
     return c.json({ success: true });
   } catch (err) {
