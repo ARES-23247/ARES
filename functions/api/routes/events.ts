@@ -517,9 +517,9 @@ eventsRouter.get("/events/:id/signups", async (c) => {
       member_type: user?.member_type || null,
       can_manage: isManagement,
     });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("[Signups GET]", err);
-    return c.json({ error: "Failed to fetch signups" }, 500);
+    return c.json({ error: "Failed to fetch signups: " + ((err as Error)?.message || String(err)) }, 500);
   }
 });
 

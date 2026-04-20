@@ -162,7 +162,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-black flex items-center gap-2">
             <ClipboardList size={20} className="text-ares-gold" />
-            Sign-Up Sheet ({signups.length})
+            RSVPs & Sign-Ups ({signups.length})
           </h3>
           
           {/* Self Check-in Button */}
@@ -224,7 +224,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                 </tr>
               ))}
               {signups.length === 0 && (
-                <tr><td colSpan={4} className="py-12 text-center text-zinc-600 text-sm">No sign-ups yet. Be the first!</td></tr>
+                <tr><td colSpan={5} className="py-12 text-center text-zinc-600 text-sm">No RSVPs yet. Be the first!</td></tr>
               )}
             </tbody>
           </table>
@@ -242,7 +242,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-6 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-black text-ares-gold uppercase tracking-[0.2em]">
-                {mySignup !== null ? "Update Your Entry" : "Join the Sheet"}
+                {mySignup !== null ? "Update Your RSVP" : "RSVP to this Event"}
               </p>
               <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">ARES Event Protocol v3.0</span>
             </div>
@@ -279,7 +279,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                 className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-ares-gold/10 hover:bg-ares-gold/20 border border-ares-gold/30 text-ares-gold rounded-xl text-sm font-black uppercase tracking-widest transition-all disabled:opacity-50"
               >
                 {isSaving ? <RefreshCw size={16} className="animate-spin" /> : mySignup !== null ? <Save size={16} /> : <Plus size={16} />}
-                {mySignup !== null ? "Update" : "Sign Up"}
+                {mySignup !== null ? "Update RSVP" : "RSVP Here"}
               </button>
               {mySignup !== null && signups.some(s => s.is_own) && (
                 <button onClick={handleRemove}
