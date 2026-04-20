@@ -1193,6 +1193,32 @@ apiRouter.get("/docs/:slug", async (c) => {
   }
 });
 
+// ── GET /api/admin/docs/export-all — export all docs as JSON backup (admin) ──
+apiRouter.get("/admin/docs/export-all", ensureAdmin, async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      `SELECT slug, title, category, sort_order, description, content FROM docs WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY category, sort_order`
+    ).all();
+
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      version: "aresweb-docs-v1",
+      count: results.length,
+      docs: results,
+    };
+
+    return new Response(JSON.stringify(backup, null, 2), {
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Disposition": `attachment; filename="aresweb-docs-backup-${new Date().toISOString().slice(0, 10)}.json"`,
+      },
+    });
+  } catch (err) {
+    console.error("Docs export error:", err);
+    return c.json({ error: "Export failed" }, 500);
+  }
+});
+
 // ── POST /api/admin/docs — create/update a doc (admin) ────────────────
 apiRouter.post("/admin/docs", async (c) => {
   try {

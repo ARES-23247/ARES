@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ChevronUp, ChevronDown, Radio } from "lucide-react";
+import { ChevronUp, ChevronDown, Radio, Download } from "lucide-react";
 import BroadcastModal from "./BroadcastModal";
 
 interface EventItem {
@@ -201,6 +201,41 @@ export default function ContentManager({
       alert(err.message);
     }
   });
+
+  const exportSingleDoc = async (slug: string) => {
+    try {
+      const res = await fetch(`/api/docs/${slug}`);
+      const data = await res.json();
+      // @ts-expect-error -- D1 untyped response
+      const doc = data.doc;
+      if (!doc) { alert("Doc not found."); return; }
+      const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Failed to export document.");
+    }
+  };
+
+  const exportAllDocs = async () => {
+    try {
+      const res = await fetch("/dashboard/api/admin/docs/export-all", { credentials: "include" });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `aresweb-docs-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Failed to export all documents.");
+    }
+  };
 
   const ClickToDeleteButton = ({ 
     id, 
@@ -426,10 +461,21 @@ export default function ContentManager({
           {(mode === "all" || mode === "docs") && (
           <div className="flex flex-col">
             <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-zinc-800 pb-2 ${view === 'trash' ? 'text-ares-red' : 'text-zinc-500'}`}>
-              <span className="flex items-center">
-                {view === 'active' ? (
-                  <><span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span>&nbsp;Documentation</>
-                ) : 'Trashed Docs'}
+              <span className="flex items-center justify-between">
+                <span className="flex items-center">
+                  {view === 'active' ? (
+                    <><span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span>&nbsp;Documentation</>
+                  ) : 'Trashed Docs'}
+                </span>
+                {view === 'active' && (
+                  <button
+                    onClick={exportAllDocs}
+                    className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 rounded-md transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan normal-case tracking-normal"
+                  >
+                    <Download size={12} />
+                    BACKUP ALL
+                  </button>
+                )}
               </span>
             </h3>
             <div className="flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar">
@@ -478,6 +524,13 @@ export default function ContentManager({
                             className="text-xs font-bold text-zinc-400 hover:text-ares-cyan bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 rounded-md transition-colors"
                           >
                             EDIT
+                          </button>
+                          <button
+                            onClick={() => exportSingleDoc(doc.slug)}
+                            className="text-xs font-bold text-zinc-400 hover:text-ares-gold bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 rounded-md transition-colors flex items-center gap-1"
+                          >
+                            <Download size={10} />
+                            EXPORT
                           </button>
                           <ClickToDeleteButton 
                             id={doc.slug} 
