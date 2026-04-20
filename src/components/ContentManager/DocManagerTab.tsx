@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Download, ChevronUp, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
-import { DocItem, ViewType, ClickToDeleteButton, contentFilter } from "./shared";
+import { DocItem, ViewType, ClickToDeleteButton, contentFilter, ContentMutationResult } from "./shared";
 import RevisionManager from "../RevisionManager";
 
 interface DocManagerTabProps {
@@ -10,10 +10,10 @@ interface DocManagerTabProps {
   onEditDoc?: (slug: string) => void;
   confirmId: string | null;
   setConfirmId: (id: string | null) => void;
-  approveMutation: any;
-  rejectMutation: any;
-  restoreMutation: any;
-  purgeMutation: any;
+  approveMutation: ContentMutationResult;
+  rejectMutation: ContentMutationResult;
+  restoreMutation: ContentMutationResult;
+  purgeMutation: ContentMutationResult;
 }
 
 export default function DocManagerTab({
@@ -53,7 +53,7 @@ export default function DocManagerTab({
   const exportSingleDoc = async (slug: string) => {
     try {
       const res = await fetch(`/api/docs/${slug}`);
-      const data = await res.json() as { doc?: any };
+      const data = await res.json() as { doc?: DocItem };
       const doc = data.doc;
       if (!doc) { alert("Doc not found."); return; }
       const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });

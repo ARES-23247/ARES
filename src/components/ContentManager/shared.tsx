@@ -38,8 +38,6 @@ export interface DocItem {
   revision_of?: string;
 }
 
-export type ViewType = "active" | "trash" | "pending";
-
 export const ClickToDeleteButton = ({ 
   id, 
   onDelete, 

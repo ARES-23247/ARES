@@ -200,8 +200,8 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
         setErrorMsg(data.error || "Failed to publish event");
       }
     },
-    onError: (err: any) => {
-      setErrorMsg(err.message || "Network error — could not reach the API.");
+    onError: (err: unknown) => {
+      setErrorMsg((err as Error).message || "Network error — could not reach the API.");
     }
   });
 

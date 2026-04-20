@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { Radio } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
-import { PostItem, ViewType, ClickToDeleteButton, contentFilter } from "./shared";
+import { PostItem, ViewType, ClickToDeleteButton, contentFilter, ContentMutationResult } from "./shared";
 import RevisionManager from "../RevisionManager";
 
 interface PostManagerTabProps {
@@ -11,11 +12,11 @@ interface PostManagerTabProps {
   confirmId: string | null;
   setConfirmId: (id: string | null) => void;
   broadcastData: { isOpen: boolean, id: string };
-  setBroadcastData: (data: any) => void;
-  approveMutation: any;
-  rejectMutation: any;
-  restoreMutation: any;
-  purgeMutation: any;
+  setBroadcastData: (data: { isOpen: boolean, type: "blog" | "event", id: string, title: string }) => void;
+  approveMutation: ContentMutationResult;
+  rejectMutation: ContentMutationResult;
+  restoreMutation: ContentMutationResult;
+  purgeMutation: ContentMutationResult;
 }
 
 export default function PostManagerTab({

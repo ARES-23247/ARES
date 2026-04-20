@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { Radio } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
-import { EventItem, ViewType, ClickToDeleteButton, contentFilter } from "./shared";
+import { EventItem, ViewType, ClickToDeleteButton, contentFilter, ContentMutationResult } from "./shared";
 
 interface EventManagerTabProps {
   view: ViewType;
@@ -10,11 +10,11 @@ interface EventManagerTabProps {
   confirmId: string | null;
   setConfirmId: (id: string | null) => void;
   broadcastData: { isOpen: boolean, id: string };
-  setBroadcastData: (data: any) => void;
-  approveMutation: any;
-  rejectMutation: any;
-  restoreMutation: any;
-  purgeMutation: any;
+  setBroadcastData: (data: { isOpen: boolean, type: "blog" | "event", id: string, title: string }) => void;
+  approveMutation: ContentMutationResult;
+  rejectMutation: ContentMutationResult;
+  restoreMutation: ContentMutationResult;
+  purgeMutation: ContentMutationResult;
 }
 
 export default function EventManagerTab({
@@ -49,8 +49,9 @@ export default function EventManagerTab({
     method: "POST",
     invalidateKeys: ["events"],
     clearConfirm: false,
-    onSuccess: (data: any) => {
-      alert(`Sync Complete! Fetched ${data.synced} events. (${data.newEvents} new, ${data.updatedEvents} updated)`);
+    onSuccess: (data: unknown) => {
+      const res = data as { synced: number; newEvents: number; updatedEvents: number };
+      alert(`Sync Complete! Fetched ${res.synced} events. (${res.newEvents} new, ${res.updatedEvents} updated)`);
     },
   });
 

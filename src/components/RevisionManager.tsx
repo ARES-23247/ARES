@@ -51,8 +51,8 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
       queryClient.invalidateQueries({ queryKey: [type === "doc" ? "docs" : "posts"] });
       onClose();
     },
-    onError: (err: any) => {
-      alert(`Error: ${err.message}`);
+    onError: (err: unknown) => {
+      alert(`Error: ${(err as Error).message || String(err)}`);
     }
   });
 
