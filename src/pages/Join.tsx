@@ -66,7 +66,7 @@ export default function Join() {
       </section>
 
       <section className="py-20 bg-zinc-950 relative">
-        <GreekMeander variant="thin" opacity="opacity-30" className="absolute top-0 left-0" />
+        <GreekMeander variant="thin" opacity="opacity-50" className="absolute top-0 left-0" />
         
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16">
           <motion.div 

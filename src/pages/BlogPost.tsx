@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { trackPageView } from "../utils/analytics";
+import { useSession } from "../utils/auth-client";
+import { Edit2 } from "lucide-react";
 
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import CommentSection from "../components/CommentSection";
@@ -20,6 +22,11 @@ interface PostRow {
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
+  const { data: session } = useSession();
+  
+  // @ts-expect-error - Better Auth session type overrides
+  const userRole = (session?.user?.role as string) || "user";
+  const isEditor = userRole === "admin" || userRole === "author";
 
   const { data: post, isLoading, isError } = useQuery<PostRow>({
     queryKey: ["post", slug],
@@ -76,6 +83,14 @@ export default function BlogPost() {
                  <span className="text-sm text-white/80">{post.author_nickname || post.cf_email?.split('@')[0] || "Author"}</span>
                </div>
              )}
+            {isEditor && (
+              <Link 
+                to={`/dashboard?editPost=${post.slug}`}
+                className="flex items-center gap-2 ml-auto px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-ares-cyan/10 hover:bg-ares-cyan text-ares-cyan hover:text-black border border-ares-cyan/30 transition-all shadow-lg backdrop-blur-sm"
+              >
+                <Edit2 size={14} /> Edit Post
+              </Link>
+            )}
           </div>
         </motion.header>
         <motion.article 

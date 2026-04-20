@@ -18,11 +18,17 @@ interface EventRow {
   is_potluck: number | null;
 }
 
-import { Calendar } from "lucide-react";
+import { Calendar, Edit2 } from "lucide-react";
 import { GreekMeander } from "../components/GreekMeander";
+import { useSession } from "../utils/auth-client";
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  const { data: session } = useSession();
+  
+  // @ts-expect-error - Better Auth session type overrides
+  const userRole = (session?.user?.role as string) || "user";
+  const isEditor = userRole === "admin" || userRole === "author";
 
   const { data: event, isLoading, isError } = useQuery<EventRow>({
     queryKey: ["event", id],
@@ -99,7 +105,7 @@ export default function EventDetail() {
     >
       {/* ─── STANDALONE EVENT HERO ─── */}
       <section className="relative w-full h-[50vh] min-h-[400px] flex items-center overflow-hidden bg-obsidian border-b-4 border-ares-bronze">
-        <GreekMeander variant="thick" opacity="opacity-40" className="absolute bottom-[-1px] left-0 z-10" />
+        <GreekMeander variant="thick" opacity="opacity-60" className="absolute bottom-[-1px] left-0 z-10" />
         <img src={event.cover_image || DEFAULT_COVER_IMAGE} alt={event.title} className={`absolute inset-0 w-full h-full opacity-60 mix-blend-luminosity ${event.cover_image ? 'object-cover' : 'object-contain p-16 bg-black/80'}`} />
         <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/70 to-transparent"></div>
         
@@ -127,6 +133,14 @@ export default function EventDetail() {
               >
                 <Calendar size={14} /> Add to Calendar
               </button>
+            )}
+            {isEditor && (
+              <Link 
+                to={`/dashboard?editEvent=${event.id}`}
+                className="w-fit flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-ares-cyan/10 hover:bg-ares-cyan text-ares-cyan hover:text-black border border-ares-cyan/30 transition-all shadow-lg backdrop-blur-sm"
+              >
+                <Edit2 size={14} /> Edit Event
+              </Link>
             )}
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight uppercase font-heading drop-shadow-2xl">

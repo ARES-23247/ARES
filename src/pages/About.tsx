@@ -86,7 +86,7 @@ export default function About() {
     <div className="flex flex-col w-full">
       {/* ─── HERO ─── */}
       <section className="py-32 bg-obsidian text-marble relative overflow-hidden">
-        <GreekMeander variant="thin" opacity="opacity-20" className="absolute top-0 left-0" />
+        <GreekMeander variant="thin" opacity="opacity-40" className="absolute top-0 left-0" />
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <p className="text-ares-bronze uppercase tracking-[0.4em] text-xs font-bold mb-6 font-heading">Our Community</p>
           <h1 className="text-5xl md:text-8xl font-bold text-white mb-8 font-heading uppercase">About ARES</h1>
