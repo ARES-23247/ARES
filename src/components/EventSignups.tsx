@@ -283,9 +283,9 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
               </button>
               {mySignup !== null && signups.some(s => s.is_own) && (
                 <button onClick={handleRemove}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded-xl text-sm font-black uppercase tracking-widest transition-all"
+                  className="flex flex-1 md:flex-none items-center justify-center gap-2 px-6 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded-xl text-sm font-black uppercase tracking-widest transition-all"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={16} /> Cancel RSVP
                 </button>
               )}
             </div>
