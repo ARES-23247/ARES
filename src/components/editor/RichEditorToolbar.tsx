@@ -3,7 +3,7 @@
  * in the ARES dashboard (Docs, Blog, Events).
  *
  * Sticks just below the navbar (top: 64px) as the user scrolls, giving a
- * word-processor feel. Includes an Export .HTML button.
+ * word-processor feel. Includes Export .HTML / .JSON and Import .DOCX / .JSON.
  */
 import { useState, useRef, useCallback } from "react";
 import type { Editor } from "@tiptap/react";
@@ -80,12 +80,28 @@ function exportAsHtml(editor: Editor, title: string) {
   URL.revokeObjectURL(url);
 }
 
+/* ---------- Helper: export JSON AST (lossless, for site-to-site sharing) ---------- */
+function exportAsJson(editor: Editor, title: string) {
+  const ast = editor.getJSON();
+  const payload = { title: title || "ARES Document", exportedAt: new Date().toISOString(), ast };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${(title || "ares-document").replace(/[^a-zA-Z0-9-_ ]/g, "").replace(/\s+/g, "-").toLowerCase()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 /* ---------- Component ---------- */
 export default function RichEditorToolbar({ editor, documentTitle }: RichEditorToolbarProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSimPickerOpen, setIsSimPickerOpen] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
+  const jsonImportRef = useRef<HTMLInputElement>(null);
 
   const handleDocImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,6 +128,23 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
       console.error(err);
     } finally {
       setIsImporting(false);
+      e.target.value = "";
+    }
+  }, [editor]);
+
+  const handleJsonImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      // Support both raw AST and our export wrapper format
+      const ast = parsed.ast || parsed;
+      editor.commands.setContent(ast);
+    } catch (err) {
+      console.error("Failed to import JSON:", err);
+      alert("Invalid JSON file. Expected an ARES export (.json) or raw Tiptap AST.");
+    } finally {
       e.target.value = "";
     }
   }, [editor]);
@@ -233,10 +266,27 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
 
         <button
           type="button"
+          onClick={() => jsonImportRef.current?.click()}
+          className="px-4 py-2 rounded-lg text-sm font-bold transition-all border border-purple-500/30 text-purple-500 hover:bg-purple-500 hover:text-white shadow-sm"
+        >
+          Import .JSON
+        </button>
+        <input ref={jsonImportRef} type="file" accept=".json" className="hidden" onChange={handleJsonImport} />
+
+        <button
+          type="button"
           onClick={() => exportAsHtml(editor, documentTitle || "")}
           className="px-4 py-2 rounded-lg text-sm font-bold transition-all border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white shadow-sm"
         >
           Export .HTML
+        </button>
+
+        <button
+          type="button"
+          onClick={() => exportAsJson(editor, documentTitle || "")}
+          className="px-4 py-2 rounded-lg text-sm font-bold transition-all border border-purple-500/30 text-purple-500 hover:bg-purple-500 hover:text-white shadow-sm"
+        >
+          Export .JSON
         </button>
       </div>
 
