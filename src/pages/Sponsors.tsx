@@ -69,6 +69,7 @@ export default function Sponsors() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,11 +86,15 @@ export default function Sponsors() {
           metadata: { level, message }
         }),
       });
-      if (!response.ok) throw new Error("Failed");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed");
+      }
       setSubmitStatus("success");
       setName(""); setEmail(""); setLevel("Interested in Details"); setMessage("");
-    } catch {
+    } catch (err) {
       setSubmitStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "Something went wrong. Please try again or email us directly.");
     } finally {
       setIsSubmitting(false);
     }
@@ -212,7 +217,7 @@ export default function Sponsors() {
             )}
             {submitStatus === "error" && (
               <div className="bg-ares-red/10 border border-ares-red/20 text-ares-red p-4 rounded-xl mb-6 text-sm font-bold">
-                Something went wrong. Please try again or email us directly.
+                {errorMessage === "Failed" ? "Something went wrong. Please try again or email us directly." : errorMessage}
               </div>
             )}
             <form className="space-y-5" onSubmit={handleSubmit}>

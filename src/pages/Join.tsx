@@ -15,6 +15,7 @@ export default function Join() {
   const [additional, setAdditional] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,11 +32,15 @@ export default function Join() {
         body: JSON.stringify({ type: role, name, email, metadata }),
       });
 
-      if (!response.ok) throw new Error("Failed");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed");
+      }
       setSubmitStatus("success");
       setName(""); setEmail(""); setSchool(""); setGrade(""); setOccupation(""); setInterests([]); setAdditional("");
-    } catch {
+    } catch (err) {
       setSubmitStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -149,7 +154,7 @@ export default function Join() {
               )}
               {submitStatus === "error" && (
                 <div className="bg-ares-red/10 border border-ares-red/20 text-ares-red p-4 rounded-xl mb-6 text-sm font-bold">
-                  Something went wrong. Please try again.
+                  {errorMessage === "Failed" ? "Something went wrong. Please try again." : errorMessage}
                 </div>
               )}
 
