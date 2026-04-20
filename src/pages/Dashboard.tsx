@@ -1,22 +1,23 @@
-import BlogEditor from "@/components/BlogEditor";
-import EventEditor from "@/components/EventEditor";
-import ContentManager from "@/components/ContentManager";
-import AssetManager from "@/components/AssetManager";
-import DocsEditor from "@/components/DocsEditor";
-import IntegrationsManager from "@/components/IntegrationsManager";
-import AvatarEditor from "@/components/AvatarEditor";
-import ProfileEditor from "@/components/ProfileEditor";
-import AdminUsers from "@/components/AdminUsers";
-import DietarySummary from "@/components/DietarySummary";
-import AnalyticsDashboard from "@/components/AnalyticsDashboard";
-import SponsorEditor from "@/components/SponsorEditor";
-import OutreachTracker from "@/components/OutreachTracker";
-import AwardEditor from "@/components/AwardEditor";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { PenTool, Calendar, Book, Image, LayoutGrid, PlusCircle, Edit3, Settings, ShieldAlert, Lock, RefreshCw, LogOut, User, Users, Utensils, BarChart3, Gem, Target, Trophy } from "lucide-react";
-/* Better Auth imports removed since we use /api/auth-check directly */
+
+// ── Lazy-loaded Tab Components ───────────────────────────────────────
+const BlogEditor = lazy(() => import("@/components/BlogEditor"));
+const EventEditor = lazy(() => import("@/components/EventEditor"));
+const ContentManager = lazy(() => import("@/components/ContentManager"));
+const AssetManager = lazy(() => import("@/components/AssetManager"));
+const DocsEditor = lazy(() => import("@/components/DocsEditor"));
+const IntegrationsManager = lazy(() => import("@/components/IntegrationsManager"));
+const AvatarEditor = lazy(() => import("@/components/AvatarEditor"));
+const ProfileEditor = lazy(() => import("@/components/ProfileEditor"));
+const AdminUsers = lazy(() => import("@/components/AdminUsers"));
+const DietarySummary = lazy(() => import("@/components/DietarySummary"));
+const AnalyticsDashboard = lazy(() => import("@/components/AnalyticsDashboard"));
+const SponsorEditor = lazy(() => import("@/components/SponsorEditor"));
+const OutreachTracker = lazy(() => import("@/components/OutreachTracker"));
+const AwardEditor = lazy(() => import("@/components/AwardEditor"));
 
 type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "assets" | "integrations" | "profile" | "users" | "logistics" | "analytics" | "sponsors" | "outreach" | "legacy";
 
@@ -25,6 +26,39 @@ type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "ma
 const isLocalDev =
   typeof window !== "undefined" &&
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+// ── Tab-to-border color map ──────────────────────────────────────────
+const TAB_BORDER: Record<TabState, string> = {
+  blog: "border-zinc-800",
+  event: "border-ares-red/30",
+  docs: "border-ares-cyan/30",
+  manage_blog: "border-ares-gold/30",
+  manage_event: "border-ares-red/30",
+  manage_docs: "border-ares-cyan/30",
+  assets: "border-ares-bronze/30",
+  integrations: "border-purple-500/30",
+  profile: "border-emerald-500/30",
+  users: "border-orange-500/30",
+  logistics: "border-ares-red/30",
+  analytics: "border-ares-cyan/30",
+  sponsors: "border-ares-cyan/30",
+  outreach: "border-ares-cyan/30",
+  legacy: "border-ares-cyan/30",
+};
+
+// ── Suspense Spinner ─────────────────────────────────────────────────
+function TabLoader() {
+  return (
+    <div className="flex justify-center items-center py-24">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      >
+        <RefreshCw size={32} className="text-ares-gold" />
+      </motion.div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -153,9 +187,115 @@ export default function Dashboard() {
     );
   }
 
+  // ── Active Tab Content Renderer ────────────────────────────────────
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "blog":
+        return <BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} />;
+      case "event":
+        return <EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} />;
+      case "docs":
+        return <DocsEditor editSlug={editDocSlug} onClearEdit={() => setEditDocSlug(null)} />;
+      case "manage_blog":
+      case "manage_event":
+      case "manage_docs":
+        return (
+          <ContentManager 
+            mode={activeTab === "manage_blog" ? "blog" : activeTab === "manage_event" ? "event" : "docs"}
+            onEditPost={(slug) => { setEditPostSlug(slug); setActiveTab("blog"); }}
+            onEditEvent={(id) => { setEditEventId(id); setActiveTab("event"); }}
+            onEditDoc={(slug) => { setEditDocSlug(slug); setActiveTab("docs"); }}
+          />
+        );
+      case "assets":
+        return <AssetManager />;
+      case "integrations":
+        return <IntegrationsManager />;
+      case "profile":
+        return <ProfileEditor />;
+      case "users":
+        return isAdmin ? <AdminUsers /> : null;
+      case "logistics":
+        return (
+          <>
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <Utensils className="text-ares-red" />
+                Team Logistics Summary
+              </h2>
+              <p className="text-zinc-500 text-sm mt-1">Aggregated data for event planning and team management.</p>
+            </div>
+            <DietarySummary />
+          </>
+        );
+      case "analytics":
+        return (
+          <>
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <BarChart3 className="text-ares-cyan" />
+                Community Engagement
+              </h2>
+              <p className="text-zinc-500 text-sm mt-1">Real-time data on documentation and blog utility.</p>
+            </div>
+            <AnalyticsDashboard />
+          </>
+        );
+      case "sponsors":
+        return (
+          <>
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <Gem className="text-ares-cyan" />
+                Sponsor Recognition
+              </h2>
+              <p className="text-zinc-500 text-sm mt-1">Manage and showcase our funding partners.</p>
+            </div>
+            <SponsorEditor />
+          </>
+        );
+      case "outreach":
+        return (
+          <>
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <Target className="text-ares-cyan" />
+                Community Impact Tracker
+              </h2>
+              <p className="text-zinc-500 text-sm mt-1">Log outreach events and student service hours.</p>
+            </div>
+            <OutreachTracker />
+          </>
+        );
+      case "legacy":
+        return (
+          <>
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <Trophy className="text-ares-gold" />
+                Team Legacy Archive
+              </h2>
+              <p className="text-zinc-500 text-sm mt-1">Manage seasonal achievements and awards.</p>
+            </div>
+            <AwardEditor />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // ── Overlay effects for special tabs ───────────────────────────────
+  const hasOverlay = activeTab === "event" || activeTab === "docs";
+  const overlayColor = activeTab === "event" ? "bg-ares-red/5" : "bg-ares-cyan/5";
+
   return (
     <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 py-8 relative overflow-hidden">
-      {isAvatarEditorOpen && <AvatarEditor currentImage={session?.user?.image as string | null} onClose={() => setIsAvatarEditorOpen(false)} />}
+      {isAvatarEditorOpen && (
+        <Suspense fallback={null}>
+          <AvatarEditor currentImage={session?.user?.image as string | null} onClose={() => setIsAvatarEditorOpen(false)} />
+        </Suspense>
+      )}
       
       {/* Background glow effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
@@ -383,224 +523,23 @@ export default function Dashboard() {
 
         <div className="w-full">
           <AnimatePresence mode="wait">
-            {activeTab === "blog" && (
-              <motion.div 
-                key="blog"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-zinc-800 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} />
-              </motion.div>
-            )}
-
-            {activeTab === "event" && (
-              <motion.div 
-                key="event"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-red/30 flex flex-col bg-zinc-900 relative shadow-2xl"
-              >
-                <div className="absolute inset-0 bg-ares-red/5 rounded-3xl pointer-events-none mix-blend-screen" />
-                <div className="relative z-10 w-full h-full">
-                  <EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} />
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === "docs" && (
-              <motion.div 
-                key="docs"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-cyan/30 flex flex-col bg-zinc-900 shadow-2xl relative"
-              >
-                <div className="absolute inset-0 bg-ares-cyan/5 rounded-3xl pointer-events-none mix-blend-screen" />
-                <div className="relative z-10 w-full h-full">
-                  <DocsEditor editSlug={editDocSlug} onClearEdit={() => setEditDocSlug(null)} />
-                </div>
-              </motion.div>
-            )}
-
-            {(activeTab === "manage_blog" || activeTab === "manage_event" || activeTab === "manage_docs") && (
-              <motion.div 
-                key={activeTab}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className={`w-full glass-card rounded-3xl p-6 md:p-10 border flex flex-col bg-zinc-900 shadow-2xl ${
-                  activeTab === "manage_blog" ? "border-ares-gold/30" : 
-                  activeTab === "manage_event" ? "border-ares-red/30" : 
-                  "border-ares-cyan/30"
-                }`}
-              >
-                <ContentManager 
-                  mode={activeTab === "manage_blog" ? "blog" : activeTab === "manage_event" ? "event" : "docs"}
-                  onEditPost={(slug) => { setEditPostSlug(slug); setActiveTab("blog"); }}
-                  onEditEvent={(id) => { setEditEventId(id); setActiveTab("event"); }}
-                  onEditDoc={(slug) => { setEditDocSlug(slug); setActiveTab("docs"); }}
-                />
-              </motion.div>
-            )}
-
-            {activeTab === "assets" && (
-              <motion.div 
-                key="assets"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-bronze/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <AssetManager />
-              </motion.div>
-            )}
-
-            {activeTab === "integrations" && (
-              <motion.div 
-                key="integrations"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-purple-500/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <IntegrationsManager />
-              </motion.div>
-            )}
-
-            {activeTab === "profile" && (
-              <motion.div 
-                key="profile"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-emerald-500/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <ProfileEditor />
-              </motion.div>
-            )}
-
-            {activeTab === "users" && isAdmin && (
-              <motion.div 
-                key="users"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-orange-500/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <AdminUsers />
-              </motion.div>
-            )}
-
-            {activeTab === "logistics" && (
-              <motion.div 
-                key="logistics"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-red/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <div className="mb-8">
-                  <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                    <Utensils className="text-ares-red" />
-                    Team Logistics Summary
-                  </h2>
-                  <p className="text-zinc-500 text-sm mt-1">Aggregated data for event planning and team management.</p>
-                </div>
-                <DietarySummary />
-              </motion.div>
-            )}
-
-            {activeTab === "analytics" && (
-              <motion.div 
-                key="analytics"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-cyan/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <div className="mb-8">
-                  <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                    <BarChart3 className="text-ares-cyan" />
-                    Community Engagement
-                  </h2>
-                  <p className="text-zinc-500 text-sm mt-1">Real-time data on documentation and blog utility.</p>
-                </div>
-                <AnalyticsDashboard />
-              </motion.div>
-            )}
-
-            {activeTab === "sponsors" && (
-              <motion.div 
-                key="sponsors"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-cyan/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <div className="mb-8">
-                  <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                    <Gem className="text-ares-cyan" />
-                    Sponsor Recognition
-                  </h2>
-                  <p className="text-zinc-500 text-sm mt-1">Manage and showcase our funding partners.</p>
-                </div>
-                <SponsorEditor />
-              </motion.div>
-            )}
-
-            {activeTab === "outreach" && (
-              <motion.div 
-                key="outreach"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-cyan/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <div className="mb-8">
-                  <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                    <Target className="text-ares-cyan" />
-                    Community Impact Tracker
-                  </h2>
-                  <p className="text-zinc-500 text-sm mt-1">Log outreach events and student service hours.</p>
-                </div>
-                <OutreachTracker />
-              </motion.div>
-            )}
-
-            {activeTab === "legacy" && (
-              <motion.div 
-                key="legacy"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full glass-card rounded-3xl p-6 md:p-10 border border-ares-cyan/30 flex flex-col bg-zinc-900 shadow-2xl"
-              >
-                <div className="mb-8">
-                  <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                    <Trophy className="text-ares-gold" />
-                    Team Legacy Archive
-                  </h2>
-                  <p className="text-zinc-500 text-sm mt-1">Manage seasonal achievements and awards.</p>
-                </div>
-                <AwardEditor />
-              </motion.div>
-            )}
+            <motion.div 
+              key={activeTab}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+              className={`w-full glass-card rounded-3xl p-6 md:p-10 border flex flex-col bg-zinc-900 shadow-2xl relative ${TAB_BORDER[activeTab] || "border-zinc-800"}`}
+            >
+              {hasOverlay && (
+                <div className={`absolute inset-0 ${overlayColor} rounded-3xl pointer-events-none mix-blend-screen`} />
+              )}
+              <div className={hasOverlay ? "relative z-10 w-full h-full" : "w-full"}>
+                <Suspense fallback={<TabLoader />}>
+                  {renderTabContent()}
+                </Suspense>
+              </div>
+            </motion.div>
           </AnimatePresence>
         </div>
       </div>

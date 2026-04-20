@@ -1,0 +1,33 @@
+import { Hono } from "hono";
+import { Bindings, getSessionUser } from "./_shared";
+import { getAuth } from "../../utils/auth";
+
+const authRouter = new Hono<{ Bindings: Bindings }>();
+
+// ── Better Auth Routes ────────────────────────────────────────────────
+authRouter.on(["POST", "GET"], "/auth/*", async (c) => {
+  try {
+    const auth = getAuth(c.env.DB, c.env, c.req.url);
+    return await auth.handler(c.req.raw);
+  } catch (error: unknown) {
+    const err = error as Error & { status?: number };
+    console.error("[Auth Handler] Internal Exception:", err);
+    return c.json({ 
+      error: "Internal Server Error during Authentication", 
+      message: err.message || String(error),
+      stack: err.stack
+    }, 500);
+  }
+});
+
+// ── GET /api/auth-check — verify session (UI gate only) ────────────────
+authRouter.get("/auth-check", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ authenticated: false }, 401);
+  return c.json({ 
+    authenticated: true, 
+    user
+  });
+});
+
+export default authRouter;

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ChevronUp, ChevronDown, Radio, Download } from "lucide-react";
 import BroadcastModal from "./BroadcastModal";
+import { useContentMutation } from "../hooks/useContentMutation";
 
 interface EventItem {
   id: string;
@@ -41,7 +42,6 @@ export default function ContentManager({
   onEditDoc?: (slug: string) => void;
   mode?: "all" | "blog" | "event" | "docs";
 }) {
-  const queryClient = useQueryClient();
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [view, setView] = useState<"active" | "trash">("active");
   const [broadcastData, setBroadcastData] = useState<{ isOpen: boolean, type: "blog" | "event", id: string, title: string }>({
@@ -51,6 +51,7 @@ export default function ContentManager({
     title: ""
   });
 
+  // ── Data Fetching ──────────────────────────────────────────────────
   const { data: events = [], isLoading: loadingEvents } = useQuery<EventItem[]>({
     queryKey: ["events"],
     queryFn: async () => {
@@ -81,129 +82,64 @@ export default function ContentManager({
     },
   });
 
-  const deleteEventMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/dashboard/api/admin/events/${id}`, { method: "DELETE", credentials: "include" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-      // @ts-expect-error -- D1 untyped response
-        throw new Error(data.error || `Failed to delete event. Status: ${res.status}`);
-      }
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      setConfirmId(null);
-    },
-    onError: (err) => {
-      alert(err.message);
-    }
+  // ── Mutations (via reusable hook) ──────────────────────────────────
+  const deleteEventMutation = useContentMutation<string>({
+    endpoint: (id) => `/dashboard/api/admin/events/${id}`,
+    invalidateKeys: ["events"],
+    setConfirmId,
   });
 
-  const syncGcalMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/dashboard/api/admin/events/sync`, { method: "POST", credentials: "include" });
-      if (!res.ok) throw new Error("Sync failed. Check permissions.");
-      return res.json();
-    },
+  const deletePostMutation = useContentMutation<string>({
+    endpoint: (slug) => `/dashboard/api/admin/posts/${slug}`,
+    invalidateKeys: ["posts"],
+    setConfirmId,
+  });
+
+  const deleteDocMutation = useContentMutation<string>({
+    endpoint: (slug) => `/dashboard/api/admin/docs/${slug}`,
+    invalidateKeys: ["docs"],
+    setConfirmId,
+  });
+
+  const syncGcalMutation = useContentMutation<void>({
+    endpoint: () => `/dashboard/api/admin/events/sync`,
+    method: "POST",
+    invalidateKeys: ["events"],
+    clearConfirm: false,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      // @ts-expect-error -- D1 untyped response
-      alert(`Sync Complete! Fetched ${data.synced} events. (${data.newEvents} new, ${data.updatedEvents} updated)`);
+      const d = data as { synced?: number; newEvents?: number; updatedEvents?: number };
+      alert(`Sync Complete! Fetched ${d.synced} events. (${d.newEvents} new, ${d.updatedEvents} updated)`);
     },
-    onError: (err) => {
-      alert(err.message);
-    }
   });
 
-  const deletePostMutation = useMutation({
-    mutationFn: async (slug: string) => {
-      const res = await fetch(`/dashboard/api/admin/posts/${slug}`, { method: "DELETE", credentials: "include" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-      // @ts-expect-error -- D1 untyped response
-        throw new Error(data.error || `Failed to delete post. Status: ${res.status}`);
-      }
-      return slug;
+  const restoreMutation = useContentMutation<{ type: "event" | "post" | "doc", id: string }>({
+    endpoint: ({ type, id }) => {
+      const base = type === "event" ? "events" : type === "post" ? "posts" : "docs";
+      return `/dashboard/api/admin/${base}/${id}/undelete`;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      setConfirmId(null);
-    },
-    onError: (err) => {
-      alert(err.message);
-    }
+    method: "PATCH",
+    invalidateKeys: ["events", "posts", "docs"],
+    clearConfirm: false,
   });
 
-  const deleteDocMutation = useMutation({
-    mutationFn: async (slug: string) => {
-      const res = await fetch(`/dashboard/api/admin/docs/${slug}`, { method: "DELETE", credentials: "include" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-      // @ts-expect-error -- D1 untyped response
-        throw new Error(data.error || `Failed to delete doc. Status: ${res.status}`);
-      }
-      return slug;
+  const purgeMutation = useContentMutation<{ type: "event" | "post" | "doc", id: string }>({
+    endpoint: ({ type, id }) => {
+      const base = type === "event" ? "events" : type === "post" ? "posts" : "docs";
+      return `/dashboard/api/admin/${base}/${id}/purge`;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["docs"] });
-      setConfirmId(null);
-    },
-    onError: (err) => {
-      alert(err.message);
-    }
+    invalidateKeys: ["events", "posts", "docs"],
+    setConfirmId,
   });
 
-  const restoreMutation = useMutation({
-    mutationFn: async ({ type, id }: { type: "event" | "post" | "doc", id: string }) => {
-      const endpoint = type === "event" ? `/dashboard/api/admin/events/${id}/undelete` : type === "post" ? `/dashboard/api/admin/posts/${id}/undelete` : `/dashboard/api/admin/docs/${id}/undelete`;
-      const res = await fetch(endpoint, { method: "PATCH", credentials: "include" });
-      if (!res.ok) throw new Error("Failed to restore item.");
-      return { type, id };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [data.type === "event" ? "events" : data.type === "post" ? "posts" : "docs"] });
-    },
-    onError: (err) => alert(err.message)
+  const sortDocMutation = useContentMutation<{ slug: string, sortOrder: number }>({
+    endpoint: ({ slug }) => `/dashboard/api/admin/docs/${slug}/sort`,
+    method: "PATCH",
+    invalidateKeys: ["docs"],
+    body: ({ sortOrder }) => ({ sortOrder }),
+    clearConfirm: false,
   });
 
-  const purgeMutation = useMutation({
-    mutationFn: async ({ type, id }: { type: "event" | "post" | "doc", id: string }) => {
-      const endpoint = type === "event" ? `/dashboard/api/admin/events/${id}/purge` : type === "post" ? `/dashboard/api/admin/posts/${id}/purge` : `/dashboard/api/admin/docs/${id}/purge`;
-      const res = await fetch(endpoint, { method: "DELETE", credentials: "include" });
-      if (!res.ok) throw new Error("Failed to purge item.");
-      return { type, id };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: [data.type === "event" ? "events" : data.type === "post" ? "posts" : "docs"] });
-      setConfirmId(null);
-    },
-    onError: (err) => alert(err.message)
-  });
-
-  const sortDocMutation = useMutation({
-    mutationFn: async ({ slug, sortOrder }: { slug: string, sortOrder: number }) => {
-      const res = await fetch(`/dashboard/api/admin/docs/${slug}/sort`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ sortOrder })
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-      // @ts-expect-error -- D1 untyped response
-        throw new Error(data.error || `Failed to sort doc. Status: ${res.status}`);
-      }
-      return slug;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["docs"] });
-    },
-    onError: (err) => {
-      alert(err.message);
-    }
-  });
-
+  // ── Export Helpers ─────────────────────────────────────────────────
   const exportSingleDoc = async (slug: string) => {
     try {
       const res = await fetch(`/api/docs/${slug}`);
@@ -239,6 +175,7 @@ export default function ContentManager({
     }
   };
 
+  // ── Shared UI Components ───────────────────────────────────────────
   const ClickToDeleteButton = ({ 
     id, 
     onDelete, 
@@ -323,7 +260,7 @@ export default function ContentManager({
               </h3>
               {view === 'active' && (
                 <button 
-                  onClick={() => syncGcalMutation.mutate()}
+                  onClick={() => syncGcalMutation.mutate(undefined as unknown as void)}
                   disabled={syncGcalMutation.isPending}
                   className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 rounded-md transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
                 >
