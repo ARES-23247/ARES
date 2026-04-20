@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings, getSessionUser } from "../_shared";
+import { Bindings } from "../_shared";
 import signupsRouter from "./signups";
 import syncRouter from "./sync";
 import adminRouter from "./admin";

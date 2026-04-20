@@ -33,10 +33,11 @@ export default function IntegrationsManager() {
         merged["CALENDAR_ID_INTERNAL"] = merged["CALENDAR_ID"];
       }
       
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalSettings(merged);
       setIsDirty(false);
     }
-  }, [data]);
+  }, [data?.settings]); // Depend on settings object specifically
 
   const saveMutation = useMutation({
     mutationFn: async (settings: SettingsData) => {

@@ -113,7 +113,7 @@ adminRouter.put("/:id", async (c) => {
     const socialConfig = await getSocialConfig(c);
     const gcalEmail = socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"];
     const gcalKey = socialConfig["GCAL_PRIVATE_KEY"];
-    let calId = socialConfig[`CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig] || socialConfig["CALENDAR_ID"];
+    const calId = socialConfig[`CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig] || socialConfig["CALENDAR_ID"];
 
     let gcalId: string | null = null;
     if (gcalEmail && gcalKey && calId) {
@@ -198,7 +198,7 @@ adminRouter.delete("/:id/purge", async (c) => {
     const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
     const row = await c.env.DB.prepare("SELECT gcal_event_id, category FROM events WHERE id = ?").bind(id).first<{gcal_event_id: string, category: string}>();
 
-    let calId = dbSettings[`CALENDAR_ID_${row?.category.toUpperCase()}`] || dbSettings["CALENDAR_ID"];
+    const calId = dbSettings[`CALENDAR_ID_${row?.category.toUpperCase()}`] || dbSettings["CALENDAR_ID"];
 
     if (gcalEmail && gcalKey && calId && row?.gcal_event_id) {
       try {

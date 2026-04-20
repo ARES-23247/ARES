@@ -1,7 +1,3 @@
-import { useState } from "react";
-import { format } from "date-fns";
-import { ChevronUp, ChevronDown, Radio, Download } from "lucide-react";
-
 export interface EventItem {
   id: string;
   title: string;

@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRichEditor } from "./editor/useRichEditor";
-import RichEditorToolbar from "./editor/RichEditorToolbar";
-import AssetPickerModal from "./AssetPickerModal";
 import { MapPin } from "lucide-react";
 import { compressImage } from "../utils/imageProcessor";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
@@ -36,12 +34,11 @@ interface SyncResponse {
   warning?: string;
 }
 
-export default function EventEditor({ editId, onClearEdit, userRole }: { editId?: string | null; onClearEdit?: () => void; userRole?: string | unknown }) {
+export default function EventEditor({ editId, onClearEdit }: { editId?: string | null; onClearEdit?: () => void; }) {
   const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState("");
   const [warningMsg, setWarningMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
   const [socials, setSocials] = useState<Record<string, boolean>>({
     discord: true,
@@ -79,16 +76,6 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     isPotluck: false,
     isVolunteer: false,
   });
-
-  const uploadFile = async (file: File): Promise<{url: string, altText?: string}> => {
-    const { blob: compressedBlob, ext } = await compressImage(file);
-    const formData = new FormData();
-    formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ext));
-    const res = await fetch("/dashboard/api/admin/upload", { method: "POST", credentials: "include", body: formData });
-    const data = await res.json() as { url?: string; altText?: string; error?: string };
-    if (!data.url) throw new Error(data.error || "Upload failed");
-    return { url: data.url, altText: data.altText };
-  };
 
   // Fetch event data if editing
   useQuery({
@@ -175,7 +162,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
 
       return await res.json() as SyncResponse;
     },
-    onSuccess: (data, isDraft) => {
+    onSuccess: (data) => {
       if (data.success) {
         setSuccessMsg(editId ? "Event updated successfully!" : "Event published successfully!");
         setWarningMsg(data.warning || "");

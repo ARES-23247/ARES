@@ -19,13 +19,23 @@ signupsRouter.get("/:id/signups", async (c) => {
        WHERE s.event_id = ? AND u.role NOT IN ('unverified') ORDER BY s.created_at ASC`
     ).bind(eventId).all();
 
-    const signups = isVerified ? (results || []).map((r: any) => ({
-      ...r,
-      nickname: r.nickname || "ARES Member",
-      is_own: user ? r.user_id === user.id : false,
-      attended: !!r.attended,
-      prep_hours: Number(r.prep_hours || 0),
-    })) : [];
+    interface SignupRecord {
+      user_id: string;
+      nickname?: string;
+      attended?: number | boolean;
+      prep_hours?: number | string;
+    }
+
+    const signups = isVerified ? (results || []).map((r: unknown) => {
+      const rec = r as SignupRecord;
+      return {
+        ...rec,
+        nickname: rec.nickname || "ARES Member",
+        is_own: user ? rec.user_id === user.id : false,
+        attended: !!rec.attended,
+        prep_hours: Number(rec.prep_hours || 0),
+      };
+    }) : [];
 
     const dietarySummary: Record<string, number> = {};
     const teamDietarySummary: Record<string, number> = {};
