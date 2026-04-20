@@ -1,8 +1,6 @@
 import { Hono } from "hono";
 import { Bindings } from "../_shared";
 import signupsRouter from "./signups";
-import syncRouter from "./sync";
-import adminRouter from "./admin";
 
 const eventsRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -12,7 +10,7 @@ eventsRouter.get("/", async (c) => {
     const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
     const offset = Number(c.req.query("offset") || "0");
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck, is_volunteer FROM events WHERE is_deleted = 0 AND status = 'published' ORDER BY date_start ASC LIMIT ? OFFSET ?"
+      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck, is_volunteer FROM events WHERE is_deleted = 0 AND status = 'published' ORDER BY date_start DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ events: results ?? [] });
   } catch (err) {

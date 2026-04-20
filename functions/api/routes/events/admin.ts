@@ -11,7 +11,7 @@ adminRouter.get("/", async (c) => {
     const limit = Math.min(Number(c.req.query("limit") || "100"), 500);
     const offset = Number(c.req.query("offset") || "0");
     const { results: events } = await c.env.DB.prepare(
-      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer, revision_of FROM events ORDER BY date_start ASC LIMIT ? OFFSET ?"
+      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer, revision_of FROM events ORDER BY date_start DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
 
     const lastSyncRow = await c.env.DB.prepare("SELECT value FROM settings WHERE key = 'LAST_CALENDAR_SYNC'").first<{value: string}>();

@@ -143,6 +143,29 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
       setIsPending(false);
     }
   };
+  const handleDelete = async () => {
+    if (!editSlug) return;
+    const confirm = window.confirm("Are you sure you want to permanently delete this post?");
+    if (!confirm) return;
+
+    setIsPending(true);
+    setErrorMsg("");
+    try {
+      const res = await fetch(`/dashboard/api/admin/posts/${editSlug}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete post.");
+      }
+      navigate("/dashboard");
+    } catch {
+      setErrorMsg("Failed to delete the post. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
+  };
+
 
   if (!editor) return <div className="text-zinc-300 animate-pulse font-mono tracking-widest text-sm">Booting Editor System...</div>;
 
@@ -261,6 +284,15 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
       <div className="flex items-center justify-between mt-6 pt-6 border-t border-zinc-800">
         <span className="text-ares-red text-sm font-medium">{errorMsg}</span>
         <div className="flex gap-4">
+          {editSlug && (
+            <button
+              onClick={handleDelete}
+              disabled={isPending}
+              className="px-6 py-3.5 rounded-full font-bold transition-all shadow-xl disabled:opacity-50 border border-ares-red/30 bg-ares-red/10 text-ares-red hover:bg-ares-red hover:text-white"
+            >
+              DELETE
+            </button>
+          )}
           <button
             onClick={() => handlePublish(true)}
             disabled={isPending}

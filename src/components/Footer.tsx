@@ -7,7 +7,7 @@ export default function Footer() {
   return (
     <footer className="w-full bg-obsidian text-marble border-t border-ares-bronze/20 pt-16 pb-8 overflow-hidden relative">
       {/* Meander accent for footer bottom */}
-      <GreekMeander variant="thin" opacity="opacity-20" className="absolute bottom-0 left-0" />
+      <GreekMeander variant="thin" opacity="opacity-40" className="absolute bottom-0 left-0" />
 
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
         {/* Brand & Mission */}

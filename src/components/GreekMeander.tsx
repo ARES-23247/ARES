@@ -25,7 +25,7 @@ interface GreekMeanderProps {
  */
 export const GreekMeander: React.FC<GreekMeanderProps> = ({
   variant = "thin",
-  opacity = "opacity-100",
+  opacity = "opacity-80",
   className,
 }) => {
   return (

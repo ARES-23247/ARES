@@ -114,6 +114,32 @@ export default function DocsEditor({ editSlug, onClearEdit, userRole }: { editSl
     }
   };
 
+  const handleDelete = async () => {
+    if (!editSlug) return;
+    const confirm = window.confirm("Are you sure you want to permanently delete this documentation page?");
+    if (!confirm) return;
+
+    setIsPending(true);
+    setErrorMsg("");
+    try {
+      const res = await fetch(`/dashboard/api/admin/docs/${editSlug}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete document.");
+      }
+      queryClient.invalidateQueries({ queryKey: ["docs"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_docs"] });
+      if (onClearEdit) onClearEdit();
+      navigate("/docs");
+    } catch {
+      setErrorMsg("Failed to delete the document. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full relative bg-obsidian/60 glass-card p-6 md:p-8 rounded-2xl border border-white/10">
       <div>
@@ -230,12 +256,21 @@ export default function DocsEditor({ editSlug, onClearEdit, userRole }: { editSl
 
       <div className="flex justify-end gap-4 mt-4 border-t border-white/10 pt-6">
         {editSlug && (
-          <button
-            onClick={() => onClearEdit && onClearEdit()}
-            className="px-6 py-2 rounded-xl text-white/50 hover:text-white font-bold tracking-wider text-sm transition-colors"
-          >
-            Cancel
-          </button>
+          <>
+            <button
+              onClick={handleDelete}
+              disabled={isPending}
+              className="px-6 py-2 rounded-xl text-ares-red/80 hover:text-white hover:bg-ares-red font-bold tracking-wider text-sm transition-colors border border-ares-red/30"
+            >
+              DELETE
+            </button>
+            <button
+              onClick={() => onClearEdit && onClearEdit()}
+              className="px-6 py-2 rounded-xl text-white/50 hover:text-white font-bold tracking-wider text-sm transition-colors"
+            >
+              Cancel
+            </button>
+          </>
         )}
         <button
           onClick={() => handlePublish(true)}

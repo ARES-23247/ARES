@@ -205,6 +205,28 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     }
   });
 
+  const handleDelete = async () => {
+    if (!editId) return;
+    const confirm = window.confirm("Are you sure you want to permanently delete this event?");
+    if (!confirm) return;
+
+    setErrorMsg("");
+    setWarningMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch(`/dashboard/api/events/admin/${editId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete event.");
+      }
+      navigate("/dashboard");
+    } catch {
+      setErrorMsg("Failed to delete the event. Please try again.");
+    }
+  };
+
   const handlePublish = (isDraft: boolean = false) => {
     if (!form.title || !form.dateStart) {
       setErrorMsg("Title and Start Date are required.");
@@ -460,6 +482,15 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
         )}
 
         <div className="flex items-center justify-end pt-4 border-t border-zinc-800/50 gap-4">
+          {editId && (
+            <button
+              onClick={handleDelete}
+              disabled={isPending}
+              className={`px-8 py-4 rounded-2xl font-black tracking-widest transition-all shadow-xl disabled:opacity-50 border border-ares-red/30 bg-ares-red/10 text-ares-red hover:bg-ares-red hover:text-white mr-auto`}
+            >
+              DELETE
+            </button>
+          )}
           <button
             onClick={() => handlePublish(true)}
             disabled={isPending}
