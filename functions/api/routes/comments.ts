@@ -26,6 +26,7 @@ commentsRouter.get("/comments/:targetType/:targetId", async (c) => {
       user_id: r.user_id,
       nickname: r.nickname || "ARES Member",
       avatar: r.avatar,
+      is_own: user ? user.id === r.user_id : false,
     }));
 
     return c.json({ 
@@ -70,10 +71,52 @@ commentsRouter.post("/comments/:targetType/:targetId", async (c) => {
   }
 });
 
-// ── DELETE /admin/comments/:id — soft-delete a comment (admin) ────────
-commentsRouter.delete("/admin/comments/:id", ensureAdmin, async (c) => {
+// ── PUT /comments/:id — edit a comment ──────────────────────────────────
+commentsRouter.put("/comments/:id", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user || user.role === "unverified") return c.json({ error: "Forbidden" }, 403);
+
+  const id = c.req.param("id");
+  const body = await c.req.json();
+  const { content } = body;
+
+  if (!content || typeof content !== "string" || content.trim().length === 0) {
+    return c.json({ error: "Comment content is required" }, 400);
+  }
+
+  try {
+    const existing = await c.env.DB.prepare("SELECT user_id FROM comments WHERE id = ? AND is_deleted = 0").bind(id).first();
+    if (!existing) return c.json({ error: "Not found" }, 404);
+
+    if (existing.user_id !== user.id && user.role !== "admin") {
+      return c.json({ error: "Forbidden: You can only edit your own comments" }, 403);
+    }
+
+    await c.env.DB.prepare(
+      "UPDATE comments SET content = ? WHERE id = ?"
+    ).bind(content.trim(), id).run();
+
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 comment edit error:", err);
+    return c.json({ error: "Edit failed" }, 500);
+  }
+});
+
+// ── DELETE /comments/:id — soft-delete a comment ────────────────────────
+commentsRouter.delete("/comments/:id", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+
   try {
     const id = c.req.param("id");
+    const existing = await c.env.DB.prepare("SELECT user_id FROM comments WHERE id = ?").bind(id).first();
+    if (!existing) return c.json({ error: "Not found" }, 404);
+
+    if (existing.user_id !== user.id && user.role !== "admin") {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+
     await c.env.DB.prepare("UPDATE comments SET is_deleted = 1 WHERE id = ?").bind(id).run();
     return c.json({ success: true });
   } catch (err) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { MessageCircle, Send, Trash2, RefreshCw } from "lucide-react";
+import { MessageCircle, Send, Trash2, RefreshCw, Pencil, Check, X } from "lucide-react";
 
 interface Comment {
   id: number;
@@ -25,6 +25,9 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
   const [posting, setPosting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState("");
 
   const fetchComments = useCallback(() => {
     fetch(`/api/comments/${targetType}/${targetId}`, { credentials: "include" })
@@ -56,7 +59,19 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
   };
 
   const deleteComment = async (id: number) => {
-    await fetch(`/api/admin/comments/${id}`, { method: "DELETE", credentials: "include" });
+    await fetch(`/api/comments/${id}`, { method: "DELETE", credentials: "include" });
+    fetchComments();
+  };
+
+  const saveEdit = async (id: number) => {
+    if (!editContent.trim()) return;
+    await fetch(`/api/comments/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ content: editContent }),
+    });
+    setEditingId(null);
     fetchComments();
   };
 
@@ -102,25 +117,56 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
       )}
 
       <div className="space-y-4">
-        {comments.filter(c => !c.is_deleted).map(comment => (
-          <div key={comment.id} className="flex gap-3 group">
-            <img src={comment.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${comment.user_id}`}
-              alt="" className="w-8 h-8 rounded-lg bg-zinc-800 flex-shrink-0" />
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-bold text-white">{comment.nickname || "ARES Member"}</span>
-                <span className="text-[10px] text-zinc-600">{new Date(comment.created_at).toLocaleDateString()}</span>
+        {comments.filter(c => !c.is_deleted).map(comment => {
+          const isEditing = editingId === comment.id;
+          const userCanModify = isAdmin || comment.is_own;
+
+          return (
+            <div key={comment.id} className="flex gap-3 group">
+              <img src={comment.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${comment.user_id}`}
+                alt="" className="w-8 h-8 rounded-lg bg-zinc-800 flex-shrink-0" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-bold text-white">{comment.nickname || "ARES Member"}</span>
+                  <span className="text-[10px] text-zinc-600">{new Date(comment.created_at).toLocaleDateString()}</span>
+                  {userCanModify && !isEditing && (
+                    <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => { setEditingId(comment.id); setEditContent(comment.content); }}
+                        className="p-1 text-zinc-600 hover:text-white transition-colors">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => deleteComment(comment.id)}
+                        className="p-1 text-zinc-600 hover:text-red-500 transition-colors">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {isEditing ? (
+                  <div className="mt-2 flex gap-2">
+                    <textarea
+                      value={editContent}
+                      onChange={e => setEditContent(e.target.value)}
+                      className="flex-1 bg-zinc-900/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ares-red resize-none min-h-[60px]"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <button onClick={() => saveEdit(comment.id)} disabled={!editContent.trim() || editContent === comment.content}
+                        className="p-2 bg-zinc-800 hover:bg-green-600/20 text-green-500 hover:text-green-400 rounded-lg transition-colors disabled:opacity-50">
+                        <Check size={16} />
+                      </button>
+                      <button onClick={() => setEditingId(null)}
+                        className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-lg transition-colors">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                )}
               </div>
-              <p className="text-sm text-zinc-300 leading-relaxed">{comment.content}</p>
             </div>
-            {(isAdmin || comment.is_own) && (
-              <button onClick={() => deleteComment(comment.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-zinc-600 hover:text-red-500">
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
