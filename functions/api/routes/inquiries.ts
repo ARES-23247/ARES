@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings, MAX_INPUT_LENGTHS, validateLength } from "./_shared";
+import { Bindings, MAX_INPUT_LENGTHS, validateLength, getSocialConfig } from "./_shared";
 
 const inquiriesRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -47,6 +47,37 @@ inquiriesRouter.post("/inquiries", async (c) => {
     await c.env.DB.prepare(
       "INSERT INTO inquiries (id, type, name, email, metadata) VALUES (?, ?, ?, ?, ?)"
     ).bind(id, type, name, email, metadata ? JSON.stringify(metadata) : null).run();
+
+    // Auto-create a pending sponsor record in the dashboard
+    if (type === "sponsor") {
+      let tierStr = "Pending";
+      if (metadata && typeof metadata.level === "string") {
+        tierStr = metadata.level.replace(" Tier Sponsor", "");
+      }
+      try {
+        await c.env.DB.prepare(
+          "INSERT INTO sponsors (id, name, tier, logo_url, website_url, is_active) VALUES (?, ?, ?, ?, ?, 0)"
+        ).bind(id, name, tierStr, null, null).run();
+      } catch (err) {
+        console.error("Failed to insert sponsor draft", err);
+      }
+    }
+
+    // Optional webhook notification
+    try {
+      const social = await getSocialConfig(c);
+      if (social.DISCORD_WEBHOOK_URL) {
+        c.executionCtx.waitUntil(
+          fetch(social.DISCORD_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              content: `🔔 **New ${type.toUpperCase()} Inquiry**\n**Name:** ${name}\n**Email:** ${email}\n**Data:** \`${JSON.stringify(metadata)}\``
+            })
+          }).catch(console.error)
+        );
+      }
+    } catch { /* ignore webhook error */ }
 
     return c.json({ success: true, id });
   } catch (err) {
