@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, 
   ShieldAlert, Lock, RefreshCw, LogOut, User, Users, Utensils, BarChart3, 
-  Gem, Target, Trophy, Menu, X, Folders  
+  Gem, Target, Trophy, Menu, X, Folders, Award
 } from "lucide-react";
 
 // ── Lazy-loaded Tab Components ───────────────────────────────────────
