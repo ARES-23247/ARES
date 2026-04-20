@@ -46,6 +46,10 @@ interface ProfileData {
   emergency_contact_name: string;
   emergency_contact_phone: string;
   show_on_about: boolean;
+  parents_name?: string;
+  parents_email?: string;
+  students_name?: string;
+  students_email?: string;
 }
 
 interface ProfileResponse extends Partial<ProfileData> {
@@ -66,6 +70,7 @@ const DEFAULT_PROFILE: ProfileData = {
   colleges: [], employers: [], show_on_about: true,
   favorite_robot_mechanism: "", pre_match_superstition: "", leadership_role: "", rookie_year: "",
   tshirt_size: "", emergency_contact_name: "", emergency_contact_phone: "",
+  parents_name: "", parents_email: "", students_name: "", students_email: "",
 };
 
 export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: string }) {
@@ -104,6 +109,10 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
             tshirt_size: data.tshirt_size || "",
             emergency_contact_name: data.emergency_contact_name || "",
             emergency_contact_phone: data.emergency_contact_phone || "",
+            parents_name: data.parents_name || "",
+            parents_email: data.parents_email || "",
+            students_name: data.students_name || "",
+            students_email: data.students_email || "",
           });
         }
         setIsLoading(false);
@@ -252,17 +261,39 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
       <div className={sectionClass}>
         <h3 className="text-sm font-black uppercase tracking-wider text-ares-red">Team Role</h3>
         <div>
-          <span className={labelClass}>Member Type</span>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <label htmlFor="pe-member-type" className={labelClass}>Member Type</label>
+          <select id="pe-member-type" className={inputClass} value={profile.member_type} onChange={e => setProfile({...profile, member_type: e.target.value})}>
             {MEMBER_TYPES.map(mt => (
-              <button key={mt.value} onClick={() => setProfile({...profile, member_type: mt.value})}
-                className={`p-3 rounded-xl border text-sm font-bold transition-all ${profile.member_type === mt.value ? "bg-ares-red/20 border-ares-red text-white" : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500"}`}
-              >
-                <span className="text-lg mr-1">{mt.icon}</span> {mt.label}
-              </button>
+              <option key={mt.value} value={mt.value}>{mt.icon} {mt.label}</option>
             ))}
-          </div>
+          </select>
         </div>
+
+        {profile.member_type === "student" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label htmlFor="pe-parents-name" className={labelClass}>Parent's Name</label>
+              <input id="pe-parents-name" className={inputClass} placeholder="e.g. Jane Doe" value={profile.parents_name || ""} onChange={e => setProfile({...profile, parents_name: e.target.value})} />
+            </div>
+            <div>
+              <label htmlFor="pe-parents-email" className={labelClass}>Parent's Email</label>
+              <input id="pe-parents-email" className={inputClass} placeholder="jane.doe@example.com" value={profile.parents_email || ""} onChange={e => setProfile({...profile, parents_email: e.target.value})} />
+            </div>
+          </div>
+        )}
+
+        {profile.member_type === "parent" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label htmlFor="pe-students-name" className={labelClass}>Student's Name</label>
+              <input id="pe-students-name" className={inputClass} placeholder="e.g. John Doe" value={profile.students_name || ""} onChange={e => setProfile({...profile, students_name: e.target.value})} />
+            </div>
+            <div>
+              <label htmlFor="pe-students-email" className={labelClass}>Student's Email</label>
+              <input id="pe-students-email" className={inputClass} placeholder="john.doe@example.com" value={profile.students_email || ""} onChange={e => setProfile({...profile, students_email: e.target.value})} />
+            </div>
+          </div>
+        )}
         <div>
           <span className={labelClass}>Subteams (select all that apply)</span>
           <div className="flex flex-wrap gap-2">

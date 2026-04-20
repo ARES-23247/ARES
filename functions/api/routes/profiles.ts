@@ -11,7 +11,7 @@ profilesRouter.get("/profile/me", async (c) => {
 
   try {
     const profile = await c.env.DB.prepare(
-      "SELECT p.user_id, p.first_name, p.last_name, p.nickname, p.phone, p.contact_email, p.show_email, p.show_phone, p.pronouns, p.grade_year, p.subteams, p.member_type, p.bio, p.favorite_food, p.dietary_restrictions, p.favorite_first_thing, p.fun_fact, p.colleges, p.employers, p.show_on_about, p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role, p.rookie_year, p.tshirt_size, p.emergency_contact_name, p.emergency_contact_phone, u.image as avatar, p.updated_at FROM user_profiles p JOIN user u ON p.user_id = u.id WHERE p.user_id = ?"
+      "SELECT p.user_id, p.first_name, p.last_name, p.nickname, p.phone, p.contact_email, p.show_email, p.show_phone, p.pronouns, p.grade_year, p.subteams, p.member_type, p.bio, p.favorite_food, p.dietary_restrictions, p.favorite_first_thing, p.fun_fact, p.colleges, p.employers, p.show_on_about, p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role, p.rookie_year, p.tshirt_size, p.emergency_contact_name, p.emergency_contact_phone, p.parents_name, p.parents_email, p.students_name, p.students_email, u.image as avatar, p.updated_at FROM user_profiles p JOIN user u ON p.user_id = u.id WHERE p.user_id = ?"
     ).bind(user.id).first();
 
     const { results: rawBadges } = await c.env.DB.prepare(
@@ -51,7 +51,8 @@ profilesRouter.put("/profile/me", async (c) => {
       member_type, grade_year, colleges, employers,
       favorite_first_thing, fun_fact,
       favorite_robot_mechanism, pre_match_superstition,
-      leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone
+      leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone,
+      parents_name, parents_email, students_name, students_email
     } = body;
 
     const dietaryStr = Array.isArray(dietary_restrictions)
@@ -68,8 +69,9 @@ profilesRouter.put("/profile/me", async (c) => {
         member_type, grade_year, colleges, employers,
         favorite_first_thing, fun_fact,
         favorite_robot_mechanism, pre_match_superstition,
-        leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone,
+        parents_name, parents_email, students_name, students_email
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET
         nickname=excluded.nickname, first_name=excluded.first_name, last_name=excluded.last_name,
         pronouns=excluded.pronouns, phone=excluded.phone, contact_email=excluded.contact_email,
@@ -83,7 +85,11 @@ profilesRouter.put("/profile/me", async (c) => {
         leadership_role=excluded.leadership_role, rookie_year=excluded.rookie_year,
         tshirt_size=excluded.tshirt_size,
         emergency_contact_name=excluded.emergency_contact_name,
-        emergency_contact_phone=excluded.emergency_contact_phone`
+        emergency_contact_phone=excluded.emergency_contact_phone,
+        parents_name=excluded.parents_name,
+        parents_email=excluded.parents_email,
+        students_name=excluded.students_name,
+        students_email=excluded.students_email`
     ).bind(
       user.id,
       nickname || "", first_name || "", last_name || "", pronouns || "",
@@ -94,7 +100,8 @@ profilesRouter.put("/profile/me", async (c) => {
       favorite_first_thing || "", fun_fact || "",
       favorite_robot_mechanism || "", pre_match_superstition || "",
       leadership_role || "", rookie_year || "",
-      tshirt_size || "", emergency_contact_name || "", emergency_contact_phone || ""
+      tshirt_size || "", emergency_contact_name || "", emergency_contact_phone || "",
+      parents_name || "", parents_email || "", students_name || "", students_email || ""
     ).run();
 
     return c.json({ success: true });
@@ -132,7 +139,7 @@ profilesRouter.get("/profile/:userId", async (c) => {
   const userId = c.req.param("userId");
   try {
     const profile = await c.env.DB.prepare(
-      "SELECT p.user_id, p.first_name, p.last_name, p.nickname, p.phone, p.contact_email, p.show_email, p.show_phone, p.pronouns, p.grade_year, p.subteams, p.member_type, p.bio, p.favorite_food, p.dietary_restrictions, p.favorite_first_thing, p.fun_fact, p.colleges, p.employers, p.show_on_about, p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role, p.rookie_year, u.image as avatar FROM user_profiles p JOIN user u ON p.user_id = u.id WHERE p.user_id = ? AND p.show_on_about = 1"
+      "SELECT p.user_id, p.first_name, p.last_name, p.nickname, p.phone, p.contact_email, p.show_email, p.show_phone, p.pronouns, p.grade_year, p.subteams, p.member_type, p.bio, p.favorite_food, p.dietary_restrictions, p.favorite_first_thing, p.fun_fact, p.colleges, p.employers, p.show_on_about, p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role, p.rookie_year, p.parents_name, p.parents_email, p.students_name, p.students_email, u.image as avatar FROM user_profiles p JOIN user u ON p.user_id = u.id WHERE p.user_id = ? AND p.show_on_about = 1"
     ).bind(userId).first();
 
     if (!profile) return c.json({ error: "Profile not found or private" }, 404);

@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "wrangler pages dev",
     "deploy": "wrangler pages deploy dist --project-name aresweb",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test": "vitest run",
+    "pa11y": "pa11y-ci"
   },
   "dependencies": {
     "@atproto/api": "^0.19.9",
@@ -69,6 +71,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260417.1",
     "@tailwindcss/typography": "^0.5.19",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@tiptap/html": "^3.22.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -80,12 +84,16 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "jsdom": "^29.0.2",
     "marked": "^18.0.2",
+    "pa11y-ci": "^4.1.0",
     "postcss": "^8",
+    "start-server-and-test": "^3.0.2",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vite": "^6.3.0",
     "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.1.4",
     "wrangler": "^4.83.0"
   }
 }

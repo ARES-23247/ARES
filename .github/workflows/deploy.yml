@@ -32,8 +32,14 @@ jobs:
       - name: Accessibility & Lint Audit
         run: npm run lint
 
+      - name: Component Tests (Vitest)
+        run: npm run test
+
       - name: Build with Vite
         run: npm run build
+
+      - name: E2E Accessibility Tests (pa11y-ci)
+        run: npx start-server-and-test preview http://localhost:4173 "npm run pa11y"
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

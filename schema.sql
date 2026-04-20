@@ -128,6 +128,10 @@ CREATE TABLE user_profiles (
     tshirt_size TEXT,
     emergency_contact_name TEXT,
     emergency_contact_phone TEXT,
+    parents_name TEXT,
+    parents_email TEXT,
+    students_name TEXT,
+    students_email TEXT,
     updated_at TEXT DEFAULT (datetime('now'))
 );
 

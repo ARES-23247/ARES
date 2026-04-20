@@ -1,0 +1,13 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "timeout": 15000,
+    "runners": ["axe", "htmlcs"]
+  },
+  "urls": [
+    "http://localhost:4173/",
+    "http://localhost:4173/about",
+    "http://localhost:4173/dashboard",
+    "http://localhost:4173/sponsors"
+  ]
+}
