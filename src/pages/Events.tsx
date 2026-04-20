@@ -14,6 +14,7 @@ interface EventItem {
   description: string;
   cover_image: string | null;
   tba_event_key: string | null;
+  category: "internal" | "outreach" | "external";
 }
 import CompetitionBanner from "../components/CompetitionBanner";
 
@@ -61,19 +62,26 @@ export default function Events() {
   const now = new Date();
   const bufferTime = subDays(now, 1);
   
-  // Filter out routine practices so they only appear on the Google Calendar iframe, not as major event cards.
-  const majorEvents = [...events]
-    .filter((e) => !e.title.toLowerCase().includes("practice"))
+  // Filter into categories
+  const outreachEvents = [...events]
+    .filter((e) => e.category === "outreach")
     .sort((a, b) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime());
   
-  const practices = [...events]
-    .filter((e) => e.title.toLowerCase().includes("practice"))
+  const internalPractices = [...events]
+    .filter((e) => e.category === "internal")
+    .sort((a, b) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime());
+
+  const externalEvents = [...events]
+    .filter((e) => e.category === "external")
     .sort((a, b) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime());
   
-  const upcomingEvents = majorEvents.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
-  const upcomingPractices = practices.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
-  const pastEvents = majorEvents.filter((e) => !isAfter(parseISO(e.date_start), bufferTime)).reverse();
-  const pastPractices = practices.filter((e) => !isAfter(parseISO(e.date_start), bufferTime)).reverse();
+  const upcomingOutreach = outreachEvents.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
+  const upcomingPractices = internalPractices.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
+  const upcomingExternal = externalEvents.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
+  
+  const pastOutreach = outreachEvents.filter((e) => !isAfter(parseISO(e.date_start), bufferTime)).reverse();
+  const pastPractices = internalPractices.filter((e) => !isAfter(parseISO(e.date_start), bufferTime)).reverse();
+  // External events are omitted from the archive.
 
   const activeCompetition = events.find(e => {
     if (!e.tba_event_key) return false;
@@ -179,23 +187,37 @@ export default function Events() {
               )}
             </div>
 
-            {/* Upcoming Events */}
+            {/* Upcoming Outreach Events */}
             <div className="flex flex-col gap-8">
               <div className="flex items-center gap-4">
-                <h2 className="text-3xl font-bold text-white">Upcoming Events</h2>
+                <h2 className="text-3xl font-bold text-white">Upcoming Outreach</h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-ares-gold/50 to-transparent"></div>
               </div>
               
-              {upcomingEvents.length === 0 ? (
+              {upcomingOutreach.length === 0 ? (
                 <div className="bg-white/5 border border-white/10 hero-card p-12 text-center">
-                  <p className="text-marble/70 text-lg">No upcoming events are currently scheduled. Check back soon!</p>
+                  <p className="text-marble/70 text-lg">No upcoming outreach events are currently scheduled.</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-6">
-                  {upcomingEvents.map(evt => <EventCard key={evt.id} event={evt} isPast={false} />)}
+                  {upcomingOutreach.map(evt => <EventCard key={evt.id} event={evt} isPast={false} />)}
                 </div>
               )}
             </div>
+
+            {/* Upcoming External / Community Events */}
+            {upcomingExternal.length > 0 && (
+              <div className="flex flex-col gap-8 mt-12">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-bold text-white/90">External & Community Events</h2>
+                  <div className="h-px flex-1 bg-gradient-to-r from-ares-cyan/50 to-transparent"></div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {upcomingExternal.map(evt => <EventCard key={evt.id} event={evt} isPast={false} />)}
+                </div>
+              </div>
+            )}
 
             {/* Upcoming Practices */}
             {upcomingPractices.length > 0 && (
@@ -212,18 +234,18 @@ export default function Events() {
             )}
 
             {/* Archival - Past Events */}
-            {(pastEvents.length > 0 || pastPractices.length > 0) && (
+            {(pastOutreach.length > 0 || pastPractices.length > 0) && (
               <div className="mt-16 bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
                 <h2 className="text-4xl font-black text-white/80 tracking-tight mb-8">Event Archive</h2>
                 
-                {pastEvents.length > 0 && (
+                {pastOutreach.length > 0 && (
                   <div className="flex flex-col gap-6 mb-12">
                     <div className="flex items-center gap-4">
-                      <h3 className="text-xl font-bold text-ares-gold uppercase tracking-widest">Past Major Events</h3>
+                      <h3 className="text-xl font-bold text-ares-gold uppercase tracking-widest">Past Outreach</h3>
                       <div className="h-px flex-1 bg-gradient-to-r from-ares-gold/30 to-transparent"></div>
                     </div>
                     <div className="flex flex-col gap-4">
-                      {pastEvents.map(evt => <EventCard key={evt.id} event={evt} isPast={true} />)}
+                      {pastOutreach.map(evt => <EventCard key={evt.id} event={evt} isPast={true} />)}
                     </div>
                   </div>
                 )}

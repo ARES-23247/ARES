@@ -13,6 +13,9 @@ interface PostRow {
   title: string;
   date: string;
   ast: string;
+  author_nickname?: string;
+  author_avatar?: string;
+  cf_email?: string;
 }
 
 export default function BlogPost() {
@@ -61,7 +64,19 @@ export default function BlogPost() {
           className="mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter mb-4">{post.title}</h1>
-          <p className="text-ares-red font-medium">{format(new Date(post.date), 'MMMM do, yyyy')}</p>
+          <div className="flex items-center gap-4 text-ares-red font-medium">
+             <span>{format(new Date(post.date), 'MMMM do, yyyy')}</span>
+             {(post.author_avatar || post.author_nickname || post.cf_email) && (
+               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                 <img 
+                   src={post.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.cf_email}`}
+                   alt="Author"
+                   className="w-6 h-6 rounded-full object-cover border border-white/20"
+                 />
+                 <span className="text-sm text-white/80">{post.author_nickname || post.cf_email?.split('@')[0] || "Author"}</span>
+               </div>
+             )}
+          </div>
         </motion.header>
         <motion.article 
           initial={{ opacity: 0, y: 20 }}

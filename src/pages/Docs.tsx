@@ -20,6 +20,14 @@ interface DocRecord {
   updated_at?: string;
   snippet?: string;
   cf_email?: string;
+  original_author_nickname?: string;
+  original_author_avatar?: string;
+}
+
+interface Contributor {
+  author_email: string;
+  nickname?: string;
+  avatar?: string;
 }
 
 interface SearchResult {
@@ -67,17 +75,19 @@ export default function Docs() {
     },
   });
 
-  const { data: currentDoc, isLoading: docLoading } = useQuery<DocRecord>({
+  const ObjectQuery = useQuery<{doc: DocRecord, contributors: Contributor[]}>({
     queryKey: ["doc", slug],
     queryFn: async () => {
       const r = await fetch(`/api/docs/${slug}`);
       if (!r.ok) throw new Error("Not found");
-      const data = await r.json();
-      // @ts-expect-error -- D1 untyped response
-      return data.doc;
+      return r.json();
     },
     enabled: !!slug,
   });
+  
+  const currentDoc = ObjectQuery.data?.doc;
+  const contributors = ObjectQuery.data?.contributors || [];
+  const docLoading = ObjectQuery.isLoading;
 
   const { data: searchResults = [] } = useQuery<SearchResult[]>({
     queryKey: ["docs-search", searchQuery],
@@ -285,16 +295,51 @@ export default function Docs() {
                 </div>
               </div>
 
-              {currentDoc.updated_at && (
-                <div className="mt-12 pt-6 border-t border-white/8 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-2 text-xs">
-                  <span className="text-white/20">
-                    Last updated: {new Date(currentDoc.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
-                  </span>
-                  {currentDoc.cf_email && (
-                    <span className="text-white/20 bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                      Last edited by: <span className="text-white/40">{currentDoc.cf_email}</span>
+              {currentDoc && (
+                <div className="mt-12 pt-6 border-t border-white/8 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4 text-xs">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-white/30 font-bold uppercase tracking-widest text-[10px]">Document Lifecycle</span>
+                    <span className="text-white/50">
+                      {currentDoc.updated_at ? `Last updated: ${new Date(currentDoc.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}` : 'Not yet updated'}
                     </span>
-                  )}
+                  </div>
+                  
+                  <div className="flex items-center gap-4 bg-zinc-900/50 p-2 pr-4 rounded-full border border-white/5">
+                    <div className="flex items-center">
+                      <div className="relative z-10 w-8 h-8 rounded-full border-2 border-zinc-950 overflow-hidden bg-zinc-800">
+                        <img 
+                          src={currentDoc.original_author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentDoc.cf_email}`}
+                          alt="Author avatar" 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="ml-2 flex flex-col justify-center">
+                        <span className="text-[10px] uppercase font-bold text-ares-gold/80 tracking-wider leading-none">Created By</span>
+                        <span className="text-white/80 font-medium">{currentDoc.original_author_nickname || currentDoc.cf_email?.split('@')[0] || "Author"}</span>
+                      </div>
+                    </div>
+                    
+                    {contributors && contributors.length > 0 && (
+                      <>
+                        <div className="w-[1px] h-6 bg-white/10 mx-2"></div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase font-bold text-ares-cyan/80 tracking-wider mb-1">Contributors</span>
+                          <div className="flex -space-x-2">
+                            {contributors.slice(0, 5).map((c, idx) => (
+                              <div key={idx} className="w-6 h-6 rounded-full border border-zinc-950 overflow-hidden bg-zinc-800" title={c.nickname || c.author_email}>
+                                <img src={c.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${c.author_email}`} alt="avatar" className="w-full h-full object-cover"/>
+                              </div>
+                            ))}
+                            {contributors.length > 5 && (
+                              <div className="w-6 h-6 rounded-full border border-zinc-950 bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-white z-10">
+                                +{contributors.length - 5}
+                              </div>
+                            )}
+                          </div>
+                         </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 

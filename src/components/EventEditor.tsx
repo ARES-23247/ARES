@@ -36,6 +36,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     location: "",
     description: "",
     coverImage: DEFAULT_COVER_IMAGE,
+    category: "internal",
     isPotluck: false,
     isVolunteer: false,
   });
@@ -75,6 +76,8 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
             description: data.event.description || "",
       // @ts-expect-error -- D1 untyped response
             coverImage: data.event.cover_image || DEFAULT_COVER_IMAGE,
+      // @ts-expect-error -- D1 untyped response
+            category: data.event.category || "internal",
       // @ts-expect-error -- D1 untyped response
             isPotluck: data.event.is_potluck === 1,
       // @ts-expect-error -- D1 untyped response
@@ -169,7 +172,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
         }
 
         if (!editId) {
-          setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: DEFAULT_COVER_IMAGE, isPotluck: false, isVolunteer: false });
+          setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: DEFAULT_COVER_IMAGE, category: "internal", isPotluck: false, isVolunteer: false });
         }
       } else {
       // @ts-expect-error -- D1 untyped response
@@ -212,6 +215,19 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
             placeholder="State Championship"
           />
+        </div>
+        <div className="flex-1">
+          <label htmlFor="event-category" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Category *</label>
+          <select
+            id="event-category"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none"
+          >
+            <option value="internal">Internal Practice</option>
+            <option value="outreach">Outreach / Volunteer</option>
+            <option value="external">External / Community</option>
+          </select>
         </div>
         <div className="flex-1">
           <label htmlFor="event-location" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Location</label>

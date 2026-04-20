@@ -11,6 +11,9 @@ interface PostRecord {
   date: string;
   snippet: string;
   thumbnail: string;
+  author_nickname?: string;
+  author_avatar?: string;
+  cf_email?: string;
 }
 
 export default function Blog() {
@@ -62,9 +65,22 @@ export default function Blog() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 </div>
                 <div className="p-6 flex-grow flex flex-col">
-                  <p className="text-xs text-white/80 mb-2">{format(new Date(post.date), 'MMMM do, yyyy')}</p>
-                  <h4 className="text-xl font-bold text-white mb-3 group-hover:text-ares-red transition-colors">{post.title}</h4>
-                  <p className="text-sm text-white/60 line-clamp-3">{post.snippet}</p>
+                  <h4 className="text-xl font-bold text-white mb-2 group-hover:text-ares-red transition-colors">{post.title}</h4>
+                  <p className="text-sm text-white/60 line-clamp-3 mb-4">{post.snippet}</p>
+                  
+                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+                    <p className="text-xs text-white/50">{format(new Date(post.date), 'MMMM do, yyyy')}</p>
+                    {(post.author_avatar || post.author_nickname || post.cf_email) && (
+                      <div className="flex items-center gap-1.5" title={post.author_nickname || post.cf_email}>
+                        <img 
+                          src={post.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.cf_email}`}
+                          alt="Author"
+                          className="w-5 h-5 rounded-full object-cover border border-white/10"
+                        />
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-ares-gold/80 truncate max-w-[100px]">{post.author_nickname || post.cf_email?.split('@')[0] || "Author"}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </Link>

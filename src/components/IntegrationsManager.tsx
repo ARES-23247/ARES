@@ -192,13 +192,35 @@ export default function IntegrationsManager() {
           </h3>
           <div className="space-y-4">
             <div>
-              <label htmlFor="cal_id" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Calendar ID</label>
+              <label htmlFor="cal_id_internal" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Internal Calendar ID</label>
               <input
-                id="cal_id"
+                id="cal_id_internal"
                 type="text"
                 placeholder="c_XXXXXXXXXXXXXXXX@group.calendar.google.com"
-                value={localSettings["CALENDAR_ID"] || ""}
-                onChange={(e) => handleChange("CALENDAR_ID", e.target.value)}
+                value={localSettings["CALENDAR_ID_INTERNAL"] || ""}
+                onChange={(e) => handleChange("CALENDAR_ID_INTERNAL", e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="cal_id_outreach" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Outreach Calendar ID</label>
+              <input
+                id="cal_id_outreach"
+                type="text"
+                placeholder="c_XXXXXXXXXXXXXXXX@group.calendar.google.com"
+                value={localSettings["CALENDAR_ID_OUTREACH"] || ""}
+                onChange={(e) => handleChange("CALENDAR_ID_OUTREACH", e.target.value)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="cal_id_external" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">External Calendar ID</label>
+              <input
+                id="cal_id_external"
+                type="text"
+                placeholder="c_XXXXXXXXXXXXXXXX@group.calendar.google.com"
+                value={localSettings["CALENDAR_ID_EXTERNAL"] || ""}
+                onChange={(e) => handleChange("CALENDAR_ID_EXTERNAL", e.target.value)}
                 className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors"
               />
             </div>

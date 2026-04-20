@@ -12,7 +12,6 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState(DEFAULT_COVER_IMAGE);
   const [errorMsg, setErrorMsg] = useState("");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -113,7 +112,7 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ title, author, coverImageUrl, ast, socials, isDraft }),
+        body: JSON.stringify({ title, coverImageUrl, ast, socials, isDraft }),
       });
 
       const data = await res.json();
@@ -169,17 +168,6 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
             onChange={(e) => setTitle(e.target.value)}
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all shadow-inner lg:text-lg"
             placeholder='e.g. Our Road to State'
-          />
-        </div>
-        <div className="flex-1">
-          <label htmlFor="author-name" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Author Name</label>
-          <input
-            id="author-name"
-            type="text"
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-ares-gold focus:border-ares-gold transition-all shadow-inner lg:text-lg"
-            placeholder="e.g. Software Team"
           />
         </div>
         <div className="flex-1">
