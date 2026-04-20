@@ -89,10 +89,10 @@ export default function Footer() {
               </a>
             </div>
           </div>
-          <div className="flex flex-wrap gap-6 md:gap-8 items-center">
-            <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link to="/docs" className="hover:text-white transition-colors flex items-center"><span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span></Link>
-            <Link to="/sponsors" className="hover:text-white transition-colors">Support Us</Link>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 md:gap-8 mt-2 md:mt-0">
+            <Link to="/privacy" className="hover:text-white transition-colors whitespace-nowrap">Privacy</Link>
+            <Link to="/docs" className="hover:text-white transition-colors flex items-center whitespace-nowrap"><span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span></Link>
+            <Link to="/sponsors" className="hover:text-white transition-colors whitespace-nowrap">Support Us</Link>
           </div>
         </div>
       </div>
