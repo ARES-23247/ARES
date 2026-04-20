@@ -88,7 +88,7 @@ export default function Join() {
                   <Wrench size={18} />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold uppercase tracking-wider text-sm mb-1">Industrial Tooling</h4>
+                  <h3 className="text-white font-bold uppercase tracking-wider text-sm mb-1">Industrial Tooling</h3>
                   <p className="text-marble/60 text-sm leading-relaxed">Operate advanced CNC mills, 3D printers, and CAD software used in top engineering firms.</p>
                 </div>
               </div>
@@ -97,7 +97,7 @@ export default function Join() {
                   <Code size={18} />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold uppercase tracking-wider text-sm mb-1">Autonomous Systems</h4>
+                  <h3 className="text-white font-bold uppercase tracking-wider text-sm mb-1">Autonomous Systems</h3>
                   <p className="text-marble/60 text-sm leading-relaxed">Learn Java, path planning, computer vision, and machine learning telemetry systems.</p>
                 </div>
               </div>
@@ -106,14 +106,14 @@ export default function Join() {
                   <PenTool size={18} />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold uppercase tracking-wider text-sm mb-1">Business & Logistics</h4>
+                  <h3 className="text-white font-bold uppercase tracking-wider text-sm mb-1">Business & Logistics</h3>
                   <p className="text-marble/60 text-sm leading-relaxed">Develop championship-grade portfolios, execute marketing pipelines, and secure sponsorships.</p>
                 </div>
               </div>
             </div>
 
             <div className="mt-12 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-              <h4 className="text-ares-gold font-bold uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><CheckCircle size={14} /> Eligibility</h4>
+              <h3 className="text-ares-gold font-bold uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><CheckCircle size={14} /> Eligibility</h3>
               <ul className="text-sm text-marble/80 space-y-2">
                 <li>• Students in grades 6-12</li>
                 <li>• Serving Monongalia & Harrison Counties</li>

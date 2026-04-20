@@ -5,7 +5,7 @@ export default function Footer() {
   const navigate = useNavigate();
 
   return (
-    <footer className="w-full bg-obsidian text-marble border-t border-ares-bronze/20 pt-16 pb-8 overflow-hidden relative">
+    <footer role="contentinfo" aria-label="Site Footer" className="w-full bg-obsidian text-marble border-t border-ares-bronze/20 pt-16 pb-8 overflow-hidden relative">
       {/* Meander accent for footer bottom */}
       <GreekMeander variant="thin" opacity="opacity-40" className="absolute bottom-0 left-0" />
 
@@ -50,8 +50,8 @@ export default function Footer() {
             <a href="https://www.youtube.com/@ARESFTC" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-red transition-colors text-white" aria-label="YouTube">
               <i className="fab fa-youtube"></i>
             </a>
-            <a href="mailto:ares@aresfirst.org" tabIndex={-1} aria-hidden="true" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-bronze transition-colors text-white">
-              <i className="fas fa-envelope"></i>
+            <a href="mailto:ares@aresfirst.org" aria-label="Email ARES 23247" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-bronze transition-colors text-white">
+              <i className="fas fa-envelope" aria-hidden="true"></i>
             </a>
           </div>
           <p className="text-marble/70 text-xs font-bold uppercase tracking-widest">ARES HQ</p>

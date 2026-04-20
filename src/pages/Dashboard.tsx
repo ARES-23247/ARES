@@ -222,16 +222,6 @@ export default function Dashboard() {
             <BadgeManager />
           </>
         ) : null;
-      case "inquiries":
-        return isAdmin ? (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3"><MessageSquare className="text-ares-cyan" /> Inquiries & Applications</h2>
-              <p className="text-zinc-500 text-sm mt-1">Review student applications, mentor requests, and sponsor inquiries.</p>
-            </div>
-            <AdminInquiries />
-          </>
-        ) : null;
       case "logistics":
         return (
           <>

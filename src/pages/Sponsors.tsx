@@ -157,6 +157,7 @@ export default function Sponsors() {
                       href={s.website_url || "#"}
                       target={s.website_url ? "_blank" : undefined}
                       rel="noopener noreferrer"
+                      aria-label={`Visit the website of ${s.name}`}
                       whileHover={{ y: -5, scale: 1.02 }}
                       className={`
                         ${TIER_STYLING[tier].glass} ${TIER_STYLING[tier].border} ${TIER_STYLING[tier].glow}
@@ -171,8 +172,8 @@ export default function Sponsors() {
                       )}
                       
                       <div className="flex items-center gap-2 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Visit Website</span>
-                        <ExternalLink size={12} className="text-ares-gold" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400" aria-hidden="true">Visit Website</span>
+                        <ExternalLink size={12} className="text-ares-gold" aria-hidden="true" />
                       </div>
                     </motion.a>
                   ))}
@@ -192,7 +193,7 @@ export default function Sponsors() {
 
           <div className="flex-1 relative z-10 flex flex-col justify-between">
             <div>
-              <h3 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter drop-shadow-lg">Join the<br/><span className="text-ares-red italic">Engineering Journey.</span></h3>
+              <h2 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter drop-shadow-lg">Join the<br/><span className="text-ares-red italic">Engineering Journey.</span></h2>
               <p className="text-zinc-400 text-lg mb-8 max-w-xl leading-relaxed">
                 Help us build the next generation of robotics. We are always looking for partners who share our passion for excellence, education, and innovation. Whether you can provide mentorship, machining, material donations, or financial grants, your support is the foundation of our success.
               </p>

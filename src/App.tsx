@@ -35,7 +35,7 @@ export default function App() {
     <ErrorBoundary>
       <ScrollToTop />
       <Navbar />
-      <main className="flex-1 flex flex-col pt-16">
+      <main id="main-content" role="main" className="flex-1 flex flex-col pt-16">
         <AnimatePresence mode="wait">
           <ErrorBoundary>
             <Routes location={location} key={location.pathname}>
