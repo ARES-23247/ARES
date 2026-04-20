@@ -9,7 +9,7 @@ const eventsRouter = new Hono<{ Bindings: Bindings }>();
 eventsRouter.get("/events", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck, is_volunteer FROM events WHERE is_deleted = 0 AND status = 'published' ORDER BY date_start ASC"
+      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck, is_volunteer FROM events WHERE is_deleted = 0 AND status = 'published' ORDER BY date_start ASC"
     ).all();
     return c.json({ events: results ?? [] });
   } catch (err) {
@@ -23,7 +23,12 @@ eventsRouter.get("/events/:id", async (c) => {
   const id = c.req.param("id");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck, is_volunteer FROM events WHERE id = ? AND is_deleted = 0 AND status = 'published'"
+      `SELECT e.id, e.title, e.category, e.date_start, e.date_end, e.location, e.description, e.cover_image, e.gcal_event_id, e.cf_email, e.is_potluck, e.is_volunteer,
+              p.nickname as author_nickname, COALESCE(p.avatar, u.image) as author_avatar
+       FROM events e
+       LEFT JOIN user u ON e.cf_email = u.email
+       LEFT JOIN user_profiles p ON u.id = p.user_id
+       WHERE e.id = ? AND e.is_deleted = 0 AND e.status = 'published'`
     ).bind(id).first();
 
     if (!row) return c.json({ error: "Event not found" }, 404);
@@ -37,8 +42,13 @@ eventsRouter.get("/events/:id", async (c) => {
 // ── GET /calendar — public calendar configuration ──────────────────────
 eventsRouter.get("/calendar", async (c) => {
   try {
-    const row = await c.env.DB.prepare("SELECT value FROM settings WHERE key = 'CALENDAR_ID'").first<{value: string}>();
-    return c.json({ calendarId: row?.value || "" });
+    const { results } = await c.env.DB.prepare("SELECT key, value FROM settings WHERE key IN ('CALENDAR_ID_INTERNAL', 'CALENDAR_ID_OUTREACH', 'CALENDAR_ID_EXTERNAL')").all<{key: string, value: string}>();
+    const map = (results || []).reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {} as Record<string, string>);
+    return c.json({ 
+      calendarIdInternal: map['CALENDAR_ID_INTERNAL'] || "",
+      calendarIdOutreach: map['CALENDAR_ID_OUTREACH'] || "",
+      calendarIdExternal: map['CALENDAR_ID_EXTERNAL'] || "",
+    });
   } catch (err) {
     console.error("D1 read error:", err);
     return c.json({ error: "Database error" }, 500);
@@ -49,7 +59,7 @@ eventsRouter.get("/calendar", async (c) => {
 eventsRouter.get("/admin/events", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer, revision_of FROM events ORDER BY date_start ASC"
+      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer, revision_of FROM events ORDER BY date_start ASC"
     ).all();
     return c.json({ events: results ?? [] });
   } catch (err) {
@@ -107,12 +117,15 @@ eventsRouter.post("/admin/events", async (c) => {
       }
     }
 
-    const user = await getSessionUser(c);
-    const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
+    const status = isDraft ? "pending" : "published";
 
     await c.env.DB.prepare(
-      "INSERT INTO events (id, title, date_start, date_end, location, description, gcal_event_id, cf_email, cover_image, status, is_potluck, is_volunteer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).bind(genId, title, dateStart, dateEnd || null, location || "", description || "", gcalId, email, coverImage || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0).run();
+      `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      genId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "",
+      gcalId || null, email, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0
+    ).run();
 
     // Dispatch Socials
     if (socials) {
@@ -143,17 +156,24 @@ eventsRouter.put("/admin/events/:id", async (c) => {
   try {
     const paramId = c.req.param("id");
     const body = await c.req.json();
-    const { title, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft } = body;
+    const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft } = body;
 
+    const cat = category || 'internal';
+    const email = c.req.header("cf-access-authenticated-user-email") || "anonymous_admin";
+    
     if (!title || !dateStart) {
       return c.json({ error: "Missing required fields" }, 400);
     }
-
+    const genId = crypto.randomUUID();
     const warnings: string[] = [];
+
     const socialConfig = await getSocialConfig(c);
     const gcalEmail = socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"];
     const gcalKey = socialConfig["GCAL_PRIVATE_KEY"];
-    const calId = socialConfig["CALENDAR_ID"];
+    let calId = "";
+    if (cat === "internal") calId = socialConfig["CALENDAR_ID_INTERNAL"];
+    if (cat === "outreach") calId = socialConfig["CALENDAR_ID_OUTREACH"];
+    if (cat === "external") calId = socialConfig["CALENDAR_ID_EXTERNAL"];
 
     // Attempt GCal update
     let gcalId: string | null = null;
@@ -176,10 +196,10 @@ eventsRouter.put("/admin/events/:id", async (c) => {
       // ── Shadow Revision Logic (Student Edits) ──
       const revId = `${paramId}-rev-${Math.random().toString(36).substring(2, 6)}`;
       await c.env.DB.prepare(
-        `INSERT INTO events (id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of)
-         VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?)`
+        `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?)`
       ).bind(
-        revId, title, dateStart, dateEnd || null, location || "", description || "", coverImage || "",
+        revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "",
         gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId
       ).run();
       
@@ -190,9 +210,9 @@ eventsRouter.put("/admin/events/:id", async (c) => {
     const status = isDraft ? "pending" : "published";
 
     await c.env.DB.prepare(
-      `UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ? WHERE id = ?`
+      `UPDATE events SET title = ?, category = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ? WHERE id = ?`
     )
-      .bind(title, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId)
+      .bind(title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId)
       .run();
 
     // ── Optional Social Syndication ──
@@ -256,10 +276,15 @@ eventsRouter.delete("/admin/events/:id/purge", async (c) => {
     }
     const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
     const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
-    const calId = dbSettings["CALENDAR_ID"];
     
+    const row = await c.env.DB.prepare("SELECT gcal_event_id, category FROM events WHERE id = ?").bind(id).first<{gcal_event_id: string, category: string}>();
+
+    let calId = "";
+    if (row?.category === "internal") calId = dbSettings["CALENDAR_ID_INTERNAL"];
+    if (row?.category === "outreach") calId = dbSettings["CALENDAR_ID_OUTREACH"];
+    if (row?.category === "external") calId = dbSettings["CALENDAR_ID_EXTERNAL"];
+
     if (gcalEmail && gcalKey && calId) {
-      const row = await c.env.DB.prepare("SELECT gcal_event_id FROM events WHERE id = ?").bind(id).first<{gcal_event_id: string}>();
       if (row && row.gcal_event_id) {
         try {
           await deleteEventFromGcal(row.gcal_event_id, {
@@ -462,13 +487,13 @@ eventsRouter.get("/events/:id/signups", async (c) => {
        WHERE s.event_id = ? AND u.role NOT IN ('unverified') ORDER BY s.created_at ASC`
     ).bind(eventId).all();
 
-    const signups = (results || []).map((r: { nickname?: string; user_id?: string; attended?: number; prep_hours?: number; [key: string]: unknown }) => ({
+    const signups = isVerified ? (results || []).map((r: { nickname?: string; user_id?: string; attended?: number; prep_hours?: number; [key: string]: unknown }) => ({
       ...r,
       nickname: r.nickname || "ARES Member",
       is_own: user ? r.user_id === user.id : false,
       attended: !!r.attended,
       prep_hours: Number(r.prep_hours || 0),
-    }));
+    })) : [];
 
     // Aggregate dietary info for verified users (Anonymous)
     const dietarySummary: Record<string, number> = {};
@@ -562,10 +587,13 @@ eventsRouter.patch("/events/:id/signups/me/attendance", async (c) => {
   if (!user || user.role === "unverified") return c.json({ error: "Unauthorized" }, 401);
 
   try {
+    const body = await c.req.json().catch(() => ({ attended: true }));
+    const attended = body.attended ? 1 : 0;
+    
     await c.env.DB.prepare(
-      `INSERT INTO event_signups (event_id, user_id, attended) VALUES (?, ?, 1)
-       ON CONFLICT(event_id, user_id) DO UPDATE SET attended = 1`
-    ).bind(eventId, user.id).run();
+      `INSERT INTO event_signups (event_id, user_id, attended) VALUES (?, ?, ?)
+       ON CONFLICT(event_id, user_id) DO UPDATE SET attended = ?`
+    ).bind(eventId, user.id, attended, attended).run();
     return c.json({ success: true });
   } catch (err) {
     console.error("[Attendance Self PATCH]", err);

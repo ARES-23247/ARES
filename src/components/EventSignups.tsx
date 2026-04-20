@@ -87,9 +87,12 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
   };
 
   const selfCheckIn = async () => {
+    const isCurrentlyAttended = myEntry?.attended || false;
     await fetch(`/api/events/${eventId}/signups/me/attendance`, {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
+      body: JSON.stringify({ attended: !isCurrentlyAttended }),
     });
     fetchSignups();
   };
@@ -158,87 +161,80 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
         )}
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-black flex items-center gap-2">
-            <ClipboardList size={20} className="text-ares-gold" />
-            RSVPs & Sign-Ups ({signups.length})
-          </h3>
-          
-          {/* Self Check-in Button */}
-          {isAuthenticated && userRole !== "unverified" && (
-            <button 
-              onClick={selfCheckIn}
-              disabled={myEntry?.attended}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                myEntry?.attended 
-                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" 
-                : "bg-ares-gold hover:bg-yellow-400 text-black shadow-lg shadow-ares-gold/20"
-              }`}
-            >
-              <CheckCircle2 size={14} />
-              {myEntry?.attended ? "Checked In" : "Check In Now"}
-            </button>
-          )}
-        </div>
+      {isAuthenticated && userRole !== "unverified" ? (
+        <>
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-black flex items-center gap-2">
+                <ClipboardList size={20} className="text-ares-gold" />
+                RSVPs & Sign-Ups ({signups.length})
+              </h3>
+              
+              {/* Self Check-in Button */}
+              <button 
+                onClick={selfCheckIn}
+                disabled={myEntry?.attended}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                  myEntry?.attended 
+                  ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" 
+                  : "bg-ares-gold hover:bg-yellow-400 text-black shadow-lg shadow-ares-gold/20"
+                }`}
+              >
+                <CheckCircle2 size={14} />
+                {myEntry?.attended ? "Checked In" : "Check In Now"}
+              </button>
+            </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto mb-6 bg-zinc-900/20 border border-zinc-800/50 rounded-2xl">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-zinc-800 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                <th className="text-left py-3 px-4">Status</th>
-                <th className="text-left py-3 px-4">Who</th>
-                {isPotluck && <th className="text-left py-3 px-4">Bringing</th>}
-                {isVolunteer && <th className="text-left py-3 px-4">Prep Hrs</th>}
-                <th className="text-left py-3 px-4">Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {signups.map(entry => (
-                <tr key={entry.id} className={`border-b border-zinc-800/30 transition-colors ${entry.attended ? "bg-emerald-500/5" : ""}`}>
-                  <td className="py-3 px-4">
-                    {canManage ? (
-                      <button 
-                        onClick={() => toggleAttendance(entry.user_id, entry.attended)}
-                        className={`transition-colors ${entry.attended ? "text-emerald-500" : "text-zinc-700 hover:text-zinc-500"}`}
-                      >
-                        {entry.attended ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                      </button>
-                    ) : (
-                      <div className={entry.attended ? "text-emerald-500" : "text-zinc-800"}>
-                        {entry.attended ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <img src={entry.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${entry.user_id}`}
-                        alt="" className="w-6 h-6 rounded-lg bg-zinc-800" />
-                      <span className={`text-sm font-bold ${entry.attended ? "text-white" : "text-zinc-400"}`}>{entry.nickname || "ARES Member"}</span>
-                    </div>
-                  </td>
-                  {isPotluck && <td className="py-3 px-4 text-sm text-zinc-300">{entry.bringing || "—"}</td>}
-                  {isVolunteer && <td className="py-3 px-4 text-sm text-zinc-300">{entry.prep_hours || 0}</td>}
-                  <td className="py-3 px-4 text-sm text-zinc-400">{entry.notes || "—"}</td>
-                </tr>
-              ))}
-              {signups.length === 0 && (
-                <tr><td colSpan={5} className="py-12 text-center text-zinc-600 text-sm">No RSVPs yet. Be the first!</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Sign Up Form */}
-      {isAuthenticated ? (
-        userRole === "unverified" ? (
-          <div className="bg-ares-red/5 border border-ares-red/20 rounded-[2rem] p-8 text-center">
-            <p className="text-sm text-zinc-300 mb-2 font-black uppercase tracking-widest text-ares-red">Verification Required</p>
-            <p className="text-xs text-zinc-500 max-w-sm mx-auto">You must be verified by a team administrator before you can sign up for events.</p>
+            {/* Table */}
+            <div className="overflow-x-auto mb-6 bg-zinc-900/20 border border-zinc-800/50 rounded-2xl">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <th className="text-left py-3 px-4">Status</th>
+                    <th className="text-left py-3 px-4">Who</th>
+                    {isPotluck && <th className="text-left py-3 px-4">Bringing</th>}
+                    {isVolunteer && <th className="text-left py-3 px-4">Prep Hrs</th>}
+                    <th className="text-left py-3 px-4">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {signups.map(entry => (
+                    <tr key={entry.id} className={`border-b border-zinc-800/30 transition-colors ${entry.attended ? "bg-emerald-500/5" : ""}`}>
+                      <td className="py-3 px-4">
+                        {canManage ? (
+                          <button 
+                            onClick={() => toggleAttendance(entry.user_id, entry.attended)}
+                            className={`transition-colors ${entry.attended ? "text-emerald-500" : "text-zinc-700 hover:text-zinc-500"}`}
+                          >
+                            {entry.attended ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                          </button>
+                        ) : (
+                          <div className={entry.attended ? "text-emerald-500" : "text-zinc-800"}>
+                            {entry.attended ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <img src={entry.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${entry.user_id}`}
+                            alt="" className="w-6 h-6 rounded-lg bg-zinc-800" />
+                          <span className={`text-sm font-bold ${entry.attended ? "text-white" : "text-zinc-400"}`}>{entry.nickname || "ARES Member"}</span>
+                        </div>
+                      </td>
+                      {isPotluck && <td className="py-3 px-4 text-sm text-zinc-300">{entry.bringing || "—"}</td>}
+                      {isVolunteer && <td className="py-3 px-4 text-sm text-zinc-300">{entry.prep_hours || 0}</td>}
+                      <td className="py-3 px-4 text-sm text-zinc-400">{entry.notes || "—"}</td>
+                    </tr>
+                  ))}
+                  {signups.length === 0 && (
+                    <tr><td colSpan={5} className="py-12 text-center text-zinc-600 text-sm">No RSVPs yet. Be the first!</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        ) : (
+
+          {/* Sign Up Form */}
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-6 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-black text-ares-gold uppercase tracking-[0.2em]">
@@ -290,16 +286,25 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
               )}
             </div>
           </div>
-        )
+        </>
       ) : (
-        <div className="p-10 bg-zinc-900/30 border border-zinc-800/50 border-dashed rounded-[2rem] text-center">
-          <p className="text-zinc-500 mb-4 text-sm font-medium">Authentication required to access the sign-up sheet and event provisions.</p>
-          <button 
-            onClick={() => window.location.href = "/login"}
-            className="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black uppercase tracking-[0.2em] text-xs rounded-xl transition-all"
-          >
-            Sign in with ARES ID
-          </button>
+        <div className="my-12 p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl text-center">
+          <p className="text-sm text-zinc-300 mb-2">
+            <span className="text-ares-gold font-bold">Verified Access Required</span>
+          </p>
+          <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
+            Sign-ups and provisions are restricted to verified ARES members to protect privacy.
+          </p>
+          {!isAuthenticated ? (
+            <div>
+              <a href="/login" className="px-6 py-3 bg-ares-gold hover:bg-yellow-400 text-black rounded-xl font-black text-xs uppercase tracking-widest inline-block transition-all shadow-lg shadow-ares-gold/20">Sign in with ARES ID</a>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mt-6 font-bold">
+                Don't have an ARES ID? <a href="/about" className="text-ares-gold hover:underline">Contact us</a>
+              </p>
+            </div>
+          ) : (
+            <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold max-w-sm mx-auto">Your account is pending team administrator verification. If you have any questions, <a href="/about" className="text-ares-gold hover:underline">contact us</a>.</p>
+          )}
         </div>
       )}
     </div>

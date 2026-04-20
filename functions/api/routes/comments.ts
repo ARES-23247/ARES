@@ -9,6 +9,9 @@ commentsRouter.get("/comments/:targetType/:targetId", async (c) => {
   const user = await getSessionUser(c);
 
   try {
+    if (!user || user.role === "unverified") {
+      return c.json({ comments: [], authenticated: !!user, role: user?.role || null });
+    }
     const { results } = await c.env.DB.prepare(
       `SELECT c.id, c.content, c.created_at, c.user_id,
               p.nickname, COALESCE(p.avatar, u.image) as avatar

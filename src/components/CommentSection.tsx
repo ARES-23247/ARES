@@ -84,17 +84,8 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
         Discussion ({comments.filter(c => !c.is_deleted).length})
       </h3>
 
-      {isAuthenticated ? (
-        userRole === "unverified" ? (
-          <div className="mb-8 p-6 bg-ares-red/5 border border-ares-red/20 rounded-2xl text-center">
-            <p className="text-sm text-zinc-300 mb-2">
-              <span className="text-ares-red font-bold">Account Verification Pending</span>
-            </p>
-            <p className="text-xs text-zinc-500 max-w-md mx-auto">
-              Your account is pending team verification. Once an admin confirms your membership, you&apos;ll be able to join the conversation.
-            </p>
-          </div>
-        ) : (
+      {isAuthenticated && userRole !== "unverified" ? (
+        <div className="space-y-4">
           <div className="flex gap-3 mb-8">
             <textarea
               value={newComment}
@@ -109,65 +100,84 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
               Post
             </button>
           </div>
-        )
+
+          <div className="space-y-4">
+            {comments.filter(c => !c.is_deleted).map(comment => {
+              const isEditing = editingId === comment.id;
+              const userCanModify = isAdmin || comment.is_own;
+
+              return (
+                <div key={comment.id} className="flex gap-3 group">
+                  <img src={comment.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${comment.user_id}`}
+                    alt="" className="w-8 h-8 rounded-lg bg-zinc-800 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-bold text-white">{comment.nickname || "ARES Member"}</span>
+                      <span className="text-[10px] text-zinc-600">{new Date(comment.created_at).toLocaleDateString()}</span>
+                      {userCanModify && !isEditing && (
+                        <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => { setEditingId(comment.id); setEditContent(comment.content); }}
+                            className="p-1 text-zinc-600 hover:text-white transition-colors">
+                            <Pencil size={14} />
+                          </button>
+                          <button onClick={() => deleteComment(comment.id)}
+                            className="p-1 text-zinc-600 hover:text-red-500 transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {isEditing ? (
+                      <div className="mt-2 flex gap-2">
+                        <textarea
+                          value={editContent}
+                          onChange={e => setEditContent(e.target.value)}
+                          className="flex-1 bg-zinc-900/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ares-red resize-none min-h-[60px]"
+                        />
+                        <div className="flex flex-col gap-2">
+                          <button onClick={() => saveEdit(comment.id)} disabled={!editContent.trim() || editContent === comment.content}
+                            className="p-2 bg-zinc-800 hover:bg-green-600/20 text-green-500 hover:text-green-400 rounded-lg transition-colors disabled:opacity-50">
+                            <Check size={16} />
+                          </button>
+                          <button onClick={() => setEditingId(null)}
+                            className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-lg transition-colors">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       ) : (
-        <div className="mb-8 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl text-center text-sm text-zinc-500">
-          <a href="/login" className="text-ares-red hover:text-red-400 font-bold">Sign in</a> to join the conversation.
+        <div className="mb-8 p-6 bg-zinc-900/50 border border-zinc-800 rounded-2xl text-center">
+          <p className="text-sm text-zinc-300 mb-2">
+            <span className="text-ares-red font-bold">Verified Access Required</span>
+          </p>
+          <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
+            Discussions are strictly restricted to verified ARES members to protect privacy.
+          </p>
+          {!isAuthenticated ? (
+            <div>
+              <a href="/login" className="px-5 py-2.5 bg-ares-red hover:bg-red-700 text-white rounded-lg font-bold text-sm inline-block transition-colors">
+                Sign in with ARES ID
+              </a>
+              <p className="text-xs text-zinc-600 mt-5">
+                Don't have an ARES ID? <a href="/about" className="text-ares-red hover:underline">Contact us</a>
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+              Your account is pending team verification. If you have any questions, <a href="/about" className="text-ares-red hover:underline">contact us</a>.
+            </p>
+          )}
         </div>
       )}
-
-      <div className="space-y-4">
-        {comments.filter(c => !c.is_deleted).map(comment => {
-          const isEditing = editingId === comment.id;
-          const userCanModify = isAdmin || comment.is_own;
-
-          return (
-            <div key={comment.id} className="flex gap-3 group">
-              <img src={comment.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${comment.user_id}`}
-                alt="" className="w-8 h-8 rounded-lg bg-zinc-800 flex-shrink-0" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-bold text-white">{comment.nickname || "ARES Member"}</span>
-                  <span className="text-[10px] text-zinc-600">{new Date(comment.created_at).toLocaleDateString()}</span>
-                  {userCanModify && !isEditing && (
-                    <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => { setEditingId(comment.id); setEditContent(comment.content); }}
-                        className="p-1 text-zinc-600 hover:text-white transition-colors">
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={() => deleteComment(comment.id)}
-                        className="p-1 text-zinc-600 hover:text-red-500 transition-colors">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {isEditing ? (
-                  <div className="mt-2 flex gap-2">
-                    <textarea
-                      value={editContent}
-                      onChange={e => setEditContent(e.target.value)}
-                      className="flex-1 bg-zinc-900/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ares-red resize-none min-h-[60px]"
-                    />
-                    <div className="flex flex-col gap-2">
-                      <button onClick={() => saveEdit(comment.id)} disabled={!editContent.trim() || editContent === comment.content}
-                        className="p-2 bg-zinc-800 hover:bg-green-600/20 text-green-500 hover:text-green-400 rounded-lg transition-colors disabled:opacity-50">
-                        <Check size={16} />
-                      </button>
-                      <button onClick={() => setEditingId(null)}
-                        className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-lg transition-colors">
-                        <X size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
