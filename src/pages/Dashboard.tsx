@@ -385,7 +385,6 @@ export default function Dashboard() {
                 
                 <div className="h-px bg-white/5 my-3 mx-4" />
                 <NavButton tab="assets" icon={Image} label="Media Gallery" activeTab={activeTab} onNavigate={handleNavigate} />
-                <NavButton tab="locations" icon={MapPin} label="Location Manager" activeTab={activeTab} onNavigate={handleNavigate} />
                 <NavButton tab="legacy" icon={Trophy} label="Trophy Case Archive" activeTab={activeTab} onNavigate={handleNavigate} />
               </div>
             </div>
