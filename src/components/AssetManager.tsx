@@ -117,13 +117,13 @@ export default function AssetManager() {
             {assets.length} asset{assets.length !== 1 && "s"} registered in the Edge.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Assign Tag/Folder (e.g., Outreach)"
+            placeholder="Assign Tag/Folder"
             value={activeFolder}
             onChange={(e) => setActiveFolder(e.target.value)}
-            className="w-48 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-ares-gold hidden sm:block"
+            className="w-full sm:w-48 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-ares-gold"
           />
           <label
             htmlFor="asset-upload-input"
