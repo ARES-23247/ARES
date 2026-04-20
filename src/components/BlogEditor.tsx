@@ -34,6 +34,7 @@ import mammoth from "mammoth";
 import AssetPickerModal from "./AssetPickerModal";
 import SimPickerModal from "./SimPickerModal";
 import { compressImage } from "../utils/imageProcessor";
+import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 
 export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: string | null; onClearEdit?: () => void }) {
   const queryClient = useQueryClient();
@@ -41,7 +42,7 @@ export default function BlogEditor({ editSlug, onClearEdit }: { editSlug?: strin
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
-  const [coverImageUrl, setCoverImageUrl] = useState("/gallery_2.png");
+  const [coverImageUrl, setCoverImageUrl] = useState(DEFAULT_COVER_IMAGE);
   const [errorMsg, setErrorMsg] = useState("");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isUploadingInline, setIsUploadingInline] = useState(false);

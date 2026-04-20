@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import CommentSection from "../components/CommentSection";
 import EventSignups from "../components/EventSignups";
+import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 
 interface EventRow {
   id: string;
@@ -59,11 +60,7 @@ export default function EventDetail() {
     >
       {/* ─── STANDALONE EVENT HERO ─── */}
       <section className="relative w-full h-[50vh] min-h-[400px] flex items-center overflow-hidden bg-obsidian border-b-[8px] border-ares-bronze/40 meander-divider">
-        {event.cover_image ? (
-          <img src={event.cover_image} alt={event.title} className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity" />
-        ) : (
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-ares-red/40 to-obsidian opacity-80" />
-        )}
+        <img src={event.cover_image || DEFAULT_COVER_IMAGE} alt={event.title} className={`absolute inset-0 w-full h-full opacity-60 mix-blend-luminosity ${event.cover_image ? 'object-cover' : 'object-contain p-16 bg-black/80'}`} />
         <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/70 to-transparent"></div>
         
         {/* Motif: Glowing shield orb (Aegis) overlay */}

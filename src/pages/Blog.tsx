@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import SEO from "../components/SEO";
+import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 
 interface PostRecord {
   slug: string;
@@ -57,7 +58,7 @@ export default function Blog() {
             <Link to={`/blog/${post.slug}`} key={post.slug} className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan">
               <div className="glass-card hero-card overflow-hidden cursor-pointer flex flex-col h-full border border-white/10">
                 <div className="relative h-56 w-full overflow-hidden">
-                  <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <img src={post.thumbnail || DEFAULT_COVER_IMAGE} alt={post.title} className={`w-full h-full group-hover:scale-110 transition-transform duration-700 ${post.thumbnail ? 'object-cover' : 'object-contain p-8 bg-black/80'}`} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 </div>
                 <div className="p-6 flex-grow flex flex-col">

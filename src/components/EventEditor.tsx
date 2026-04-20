@@ -35,6 +35,7 @@ import 'katex/dist/katex.min.css';
 import AssetPickerModal from "./AssetPickerModal";
 import SimPickerModal from "./SimPickerModal";
 import { compressImage } from "../utils/imageProcessor";
+import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 
 export default function EventEditor({ editId, onClearEdit }: { editId?: string | null; onClearEdit?: () => void }) {
   const queryClient = useQueryClient();
@@ -125,7 +126,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
     dateEnd: "",
     location: "",
     description: "",
-    coverImage: "/gallery_2.png",
+    coverImage: DEFAULT_COVER_IMAGE,
   });
 
   useEffect(() => {
@@ -150,7 +151,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
       // @ts-expect-error -- D1 untyped response
             description: data.event.description || "",
       // @ts-expect-error -- D1 untyped response
-            coverImage: data.event.cover_image || "/gallery_2.png",
+            coverImage: data.event.cover_image || DEFAULT_COVER_IMAGE,
           });
           if (editor) {
             try {
@@ -289,7 +290,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
         }
 
         if (!editId) {
-          setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: "/gallery_2.png" });
+          setForm({ title: "", dateStart: "", dateEnd: "", location: "", description: "", coverImage: DEFAULT_COVER_IMAGE });
         }
       } else {
       // @ts-expect-error -- D1 untyped response
@@ -509,7 +510,7 @@ export default function EventEditor({ editId, onClearEdit }: { editId?: string |
             id="event-cover" type="text"
             value={form.coverImage} onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
-            placeholder="/gallery_2.png"
+            placeholder={DEFAULT_COVER_IMAGE}
           />
           <button 
             className={`px-6 py-3 rounded-lg text-sm font-bold border border-zinc-700 transition-all focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900 ${isUploading ? "bg-zinc-800 animate-pulse text-zinc-300" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"}`}

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { format, isAfter, subDays, parseISO } from "date-fns";
 import { motion } from "framer-motion";
 import SEO from "../components/SEO";
+import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 
 interface EventItem {
   id: string;
@@ -79,13 +80,7 @@ export default function Events() {
       <Link to={`/events/${event.id}`} className={`flex flex-col md:flex-row gap-6 bg-black/40 border ${isPast ? 'border-white/5 opacity-80' : 'border-ares-gold/30 shadow-lg shadow-ares-gold/10'} hero-card overflow-hidden group block cursor-pointer`}>
         {/* Date / Image Block */}
         <div className="md:w-1/3 relative overflow-hidden bg-ares-red/20 min-h-[200px] flex-shrink-0">
-          {event.cover_image ? (
-            <img src={event.cover_image} alt={event.title} className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${isPast ? '' : 'group-hover:scale-105'}`} />
-          ) : (
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-ares-red to-black flex items-center justify-center opacity-80">
-              <span className="text-white/20 font-bold tracking-widest text-3xl transform -rotate-12">ARES</span>
-            </div>
-          )}
+          <img src={event.cover_image || DEFAULT_COVER_IMAGE} alt={event.title} className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${isPast ? '' : 'group-hover:scale-105'} ${!event.cover_image ? 'object-contain p-8 bg-black/80' : ''}`} />
           <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 text-center">
             <div className={`text-2xl font-bold ${isPast ? 'text-white/80' : 'text-ares-gold'}`}>{format(startDate, 'd')}</div>
             <div className={`text-xs font-bold uppercase tracking-widest ${isPast ? 'text-white/80' : 'text-ares-red'}`}>{format(startDate, 'MMM')}</div>
