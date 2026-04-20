@@ -106,7 +106,7 @@ export default function Outreach() {
             </p>
             <div className="mt-10 flex gap-4">
                <a href="https://sparkwv.org" target="_blank" rel="noreferrer" className="px-6 py-3 bg-ares-red text-white font-black rounded-xl hover:scale-105 transition-all shadow-lg shadow-ares-red/20">Support Spark!</a>
-               <a href="/contact" className="px-6 py-3 bg-zinc-100 border border-zinc-200 text-zinc-900 font-black rounded-xl hover:bg-zinc-200 transition-all">Join the Mission</a>
+               <a href="/join" className="px-6 py-3 bg-zinc-100 border border-zinc-200 text-zinc-900 font-black rounded-xl hover:bg-zinc-200 transition-all">Join the Mission</a>
             </div>
           </div>
           <div className="relative">
@@ -132,7 +132,7 @@ export default function Outreach() {
               <p className="text-zinc-500 font-medium">A chronological record of our community interactions.</p>
             </div>
             <div className="h-px flex-1 bg-white/5 mx-6 hidden md:block" />
-            <a href="/contact" className="text-ares-gold font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-all">
+            <a href="mailto:ares@aresfirst.org" className="text-ares-gold font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-all">
               Request a demo <ArrowRight size={14} />
             </a>
           </header>
@@ -175,7 +175,7 @@ export default function Outreach() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-ares-red/20 blur-[100px] rounded-full pointer-events-none" />
           <h2 className="text-4xl md:text-5xl font-black text-white mb-6 italic tracking-tighter">Have a volunteer need?</h2>
           <p className="text-zinc-400 text-lg mb-10 max-w-xl mx-auto font-medium">Whether it&apos;s a elementary school demo, a science fair, or a community workshop—ARES is here to inspire.</p>
-          <a href="/contact" className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-ares-gold hover:text-black transition-all shadow-2xl">
+          <a href="mailto:ares@aresfirst.org" className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-ares-gold hover:text-black transition-all shadow-2xl">
             Get In Touch <ArrowRight size={20} />
           </a>
         </div>
