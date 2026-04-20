@@ -239,35 +239,35 @@ export default function ContentManager({
 
   return (
     <div className="w-full h-full flex flex-col">
-      {mode === "all" && (
-        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white tracking-tighter">Manage Content</h2>
-            <p className="text-zinc-400 text-sm mt-1">Review and manage the lifecycle of Database entries.</p>
-          </div>
-          
-          <div className="flex bg-zinc-900/50 p-1 rounded-lg border border-zinc-800">
-            <button 
-              onClick={() => setView("active")}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === "active" ? 'bg-zinc-800 text-ares-cyan border border-zinc-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              ACTIVE
-            </button>
-            <button 
-              onClick={() => setView("pending")}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === "pending" ? 'bg-ares-gold/10 text-ares-gold border border-ares-gold/20 shadow-sm' : 'text-zinc-500 hover:text-ares-gold/60'}`}
-            >
-              PENDING
-            </button>
-            <button 
-              onClick={() => setView("trash")}
-              className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${view === "trash" ? 'bg-ares-red/10 text-ares-red border border-ares-red/20 shadow-sm' : 'text-zinc-500 hover:text-ares-red/60'}`}
-            >
-              TRASH
-            </button>
-          </div>
+      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-white tracking-tighter">
+            {mode === "blog" ? "Manage Blogs & News" : mode === "event" ? "Manage Events" : mode === "docs" ? "Manage Documentation" : "Manage Content"}
+          </h2>
+          <p className="text-zinc-400 text-sm mt-1">Review and manage the lifecycle of Database entries.</p>
         </div>
-      )}
+        
+        <div className="flex bg-zinc-900/50 p-1 rounded-lg border border-zinc-800 self-start md:self-auto w-full md:w-auto overflow-x-auto custom-scrollbar shadow-inner">
+          <button 
+            onClick={() => setView("active")}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${view === "active" ? 'bg-zinc-800 text-ares-cyan border border-zinc-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
+            ACTIVE
+          </button>
+          <button 
+            onClick={() => setView("pending")}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${view === "pending" ? 'bg-ares-gold/10 text-ares-gold border border-ares-gold/20 shadow-sm' : 'text-zinc-500 hover:text-ares-gold/60'}`}
+          >
+            PENDING
+          </button>
+          <button 
+            onClick={() => setView("trash")}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${view === "trash" ? 'bg-ares-red/10 text-ares-red border border-ares-red/20 shadow-sm' : 'text-zinc-500 hover:text-ares-red/60'}`}
+          >
+            TRASH
+          </button>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center min-h-[300px]">
