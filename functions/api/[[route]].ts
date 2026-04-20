@@ -18,6 +18,7 @@ import judgesRouter from "./routes/judges";
 import profilesRouter from "./routes/profiles";
 import commentsRouter from "./routes/comments";
 import inquiriesRouter from "./routes/inquiries";
+import badgesRouter from "./routes/badges";
 
 const app = new Hono<{ Bindings: Bindings }>();
 const apiRouter = new Hono<{ Bindings: Bindings }>();
@@ -58,6 +59,7 @@ apiRouter.route("/", judgesRouter);
 
 // Users & Profiles
 apiRouter.route("/", profilesRouter);
+apiRouter.route("/", badgesRouter);
 
 // ── Global Platform Search (stays in aggregator — crosses domains) ───
 apiRouter.get("/search", async (c) => {

@@ -14,6 +14,13 @@ profilesRouter.get("/profile/me", async (c) => {
       "SELECT * FROM user_profiles WHERE user_id = ?"
     ).bind(user.id).first();
 
+    const { results: rawBadges } = await c.env.DB.prepare(
+      `SELECT b.* FROM badges b
+       JOIN user_badges ub ON b.id = ub.badge_id
+       WHERE ub.user_id = ?
+       ORDER BY ub.awarded_at DESC`
+    ).bind(user.id).all();
+
     return c.json({
       profile: profile || {
         user_id: user.id,
@@ -21,6 +28,7 @@ profilesRouter.get("/profile/me", async (c) => {
         avatar: null,
         member_type: "student",
       },
+      badges: rawBadges || [],
       auth: { id: user.id, email: user.email, name: user.name, image: user.image },
     });
   } catch (err) {
@@ -131,7 +139,15 @@ profilesRouter.get("/profile/:userId", async (c) => {
 
     const memberType = String(profile.member_type || "student");
     const sanitized = sanitizeProfileForPublic(profile as Record<string, unknown>, memberType);
-    return c.json({ profile: sanitized });
+
+    const { results: rawBadges } = await c.env.DB.prepare(
+      `SELECT b.* FROM badges b
+       JOIN user_badges ub ON b.id = ub.badge_id
+       WHERE ub.user_id = ?
+       ORDER BY ub.awarded_at DESC`
+    ).bind(userId).all();
+
+    return c.json({ profile: sanitized, badges: rawBadges || [] });
   } catch (err) {
     console.error("D1 public profile error:", err);
     return c.json({ error: "Profile fetch failed" }, 500);
