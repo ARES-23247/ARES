@@ -30,7 +30,7 @@ Technical systems map poorly to intuition without a bridge.
 - Example: "A Cloudflare Edge Worker is like a drive-thru window that serves the website right next to the user's house, instead of making them drive all the way to a central server." 
 
 ### 5. Concept Breakdowns ("In Other Words")
-When you are forced to introduce a new technical term (e.g., `Server Action` or `Zero Trust Architecture`), append an "In other words" or "What this means" section directly below it that rephrases the entire concept plainly.
+When you are forced to introduce a new technical term (e.g., `Server Action` or `Role Based Access Control`), append an "In other words" or "What this means" section directly below it that rephrases the entire concept plainly.
 
 ### 6. Concrete First, Abstract Second
 Provide a concrete, real-world example of what a feature *does* before explaining *how* it algorithmically works.
