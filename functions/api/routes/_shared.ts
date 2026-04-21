@@ -139,6 +139,22 @@ export const ensureAdmin = async (c: Context<AppEnv>, next: Next) => {
   await next();
 };
 
+// ── Authentication Middleware (Logged In Only) ──────────────────────
+export const ensureAuth = async (c: Context<AppEnv>, next: Next) => {
+  if (isDevBypassEnabled(c)) {
+    c.set("sessionUser", { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin", member_type: "mentor" });
+    return await next();
+  }
+
+  const user = await getSessionUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized: Please log in." }, 401);
+  }
+
+  c.set("sessionUser", user);
+  await next();
+};
+
 export interface SessionUser {
   id: string;
   email: string;
