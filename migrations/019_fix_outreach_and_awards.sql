@@ -1,6 +1,4 @@
--- Add students_count to outreach_logs
+-- Add students_count to outreach_logs if it doesn't exist (using a safe approach for SQLite)
+-- In SQLite, we can't do IF NOT EXISTS for columns in ALTER TABLE easily in one statement, 
+-- but since this is a new migration in the sequence, it should be fine.
 ALTER TABLE outreach_logs ADD COLUMN students_count INTEGER DEFAULT 0;
-
--- Rename columns in outreach_logs for consistency with frontend/API if needed, 
--- but we can also just use aliases in the queries to avoid complex migrations.
--- Let's stick to adding students_count for now.
