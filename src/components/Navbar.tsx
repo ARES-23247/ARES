@@ -2,14 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, LayoutDashboard, LogIn, Bell, Check, Heart } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
 
 
 import { useSession } from "../utils/auth-client";
 import { GreekMeander } from "./GreekMeander";
 
 export default function Navbar() {
-  const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const navigate = useNavigate();
