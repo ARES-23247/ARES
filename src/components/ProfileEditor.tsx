@@ -50,11 +50,11 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
 
   const isMinor = profile.member_type === "student"; // Only students get PII-hidden treatment
 
-  const getFetchUrl = () => adminEditUserId ? `/api/profile/${adminEditUserId}` : "/api/profile/me";
-  const getSaveUrl = () => adminEditUserId ? `/api/admin/users/${adminEditUserId}` : "/api/profile/me";
+  const fetchUrl = adminEditUserId ? `/api/profile/${adminEditUserId}` : "/api/profile/me";
+  const saveUrl = adminEditUserId ? `/api/admin/users/${adminEditUserId}` : "/api/profile/me";
 
   useEffect(() => {
-    fetch(getFetchUrl(), { credentials: "include" })
+    fetch(fetchUrl, { credentials: "include" })
       .then(r => r.json())
       .then((data: ProfileResponse) => {
         if (data && !data.error) {
@@ -94,7 +94,7 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
     setIsSaving(true);
     setMessage(null);
     try {
-      const res = await fetch(fetchUrl, {
+      const res = await fetch(saveUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

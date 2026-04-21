@@ -141,7 +141,7 @@ apiRouter.route("/webhooks/github", githubWebhookRouter);
 apiRouter.route("/webhooks/zulip", zulipWebhookRouter);
 
 // ── Global Platform Search (stays in aggregator — crosses domains) ───
-const searchCache = new Map<string, { data: any; expiresAt: number }>();
+const searchCache = new Map<string, { data: unknown; expiresAt: number }>();
 
 apiRouter.get("/search", async (c) => {
   try {

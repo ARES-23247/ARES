@@ -53,7 +53,7 @@ export default function App() {
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/*" element={<Dashboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/profile/:userId" element={<ProfilePage />} />
               <Route path="/tech-stack" element={<TechStack />} />

@@ -75,7 +75,7 @@ export default function JudgesHub() {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchPortfolio]);
+  }, [fetchPortfolio, turnstileToken]);
 
   useEffect(() => {
     const savedCode = localStorage.getItem("ares_judge_code");
