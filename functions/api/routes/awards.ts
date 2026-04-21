@@ -21,7 +21,7 @@ awardsRouter.get("/", async (c) => {
 awardsRouter.post("/", ensureAdmin, async (c) => {
   try {
     const body = await c.req.json();
-    const { id, title, year, event, team, description, media_url } = body;
+    const { id, title, year, event, description } = body;
     
     if (!id || !title || !year) {
       return c.json({ error: "Missing required fields" }, 400);
