@@ -343,3 +343,40 @@ export function sanitizeProfileForPublic(profile: Record<string, unknown>, membe
     grade_year: profile.grade_year,
   };
 }
+
+
+// ── Rate Limiting (Distributed via D1) ──────────────────────────────────
+export async function checkRateLimit(c: any, ip: string, limit = 100, windowSeconds = 60): Promise<boolean> {
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const windowStart = now - windowSeconds;
+
+    // Clean up old entries occasionally (1% chance)
+    if (Math.random() < 0.01) {
+      c.executionCtx.waitUntil(
+        c.env.DB.prepare("DELETE FROM audit_log WHERE resource_type = 'rate_limit' AND created_at < datetime('now', '-1 hour')").run()
+      );
+    }
+
+    // Check recent request count for this IP
+    const { count } = await c.env.DB.prepare(
+      "SELECT COUNT(*) as count FROM audit_log WHERE actor = ? AND resource_type = 'rate_limit' AND created_at > datetime('now', '-' || ? || ' seconds')"
+    ).bind(ip, windowSeconds).first();
+
+    if (count > limit) {
+      return false;
+    }
+
+    // Log this request
+    c.executionCtx.waitUntil(
+      c.env.DB.prepare(
+        "INSERT INTO audit_log (id, actor, action, resource_type, created_at) VALUES (?, ?, 'request', 'rate_limit', datetime('now'))"
+      ).bind(crypto.randomUUID(), ip).run()
+    );
+
+    return true;
+  } catch (err) {
+    console.error("[RateLimit] Error:", err);
+    return true; // Fail open to not block users if DB is slow
+  }
+}
