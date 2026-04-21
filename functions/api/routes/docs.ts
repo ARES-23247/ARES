@@ -3,7 +3,7 @@ import { Context } from "hono";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, parsePagination, checkWriteRateLimit, verifyTurnstile } from "./_shared";
 import { siteConfig } from "../../utils/site.config";
 import { sendZulipMessage } from "../../utils/zulipSync";
-import { emitNotification, notifyAdmins } from "../../utils/notifications";
+import { emitNotification, notifyByRole } from "../../utils/notifications";
 
 
 const docsRouter = new Hono<AppEnv>();
@@ -236,7 +236,7 @@ async function handleDocSave(c: Context<AppEnv>) {
        ).bind(revSlug, title, category, sortOrder || 0, description || "", content, email, isPortfolio ? 1 : 0, isExecutiveSummary ? 1 : 0, slug).run();
        
        c.executionCtx.waitUntil(
-         notifyAdmins(c, {
+         notifyByRole(c, ["admin", "coach", "mentor"], {
            title: "📝 Doc Revision Pending",
            message: `"${title}" revised by ${email} needs admin approval.`,
            link: "/dashboard",
@@ -269,10 +269,10 @@ async function handleDocSave(c: Context<AppEnv>) {
       } catch { /* ignore */ }
     }
 
-    // ── Notify admins of pending content ──
+    // ── Notify admins and mentors of pending content ──
     if (status === "pending") {
       c.executionCtx.waitUntil(
-        notifyAdmins(c, {
+        notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📝 Pending Document",
           message: `"${title}" submitted by ${email} needs review.`,
           link: "/dashboard",

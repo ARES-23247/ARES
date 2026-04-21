@@ -1,11 +1,10 @@
-import { useState } from "react";
 import { format } from "date-fns";
 import { Radio } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
-import { EventItem, ViewType, ClickToDeleteButton, contentFilter, ContentMutationResult } from "./shared";
+import { EventItem, ViewType, ClickToDeleteButton, ContentMutationResult } from "./shared";
 
-type EventCategory = "all" | "internal" | "outreach" | "external";
+
 
 interface EventManagerTabProps {
   view: ViewType;
@@ -20,18 +19,7 @@ interface EventManagerTabProps {
   purgeMutation: ContentMutationResult;
 }
 
-const CATEGORY_LABELS: Record<EventCategory, string> = {
-  all: "ALL",
-  internal: "PRACTICES",
-  outreach: "OUTREACH",
-  external: "COMMUNITY",
-};
 
-const CATEGORY_COLORS: Record<string, string> = {
-  internal: "bg-ares-red",
-  outreach: "bg-ares-gold",
-  external: "bg-ares-cyan",
-};
 
 export default function EventManagerTab({
   view,
@@ -45,7 +33,7 @@ export default function EventManagerTab({
   restoreMutation,
   purgeMutation
 }: EventManagerTabProps) {
-  const [categoryFilter, setCategoryFilter] = useState<EventCategory>("all");
+  // Removed local category filter state since it is now controlled by the parent view
 
   const { data: eventsResult, isLoading } = useQuery<{ events: EventItem[], lastSyncedAt: string | null }>({
     queryKey: ["admin_events"],
@@ -81,19 +69,16 @@ export default function EventManagerTab({
 
   if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-800 border-t-ares-red rounded-full animate-spin"></div></div>;
 
-  // Apply lifecycle filter first, then category filter for active view
-  const lifecycleFiltered = events.filter(contentFilter(view));
-  const filtered = view === "active" && categoryFilter !== "all"
-    ? lifecycleFiltered.filter(e => e.category === categoryFilter)
-    : lifecycleFiltered;
+  const lifecycleFiltered = events.filter(e => {
+    if (view === 'trash') return e.is_deleted === 1;
+    if (view === 'pending') return e.is_deleted !== 1 && (e.status === 'pending' || e.status === 'rejected');
+    return e.is_deleted !== 1 && (e.status === 'published' || !e.status);
+  });
 
-  // Count events per category for the active view badges
-  const categoryCounts = view === "active" ? {
-    all: lifecycleFiltered.length,
-    internal: lifecycleFiltered.filter(e => e.category === "internal").length,
-    outreach: lifecycleFiltered.filter(e => e.category === "outreach").length,
-    external: lifecycleFiltered.filter(e => e.category === "external").length,
-  } : null;
+  const filtered = (view === 'active' || view === 'all') ? lifecycleFiltered :
+                   (view === 'internal' || view === 'outreach' || view === 'external') ? lifecycleFiltered.filter(e => e.category === view) : lifecycleFiltered;
+
+  // We no longer display category counts, since the tabs are now top-level.
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -119,32 +104,7 @@ export default function EventManagerTab({
         )}
       </div>
 
-      {/* Category Sub-Tabs (only shown for active view) */}
-      {view === "active" && (
-        <div className="flex gap-1 mb-4 bg-zinc-950/50 p-1 ares-cut-sm border border-zinc-800/50">
-          {(Object.keys(CATEGORY_LABELS) as EventCategory[]).map(cat => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`flex items-center gap-1.5 px-3 py-1 ares-cut-sm text-[10px] font-bold uppercase tracking-widest transition-all ${
-                categoryFilter === cat
-                  ? "bg-zinc-800 text-white border border-zinc-700 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {cat !== "all" && (
-                <span className={`w-1.5 h-1.5 rounded-full ${CATEGORY_COLORS[cat]}`}></span>
-              )}
-              {CATEGORY_LABELS[cat]}
-              {categoryCounts && (
-                <span className="text-[9px] text-zinc-500 ml-0.5">
-                  ({categoryCounts[cat]})
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Sub-tabs removed as they are now top-level tabs */}
 
       <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
         {filtered.length === 0 ? (

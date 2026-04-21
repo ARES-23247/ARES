@@ -3,7 +3,7 @@ import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, parsePagination } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
-import { emitNotification, notifyAdmins } from "../../utils/notifications";
+import { emitNotification, notifyByRole } from "../../utils/notifications";
 import { 
   createShadowRevision, 
   approvePost, 
@@ -200,10 +200,10 @@ async function handlePostSave(c: Context<AppEnv>) {
         );
       } catch { /* ignore */ }
     }
-    // ── Notify admins of pending content ──
+    // ── Notify admins and mentors of pending content ──
     if (status === "pending") {
       c.executionCtx.waitUntil(
-        notifyAdmins(c, {
+        notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📝 Pending Blog Post",
           message: `"${body.title}" submitted by ${email} needs review.`,
           link: "/dashboard",

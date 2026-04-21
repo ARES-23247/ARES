@@ -1,31 +1,48 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, MAX_INPUT_LENGTHS, validateLength, getSocialConfig, parsePagination, ensureAdmin, logAuditAction, checkWriteRateLimit, verifyTurnstile } from "./_shared";
+import { AppEnv, MAX_INPUT_LENGTHS, validateLength, getSocialConfig, parsePagination, getSessionUser, ensureAuth, logAuditAction, checkWriteRateLimit, verifyTurnstile } from "./_shared";
 import { sendZulipAlert } from "../../utils/zulipSync";
-import { buildGitHubConfig, createProjectItem } from "../../utils/githubProjects";
-import { notifyAdmins } from "../../utils/notifications";
+import { notifyByRole, NotifyAudience } from "../../utils/notifications";
 
 
 const inquiriesRouter = new Hono<AppEnv>();
 const adminInquiriesRouter = new Hono<AppEnv>();
 
-// ── GET / — list all inquiries (admin) ──────────────────────────
-adminInquiriesRouter.get("/", async (c) => {
+// ── GET / — list all inquiries (verified users) ──────────────────────────
+inquiriesRouter.get("/", ensureAuth, async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
-    const { results } = await c.env.DB.prepare(
-      "SELECT id, type, name, email, metadata, status, created_at FROM inquiries ORDER BY created_at DESC LIMIT ? OFFSET ?"
-    ).bind(limit, offset).all();
+    const user = await getSessionUser(c);
+    
+    // Check if user is verified
+    if (!user || user.role === "unverified") {
+      return c.json({ error: "Unauthorized" }, 403);
+    }
+    
+    let filterClause = "";
+    
+    // If not admin, check member_type
+    if (user.role !== "admin") {
+       const profile = await c.env.DB.prepare("SELECT member_type FROM user_profiles WHERE user_id = ?").bind(user.id).first<{member_type: string}>();
+       const memberType = profile?.member_type || "student";
+       
+       if (memberType === "student") {
+         filterClause = "WHERE type IN ('outreach', 'support')";
+       } else if (memberType !== "coach" && memberType !== "mentor") {
+         return c.json({ error: "Unauthorized" }, 403);
+       }
+    }
+
+    const query = filterClause 
+      ? `SELECT id, type, name, email, metadata, status, created_at FROM inquiries ${filterClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+      : `SELECT id, type, name, email, metadata, status, created_at FROM inquiries ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+
+    const { results } = await c.env.DB.prepare(query).bind(limit, offset).all();
     return c.json({ inquiries: results });
   } catch (err) {
     console.error("D1 inquiry list error:", err);
     return c.json({ inquiries: [] }, 500);
   }
-});
-
-// Alias for old list path if needed
-adminInquiriesRouter.get("/list", async (c) => {
-  return c.redirect("./");
 });
 
 // ── POST /inquiries — Submit a new inquiry ─────────────────────────────
@@ -166,8 +183,13 @@ inquiriesRouter.post("/", async (c) => {
  
     // ── In-App Dashboard Notification ──
     try {
+      const audiences: NotifyAudience[] = 
+        (type === "outreach" || type === "support") 
+          ? ["admin", "coach", "mentor", "student"]
+          : ["admin", "coach", "mentor"];
+          
       c.executionCtx.waitUntil(
-        notifyAdmins(c, {
+        notifyByRole(c, audiences, {
           title: `New ${type.toUpperCase()} Inquiry`,
           message: `${name} submitted a new inquiry.`,
           link: "/dashboard?tab=inquiries",
@@ -197,9 +219,20 @@ inquiriesRouter.post("/", async (c) => {
   }
 });
 
-// ── PATCH /:id/status — update status (admin) ──────────────────────────────────
-adminInquiriesRouter.patch("/:id/status", ensureAdmin, async (c) => {
+// ── PATCH /:id/status — update status (authorized) ──────────────────────────────────
+inquiriesRouter.patch("/:id/status", ensureAuth, async (c) => {
   try {
+    const user = await getSessionUser(c);
+    if (!user || user.role === "unverified") return c.json({ error: "Unauthorized" }, 403);
+    
+    if (user.role !== "admin") {
+      const profile = await c.env.DB.prepare("SELECT member_type FROM user_profiles WHERE user_id = ?").bind(user.id).first<{member_type: string}>();
+      const memberType = profile?.member_type || "student";
+      if (memberType !== "coach" && memberType !== "mentor") {
+        return c.json({ error: "Unauthorized" }, 403);
+      }
+    }
+
     const id = (c.req.param("id") || "");
     const { status } = await c.req.json();
     
@@ -219,9 +252,20 @@ adminInquiriesRouter.patch("/:id/status", ensureAdmin, async (c) => {
   }
 });
 
-// ── DELETE /:id — delete inquiry (admin) ────────────────────────────────────────
-adminInquiriesRouter.delete("/:id", ensureAdmin, async (c) => {
+// ── DELETE /:id — delete inquiry (authorized) ────────────────────────────────────────
+inquiriesRouter.delete("/:id", ensureAuth, async (c) => {
   try {
+    const user = await getSessionUser(c);
+    if (!user || user.role === "unverified") return c.json({ error: "Unauthorized" }, 403);
+    
+    if (user.role !== "admin") {
+      const profile = await c.env.DB.prepare("SELECT member_type FROM user_profiles WHERE user_id = ?").bind(user.id).first<{member_type: string}>();
+      const memberType = profile?.member_type || "student";
+      if (memberType !== "coach" && memberType !== "mentor") {
+        return c.json({ error: "Unauthorized" }, 403);
+      }
+    }
+
     const id = (c.req.param("id") || "");
     await c.env.DB.prepare("DELETE FROM inquiries WHERE id = ?").bind(id).run();
     await logAuditAction(c, "inquiry_deleted", "inquiries", id, "Inquiry permanently deleted");

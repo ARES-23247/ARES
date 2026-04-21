@@ -49,18 +49,16 @@ export async function emitNotification(
   }
 }
 
+export type NotifyAudience = "admin" | "coach" | "mentor" | "student";
+
 /**
- * Broadcast a notification to all users with the 'admin' role.
+ * Broadcast a notification to users with matching roles or member types.
+ * Will only notify verified users (role != 'unverified').
  */
-export async function notifyAdmins(
+export async function notifyByRole(
   c: Context<AppEnv>,
-  {
-    title,
-    message,
-    link,
-    external = false,
-    priority = "medium"
-  }: {
+  audiences: NotifyAudience[],
+  payload: {
     title: string;
     message: string;
     link?: string;
@@ -68,28 +66,64 @@ export async function notifyAdmins(
     priority?: "low" | "medium" | "high";
   }
 ) {
+  if (audiences.length === 0) return;
+
   try {
-    // Better-Auth stores roles in the 'user' table
-    const { results: admins } = await c.env.DB.prepare(
-      "SELECT id FROM user WHERE role = 'admin'"
-    ).all();
+    const includeAdmin = audiences.includes("admin");
+    const profileTypes = audiences.filter(a => a !== "admin");
 
-    if (!admins) return;
+    const queries = [];
+    if (includeAdmin) {
+      // Admins are already verified since their role is 'admin'
+      queries.push(`SELECT id FROM user WHERE role = 'admin'`);
+    }
+    
+    if (profileTypes.length > 0) {
+      const placeholders = profileTypes.map(() => '?').join(', ');
+      // Join against user_profiles to check member_type, and ensure user is verified
+      queries.push(`
+        SELECT u.id 
+        FROM user u
+        JOIN user_profiles p ON u.id = p.user_id
+        WHERE u.role != 'unverified' AND p.member_type IN (${placeholders})
+      `);
+    }
 
-    const promises = admins.map(admin => 
+    const unionQuery = queries.join(' UNION ');
+    const stmt = c.env.DB.prepare(unionQuery);
+    const boundStmt = profileTypes.length > 0 ? stmt.bind(...profileTypes) : stmt;
+
+    const { results } = await boundStmt.all();
+
+    if (!results || results.length === 0) return;
+
+    const promises = results.map(row => 
       emitNotification(c, {
-        userId: admin.id as string,
-        title,
-        message,
-        link,
-        external,
-        priority
+        userId: row.id as string,
+        ...payload
       })
     );
 
     await Promise.all(promises);
   } catch (err) {
-    console.error("[Notification] notifyAdmins failed:", err);
+    console.error("[Notification] notifyByRole failed:", err);
   }
+}
+
+/**
+ * Broadcast a notification to all users with the 'admin' role.
+ * Kept for backward compatibility.
+ */
+export async function notifyAdmins(
+  c: Context<AppEnv>,
+  payload: {
+    title: string;
+    message: string;
+    link?: string;
+    external?: boolean;
+    priority?: "low" | "medium" | "high";
+  }
+) {
+  return notifyByRole(c, ["admin"], payload);
 }
 

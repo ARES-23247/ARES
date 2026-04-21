@@ -4,7 +4,7 @@ import { AppEnv, getSocialConfig, extractAstText, getSessionUser, getDbSettings,
 import { pushEventToGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials } from "../../../utils/socialSync";
 import { sendZulipMessage } from "../../../utils/zulipSync";
-import { notifyAdmins } from "../../../utils/notifications";
+import { notifyByRole } from "../../../utils/notifications";
 
 const adminRouter = new Hono<AppEnv>();
 
@@ -116,10 +116,10 @@ adminRouter.post("/", async (c) => {
     }
 
 
-    // ── Notify admins of pending content ──
+    // ── Notify admins and mentors of pending content ──
     if (status === "pending") {
       c.executionCtx.waitUntil(
-        notifyAdmins(c, {
+        notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📅 Pending Event",
           message: `"${title}" submitted by ${email} needs review.`,
           link: "/dashboard",
@@ -174,7 +174,7 @@ adminRouter.put("/:id", async (c) => {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?, ?)`
       ).bind(revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId, publishedAt || null).run();
       c.executionCtx.waitUntil(
-        notifyAdmins(c, {
+        notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📅 Event Revision Pending",
           message: `"${title}" revised by ${user?.email || "unknown"} needs admin approval.`,
           link: "/dashboard",

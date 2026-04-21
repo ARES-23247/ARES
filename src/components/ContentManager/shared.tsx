@@ -1,4 +1,4 @@
-export type ViewType = "active" | "trash" | "pending";
+export type ViewType = "active" | "trash" | "pending" | "internal" | "outreach" | "external" | "all";
 
 export interface ContentMutationResult {
   mutate: (variables: { type: 'event' | 'post' | 'doc'; id: string }) => void;

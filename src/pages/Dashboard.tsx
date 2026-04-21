@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams, useNavigate, Link, useLocation, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -93,6 +93,7 @@ export default function Dashboard() {
   const isAdmin = role === "admin" || isLocalDev;
   const isAuthorized = isAdmin || role === "author";
   const isUnverified = role === "unverified" && !isLocalDev;
+  const canSeeInquiries = !isUnverified;
   const canSeeLogistics = isAdmin || ["parent", "coach", "mentor"].includes(memberType);
 
   const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
@@ -300,7 +301,7 @@ export default function Dashboard() {
             <div>
               <h4 className="text-[10px] uppercase font-black tracking-widest text-ares-gold mb-2 px-6">Administration</h4>
               <div className="space-y-1 px-3">
-                {isAdmin && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" currentPath={location.pathname} />}
+                {canSeeInquiries && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" currentPath={location.pathname} />}
                 {isAdmin && <NavButton tab="command_center" icon={Radio} label="Command Center" currentPath={location.pathname} />}
                 {isAdmin && <NavButton tab="users" icon={Users} label="User Roles & Sync" currentPath={location.pathname} />}
                 {isAdmin && <NavButton tab="impact_roster" icon={Trophy} label="Impact & Roster" currentPath={location.pathname} />}
@@ -374,7 +375,7 @@ export default function Dashboard() {
                     <Route path="assets" element={<AssetManager />} />
                     <Route path="integrations" element={isAdmin ? <IntegrationsManager /> : <div className="text-center py-20">Access Denied</div>} />
                     <Route path="users" element={isAdmin ? <AdminUsers /> : <div className="text-center py-20">Access Denied</div>} />
-                    <Route path="inquiries" element={isAdmin ? <><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><MessageSquare className="text-ares-gold" /> Team Inquiries</h2><p className="text-marble/60 text-sm mt-1">Review student, mentor, and sponsor applications.</p></div><AdminInquiries /></> : <div className="text-center py-20">Access Denied</div>} />
+                    <Route path="inquiries" element={canSeeInquiries ? <><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><MessageSquare className="text-ares-gold" /> Team Inquiries</h2><p className="text-marble/60 text-sm mt-1">Review student, mentor, and sponsor applications.</p></div><AdminInquiries /></> : <div className="text-center py-20">Access Denied</div>} />
                     <Route path="impact_roster" element={isAdmin ? <MemberImpactOverview /> : <div className="text-center py-20">Access Denied</div>} />
                     <Route path="badges" element={isAdmin ? <><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3">Badge Management</h2><p className="text-zinc-500 text-sm mt-1">Define platform-wide awards and distribute them to members.</p></div><BadgeManager /></> : <div className="text-center py-20">Access Denied</div>} />
                     <Route path="logistics" element={canSeeLogistics ? <><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><Utensils className="text-ares-gold" /> Team Logistics Summary</h2><p className="text-marble/60 text-sm mt-1">Aggregated dietary data for event planning and team management.</p></div><DietarySummary /></> : <div className="text-center py-20">Access Denied</div>} />
