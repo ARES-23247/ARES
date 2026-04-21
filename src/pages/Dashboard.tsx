@@ -30,27 +30,40 @@ const CommandCenter = lazy(() => import("@/components/CommandCenter"));
 const SponsorTokensManager = lazy(() => import("@/components/SponsorTokensManager"));
 
 // ── NavButton Component ────────────────────────────────────────────
-const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false, currentPath }: { tab: string, icon?: React.ElementType, label: string, disabled?: boolean, sub?: boolean, currentPath: string }) => {
+const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false, currentPath, pendingCount = 0 }: { tab: string, icon?: React.ElementType, label: string, disabled?: boolean, sub?: boolean, currentPath: string, pendingCount?: number }) => {
   const isActive = currentPath === `/dashboard/${tab}` || (tab === "profile" && (currentPath === "/dashboard" || currentPath === "/dashboard/"));
-  const sharedClass = `w-full flex items-center gap-3 px-4 py-2.5 ares-cut-sm transition-all font-semibold text-left ${
+  const hasPending = pendingCount > 0;
+  
+  const sharedClass = `w-full flex items-center justify-between gap-3 px-4 py-2.5 ares-cut-sm transition-all font-semibold text-left ${
     isActive 
       ? "bg-ares-red/10 text-white border border-ares-red/30 shadow-[0_0_15px_rgba(192,0,0,0.1)]" 
-      : "text-marble/70 hover:bg-white/5 hover:text-white border border-transparent"
+      : hasPending
+        ? "text-ares-danger hover:bg-ares-danger/10 border border-ares-danger/20 shadow-[0_0_10px_rgba(239,68,68,0.05)]"
+        : "text-marble/70 hover:bg-white/5 hover:text-white border border-transparent"
   } ${sub ? "pl-11 text-sm font-bold" : "text-sm"} ${disabled ? "opacity-30 cursor-not-allowed pointer-events-none" : ""}`;
 
   if (disabled) {
     return (
       <button disabled className={sharedClass}>
-        {Icon && <Icon size={18} className={isActive ? "text-white" : "text-marble/50"} />}
-        <span className="truncate">{label}</span>
+        <div className="flex items-center gap-3 truncate">
+          {Icon && <Icon size={18} className={isActive ? "text-white" : "text-marble/50"} />}
+          <span className="truncate">{label}</span>
+        </div>
       </button>
     );
   }
 
   return (
     <Link to={`/dashboard/${tab}`} className={sharedClass}>
-      {Icon && <Icon size={18} className={isActive ? "text-white" : "text-marble/50"} />}
-      <span className="truncate">{label}</span>
+      <div className="flex items-center gap-3 truncate">
+        {Icon && <Icon size={18} className={isActive ? "text-white" : hasPending ? "text-ares-danger" : "text-marble/50"} />}
+        <span className="truncate">{label}</span>
+      </div>
+      {hasPending && (
+        <span className="shrink-0 bg-ares-danger text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+          {pendingCount}
+        </span>
+      )}
     </Link>
   );
 };
@@ -85,13 +98,16 @@ export default function Dashboard() {
   // ── State ──────────────────────────────────────────────────────────
   const [enrichedSession, setEnrichedSession] = useState<{user: Record<string, unknown>, authenticated: boolean} | null>(null);
   const [isPending, setIsPending] = useState(true);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingInquiriesCount, setPendingInquiriesCount] = useState(0);
+  const [pendingPostsCount, setPendingPostsCount] = useState(0);
+  const [pendingEventsCount, setPendingEventsCount] = useState(0);
+  const [pendingDocsCount, setPendingDocsCount] = useState(0);
 
   const session = enrichedSession;
   const role = (session?.user?.role as string) || "unverified";
   const memberType = (session?.user?.member_type as string) || "student";
   const isAdmin = role === "admin" || isLocalDev;
-  const isAuthorized = isAdmin || role === "author";
+  const isAuthorized = isAdmin || role === "author" || memberType === "coach" || memberType === "mentor";
   const isUnverified = role === "unverified" && !isLocalDev;
   const canSeeInquiries = !isUnverified;
   const canSeeLogistics = isAdmin || ["parent", "coach", "mentor"].includes(memberType);
@@ -108,11 +124,36 @@ export default function Dashboard() {
         .then(res => res.json() as Promise<{ inquiries?: { status: string }[] }>)
         .then((data) => {
           if (data.inquiries) {
-            setPendingCount(data.inquiries.filter((i: { status: string }) => i.status === "pending").length);
+            setPendingInquiriesCount(data.inquiries.filter((i: { status: string }) => i.status === "pending").length);
           }
         }).catch(() => {});
     }
-  }, [session, canSeeInquiries]);
+    if (session && isAuthorized) {
+      fetch("/api/admin/posts/list")
+        .then(res => res.json() as Promise<{ posts?: { status: string }[] }>)
+        .then((data) => {
+          if (data.posts) {
+            setPendingPostsCount(data.posts.filter((p: { status: string }) => p.status === "pending").length);
+          }
+        }).catch(() => {});
+        
+      fetch("/api/admin/events")
+        .then(res => res.json() as Promise<{ events?: { status: string }[] }>)
+        .then((data) => {
+          if (data.events) {
+            setPendingEventsCount(data.events.filter((e: { status: string }) => e.status === "pending").length);
+          }
+        }).catch(() => {});
+        
+      fetch("/api/admin/docs")
+        .then(res => res.json() as Promise<{ docs?: { status: string }[] }>)
+        .then((data) => {
+          if (data.docs) {
+            setPendingDocsCount(data.docs.filter((d: { status: string }) => d.status === "pending").length);
+          }
+        }).catch(() => {});
+    }
+  }, [session, canSeeInquiries, isAuthorized]);
 
   useEffect(() => {
     fetch("/api/profile/me")
@@ -204,9 +245,9 @@ export default function Dashboard() {
             <AppWindow size={16} className="text-white" />
           </div>
           <h1 className="text-lg font-black tracking-tighter text-white">ARES<span className="text-zinc-500 font-bold">Workspace</span></h1>
-          {canSeeInquiries && pendingCount > 0 && (
+          {canSeeInquiries && pendingInquiriesCount > 0 && (
             <Link to="/dashboard/inquiries" onClick={() => setIsSidebarOpen(false)} className="ml-2 px-2 py-0.5 bg-ares-danger text-white text-[10px] font-black uppercase tracking-widest rounded-full animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.6)]">
-              {pendingCount} New
+              {pendingInquiriesCount} New
             </Link>
           )}
         </div>
@@ -274,9 +315,9 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 px-4 py-2 mt-1 mb-1 text-[11px] font-black uppercase tracking-wider text-zinc-500">
                   <Folders size={14} className="text-zinc-600" /> Database Manager
                 </div>
-                <NavButton tab="manage_blog" label="1. Blogs / News" sub={true} currentPath={location.pathname} />
-                <NavButton tab="manage_event" label="2. Calendar Events" sub={true} currentPath={location.pathname} />
-                <NavButton tab="manage_docs" label="3. ARESLib Docs" sub={true} currentPath={location.pathname} />
+                <NavButton tab="manage_blog" label="1. Blogs / News" sub={true} currentPath={location.pathname} pendingCount={pendingPostsCount} />
+                <NavButton tab="manage_event" label="2. Calendar Events" sub={true} currentPath={location.pathname} pendingCount={pendingEventsCount} />
+                <NavButton tab="manage_docs" label="3. ARESLib Docs" sub={true} currentPath={location.pathname} pendingCount={pendingDocsCount} />
                 <div className="h-px bg-white/5 my-3 mx-4" />
                 <NavButton tab="assets" icon={Image} label="Media Gallery" currentPath={location.pathname} />
                 <NavButton tab="legacy" icon={Trophy} label="Trophy Case Archive" currentPath={location.pathname} />
@@ -288,7 +329,7 @@ export default function Dashboard() {
             <div>
               <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Operations</h4>
               <div className="space-y-1 px-3">
-                {canSeeInquiries && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" currentPath={location.pathname} />}
+                {canSeeInquiries && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" currentPath={location.pathname} pendingCount={pendingInquiriesCount} />}
                 <NavButton tab="outreach" icon={Target} label="Outreach Tracker" currentPath={location.pathname} />
                 <NavButton tab="locations" icon={MapPin} label="Meeting Locations" currentPath={location.pathname} />
                 <NavButton tab="sponsors" icon={Gem} label="Sponsors & Funding" currentPath={location.pathname} />

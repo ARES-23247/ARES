@@ -20,7 +20,7 @@ export default function Navbar() {
   const canSeeInquiries = isSignedIn && role !== "unverified";
   
   const [pendingInquiries, setPendingInquiries] = useState<{ id: string, name: string, type: string }[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingPosts, setPendingPosts] = useState<{ slug: string, status: string, title: string, author_nickname?: string }[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -66,7 +66,7 @@ export default function Navbar() {
 
   const rawNotifications = notifData?.notifications || [];
   
-  // Combine db notifications with pending inquiries
+  // Combine db notifications with pending inquiries and pending posts
   const notifications = [
     ...rawNotifications,
     ...pendingInquiries.map(i => ({
@@ -76,6 +76,14 @@ export default function Navbar() {
       is_read: false,
       link: '/dashboard/inquiries',
       is_inquiry: true
+    })),
+    ...pendingPosts.map(p => ({
+      id: `post-${p.slug}`,
+      title: `New Pending Post`,
+      message: `"${p.title}" by ${p.author_nickname || 'Student'}`,
+      is_read: false,
+      link: '/dashboard/manage_blog',
+      is_inquiry: true // Treat as action item (cannot be marked read)
     }))
   ];
   
@@ -89,7 +97,15 @@ export default function Navbar() {
           if (data.inquiries) {
             const pending = data.inquiries.filter((i) => i.status === "pending");
             setPendingInquiries(pending);
-            setPendingCount(pending.length);
+          }
+        }).catch(() => {});
+        
+      fetch("/api/admin/posts/list")
+        .then(res => res.json() as Promise<{ posts?: { slug: string, status: string, title: string, author_nickname?: string }[] }>)
+        .then((data) => {
+          if (data.posts) {
+            const pending = data.posts.filter((p) => p.status === "pending");
+            setPendingPosts(pending);
           }
         }).catch(() => {});
     }
@@ -221,12 +237,6 @@ export default function Navbar() {
                 className="w-6 h-6 rounded-full bg-zinc-800" 
               />
               <span className="text-xs font-bold text-zinc-300 group-hover:text-white uppercase tracking-wider">Dashboard</span>
-              {pendingCount > 0 && (
-                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ares-danger-soft opacity-75"></span>
-                   <span className="relative inline-flex rounded-full h-3 w-3 bg-ares-danger"></span>
-                 </span>
-              )}
             </Link>
           )}
           {!isPending && !isSignedIn && (
@@ -272,12 +282,6 @@ export default function Navbar() {
           {isSignedIn && (
             <Link to="/dashboard" onClick={() => setOpen(false)} className="text-ares-gold hover:text-white flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1 w-max">
               <LayoutDashboard size={16} /> Dashboard
-              {pendingCount > 0 && (
-                <span className="ml-1 flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ares-danger-soft opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-ares-danger"></span>
-                </span>
-              )}
             </Link>
           )}
           {!isPending && !isSignedIn && (

@@ -115,19 +115,30 @@ export const ensureAdmin = async (c: Context<AppEnv>, next: Next) => {
   const url = new URL(c.req.url);
   const role = (session.user as { role?: string }).role || UserRole.UNVERIFIED;
 
-  // Authors can do everything EXCEPT manage users
-  const isSuperAdminRoute = url.pathname.includes("/admin/users") || url.pathname.includes("/admin/roles");
-  const allowedRoles: string[] = isSuperAdminRoute ? [UserRole.ADMIN] : [UserRole.ADMIN, UserRole.AUTHOR];
-
-  if (!allowedRoles.includes(role)) {
-     console.warn(`[Auth Check] Access Denied for ${session.user.email}. Role: ${role}. Path: ${url.pathname}`);
-     return c.json({ error: `Forbidden: Requires one of [${allowedRoles.join(", ")}] privileges.` }, 403);
-  }
-
   // EFF-05: Store session in context so handlers don't need to re-fetch
   const profile = await c.env.DB.prepare(
     "SELECT member_type FROM user_profiles WHERE user_id = ?"
   ).bind(session.user.id).first<{ member_type: string }>();
+
+  const memberType = profile?.member_type || "student";
+
+  // Authors and Adult Leaders can do everything EXCEPT manage users
+  const isSuperAdminRoute = url.pathname.includes("/admin/users") || url.pathname.includes("/admin/roles");
+  const allowedRoles: string[] = isSuperAdminRoute ? [UserRole.ADMIN] : [UserRole.ADMIN, UserRole.AUTHOR];
+
+  let isAuthorized = allowedRoles.includes(role);
+  
+  // Grant standard admin privileges to verified Coaches and Mentors
+  if (!isAuthorized && !isSuperAdminRoute) {
+    if (role !== UserRole.UNVERIFIED && (memberType === "coach" || memberType === "mentor")) {
+      isAuthorized = true;
+    }
+  }
+
+  if (!isAuthorized) {
+     console.warn(`[Auth Check] Access Denied for ${session.user.email}. Role: ${role}, MemberType: ${memberType}. Path: ${url.pathname}`);
+     return c.json({ error: `Forbidden: Requires one of [${allowedRoles.join(", ")}] privileges or adult leader status.` }, 403);
+  }
 
   c.set("sessionUser", {
     id: session.user.id,
@@ -135,7 +146,7 @@ export const ensureAdmin = async (c: Context<AppEnv>, next: Next) => {
     name: session.user.name,
     image: session.user.image,
     role,
-    member_type: profile?.member_type || "student",
+    member_type: memberType,
   });
 
   await next();
