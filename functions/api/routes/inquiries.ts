@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, MAX_INPUT_LENGTHS, validateLength, getSocialConfig, parsePagination, ensureAdmin, logAuditAction } from "./_shared";
+import { AppEnv, MAX_INPUT_LENGTHS, validateLength, getSocialConfig, parsePagination, ensureAdmin, logAuditAction, checkWriteRateLimit } from "./_shared";
 import { sendZulipAlert } from "../../utils/zulipSync";
 import { buildGitHubConfig, createProjectItem } from "../../utils/githubProjects";
 import { notifyAdmins } from "../../utils/notifications";
@@ -30,6 +30,12 @@ adminInquiriesRouter.get("/list", async (c) => {
 
 // ── POST /inquiries — Submit a new inquiry ─────────────────────────────
 inquiriesRouter.post("/", async (c) => {
+  // SEC-DoW: Unauthenticated D1 write + external webhook fan-out — enforce strict IP limit
+  const ip = c.req.header("CF-Connecting-IP") || "unknown";
+  if (!checkWriteRateLimit(`inquiry:${ip}`, 5, 60)) {
+    return c.json({ error: "Too many submissions. Please try again later." }, 429);
+  }
+
   try {
     const body = await c.req.json();
     const { type, name, email, metadata } = body;
@@ -119,7 +125,6 @@ inquiriesRouter.post("/", async (c) => {
 
       // Fallback to Cloudflare's free MailChannels if no webhooks are configured
       if (!notified) {
-         // You can customize the from/to email to a configured settings address if needed
          c.executionCtx.waitUntil(
             fetch("https://api.mailchannels.net/tx/v1/send", {
               method: "POST",
@@ -234,4 +239,3 @@ export async function purgeOldInquiries(db: D1Database, days: number) {
 }
 
 export { inquiriesRouter, adminInquiriesRouter };
-

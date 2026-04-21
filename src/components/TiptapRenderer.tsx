@@ -65,6 +65,33 @@ export interface ASTNode {
   attrs?: Record<string, string | number | boolean>;
 }
 
+function validateUrl(url: string, type: 'image' | 'video'): string {
+  if (!url) return "";
+  
+  // Allow relative paths
+  if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) return url;
+
+  const allowedDomains = [
+    "aresnetwork.dev",
+    "youtube.com",
+    "youtu.be",
+    "googleusercontent.com",
+    "cloudflare-ipfs.com",
+    "raw.githubusercontent.com"
+  ];
+
+  try {
+    const parsed = new URL(url);
+    const domain = parsed.hostname.split('.').slice(-2).join('.');
+    if (allowedDomains.includes(domain)) return url;
+  } catch {
+    return "";
+  }
+  
+  console.warn(`Blocked ${type} URL for security: ${url}`);
+  return "";
+}
+
 export default function TiptapRenderer({ node }: { node: ASTNode }) {
   if (!node) return null;
 
@@ -107,13 +134,14 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
         </Tag>
       );
     }
-    case "paragraph": return <p className="text-[#e6edf3]/80 leading-relaxed mb-4">{children}</p>;
-    case "bulletList": return <ul className="list-disc list-inside space-y-1 mb-4 text-[#e6edf3]/70 ml-2">{children}</ul>;
-    case "orderedList": return <ol className="list-decimal list-inside space-y-1 mb-4 text-[#e6edf3]/70 ml-2">{children}</ol>;
+    case "paragraph": return <p className="text-ares-offwhite/80 leading-relaxed mb-4">{children}</p>;
+    case "bulletList": return <ul className="list-disc list-inside space-y-1 mb-4 text-ares-offwhite/70 ml-2">{children}</ul>;
+    case "orderedList": return <ol className="list-decimal list-inside space-y-1 mb-4 text-ares-offwhite/70 ml-2">{children}</ol>;
     case "listItem": return <li className="leading-relaxed">{children}</li>;
     case "image": {
-      const srcStr = (node.src || node.attrs?.src || "") as string;
+      const srcStr = validateUrl((node.src || node.attrs?.src || "") as string, 'image');
       const altStr = (node.alt || node.attrs?.alt || "") as string;
+      if (!srcStr) return null;
       return (
         <figure className="my-8 ares-cut-sm overflow-hidden glass-card border border-white/5 bg-black/40">
           <div className="relative w-full aspect-video">
@@ -154,12 +182,16 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
     case "tableRow": return <tr className="border-b border-zinc-800 hover:bg-zinc-900/50 transition-colors odd:bg-black/20 even:bg-black/40">{children}</tr>;
     case "tableHeader": return <th className="bg-zinc-900 border border-zinc-800 p-3 font-bold text-ares-gold whitespace-nowrap uppercase tracking-wider text-sm">{children}</th>;
     case "tableCell": return <td className="border border-zinc-800 p-3 text-zinc-300 align-top">{children}</td>;
-    case "youtube": return (
-      <div className="my-8 w-full aspect-video ares-cut-sm overflow-hidden glass-card shadow-lg flex items-center justify-center">
-        <iframe title="YouTube Video Component" src={node.attrs?.src as string} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-      </div>
-    );
-    case "taskList": return <ul className="list-none pl-0 space-y-2 my-4 text-[#e6edf3]/80">{children}</ul>;
+    case "youtube": {
+      const src = validateUrl(node.attrs?.src as string, 'video');
+      if (!src) return null;
+      return (
+        <div className="my-8 w-full aspect-video ares-cut-sm overflow-hidden glass-card shadow-lg flex items-center justify-center">
+          <iframe title="YouTube Video Component" src={src} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+      );
+    }
+    case "taskList": return <ul className="list-none pl-0 space-y-2 my-4 text-ares-offwhite/80">{children}</ul>;
     case "taskItem": return (
       <li className="flex items-start gap-3">
         <div className="mt-1 flex-shrink-0">
@@ -185,13 +217,13 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
       let icon = "ℹ️";
       
       if (type === "info") {
-        baseClass += " bg-ares-cyan/10 border-ares-cyan/30 text-[#e6edf3]";
+        baseClass += " bg-ares-cyan/10 border-ares-cyan/30 text-ares-offwhite";
         icon = "ℹ️";
       } else if (type === "warning") {
-        baseClass += " bg-ares-red/10 border-ares-red/30 text-[#e6edf3]";
+        baseClass += " bg-ares-red/10 border-ares-red/30 text-ares-offwhite";
         icon = "⚠️";
       } else if (type === "tip") {
-        baseClass += " bg-ares-gold/10 border-ares-gold/30 text-[#e6edf3]";
+        baseClass += " bg-ares-gold/10 border-ares-gold/30 text-ares-offwhite";
         icon = "💡";
       }
 

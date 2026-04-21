@@ -3,7 +3,17 @@ import { Bindings } from "./_shared";
 
 const tbaRouter = new Hono<{ Bindings: Bindings }>();
 
+// SEC-DoW: Cache TBA responses in-memory to prevent external API quota exhaustion
+const tbaCache = new Map<string, { data: unknown; expiresAt: number }>();
+
 async function getTBA(path: string, c: Context<{ Bindings: Bindings }>) {
+  // Check in-memory cache first (5 minute TTL)
+  const now = Date.now();
+  const cached = tbaCache.get(path);
+  if (cached && cached.expiresAt > now) {
+    return cached.data;
+  }
+
   const { results: settingsRows } = await c.env.DB.prepare("SELECT value FROM settings WHERE key = 'TBA_API_KEY'").all();
   const apiKey = (settingsRows[0] as { value: string })?.value;
   if (!apiKey) throw new Error("TBA_API_KEY not configured");
@@ -12,7 +22,19 @@ async function getTBA(path: string, c: Context<{ Bindings: Bindings }>) {
     headers: { "X-TBA-Auth-Key": apiKey }
   });
   if (!r.ok) throw new Error(`TBA API error: ${r.status}`);
-  return r.json();
+  const data = await r.json();
+
+  // Cache for 5 minutes
+  tbaCache.set(path, { data, expiresAt: now + 300000 });
+
+  // Periodic GC
+  if (Math.random() < 0.05) {
+    for (const [k, v] of tbaCache.entries()) {
+      if (v.expiresAt < now) tbaCache.delete(k);
+    }
+  }
+
+  return data;
 }
 
 // ── GET /tba/rankings/:eventKey ───────────────────────────────────────

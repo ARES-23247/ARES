@@ -371,3 +371,28 @@ export function checkRateLimit(ip: string, limit = 100, windowSeconds = 60): boo
 
   return record.count <= limit;
 }
+
+// ── Write-Endpoint Rate Limiting (Stricter) ────────────────────────────
+// Separate limiter for unauthenticated POST endpoints that write to D1/R2.
+// Prevents bots from spamming analytics/track, sponsor-click, inquiries etc.
+const writeRateLimitCache = new Map<string, { count: number; expiresAt: number }>();
+
+export function checkWriteRateLimit(ip: string, limit = 15, windowSeconds = 60): boolean {
+  const now = Date.now();
+
+  if (Math.random() < 0.05) {
+    for (const [key, data] of writeRateLimitCache.entries()) {
+      if (data.expiresAt < now) writeRateLimitCache.delete(key);
+    }
+  }
+
+  let record = writeRateLimitCache.get(ip);
+  if (!record || record.expiresAt < now) {
+    record = { count: 0, expiresAt: now + windowSeconds * 1000 };
+  }
+
+  record.count += 1;
+  writeRateLimitCache.set(ip, record);
+
+  return record.count <= limit;
+}

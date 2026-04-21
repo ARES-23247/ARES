@@ -1,10 +1,16 @@
 import { Hono } from "hono";
-import { Bindings, ensureAdmin } from "./_shared";
+import { Bindings, ensureAdmin, checkWriteRateLimit } from "./_shared";
 
 const analyticsRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── POST /analytics/track — log a page view ──────────────────────────
 analyticsRouter.post("/track", async (c) => {
+  // SEC-DoW: Unauthenticated D1 write — enforce strict per-IP write limit
+  const ip = c.req.header("CF-Connecting-IP") || "unknown";
+  if (!checkWriteRateLimit(`track:${ip}`, 20, 60)) {
+    return c.json({ success: false }, 429);
+  }
+
   try {
     const body = await c.req.json();
     const { path, category, referrer } = body as { path?: string; category?: string; referrer?: string };
@@ -28,6 +34,12 @@ analyticsRouter.post("/track", async (c) => {
 
 // ── POST /analytics/sponsor-click — log a sponsor link click ─────────
 analyticsRouter.post("/sponsor-click", async (c) => {
+  // SEC-DoW: Unauthenticated D1 write — enforce strict per-IP write limit
+  const ip = c.req.header("CF-Connecting-IP") || "unknown";
+  if (!checkWriteRateLimit(`click:${ip}`, 10, 60)) {
+    return c.json({ success: false }, 429);
+  }
+
   try {
     const body = await c.req.json();
     const { sponsor_id } = body as { sponsor_id: string };
