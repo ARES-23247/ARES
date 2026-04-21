@@ -33,8 +33,7 @@ export default function Navbar() {
     <nav role="navigation" aria-label="Main Navigation" className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 pt-4 pb-4 transition-all duration-500 overflow-hidden rounded-bl-xl rounded-br-[2.5rem] border-t-4 border-ares-bronze">
       <a 
         href="#main-content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-24 focus:left-6 bg-ares-red px-6 py-3 ares-cut-sm font-bold z-[100] shadow-2xl border border-white/20 transition-all"
-        style={{ backgroundColor: '#c00000', color: '#ffffff' }}
+        className="sr-only focus:not-sr-only focus:absolute focus:top-24 focus:left-6 bg-ares-red text-white px-6 py-3 ares-cut-sm font-bold z-[100] shadow-2xl border border-white/20 transition-all"
       >
         Skip to Main Content
       </a>
@@ -55,8 +54,9 @@ export default function Navbar() {
           <Link to="/outreach" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Outreach</Link>
           <Link to="/events" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Events</Link>
           <Link to="/tech-stack" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Tech Stack</Link>
-          <Link to="/docs" className="hover:opacity-80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1 flex items-center shadow-lg">
-            <span className="bg-ares-red px-1.5 py-0.5 rounded-l text-xs font-bold uppercase" style={{ backgroundColor: '#c00000', color: '#ffffff' }}>ARES</span><span className="bg-white/10 text-white px-1.5 py-0.5 rounded-r text-xs font-bold uppercase">Lib</span>
+          <Link to="/docs" className="hover:opacity-80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-lg">
+            <span className="bg-ares-red px-2 py-1 text-xs font-bold uppercase text-white">ARES</span>
+            <span className="bg-white/10 text-white px-2 py-1 text-xs font-bold uppercase">Lib</span>
           </Link>
           <Link to="/blog" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
         </div>
@@ -91,8 +91,8 @@ export default function Navbar() {
               <span className="text-xs font-bold text-zinc-300 group-hover:text-ares-gold uppercase tracking-wider">Sign In</span>
             </Link>
           )}
-          <Link to="/sponsors" className="px-5 py-2 font-bold uppercase tracking-wider text-xs ares-cut-sm bg-ares-red hover:scale-105 hover:bg-ares-red transition-all border border-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-            <span style={{ backgroundColor: '#c00000', color: '#ffffff' }}>Support Us</span>
+          <Link to="/sponsors" className="px-5 py-2 font-bold uppercase tracking-wider text-xs ares-cut-sm bg-ares-red text-white hover:scale-105 hover:bg-ares-red transition-all border border-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <span>Support Us</span>
           </Link>
         </div>
 
@@ -119,8 +119,9 @@ export default function Navbar() {
           <Link to="/outreach" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Outreach</Link>
           <Link to="/events" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Events</Link>
           <Link to="/tech-stack" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Tech Stack</Link>
-          <Link to="/docs" onClick={() => setOpen(false)} className="hover:opacity-80 transition-all flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1 w-max shadow-sm">
-            <span className="bg-ares-red px-1.5 py-0.5 rounded-l text-xs font-bold uppercase" style={{ backgroundColor: '#c00000', color: '#ffffff' }}>ARES</span><span className="bg-white/10 text-white px-1.5 py-0.5 rounded-r text-xs font-bold uppercase">Lib</span>
+          <Link to="/docs" onClick={() => setOpen(false)} className="hover:opacity-80 transition-all flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden w-max shadow-sm ml-2 mb-2">
+            <span className="bg-ares-red px-2 py-1 text-xs font-bold uppercase text-white">ARES</span>
+            <span className="bg-white/10 text-white px-2 py-1 text-xs font-bold uppercase">Lib</span>
           </Link>
           <Link to="/blog" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
           {isSignedIn && (
