@@ -81,7 +81,7 @@ export default function Outreach() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 + (idx * 0.1) }}
-                className="bg-black/40 border border-white/5 p-8 rounded-[2.5rem] relative group hover:border-white/20 transition-all shadow-xl backdrop-blur-md"
+                className="bg-black/40 border border-white/5 p-8 ares-cut-lg relative group hover:border-white/20 transition-all shadow-xl backdrop-blur-md"
               >
                 <div className="mb-6">{stat.icon}</div>
                 <div className="text-5xl font-black text-white mb-2 tracking-tighter">{stat.val}</div>
@@ -94,7 +94,7 @@ export default function Outreach() {
       </section>
 
       {/* Spark! Initiative */}
-      <section className="py-32 px-6 bg-white text-zinc-900 rounded-t-[4rem] relative z-10 mt-20">
+      <section className="py-32 px-6 bg-white text-zinc-900 ares-cut-lg relative z-10 mt-20">
         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="text-4xl md:text-6xl font-black text-ares-red mb-8 tracking-tighter italic">Sparking Curiosity.</h2>
@@ -145,7 +145,7 @@ export default function Outreach() {
                 key={log.id} 
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                className="bg-zinc-900/50 border border-white/5 p-8 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-start md:items-center gap-8 group hover:border-white/10 transition-all backdrop-blur-sm"
+                className="bg-zinc-900/50 border border-white/5 p-8 ares-cut-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-8 group hover:border-white/10 transition-all backdrop-blur-sm"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-3">
@@ -171,7 +171,7 @@ export default function Outreach() {
 
       {/* CTA Footer */}
       <section className="py-32 px-6">
-        <div className="max-w-4xl mx-auto rounded-[3.5rem] bg-gradient-to-br from-ares-red/30 to-zinc-900 border border-ares-red/40 p-12 text-center relative overflow-hidden">
+        <div className="max-w-4xl mx-auto ares-cut-lg bg-gradient-to-br from-ares-red/30 to-zinc-900 border border-ares-red/40 p-12 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-ares-red/20 blur-[100px] rounded-full pointer-events-none" />
           <h2 className="text-4xl md:text-5xl font-black text-white mb-6 italic tracking-tighter">Have a volunteer need?</h2>
           <p className="text-zinc-400 text-lg mb-10 max-w-xl mx-auto font-medium">Whether it&apos;s a elementary school demo, a science fair, or a community workshop—ARES is here to inspire.</p>

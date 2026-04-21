@@ -32,7 +32,7 @@ export default function Footer() {
             <li><Link to="/seasons" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Seasons</Link></li>
             <li><Link to="/outreach" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Outreach</Link></li>
             <li><Link to="/blog" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Team Blog</Link></li>
-            <li><Link to="/docs" className="hover:opacity-80 transition-colors flex items-center gap-2"><span>{"//"}</span> <span className="flex items-center shadow-lg" style={{ color: '#ffffff' }}><span className="bg-ares-red px-1.5 py-0.5 rounded-l text-[10px] uppercase" style={{ backgroundColor: '#c00000' }}>ARES</span><span className="bg-white/10 px-1.5 py-0.5 rounded-r text-[10px] uppercase">Lib</span></span></Link></li>
+            <li><Link to="/docs" className="hover:opacity-80 transition-colors flex items-center gap-2"><span>{"//"}</span> <span className="flex items-center shadow-lg ares-cut-sm overflow-hidden"><span className="bg-ares-red px-2 py-0.5 text-[10px] uppercase text-white font-bold">ARES</span><span className="bg-white/10 text-white font-bold px-2 py-0.5 text-[10px] uppercase">Lib</span></span></Link></li>
             <li><Link to="/join" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Join Us</Link></li>
           </ul>
         </div>
@@ -93,8 +93,9 @@ export default function Footer() {
 
           <div className="flex gap-8 items-center border-l border-marble/10 pl-8 h-4">
             <Link to="/privacy" className="hover:text-white transition-colors whitespace-nowrap">Privacy</Link>
-            <Link to="/docs" className="hover:opacity-80 transition-colors flex items-center whitespace-nowrap shadow-sm" style={{ color: '#ffffff' }}>
-              <span className="bg-ares-red px-1 py-0.5 rounded-l uppercase text-[8px]" style={{ backgroundColor: '#c00000' }}>ARES</span><span className="bg-white/10 px-1 py-0.5 rounded-r uppercase text-[8px]">Lib</span>
+            <Link to="/docs" className="hover:opacity-80 transition-colors flex items-center whitespace-nowrap shadow-sm ares-cut-sm overflow-hidden">
+              <span className="bg-ares-red px-1.5 py-0.5 text-[8px] uppercase text-white font-bold">ARES</span>
+              <span className="bg-white/10 text-white font-bold px-1.5 py-0.5 text-[8px] uppercase">Lib</span>
             </Link>
             <Link to="/sponsors" className="hover:text-white transition-colors whitespace-nowrap">Support Us</Link>
           </div>
