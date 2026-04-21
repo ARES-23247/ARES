@@ -17,8 +17,8 @@ sponsorsRouter.get("/", async (c) => {
   }
 });
 
-// ── GET /list — list all sponsors (admin) ──────
-sponsorsRouter.get("/list", ensureAdmin, async (c) => {
+// ── GET /admin — list all sponsors (admin) ──────
+sponsorsRouter.get("/admin", ensureAdmin, async (c) => {
   return handleSponsorList(c);
 });
 
@@ -33,8 +33,8 @@ async function handleSponsorList(c: Context<{ Bindings: Bindings }>) {
   }
 }
 
-// ── POST /save — create or update a sponsor (admin) ──────
-sponsorsRouter.post("/save", ensureAdmin, async (c) => {
+// ── POST /admin — create or update a sponsor (admin) ──────
+sponsorsRouter.post("/admin", ensureAdmin, async (c) => {
   return handleSponsorSave(c);
 });
 
@@ -68,8 +68,8 @@ async function handleSponsorSave(c: Context<{ Bindings: Bindings }>) {
   }
 }
 
-// ── DELETE /:id — remove a sponsor (admin) ─────────
-sponsorsRouter.delete("/:id", ensureAdmin, async (c) => {
+// ── DELETE /admin/:id — remove a sponsor (admin) ─────────
+sponsorsRouter.delete("/admin/:id", ensureAdmin, async (c) => {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare("DELETE FROM sponsors WHERE id = ?").bind(id).run();
@@ -115,8 +115,8 @@ sponsorsRouter.get("/roi/:token", async (c) => {
   }
 });
 
-// ── GET /tokens — Get Tokens for Admins (admin) ──────
-sponsorsRouter.get("/tokens", ensureAdmin, async (c) => {
+// ── GET /admin/tokens — Get Tokens for Admins (admin) ──────
+sponsorsRouter.get("/admin/tokens", ensureAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       "SELECT t.token, t.sponsor_id, s.name as sponsor_name, t.created_at FROM sponsor_tokens t JOIN sponsors s ON t.sponsor_id = s.id ORDER BY t.created_at DESC"
@@ -127,8 +127,8 @@ sponsorsRouter.get("/tokens", ensureAdmin, async (c) => {
   }
 });
 
-// ── POST /tokens/generate — Generate Token (admin) ──────
-sponsorsRouter.post("/tokens/generate", ensureAdmin, async (c) => {
+// ── POST /admin/tokens/generate — Generate Token (admin) ──────
+sponsorsRouter.post("/admin/tokens/generate", ensureAdmin, async (c) => {
   try {
     const { sponsor_id } = await c.req.json();
     if (!sponsor_id) return c.json({ error: "Missing sponsor_id"}, 400);

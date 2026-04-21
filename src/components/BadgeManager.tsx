@@ -36,7 +36,7 @@ export default function BadgeManager() {
   const { data: usersData } = useQuery<{ users: Array<{ id: string, name: string, email: string }> }>({
     queryKey: ["admin_users_list"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/users");
+      const res = await fetch("/api/profile/admin/users");
       if (!res.ok) throw new Error("Failed to fetch users");
       return res.json();
     }
@@ -70,7 +70,7 @@ export default function BadgeManager() {
   const awardBadgeMutation = useMutation({
     mutationFn: async () => {
       if (!selectedUser || !selectedBadge) throw new Error("Select user and badge");
-      const res = await fetch(`/api/admin/users/${selectedUser}/badges`, {
+      const res = await fetch(`/api/badges/admin/users/${selectedUser}/badges`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ badge_id: selectedBadge })

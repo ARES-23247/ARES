@@ -50,7 +50,7 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
 
   const isMinor = profile.member_type === "student"; // Only students get PII-hidden treatment
 
-  const fetchUrl = adminEditUserId ? `/dashboard/api/admin/users/${adminEditUserId}/profile` : "/api/profile/me";
+  const fetchUrl = adminEditUserId ? `/api/profile/${adminEditUserId}` : "/api/profile/me";
 
   useEffect(() => {
     fetch(fetchUrl, { credentials: "include" })

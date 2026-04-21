@@ -2,9 +2,10 @@ import { Hono } from "hono";
 import { Bindings, validateLength, MAX_INPUT_LENGTHS, ensureAdmin, parsePagination } from "./_shared";
 
 const locationsRouter = new Hono<{ Bindings: Bindings }>();
+const adminLocationsRouter = new Hono<{ Bindings: Bindings }>();
 
-// ── GET /locations — public facing list ───────────────────────────────
-locationsRouter.get("/locations", async (c) => {
+// ── GET / — public facing list ───────────────────────────────
+locationsRouter.get("/", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       "SELECT id, name, address, maps_url FROM locations WHERE is_deleted = 0 ORDER BY name ASC"
@@ -16,8 +17,8 @@ locationsRouter.get("/locations", async (c) => {
   }
 });
 
-// ── GET /admin/locations — all for manager ─────────────────────────────
-locationsRouter.get("/admin/locations", ensureAdmin, async (c) => {
+// ── GET /admin/ — all for manager ─────────────────────────────
+locationsRouter.get("/", ensureAdmin, async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare(
@@ -30,8 +31,8 @@ locationsRouter.get("/admin/locations", ensureAdmin, async (c) => {
   }
 });
 
-// ── POST /admin/locations — create new ─────────────────────────────────
-locationsRouter.post("/admin/locations", ensureAdmin, async (c) => {
+// ── POST / — create new ─────────────────────────────────
+locationsRouter.post("/", ensureAdmin, async (c) => {
   try {
     
     const body: { name?: string; address?: string; maps_url?: string } = await c.req.json();
@@ -58,8 +59,8 @@ locationsRouter.post("/admin/locations", ensureAdmin, async (c) => {
   }
 });
 
-// ── PUT /admin/locations/:id — update ──────────────────────────────────
-locationsRouter.put("/admin/locations/:id", ensureAdmin, async (c) => {
+// ── PUT /:id — update ──────────────────────────────────
+locationsRouter.put("/:id", ensureAdmin, async (c) => {
   try {
 
     const id = c.req.param("id");
@@ -87,8 +88,8 @@ locationsRouter.put("/admin/locations/:id", ensureAdmin, async (c) => {
   }
 });
 
-// ── DELETE /admin/locations/:id — soft delete ──────────────────────────
-locationsRouter.delete("/admin/locations/:id", ensureAdmin, async (c) => {
+// ── DELETE /:id — soft delete ──────────────────────────
+locationsRouter.delete("/:id", ensureAdmin, async (c) => {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare(
@@ -102,4 +103,4 @@ locationsRouter.delete("/admin/locations/:id", ensureAdmin, async (c) => {
   }
 });
 
-export { locationsRouter };
+export { locationsRouter, adminLocationsRouter };

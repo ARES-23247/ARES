@@ -20,7 +20,7 @@ import profilesRouter from "./routes/profiles";
 import commentsRouter from "./routes/comments";
 import inquiriesRouter from "./routes/inquiries";
 import badgesRouter from "./routes/badges";
-import { locationsRouter } from "./routes/locations";
+import { locationsRouter, adminLocationsRouter } from "./routes/locations";
 import sitemapRouter from "./routes/sitemap";
 import githubRouter from "./routes/github";
 import githubWebhookRouter from "./routes/githubWebhook";
@@ -117,6 +117,7 @@ apiRouter.route("/admin/events/sync", syncEventsRouter);
 apiRouter.route("/comments", commentsRouter);
 apiRouter.route("/inquiries", inquiriesRouter);
 apiRouter.route("/locations", locationsRouter);
+apiRouter.route("/sponsors", sponsorsRouter);
 apiRouter.route("/media", mediaRouter);
 apiRouter.route("/awards", awardsRouter);
 apiRouter.route("/outreach", outreachRouter);
@@ -136,8 +137,6 @@ apiRouter.route("/admin/posts", postsRouter);
 apiRouter.route("/admin/docs", docsRouter);
 apiRouter.route("/admin/inquiries", inquiriesRouter);
 apiRouter.route("/admin/comments", commentsRouter);
-apiRouter.route("/admin/locations", locationsRouter);
-apiRouter.route("/admin/sponsors", sponsorsRouter);
 apiRouter.route("/admin/media", mediaRouter);
 apiRouter.route("/admin/awards", awardsRouter);
 apiRouter.route("/admin/outreach", outreachRouter);
@@ -150,8 +149,7 @@ apiRouter.route("/admin/github", githubRouter);
 apiRouter.route("/admin/zulip", zulipRouter);
 
 // Special mount for logistics summary fallback (About page / Logistics tab)
-apiRouter.get("/logistics/summary", (c) => profilesRouter.fetch(c.req.raw, c.env, c.executionCtx));
-apiRouter.get("/team-roster", (c) => profilesRouter.fetch(c.req.raw, c.env, c.executionCtx));
+// Handled by /api/profile/... endpoints now
 
 // Webhooks (public — self-authenticated via signatures/tokens)
 apiRouter.route("/webhooks/github", githubWebhookRouter);

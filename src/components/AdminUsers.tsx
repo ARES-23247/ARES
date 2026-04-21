@@ -25,7 +25,7 @@ export default function AdminUsers() {
   const [editUserId, setEditUserId] = useState<string | null>(null);
 
   const fetchUsers = useCallback(() => {
-    fetch("/api/admin/users", { credentials: "include" })
+    fetch("/api/profile/admin/users", { credentials: "include" })
       .then(async (r) => {
         if (!r.ok) {
           const body = await r.json().catch(() => ({})) as Record<string, unknown>;
@@ -46,8 +46,8 @@ export default function AdminUsers() {
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const changeRole = async (userId: string, newRole: string) => {
-    await fetch(`/api/admin/users/${userId}/role`, {
-      method: "PUT",
+    await fetch(`/api/profile/admin/users/${userId}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ role: newRole }),
@@ -56,8 +56,8 @@ export default function AdminUsers() {
   };
 
   const changeMemberType = async (userId: string, newType: string) => {
-    await fetch(`/api/admin/users/${userId}/member_type`, {
-      method: "PUT",
+    await fetch(`/api/profile/admin/users/${userId}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ member_type: newType }),
@@ -67,7 +67,7 @@ export default function AdminUsers() {
 
   const removeUser = async (userId: string, name: string) => {
     if (!confirm(`Remove ${name}? This cannot be undone.`)) return;
-    await fetch(`/api/admin/users/${userId}`, {
+    await fetch(`/api/profile/admin/users/${userId}`, {
       method: "DELETE",
       credentials: "include",
     });

@@ -72,7 +72,7 @@ export default function About() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/team-roster")
+    fetch("/api/profile/team-roster")
       .then(r => r.json())
       .then((data) => { setMembers((data as { members: TeamMember[] }).members || []); setLoading(false); })
       .catch(() => setLoading(false));
