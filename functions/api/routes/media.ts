@@ -68,7 +68,7 @@ mediaRouter.post("/admin/upload", async (c) => {
 });
 
 // ── GET /media/:key — proxy R2 images ─────────────────────────────────
-mediaRouter.get("/media/:key", async (c) => {
+mediaRouter.get("/:key", async (c) => {
   const key = c.req.param("key");
   const object = await c.env.ARES_STORAGE.get(key);
 
@@ -85,7 +85,7 @@ mediaRouter.get("/media/:key", async (c) => {
 });
 
 // ── GET /media — list public R2 objects (Gallery only) ────────────────
-mediaRouter.get("/media", async (c) => {
+mediaRouter.get("/", async (c) => {
   try {
     const [objects, dbRes] = await Promise.all([
       c.env.ARES_STORAGE.list(),
@@ -112,7 +112,7 @@ mediaRouter.get("/media", async (c) => {
 });
 
 // ── GET /admin/media — list all R2 objects (CMS Admins) ───────────────
-mediaRouter.get("/admin/media", async (c) => {
+mediaRouter.get("/admin/list", async (c) => {
   try {
     const [objects, dbRes] = await Promise.all([
       c.env.ARES_STORAGE.list(),
@@ -139,7 +139,7 @@ mediaRouter.get("/admin/media", async (c) => {
 });
 
 // ── DELETE /admin/media/:key — delete R2 object (admin) ─────────────────
-mediaRouter.delete("/admin/media/:key", ensureAdmin, async (c) => {
+mediaRouter.delete("/admin/:key", ensureAdmin, async (c) => {
   try {
     const key = c.req.param("key") as string;
     const auth = getAuth(c.env.DB, c.env);
@@ -172,7 +172,7 @@ mediaRouter.delete("/admin/media/:key", ensureAdmin, async (c) => {
 });
 
 // ── PUT /admin/media/:key/move — change folder (admin) ─────────────────
-mediaRouter.put("/admin/media/:key/move", ensureAdmin, async (c) => {
+mediaRouter.put("/admin/:key/move", ensureAdmin, async (c) => {
   try {
     const key = c.req.param("key") as string;
     const body = await c.req.json();
@@ -187,7 +187,7 @@ mediaRouter.put("/admin/media/:key/move", ensureAdmin, async (c) => {
 });
 
 // ── POST /admin/media/syndicate — Cross-post Asset to Socials (admin) ─
-mediaRouter.post("/admin/media/syndicate", async (c) => {
+mediaRouter.post("/admin/syndicate", async (c) => {
   try {
     const { key, caption } = await c.req.json();
     if (!key || !caption) {

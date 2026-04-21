@@ -3,7 +3,7 @@ import { Bindings } from "./_shared";
 
 const sitemapRouter = new Hono<{ Bindings: Bindings }>();
 
-sitemapRouter.get("/sitemap.xml", async (c) => {
+sitemapRouter.get(".xml", async (c) => {
   try {
     const baseUrl = new URL(c.req.url).origin;
     

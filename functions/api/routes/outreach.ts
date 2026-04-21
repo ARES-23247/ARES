@@ -27,10 +27,10 @@ function mergeAndSort(logs: Record<string, unknown>[], volunteerEvents: Record<s
   );
 }
 
-// ── GET /outreach — list all outreach logs for public report ──────────
-outreachRouter.get("/outreach", async (c) => {
+// ── GET / — list all outreach logs (public or admin) ───────
+outreachRouter.get("/", async (c) => {
   try {
-    const { limit, offset } = parsePagination(c, 10, 100);
+    const { limit, offset } = parsePagination(c, 50, 200);
     const { results: logs } = await c.env.DB.prepare("SELECT id, title, date, location, students_count, hours_logged, reach_count, description FROM outreach_logs ORDER BY date DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
     const volunteerEvents = await fetchVolunteerEvents(c.env.DB);
     return c.json({ logs: mergeAndSort((logs || []) as Record<string, unknown>[], volunteerEvents) });
@@ -40,21 +40,8 @@ outreachRouter.get("/outreach", async (c) => {
   }
 });
 
-// ── GET /admin/outreach — list all outreach logs for management ───────
-outreachRouter.get("/admin/outreach", async (c) => {
-  try {
-    const { limit, offset } = parsePagination(c, 50, 200);
-    const { results: logs } = await c.env.DB.prepare("SELECT id, title, date, location, students_count, hours_logged, reach_count, description FROM outreach_logs ORDER BY date DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
-    const volunteerEvents = await fetchVolunteerEvents(c.env.DB);
-    return c.json({ logs: mergeAndSort((logs || []) as Record<string, unknown>[], volunteerEvents) });
-  } catch (err) {
-    console.error("D1 admin outreach list error:", err);
-    return c.json({ logs: [] }, 500);
-  }
-});
-
-// ── POST /admin/outreach — create or update an outreach log ───────────
-outreachRouter.post("/admin/outreach", async (c) => {
+// ── POST / — create or update an outreach log ───────────
+outreachRouter.post("/", async (c) => {
   try {
     const body = await c.req.json();
     const { id, title, date, location, students_count, hours_logged, reach_count, description } = body;
@@ -75,8 +62,8 @@ outreachRouter.post("/admin/outreach", async (c) => {
   }
 });
 
-// ── DELETE /admin/outreach/:id — remove an outreach log ────────────────
-outreachRouter.delete("/admin/outreach/:id", async (c) => {
+// ── DELETE /:id — remove an outreach log ────────────────
+outreachRouter.delete("/:id", async (c) => {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare("DELETE FROM outreach_logs WHERE id = ?").bind(id).run();

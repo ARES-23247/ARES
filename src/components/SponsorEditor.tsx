@@ -35,7 +35,7 @@ export default function SponsorEditor() {
   const { data: sponsors = [], isLoading } = useQuery<Sponsor[]>({
     queryKey: ["admin-sponsors"],
     queryFn: async () => {
-      const r = await fetch("/api/admin/sponsors", { cache: "no-store" });
+      const r = await fetch("/api/sponsors/admin", { cache: "no-store" });
       const d = await r.json() as { sponsors?: Sponsor[] };
       return d.sponsors || [];
     }
@@ -43,7 +43,7 @@ export default function SponsorEditor() {
 
   const saveMutation = useMutation({
     mutationFn: async (sponsor: Partial<Sponsor>) => {
-      const r = await fetch("/api/admin/sponsors", {
+      const r = await fetch("/api/sponsors/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sponsor)
@@ -62,7 +62,7 @@ export default function SponsorEditor() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const r = await fetch(`/api/admin/sponsors/${id}`, { method: "DELETE" });
+      const r = await fetch(`/api/sponsors/admin/${id}`, { method: "DELETE" });
       if (!r.ok) throw new Error("Failed to delete sponsor");
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] })

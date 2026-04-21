@@ -104,39 +104,57 @@ apiRouter.use("*", cors({
 apiRouter.use("/admin/*", ensureAdmin);
 
 // ── Mount Domain Routers ─────────────────────────────────────────────
-// Auth
+// ── Auth
 apiRouter.route("/auth", authRouter);
 
-// Content
-apiRouter.route("/", postsRouter);
+// ── Content (Modern + Legacy Bridge)
+apiRouter.route("/posts", postsRouter);
+apiRouter.route("/admin/posts", postsRouter);
+
+apiRouter.route("/docs", docsRouter);
+apiRouter.route("/admin/docs", docsRouter);
+
 apiRouter.route("/events", eventsRouter);
+apiRouter.route("/admin/events", adminEventsRouter); // Already domain-split
 apiRouter.route("/admin/events/sync", syncEventsRouter);
-apiRouter.route("/admin/events", adminEventsRouter);
-apiRouter.route("/", docsRouter);
-apiRouter.route("/", commentsRouter);
-apiRouter.route("/", inquiriesRouter);
-apiRouter.route("/", locationsRouter);
 
-// Media & Assets
-apiRouter.route("/", mediaRouter);
+apiRouter.route("/comments", commentsRouter);
+apiRouter.route("/admin/comments", commentsRouter);
 
-// Data Management
-apiRouter.route("/", analyticsRouter);
-apiRouter.route("/", sponsorsRouter);
-apiRouter.route("/", outreachRouter);
-apiRouter.route("/", awardsRouter);
+apiRouter.route("/inquiries", inquiriesRouter);
+apiRouter.route("/admin/inquiries", inquiriesRouter);
 
-// External Integrations
-apiRouter.route("/", tbaRouter);
+apiRouter.route("/locations", locationsRouter);
+apiRouter.route("/admin/locations", locationsRouter);
+
+// ── Media & Assets
+apiRouter.route("/media", mediaRouter);
+apiRouter.route("/admin/media", mediaRouter);
+apiRouter.route("/admin/upload", mediaRouter); // Specific legacy alias for upload
+
+// ── Data Management & Sponsors
+apiRouter.route("/analytics", analyticsRouter);
+apiRouter.route("/sponsors", sponsorsRouter);
+apiRouter.route("/admin/sponsors", sponsorsRouter);
+
+apiRouter.route("/outreach", outreachRouter);
+apiRouter.route("/admin/outreach", outreachRouter);
+
+apiRouter.route("/awards", awardsRouter);
+apiRouter.route("/admin/awards", awardsRouter);
+
+// ── External Integrations & System
+apiRouter.route("/tba", tbaRouter);
 apiRouter.route("/github", githubRouter);
 apiRouter.route("/zulip", zulipRouter);
 apiRouter.route("/swagger", swaggerRouter);
-apiRouter.route("/", settingsRouter);
-apiRouter.route("/", judgesRouter);
+apiRouter.route("/settings", settingsRouter);
+apiRouter.route("/admin/settings", settingsRouter); // Bridge for settings
 
-apiRouter.route("/", sitemapRouter);
-apiRouter.route("/", profilesRouter);
-apiRouter.route("/", badgesRouter);
+apiRouter.route("/judges", judgesRouter);
+apiRouter.route("/sitemap", sitemapRouter);
+apiRouter.route("/profile", profilesRouter);
+apiRouter.route("/badges", badgesRouter);
 apiRouter.route("/notifications", notificationsRouter);
 
 // Webhooks (public — self-authenticated via signatures/tokens)

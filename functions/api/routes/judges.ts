@@ -4,7 +4,7 @@ import { Bindings, ensureAdmin } from "./_shared";
 const judgesRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── POST /judges/login — verify judge access code ─────────────────────
-judgesRouter.post("/judges/login", async (c) => {
+judgesRouter.post("/login", async (c) => {
   try {
     const { code } = await c.req.json();
     if (!code) return c.json({ error: "Code required" }, 400);
@@ -24,7 +24,7 @@ judgesRouter.post("/judges/login", async (c) => {
 });
 
 // ── GET /judges/portfolio — get all portfolio content ──────────────────
-judgesRouter.get("/judges/portfolio", async (c) => {
+judgesRouter.get("/portfolio", async (c) => {
   try {
     // Verify access code from header
     const code = c.req.header("X-Judge-Code");
@@ -68,7 +68,7 @@ judgesRouter.get("/judges/portfolio", async (c) => {
 });
 
 // ── GET /admin/judges/codes — list all access codes (admin) ────────────
-judgesRouter.get("/admin/judges/codes", ensureAdmin, async (c) => {
+judgesRouter.get("/admin/codes", ensureAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       "SELECT id, code, label, created_at, expires_at FROM judge_access_codes ORDER BY created_at DESC"
@@ -81,7 +81,7 @@ judgesRouter.get("/admin/judges/codes", ensureAdmin, async (c) => {
 });
 
 // ── POST /admin/judges/codes — create a new access code (admin) ───────
-judgesRouter.post("/admin/judges/codes", ensureAdmin, async (c) => {
+judgesRouter.post("/admin/codes", ensureAdmin, async (c) => {
   try {
     const { label, expiresAt } = await c.req.json();
     const code = (crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')).slice(0, 12).toUpperCase();
@@ -99,7 +99,7 @@ judgesRouter.post("/admin/judges/codes", ensureAdmin, async (c) => {
 });
 
 // ── DELETE /admin/judges/codes/:id — delete an access code (admin) ────
-judgesRouter.delete("/admin/judges/codes/:id", ensureAdmin, async (c) => {
+judgesRouter.delete("/admin/codes/:id", ensureAdmin, async (c) => {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare("DELETE FROM judge_access_codes WHERE id = ?").bind(id).run();

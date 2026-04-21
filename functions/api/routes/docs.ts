@@ -8,7 +8,7 @@ const docsRouter = new Hono<AppEnv>();
 
 
 // ── GET /docs — list all docs grouped by category ─────────────────────
-docsRouter.get("/docs", async (c) => {
+docsRouter.get("/", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       `SELECT d.slug, d.title, d.category, d.sort_order, d.description, d.is_portfolio, d.is_executive_summary,
@@ -26,7 +26,7 @@ docsRouter.get("/docs", async (c) => {
 });
 
 // ── GET /docs/search?q=keyword — full-text search ─────────────────────
-docsRouter.get("/docs/search", async (c) => {
+docsRouter.get("/search", async (c) => {
   const q = c.req.query("q");
   if (!q || q.length < 3) return c.json({ results: [] });
   try {
@@ -57,7 +57,7 @@ docsRouter.get("/docs/search", async (c) => {
 });
 
 // ── POST /docs/:slug/feedback — Submit doc feedback ───────────────────
-docsRouter.post("/docs/:slug/feedback", async (c) => {
+docsRouter.post("/:slug/feedback", async (c) => {
   try {
     const slug = c.req.param("slug");
     const body = await c.req.json();
@@ -79,7 +79,7 @@ docsRouter.post("/docs/:slug/feedback", async (c) => {
 });
 
 // ── GET /docs/:slug — single doc page ─────────────────────────────────
-docsRouter.get("/docs/:slug", async (c) => {
+docsRouter.get("/:slug", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
@@ -111,7 +111,8 @@ docsRouter.get("/docs/:slug", async (c) => {
   }
 });
 
-docsRouter.get("/admin/docs", async (c) => {
+// ── GET /list — list all docs (admin) ──────────────────────
+docsRouter.get("/list", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 100, 500);
     const { results } = await c.env.DB.prepare(
@@ -124,8 +125,8 @@ docsRouter.get("/admin/docs", async (c) => {
   }
 });
 
-// ── GET /admin/docs/export-all — export all docs as JSON backup (admin) ──
-docsRouter.get("/admin/docs/export-all", ensureAdmin, async (c) => {
+// ── GET /export-all — export all docs (admin) ─────────────────
+docsRouter.get("/export-all", ensureAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       `SELECT slug, title, category, sort_order, description, content, is_portfolio, is_executive_summary, status FROM docs WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY category, sort_order`
@@ -150,8 +151,17 @@ docsRouter.get("/admin/docs/export-all", ensureAdmin, async (c) => {
   }
 });
 
-// ── POST /admin/docs — create/update a doc (admin) ────────────────────
-docsRouter.post("/admin/docs", async (c) => {
+// ── POST /save — create/update a doc (admin) ────────────────────
+docsRouter.post("/save", async (c) => {
+  return handleDocSave(c);
+});
+
+// Legacy alias for dashboard POST /api/admin/docs
+docsRouter.post("/", async (c) => {
+  return handleDocSave(c);
+});
+
+async function handleDocSave(c: any) {
   try {
     const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = await c.req.json();
     if (!slug || !title || !category || !content) {
@@ -220,8 +230,17 @@ docsRouter.post("/admin/docs", async (c) => {
   }
 });
 
-// ── DELETE /admin/docs/:slug — soft-delete (admin) ─────────────────────
-docsRouter.delete("/admin/docs/:slug", async (c) => {
+// ── DELETE /:slug — soft-delete (admin) ─────────────────────
+docsRouter.delete("/:slug", async (c) => {
+  return handleDocDelete(c);
+});
+
+// Legacy alias for dashboard DELETE /api/admin/docs/:slug
+docsRouter.delete("/admin/:slug", async (c) => {
+  return handleDocDelete(c);
+});
+
+async function handleDocDelete(c: any) {
   try {
     const slug = c.req.param("slug");
     await c.env.DB.prepare("UPDATE docs SET is_deleted = 1 WHERE slug = ?").bind(slug).run();
@@ -232,8 +251,8 @@ docsRouter.delete("/admin/docs/:slug", async (c) => {
   }
 });
 
-// ── PATCH /admin/docs/:slug/undelete — restore (admin) ────────────────
-docsRouter.patch("/admin/docs/:slug/undelete", async (c) => {
+// ── PATCH /:slug/undelete — restore (admin) ────────────────
+docsRouter.patch("/:slug/undelete", async (c) => {
   try {
     const slug = c.req.param("slug");
     await c.env.DB.prepare("UPDATE docs SET is_deleted = 0 WHERE slug = ?").bind(slug).run();
@@ -244,8 +263,8 @@ docsRouter.patch("/admin/docs/:slug/undelete", async (c) => {
   }
 });
 
-// ── DELETE /admin/docs/:slug/purge — PERMANENTLY delete (admin) ────────
-docsRouter.delete("/admin/docs/:slug/purge", async (c) => {
+// ── DELETE /:slug/purge — PERMANENTLY delete (admin) ────────
+docsRouter.delete("/:slug/purge", async (c) => {
   try {
     const slug = c.req.param("slug");
     await c.env.DB.prepare("DELETE FROM docs WHERE slug = ?").bind(slug).run();
@@ -256,8 +275,8 @@ docsRouter.delete("/admin/docs/:slug/purge", async (c) => {
   }
 });
 
-// ── PATCH /admin/docs/:slug/sort — update doc sort_order ───────────────
-docsRouter.patch("/admin/docs/:slug/sort", async (c) => {
+// ── PATCH /:slug/sort — update sort order (admin) ───────────────
+docsRouter.patch("/:slug/sort", async (c) => {
   try {
     const slug = c.req.param("slug");
     const { sortOrder } = await c.req.json();
@@ -272,8 +291,8 @@ docsRouter.patch("/admin/docs/:slug/sort", async (c) => {
   }
 });
 
-// ── PATCH /admin/docs/:slug/approve — approve pending doc (admin) ─────
-docsRouter.patch("/admin/docs/:slug/approve", async (c) => {
+// ── PATCH /:slug/approve — approve pending doc (admin) ─────
+docsRouter.patch("/:slug/approve", async (c) => {
   try {
     const user = await getSessionUser(c);
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
@@ -344,8 +363,8 @@ docsRouter.patch("/admin/docs/:slug/approve", async (c) => {
   }
 });
 
-// ── PATCH /admin/docs/:slug/reject — reject pending doc (admin) ─────
-docsRouter.patch("/admin/docs/:slug/reject", async (c) => {
+// ── PATCH /:slug/reject — reject pending doc (admin) ─────
+docsRouter.patch("/:slug/reject", async (c) => {
   try {
     const user = await getSessionUser(c);
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
@@ -379,8 +398,8 @@ docsRouter.patch("/admin/docs/:slug/reject", async (c) => {
   }
 });
 
-// ── GET /admin/docs/:slug/history — list doc history (admin) ──────────
-docsRouter.get("/admin/docs/:slug/history", async (c) => {
+// ── GET /:slug/history — list doc history (admin) ──────────
+docsRouter.get("/:slug/history", async (c) => {
   try {
     const slug = c.req.param("slug");
     const { results } = await c.env.DB.prepare(
@@ -393,8 +412,8 @@ docsRouter.get("/admin/docs/:slug/history", async (c) => {
   }
 });
 
-// ── PATCH /admin/docs/:slug/history/:id/restore — restore from history (admin) ──
-docsRouter.patch("/admin/docs/:slug/history/:id/restore", ensureAdmin, async (c) => {
+// ── PATCH /:slug/history/:id/restore — restore from history (admin) ──
+docsRouter.patch("/:slug/history/:id/restore", ensureAdmin, async (c) => {
   try {
     const slug = c.req.param("slug");
     const id = c.req.param("id");

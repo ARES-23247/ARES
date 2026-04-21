@@ -5,7 +5,7 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 const badgesRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── GET /badges — list ALL available badges ────────────────────────
-badgesRouter.get("/badges", async (c) => {
+badgesRouter.get("/", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       "SELECT id, name, description, icon, color_theme, created_at FROM badges ORDER BY created_at ASC"
@@ -18,7 +18,7 @@ badgesRouter.get("/badges", async (c) => {
 });
 
 // ── POST /admin/badges — Create a badge class ────────────────────────
-badgesRouter.post("/admin/badges", ensureAdmin, async (c) => {
+badgesRouter.post("/admin/save", ensureAdmin, async (c) => {
   try {
     const body = await c.req.json();
     const { id, name, description, icon, color_theme } = body;
@@ -39,7 +39,7 @@ badgesRouter.post("/admin/badges", ensureAdmin, async (c) => {
 });
 
 // ── POST /admin/users/:userId/badges — Award a badge ──────────────────
-badgesRouter.post("/admin/users/:userId/badges", ensureAdmin, async (c) => {
+badgesRouter.post("/admin/users/:userId/award", ensureAdmin, async (c) => {
   try {
     const userId = c.req.param("userId");
     const { badge_id } = await c.req.json();
@@ -83,7 +83,7 @@ badgesRouter.post("/admin/users/:userId/badges", ensureAdmin, async (c) => {
 });
 
 // ── DELETE /admin/users/:userId/badges/:badgeId — Revoke a badge ──────
-badgesRouter.delete("/admin/users/:userId/badges/:badgeId", ensureAdmin, async (c) => {
+badgesRouter.delete("/admin/users/:userId/:badgeId/revoke", ensureAdmin, async (c) => {
   try {
     const userId = c.req.param("userId");
     const badgeId = c.req.param("badgeId");

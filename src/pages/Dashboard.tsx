@@ -97,7 +97,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (session && isAdmin) {
-      fetch("/api/admin/inquiries")
+      fetch("/api/inquiries/admin")
         .then(res => res.json())
         .then((data: { inquiries?: { status: string }[] }) => {
           if (data.inquiries) {

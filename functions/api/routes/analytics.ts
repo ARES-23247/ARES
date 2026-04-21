@@ -4,7 +4,7 @@ import { Bindings, ensureAdmin } from "./_shared";
 const analyticsRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── POST /analytics/track — log a page view ──────────────────────────
-analyticsRouter.post("/analytics/track", async (c) => {
+analyticsRouter.post("/track", async (c) => {
   try {
     const body = await c.req.json();
     const { path, category, referrer } = body as { path?: string; category?: string; referrer?: string };
@@ -27,7 +27,7 @@ analyticsRouter.post("/analytics/track", async (c) => {
 });
 
 // ── POST /analytics/sponsor-click — log a sponsor link click ─────────
-analyticsRouter.post("/analytics/sponsor-click", async (c) => {
+analyticsRouter.post("/sponsor-click", async (c) => {
   try {
     const body = await c.req.json();
     const { sponsor_id } = body as { sponsor_id: string };

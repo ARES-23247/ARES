@@ -5,7 +5,7 @@ import { sendZulipAlert } from "../../utils/zulipSync";
 const sponsorsRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── GET /sponsors — list active sponsors for public display ───────────
-sponsorsRouter.get("/sponsors", async (c) => {
+sponsorsRouter.get("/", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
       "SELECT id, name, tier, logo_url, website_url FROM sponsors WHERE is_active = 1 ORDER BY CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END"
@@ -17,7 +17,18 @@ sponsorsRouter.get("/sponsors", async (c) => {
   }
 });
 
-sponsorsRouter.get("/admin/sponsors", async (c) => {
+// ── GET /admin — list all sponsors (admin) ──────
+// ── GET /list — list all sponsors (admin) ──────
+sponsorsRouter.get("/list", async (c) => {
+  return handleSponsorList(c);
+});
+
+// Legacy alias for dashboard GET /api/admin/sponsors
+sponsorsRouter.get("/admin", async (c) => {
+  return handleSponsorList(c);
+});
+
+async function handleSponsorList(c: any) {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare("SELECT id, name, tier, logo_url, website_url, is_active, created_at FROM sponsors ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
@@ -28,8 +39,18 @@ sponsorsRouter.get("/admin/sponsors", async (c) => {
   }
 });
 
-// ── POST /admin/sponsors — create or update a sponsor (admin) ──────
-sponsorsRouter.post("/admin/sponsors", async (c) => {
+// ── POST /admin — create or update a sponsor (admin) ──────
+// ── POST /save — create or update a sponsor (admin) ──────
+sponsorsRouter.post("/save", async (c) => {
+  return handleSponsorSave(c);
+});
+
+// Legacy alias for dashboard POST /api/admin/sponsors
+sponsorsRouter.post("/admin", async (c) => {
+  return handleSponsorSave(c);
+});
+
+async function handleSponsorSave(c: any) {
   try {
     const body = await c.req.json();
     const { id, name, tier, logo_url, website_url, is_active } = body;
@@ -50,8 +71,18 @@ sponsorsRouter.post("/admin/sponsors", async (c) => {
   }
 });
 
-// ── DELETE /admin/sponsors/:id — remove a sponsor (admin) ─────────
-sponsorsRouter.delete("/admin/sponsors/:id", async (c) => {
+// ── DELETE /admin/:id — remove a sponsor (admin) ─────────
+// ── DELETE /:id — remove a sponsor (admin) ─────────
+sponsorsRouter.delete("/:id", async (c) => {
+  return handleSponsorDelete(c);
+});
+
+// Legacy alias for dashboard DELETE /api/admin/sponsors/:id
+sponsorsRouter.delete("/admin/:id", async (c) => {
+  return handleSponsorDelete(c);
+});
+
+async function handleSponsorDelete(c: any) {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare("DELETE FROM sponsors WHERE id = ?").bind(id).run();
@@ -63,7 +94,7 @@ sponsorsRouter.delete("/admin/sponsors/:id", async (c) => {
 });
 
 // ── GET /sponsors/roi/:token — Public (hidden) Sponsor Dashboard ────
-sponsorsRouter.get("/sponsors/roi/:token", async (c) => {
+sponsorsRouter.get("/roi/:token", async (c) => {
   try {
     const token = c.req.param("token");
     const { results: tokens } = await c.env.DB.prepare(
@@ -96,8 +127,18 @@ sponsorsRouter.get("/sponsors/roi/:token", async (c) => {
   }
 });
 
-// ── GET /admin/sponsors/tokens — Get Tokens for Admins ──────
-sponsorsRouter.get("/admin/sponsors/tokens", async (c) => {
+// ── GET /admin/tokens — Get Tokens for Admins ──────
+// ── GET /tokens — Get Tokens for Admins (admin) ──────
+sponsorsRouter.get("/tokens", async (c) => {
+  return handleTokenList(c);
+});
+
+// Legacy alias for dashboard GET /api/admin/sponsors/tokens
+sponsorsRouter.get("/admin/tokens", async (c) => {
+  return handleTokenList(c);
+});
+
+async function handleTokenList(c: any) {
   try {
     // Only admins (protected by middleware on routes ideally, or here)
     const { results } = await c.env.DB.prepare(
@@ -109,8 +150,18 @@ sponsorsRouter.get("/admin/sponsors/tokens", async (c) => {
   }
 });
 
-// ── POST /admin/sponsors/tokens — Generate Token ──────
-sponsorsRouter.post("/admin/sponsors/tokens", async (c) => {
+// ── POST /admin/tokens — Generate Token ──────
+// ── POST /tokens/generate — Generate Token (admin) ──────
+sponsorsRouter.post("/tokens/generate", async (c) => {
+  return handleTokenGenerate(c);
+});
+
+// Legacy alias for dashboard POST /api/admin/sponsors/tokens
+sponsorsRouter.post("/admin/tokens", async (c) => {
+  return handleTokenGenerate(c);
+});
+
+async function handleTokenGenerate(c: any) {
   try {
     const { sponsor_id } = await c.req.json();
     if (!sponsor_id) return c.json({ error: "Missing sponsor_id"}, 400);

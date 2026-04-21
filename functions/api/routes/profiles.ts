@@ -7,7 +7,7 @@ import { encrypt, decrypt } from "../../utils/crypto";
 const profilesRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── GET /profile/me — fetch current user's full profile ───────────────
-profilesRouter.get("/profile/me", async (c) => {
+profilesRouter.get("/me", async (c) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
 
@@ -48,7 +48,7 @@ profilesRouter.get("/profile/me", async (c) => {
 });
 
 // ── PUT /profile/me — update current user's profile ──────────────────
-profilesRouter.put("/profile/me", async (c) => {
+profilesRouter.put("/me", async (c) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
 
@@ -127,7 +127,7 @@ profilesRouter.put("/profile/me", async (c) => {
 });
 
 // ── PUT /profile/avatar — update avatar image ─────────────────────────
-profilesRouter.put("/profile/avatar", async (c) => {
+profilesRouter.put("/avatar", async (c) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
 
@@ -150,7 +150,7 @@ profilesRouter.put("/profile/avatar", async (c) => {
 });
 
 // ── GET /profile/:userId — public profile ─────────────────────────────
-profilesRouter.get("/profile/:userId", async (c) => {
+profilesRouter.get("/:userId", async (c) => {
   const userId = c.req.param("userId");
   try {
     const profile = await c.env.DB.prepare(

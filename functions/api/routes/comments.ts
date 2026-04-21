@@ -7,7 +7,7 @@ import { emitNotification } from "../../utils/notifications";
 const commentsRouter = new Hono<AppEnv>();
 
 // ── GET /comments/:targetType/:targetId — list comments ───────────────
-commentsRouter.get("/comments/:targetType/:targetId", async (c) => {
+commentsRouter.get("/:targetType/:targetId", async (c) => {
   const { targetType, targetId } = c.req.param();
   const user = await getSessionUser(c);
 
@@ -51,7 +51,7 @@ commentsRouter.get("/comments/:targetType/:targetId", async (c) => {
 });
 
 // ── POST /comments/:targetType/:targetId — create a comment ───────────
-commentsRouter.post("/comments/:targetType/:targetId", async (c) => {
+commentsRouter.post("/:targetType/:targetId", async (c) => {
   const user = await getSessionUser(c);
   if (!user || user.role === "unverified") {
     return c.json({ error: "Forbidden: Your account is pending team verification." }, 403);
@@ -134,7 +134,7 @@ commentsRouter.post("/comments/:targetType/:targetId", async (c) => {
 });
 
 // ── PUT /comments/:id — edit a comment ──────────────────────────────────
-commentsRouter.put("/comments/:id", async (c) => {
+commentsRouter.put("/:id", async (c) => {
   const user = await getSessionUser(c);
   if (!user || user.role === "unverified") return c.json({ error: "Forbidden" }, 403);
 
@@ -174,7 +174,7 @@ commentsRouter.put("/comments/:id", async (c) => {
 });
 
 // ── DELETE /comments/:id — soft-delete a comment ────────────────────────
-commentsRouter.delete("/comments/:id", async (c) => {
+commentsRouter.delete("/:id", async (c) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
 

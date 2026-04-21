@@ -24,14 +24,14 @@ export default function SponsorTokensManager() {
     setLoading(true);
     try {
       // Fetch available sponsors to pick from
-      const sRes = await fetch("/api/admin/sponsors");
+      const sRes = await fetch("/api/sponsors/admin");
       if (sRes.ok) {
         const sData = await sRes.json();
         setSponsors(sData.sponsors || []);
       }
       
       // Fetch generated tokens
-      const tRes = await fetch("/api/admin/sponsors/tokens");
+      const tRes = await fetch("/api/sponsors/admin/tokens");
       if (tRes.ok) {
         const tData = await tRes.json();
         setTokens(tData.tokens || []);
@@ -54,7 +54,7 @@ export default function SponsorTokensManager() {
     if (!selectedSponsor) return;
     setGenerating(true);
     try {
-      const res = await fetch("/api/admin/sponsors/tokens", {
+      const res = await fetch("/api/sponsors/admin/tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sponsor_id: selectedSponsor }),

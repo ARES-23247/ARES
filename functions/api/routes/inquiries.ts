@@ -8,8 +8,8 @@ import { notifyAdmins } from "../../utils/notifications";
 
 const inquiriesRouter = new Hono<AppEnv>();
 
-// ── GET /admin/inquiries — List all inquiries ──────────────────────────
-inquiriesRouter.get("/admin/inquiries", async (c) => {
+// ── GET / — list all inquiries (admin) ──────────────────────────
+inquiriesRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare(
@@ -22,8 +22,13 @@ inquiriesRouter.get("/admin/inquiries", async (c) => {
   }
 });
 
+// Alias for old list path if needed
+inquiriesRouter.get("/list", async (c) => {
+  return c.redirect("./");
+});
+
 // ── POST /inquiries — Submit a new inquiry ─────────────────────────────
-inquiriesRouter.post("/inquiries", async (c) => {
+inquiriesRouter.post("/", async (c) => {
   try {
     const body = await c.req.json();
     const { type, name, email, metadata } = body;
@@ -180,8 +185,8 @@ inquiriesRouter.post("/inquiries", async (c) => {
   }
 });
 
-// ── PATCH /admin/inquiries/:id/status ──────────────────────────────────
-inquiriesRouter.patch("/admin/inquiries/:id/status", async (c) => {
+// ── PATCH /:id/status — update status (admin) ──────────────────────────────────
+inquiriesRouter.patch("/:id/status", async (c) => {
   try {
     const id = c.req.param("id");
     const { status } = await c.req.json();
@@ -198,8 +203,8 @@ inquiriesRouter.patch("/admin/inquiries/:id/status", async (c) => {
   }
 });
 
-// ── DELETE /admin/inquiries/:id ────────────────────────────────────────
-inquiriesRouter.delete("/admin/inquiries/:id", async (c) => {
+// ── DELETE /:id — delete inquiry (admin) ────────────────────────────────────────
+inquiriesRouter.delete("/:id", async (c) => {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare("DELETE FROM inquiries WHERE id = ?").bind(id).run();

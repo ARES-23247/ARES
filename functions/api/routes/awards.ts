@@ -3,12 +3,13 @@ import { Bindings, parsePagination } from "./_shared";
 
 const awardsRouter = new Hono<{ Bindings: Bindings }>();
 
-// ── GET /awards — list all awards for public display ──────────────────
-awardsRouter.get("/awards", async (c) => {
+// ── GET / — list all awards ──────────
+awardsRouter.get("/", async (c) => {
   try {
+    const { limit, offset } = parsePagination(c, 50, 100);
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, year, event_name, image_url, description FROM awards ORDER BY year DESC, title ASC"
-    ).all();
+      "SELECT id, title, year, event, team, description, media_url FROM awards ORDER BY year DESC, title ASC LIMIT ? OFFSET ?"
+    ).bind(limit, offset).all();
     return c.json({ awards: results || [] });
   } catch (err) {
     console.error("D1 awards list error:", err);
@@ -16,48 +17,36 @@ awardsRouter.get("/awards", async (c) => {
   }
 });
 
-// ── GET /admin/awards — list all awards for management ────────────────
-awardsRouter.get("/admin/awards", async (c) => {
-  try {
-    const { limit, offset } = parsePagination(c, 50, 200);
-    const { results } = await c.env.DB.prepare("SELECT id, title, year, event_name, image_url, description, icon_type, created_at FROM awards ORDER BY year DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
-    return c.json({ awards: results || [] });
-  } catch (err) {
-    console.error("D1 admin awards list error:", err);
-    return c.json({ awards: [] });
-  }
-});
-
-// ── POST /admin/awards — create or update an award ────────────────────
-awardsRouter.post("/admin/awards", async (c) => {
+// ── POST / — create or update an award ───────────
+awardsRouter.post("/", async (c) => {
   try {
     const body = await c.req.json();
-    const { id, title, year, event_name, image_url, description } = body;
+    const { id, title, year, event, team, description, media_url } = body;
     
     if (!id || !title || !year) {
       return c.json({ error: "Missing required fields" }, 400);
     }
 
     await c.env.DB.prepare(
-      "INSERT INTO awards (id, title, year, event_name, image_url, description) VALUES (?, ?, ?, ?, ?, ?) " +
-      "ON CONFLICT(id) DO UPDATE SET title=excluded.title, year=excluded.year, event_name=excluded.event_name, image_url=excluded.image_url, description=excluded.description"
-    ).bind(id, title, year, event_name || null, image_url || null, description || null).run();
+      "INSERT INTO awards (id, title, year, event, team, description, media_url) VALUES (?, ?, ?, ?, ?, ?, ?) " +
+      "ON CONFLICT(id) DO UPDATE SET title=excluded.title, year=excluded.year, event=excluded.event, team=excluded.team, description=excluded.description, media_url=excluded.media_url"
+    ).bind(id, title, year, event || null, team || "23247", description || null, media_url || null).run();
 
     return c.json({ success: true });
   } catch (err) {
-    console.error("D1 award save error:", err);
+    console.error("D1 awards save error:", err);
     return c.json({ error: "Save failed" }, 500);
   }
 });
 
-// ── DELETE /admin/awards/:id — remove an award ───────────────────────
-awardsRouter.delete("/admin/awards/:id", async (c) => {
+// ── DELETE /:id — remove an award ────────────────
+awardsRouter.delete("/:id", async (c) => {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare("DELETE FROM awards WHERE id = ?").bind(id).run();
     return c.json({ success: true });
   } catch (err) {
-    console.error("D1 award delete error:", err);
+    console.error("D1 awards delete error:", err);
     return c.json({ error: "Delete failed" }, 500);
   }
 });

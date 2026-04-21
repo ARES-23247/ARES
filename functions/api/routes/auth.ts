@@ -4,6 +4,16 @@ import { getAuth } from "../../utils/auth";
 
 const authRouter = new Hono<{ Bindings: Bindings }>();
 
+// ── GET /api/auth-check — verify session (UI gate only) ────────────────
+authRouter.get("/auth-check", async (c) => {
+  const user = await getSessionUser(c);
+  if (!user) return c.json({ authenticated: false }, 401);
+  return c.json({ 
+    authenticated: true, 
+    user
+  });
+});
+
 // ── Better Auth Routes ────────────────────────────────────────────────
 authRouter.on(["POST", "GET"], "/*", async (c) => {
   console.log(`[Auth Handler] Request URL: ${c.req.url}`);
@@ -20,16 +30,6 @@ authRouter.on(["POST", "GET"], "/*", async (c) => {
       stack: c.env.ENVIRONMENT === "development" ? err.stack : undefined
     }, 500);
   }
-});
-
-// ── GET /api/auth-check — verify session (UI gate only) ────────────────
-authRouter.get("/auth-check", async (c) => {
-  const user = await getSessionUser(c);
-  if (!user) return c.json({ authenticated: false }, 401);
-  return c.json({ 
-    authenticated: true, 
-    user
-  });
 });
 
 export default authRouter;

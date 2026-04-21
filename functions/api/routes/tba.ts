@@ -16,7 +16,7 @@ async function getTBA(path: string, c: Context<{ Bindings: Bindings }>) {
 }
 
 // ── GET /tba/rankings/:eventKey ───────────────────────────────────────
-tbaRouter.get("/tba/rankings/:eventKey", async (c) => {
+tbaRouter.get("/rankings/:eventKey", async (c) => {
   try {
     const eventKey = c.req.param("eventKey");
     const data = await getTBA(`/event/${eventKey}/rankings`, c);
@@ -28,7 +28,7 @@ tbaRouter.get("/tba/rankings/:eventKey", async (c) => {
 });
 
 // ── GET /tba/matches/:eventKey ────────────────────────────────────────
-tbaRouter.get("/tba/matches/:eventKey", async (c) => {
+tbaRouter.get("/matches/:eventKey", async (c) => {
   try {
     const eventKey = c.req.param("eventKey");
     const data = (await getTBA(`/event/${eventKey}/matches/simple`, c)) as Array<{ time?: number; [key: string]: unknown }>;
@@ -41,7 +41,7 @@ tbaRouter.get("/tba/matches/:eventKey", async (c) => {
 });
 
 // ── GET /tba/team/:teamKey/events/:year ───────────────────────────────
-tbaRouter.get("/tba/team/:teamKey/events/:year", async (c) => {
+tbaRouter.get("/team/:teamKey/events/:year", async (c) => {
   try {
     const { teamKey, year } = c.req.param();
     const data = await getTBA(`/team/${teamKey}/events/${year}/simple`, c);

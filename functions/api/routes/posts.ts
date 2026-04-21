@@ -15,7 +15,7 @@ import {
 const postsRouter = new Hono<AppEnv>();
 
 // ── GET /posts — list all blog posts ─────────────────────────────────
-postsRouter.get("/posts", async (c) => {
+postsRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 10, 100);
     const { results } = await c.env.DB.prepare(
@@ -34,7 +34,7 @@ postsRouter.get("/posts", async (c) => {
 });
 
 // ── GET /posts/:slug — single blog post ──────────────────────────────
-postsRouter.get("/posts/:slug", async (c) => {
+postsRouter.get("/:slug", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
@@ -54,8 +54,8 @@ postsRouter.get("/posts/:slug", async (c) => {
   }
 });
 
-// ── GET /admin/posts — list all blog posts (admin) ──────────────────────
-postsRouter.get("/admin/posts", async (c) => {
+// ── GET /list — list all blog posts (admin) ──────────────────────
+postsRouter.get("/list", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare(
@@ -68,8 +68,8 @@ postsRouter.get("/admin/posts", async (c) => {
   }
 });
 
-// ── GET /admin/posts/:slug — single blog post (admin) ─────────────────
-postsRouter.get("/admin/posts/:slug", async (c) => {
+// ── GET /:slug/detail — single blog post (admin) ─────────────────
+postsRouter.get("/:slug/detail", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
@@ -101,8 +101,17 @@ function buildSnippet(ast: unknown): string {
   return "";
 }
 
-// ── POST /admin/posts — create a new blog post (admin) ────────────────
-postsRouter.post("/admin/posts", async (c) => {
+// ── POST /save — create a new blog post (admin) ────────────────
+postsRouter.post("/save", async (c) => {
+  return handlePostSave(c);
+});
+
+// Legacy alias for dashboard POST /api/admin/posts
+postsRouter.post("/", async (c) => {
+  return handlePostSave(c);
+});
+
+async function handlePostSave(c: any) {
   try {
     const body = await c.req.json<{
       title: string;
@@ -202,8 +211,17 @@ postsRouter.post("/admin/posts", async (c) => {
   }
 });
 
-// ── PUT /admin/posts/:slug — edit a blog post (admin) ────────────────────
-postsRouter.put("/admin/posts/:slug", async (c) => {
+// ── PUT /:slug — edit a blog post (admin) ────────────────────
+postsRouter.put("/:slug", async (c) => {
+  return handlePostEdit(c);
+});
+
+// Legacy alias for dashboard PUT /api/admin/posts/:slug
+postsRouter.put("/admin/:slug", async (c) => {
+  return handlePostEdit(c);
+});
+
+async function handlePostEdit(c: any) {
   try {
     const slug = c.req.param("slug");
     const body = await c.req.json<{
@@ -261,8 +279,8 @@ postsRouter.put("/admin/posts/:slug", async (c) => {
   }
 });
 
-// ── DELETE /admin/posts/:slug — soft-delete (admin) ──────────────────
-postsRouter.delete("/admin/posts/:slug", async (c) => {
+// ── DELETE /:slug — soft-delete (admin) ──────────────────
+postsRouter.delete("/:slug", async (c) => {
   try {
     const slug = c.req.param("slug");
     await c.env.DB.prepare("UPDATE posts SET is_deleted = 1 WHERE slug = ?").bind(slug).run();
@@ -273,8 +291,8 @@ postsRouter.delete("/admin/posts/:slug", async (c) => {
   }
 });
 
-// ── PATCH /admin/posts/:slug/undelete — restore (admin) ───────────────
-postsRouter.patch("/admin/posts/:slug/undelete", async (c) => {
+// ── PATCH /:slug/undelete — restore (admin) ───────────────
+postsRouter.patch("/:slug/undelete", async (c) => {
   try {
     const slug = c.req.param("slug");
     await c.env.DB.prepare("UPDATE posts SET is_deleted = 0 WHERE slug = ?").bind(slug).run();
@@ -285,8 +303,8 @@ postsRouter.patch("/admin/posts/:slug/undelete", async (c) => {
   }
 });
 
-// ── DELETE /admin/posts/:slug/purge — PERMANENTLY delete (admin) ──────
-postsRouter.delete("/admin/posts/:slug/purge", async (c) => {
+// ── DELETE /:slug/purge — PERMANENTLY delete (admin) ──────
+postsRouter.delete("/:slug/purge", async (c) => {
   try {
     const slug = c.req.param("slug");
     await c.env.DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
@@ -297,8 +315,8 @@ postsRouter.delete("/admin/posts/:slug/purge", async (c) => {
   }
 });
 
-// ── PATCH /admin/posts/:slug/approve — approve pending post (admin) ─────
-postsRouter.patch("/admin/posts/:slug/approve", async (c) => {
+// ── PATCH /:slug/approve — approve pending post (admin) ─────
+postsRouter.patch("/:slug/approve", async (c) => {
   try {
     const user = await getSessionUser(c);
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
@@ -315,8 +333,8 @@ postsRouter.patch("/admin/posts/:slug/approve", async (c) => {
 });
 
 
-// ── PATCH /admin/posts/:slug/reject — reject pending post (admin) ─────
-postsRouter.patch("/admin/posts/:slug/reject", async (c) => {
+// ── PATCH /:slug/reject — reject pending post (admin) ─────
+postsRouter.patch("/:slug/reject", async (c) => {
   try {
     const user = await getSessionUser(c);
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
@@ -350,8 +368,8 @@ postsRouter.patch("/admin/posts/:slug/reject", async (c) => {
   }
 });
 
-// ── POST /admin/posts/:slug/repush — manual social broadcast (admin) ──
-postsRouter.post("/admin/posts/:slug/repush", async (c) => {
+// ── POST /:slug/repush — manual social broadcast (admin) ──
+postsRouter.post("/:slug/repush", async (c) => {
   try {
     const slug = c.req.param("slug");
     const { socials } = await c.req.json<{ socials: Record<string, boolean> }>();
@@ -384,8 +402,8 @@ postsRouter.post("/admin/posts/:slug/repush", async (c) => {
   }
 });
 
-// ── GET /admin/posts/:slug/history — list post history (admin) ─────────
-postsRouter.get("/admin/posts/:slug/history", async (c) => {
+// ── GET /:slug/history — list post history (admin) ─────────
+postsRouter.get("/:slug/history", async (c) => {
   try {
     const slug = c.req.param("slug");
     const history = await getPostHistory(c, slug);
@@ -396,8 +414,8 @@ postsRouter.get("/admin/posts/:slug/history", async (c) => {
   }
 });
 
-// ── PATCH /admin/posts/:slug/history/:id/restore — restore from history (admin) ──
-postsRouter.patch("/admin/posts/:slug/history/:id/restore", ensureAdmin, async (c) => {
+// ── PATCH /:slug/history/:id/restore — restore from history (admin) ──
+postsRouter.patch("/:slug/history/:id/restore", ensureAdmin, async (c) => {
   try {
     const slug = c.req.param("slug");
     const id = c.req.param("id");
