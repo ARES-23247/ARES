@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { handle } from "hono/cloudflare-pages";
+import { cors } from "hono/cors";
 import { Bindings, ensureAdmin } from "./routes/_shared";
 
 // ── Domain Routers ───────────────────────────────────────────────────
@@ -34,6 +35,30 @@ app.use("*", async (c, next) => {
   console.log(`[${c.req.method}] ${c.req.url} (Path: ${c.req.path})`);
   await next();
 });
+
+// ── SEC-04: CORS — restrict API to same-origin + trusted domains ─────
+apiRouter.use("*", cors({
+  origin: (origin, c) => {
+    // Same-origin requests (no origin header) are always allowed
+    if (!origin) return origin;
+    // Dynamically trust the current request's origin
+    const requestOrigin = new URL(c.req.url).origin;
+    if (origin === requestOrigin) return origin;
+    // Static trusted origins for development
+    const trusted = [
+      "http://localhost:5173",
+      "http://localhost:8788",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:8788",
+    ];
+    if (trusted.includes(origin)) return origin;
+    return undefined; // Deny
+  },
+  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  maxAge: 86400,
+}));
 
 // ── Auth middleware for admin routes ──────────────────────────────────
 apiRouter.use("/admin/*", ensureAdmin);

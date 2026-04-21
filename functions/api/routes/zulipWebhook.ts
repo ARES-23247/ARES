@@ -39,6 +39,20 @@ zulipWebhookRouter.post("/", async (c) => {
   const parts = cleaned.split(/\s+/);
   const command = parts[0]?.toLowerCase();
 
+  // SEC-05: Authorize destructive commands by checking sender role in DB
+  const PRIVILEGED_COMMANDS = ["!task", "!broadcast"];
+  if (PRIVILEGED_COMMANDS.includes(command || "")) {
+    const senderEmail = body.message?.sender_email;
+    if (senderEmail) {
+      const user = await c.env.DB.prepare(
+        "SELECT u.role FROM user u WHERE u.email = ? AND u.role IN ('admin', 'author')"
+      ).bind(senderEmail).first<{ role: string }>();
+      if (!user) {
+        return c.json({ content: `🔒 Permission denied. \`${command}\` requires admin or author privileges. Your Zulip email (${senderEmail}) is not linked to an authorized ARESWEB account.` });
+      }
+    }
+  }
+
   try {
     switch (command) {
       case "!help":

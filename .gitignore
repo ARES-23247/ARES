@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 .wrangler/
+_worker.bundle
 
 # IDE
 .vscode/
@@ -17,3 +18,89 @@ Thumbs.db
 .env
 .env.local
 .dev.vars
+
+# Build / lint / test artifacts
+*.log
+build_log.txt
+build_output.log
+server.log
+eslint-report.*
+eslint-utf8.txt
+eslint_errors.txt
+lint.txt
+lint-out.txt
+lint-output.txt
+lint_output.txt
+tsc_errors.txt
+
+# pa11y reports
+pa11y_report*.json
+pa11y_report*.txt
+pa11y_errors*.log
+pa11y_utf8*.log
+
+# Debug / migration scripts (should not be in production tracking)
+debug_*.mjs
+debug_*.json
+batch_migrate_*.mjs
+migrate-docs.mjs
+migrate_docs*.mjs
+migrate_quiz.mjs
+refine_migration*.mjs
+final_fix_*.mjs
+final_surgical_fix_*.mjs
+fix-db.mjs
+fix-docs.cjs
+fix_lint.cjs
+fix_ts.cjs
+dump_schema.mjs
+dump_tables.mjs
+patch.py
+extract_content.py
+inspect_db.py
+inspect_user_table.py
+test-bsky.ts
+test-insert.ts
+test-signin.mjs
+trigger-callback.mjs
+auth.cli.ts
+audit.cjs
+
+# Temp data dumps
+all_docs.json
+quiz_content*.json
+quiz_content.md
+quiz_debug.json
+quiz_raw.json
+trouble_sample.json
+large_files.json
+temp_bench.txt
+temp_trouble.txt
+curl_events.txt
+
+# SQL migration / hotfix files
+docs-content-fix.sql
+docs-seed-fixed.sql
+docs-schema.sql
+fix-docs.sql
+hotfix_remote.sql
+patch_settings.sql
+prod-docs.sql
+reorganize.sql
+soft_delete.sql
+temp_alter.sql
+temp_update.sql
+migrate_bench*.sql
+migrate_quiz.sql
+migrate_trouble.sql
+test_admin_query.sql
+schema.sql
+
+# Coverage / test reports
+coverage/
+test-results/
+playwright-report/
+
+# Scratch directories
+scratch/
+scratch_migration/
