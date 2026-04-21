@@ -122,7 +122,7 @@ profilesRouter.get("/:userId", async (c) => {
   const userId = (c.req.param("userId") || "");
   try {
     const profile = await c.env.DB.prepare(
-      `SELECT p.user_id, p.nickname, p.bio, p.joined_year, p.member_type, p.linkedin_url, p.github_url, p.show_on_about, u.image as avatar, u.name 
+      `SELECT p.*, u.image as avatar, u.name 
        FROM user_profiles p 
        LEFT JOIN user u ON p.user_id = u.id 
        WHERE p.user_id = ?`
@@ -140,6 +140,20 @@ profilesRouter.get("/:userId", async (c) => {
 
     const memberType = String(profile.member_type || "student");
     const sanitized = sanitizeProfileForPublic(profile as Record<string, unknown>, memberType);
+
+    // If requester is an admin/leader or the user themselves, decrypt and append internal records
+    const requester = await getSessionUser(c);
+    const isAdmin = requester?.role === "admin" || requester?.role === "author" || requester?.member_type === "coach" || requester?.member_type === "mentor";
+    const isSelf = requester?.id === userId;
+
+    if (isAdmin || isSelf) {
+      const secret = c.env.ENCRYPTION_SECRET;
+      sanitized.emergency_contact_name = await decrypt(profile.emergency_contact_name as string, secret);
+      sanitized.emergency_contact_phone = await decrypt(profile.emergency_contact_phone as string, secret);
+      sanitized.dietary_restrictions = profile.dietary_restrictions;
+      sanitized.favorite_food = profile.favorite_food;
+      sanitized.tshirt_size = profile.tshirt_size;
+    }
 
     const { results: rawBadges } = await c.env.DB.prepare(
       `SELECT b.* FROM badges b
