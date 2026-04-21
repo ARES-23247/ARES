@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { siteConfig } from "../../utils/site.config";
 import { Bindings, ensureAdmin, getSocialConfig } from "./_shared";
 import { buildGitHubConfig, fetchProjectBoard, fetchProjectFields, createProjectItem, updateProjectItemStatus, queryProjectItem } from "../../utils/githubProjects";
 
@@ -17,7 +18,7 @@ interface DayCell {
 }
 
 githubRouter.get("/activity", async (c) => {
-  const org = "ARES-23247";
+  const org = siteConfig.urls.githubOrg;
   
   // Use Cloudflare's Cache API to cache the expensive aggregation for 1 hour
   const cacheUrl = new URL(c.req.url);
@@ -31,7 +32,7 @@ githubRouter.get("/activity", async (c) => {
 
   try {
     const headers: Record<string, string> = {
-      "User-Agent": "ARES-23247-Cloudflare-Worker"
+      "User-Agent": `${siteConfig.team.name}-Cloudflare-Worker`
     };
 
     // 1. Fetch public repos

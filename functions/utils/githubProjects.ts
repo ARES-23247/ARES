@@ -1,7 +1,9 @@
+import { siteConfig } from "../../src/site.config";
+
 /**
  * GitHub Projects v2 — GraphQL Client Utility
  * Provides CRUD operations against the GitHub Projects v2 API
- * for the ARES-23247 organization project board.
+ * for the ${siteConfig.urls.githubOrg} organization project board.
  */
 
 interface GitHubProjectsConfig {
@@ -22,7 +24,7 @@ async function gql<T>(config: GitHubProjectsConfig, query: string, variables: Re
     headers: {
       "Authorization": `Bearer ${config.pat}`,
       "Content-Type": "application/json",
-      "User-Agent": "ARES-23247-Cloudflare-Worker",
+      "User-Agent": `${siteConfig.team.name}-Cloudflare-Worker`,
     },
     body: JSON.stringify({ query, variables }),
   });
@@ -364,7 +366,7 @@ export async function queryProjectItem(
 export function buildGitHubConfig(settings: Record<string, string | undefined>): GitHubProjectsConfig | null {
   const pat = settings["GITHUB_PAT"];
   const projectId = settings["GITHUB_PROJECT_ID"];
-  const org = settings["GITHUB_ORG"] || "ARES-23247";
+  const org = settings["GITHUB_ORG"] || siteConfig.urls.githubOrg;
 
   if (!pat || !projectId) return null;
   return { pat, projectId, org };

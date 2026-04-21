@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { siteConfig } from "../site.config";
 import { Link } from "react-router-dom";
 
 export default function BugReport() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [repoStr, setRepoStr] = useState("ARES-23247/ARESWEB"); // Default repo
+  const [repoStr, setRepoStr] = useState(`${siteConfig.urls.githubOrg}/ARESWEB`); // Default repo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,8 +79,8 @@ export default function BugReport() {
                       onChange={(e) => setRepoStr(e.target.value)}
                       className="w-full bg-black/50 border border-zinc-700/50 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all font-mono appearance-none"
                     >
-                      <option value="ARES-23247/ARESWEB">ARESWEB (Web Portal)</option>
-                      <option value="ARES-23247/IntoTheDeep">IntoTheDeep (Robot Code)</option>
+                      <option value={`${siteConfig.urls.githubOrg}/ARESWEB`}>ARESWEB (Web Portal)</option>
+                      <option value={`${siteConfig.urls.githubOrg}/IntoTheDeep`}>IntoTheDeep (Robot Code)</option>
                     </select>
                   </div>
 
@@ -128,7 +129,7 @@ export default function BugReport() {
                   <p className="text-marble/70 text-sm leading-relaxed mb-3">
                     If you don&apos;t have a GitHub account, you can email us your bug report securely.
                   </p>
-                  <a href="mailto:ares@aresfirst.org?subject=ARES%20Bug%20Report" className="text-ares-cyan hover:text-white font-bold text-sm tracking-wider uppercase inline-flex items-center gap-2 transition-colors">
+                  <a href={`mailto:${siteConfig.contact.email}?subject=${siteConfig.team.name}%20Bug%20Report`} className="text-ares-cyan hover:text-white font-bold text-sm tracking-wider uppercase inline-flex items-center gap-2 transition-colors">
                     Report via Email <span aria-hidden="true" className="text-lg before:content-['→']"></span>
                   </a>
                 </div>

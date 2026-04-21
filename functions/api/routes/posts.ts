@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { siteConfig } from "../../utils/site.config";
 import { Bindings, getSocialConfig, extractAstText, getSessionUser, ensureAdmin } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
@@ -179,7 +180,7 @@ postsRouter.post("/admin/posts", async (c) => {
             c.env,
             "announcements",
             "Website Updates",
-            `🚀 **New Blog Post Published:** [${body.title}](https://aresfirst.org/blog/${slug})\n\n${snippet.substring(0, 300)}`
+            `🚀 **New Blog Post Published:** [${body.title}](${siteConfig.urls.base}/blog/${slug})\n\n${snippet.substring(0, 300)}`
           ).catch(err => console.error("[Posts] Zulip announcement failed:", err))
         );
       } catch { /* ignore */ }

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import { siteConfig } from "../site.config";
 import { Target, Clock, ArrowRight, Activity, MapPin, Heart } from "lucide-react";
 import SEO from "../components/SEO";
 
@@ -132,7 +133,7 @@ export default function Outreach() {
               <p className="text-zinc-300 font-medium">A chronological record of our community interactions.</p>
             </div>
             <div className="h-px flex-1 bg-white/5 mx-6 hidden md:block" />
-            <a href="mailto:ares@aresfirst.org" className="text-ares-gold font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-all">
+            <a href={`mailto:${siteConfig.contact.email}`} className="text-ares-gold font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-all">
               Request a demo <ArrowRight size={14} />
             </a>
           </header>
@@ -175,7 +176,7 @@ export default function Outreach() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-ares-red/20 blur-[100px] rounded-full pointer-events-none" />
           <h2 className="text-4xl md:text-5xl font-black text-white mb-6 italic tracking-tighter">Have a volunteer need?</h2>
           <p className="text-zinc-300 text-lg mb-10 max-w-xl mx-auto font-medium">Whether it&apos;s a elementary school demo, a science fair, or a community workshop—ARES is here to inspire.</p>
-          <a href="mailto:ares@aresfirst.org" className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black ares-cut hover:bg-ares-gold hover:text-black transition-all shadow-2xl">
+          <a href={`mailto:${siteConfig.contact.email}`} className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black ares-cut hover:bg-ares-gold hover:text-black transition-all shadow-2xl">
             Get In Touch <ArrowRight size={20} />
           </a>
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
 import { GraduationCap } from "lucide-react";
 import { BrandLogo } from "../components/BrandLogo";
 import { GreekMeander } from "../components/GreekMeander";
@@ -84,6 +85,7 @@ export default function About() {
 
   return (
     <div className="flex flex-col w-full">
+      <SEO title="About Us" description="Learn about ARES 23247, our mission, and the students driving FIRST Robotics forward in West Virginia." />
       {/* ─── HERO ─── */}
       <section className="py-32 bg-obsidian text-marble relative overflow-hidden">
         <GreekMeander variant="thin" opacity="opacity-40" className="absolute top-0 left-0" />

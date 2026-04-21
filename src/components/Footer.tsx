@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { GreekMeander } from "./GreekMeander";
+import { siteConfig } from "../site.config";
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -50,13 +51,13 @@ export default function Footer() {
             <a href="https://www.youtube.com/@ARESFTC" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-red transition-colors text-white" aria-label="YouTube">
               <i className="fab fa-youtube"></i>
             </a>
-            <a href="mailto:ares@aresfirst.org" aria-label="Email ARES 23247" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-bronze transition-colors text-white">
+            <a href={`mailto:${siteConfig.contact.email}`} aria-label={`Email ${siteConfig.team.fullName}`} className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-bronze transition-colors text-white">
               <i className="fas fa-envelope" aria-hidden="true"></i>
             </a>
           </div>
           <p className="text-marble/70 text-xs font-bold uppercase tracking-widest">ARES HQ</p>
-          <a href="mailto:ares@aresfirst.org" className="text-marble/80 hover:text-ares-red text-sm font-bold transition-colors block mb-4">
-            ares@aresfirst.org
+          <a href={`mailto:${siteConfig.contact.email}`} className="text-marble/80 hover:text-ares-red text-sm font-bold transition-colors block mb-4">
+            {siteConfig.contact.email}
           </a>
           <Link to="/bug-report" className="bg-ares-red text-white hover:bg-white hover:text-ares-red px-4 py-2 ares-cut-sm transition-all font-bold uppercase tracking-widest text-xs inline-flex items-center gap-2 shadow-lg shadow-ares-red/20 w-fit mt-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>

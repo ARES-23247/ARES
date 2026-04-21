@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { siteConfig } from "../../utils/site.config";
 import { Bindings, getSocialConfig } from "./_shared";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem, fetchProjectFields, updateProjectItemStatus } from "../../utils/githubProjects";
 
@@ -162,7 +163,7 @@ zulipWebhookRouter.post("/", async (c) => {
         const count = result?.count || 0;
         return c.json({
           content: count > 0
-            ? `🔔 **${count} pending inquir${count === 1 ? "y" : "ies"}** — [Review in Dashboard](https://aresfirst.org/dashboard?tab=inquiries)`
+            ? `🔔 **${count} pending inquir${count === 1 ? "y" : "ies"}** — [Review in Dashboard](${siteConfig.urls.base}/dashboard?tab=inquiries)`
             : "✅ No pending inquiries! All caught up.",
         });
       }

@@ -75,6 +75,7 @@
     "tiptap-extension-mermaid": "^0.0.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.2",
     "@cloudflare/workers-types": "^4.20260417.1",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/typography": "^0.5.19",

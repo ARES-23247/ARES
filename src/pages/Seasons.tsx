@@ -111,7 +111,7 @@ export default function Seasons() {
              <div className="relative pl-8 md:pl-0">
                 <div className="absolute left-[-5px] md:left-1/2 md:-translate-x-1/2 top-0 w-3 h-3 rounded-full bg-ares-red shadow-[0_0_10px_rgba(192,0,0,0.8)]" />
                 <div className="md:w-[45%] md:mr-auto text-left md:text-right">
-                   <span className="text-ares-red text-sm font-black uppercase tracking-widest mb-2 block">2025 - 2026</span>
+                   <div className="mb-3"><span className="bg-ares-red text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-md">2025 - 2026</span></div>
                    <h3 className="text-3xl font-black text-white italic tracking-tighter mb-4 uppercase">FTC DECODE</h3>
                    <p className="text-zinc-300 leading-relaxed mb-6">
                       The rookie year. Establishing the ARES project, building our first competitive robot, and learning the values of <em>FIRST</em>. Focused on archaeological investigations and autonomous navigation.
@@ -123,10 +123,10 @@ export default function Seasons() {
              </div>
 
              {/* Future Expansion */}
-             <div className="relative pl-8 md:pl-0 opacity-40">
-                <div className="absolute left-[-5px] md:left-1/2 md:-translate-x-1/2 top-0 w-3 h-3 rounded-full bg-zinc-700" />
+             <div className="relative pl-8 md:pl-0">
+                <div className="absolute left-[-5px] md:left-1/2 md:-translate-x-1/2 top-0 w-3 h-3 rounded-full bg-zinc-700 border border-zinc-500" />
                 <div className="md:w-[45%] md:ml-auto text-left">
-                   <span className="text-zinc-300 text-sm font-black uppercase tracking-widest mb-2 block">2026 - 2027</span>
+                   <div className="mb-3"><span className="bg-zinc-800 text-zinc-300 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-sm border border-zinc-600">2026 - 2027</span></div>
                    <h3 className="text-3xl font-black text-white italic tracking-tighter mb-4 uppercase">Next Frontier</h3>
                    <p className="text-zinc-300 leading-relaxed italic">
                       Expanding the ARES engine, mentoring younger teams, and striving for consistent championship performance.

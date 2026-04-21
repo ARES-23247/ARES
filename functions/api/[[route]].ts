@@ -30,6 +30,44 @@ import zulipRouter from "./routes/zulip";
 const app = new Hono<{ Bindings: Bindings }>();
 const apiRouter = new Hono<{ Bindings: Bindings }>();
 
+// ── Rate Limiting (In-Memory per-isolate) ─────────────────────────────
+const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 100;
+
+app.use("*", async (c, next) => {
+  const ip = c.req.header("CF-Connecting-IP") || "unknown";
+  
+  // Skip rate limiting for static assets or internal
+  if (ip !== "unknown" && !c.req.path.startsWith("/assets")) {
+    const now = Date.now();
+    let record = rateLimitMap.get(ip);
+    
+    if (!record || now - record.windowStart > RATE_LIMIT_WINDOW_MS) {
+      record = { count: 0, windowStart: now };
+    }
+    
+    record.count++;
+    rateLimitMap.set(ip, record);
+    
+    // Clean up old entries occasionally (10% chance)
+    if (Math.random() < 0.1) {
+      for (const [key, val] of rateLimitMap.entries()) {
+        if (now - val.windowStart > RATE_LIMIT_WINDOW_MS) {
+          rateLimitMap.delete(key);
+        }
+      }
+    }
+    
+    if (record.count > MAX_REQUESTS_PER_WINDOW) {
+      console.warn(`[Rate Limit] Blocked IP ${ip} - ${record.count} reqs / 1m`);
+      return c.json({ error: "Too many requests. Please try again later." }, 429);
+    }
+  }
+  
+  await next();
+});
+
 // ── Request Logger ───────────────────────────────────────────────────
 app.use("*", async (c, next) => {
   console.log(`[${c.req.method}] ${c.req.url} (Path: ${c.req.path})`);

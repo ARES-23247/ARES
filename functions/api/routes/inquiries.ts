@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { siteConfig } from "../../utils/site.config";
 import { Bindings, MAX_INPUT_LENGTHS, validateLength, getSocialConfig } from "./_shared";
 import { sendZulipAlert } from "../../utils/zulipSync";
 import { buildGitHubConfig, createProjectItem } from "../../utils/githubProjects";
@@ -116,8 +117,8 @@ inquiriesRouter.post("/inquiries", async (c) => {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                personalizations: [{ to: [{ email: "info@aresfirst.org", name: "ARES Admissions" }] }],
-                from: { email: "noreply@aresfirst.org", name: "ARES Website Portal" },
+                personalizations: [{ to: [{ email: siteConfig.contact.email, name: `${siteConfig.team.name} Admissions` }] }],
+                from: { email: `noreply@${new URL(siteConfig.urls.base).hostname}`, name: `${siteConfig.team.name} Website Portal` },
                 subject: `New ${type.toUpperCase()} Inquiry Submission`,
                 content: [{ type: "text/plain", value: `You received a new ${type} inquiry from ${name} (${email}).\n\nPayload:\n${JSON.stringify(metadata, null, 2)}` }]
               })
@@ -132,7 +133,7 @@ inquiriesRouter.post("/inquiries", async (c) => {
       const alertBody = [
         `📧 **Email:** ${email}`,
         metadata ? `📎 **Details:** \`${JSON.stringify(metadata)}\`` : "",
-        `🔗 [Review in Dashboard](https://aresfirst.org/dashboard?tab=inquiries)`,
+        `🔗 [Review in Dashboard](${siteConfig.urls.base}/dashboard?tab=inquiries)`,
       ].filter(Boolean).join("\n");
 
       c.executionCtx.waitUntil(

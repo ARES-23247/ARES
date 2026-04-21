@@ -1,4 +1,5 @@
 import { memo, useCallback, useState } from "react";
+import { siteConfig } from "../../site.config";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, BookOpen, ChevronRight, ChevronDown, Menu, X, ExternalLink } from "lucide-react";
@@ -133,7 +134,7 @@ function DocsSidebar({ groupedDocs, currentSlug, onSearchOpen }: DocsSidebarProp
 
         <div className="mt-8 px-2 border-t border-white/8 pt-4">
           <a
-            href="https://ARES-23247.github.io/ARESLib/javadoc/index.html"
+            href={`https://${siteConfig.urls.githubOrg}.github.io/ARESLib/javadoc/index.html`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-sm text-white/70 hover:text-ares-gold transition-colors"

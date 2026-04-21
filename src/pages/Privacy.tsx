@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Shield, EyeOff, Server, Lock } from "lucide-react";
-import { Helmet } from "react-helmet-async";
+import { siteConfig } from "../site.config";
+import SEO from "../components/SEO";
 
 export default function Privacy() {
   return (
@@ -11,11 +12,10 @@ export default function Privacy() {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-obsidian text-white pt-24 pb-16"
     >
-      <Helmet>
-        <title>Privacy Policy | ARES 23247</title>
-        <meta name="description" content="ARES 23247 Privacy Policy. Read our commitment to COPPA, GDPR, and cookie-free analytics." />
-      </Helmet>
-
+      <SEO 
+        title="Privacy Policy" 
+        description="ARES 23247 Privacy Policy. Read our commitment to COPPA, GDPR, and cookie-free analytics." 
+      />
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <div className="mb-16">
           <h1 className="text-4xl lg:text-5xl font-bold font-heading mb-6 tracking-tight">
@@ -91,7 +91,7 @@ export default function Privacy() {
 
         <div className="mt-16 text-center text-marble/50 text-sm">
           <p>This privacy policy is actively maintained by ARES 23247.</p>
-          <p>For inquiries, contact us at <a href="mailto:ares@aresfirst.org" aria-label="Send an email to ARES robotics team" className="text-marble/80 hover:text-ares-red transition-colors font-bold tracking-widest uppercase">ares@aresfirst.org</a></p>
+          <p>For inquiries, contact us at <a href={`mailto:${siteConfig.contact.email}`} aria-label={`Send an email to ${siteConfig.team.name} robotics team`} className="text-marble/80 hover:text-ares-red transition-colors font-bold tracking-widest uppercase">{siteConfig.contact.email}</a></p>
         </div>
       </div>
     </motion.div>

@@ -1,4 +1,5 @@
 import { Context, Next } from "hono";
+import { siteConfig } from "../../utils/site.config";
 import { getAuth } from "../../utils/auth";
 import { parseAstToText } from "../../utils/gcalSync";
 
@@ -219,7 +220,7 @@ export async function getSocialConfig(c: Context<AppEnv>): Promise<Record<string
       // ── GitHub Projects v2 ──
       GITHUB_PAT: c.env.GITHUB_PAT || dbSettings["GITHUB_PAT"],
       GITHUB_PROJECT_ID: c.env.GITHUB_PROJECT_ID || dbSettings["GITHUB_PROJECT_ID"],
-      GITHUB_ORG: c.env.GITHUB_ORG || dbSettings["GITHUB_ORG"] || "ARES-23247",
+      GITHUB_ORG: c.env.GITHUB_ORG || dbSettings["GITHUB_ORG"] || siteConfig.urls.githubOrg,
       GITHUB_WEBHOOK_SECRET: c.env.GITHUB_WEBHOOK_SECRET || dbSettings["GITHUB_WEBHOOK_SECRET"],
     };
   } catch (err) {

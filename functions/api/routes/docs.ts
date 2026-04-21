@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, getSessionUser } from "./_shared";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
@@ -27,9 +28,10 @@ docsRouter.get("/docs/search", async (c) => {
   const q = c.req.query("q");
   if (!q || q.length < 3) return c.json({ results: [] });
   try {
+    const safeQ = q.replace(/"/g, '""');
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, category, description FROM docs WHERE is_deleted = 0 AND status = 'published' AND (title LIKE ? OR content LIKE ? OR description LIKE ?) ORDER BY category, sort_order ASC LIMIT 20"
-    ).bind(`%${q}%`, `%${q}%`, `%${q}%`).all();
+      `SELECT slug, title, category, description FROM docs_fts WHERE is_deleted = '0' AND status = 'published' AND docs_fts MATCH ? ORDER BY rank LIMIT 20`
+    ).bind(`"${safeQ}"*`).all();
 
     const mapped = (results ?? []).map((r: Record<string, unknown>) => {
       let snippet = String(r.description || "");
@@ -204,7 +206,7 @@ docsRouter.post("/admin/docs", async (c) => {
             c.env,
             "engineering",
             "Engineering Docs",
-            `📝 **Doc ${action}:** [${title}](https://aresfirst.org/docs/${slug}) (${category})`
+            `📝 **Doc ${action}:** [${title}](${siteConfig.urls.base}/docs/${slug}) (${category})`
           ).catch(err => console.error("[Docs] Zulip notification failed:", err))
         );
       } catch { /* ignore */ }
@@ -296,7 +298,7 @@ docsRouter.patch("/admin/docs/:slug/approve", async (c) => {
           c.env,
           "content-review",
           "Approvals",
-          `✅ **Doc approved:** [${slug}](https://aresfirst.org/docs/${slug})`
+          `✅ **Doc approved:** [${slug}](${siteConfig.urls.base}/docs/${slug})`
         ).catch(err => console.error("[Docs] Zulip approval notification failed:", err))
       );
     } catch { /* ignore */ }

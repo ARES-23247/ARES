@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { siteConfig } from "../../../utils/site.config";
 import { Bindings, getSocialConfig, extractAstText, getSessionUser, getDbSettings } from "../_shared";
 import { pushEventToGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials } from "../../../utils/socialSync";
@@ -109,7 +110,7 @@ adminRouter.post("/", async (c) => {
             c.env,
             "announcements",
             "Calendar",
-            `📅 **New Event:** ${title}\n📍 ${location || "TBD"} • 📆 ${eventDate}\n${desc ? `\n${desc}` : ""}\n\n[View on ARESWEB](https://aresfirst.org/events)`
+            `📅 **New Event:** ${title}\n📍 ${location || "TBD"} • 📆 ${eventDate}\n${desc ? `\n${desc}` : ""}\n\n[View on ${siteConfig.team.name}WEB](${siteConfig.urls.base}/events)`
           ).catch(err => console.error("[Events] Zulip notification failed:", err))
         );
       } catch { /* ignore */ }
@@ -299,7 +300,7 @@ adminRouter.post("/:id/repush", async (c) => {
     if (!event) return c.json({ error: "Event not found" }, 404);
     const socialConfig = await getSocialConfig(c);
     try {
-      await dispatchSocials({ title: event.title, url: `https://aresfirst.org/events`, snippet: extractAstText(event.description || "").substring(0, 250) || "Join us for our upcoming event!", coverImageUrl: event.cover_image || "/gallery_1.png", baseUrl: new URL(c.req.url).origin }, socialConfig, socials);
+      await dispatchSocials({ title: event.title, url: `${siteConfig.urls.base}/events`, snippet: extractAstText(event.description || "").substring(0, 250) || "Join us for our upcoming event!", coverImageUrl: event.cover_image || "/gallery_1.png", baseUrl: new URL(c.req.url).origin }, socialConfig, socials);
     } catch (err: unknown) { return c.json({ error: `Network Repush Failed: ${(err as Error).message || String(err)}` }, 502); }
     return c.json({ success: true });
   } catch (err) {

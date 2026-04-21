@@ -1,6 +1,7 @@
 import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import GitHubHeatmap from "../components/GitHubHeatmap";
+import SEO from "../components/SEO";
 
 export default function TechStack() {
   return (
@@ -11,6 +12,7 @@ export default function TechStack() {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-obsidian text-white pt-24 pb-16"
     >
+      <SEO title="Tech Stack" description="Explore the zero-cost, serverless architecture powering ARES 23247." />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 overflow-x-hidden">
         
         {/* Header Section */}

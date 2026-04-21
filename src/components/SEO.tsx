@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { siteConfig } from "../site.config";
 
 interface SEOProps {
   title: string;
@@ -11,20 +12,20 @@ interface SEOProps {
 export default function SEO({ 
   title, 
   description = "ARES 23247 - Appalachian Robotics & Engineering Society. FIRST® Tech Challenge Team based in Morgantown, WV.", 
-  image = "https://aresfirst.org/ares_hero.png", 
+  image = `${siteConfig.urls.base}/ares_hero.png`, 
   url,
   type = "website"
 }: SEOProps) {
   
   const siteTitle = `${title} | ARES 23247`;
-  const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : "https://aresfirst.org");
+  const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : siteConfig.urls.base);
 
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "ARES 23247 (Appalachian Robotics & Engineering Society)",
-    "url": "https://aresfirst.org",
-    "logo": "https://aresfirst.org/ares_hero.png",
+    "url": siteConfig.urls.base,
+    "logo": `${siteConfig.urls.base}/ares_hero.png`,
     "description": "FIRST® Tech Challenge (FTC) Robotics Team based in Morgantown, West Virginia.",
     "sameAs": [
       "https://github.com/ARES23247"

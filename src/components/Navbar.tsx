@@ -64,10 +64,10 @@ export default function Navbar() {
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
             aria-label="Open Command Palette"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan border border-white/5"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-zinc-200 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan border border-white/10"
           >
             <Search size={14} aria-hidden="true" />
-            <span className="text-xs font-mono pr-2">Search... <kbd className="hidden lg:inline bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded ml-1 border border-zinc-700">Ctrl K</kbd></span>
+            <span className="text-xs font-mono pr-2">Search... <kbd className="hidden lg:inline bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded ml-1 border border-zinc-600">Ctrl K</kbd></span>
           </button>
           {isSignedIn && (
             <Link to="/dashboard" className="relative flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all group" aria-label="Dashboard">

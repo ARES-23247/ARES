@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { siteConfig } from "../site.config";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Gem, Award, ShieldCheck, Zap, ExternalLink, Heart, Package } from "lucide-react";
@@ -117,7 +118,7 @@ export default function Sponsors() {
 
   return (
     <div className="min-h-screen bg-obsidian text-marble py-24 relative overflow-hidden">
-      <SEO title="Our Partners — ARES 23247" description="The corporate partners and community sponsors who empower ARES 23247 to innovate in FIRST Robotics." />
+      <SEO title="Sponsors" description={`The corporate partners and community sponsors who empower ${siteConfig.team.fullName} to innovate in FIRST Robotics.`} />
       
       {/* Background Ambience */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[600px] bg-ares-red/5 blur-[120px] rounded-full pointer-events-none" />
@@ -146,7 +147,7 @@ export default function Sponsors() {
             transition={{ delay: 0.2 }}
             className="text-marble/70 text-lg max-w-2xl mx-auto leading-relaxed"
           >
-            ARES 23247 is fueled by the generosity of organizations that believe in the future of STEM. These partners provide the resources necessary for us to compete at the highest level.
+            {siteConfig.team.fullName} is fueled by the generosity of organizations that believe in the future of STEM. These partners provide the resources necessary for us to compete at the highest level.
           </motion.p>
         </header>
 
@@ -210,7 +211,7 @@ export default function Sponsors() {
           className="mt-32 p-12 ares-cut-lg bg-[#181818] border border-ares-red/20 text-left flex flex-col lg:flex-row gap-12 overflow-hidden relative"
         >
           {/* Subtle grid pattern background */}
-          <div className="absolute inset-0 bg-[url('https://api.aresfirst.org/assets/grid.svg')] opacity-5 mix-blend-overlay pointer-events-none z-0" aria-hidden="true"></div>
+          <div className="absolute inset-0 bg-[url('/assets/grid.svg')] opacity-5 mix-blend-overlay pointer-events-none z-0" aria-hidden="true"></div>
 
           <div className="flex-1 relative z-10 flex flex-col justify-between">
             <div>
@@ -222,8 +223,8 @@ export default function Sponsors() {
             
             <div className="mt-12 lg:mt-0">
               <p className="text-[#b3b3b3] font-bold uppercase tracking-widest text-xs mb-3" style={{ color: '#b3b3b3', backgroundColor: '#181818' }}>Or email the executive board directly</p>
-              <a href="mailto:ares@aresfirst.org" className="text-2xl font-bold text-white hover:text-ares-gold transition-colors flex items-center gap-3 w-fit group" style={{ color: '#ffffff', backgroundColor: '#181818' }}>
-                ares@aresfirst.org <span className="group-hover:translate-x-1 transition-transform"><ArrowRight size={20} className="text-ares-red" /></span>
+              <a href={`mailto:${siteConfig.contact.email}`} className="text-2xl font-bold text-white hover:text-ares-gold transition-colors flex items-center gap-3 w-fit group" style={{ color: '#ffffff', backgroundColor: '#181818' }}>
+                {siteConfig.contact.email} <span className="group-hover:translate-x-1 transition-transform"><ArrowRight size={20} className="text-ares-red" /></span>
               </a>
             </div>
           </div>
@@ -278,7 +279,7 @@ export default function Sponsors() {
                   {isSubmitting ? "Sending..." : <><span className="flex items-center gap-2">Submit Interest Request <ArrowRight size={18} /></span></>}
                 </button>
                 <p className="text-center text-[10px] text-[#999999] font-mono uppercase tracking-tighter mt-4" style={{ color: '#999999', backgroundColor: '#1f1f1f' }}>
-                  ARES 23247 operates under a 501(c)(3) nonprofit umbrella. All donations are tax-deductible.
+                  {siteConfig.team.fullName} operates under a 501(c)(3) nonprofit umbrella. All donations are tax-deductible.
                 </p>
               </div>
             </form>

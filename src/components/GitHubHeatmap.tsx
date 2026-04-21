@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { siteConfig } from "../site.config";
 
 interface DayCell {
   date: string;
@@ -95,7 +96,7 @@ export default function GitHubHeatmap() {
           </p>
         </div>
         <a
-          href={`https://github.com/ARES-23247`}
+          href={`https://github.com/${siteConfig.urls.githubOrg}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-ares-gold text-sm font-bold uppercase tracking-wider hover:text-white transition-colors shrink-0"
