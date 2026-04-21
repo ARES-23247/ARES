@@ -3,7 +3,7 @@ import { Context } from "hono";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, parsePagination, checkWriteRateLimit, verifyTurnstile } from "./_shared";
 import { siteConfig } from "../../utils/site.config";
 import { sendZulipMessage } from "../../utils/zulipSync";
-import { emitNotification } from "../../utils/notifications";
+import { emitNotification, notifyAdmins } from "../../utils/notifications";
 
 
 const docsRouter = new Hono<AppEnv>();
@@ -235,6 +235,15 @@ async function handleDocSave(c: Context<AppEnv>) {
          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, 'pending', ?)`
        ).bind(revSlug, title, category, sortOrder || 0, description || "", content, email, isPortfolio ? 1 : 0, isExecutiveSummary ? 1 : 0, slug).run();
        
+       c.executionCtx.waitUntil(
+         notifyAdmins(c, {
+           title: "📝 Doc Revision Pending",
+           message: `"${title}" revised by ${email} needs admin approval.`,
+           link: "/dashboard",
+           external: true,
+           priority: "medium"
+         }).catch(err => console.error("[Docs] Admin revision notification failed:", err))
+       );
        return c.json({ success: true, slug: revSlug });
     }
 
@@ -258,6 +267,19 @@ async function handleDocSave(c: Context<AppEnv>) {
           ).catch(err => console.error("[Docs] Zulip notification failed:", err))
         );
       } catch { /* ignore */ }
+    }
+
+    // ── Notify admins of pending content ──
+    if (status === "pending") {
+      c.executionCtx.waitUntil(
+        notifyAdmins(c, {
+          title: "📝 Pending Document",
+          message: `"${title}" submitted by ${email} needs review.`,
+          link: "/dashboard",
+          external: true,
+          priority: "medium"
+        }).catch(err => console.error("[Docs] Admin notification failed:", err))
+      );
     }
 
     return c.json({ success: true, slug });

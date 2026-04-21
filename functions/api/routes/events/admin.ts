@@ -4,6 +4,7 @@ import { AppEnv, getSocialConfig, extractAstText, getSessionUser, getDbSettings,
 import { pushEventToGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials } from "../../../utils/socialSync";
 import { sendZulipMessage } from "../../../utils/zulipSync";
+import { notifyAdmins } from "../../../utils/notifications";
 
 const adminRouter = new Hono<AppEnv>();
 
@@ -115,6 +116,19 @@ adminRouter.post("/", async (c) => {
     }
 
 
+    // ── Notify admins of pending content ──
+    if (status === "pending") {
+      c.executionCtx.waitUntil(
+        notifyAdmins(c, {
+          title: "📅 Pending Event",
+          message: `"${title}" submitted by ${email} needs review.`,
+          link: "/dashboard",
+          external: true,
+          priority: "medium"
+        }).catch(err => console.error("[Events] Admin notification failed:", err))
+      );
+    }
+
     return c.json({ success: true, id: genId, warning: warnings.length > 0 ? warnings.join(" | ") : undefined }, warnings.length > 0 ? 207 : 200);
   } catch (err: unknown) {
     console.error("D1 manual event creation error:", err);
@@ -159,6 +173,15 @@ adminRouter.put("/:id", async (c) => {
         `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of, published_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?, ?)`
       ).bind(revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId, publishedAt || null).run();
+      c.executionCtx.waitUntil(
+        notifyAdmins(c, {
+          title: "📅 Event Revision Pending",
+          message: `"${title}" revised by ${user?.email || "unknown"} needs admin approval.`,
+          link: "/dashboard",
+          external: true,
+          priority: "medium"
+        }).catch(err => console.error("[Events] Admin revision notification failed:", err))
+      );
       return c.json({ success: true, id: revId, warning: warnings.length > 0 ? warnings.join(" | ") : undefined }, warnings.length > 0 ? 207 : 200);
     }
 

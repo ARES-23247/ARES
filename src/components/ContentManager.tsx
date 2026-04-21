@@ -108,7 +108,7 @@ export default function ContentManager({
         </div>
       </div>
 
-      <div className={`grid gap-6 flex-1 ${mode === "all" ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1"}`}>
+      <div className={`grid gap-6 flex-1 min-h-0 ${mode === "all" ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1"}`}>
         {(mode === "all" || mode === "event") && (
           <EventManagerTab 
             {...sharedProps} 

@@ -89,7 +89,7 @@ export default function DocManagerTab({
   const filtered = docs.filter(contentFilter(view));
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col flex-1 min-h-0">
       <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-zinc-800 pb-2 ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-zinc-500'}`}>
         <span className="flex items-center justify-between">
           <span className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export default function DocManagerTab({
           </div>
         </span>
       </h3>
-      <div className="flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar">
+      <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
         {filtered.length === 0 ? (
           <div className="text-zinc-500 text-xs italic py-4 text-center border border-dashed border-zinc-800/50 ares-cut-sm">No {view} docs found.</div>
         ) : (

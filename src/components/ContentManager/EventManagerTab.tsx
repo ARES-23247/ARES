@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { Radio } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
 import { EventItem, ViewType, ClickToDeleteButton, contentFilter, ContentMutationResult } from "./shared";
+
+type EventCategory = "all" | "internal" | "outreach" | "external";
 
 interface EventManagerTabProps {
   view: ViewType;
@@ -17,6 +20,19 @@ interface EventManagerTabProps {
   purgeMutation: ContentMutationResult;
 }
 
+const CATEGORY_LABELS: Record<EventCategory, string> = {
+  all: "ALL",
+  internal: "PRACTICES",
+  outreach: "OUTREACH",
+  external: "COMMUNITY",
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  internal: "bg-ares-red",
+  outreach: "bg-ares-gold",
+  external: "bg-ares-cyan",
+};
+
 export default function EventManagerTab({
   view,
   onEditEvent,
@@ -29,6 +45,8 @@ export default function EventManagerTab({
   restoreMutation,
   purgeMutation
 }: EventManagerTabProps) {
+  const [categoryFilter, setCategoryFilter] = useState<EventCategory>("all");
+
   const { data: eventsResult, isLoading } = useQuery<{ events: EventItem[], lastSyncedAt: string | null }>({
     queryKey: ["admin_events"],
     queryFn: async () => {
@@ -63,10 +81,22 @@ export default function EventManagerTab({
 
   if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-800 border-t-ares-red rounded-full animate-spin"></div></div>;
 
-  const filtered = events.filter(contentFilter(view));
+  // Apply lifecycle filter first, then category filter for active view
+  const lifecycleFiltered = events.filter(contentFilter(view));
+  const filtered = view === "active" && categoryFilter !== "all"
+    ? lifecycleFiltered.filter(e => e.category === categoryFilter)
+    : lifecycleFiltered;
+
+  // Count events per category for the active view badges
+  const categoryCounts = view === "active" ? {
+    all: lifecycleFiltered.length,
+    internal: lifecycleFiltered.filter(e => e.category === "internal").length,
+    outreach: lifecycleFiltered.filter(e => e.category === "outreach").length,
+    external: lifecycleFiltered.filter(e => e.category === "external").length,
+  } : null;
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col flex-1 min-h-0">
       <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
         <div className="flex items-center gap-4">
           <h3 className={`font-bold uppercase tracking-widest text-xs ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-ares-gold'}`}>
@@ -88,7 +118,35 @@ export default function EventManagerTab({
           </button>
         )}
       </div>
-      <div className="flex flex-col gap-3 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar">
+
+      {/* Category Sub-Tabs (only shown for active view) */}
+      {view === "active" && (
+        <div className="flex gap-1 mb-4 bg-zinc-950/50 p-1 ares-cut-sm border border-zinc-800/50">
+          {(Object.keys(CATEGORY_LABELS) as EventCategory[]).map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`flex items-center gap-1.5 px-3 py-1 ares-cut-sm text-[10px] font-bold uppercase tracking-widest transition-all ${
+                categoryFilter === cat
+                  ? "bg-zinc-800 text-white border border-zinc-700 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {cat !== "all" && (
+                <span className={`w-1.5 h-1.5 rounded-full ${CATEGORY_COLORS[cat]}`}></span>
+              )}
+              {CATEGORY_LABELS[cat]}
+              {categoryCounts && (
+                <span className="text-[9px] text-zinc-500 ml-0.5">
+                  ({categoryCounts[cat]})
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
         {filtered.length === 0 ? (
           <div className="text-zinc-500 text-xs italic py-4 text-center border border-dashed border-zinc-800/50 ares-cut-sm">No {view} events found.</div>
         ) : (

@@ -3,7 +3,7 @@ import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, parsePagination } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
-import { emitNotification } from "../../utils/notifications";
+import { emitNotification, notifyAdmins } from "../../utils/notifications";
 import { 
   createShadowRevision, 
   approvePost, 
@@ -199,6 +199,18 @@ async function handlePostSave(c: Context<AppEnv>) {
           ).catch(err => console.error("[Posts] Zulip announcement failed:", err))
         );
       } catch { /* ignore */ }
+    }
+    // ── Notify admins of pending content ──
+    if (status === "pending") {
+      c.executionCtx.waitUntil(
+        notifyAdmins(c, {
+          title: "📝 Pending Blog Post",
+          message: `"${body.title}" submitted by ${email} needs review.`,
+          link: "/dashboard",
+          external: true,
+          priority: "medium"
+        }).catch(err => console.error("[Posts] Admin notification failed:", err))
+      );
     }
 
     return c.json({ success: true, slug });
