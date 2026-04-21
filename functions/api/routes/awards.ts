@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings } from "./_shared";
+import { Bindings, parsePagination } from "./_shared";
 
 const awardsRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -19,8 +19,7 @@ awardsRouter.get("/awards", async (c) => {
 // ── GET /admin/awards — list all awards for management ────────────────
 awardsRouter.get("/admin/awards", async (c) => {
   try {
-    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
-    const offset = Number(c.req.query("offset") || "0");
+    const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare("SELECT id, title, year, event_name, image_url, description, icon_type, created_at FROM awards ORDER BY year DESC, created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
     return c.json({ awards: results || [] });
   } catch (err) {

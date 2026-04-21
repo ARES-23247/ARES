@@ -1,16 +1,17 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { Bindings, MAX_INPUT_LENGTHS, validateLength, getSocialConfig } from "./_shared";
+import { Bindings, MAX_INPUT_LENGTHS, validateLength, getSocialConfig, parsePagination } from "./_shared";
 import { sendZulipAlert } from "../../utils/zulipSync";
 import { buildGitHubConfig, createProjectItem } from "../../utils/githubProjects";
+import { notifyAdmins } from "../../utils/notifications";
+
 
 const inquiriesRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── GET /admin/inquiries — List all inquiries ──────────────────────────
 inquiriesRouter.get("/admin/inquiries", async (c) => {
   try {
-    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
-    const offset = Number(c.req.query("offset") || "0");
+    const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare(
       "SELECT id, type, name, email, metadata, status, created_at FROM inquiries ORDER BY created_at DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
@@ -145,6 +146,19 @@ inquiriesRouter.post("/inquiries", async (c) => {
         ).catch(err => console.error("[Inquiry] Zulip alert failed:", err))
       );
     } catch { /* ignore Zulip error */ }
+ 
+    // ── In-App Dashboard Notification ──
+    try {
+      c.executionCtx.waitUntil(
+        notifyAdmins(c as any, {
+          title: `New ${type.toUpperCase()} Inquiry`,
+          message: `${name} (${email}) submitted a new inquiry.`,
+          link: "/dashboard?tab=inquiries",
+          priority: type === "sponsor" ? "high" : "medium"
+        }).catch(err => console.error("[Inquiry] In-App notification failed:", err))
+      );
+    } catch { /* ignore in-app error */ }
+
 
     // ── GitHub Auto-Escalation ──
     try {
@@ -195,4 +209,18 @@ inquiriesRouter.delete("/admin/inquiries/:id", async (c) => {
   }
 });
 
+export async function purgeOldInquiries(db: D1Database, days: number) {
+  if (days <= 0) return { deleted: 0 };
+  
+  // Deletes inquiries where status is 'resolved' or 'rejected' and created_at is older than X days
+  const { meta } = await db.prepare(
+    `DELETE FROM inquiries 
+     WHERE (status = 'resolved' OR status = 'rejected') 
+     AND created_at < datetime('now', '-' || ? || ' days')`
+  ).bind(days).run();
+  
+  return { deleted: meta.changes };
+}
+
 export default inquiriesRouter;
+

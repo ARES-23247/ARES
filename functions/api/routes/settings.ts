@@ -38,4 +38,27 @@ settingsRouter.post("/admin/settings", ensureAdmin, async (c) => {
   }
 });
 
+// ── GET /admin/backup — Export database as JSON ───────────────
+settingsRouter.get("/admin/backup", ensureAdmin, async (c) => {
+  try {
+    const { results: tables } = await c.env.DB.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE '%_fts%'"
+    ).all();
+    
+    const backup: Record<string, Record<string, unknown>[]> = {};
+    for (const row of tables) {
+      if (!row || typeof row.name !== 'string') continue;
+      const { results } = await c.env.DB.prepare(`SELECT * FROM ${row.name}`).all();
+      backup[row.name] = results;
+    }
+    
+    await logAuditAction(c, "database_export", "system", null, "Exported full D1 database backup as JSON.");
+    
+    return c.json({ success: true, timestamp: new Date().toISOString(), backup });
+  } catch (err) {
+    console.error("D1 backup error:", err);
+    return c.json({ success: false, error: "Backup generation failed" }, 500);
+  }
+});
+
 export default settingsRouter;

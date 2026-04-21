@@ -25,7 +25,9 @@ import sitemapRouter from "./routes/sitemap";
 import githubRouter from "./routes/github";
 import githubWebhookRouter from "./routes/githubWebhook";
 import zulipWebhookRouter from "./routes/zulipWebhook";
+import swaggerRouter from "./routes/swagger";
 import zulipRouter from "./routes/zulip";
+import notificationsRouter from "./routes/notifications";
 
 const app = new Hono<{ Bindings: Bindings }>();
 const apiRouter = new Hono<{ Bindings: Bindings }>();
@@ -128,12 +130,14 @@ apiRouter.route("/", awardsRouter);
 apiRouter.route("/", tbaRouter);
 apiRouter.route("/github", githubRouter);
 apiRouter.route("/zulip", zulipRouter);
+apiRouter.route("/swagger", swaggerRouter);
 apiRouter.route("/", settingsRouter);
 apiRouter.route("/", judgesRouter);
 
 apiRouter.route("/", sitemapRouter);
 apiRouter.route("/", profilesRouter);
 apiRouter.route("/", badgesRouter);
+apiRouter.route("/", notificationsRouter);
 
 // Webhooks (public — self-authenticated via signatures/tokens)
 apiRouter.route("/webhooks/github", githubWebhookRouter);
@@ -145,21 +149,26 @@ apiRouter.get("/search", async (c) => {
     const q = c.req.query("q") || "";
     if (q.length < 3) return c.json({ results: [] });
 
+    // Sanitize query for FTS MATCH
+    const safeQ = q.replace(/"/g, '""');
+    const ftsQ = `"${safeQ}"*`;
     const wildcard = `%${q}%`;
+
     const [postsReq, eventsReq, docsReq, usersReq] = await Promise.all([
       c.env.DB.prepare(
-        "SELECT 'blog' as type, slug as id, title, snippet as matched_text FROM posts WHERE title LIKE ? OR snippet LIKE ? LIMIT 5"
-      ).bind(wildcard, wildcard).all(),
+        "SELECT 'blog' as type, slug as id, title, snippet as matched_text FROM posts_fts WHERE is_deleted = '0' AND status = 'published' AND posts_fts MATCH ? ORDER BY rank LIMIT 5"
+      ).bind(ftsQ).all(),
       c.env.DB.prepare(
-        "SELECT 'event' as type, id, title, description as matched_text FROM events WHERE title LIKE ? OR description LIKE ? LIMIT 5"
-      ).bind(wildcard, wildcard).all(),
+        "SELECT 'event' as type, id, title, description as matched_text FROM events_fts WHERE is_deleted = 0 AND status = 'published' AND events_fts MATCH ? ORDER BY rank LIMIT 5"
+      ).bind(ftsQ).all(),
       c.env.DB.prepare(
-        "SELECT 'doc' as type, slug as id, title, description as matched_text FROM docs WHERE status = 'published' AND is_deleted = 0 AND (title LIKE ? OR description LIKE ?) LIMIT 5"
-      ).bind(wildcard, wildcard).all(),
+        "SELECT 'doc' as type, slug as id, title, description as matched_text FROM docs_fts WHERE status = 'published' AND is_deleted = '0' AND docs_fts MATCH ? ORDER BY rank LIMIT 5"
+      ).bind(ftsQ).all(),
       c.env.DB.prepare(
-        "SELECT 'user' as type, user_id as id, nickname as title, bio as matched_text FROM user_profiles WHERE show_on_about = 1 AND (nickname LIKE ? OR first_name LIKE ? OR last_name LIKE ?) LIMIT 5"
-      ).bind(wildcard, wildcard, wildcard).all()
+        "SELECT 'user' as type, user_id as id, nickname as title, bio as matched_text FROM user_profiles_fts WHERE show_on_about = 1 AND user_profiles_fts MATCH ? ORDER BY rank LIMIT 5"
+      ).bind(ftsQ).all()
     ]);
+
 
     return c.json({ results: [...(postsReq.results || []), ...(eventsReq.results || []), ...(docsReq.results || []), ...(usersReq.results || [])] });
   } catch (err) {
@@ -189,4 +198,32 @@ app.route("/dashboard/api", apiRouter);
 
 export const onRequest = handle(app);
 
+// ── Scheduled Maintenance (Triggers) ──────────────────────────────────
+import { purgeOldInquiries } from "./routes/inquiries";
+
+export const scheduled = async (
+  event: ScheduledEvent,
+  env: Bindings,
+  ctx: ExecutionContext
+) => {
+  try {
+    // 1. Fetch Retention Policy from Database
+    const retentionRow = await env.DB.prepare(
+      "SELECT value FROM settings WHERE key = 'RETENTION_INQUIRY_DAYS'"
+    ).first<{ value: string }>();
+
+    const days = Number(retentionRow?.value || "30");
+
+    console.log(`[Scheduled] Starting maintenance. Retention period: ${days} days.`);
+
+    // 2. Execute Purge
+    const { deleted } = await purgeOldInquiries(env.DB, days);
+    
+    console.log(`[Scheduled] Maintenance complete. Purged ${deleted} old inquiries.`);
+  } catch (err) {
+    console.error("[Scheduled] Maintenance failed:", err);
+  }
+};
+
 export default app;
+

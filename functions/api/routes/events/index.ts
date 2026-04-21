@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings } from "../_shared";
+import { Bindings, parsePagination } from "../_shared";
 import signupsRouter from "./signups";
 
 const eventsRouter = new Hono<{ Bindings: Bindings }>();
@@ -7,10 +7,9 @@ const eventsRouter = new Hono<{ Bindings: Bindings }>();
 // ── GET /events — list all events ──────────────────────────────────────
 eventsRouter.get("/", async (c) => {
   try {
-    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
-    const offset = Number(c.req.query("offset") || "0");
+    const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck, is_volunteer FROM events WHERE is_deleted = 0 AND status = 'published' ORDER BY date_start DESC LIMIT ? OFFSET ?"
+      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck, is_volunteer, published_at FROM events WHERE is_deleted = 0 AND status = 'published' AND (published_at IS NULL OR datetime(published_at) <= datetime('now')) ORDER BY date_start DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ events: results ?? [] });
   } catch (err) {
@@ -43,12 +42,12 @@ eventsRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
   try {
     const row = await c.env.DB.prepare(
-      `SELECT e.id, e.title, e.category, e.date_start, e.date_end, e.location, e.description, e.cover_image, e.gcal_event_id, e.cf_email, e.is_potluck, e.is_volunteer,
+      `SELECT e.id, e.title, e.category, e.date_start, e.date_end, e.location, e.description, e.cover_image, e.gcal_event_id, e.cf_email, e.is_potluck, e.is_volunteer, e.published_at,
               p.nickname as author_nickname, u.image as author_avatar
        FROM events e
        LEFT JOIN user u ON e.cf_email = u.email
        LEFT JOIN user_profiles p ON u.id = p.user_id
-       WHERE e.id = ? AND e.is_deleted = 0 AND e.status = 'published'`
+       WHERE e.id = ? AND e.is_deleted = 0 AND e.status = 'published' AND (e.published_at IS NULL OR datetime(e.published_at) <= datetime('now'))`
     ).bind(id).first();
 
     if (!row) return c.json({ error: "Event not found" }, 404);

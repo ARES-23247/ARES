@@ -5,6 +5,7 @@ import { IdentityForm } from "./profile/IdentityForm";
 import { RoleForm } from "./profile/RoleForm";
 import { ContactForm } from "./profile/ContactForm";
 import { LogisticsForm } from "./profile/LogisticsForm";
+import { SecuritySettings } from "./profile/SecuritySettings";
 import { ProfileData, CollegeEntry, EmployerEntry } from "./profile/types";
 
 interface ProfileResponse extends Partial<ProfileData> {
@@ -139,6 +140,7 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
       <IdentityForm profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
       <RoleForm profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
       <ContactForm profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+      <SecuritySettings profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
       <LogisticsForm profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
 
       {/* Save */}

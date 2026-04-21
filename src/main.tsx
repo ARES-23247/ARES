@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./index.css";
+import "./i18n";
 import { registerSW } from "virtual:pwa-register";
 
 const updateSW = registerSW({

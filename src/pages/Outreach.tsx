@@ -45,7 +45,7 @@ export default function Outreach() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-ares-red text-xs font-bold uppercase tracking-widest mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-red-400 text-xs font-bold uppercase tracking-widest mb-8"
           >
             <Activity size={14} className="animate-pulse" />
             Active Impact Reporting
@@ -55,7 +55,7 @@ export default function Outreach() {
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl md:text-8xl font-black text-white mb-8 tracking-tighter italic"
           >
-            Engineering <br/> <span className="text-ares-red">Change</span>.
+            Engineering <br/> <span className="text-red-500">Change</span>.
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -82,12 +82,12 @@ export default function Outreach() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 + (idx * 0.1) }}
-                className="bg-black/40 border border-white/5 p-8 ares-cut-lg relative group hover:border-white/20 transition-all shadow-xl backdrop-blur-md"
+                className="bg-[#121212] border border-white/10 p-8 ares-cut-lg relative group hover:border-white/20 transition-all shadow-xl"
               >
                 <div className="mb-6">{stat.icon}</div>
                 <div className="text-5xl font-black text-white mb-2 tracking-tighter">{stat.val}</div>
-                <div className="text-xs font-bold uppercase tracking-widest text-zinc-300 mb-4">{stat.label}</div>
-                <p className="text-zinc-300 text-sm italic">{stat.desc}</p>
+                <div className="text-xs font-bold uppercase tracking-widest text-white mb-4">{stat.label}</div>
+                <p className="text-zinc-100 text-sm italic">{stat.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -130,7 +130,7 @@ export default function Outreach() {
           <header className="mb-16 flex flex-col md:flex-row items-end justify-between gap-6">
             <div>
               <h2 className="text-4xl font-black text-white italic tracking-tighter">Impact Log</h2>
-              <p className="text-zinc-300 font-medium">A chronological record of our community interactions.</p>
+              <p className="text-zinc-200 font-medium">A chronological record of our community interactions.</p>
             </div>
             <div className="h-px flex-1 bg-white/5 mx-6 hidden md:block" />
             <a href={`mailto:${siteConfig.contact.email}`} className="text-ares-gold font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-all">
@@ -149,18 +149,18 @@ export default function Outreach() {
                 className="bg-zinc-900/50 border border-white/5 p-8 ares-cut-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-8 group hover:border-white/10 transition-all backdrop-blur-sm"
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 text-zinc-300 text-[10px] font-bold uppercase tracking-widest mb-3">
-                     <span className="flex items-center gap-1"><MapPin size={10} className="text-ares-red" /> {log.location || 'Local Community'}</span>
+                  <div className="flex items-center gap-3 text-zinc-200 text-xs font-bold uppercase tracking-widest mb-3">
+                     <span className="flex items-center gap-1"><MapPin size={10} className="text-red-400" /> {log.location || 'Local Community'}</span>
                      <span>&middot;</span>
                      <span>{new Date(log.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                   <h3 className="text-2xl font-black text-white mb-3 group-hover:text-ares-gold transition-colors">{log.title}</h3>
-                  <p className="text-zinc-300 leading-relaxed max-w-2xl">{log.description}</p>
+                  <p className="text-zinc-200 leading-relaxed max-w-2xl">{log.description}</p>
                 </div>
                 
                 <div className="flex items-center gap-4">
                   <div className="px-6 py-4 bg-white/5 ares-cut-lg text-center border border-white/5">
-                    <div className="text-[10px] font-black text-ares-gold uppercase tracking-tighter mb-1">Impact</div>
+                    <div className="text-xs font-black text-ares-gold uppercase tracking-tighter mb-1">Impact</div>
                     <div className="text-2xl font-black text-white">{log.reach_count.toLocaleString()}</div>
                   </div>
                 </div>

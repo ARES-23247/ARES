@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings } from "./_shared";
+import { Bindings, parsePagination } from "./_shared";
 import { sendZulipAlert } from "../../utils/zulipSync";
 
 const sponsorsRouter = new Hono<{ Bindings: Bindings }>();
@@ -19,8 +19,7 @@ sponsorsRouter.get("/sponsors", async (c) => {
 
 sponsorsRouter.get("/admin/sponsors", async (c) => {
   try {
-    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
-    const offset = Number(c.req.query("offset") || "0");
+    const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare("SELECT id, name, tier, logo_url, website_url, is_active, created_at FROM sponsors ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
     return c.json({ sponsors: results || [] });
   } catch (err) {

@@ -1,23 +1,30 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { Bindings, getSocialConfig, extractAstText, getSessionUser, ensureAdmin } from "./_shared";
+import { Bindings, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, parsePagination } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
+import { emitNotification } from "../../utils/notifications";
+import { 
+  createShadowRevision, 
+  approvePost, 
+  getPostHistory, 
+  restorePostFromHistory 
+} from "../../utils/postHistory";
+
 
 const postsRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── GET /posts — list all blog posts ─────────────────────────────────
 postsRouter.get("/posts", async (c) => {
   try {
-    const limit = Math.min(Number(c.req.query("limit") || "10"), 100);
-    const offset = Number(c.req.query("offset") || "0");
+    const { limit, offset } = parsePagination(c, 10, 100);
     const { results } = await c.env.DB.prepare(
       `SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail, p.cf_email,
               uP.nickname as author_nickname, u.image as author_avatar
        FROM posts p
        LEFT JOIN user u ON p.cf_email = u.email
        LEFT JOIN user_profiles uP ON u.id = uP.user_id
-       WHERE p.is_deleted = 0 AND p.status = 'published' ORDER BY p.date DESC LIMIT ? OFFSET ?`
+       WHERE p.is_deleted = 0 AND p.status = 'published' AND (p.published_at IS NULL OR datetime(p.published_at) <= datetime('now')) ORDER BY p.date DESC LIMIT ? OFFSET ?`
     ).bind(limit, offset).all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
@@ -36,7 +43,7 @@ postsRouter.get("/posts/:slug", async (c) => {
        FROM posts p
        LEFT JOIN user u ON p.cf_email = u.email
        LEFT JOIN user_profiles uP ON u.id = uP.user_id
-       WHERE p.slug = ? AND p.is_deleted = 0 AND p.status = 'published'`
+       WHERE p.slug = ? AND p.is_deleted = 0 AND p.status = 'published' AND (p.published_at IS NULL OR datetime(p.published_at) <= datetime('now'))`
     ).bind(slug).first();
 
     if (!row) return c.json({ error: "Post not found" }, 404);
@@ -50,10 +57,9 @@ postsRouter.get("/posts/:slug", async (c) => {
 // ── GET /admin/posts — list all blog posts (admin) ──────────────────────
 postsRouter.get("/admin/posts", async (c) => {
   try {
-    const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
-    const offset = Number(c.req.query("offset") || "0");
+    const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, cf_email, is_deleted, status, revision_of FROM posts ORDER BY date DESC LIMIT ? OFFSET ?"
+      "SELECT slug, title, date, snippet, thumbnail, cf_email, is_deleted, status, revision_of, published_at FROM posts ORDER BY date DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
@@ -67,7 +73,7 @@ postsRouter.get("/admin/posts/:slug", async (c) => {
   const slug = c.req.param("slug");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT slug, title, date, snippet, thumbnail, content, is_deleted, status, revision_of FROM posts WHERE slug = ?"
+      "SELECT slug, title, date, snippet, thumbnail, content, is_deleted, status, revision_of, published_at FROM posts WHERE slug = ?"
     ).bind(slug).first();
 
     if (!row) return c.json({ error: "Post not found" }, 404);
@@ -103,6 +109,8 @@ postsRouter.post("/admin/posts", async (c) => {
       author?: string;
       coverImageUrl?: string;
       ast: unknown;
+      isDraft?: boolean;
+      publishedAt?: string;
     }>();
 
     if (!body.title) {
@@ -135,8 +143,8 @@ postsRouter.post("/admin/posts", async (c) => {
     const status = body.isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
     await c.env.DB.prepare(
-      `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
       .bind(
         slug,
@@ -147,7 +155,8 @@ postsRouter.post("/admin/posts", async (c) => {
         snippet,
         astStr,
         email,
-        status
+        status,
+        body.publishedAt || null
       )
       .run();
 
@@ -203,6 +212,7 @@ postsRouter.put("/admin/posts/:slug", async (c) => {
       coverImageUrl?: string;
       ast: unknown;
       isDraft?: boolean;
+      publishedAt?: string;
     }>();
 
     if (!body.title) {
@@ -214,25 +224,15 @@ postsRouter.put("/admin/posts/:slug", async (c) => {
     const user = await getSessionUser(c);
     
     if (user?.role !== "admin") {
-      // ── Shadow Revision Logic (Student Edits) ──
-      const suffix = Math.random().toString(36).substring(2, 6);
-      const revSlug = `${slug}-rev-${suffix}`;
-      const dateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "2-digit" });
-
-      await c.env.DB.prepare(
-        `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, revision_of)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
-      ).bind(
-        revSlug,
-        body.title,
-        body.author || "ARES Team",
-        dateStr,
-        body.coverImageUrl || "/gallery_1.png",
+      // ── Shadow Revision Logic (Student Edits) ── (GAP-03)
+      const revSlug = await createShadowRevision(c, slug, user!, {
+        title: body.title,
+        author: body.author,
+        coverImageUrl: body.coverImageUrl,
         snippet,
         astStr,
-        user?.email || "anonymous_author",
-        slug
-      ).run();
+        publishedAt: body.publishedAt
+      });
 
       return c.json({ success: true, slug: revSlug });
     }
@@ -240,7 +240,7 @@ postsRouter.put("/admin/posts/:slug", async (c) => {
     // ── Direct Update Logic (Admin Edits) ──
     const status = body.isDraft ? "pending" : "published";
     await c.env.DB.prepare(
-      `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = ? WHERE slug = ?`
+      `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = ?, published_at = ? WHERE slug = ?`
     )
       .bind(
         body.title,
@@ -249,6 +249,7 @@ postsRouter.put("/admin/posts/:slug", async (c) => {
         snippet,
         astStr,
         status,
+        body.publishedAt || null,
         slug
       )
       .run();
@@ -303,27 +304,16 @@ postsRouter.patch("/admin/posts/:slug/approve", async (c) => {
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
     const slug = c.req.param("slug");
     
-    type PostRow = { revision_of?: string; title: string; author: string; thumbnail: string; snippet: string; ast: string };
-    const row = await c.env.DB.prepare(
-      "SELECT revision_of, title, author, thumbnail, snippet, ast FROM posts WHERE slug = ?"
-    ).bind(slug).first<PostRow>();
+    const result = await approvePost(c, slug);
+    if (!result.success) return c.json({ error: result.error }, 404);
 
-    if (row && row.revision_of) {
-      // Merge shadow revision into original, then delete shadow
-      await c.env.DB.prepare(
-        "UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = 'published' WHERE slug = ?"
-      ).bind(row.title, row.author || "ARES Team", row.thumbnail, row.snippet, row.ast, row.revision_of).run();
-      await c.env.DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
-      return c.json({ success: true });
-    }
-
-    await c.env.DB.prepare("UPDATE posts SET status = 'published' WHERE slug = ?").bind(slug).run();
     return c.json({ success: true });
   } catch (err) {
     console.error("D1 approve error (posts):", err);
     return c.json({ error: "Approval failed" }, 500);
   }
 });
+
 
 // ── PATCH /admin/posts/:slug/reject — reject pending post (admin) ─────
 postsRouter.patch("/admin/posts/:slug/reject", async (c) => {
@@ -333,11 +323,27 @@ postsRouter.patch("/admin/posts/:slug/reject", async (c) => {
     const slug = c.req.param("slug");
     const body = await c.req.json().catch(() => ({})) as { reason?: string };
     
+    const row = await c.env.DB.prepare("SELECT title, cf_email FROM posts WHERE slug = ?").bind(slug).first<{ title: string, cf_email: string }>();
+    
     await c.env.DB.prepare(
       "UPDATE posts SET status = 'rejected' WHERE slug = ?"
     ).bind(slug).run();
 
+    if (row?.cf_email) {
+      const author = await c.env.DB.prepare("SELECT id FROM user WHERE email = ?").bind(row.cf_email).first<{ id: string }>();
+      if (author) {
+        c.executionCtx.waitUntil(emitNotification(c as any, {
+          userId: author.id,
+          title: "Post Rejected",
+          message: `Your post "${row.title}" was rejected${body.reason ? `: "${body.reason}"` : "."}`,
+          link: "/dashboard?tab=posts",
+          priority: "high"
+        }));
+      }
+    }
+
     return c.json({ success: true, reason: body.reason || "No reason provided" });
+
   } catch (err) {
     console.error("D1 reject error (posts):", err);
     return c.json({ error: "Rejection failed" }, 500);
@@ -382,10 +388,8 @@ postsRouter.post("/admin/posts/:slug/repush", async (c) => {
 postsRouter.get("/admin/posts/:slug/history", async (c) => {
   try {
     const slug = c.req.param("slug");
-    const { results } = await c.env.DB.prepare(
-      "SELECT id, title, author, author_email, created_at FROM posts_history WHERE slug = ? ORDER BY created_at DESC LIMIT 50"
-    ).bind(slug).all();
-    return c.json({ history: results ?? [] });
+    const history = await getPostHistory(c, slug);
+    return c.json({ history });
   } catch (err) {
     console.error("D1 post history error:", err);
     return c.json({ history: [] });
@@ -397,43 +401,10 @@ postsRouter.patch("/admin/posts/:slug/history/:id/restore", ensureAdmin, async (
   try {
     const slug = c.req.param("slug");
     const id = c.req.param("id");
-    
-    interface PostHistoryRestoreRow {
-      title: string;
-      author: string;
-      thumbnail: string;
-      snippet: string;
-      ast: string;
-    }
-    const row = await c.env.DB.prepare(
-      "SELECT title, author, thumbnail, snippet, ast FROM posts_history WHERE id = ? AND slug = ?"
-    ).bind(id, slug).first<PostHistoryRestoreRow>();
-
-    if (!row) return c.json({ error: "Version not found" }, 404);
-
     const user = await getSessionUser(c);
-    const email = user?.email || "anonymous_admin";
-
-    // Capture CURRENT as history before restoring
-    interface PostCurrentRow {
-      slug: string;
-      title: string;
-      author: string;
-      thumbnail: string;
-      snippet: string;
-      ast: string;
-      cf_email: string;
-    }
-    const current = await c.env.DB.prepare("SELECT slug, title, author, thumbnail, snippet, ast, cf_email FROM posts WHERE slug = ?").bind(slug).first<PostCurrentRow>();
-    if (current) {
-        await c.env.DB.prepare(
-          "INSERT INTO posts_history (slug, title, author, thumbnail, snippet, ast, author_email) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        ).bind(current.slug, current.title, current.author, current.thumbnail, current.snippet, current.ast, current.cf_email || "unknown").run();
-    }
-
-    await c.env.DB.prepare(
-      "UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, cf_email = ? WHERE slug = ?"
-    ).bind(row.title, row.author, row.thumbnail, row.snippet, row.ast, email, slug).run();
+    
+    const result = await restorePostFromHistory(c, slug, id, user?.email || "anonymous_admin");
+    if (!result.success) return c.json({ error: result.error }, 404);
 
     return c.json({ success: true });
   } catch (err) {

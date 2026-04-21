@@ -1,8 +1,10 @@
 import { betterAuth } from "better-auth";
-import { genericOAuth } from "better-auth/plugins";
+import { genericOAuth, twoFactor, emailVerification } from "better-auth/plugins";
 import { kyselyAdapter } from "@better-auth/kysely-adapter";
 import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
+import { sendEmail } from "./email";
+import { siteConfig } from "./site.config";
 
 export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl?: string) => {
     const kyselyDb = new Kysely({
@@ -36,7 +38,30 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
                         }
                     }
                 ] : []
-            })
+            }),
+            twoFactor(),
+            emailVerification({
+                async sendVerificationEmail({ user, url }) {
+                    const apiKey = env.RESEND_API_KEY as string;
+                    if (!apiKey) {
+                        console.error("[Auth] Cannot send verification email: RESEND_API_KEY is missing.");
+                        return;
+                    }
+                    await sendEmail(
+                        apiKey,
+                        user.email,
+                        "Verify your ARES Web Portal account",
+                        `
+                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px;">
+                            <h2 style="color: #ed1c24;">Welcome to ARES 23247</h2>
+                            <p>Please verify your email address to complete your registration and gain access to the engineering portal.</p>
+                            <a href="${url}" style="display: inline-block; background-color: #ed1c24; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">Verify Email</a>
+                            <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">If you didn't request this, you can safely ignore this email.</p>
+                        </div>
+                        `
+                    );
+                },
+            }),
         ],
         database: kyselyAdapter(kyselyDb, {
         }),

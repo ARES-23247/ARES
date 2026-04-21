@@ -22,7 +22,9 @@ export type Bindings = {
   GITHUB_PROJECT_ID?: string;
   GITHUB_ORG?: string;
   GITHUB_WEBHOOK_SECRET?: string;
+  ENCRYPTION_SECRET: string;
   // ── Zulip ──
+
   ZULIP_CLIENT_ID: string;
   ZULIP_CLIENT_SECRET: string;
   ZULIP_URL?: string;
@@ -33,11 +35,13 @@ export type Bindings = {
   ZULIP_ADMIN_STREAM?: string;
   // ── Bootstrap ──
   INITIAL_ADMIN_EMAIL?: string;
+  RESEND_API_KEY?: string;
   DEV_BYPASS?: string;
 };
 
 export type Variables = {
   sessionUser: SessionUser;
+  socialConfig?: Record<string, string | undefined>;
 };
 
 export type AppEnv = {
@@ -175,6 +179,13 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<SessionUser | 
   return null;
 }
 
+// ── Pagination Helper (DRY-01) ───────────────────────────────────────
+export function parsePagination(c: Context<AppEnv>, defaultLimit = 50, maxLimit = 200) {
+  const limit = Math.min(Number(c.req.query("limit") || String(defaultLimit)), maxLimit);
+  const offset = Math.max(Number(c.req.query("offset") || "0"), 0);
+  return { limit, offset };
+}
+
 // ── Centralized Settings Fetch (EFF-01) ──────────────────────────────
 export async function getDbSettings(c: Context<AppEnv>): Promise<Record<string, string>> {
   const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
@@ -189,10 +200,14 @@ export async function getDbSettings(c: Context<AppEnv>): Promise<Record<string, 
 
 // ── Social Config Helper ─────────────────────────────────────────────
 export async function getSocialConfig(c: Context<AppEnv>): Promise<Record<string, string | undefined>> {
+  // EFF-01: Per-request caching in context to avoid redundant D1 queries
+  const cached = c.get("socialConfig");
+  if (cached) return cached;
+
   try {
     const dbSettings = await getDbSettings(c);
 
-    return {
+    const config = {
       DISCORD_WEBHOOK_URL: c.env.DISCORD_WEBHOOK_URL || dbSettings["DISCORD_WEBHOOK_URL"],
       MAKE_WEBHOOK_URL: dbSettings["MAKE_WEBHOOK_URL"],
       BLUESKY_HANDLE: dbSettings["BLUESKY_HANDLE"],
@@ -223,6 +238,8 @@ export async function getSocialConfig(c: Context<AppEnv>): Promise<Record<string
       GITHUB_ORG: c.env.GITHUB_ORG || dbSettings["GITHUB_ORG"] || siteConfig.urls.githubOrg,
       GITHUB_WEBHOOK_SECRET: c.env.GITHUB_WEBHOOK_SECRET || dbSettings["GITHUB_WEBHOOK_SECRET"],
     };
+    c.set("socialConfig", config);
+    return config;
   } catch (err) {
     console.error("Failed to fetch settings for social integration:", err);
     return {};

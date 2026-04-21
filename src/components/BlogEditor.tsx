@@ -12,6 +12,7 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
+  const [publishedAt, setPublishedAt] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState(DEFAULT_COVER_IMAGE);
   const [errorMsg, setErrorMsg] = useState("");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
@@ -52,6 +53,8 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
         if (data.post) {
       // @ts-expect-error -- D1 untyped response
           setTitle(data.post.title || "");
+      // @ts-expect-error -- D1 untyped response
+          setPublishedAt(data.post.published_at || "");
           if (editor) {
             try {
       // @ts-expect-error -- D1 untyped response
@@ -112,7 +115,7 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ title, coverImageUrl, ast, socials, isDraft }),
+        body: JSON.stringify({ title, coverImageUrl, ast, socials, isDraft, publishedAt }),
       });
 
       const data = await res.json();
@@ -236,6 +239,17 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
               }} 
             />
           </div>
+        </div>
+      </div>
+      
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1 md:max-w-xs">
+          <label htmlFor="post-published-at" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Schedule Publish Time</label>
+          <input
+            id="post-published-at" type="datetime-local"
+            value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)}
+            className="w-full bg-zinc-950 border border-zinc-800 ares-cut-sm px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
+          />
         </div>
       </div>
 

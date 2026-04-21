@@ -6,8 +6,7 @@ test.describe('Admin Dashboard', () => {
     await page.route('**/api/auth/get-session', async route => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
+        json: {
           session: {
             id: "mockup-session-id",
             userId: "admin-user",
@@ -26,21 +25,35 @@ test.describe('Admin Dashboard', () => {
             role: "admin",
             banned: false
           }
-        })
+        }
       });
     });
 
     await page.route('**/api/profile/me', async route => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          role: "admin",
-          memberType: "executive",
-          permissions: ["manage_content", "manage_users"]
-        })
+        json: {
+          user_id: "admin-user",
+          nickname: "Admin User",
+          member_type: "mentor",
+          auth: {
+            id: "admin-user",
+            email: "admin@ares.org",
+            name: "Admin User",
+            image: "https://api.dicebear.com/9.x/bottts/svg?seed=admin",
+            role: "admin"
+          }
+        }
       });
     });
+
+    // Add a fake cookie to ensure better-auth doesn't short circuit
+    await page.context().addCookies([{
+      name: 'better-auth.session_token',
+      value: 'mockup-session-id',
+      domain: 'localhost',
+      path: '/'
+    }]);
   });
 
   test('Admin dashboard loads and displays authorized management hubs', async ({ page }) => {
@@ -51,7 +64,6 @@ test.describe('Admin Dashboard', () => {
     
     // Verify user profile section rendered the mocked user
     await page.screenshot({ path: 'admin-dashboard.png', fullPage: true });
-    console.log(await page.locator('body').innerText());
     await expect(page.getByText('Admin User')).toBeVisible();
     
     // Verify admin hubs are accessible

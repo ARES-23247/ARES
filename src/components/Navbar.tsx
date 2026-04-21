@@ -1,12 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Search, LayoutDashboard, LogIn } from "lucide-react";
+import { Search, LayoutDashboard, LogIn, Bell, Check, Heart } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { siteConfig } from "../site.config";
+
 
 import { useSession } from "../utils/auth-client";
 import { GreekMeander } from "./GreekMeander";
 
 export default function Navbar() {
+  const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
+
   const navigate = useNavigate();
   const { data: session, isPending } = useSession();
 
@@ -15,6 +21,40 @@ export default function Navbar() {
   const isAdmin = session?.user?.role === "admin";
   
   const [pendingCount, setPendingCount] = useState(0);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: notifData } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications");
+      if (!res.ok) return { notifications: [] };
+      return res.json() as Promise<{ notifications: { id: string; title: string; message: string; is_read: boolean; link?: string }[] }>;
+    },
+    enabled: !!isSignedIn,
+    refetchInterval: 30000 // Poll every 30s
+  });
+
+  const markAllRead = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/notifications/read-all", { method: "PUT" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }
+  });
+
+  const markRead = useMutation({
+    mutationFn: async (id: string) => {
+      await fetch(`/api/notifications/${id}/read`, { method: "PUT" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }
+  });
+
+  const notifications = notifData?.notifications || [];
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   useEffect(() => {
     if (isAdmin) {
@@ -70,6 +110,75 @@ export default function Navbar() {
             <span className="text-xs font-mono pr-2">Search... <kbd className="hidden lg:inline bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded ml-1 border border-zinc-600">Ctrl K</kbd></span>
           </button>
           {isSignedIn && (
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifs(!showNotifs)}
+                className="relative flex items-center justify-center p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
+                aria-label="Notifications"
+              >
+                <Bell size={18} className="text-zinc-300" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 text-[9px] font-bold text-white items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  </span>
+                )}
+              </button>
+              
+              {showNotifs && (
+                <div className="absolute top-12 right-0 w-80 bg-zinc-900 border border-white/10 shadow-2xl rounded-lg overflow-hidden flex flex-col z-[200]">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20">
+                    <h3 className="text-sm font-bold text-white">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={() => markAllRead.mutate()}
+                        className="text-xs text-ares-gold hover:text-white flex items-center gap-1"
+                      >
+                        <Check size={12} /> Mark Read
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex-1 overflow-y-auto max-h-96 w-full">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-sm text-zinc-500">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div 
+                          key={n.id} 
+                          role="button"
+                          tabIndex={0}
+                          className={`px-4 py-3 border-b border-white/5 flex flex-col gap-1 hover:bg-white/5 cursor-pointer ${n.is_read ? 'opacity-60' : 'bg-ares-red/5'}`}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              if (!n.is_read) markRead.mutate(n.id);
+                              if (n.link) navigate(n.link);
+                              setShowNotifs(false);
+                            }
+                          }}
+                          onClick={() => {
+                            if (!n.is_read) markRead.mutate(n.id);
+                            if (n.link) navigate(n.link);
+                            setShowNotifs(false);
+                          }}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                             <span className="text-sm font-bold text-white">{n.title}</span>
+                             {!n.is_read && <span className="h-2 w-2 rounded-full bg-ares-red flex-shrink-0 mt-1"></span>}
+                          </div>
+                          <span className="text-xs text-zinc-400 line-clamp-2">{n.message}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {isSignedIn && (
             <Link to="/dashboard" className="relative flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all group" aria-label="Dashboard">
               <img 
                 src={userImage || `https://api.dicebear.com/9.x/bottts/svg?seed=${session?.user?.id}`} 
@@ -91,10 +200,28 @@ export default function Navbar() {
               <span className="text-xs font-bold text-zinc-300 group-hover:text-ares-gold uppercase tracking-wider">Sign In</span>
             </Link>
           )}
-          <Link to="/sponsors" className="px-5 py-2 font-bold uppercase tracking-wider text-xs ares-cut-sm bg-ares-red text-white hover:scale-105 hover:bg-ares-red transition-all border border-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+
+          {/* Language Switcher */}
+          <div className="flex bg-zinc-900 border border-white/10 p-1 ares-cut-sm">
+            {['en', 'es'].map((l) => (
+              <button
+                key={l}
+                onClick={() => i18n.changeLanguage(l)}
+                className={`px-3 py-1 text-xs font-black transition-all ares-cut-sm ${
+                  i18n.language === l ? 'bg-ares-red text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <Link to="/sponsors" className="hidden md:flex bg-ares-red text-white px-6 py-2 rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-md rounded-bl-md font-bold uppercase tracking-widest text-xs hover:bg-ares-bronze hover:text-white transition-all shadow-lg items-center gap-2">
+            <Heart size={14} className="fill-white" />
             <span>Support Us</span>
           </Link>
         </div>
+
 
         <button 
           onClick={() => setOpen(!open)} 
@@ -113,17 +240,16 @@ export default function Navbar() {
           <button onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent('open-command-palette')); }} className="text-left text-ares-gold flex items-center gap-2 mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">
             <Search size={16} aria-hidden="true" /> Command Palette
           </button>
-          <Link to="/" onClick={() => setOpen(false)} className="text-marble hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Home</Link>
-          <Link to="/about" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">About</Link>
-          <Link to="/seasons" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Seasons</Link>
-          <Link to="/outreach" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Outreach</Link>
-          <Link to="/events" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Events</Link>
-          <Link to="/tech-stack" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Tech Stack</Link>
-          <Link to="/docs" onClick={() => setOpen(false)} className="hover:opacity-80 transition-all flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden w-max shadow-sm ml-2 mb-2">
-            <span className="bg-ares-red px-2 py-1 text-xs font-bold uppercase text-white">ARES</span>
-            <span className="bg-white/10 text-white px-2 py-1 text-xs font-bold uppercase">Lib</span>
-          </Link>
-          <Link to="/blog" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
+          <div className="flex flex-col gap-6 p-8">
+          <Link to="/" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">HOME</Link>
+          <Link to="/about" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">WHO WE ARE</Link>
+          <Link to="/seasons" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SEASONS</Link>
+          <Link to="/outreach" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">OUTREACH</Link>
+          <Link to="/events" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">EVENTS</Link>
+          <Link to="/tech-stack" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">TECH STACK</Link>
+          <Link to="/blog" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter text-ares-gold">TEAM BLOG</Link>
+          <Link to="/sponsors" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SUPPORT US</Link>
+        </div>
           {isSignedIn && (
             <Link to="/dashboard" onClick={() => setOpen(false)} className="text-ares-gold hover:text-white flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1 w-max">
               <LayoutDashboard size={16} /> Dashboard
@@ -142,7 +268,13 @@ export default function Navbar() {
           )}
           <Link to="/join" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Join Us</Link>
           <Link to="/sponsors" onClick={() => setOpen(false)} className="text-marble/70 hover:text-ares-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Support Us</Link>
+          
+          <div className="flex items-center gap-2 mt-2 px-2">
+             <button onClick={() => { i18n.changeLanguage('en'); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-bold ${i18n.language === 'en' ? 'bg-ares-red text-white' : 'bg-white/5 text-zinc-500'}`}>English</button>
+             <button onClick={() => { i18n.changeLanguage('es'); setOpen(false); }} className={`px-3 py-1 rounded-full text-xs font-bold ${i18n.language === 'es' ? 'bg-ares-red text-white' : 'bg-white/5 text-zinc-500'}`}>Español</button>
+          </div>
         </div>
+
       )}
 
     </nav>

@@ -5,6 +5,7 @@ import { Settings, Save } from "lucide-react";
 import { ZulipCard } from "./integrations/ZulipCard";
 import { GithubCard } from "./integrations/GithubCard";
 import { SocialCard } from "./integrations/SocialCard";
+import { DataBackupCard } from "./integrations/DataBackupCard";
 
 type SettingsData = Record<string, string>;
 
@@ -130,6 +131,7 @@ export default function IntegrationsManager() {
         <ZulipCard localSettings={localSettings} handleChange={handleChange} />
         <GithubCard localSettings={localSettings} handleChange={handleChange} />
         <SocialCard localSettings={localSettings} handleChange={handleChange} />
+        <DataBackupCard />
 
       </div>
     </div>

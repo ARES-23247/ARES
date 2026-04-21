@@ -117,7 +117,7 @@ export default function Sponsors() {
   };
 
   return (
-    <div className="min-h-screen bg-obsidian text-marble py-24 relative overflow-hidden">
+    <div className="min-h-screen bg-obsidian text-white py-24 relative overflow-hidden">
       <SEO title="Sponsors" description={`The corporate partners and community sponsors who empower ${siteConfig.team.fullName} to innovate in FIRST Robotics.`} />
       
       {/* Background Ambience */}
@@ -139,13 +139,13 @@ export default function Sponsors() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-black tracking-tighter mb-6 italic"
           >
-            Our <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block" style={{ backgroundColor: '#c00000', color: '#ffffff' }}>Partners</span>
+            Our <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block text-white" style={{ backgroundColor: '#c00000' }}>Partners</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-marble/70 text-lg max-w-2xl mx-auto leading-relaxed"
+            className="text-marble text-lg max-w-2xl mx-auto leading-relaxed"
           >
             {siteConfig.team.fullName} is fueled by the generosity of organizations that believe in the future of STEM. These partners provide the resources necessary for us to compete at the highest level.
           </motion.p>
@@ -196,7 +196,7 @@ export default function Sponsors() {
                       <div className={`fallback-text text-2xl font-black text-white/40 mb-2 ${s.logo_url ? 'hidden' : ''}`}>{s.name}</div>
                       
                       <div className="flex items-center gap-2 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-marble/70" aria-hidden="true">Visit Website</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-white" aria-hidden="true">Visit Website</span>
                         <ExternalLink size={12} className="text-ares-gold" aria-hidden="true" />
                       </div>
                     </motion.a>
@@ -246,12 +246,12 @@ export default function Sponsors() {
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="name-input" className="block text-xs font-bold text-marble uppercase tracking-widest mb-1.5 ml-1" style={{ color: '#e8e8e8', backgroundColor: '#151515' }}>Company / Name *</label>
-                  <input id="name-input" type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-[#181818] border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-marble/50 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="Stark Industries" />
+                  <label htmlFor="name-input" className="block text-xs font-bold text-white uppercase tracking-widest mb-1.5 ml-1">Company / Name *</label>
+                  <input id="name-input" type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-[#181818] border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-zinc-400 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="Stark Industries" />
                 </div>
                 <div>
-                  <label htmlFor="email-input" className="block text-xs font-bold text-marble uppercase tracking-widest mb-1.5 ml-1" style={{ color: '#e8e8e8', backgroundColor: '#1f1f1f' }}>Email *</label>
-                  <input id="email-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-[#181818] border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-marble/50 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="you@stark.com" />
+                  <label htmlFor="email-input" className="block text-xs font-bold text-white uppercase tracking-widest mb-1.5 ml-1">Email *</label>
+                  <input id="email-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-[#181818] border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-zinc-400 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="you@stark.com" />
                 </div>
               </div>
               <div>

@@ -6,6 +6,9 @@ import AssetPickerModal from "./AssetPickerModal";
 import { MapPin } from "lucide-react";
 import { compressImage } from "../utils/imageProcessor";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
+import EventPotluckVolunteerFlags from "./events/EventPotluckVolunteerFlags";
+import EventSocialSyndication from "./events/EventSocialSyndication";
+import EventCoverPicker from "./events/EventCoverPicker";
 
 interface LocationRow {
   id: string;
@@ -27,6 +30,7 @@ interface EventData {
   is_deleted: number;
   status: string;
   revision_of?: string;
+  published_at?: string;
 }
 
 interface SyncResponse {
@@ -78,6 +82,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     category: "internal",
     isPotluck: false,
     isVolunteer: false,
+    publishedAt: "",
   });
   
   const uploadFile = async (file: File): Promise<{url: string, altText?: string}> => {
@@ -88,6 +93,18 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
     const data = await res.json() as { url?: string; altText?: string; error?: string };
     if (!data.url) throw new Error(data.error || "Upload failed");
     return { url: data.url, altText: data.altText };
+  };
+
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const { url } = await uploadFile(file);
+      setForm({ ...form, coverImage: url });
+    } catch(err) {
+      setErrorMsg(String(err));
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Fetch event data if editing
@@ -109,6 +126,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
           category: data.event.category || "internal",
           isPotluck: data.event.is_potluck === 1,
           isVolunteer: data.event.is_volunteer === 1,
+          publishedAt: data.event.published_at || "",
         });
         if (editor) {
           try {
@@ -192,7 +210,7 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
           setForm({ 
             title: "", dateStart: "", dateEnd: "", location: "", 
             description: "", coverImage: DEFAULT_COVER_IMAGE, 
-            category: "internal", isPotluck: false, isVolunteer: false 
+            category: "internal", isPotluck: false, isVolunteer: false, publishedAt: "" 
           });
           if (editor) editor.commands.clearContent();
         }
@@ -221,7 +239,9 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
       if (!res.ok) {
         throw new Error("Failed to delete event.");
       }
-      navigate("/dashboard");
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      if (onClearEdit) onClearEdit();
     } catch {
       setErrorMsg("Failed to delete the event. Please try again.");
     }
@@ -340,115 +360,42 @@ export default function EventEditor({ editId, onClearEdit, userRole }: { editId?
             className="w-full bg-zinc-950 border border-zinc-800 ares-cut-sm px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
           />
         </div>
+        <div className="flex-1">
+          <label htmlFor="event-published-at" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Schedule Publish Time</label>
+          <input
+            id="event-published-at" type="datetime-local"
+            value={form.publishedAt} onChange={(e) => setForm({ ...form, publishedAt: e.target.value })}
+            className="w-full bg-zinc-950 border border-zinc-800 ares-cut-sm px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
+          />
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-        <div className="flex flex-col gap-1">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input 
-              type="checkbox" 
-              checked={form.isPotluck}
-              onChange={(e) => setForm({ ...form, isPotluck: e.target.checked })}
-              className="w-5 h-5 rounded border-zinc-700 bg-zinc-950 text-ares-red focus:ring-ares-red transition-all cursor-pointer"
-            />
-            <span className="text-sm font-bold text-zinc-300 group-hover:text-white transition-colors uppercase tracking-wider">
-              Potluck Event
-            </span>
-          </label>
-          <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-tighter ml-7">
-            Enable food sign-up sheet and dietary tracking.
-          </p>
-        </div>
-        
-        <div className="flex flex-col gap-1">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input 
-              type="checkbox" 
-              checked={form.isVolunteer}
-              onChange={(e) => setForm({ ...form, isVolunteer: e.target.checked })}
-              className="w-5 h-5 rounded border-zinc-700 bg-zinc-950 text-ares-red focus:ring-ares-red transition-all cursor-pointer"
-            />
-            <span className="text-sm font-bold text-zinc-300 group-hover:text-white transition-colors uppercase tracking-wider">
-              Volunteer Opportunity
-            </span>
-          </label>
-          <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-tighter ml-7">
-            Automatically tracks prep and check-in hours for outreach.
-          </p>
-        </div>
-      </div>
+      <EventPotluckVolunteerFlags 
+        isPotluck={form.isPotluck} 
+        isVolunteer={form.isVolunteer} 
+        onChange={(field, val) => setForm({ ...form, [field]: val })}
+      />
 
       <div>
         <label htmlFor="event-desc-editor" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Event Description / Recap</label>
         {editor && <RichEditorToolbar editor={editor} documentTitle={form.title} />}
       </div>
 
-      <div>
-        <label htmlFor="event-cover" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Cover Asset</label>
-        <div className="flex gap-2">
-          <input
-            id="event-cover" type="text"
-            value={form.coverImage} onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
-            className="w-full bg-zinc-950 border border-zinc-800 ares-cut-sm px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
-            placeholder={DEFAULT_COVER_IMAGE}
-          />
-          <button 
-            className={`px-6 py-3 ares-cut-sm text-sm font-bold border border-zinc-700 transition-all focus:outline-none focus:ring-2 focus:ring-ares-red ring-offset-2 ring-offset-zinc-900 ${isUploading ? "bg-zinc-800 animate-pulse text-zinc-300" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"}`}
-            onClick={() => document.getElementById('event-img-upload')?.click()}
-          >
-            UPL
-          </button>
-          <button 
-            className="px-6 py-3 ares-cut-sm text-sm font-bold border border-ares-gold/30 transition-all focus:outline-none focus:ring-2 focus:ring-ares-gold ring-offset-2 ring-offset-zinc-900 bg-ares-gold/20 text-ares-gold hover:bg-ares-gold hover:text-black whitespace-nowrap"
-            onClick={() => setIsCoverPickerOpen(true)}
-          >
-            Library
-          </button>
-          <input 
-            id="event-img-upload" type="file" accept="image/*,.heic,.heif" className="hidden" 
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setIsUploading(true);
-              try {
-                const { url } = await uploadFile(file);
-                setForm({ ...form, coverImage: url });
-              } catch(err) {
-                setErrorMsg(String(err));
-              } finally {
-                setIsUploading(false);
-              }
-            }} 
-          />
-        </div>
-      </div>
+      <EventCoverPicker 
+        coverImage={form.coverImage}
+        isUploading={isUploading}
+        onUrlChange={(url) => setForm({ ...form, coverImage: url })}
+        onLibraryClick={() => setIsCoverPickerOpen(true)}
+        onUploadClick={() => document.getElementById('event-img-upload')?.click()}
+        onFileChange={handleFileUpload}
+      />
 
-      {availableSocials.length > 0 && (
-        <div className="bg-zinc-900/30 border border-zinc-800/50 ares-cut-sm p-4 shadow-inner">
-          <div className="flex items-center gap-2 mb-3">
-             <div className="w-2 h-2 rounded-full bg-ares-cyan animate-pulse"></div>
-             <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Broadcast & Social Syndication</span>
-          </div>
-          <div className="flex flex-wrap gap-4">
-            {availableSocials.map(platform => (
-              <label key={platform} className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={socials[platform] || false}
-                  onChange={(e) => setSocials(prev => ({ ...prev, [platform]: e.target.checked }))}
-                  className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-ares-red focus:ring-ares-red transition-all cursor-pointer"
-                />
-                <span className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors capitalize">
-                  {platform}
-                </span>
-              </label>
-            ))}
-          </div>
-          <p className="text-[10px] text-zinc-500 mt-2 italic font-mono uppercase tracking-tighter">
-            * Selected platforms will receive a preview card and link immediately upon {editId ? "updating" : "publication"}.
-          </p>
-        </div>
-      )}
+      <EventSocialSyndication 
+        availableSocials={availableSocials}
+        socials={socials}
+        onChange={(platform, val) => setSocials(prev => ({ ...prev, [platform]: val }))}
+        isEdit={!!editId}
+      />
 
       <div className="mt-6 flex flex-col gap-4">
         {errorMsg && (

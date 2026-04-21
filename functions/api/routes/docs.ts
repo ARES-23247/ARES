@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, ensureAdmin, getSessionUser } from "./_shared";
+import { AppEnv, ensureAdmin, getSessionUser, parsePagination } from "./_shared";
 import { sendZulipMessage } from "../../utils/zulipSync";
+import { emitNotification } from "../../utils/notifications";
+
 
 const docsRouter = new Hono<AppEnv>();
 
@@ -111,8 +113,7 @@ docsRouter.get("/docs/:slug", async (c) => {
 
 docsRouter.get("/admin/docs", async (c) => {
   try {
-    const limit = Math.min(Number(c.req.query("limit") || "100"), 500);
-    const offset = Number(c.req.query("offset") || "0");
+    const { limit, offset } = parsePagination(c, 100, 500);
     const { results } = await c.env.DB.prepare(
       "SELECT slug, title, category, sort_order, description, is_portfolio, is_executive_summary, is_deleted, status, revision_of FROM docs ORDER BY category, sort_order ASC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
@@ -278,18 +279,50 @@ docsRouter.patch("/admin/docs/:slug/approve", async (c) => {
     if (user?.role !== "admin") return c.json({ error: "Unauthorized" }, 401);
     const slug = c.req.param("slug");
 
-    type DocRow = { revision_of?: string; title: string; category: string; sort_order: number; description: string; content: string; is_portfolio: number; is_executive_summary: number };
-    const row = await c.env.DB.prepare("SELECT revision_of, title, category, sort_order, description, content, is_portfolio, is_executive_summary FROM docs WHERE slug = ?").bind(slug).first<DocRow>();
+    type DocRow = { revision_of?: string; title: string; category: string; sort_order: number; description: string; content: string; is_portfolio: number; is_executive_summary: number; cf_email: string };
+    const row = await c.env.DB.prepare("SELECT revision_of, title, category, sort_order, description, content, is_portfolio, is_executive_summary, cf_email FROM docs WHERE slug = ?").bind(slug).first<DocRow>();
 
-    if (row && row.revision_of) {
+    if (!row) return c.json({ error: "Doc not found" }, 404);
+
+    if (row.revision_of) {
       await c.env.DB.prepare(
         "UPDATE docs SET title = ?, category = ?, sort_order = ?, description = ?, content = ?, is_portfolio = ?, is_executive_summary = ?, status = 'published', updated_at = datetime('now') WHERE slug = ?"
       ).bind(row.title, row.category, row.sort_order, row.description, row.content, row.is_portfolio ? 1 : 0, row.is_executive_summary ? 1 : 0, row.revision_of).run();
       await c.env.DB.prepare("DELETE FROM docs WHERE slug = ?").bind(slug).run();
+
+      // Notify original author of the MERGE
+      if (row.cf_email) {
+        const author = await c.env.DB.prepare("SELECT id FROM user WHERE email = ?").bind(row.cf_email).first<{ id: string }>();
+        if (author) {
+          c.executionCtx.waitUntil(emitNotification(c as any, {
+            userId: author.id,
+            title: "Doc Merged",
+            message: `Your changes to document "${row.title}" have been approved and published.`,
+            link: `/docs/${row.revision_of}`,
+            priority: "medium"
+          }));
+        }
+      }
+
       return c.json({ success: true });
     }
 
     await c.env.DB.prepare("UPDATE docs SET status = 'published' WHERE slug = ?").bind(slug).run();
+
+    // Notify original author of the APPROVAL
+    if (row.cf_email) {
+      const author = await c.env.DB.prepare("SELECT id FROM user WHERE email = ?").bind(row.cf_email).first<{ id: string }>();
+      if (author) {
+        c.executionCtx.waitUntil(emitNotification(c as any, {
+          userId: author.id,
+          title: "Doc Approved",
+          message: `Your technical document "${row.title}" has been published.`,
+          link: `/docs/${slug}`,
+          priority: "medium"
+        }));
+      }
+    }
+
 
     // ── Zulip Content Review ──
     try {
@@ -318,11 +351,27 @@ docsRouter.patch("/admin/docs/:slug/reject", async (c) => {
     const slug = c.req.param("slug");
     const body = await c.req.json().catch(() => ({})) as { reason?: string };
     
+    const row = await c.env.DB.prepare("SELECT title, cf_email FROM docs WHERE slug = ?").bind(slug).first<{ title: string, cf_email: string }>();
+    
     await c.env.DB.prepare(
       "UPDATE docs SET status = 'rejected' WHERE slug = ?"
     ).bind(slug).run();
 
+    if (row?.cf_email) {
+      const author = await c.env.DB.prepare("SELECT id FROM user WHERE email = ?").bind(row.cf_email).first<{ id: string }>();
+      if (author) {
+        c.executionCtx.waitUntil(emitNotification(c as any, {
+          userId: author.id,
+          title: "Doc Rejected",
+          message: `Your technical document "${row.title}" was rejected${body.reason ? `: "${body.reason}"` : "."}`,
+          link: "/dashboard?tab=docs",
+          priority: "high"
+        }));
+      }
+    }
+
     return c.json({ success: true, reason: body.reason || "No reason provided" });
+
   } catch (err) {
     console.error("D1 reject error (docs):", err);
     return c.json({ error: "Rejection failed" }, 500);

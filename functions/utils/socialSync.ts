@@ -1,5 +1,14 @@
-import { BskyAgent, RichText } from '@atproto/api';
 import { sendZulipMessage } from './zulipSync';
+import { 
+  dispatchDiscord, dispatchDiscordPhoto, 
+  dispatchSlack, dispatchSlackPhoto, 
+  dispatchTeams, dispatchTeamsPhoto, 
+  dispatchGChat, dispatchGChatPhoto, 
+  dispatchMake 
+} from './social/webhooks';
+import { dispatchBluesky } from './social/bluesky';
+import { dispatchTwitterPhoto } from './social/twitter';
+import { dispatchFacebook, dispatchMetaPhoto } from './social/meta';
 
 export interface SocialConfig {
   DISCORD_WEBHOOK_URL?: string;
@@ -49,36 +58,20 @@ export async function dispatchSocials(
     return socialsFilter[key] === true;
   };
 
-  if (config.DISCORD_WEBHOOK_URL && config.DISCORD_WEBHOOK_URL.trim() !== '' && isEnabled('discord')) {
-    promises.push(
-      fetch(config.DISCORD_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: null,
-          embeds: [
-            {
-              title: "🚀 New Web Update: " + payload.title,
-              description: payload.snippet,
-              url: payload.url,
-              color: 12582912, // ARES Red (0xC00000)
-              author: { name: "ARES 23247 Bot" },
-              image: payload.coverImageUrl ? { url: payload.url.replace('/blog/', '') + payload.coverImageUrl } : null,
-              footer: { text: "FIRST Robotics Competition • ARES 23247" }
-            }
-          ]
-        })
-      }).catch(err => console.error("Discord webhook failed:", err))
-    );
-  }
+  // 1. Webhooks & Integrated Services
+  if (isEnabled('discord')) promises.push(dispatchDiscord(payload, config));
+  if (isEnabled('slack')) promises.push(dispatchSlack(payload, config));
+  if (isEnabled('teams')) promises.push(dispatchTeams(payload, config));
+  if (isEnabled('gchat')) promises.push(dispatchGChat(payload, config));
+  if (isEnabled('make')) promises.push(dispatchMake(payload, config));
 
-  // ── Zulip Announcements Channel ──
+  // 2. Zulip Announcements Channel
   if (config.ZULIP_BOT_EMAIL && config.ZULIP_API_KEY && isEnabled('zulip')) {
     const zulipEnv = {
       ZULIP_BOT_EMAIL: config.ZULIP_BOT_EMAIL,
       ZULIP_API_KEY: config.ZULIP_API_KEY,
       ZULIP_URL: config.ZULIP_URL,
-    } as { ZULIP_BOT_EMAIL?: string; ZULIP_API_KEY?: string; ZULIP_URL?: string };
+    };
     promises.push(
       sendZulipMessage(
         zulipEnv,
@@ -89,194 +82,9 @@ export async function dispatchSocials(
     );
   }
 
-  if (config.MAKE_WEBHOOK_URL && config.MAKE_WEBHOOK_URL.trim() !== '' && isEnabled('make')) {
-    promises.push(
-      fetch(config.MAKE_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }).catch(err => console.error("Make.com webhook failed:", err))
-    );
-  }
-
-  if (config.SLACK_WEBHOOK_URL && config.SLACK_WEBHOOK_URL.trim() !== '' && isEnabled('slack')) {
-    promises.push(
-      fetch(config.SLACK_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: `🚀 *New Web Update: ${payload.title}*\n${payload.snippet}\n<${payload.url}|Read more>`
-        })
-      }).catch(err => console.error("Slack webhook failed:", err))
-    );
-  }
-
-  if (config.TEAMS_WEBHOOK_URL && config.TEAMS_WEBHOOK_URL.trim() !== '' && isEnabled('teams')) {
-    promises.push(
-      fetch(config.TEAMS_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "message",
-          attachments: [
-            {
-              contentType: "application/vnd.microsoft.card.adaptive",
-              content: {
-                $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-                type: "AdaptiveCard",
-                version: "1.2",
-                body: [
-                  { type: "TextBlock", text: `🚀 New Web Update: ${payload.title}`, weight: "Bolder", size: "Medium" },
-                  { type: "TextBlock", text: payload.snippet, wrap: true }
-                ],
-                actions: [
-                  { type: "Action.OpenUrl", title: "Read More", url: payload.url }
-                ]
-              }
-            }
-          ]
-        })
-      }).catch(err => console.error("Teams webhook failed:", err))
-    );
-  }
-
-  if (config.GCHAT_WEBHOOK_URL && config.GCHAT_WEBHOOK_URL.trim() !== '' && isEnabled('gchat')) {
-    promises.push(
-      fetch(config.GCHAT_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: `🚀 *New Web Update: ${payload.title}*\n${payload.snippet}\nRead more: ${payload.url}`
-        })
-      }).then(async res => { 
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`GChat Rejected: ${errText}`);
-        }
-      })
-    );
-  }
-
-  if (config.FACEBOOK_PAGE_ID && config.FACEBOOK_ACCESS_TOKEN && isEnabled('facebook')) {
-    const fbUrl = `https://graph.facebook.com/v19.0/${config.FACEBOOK_PAGE_ID}/feed`;
-    const fbPayload = new URLSearchParams({
-      message: `🚀 New Update: ${payload.title}\n\n${payload.snippet}`,
-      link: payload.url,
-      access_token: config.FACEBOOK_ACCESS_TOKEN
-    });
-    promises.push(
-      fetch(fbUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: fbPayload.toString()
-      }).then(async res => { 
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Facebook API Rejected: ${errText}`);
-        }
-      })
-    );
-  }
-
-  if (config.BLUESKY_HANDLE && config.BLUESKY_APP_PASSWORD && isEnabled('bluesky')) {
-    promises.push(
-      (async () => {
-        try {
-          const agent = new BskyAgent({ service: 'https://bsky.social' });
-          await agent.login({
-
-            identifier: config.BLUESKY_HANDLE as string,
-            password: config.BLUESKY_APP_PASSWORD as string,
-          });
-
-          // AT Protocol mandates a strict 300 character limit for `rt.text`
-          const prefix = `🚀 New Update: ${payload.title}\n\n`;
-          const suffix = `\n\nRead more: ${payload.url}`;
-          const maxSnippetLen = 295 - (prefix.length + suffix.length);
-          
-          let safeSnippet = payload.snippet || "";
-          if (maxSnippetLen > 0 && safeSnippet.length > maxSnippetLen) {
-            safeSnippet = safeSnippet.substring(0, maxSnippetLen - 3) + "...";
-          } else if (maxSnippetLen <= 0) {
-            safeSnippet = "";
-          }
-
-          const rt = new RichText({
-            text: `${prefix}${safeSnippet}${suffix}`
-          });
-          
-          await rt.detectFacets(agent);
-
-          let embed = undefined;
-          // Only attempt to fetch and upload the image to BlueSky if it's an explicit, absolute, external URL.
-          // Fetching internal/relative URLs (like /gallery_1.png) via external loopback violently crashes Cloudflare Workers due to Subrequest recursion caps.
-          if (payload.coverImageUrl && payload.coverImageUrl.startsWith('http')) {
-            try {
-              const imgRes = await fetch(payload.coverImageUrl);
-              if (imgRes.ok) {
-                const imgBuffer = await imgRes.arrayBuffer();
-                const mimeType = imgRes.headers.get("content-type") || "image/jpeg";
-                
-                const { data } = await agent.uploadBlob(new Uint8Array(imgBuffer), {
-                    encoding: mimeType
-                });
-                
-                if (data && data.blob) {
-                  embed = {
-                      $type: 'app.bsky.embed.external',
-                      external: {
-                          uri: payload.url,
-                          title: payload.title,
-                          description: payload.snippet,
-                          thumb: data.blob
-                      }
-                  };
-                }
-              }
-            } catch (imgErr) {
-              console.error("Bluesky image upload failed, proceeding without embed:", imgErr);
-            }
-          }
-
-          if (!embed) {
-            // Text-only link card fallback
-            embed = {
-                $type: 'app.bsky.embed.external',
-                external: {
-                    uri: payload.url,
-                    title: payload.title,
-                    description: payload.snippet,
-                }
-            };
-          }
-
-          const maxRetries = 2;
-          for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-              await agent.post({
-                text: rt.text,
-                facets: rt.facets,
-                embed: embed as Record<string, unknown>,
-                createdAt: new Date().toISOString()
-              });
-              break; // Success
-            } catch (err: unknown) {
-              const errMsg = (err as Error)?.message || String(err);
-              if (attempt === maxRetries || !errMsg.includes('UpstreamTimeout')) {
-                  console.error("Bluesky post failed:", errMsg);
-                  throw new Error(`Bluesky: ${errMsg}`);
-              }
-              console.warn(`Bluesky timeout (attempt ${attempt}), retrying...`);
-              await new Promise(r => setTimeout(r, 1500)); // Brief backoff
-            }
-          }
-        } catch (err: unknown) {
-          console.error("Bluesky syndication failed:", (err as Error)?.message || err);
-          throw new Error(`Bluesky: ${(err as Error)?.message || String(err)}`);
-        }
-      })()
-    );
-  }
+  // 3. Social Platforms
+  if (isEnabled('facebook')) promises.push(dispatchFacebook(payload, config));
+  if (isEnabled('bluesky')) promises.push(dispatchBluesky(payload, config));
 
   const results = await Promise.allSettled(promises);
   const failures: string[] = [];
@@ -293,231 +101,22 @@ export async function dispatchSocials(
 }
 
 /**
- * V8 Edge Crypto implementation of OAuth 1.0A HMAC-SHA1 to natively sign requests for Twitter API.
- */
-async function generateOAuth1Signature(url: string, method: string, config: SocialConfig): Promise<string> {
-  const nonce = crypto.randomUUID().replace(/-/g, '');
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  
-  const params: Record<string, string> = {
-    oauth_consumer_key: config.TWITTER_API_KEY!,
-    oauth_nonce: nonce,
-    oauth_signature_method: "HMAC-SHA1",
-    oauth_timestamp: timestamp,
-    oauth_token: config.TWITTER_ACCESS_TOKEN!,
-    oauth_version: "1.0"
-  };
-  
-  const percentEncode = (str: string) => encodeURIComponent(str).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
-  
-  const sortedKeys = Object.keys(params).sort();
-  const paramString = sortedKeys.map(k => `${percentEncode(k)}=${percentEncode(params[k])}`).join('&');
-  
-  const signatureBaseString = `${method.toUpperCase()}&${percentEncode(url)}&${percentEncode(paramString)}`;
-  const signingKey = `${percentEncode(config.TWITTER_API_SECRET!)}&${percentEncode(config.TWITTER_ACCESS_SECRET!)}`;
-  
-  const enc = new TextEncoder();
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(signingKey),
-    { name: "HMAC", hash: "SHA-1" },
-    false,
-    ["sign"]
-  );
-  
-  const signatureBuffer = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(signatureBaseString));
-  const signature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
-  
-  params.oauth_signature = signature;
-  
-  return "OAuth " + Object.keys(params)
-    .sort()
-    .map(k => `${percentEncode(k)}="${percentEncode(params[k])}"`)
-    .join(', ');
-}
-
-/**
  * Dispatches an uploaded raw photo directly to configured visual social media endpoints.
  */
 export async function dispatchPhotoSocials(imageUrl: string, caption: string, config: SocialConfig) {
   const promises: Promise<unknown>[] = [];
 
-  // 1. INSTAGRAM GRAPH API
-  if (config.INSTAGRAM_ACCOUNT_ID && config.INSTAGRAM_ACCESS_TOKEN) {
-    promises.push(
-      (async () => {
-        const creationUrl = `https://graph.facebook.com/v19.0/${config.INSTAGRAM_ACCOUNT_ID}/media`;
-        const creationPayload = new URLSearchParams({
-          image_url: imageUrl,
-          caption: caption,
-          access_token: config.INSTAGRAM_ACCESS_TOKEN || ""
-        });
-        const createRes = await fetch(creationUrl, { method: "POST", body: creationPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
-        if (!createRes.ok) {
-          const errText = await createRes.text();
-          throw new Error(`Instagram Photo Creation Rejected: ${errText}`);
-        }
-        
-        const createData = await createRes.json() as { id?: string };
+  // 1. Meta (Instagram & Facebook)
+  promises.push(dispatchMetaPhoto(imageUrl, caption, config));
 
-        if (createData.id) {
-          const publishUrl = `https://graph.facebook.com/v19.0/${config.INSTAGRAM_ACCOUNT_ID}/media_publish`;
-          const publishPayload = new URLSearchParams({ creation_id: createData.id, access_token: config.INSTAGRAM_ACCESS_TOKEN || "" });
-          const pubRes = await fetch(publishUrl, { method: "POST", body: publishPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
-          if (!pubRes.ok) {
-            const errText = await pubRes.text();
-            throw new Error(`Instagram Photo Publish Rejected: ${errText}`);
-          }
-        }
-      })()
-    );
-  }
+  // 2. Twitter (X)
+  promises.push(dispatchTwitterPhoto(imageUrl, caption, config).catch(() => {}));
 
-  // 2. FACEBOOK GRAPH API (PHOTO)
-  if (config.FACEBOOK_PAGE_ID && config.FACEBOOK_ACCESS_TOKEN) {
-    promises.push(
-      (async () => {
-        const fbUrl = `https://graph.facebook.com/v19.0/${config.FACEBOOK_PAGE_ID}/photos`;
-        const fbPayload = new URLSearchParams({ url: imageUrl, message: caption, access_token: config.FACEBOOK_ACCESS_TOKEN || "" });
-        const res = await fetch(fbUrl, { method: "POST", body: fbPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Facebook Photo API Rejected: ${text}`);
-        }
-      })()
-    );
-  }
-
-  // 3. X (TWITTER) NATIVE API V2 & v1.1 Media Upload via Edge Crypto
-  if (config.TWITTER_API_KEY && config.TWITTER_API_SECRET && config.TWITTER_ACCESS_TOKEN && config.TWITTER_ACCESS_SECRET) {
-    promises.push(
-      (async () => {
-        try {
-          // Fetch image bytes to push to X upload server
-          const imgRes = await fetch(imageUrl);
-          const imgBuffer = await imgRes.arrayBuffer();
-          const imgBlob = new Blob([imgBuffer], { type: imgRes.headers.get("content-type") || "image/jpeg" });
-
-          const uploadUrl = "https://upload.twitter.com/1.1/media/upload.json";
-          const authHeader = await generateOAuth1Signature(uploadUrl, "POST", config);
-          
-          const formData = new FormData();
-          formData.append("media", imgBlob);
-
-          const mediaRes = await fetch(uploadUrl, { method: "POST", headers: { "Authorization": authHeader }, body: formData });
-          const mediaData = await mediaRes.json() as { media_id_string?: string };
-
-          if (mediaData.media_id_string) {
-            const tweetUrl = "https://api.twitter.com/2/tweets";
-            const tweetAuthHeader = await generateOAuth1Signature(tweetUrl, "POST", config);
-            const tweetPayload = {
-              text: caption,
-              media: { media_ids: [mediaData.media_id_string] }
-            };
-            await fetch(tweetUrl, { method: "POST", headers: { "Authorization": tweetAuthHeader, "Content-Type": "application/json" }, body: JSON.stringify(tweetPayload) });
-          }
-        } catch (err) { console.error("X (Twitter) Native Push failed:", err); }
-      })()
-    );
-  }
-
-  // 4. DISCORD NATIVE EMBED
-  if (config.DISCORD_WEBHOOK_URL && config.DISCORD_WEBHOOK_URL.trim() !== '') {
-    promises.push(
-      fetch(config.DISCORD_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: null,
-          embeds: [
-            {
-              title: "📸 New ARES Gallery Media",
-              description: caption,
-              color: 12582912,
-              image: { url: imageUrl },
-              author: { name: "ARES 23247 Bot" }
-            }
-          ]
-        })
-      }).catch(err => console.error("Discord Photo push failed:", err))
-    );
-  }
-
-  // 5. SLACK
-  if (config.SLACK_WEBHOOK_URL && config.SLACK_WEBHOOK_URL.trim() !== '') {
-    promises.push(
-      fetch(config.SLACK_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          blocks: [
-            {
-              type: "image",
-              title: { type: "plain_text", text: caption || "ARES Media" },
-              image_url: imageUrl,
-              alt_text: "ARES 23247 Broadcast"
-            }
-          ]
-        })
-      }).catch(err => console.error("Slack Photo push failed:", err))
-    );
-  }
-
-  // 6. TEAMS
-  if (config.TEAMS_WEBHOOK_URL && config.TEAMS_WEBHOOK_URL.trim() !== '') {
-    promises.push(
-      fetch(config.TEAMS_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "message",
-          attachments: [
-            {
-              contentType: "application/vnd.microsoft.card.adaptive",
-              content: {
-                $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-                type: "AdaptiveCard",
-                version: "1.2",
-                body: [
-                  { type: "TextBlock", text: "📸 New ARES Gallery Media", weight: "Bolder", size: "Medium" },
-                  { type: "Image", url: imageUrl },
-                  { type: "TextBlock", text: caption, wrap: true }
-                ]
-              }
-            }
-          ]
-        })
-      }).catch(err => console.error("Teams Photo push failed:", err))
-    );
-  }
-
-  // 7. GOOGLE CHAT
-  if (config.GCHAT_WEBHOOK_URL && config.GCHAT_WEBHOOK_URL.trim() !== '') {
-    promises.push(
-      fetch(config.GCHAT_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cardsV2: [
-            {
-              cardId: "photoCard",
-              card: {
-                header: { title: "📸 New ARES Gallery Media" },
-                sections: [
-                  {
-                    widgets: [
-                      { image: { imageUrl: imageUrl } },
-                      { textParagraph: { text: caption } }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        })
-      }).catch(err => console.error("GChat Photo push failed:", err))
-    );
-  }
+  // 3. Webhooks
+  promises.push(dispatchDiscordPhoto(imageUrl, caption, config));
+  promises.push(dispatchSlackPhoto(imageUrl, caption, config));
+  promises.push(dispatchTeamsPhoto(imageUrl, caption, config));
+  promises.push(dispatchGChatPhoto(imageUrl, caption, config));
 
   await Promise.allSettled(promises);
 }

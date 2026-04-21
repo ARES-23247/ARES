@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { Bindings, ensureAdmin, getSessionUser, sanitizeProfileForPublic } from "./_shared";
 import { getAuth } from "../../utils/auth";
+import { encrypt, decrypt } from "../../utils/crypto";
+
 
 const profilesRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -20,6 +22,14 @@ profilesRouter.get("/profile/me", async (c) => {
        WHERE ub.user_id = ?
        ORDER BY ub.awarded_at DESC`
     ).bind(user.id).all();
+
+    // Decrypt PII fields
+    if (profile) {
+      const secret = c.env.ENCRYPTION_SECRET;
+      profile.emergency_contact_name = await decrypt(profile.emergency_contact_name as string, secret);
+      profile.emergency_contact_phone = await decrypt(profile.emergency_contact_phone as string, secret);
+    }
+
 
     return c.json({
       ...(profile || {
@@ -61,6 +71,10 @@ profilesRouter.put("/profile/me", async (c) => {
 
     const subteamsStr = Array.isArray(subteams) ? JSON.stringify(subteams) : (subteams || "[]");
 
+    const secret = c.env.ENCRYPTION_SECRET;
+    const encryptedName = await encrypt(emergency_contact_name || "", secret);
+    const encryptedPhone = await encrypt(emergency_contact_phone || "", secret);
+
     await c.env.DB.prepare(
       `INSERT INTO user_profiles (
         user_id, nickname, first_name, last_name, pronouns, phone, contact_email,
@@ -100,9 +114,10 @@ profilesRouter.put("/profile/me", async (c) => {
       favorite_first_thing || "", fun_fact || "",
       favorite_robot_mechanism || "", pre_match_superstition || "",
       leadership_role || "", rookie_year || "",
-      tshirt_size || "", emergency_contact_name || "", emergency_contact_phone || "",
+      tshirt_size || "", encryptedName, encryptedPhone,
       parents_name || "", parents_email || "", students_name || "", students_email || ""
     ).run();
+
 
     return c.json({ success: true });
   } catch (err) {

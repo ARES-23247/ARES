@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { Bindings, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig } from "./_shared";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
+import { emitNotification } from "../../utils/notifications";
+
 
 const commentsRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -84,6 +86,44 @@ commentsRouter.post("/comments/:targetType/:targetId", async (c) => {
     } catch (e) {
       console.error("[Comments] Zulip Sync Error", e);
     }
+
+    // ── In-App Notification ──
+    try {
+      let authorEmail: string | null = null;
+      let targetTitle: string | null = null;
+
+      if (targetType === "blog" || targetType === "posts") {
+        const row = await c.env.DB.prepare("SELECT cf_email, title FROM posts WHERE slug = ?").bind(targetId).first<{ cf_email: string, title: string }>();
+        authorEmail = row?.cf_email || null;
+        targetTitle = row?.title || null;
+      } else if (targetType === "doc") {
+        const row = await c.env.DB.prepare("SELECT cf_email, title FROM docs WHERE slug = ?").bind(targetId).first<{ cf_email: string, title: string }>();
+        authorEmail = row?.cf_email || null;
+        targetTitle = row?.title || null;
+      } else if (targetType === "event") {
+        const row = await c.env.DB.prepare("SELECT cf_email, title FROM events WHERE id = ?").bind(targetId).first<{ cf_email: string, title: string }>();
+        authorEmail = row?.cf_email || null;
+        targetTitle = row?.title || null;
+      }
+
+      if (authorEmail && authorEmail !== user.email) {
+        const author = await c.env.DB.prepare("SELECT id FROM user WHERE email = ?").bind(authorEmail).first<{ id: string }>();
+        if (author) {
+          c.executionCtx.waitUntil(
+            emitNotification(c as any, {
+              userId: author.id,
+              title: "New Comment",
+              message: `${user.name || "Someone"} commented on "${targetTitle || targetId}"`,
+              link: `/${targetType === "blog" ? "blog" : targetType === "doc" ? "docs" : "events"}/${targetId}`,
+              priority: "medium"
+            })
+          );
+        }
+      }
+    } catch (err) {
+      console.error("[Comments] In-app notification failed:", err);
+    }
+
 
     return c.json({ success: true });
   } catch (err) {

@@ -28,6 +28,21 @@ test.describe('Static Information Pages', () => {
 
       // Wait for React to mount and render completely
       await page.waitForLoadState('networkidle');
+      
+      // Allow Framer Motion animations to settle
+      await page.waitForTimeout(500);
+
+      // Disable animations to prevent flaky accessibility results (contrast scanning mid-animation)
+      await page.addStyleTag({
+        content: `
+          *, *::before, *::after {
+            transition: none !important;
+            animation: none !important;
+            transition-duration: 0s !important;
+            animation-duration: 0s !important;
+          }
+        `
+      });
 
       // 1. Verify correct title mapping
       await expect(page).toHaveTitle(route.expectedTitle);

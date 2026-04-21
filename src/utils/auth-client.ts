@@ -1,9 +1,12 @@
 import { createAuthClient } from "better-auth/react";
-import { genericOAuthClient } from "better-auth/client/plugins";
+import { genericOAuthClient, twoFactorClient } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
     baseURL: window.location.origin + "/api/auth", // Better Auth is mounted at /api/auth
-    plugins: [genericOAuthClient()]
+    plugins: [
+        genericOAuthClient(),
+        twoFactorClient()
+    ]
 });
 
 export const { signIn, signOut, useSession } = authClient;

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../../utils/site.config";
-import { Bindings, getSocialConfig, extractAstText, getSessionUser, getDbSettings } from "../_shared";
+import { Bindings, getSocialConfig, extractAstText, getSessionUser, getDbSettings, parsePagination } from "../_shared";
 import { pushEventToGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials } from "../../../utils/socialSync";
 import { sendZulipMessage } from "../../../utils/zulipSync";
@@ -10,8 +10,7 @@ const adminRouter = new Hono<{ Bindings: Bindings }>();
 // ── GET /admin/events — list all events (admin) ─────────────────────────
 adminRouter.get("/", async (c) => {
   try {
-    const limit = Math.min(Number(c.req.query("limit") || "100"), 500);
-    const offset = Number(c.req.query("offset") || "0");
+    const { limit, offset } = parsePagination(c, 100, 500);
     const { results: events } = await c.env.DB.prepare(
       "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer, revision_of FROM events ORDER BY date_start DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
@@ -48,7 +47,7 @@ adminRouter.get("/:id", async (c) => {
 adminRouter.post("/", async (c) => {
   try {
     const body = await c.req.json();
-    const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft } = body;
+    const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft, publishedAt } = body;
     const cat = category || 'internal';
 
     if (!title || !dateStart) return c.json({ error: "Missing required fields" }, 400);
@@ -79,11 +78,11 @@ adminRouter.post("/", async (c) => {
     const status = isDraft ? "pending" : "published";
 
     await c.env.DB.prepare(
-      `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       genId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "",
-      gcalId || null, email, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0
+      gcalId || null, email, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null
     ).run();
 
     if (socials) {
@@ -129,7 +128,7 @@ adminRouter.put("/:id", async (c) => {
   try {
     const paramId = c.req.param("id");
     const body = await c.req.json();
-    const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft } = body;
+    const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft, publishedAt } = body;
     const cat = category || 'internal';
     
     if (!title || !dateStart) return c.json({ error: "Missing required fields" }, 400);
@@ -158,16 +157,16 @@ adminRouter.put("/:id", async (c) => {
     if (user?.role !== "admin") {
       const revId = `${paramId}-rev-${Math.random().toString(36).substring(2, 6)}`;
       await c.env.DB.prepare(
-        `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?)`
-      ).bind(revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId).run();
+        `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of, published_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?, ?)`
+      ).bind(revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId, publishedAt || null).run();
       return c.json({ success: true, id: revId, warning: warnings.length > 0 ? warnings.join(" | ") : undefined }, warnings.length > 0 ? 207 : 200);
     }
 
     const status = isDraft ? "pending" : "published";
     await c.env.DB.prepare(
-      `UPDATE events SET title = ?, category = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ? WHERE id = ?`
-    ).bind(title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId).run();
+      `UPDATE events SET title = ?, category = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ?, published_at = ? WHERE id = ?`
+    ).bind(title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null, paramId).run();
 
      if (socials) {
        try {
