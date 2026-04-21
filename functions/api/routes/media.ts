@@ -209,4 +209,4 @@ adminMediaRouter.post("/syndicate", ensureAdmin, async (c) => {
   }
 });
 
-export { mediaRouter, adminMediaRouter };
+export { adminMediaRouter }; export default mediaRouter;
