@@ -28,6 +28,11 @@ profilesRouter.get("/me", async (c) => {
       const secret = c.env.ENCRYPTION_SECRET;
       profile.emergency_contact_name = await decrypt(profile.emergency_contact_name as string, secret);
       profile.emergency_contact_phone = await decrypt(profile.emergency_contact_phone as string, secret);
+      profile.phone = await decrypt(profile.phone as string, secret);
+      profile.parents_name = await decrypt(profile.parents_name as string, secret);
+      profile.parents_email = await decrypt(profile.parents_email as string, secret);
+      profile.students_name = await decrypt(profile.students_name as string, secret);
+      profile.students_email = await decrypt(profile.students_email as string, secret);
     }
 
 
@@ -62,7 +67,7 @@ profilesRouter.put("/me", async (c) => {
       favorite_first_thing, fun_fact,
       favorite_robot_mechanism, pre_match_superstition,
       leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone,
-      parents_name, parents_email, students_name, students_email
+      parents_name, parents_email, students_name, students_email, favorite_food
     } = body;
 
     const dietaryStr = Array.isArray(dietary_restrictions)
@@ -90,8 +95,8 @@ profilesRouter.put("/me", async (c) => {
         favorite_first_thing, fun_fact,
         favorite_robot_mechanism, pre_match_superstition,
         leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone,
-        parents_name, parents_email, students_name, students_email
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        parents_name, parents_email, students_name, students_email, favorite_food
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET
         nickname=excluded.nickname, first_name=excluded.first_name, last_name=excluded.last_name,
         pronouns=excluded.pronouns, phone=excluded.phone, contact_email=excluded.contact_email,
@@ -109,7 +114,8 @@ profilesRouter.put("/me", async (c) => {
         parents_name=excluded.parents_name,
         parents_email=excluded.parents_email,
         students_name=excluded.students_name,
-        students_email=excluded.students_email`
+        students_email=excluded.students_email,
+        favorite_food=excluded.favorite_food`
     ).bind(
       user.id,
       nickname || "", first_name || "", last_name || "", pronouns || "",
@@ -121,7 +127,8 @@ profilesRouter.put("/me", async (c) => {
       favorite_robot_mechanism || "", pre_match_superstition || "",
       leadership_role || "", rookie_year || "",
       tshirt_size || "", encryptedName, encryptedPhone,
-      encryptedParentsName, encryptedParentsEmail, encryptedStudentsName, encryptedStudentsEmail
+      encryptedParentsName, encryptedParentsEmail, encryptedStudentsName, encryptedStudentsEmail,
+      favorite_food || ""
     ).run();
 
 
@@ -253,6 +260,9 @@ profilesRouter.get("/:userId", async (c) => {
     }
 
     const memberType = String(profile.member_type || "student");
+    if (profile.phone) {
+      profile.phone = await decrypt(profile.phone as string, c.env.ENCRYPTION_SECRET);
+    }
     const sanitized = sanitizeProfileForPublic(profile as Record<string, unknown>, memberType);
 
     const { results: rawBadges } = await c.env.DB.prepare(
