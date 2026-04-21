@@ -194,6 +194,33 @@ export async function logAuditAction(
   }
 }
 
+/**
+ * Logs a system-level integration failure for admin visibility.
+ * Used in utility functions where Context might not be available.
+ */
+export async function logSystemError(
+  db: D1Database,
+  service: string,
+  error: string,
+  details?: string
+): Promise<void> {
+  try {
+    await db.prepare(
+      `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+    ).bind(
+      crypto.randomUUID(),
+      "system",
+      "INTEGRATION_FAILURE",
+      service,
+      null,
+      JSON.stringify({ error, details, timestamp: new Date().toISOString() })
+    ).run();
+  } catch (err) {
+    console.error("[AuditLog] Failed to log system error:", err);
+  }
+}
+
 // ── Session Helper ───────────────────────────────────────────────────
 export async function getSessionUser(c: Context<AppEnv>): Promise<SessionUser | null> {
   // Check if ensureAdmin already stored session in context

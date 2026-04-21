@@ -9,6 +9,7 @@ import {
 import { dispatchBluesky } from './social/bluesky';
 import { dispatchTwitterPhoto } from './social/twitter';
 import { dispatchFacebook, dispatchMetaPhoto } from './social/meta';
+import { logSystemError } from '../api/routes/_shared';
 
 export interface SocialConfig {
   DISCORD_WEBHOOK_URL?: string;
@@ -47,6 +48,7 @@ export interface PostPayload {
  * Fails gracefully on any single provider so others still execute.
  */
 export async function dispatchSocials(
+  db: D1Database,
   payload: PostPayload, 
   config: SocialConfig, 
   socialsFilter: Record<string, boolean> | null = null
@@ -68,17 +70,18 @@ export async function dispatchSocials(
   // 2. Zulip Announcements Channel
   if (config.ZULIP_BOT_EMAIL && config.ZULIP_API_KEY && isEnabled('zulip')) {
     const zulipEnv = {
+      DB: db, // Fake Bindings but we only need DB
       ZULIP_BOT_EMAIL: config.ZULIP_BOT_EMAIL,
       ZULIP_API_KEY: config.ZULIP_API_KEY,
       ZULIP_URL: config.ZULIP_URL,
-    };
+    } as any;
     promises.push(
       sendZulipMessage(
         zulipEnv,
         "announcements",
         "Website Updates",
         `🚀 **${payload.title}**\n\n${payload.snippet}\n\n[🔗 Read more](${payload.url})`
-      ).catch(err => console.error("Zulip social dispatch failed:", err))
+      )
     );
   }
 
@@ -96,7 +99,9 @@ export async function dispatchSocials(
   });
 
   if (failures.length > 0) {
-    throw new Error(`Syndication partial failure: ${failures.join(" | ")}`);
+    const errorMsg = failures.join(" | ");
+    await logSystemError(db, "SocialSync", "Partial syndication failure", errorMsg);
+    throw new Error(`Syndication partial failure: ${errorMsg}`);
   }
 }
 

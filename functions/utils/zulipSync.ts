@@ -1,4 +1,4 @@
-import { Bindings } from "../api/routes/_shared";
+import { Bindings, logSystemError } from "../api/routes/_shared";
 
 function getZulipAuthHeaders(env: Bindings): HeadersInit {
   if (!env.ZULIP_BOT_EMAIL || !env.ZULIP_API_KEY) {
@@ -43,7 +43,9 @@ export async function sendZulipMessage(
     });
 
     if (!res.ok) {
-      console.error("[ZulipSync] Failed to send message:", await res.text());
+      const errorText = await res.text();
+      console.error("[ZulipSync] Failed to send message:", errorText);
+      await logSystemError(env.DB, "Zulip", "Failed to send message", errorText);
       return null;
     }
 
@@ -51,9 +53,11 @@ export async function sendZulipMessage(
     if (data.result === "success") {
       return String(data.id);
     }
+    await logSystemError(env.DB, "Zulip", "Zulip API returned non-success", JSON.stringify(data));
     return null;
   } catch (err) {
     console.error("[ZulipSync] Exception sending message:", err);
+    await logSystemError(env.DB, "Zulip", "Exception in sendZulipMessage", String(err));
     return null;
   }
 }
