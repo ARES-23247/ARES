@@ -108,7 +108,7 @@ export default function Sponsors() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 py-24 relative overflow-hidden">
+    <div className="min-h-screen bg-obsidian text-marble py-24 relative overflow-hidden">
       <SEO title="Our Partners — ARES 23247" description="The corporate partners and community sponsors who empower ARES 23247 to innovate in FIRST Robotics." />
       
       {/* Background Ambience */}
@@ -130,13 +130,13 @@ export default function Sponsors() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-black tracking-tighter mb-6 italic"
           >
-            Our <span className="text-ares-red">Partners</span>
+            Our <span className="bg-ares-red px-6 py-2 rounded-2xl shadow-xl mt-2 inline-block" style={{ backgroundColor: '#c00000', color: '#ffffff' }}>Partners</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-zinc-500 text-lg max-w-2xl mx-auto leading-relaxed"
+            className="text-marble/70 text-lg max-w-2xl mx-auto leading-relaxed"
           >
             ARES 23247 is fueled by the generosity of organizations that believe in the future of STEM. These partners provide the resources necessary for us to compete at the highest level.
           </motion.p>
@@ -174,7 +174,7 @@ export default function Sponsors() {
                     >
                       {s.logo_url ? (
                         <img 
-                          src={s.logo_url} 
+                          src={s.logo_url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/')} 
                           alt={s.name} 
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
@@ -186,7 +186,7 @@ export default function Sponsors() {
                       <div className={`fallback-text text-2xl font-black text-white/40 mb-2 ${s.logo_url ? 'hidden' : ''}`}>{s.name}</div>
                       
                       <div className="flex items-center gap-2 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400" aria-hidden="true">Visit Website</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-marble/70" aria-hidden="true">Visit Website</span>
                         <ExternalLink size={12} className="text-ares-gold" aria-hidden="true" />
                       </div>
                     </motion.a>
@@ -200,28 +200,29 @@ export default function Sponsors() {
         <motion.footer 
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          className="mt-32 p-12 rounded-[3rem] bg-gradient-to-br from-ares-red/20 to-zinc-900 border border-ares-red/20 text-left flex flex-col lg:flex-row gap-12 overflow-hidden relative"
+          className="mt-32 p-12 rounded-[3rem] border border-ares-red/20 text-left flex flex-col lg:flex-row gap-12 overflow-hidden relative"
         >
           {/* Subtle grid pattern background */}
-          <div className="absolute inset-0 bg-[url('https://api.aresfirst.org/assets/grid.svg')] opacity-5 mix-blend-overlay pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-ares-red/20 to-obsidian z-0" aria-hidden="true"></div>
+          <div className="absolute inset-0 bg-[url('https://api.aresfirst.org/assets/grid.svg')] opacity-5 mix-blend-overlay pointer-events-none z-0" aria-hidden="true"></div>
 
           <div className="flex-1 relative z-10 flex flex-col justify-between">
             <div>
-              <h2 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter drop-shadow-lg">Join the<br/><span className="text-ares-red italic">Engineering Journey.</span></h2>
-              <p className="text-zinc-400 text-lg mb-8 max-w-xl leading-relaxed">
+              <h2 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter drop-shadow-[0_10px_8px_#111111]">Join the<br/><span className="text-ares-gold italic drop-shadow-[0_4px_3px_#111111]">Engineering Journey.</span></h2>
+              <p className="text-[#b3b3b3] text-lg mb-8 max-w-xl leading-relaxed">
                 Help us build the next generation of robotics. We are always looking for partners who share our passion for excellence, education, and innovation. Whether you can provide mentorship, machining, material donations, or financial grants, your support is the foundation of our success.
               </p>
             </div>
             
             <div className="mt-12 lg:mt-0">
-              <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs mb-3">Or email the executive board directly</p>
-              <a href="mailto:ares@aresfirst.org" className="text-2xl font-bold text-ares-red hover:text-white transition-colors flex items-center gap-3 w-fit group">
-                ares@aresfirst.org <span className="group-hover:translate-x-1 transition-transform"><ArrowRight size={20} /></span>
+              <p className="text-[#b3b3b3] font-bold uppercase tracking-widest text-xs mb-3">Or email the executive board directly</p>
+              <a href="mailto:ares@aresfirst.org" className="text-2xl font-bold text-white hover:text-ares-gold transition-colors flex items-center gap-3 w-fit group">
+                ares@aresfirst.org <span className="group-hover:translate-x-1 transition-transform"><ArrowRight size={20} className="text-ares-red" /></span>
               </a>
             </div>
           </div>
           
-          <div className="flex-1 relative z-10 bg-zinc-950/80 p-8 rounded-3xl border border-white/5 shadow-2xl backdrop-blur-md">
+          <div className="flex-1 relative z-10 bg-obsidian/80 p-8 rounded-3xl border border-white/5 shadow-2xl backdrop-blur-md">
             <h4 className="text-xl font-black text-white mb-6 uppercase tracking-widest flex items-center gap-3">
               <Heart size={20} className="text-ares-red fill-ares-red/20" /> Become a Sponsor
             </h4>
@@ -238,18 +239,18 @@ export default function Sponsors() {
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="name-input" className="block text-xs font-bold text-ares-red uppercase tracking-widest mb-1.5 ml-1">Company / Name *</label>
-                  <input id="name-input" type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="Stark Industries" />
+                  <label htmlFor="name-input" className="block text-xs font-bold text-marble uppercase tracking-widest mb-1.5 ml-1">Company / Name *</label>
+                  <input id="name-input" type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-[#181818] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-marble/50 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="Stark Industries" />
                 </div>
                 <div>
-                  <label htmlFor="email-input" className="block text-xs font-bold text-ares-red uppercase tracking-widest mb-1.5 ml-1">Email *</label>
-                  <input id="email-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="you@stark.com" />
+                  <label htmlFor="email-input" className="block text-xs font-bold text-marble uppercase tracking-widest mb-1.5 ml-1">Email *</label>
+                  <input id="email-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-[#181818] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-marble/50 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="you@stark.com" />
                 </div>
               </div>
               <div>
-                <label htmlFor="subject-select" className="block text-xs font-bold text-ares-red uppercase tracking-widest mb-1.5 ml-1">Sponsorship Level</label>
+                <label htmlFor="subject-select" className="block text-xs font-bold text-marble uppercase tracking-widest mb-1.5 ml-1">Sponsorship Level</label>
                 <div className="relative">
-                  <select id="subject-select" value={level} onChange={e => setLevel(e.target.value)} className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner appearance-none cursor-pointer">
+                  <select id="subject-select" value={level} onChange={e => setLevel(e.target.value)} className="w-full bg-[#181818] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner appearance-none cursor-pointer">
                     <option>Interested in Details</option>
                     {dropdownTiers.map(t => (
                       <option key={t}>{t} Tier Sponsor</option>
@@ -257,20 +258,20 @@ export default function Sponsors() {
                     <option>In-Kind Donation / Material</option>
                     <option>Mentorship / Engineering Support</option>
                   </select>
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-zinc-600">
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-marble/60">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                   </div>
                 </div>
               </div>
               <div>
-                <label htmlFor="message-textarea" className="block text-xs font-bold text-ares-red uppercase tracking-widest mb-1.5 ml-1">Message</label>
-                <textarea id="message-textarea" value={message} onChange={e => setMessage(e.target.value)} rows={4} className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all resize-none shadow-inner" placeholder="We'd love to partner with Team ARES to..."></textarea>
+                <label htmlFor="message-textarea" className="block text-xs font-bold text-marble uppercase tracking-widest mb-1.5 ml-1">Message</label>
+                <textarea id="message-textarea" value={message} onChange={e => setMessage(e.target.value)} rows={4} className="w-full bg-[#181818] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-marble/50 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all resize-none shadow-inner" placeholder="We'd love to partner with Team ARES to..."></textarea>
               </div>
               <div className="pt-2">
                 <button type="submit" disabled={isSubmitting} className="px-8 py-3.5 w-full bg-ares-red text-white font-black uppercase tracking-widest rounded-xl hover:bg-red-600 hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none">
                   {isSubmitting ? "Sending..." : <><span className="flex items-center gap-2">Submit Interest Request <ArrowRight size={18} /></span></>}
                 </button>
-                <p className="text-center text-[10px] text-zinc-600 font-mono uppercase tracking-tighter mt-4">
+                <p className="text-center text-[10px] text-[#999999] font-mono uppercase tracking-tighter mt-4">
                   ARES 23247 operates under a 501(c)(3) nonprofit umbrella. All donations are tax-deductible.
                 </p>
               </div>
