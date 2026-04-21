@@ -15,9 +15,8 @@ export default function TechStack() {
         
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-16 px-4">
-          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold font-heading mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-ares-gold to-ares-red leading-tight">
-            Built for the Future.
-          </h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold font-heading mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-ares-gold to-ares-red leading-tight before:content-['Built_for_the_Future.']" aria-hidden="true"></h1>
+          <h1 className="sr-only">Built for the Future.</h1>
           <p className="text-lg md:text-xl text-marble/80 leading-relaxed">
             ARES 23247&apos;s digital portal isn&apos;t just a website; it&apos;s a statement on <strong>Sustainability</strong>. 
             By leveraging entirely free, serverless Edge architecture, we&apos;ve brought our operating costs down to <strong>$0.00</strong>.
@@ -37,7 +36,7 @@ export default function TechStack() {
             <p className="text-marble/70 leading-relaxed mb-4">
               Our frontend is globally distributed across Cloudflare&apos;s Edge network. Because it&apos;s deployed as static assets with Edge functions, we get infinite scaling and ultra-fast load times globally without paying for traditional virtual private servers.
             </p>
-            <div className="text-xs font-bold uppercase tracking-widest text-ares-cyan">Cost: Free Tier</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-auto">Cost: Free Tier</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
@@ -50,7 +49,7 @@ export default function TechStack() {
             <p className="text-marble/70 leading-relaxed mb-4 flex-1">
               We natively bind <strong>Llama</strong> 3.1 & <strong>LLaVA</strong> 1.5 models directly into our Cloudflare router. Whenever an image is uploaded, AI runs structural analysis to auto-generate ARIA labels for visually impaired screen-readers with 0 server costs.
             </p>
-            <div className="text-xs font-bold uppercase tracking-widest text-purple-500 mt-auto">Cost: Free Tier</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-auto">Cost: Free Tier</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
@@ -61,7 +60,7 @@ export default function TechStack() {
             <p className="text-marble/70 leading-relaxed mb-4 flex-1">
               We ditched expensive MongoDB and AWS RDS databases. Our entire blog, events, and asset metadata are stored in Cloudflare D1—a serverless SQLite database native to the Edge.
             </p>
-            <div className="text-xs font-bold uppercase tracking-widest text-ares-gold mt-auto">Cost: Free Tier</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-auto">Cost: Free Tier</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
@@ -72,7 +71,7 @@ export default function TechStack() {
             <p className="text-marble/70 leading-relaxed mb-4 flex-1">
               We host all of our high-resolution imagery securely in Cloudflare R2 Object Storage. This acts identically to Amazon S3, powering our WebP conversion pipeline without the crippling egress bandwidth fees.
             </p>
-            <div className="text-xs font-bold uppercase tracking-widest text-orange-500 mt-auto">Cost: Free Tier</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-auto">Cost: Free Tier</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
@@ -83,7 +82,7 @@ export default function TechStack() {
             <p className="text-marble/70 leading-relaxed mb-4 flex-1">
               Our UI is built with React 18 and Vite. Using pure React without heavy SSR frameworks keeps our codebase incredibly lean, teachable to new students, and statically compilable.
             </p>
-            <div className="text-xs font-bold uppercase tracking-widest text-ares-red mt-auto">Cost: Open Source</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-auto">Cost: Open Source</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
@@ -94,7 +93,7 @@ export default function TechStack() {
             <p className="text-marble/70 leading-relaxed mb-4 flex-1">
               The portal features a fully bespoke, role-based Content Management System. It inherently supports abstract syntax trees, intelligent cross-posting (Discord, Bluesky), and a tiered review pipeline allowing students to submit articles for mentor approval.
             </p>
-            <div className="text-xs font-bold uppercase tracking-widest text-blue-500 mt-auto">Cost: Custom Built</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-auto">Cost: Custom Built</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
@@ -105,7 +104,7 @@ export default function TechStack() {
             <p className="text-marble/70 leading-relaxed mb-4 flex-1">
               To support robotics pits entirely devoid of WiFi, we employ native PWA Service Workers routing `NetworkFirst`. The site silently caches React ASTs & D1 Payloads—launching perfectly offline anywhere in the world.
             </p>
-            <div className="text-xs font-bold uppercase tracking-widest text-green-500 mt-auto">Cost: Open Source</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-auto">Cost: Open Source</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
@@ -116,7 +115,7 @@ export default function TechStack() {
             <p className="text-marble/70 leading-relaxed mb-4 flex-1">
               For our team communications, we proudly use <strong>Zulip</strong>. Their generous donation of Zulip Cloud Standard provides our students and mentors with an organized, thread-based workspace that keeps our engineering and outreach discussions seamlessly coordinated.
             </p>
-            <div className="text-xs font-bold uppercase tracking-widest text-teal-500 mt-auto">Cost: Sponsored</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-auto">Cost: Sponsored</div>
           </div>
         </div>
 

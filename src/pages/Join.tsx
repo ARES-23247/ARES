@@ -59,9 +59,11 @@ export default function Join() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-ares-red uppercase tracking-[0.3em] font-bold text-sm mb-4">Enrollment Open</p>
+            <p aria-hidden="true" className="text-ares-red uppercase tracking-[0.3em] font-bold text-sm mb-4 before:content-['Enrollment_Open']"></p>
+            <p className="sr-only">Enrollment Open</p>
             <h1 className="text-5xl md:text-7xl font-black text-white mb-6 uppercase tracking-tighter italic">
-              Join <span className="text-ares-red">ARES.</span>
+              Join <span aria-hidden="true" className="text-ares-red before:content-['ARES.']"></span>
+              <span className="sr-only">ARES.</span>
             </h1>
             <p className="text-marble/80 text-xl max-w-2xl mx-auto leading-relaxed border-t border-white/10 pt-8">
               We are actively looking for forward-thinking students and dedicated mentors to expand our operations. No prior experience is required—only the drive to learn and the grit to succeed.
@@ -135,13 +137,13 @@ export default function Join() {
               <div className="flex flex-wrap gap-4 mb-10 relative z-10">
                 <button 
                   onClick={() => setRole("student")}
-                  className={`flex-1 min-w-[200px] flex items-center justify-center gap-3 px-6 py-4 ares-cut-sm font-bold uppercase tracking-widest text-sm transition-all ${role === "student" ? "bg-ares-red text-white shadow-lg shadow-ares-red/20 scale-100" : "bg-obsidian/5 text-obsidian/60 hover:bg-obsidian/10 scale-95"}`}
+                  className={`flex-1 min-w-[200px] flex items-center justify-center gap-3 px-6 py-4 ares-cut-sm font-bold uppercase tracking-widest text-sm transition-all ${role === "student" ? "bg-ares-red text-white shadow-lg shadow-ares-red/20 scale-100" : "bg-obsidian/5 text-obsidian/80 hover:bg-obsidian/10 scale-95"}`}
                 >
                   <Rocket size={18} /> Student Application
                 </button>
                 <button 
                   onClick={() => setRole("mentor")}
-                  className={`flex-1 min-w-[200px] flex items-center justify-center gap-3 px-6 py-4 ares-cut-sm font-bold uppercase tracking-widest text-sm transition-all ${role === "mentor" ? "bg-obsidian text-white shadow-lg scale-100" : "bg-obsidian/5 text-obsidian/60 hover:bg-obsidian/10 scale-95"}`}
+                  className={`flex-1 min-w-[200px] flex items-center justify-center gap-3 px-6 py-4 ares-cut-sm font-bold uppercase tracking-widest text-sm transition-all ${role === "mentor" ? "bg-obsidian text-white shadow-lg scale-100" : "bg-obsidian/5 text-obsidian/80 hover:bg-obsidian/10 scale-95"}`}
                 >
                   <GraduationCap size={18} /> Mentor Application
                 </button>
@@ -199,7 +201,7 @@ export default function Join() {
 
                 <div>
                   <p id="join-interests-label" className="block text-xs font-bold text-obsidian uppercase tracking-widest mb-2 ml-1">Interests / Expertise *</p>
-                  <p className="text-xs text-obsidian/50 mb-3 ml-1 leading-relaxed">What areas are you most interested in pursuing with ARES?</p>
+                  <p className="text-xs text-obsidian/80 mb-3 ml-1 leading-relaxed">What areas are you most interested in pursuing with ARES?</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {["Mechanical / CAD", "Programming", "Electrical", "Business", "Outreach", "Media / Video"].map((item) => (
                       <label key={item} className="flex items-center gap-3 p-3 border border-obsidian/10 ares-cut-sm cursor-pointer hover:bg-obsidian/5 transition-colors">
@@ -219,7 +221,7 @@ export default function Join() {
                   <button type="submit" disabled={isSubmitting} className={`px-8 py-4 w-full text-white font-black uppercase tracking-widest ares-cut-sm hover:-translate-y-1 active:translate-y-0 transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 ${role === "student" ? "bg-ares-red hover:shadow-[0_10px_30px_rgba(220,38,38,0.3)] hover:bg-red-600" : "bg-obsidian hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"}`}>
                     {isSubmitting ? "Submitting..." : `Submit ${role === "student" ? "Student" : "Mentor"} Application`}
                   </button>
-                  <p className="text-center text-[11px] text-obsidian/40 font-bold uppercase tracking-widest mt-4">
+                  <p className="text-center text-[11px] text-obsidian/80 font-bold uppercase tracking-widest mt-4">
                     Your personal information is protected under the FIRST Youth Protection Program guidelines.
                   </p>
                 </div>

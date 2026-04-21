@@ -109,7 +109,7 @@ export default function Accessibility() {
           className="text-center p-8 hero-card border border-dashed border-zinc-800"
         >
           <div className="flex gap-6 justify-center items-center mb-6 border-b border-zinc-800/50 pb-4 max-w-sm mx-auto">
-            <span className="font-mono text-sm tracking-widest text-zinc-500 mr-2">SCANNED BY</span>
+            <span className="font-mono text-sm tracking-widest text-zinc-400 mr-2">SCANNED BY</span>
             <a href="https://pa11y.org/" target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100 transition-opacity flex items-center font-bold text-sm gap-1.5" title="pa11y CI Integrated">
               <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/>
@@ -120,7 +120,7 @@ export default function Accessibility() {
               <img src="https://wave.webaim.org/img/wavelogo.svg" alt="WAVE Logo" className="h-4" />
             </a>
           </div>
-          <p className="text-zinc-500 text-sm max-w-lg mx-auto">
+          <p className="text-zinc-400 text-sm max-w-lg mx-auto">
             If you encounter an accessibility hurdle on the ARES Web Portal, please contact us immediately on GitHub or via our Mentors. We treat accessibility defect patches with identical severity to hard system crashes.
           </p>
         </motion.div>

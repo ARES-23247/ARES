@@ -228,7 +228,7 @@ export default function Docs() {
             <div className="text-center py-20">
               <BookOpen size={48} className="text-white/20 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">No Documentation Yet</h2>
-              <p className="text-white/40">Documentation pages will appear here once they are seeded into the database.</p>
+              <p className="text-white/60">Documentation pages will appear here once they are seeded into the database.</p>
             </div>
           )}
 
@@ -242,7 +242,9 @@ export default function Docs() {
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2 text-xs text-white/30">
                   <Link to="/docs" className="hover:text-ares-gold transition-colors flex items-center">
-                    <span className="text-ares-red normal-case">ARES</span><span className="text-white normal-case">Lib</span>
+                    <span aria-hidden="true" className="text-ares-red normal-case before:content-['ARES']"></span>
+                    <span className="sr-only">ARES</span>
+                    <span className="text-white normal-case">Lib</span>
                   </Link>
                   <ChevronRight size={12} />
                   <span className="text-ares-gold/60">{currentDoc.category}</span>

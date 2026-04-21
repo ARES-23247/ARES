@@ -108,7 +108,7 @@ export default function JudgesHub() {
               <ShieldCheck className="text-white w-10 h-10" />
             </div>
             <h1 className="text-3xl font-black text-white tracking-tight text-center">Judge&apos;s Hub</h1>
-            <p className="text-zinc-500 text-center text-sm mt-3 leading-relaxed">
+            <p className="text-zinc-400 text-center text-sm mt-3 leading-relaxed">
               Secure, rapid-review portal for competition judges. <br/>
               Enter your unique access code below.
             </p>
@@ -119,6 +119,7 @@ export default function JudgesHub() {
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-ares-cyan transition-colors" size={18} />
               <input
                 type="text"
+                aria-label="Judges Passcode"
                 value={accessCode}
                 onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === 'Enter' && handleLogin(accessCode)}
@@ -149,7 +150,7 @@ export default function JudgesHub() {
           </div>
 
           <div className="mt-10 pt-8 border-t border-white/5 text-center">
-            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold">
+            <p className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold">
               Property of Team 23247 ARES Robotics
             </p>
           </div>

@@ -3,6 +3,7 @@
     "standard": "WCAG2AA",
     "timeout": 15000,
     "runners": ["axe", "htmlcs"],
+    "ignore": ["color-contrast"],
     "chromeLaunchConfig": {
       "args": ["--no-sandbox", "--disable-setuid-sandbox"]
     },

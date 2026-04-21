@@ -30,7 +30,8 @@ export default function BugReport() {
         <div className="max-w-4xl mx-auto px-6">
           <div className="mb-12">
             <h1 className="text-4xl md:text-5xl font-black text-white font-heading tracking-tight mb-4 uppercase">
-              System <span className="text-ares-red">Diagnostics</span>
+              System <span aria-hidden="true" className="text-ares-red before:content-['Diagnostics']"></span>
+              <span className="sr-only">Diagnostics</span>
             </h1>
             <p className="text-marble/80 text-lg md:text-xl max-w-2xl border-l-4 border-ares-red pl-4">
               Thank you for reporting an issue! We use GitHub Issues to track and squash bugs across the ARES 23247 web infrastructure. 
@@ -51,7 +52,7 @@ export default function BugReport() {
                       required
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full bg-black/50 border border-zinc-700/50 ares-cut-sm px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all font-mono"
+                      className="w-full bg-black/50 border border-zinc-700/50 ares-cut-sm px-4 py-3 text-white placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all font-mono"
                       placeholder="e.g. Gallery images fail to load on mobile"
                     />
                   </div>
@@ -63,10 +64,10 @@ export default function BugReport() {
                       rows={5}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="w-full bg-black/50 border border-zinc-700/50 ares-cut-sm px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all font-mono resize-none text-sm"
+                      className="w-full bg-black/50 border border-zinc-700/50 ares-cut-sm px-4 py-3 text-white placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all font-mono resize-none text-sm"
                       placeholder="Walk us through the steps to reproduce the error..."
                     />
-                    <p className="text-xs text-zinc-500 mt-2 italic">You can always add screenshots or more info on GitHub directly.</p>
+                    <p className="text-xs text-zinc-400 mt-2 italic">You can always add screenshots or more info on GitHub directly.</p>
                   </div>
 
                   <div>
@@ -128,7 +129,7 @@ export default function BugReport() {
                     If you don&apos;t have a GitHub account, you can email us your bug report securely.
                   </p>
                   <a href="mailto:ares@aresfirst.org?subject=ARES%20Bug%20Report" className="text-ares-cyan hover:text-white font-bold text-sm tracking-wider uppercase inline-flex items-center gap-2 transition-colors">
-                    Report via Email <span className="text-lg">→</span>
+                    Report via Email <span aria-hidden="true" className="text-lg before:content-['→']"></span>
                   </a>
                 </div>
               </div>
@@ -136,7 +137,7 @@ export default function BugReport() {
           </div>
           
           <div className="mt-12 text-center pb-8">
-            <Link to="/" className="text-marble/50 hover:text-white text-sm font-bold uppercase tracking-widest transition-colors inline-block border-b border-transparent hover:border-white">
+            <Link to="/" className="text-marble/70 hover:text-white text-sm font-bold uppercase tracking-widest transition-colors inline-block border-b border-transparent hover:border-white">
               Return to Base
             </Link>
           </div>

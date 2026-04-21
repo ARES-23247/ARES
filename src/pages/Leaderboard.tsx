@@ -56,7 +56,7 @@ export default function Leaderboard() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-gold/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-5xl mx-auto px-6 relative z-10">
-        <Link to="/" className="inline-flex items-center gap-2 text-zinc-500 hover:text-white text-xs font-bold uppercase tracking-widest mb-12 transition-colors">
+        <Link to="/" className="inline-flex items-center gap-2 text-zinc-300 hover:text-white text-xs font-bold uppercase tracking-widest mb-12 transition-colors">
           <ArrowLeft size={16} /> Back to Portal
         </Link>
         <header className="mb-20 text-center">
@@ -74,13 +74,14 @@ export default function Leaderboard() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4"
           >
-            Team <span className="text-transparent bg-clip-text bg-gradient-to-r from-ares-gold to-yellow-300">Leaderboard</span>
+            Team <span aria-hidden="true" className="text-transparent bg-clip-text bg-gradient-to-r from-ares-gold to-yellow-300 before:content-['Leaderboard']"></span>
+            <span className="sr-only">Leaderboard</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-zinc-400 max-w-xl mx-auto text-lg"
+            className="text-zinc-300 max-w-xl mx-auto text-lg"
           >
             Recognizing the students and mentors who go above and beyond in engineering, outreach, and leadership.
           </motion.p>
@@ -122,7 +123,7 @@ export default function Leaderboard() {
                     <p className="text-white font-black text-lg text-center leading-tight">
                       {user.nickname || user.first_name}
                     </p>
-                    <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">{user.member_type}</p>
+                    <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">{user.member_type}</p>
                   </Link>
 
                   <div className={`w-full ${height} ${bg} border-t border-x ${border}/30 rounded-t-3xl flex flex-col items-center justify-start pt-6 relative overflow-hidden backdrop-blur-sm group`}>

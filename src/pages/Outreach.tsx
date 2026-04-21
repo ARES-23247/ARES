@@ -60,7 +60,7 @@ export default function Outreach() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-zinc-400 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-medium"
+            className="text-zinc-300 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-medium"
           >
             ARES 23247 isn&apos;t just about building robots. We&apos;re building a community that values curiosity, innovation, and service.
           </motion.p>
@@ -85,8 +85,8 @@ export default function Outreach() {
               >
                 <div className="mb-6">{stat.icon}</div>
                 <div className="text-5xl font-black text-white mb-2 tracking-tighter">{stat.val}</div>
-                <div className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-4">{stat.label}</div>
-                <p className="text-zinc-600 text-sm italic">{stat.desc}</p>
+                <div className="text-xs font-bold uppercase tracking-widest text-zinc-300 mb-4">{stat.label}</div>
+                <p className="text-zinc-300 text-sm italic">{stat.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -101,7 +101,7 @@ export default function Outreach() {
             <p className="text-lg leading-relaxed mb-6 font-medium text-zinc-700">
               ARES is proud to partner with <a href="https://sparkwv.org" target="_blank" rel="noopener noreferrer" className="text-ares-red underline font-black">Spark! Imagination and Science Center</a> in Morgantown. 
             </p>
-            <p className="text-lg leading-relaxed text-zinc-600">
+            <p className="text-lg leading-relaxed text-zinc-700">
               Together, we are developing a new rotating exhibit structure that highlights STEM stories unique to West Virginia. Our first project is the <strong>WV Bridge Exhibit</strong>, using the Engineering Design Process to teach children about structural integrity and local history.
             </p>
             <div className="mt-10 flex gap-4">
@@ -129,7 +129,7 @@ export default function Outreach() {
           <header className="mb-16 flex flex-col md:flex-row items-end justify-between gap-6">
             <div>
               <h2 className="text-4xl font-black text-white italic tracking-tighter">Impact Log</h2>
-              <p className="text-zinc-500 font-medium">A chronological record of our community interactions.</p>
+              <p className="text-zinc-300 font-medium">A chronological record of our community interactions.</p>
             </div>
             <div className="h-px flex-1 bg-white/5 mx-6 hidden md:block" />
             <a href="mailto:ares@aresfirst.org" className="text-ares-gold font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-all">
@@ -148,13 +148,13 @@ export default function Outreach() {
                 className="bg-zinc-900/50 border border-white/5 p-8 ares-cut-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-8 group hover:border-white/10 transition-all backdrop-blur-sm"
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-3">
+                  <div className="flex items-center gap-3 text-zinc-300 text-[10px] font-bold uppercase tracking-widest mb-3">
                      <span className="flex items-center gap-1"><MapPin size={10} className="text-ares-red" /> {log.location || 'Local Community'}</span>
                      <span>&middot;</span>
                      <span>{new Date(log.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                   <h3 className="text-2xl font-black text-white mb-3 group-hover:text-ares-gold transition-colors">{log.title}</h3>
-                  <p className="text-zinc-500 leading-relaxed max-w-2xl">{log.description}</p>
+                  <p className="text-zinc-300 leading-relaxed max-w-2xl">{log.description}</p>
                 </div>
                 
                 <div className="flex items-center gap-4">
@@ -174,7 +174,7 @@ export default function Outreach() {
         <div className="max-w-4xl mx-auto ares-cut-lg bg-gradient-to-br from-ares-red/30 to-zinc-900 border border-ares-red/40 p-12 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-ares-red/20 blur-[100px] rounded-full pointer-events-none" />
           <h2 className="text-4xl md:text-5xl font-black text-white mb-6 italic tracking-tighter">Have a volunteer need?</h2>
-          <p className="text-zinc-400 text-lg mb-10 max-w-xl mx-auto font-medium">Whether it&apos;s a elementary school demo, a science fair, or a community workshop—ARES is here to inspire.</p>
+          <p className="text-zinc-300 text-lg mb-10 max-w-xl mx-auto font-medium">Whether it&apos;s a elementary school demo, a science fair, or a community workshop—ARES is here to inspire.</p>
           <a href="mailto:ares@aresfirst.org" className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black ares-cut hover:bg-ares-gold hover:text-black transition-all shadow-2xl">
             Get In Touch <ArrowRight size={20} />
           </a>
