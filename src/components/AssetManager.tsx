@@ -38,7 +38,7 @@ export default function AssetManager() {
         const formData = new FormData();
         formData.append("file", compressed, file.name.replace(/\.[^/.]+$/, ext));
         formData.append("folder", activeFolder);
-        const res = await fetch("/dashboard/api/admin/upload", { method: "POST", credentials: "include", body: formData });
+        const res = await fetch("/dashboard/api/admin/media/upload", { method: "POST", credentials: "include", body: formData });
         if (!res.ok) throw new Error("Upload failed");
         setUploadProgress({ current: i + 1, total: files.length });
       }

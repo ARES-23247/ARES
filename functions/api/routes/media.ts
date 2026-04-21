@@ -2,9 +2,10 @@ import { Hono } from "hono";
 import { Bindings, ensureAdmin, getDbSettings } from "./_shared";
 
 const mediaRouter = new Hono<{ Bindings: Bindings }>();
+const adminMediaRouter = new Hono<{ Bindings: Bindings }>();
 
 // ── POST /admin/upload — File Upload via R2 & AI Image Accessibility ──
-mediaRouter.post("/admin/upload", ensureAdmin, async (c) => {
+adminMediaRouter.post("/upload", ensureAdmin, async (c) => {
   try {
     const body = await c.req.parseBody();
     const file = body["file"] as File;
@@ -111,7 +112,7 @@ mediaRouter.get("/", async (c) => {
 });
 
 // ── GET /admin/media — list all R2 objects (CMS Admins) ───────────────
-mediaRouter.get("/admin/list", async (c) => {
+adminMediaRouter.get("/", async (c) => {
   try {
     const [objects, dbRes] = await Promise.all([
       c.env.ARES_STORAGE.list(),
@@ -138,7 +139,7 @@ mediaRouter.get("/admin/list", async (c) => {
 });
 
 // ── DELETE /admin/media/:key — delete R2 object (admin) ─────────────────
-mediaRouter.delete("/admin/:key", ensureAdmin, async (c) => {
+adminMediaRouter.delete("/:key", ensureAdmin, async (c) => {
   try {
     const key = c.req.param("key") as string;
     // ensureAdmin already validated the session — use context
@@ -168,7 +169,7 @@ mediaRouter.delete("/admin/:key", ensureAdmin, async (c) => {
 });
 
 // ── PUT /admin/media/:key/move — change folder (admin) ─────────────────
-mediaRouter.put("/admin/:key/move", ensureAdmin, async (c) => {
+adminMediaRouter.put("/:key/move", ensureAdmin, async (c) => {
   try {
     const key = c.req.param("key") as string;
     const body = await c.req.json();
@@ -183,7 +184,7 @@ mediaRouter.put("/admin/:key/move", ensureAdmin, async (c) => {
 });
 
 // ── POST /admin/media/syndicate — Cross-post Asset to Socials (admin) ─
-mediaRouter.post("/admin/syndicate", ensureAdmin, async (c) => {
+adminMediaRouter.post("/syndicate", ensureAdmin, async (c) => {
   try {
     const { key, caption } = await c.req.json();
     if (!key || !caption) {
@@ -208,4 +209,4 @@ mediaRouter.post("/admin/syndicate", ensureAdmin, async (c) => {
   }
 });
 
-export default mediaRouter;
+export { mediaRouter, adminMediaRouter };

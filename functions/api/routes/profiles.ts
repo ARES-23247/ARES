@@ -155,44 +155,6 @@ profilesRouter.put("/avatar", async (c) => {
   }
 });
 
-// ── GET /profile/:userId — public profile ─────────────────────────────
-profilesRouter.get("/:userId", async (c) => {
-  const userId = c.req.param("userId");
-  try {
-    const profile = await c.env.DB.prepare(
-      `SELECT p.*, u.image as avatar, u.name 
-       FROM user_profiles p 
-       LEFT JOIN user u ON p.user_id = u.id 
-       WHERE p.user_id = ?`
-    ).bind(userId).first<Record<string, unknown>>();
-
-    if (!profile) {
-      console.warn(`[Profile API] 404 - User ID ${userId} not found in user_profiles table.`);
-      return c.json({ error: "Profile not found" }, 404);
-    }
-
-    if (Number(profile.show_on_about || 0) !== 1) {
-      console.info(`[Profile API] 403 - User ID ${userId} exists but has show_on_about=0.`);
-      return c.json({ error: "This profile is private." }, 403);
-    }
-
-    const memberType = String(profile.member_type || "student");
-    const sanitized = sanitizeProfileForPublic(profile as Record<string, unknown>, memberType);
-
-    const { results: rawBadges } = await c.env.DB.prepare(
-      `SELECT b.* FROM badges b
-       JOIN user_badges ub ON b.id = ub.badge_id
-       WHERE ub.user_id = ?
-       ORDER BY ub.awarded_at DESC`
-    ).bind(userId).all();
-
-    return c.json({ profile: sanitized, badges: rawBadges || [] });
-  } catch (err) {
-    console.error("D1 public profile error:", err);
-    return c.json({ error: "Profile fetch failed" }, 500);
-  }
-});
-
 // ── GET /team-roster — about page roster ──────────────────────────────
 profilesRouter.get("/team-roster", async (c) => {
   try {
@@ -266,6 +228,44 @@ profilesRouter.get("/logistics/summary", async (c) => {
   } catch (err) {
     console.error("D1 logistics summary error:", err);
     return c.json({ error: "Logistics fetch failed" }, 500);
+  }
+});
+
+// ── GET /profile/:userId — public profile ─────────────────────────────
+profilesRouter.get("/:userId", async (c) => {
+  const userId = c.req.param("userId");
+  try {
+    const profile = await c.env.DB.prepare(
+      `SELECT p.*, u.image as avatar, u.name 
+       FROM user_profiles p 
+       LEFT JOIN user u ON p.user_id = u.id 
+       WHERE p.user_id = ?`
+    ).bind(userId).first<Record<string, unknown>>();
+
+    if (!profile) {
+      console.warn(`[Profile API] 404 - User ID ${userId} not found in user_profiles table.`);
+      return c.json({ error: "Profile not found" }, 404);
+    }
+
+    if (Number(profile.show_on_about || 0) !== 1) {
+      console.info(`[Profile API] 403 - User ID ${userId} exists but has show_on_about=0.`);
+      return c.json({ error: "This profile is private." }, 403);
+    }
+
+    const memberType = String(profile.member_type || "student");
+    const sanitized = sanitizeProfileForPublic(profile as Record<string, unknown>, memberType);
+
+    const { results: rawBadges } = await c.env.DB.prepare(
+      `SELECT b.* FROM badges b
+       JOIN user_badges ub ON b.id = ub.badge_id
+       WHERE ub.user_id = ?
+       ORDER BY ub.awarded_at DESC`
+    ).bind(userId).all();
+
+    return c.json({ profile: sanitized, badges: rawBadges || [] });
+  } catch (err) {
+    console.error("D1 public profile error:", err);
+    return c.json({ error: "Profile fetch failed" }, 500);
   }
 });
 

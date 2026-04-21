@@ -7,9 +7,10 @@ import { notifyAdmins } from "../../utils/notifications";
 
 
 const inquiriesRouter = new Hono<AppEnv>();
+const adminInquiriesRouter = new Hono<AppEnv>();
 
 // ── GET / — list all inquiries (admin) ──────────────────────────
-inquiriesRouter.get("/", async (c) => {
+adminInquiriesRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare(
@@ -23,7 +24,7 @@ inquiriesRouter.get("/", async (c) => {
 });
 
 // Alias for old list path if needed
-inquiriesRouter.get("/list", async (c) => {
+adminInquiriesRouter.get("/list", async (c) => {
   return c.redirect("./");
 });
 
@@ -186,7 +187,7 @@ inquiriesRouter.post("/", async (c) => {
 });
 
 // ── PATCH /:id/status — update status (admin) ──────────────────────────────────
-inquiriesRouter.patch("/:id/status", ensureAdmin, async (c) => {
+adminInquiriesRouter.patch("/:id/status", ensureAdmin, async (c) => {
   try {
     const id = c.req.param("id");
     const { status } = await c.req.json();
@@ -208,7 +209,7 @@ inquiriesRouter.patch("/:id/status", ensureAdmin, async (c) => {
 });
 
 // ── DELETE /:id — delete inquiry (admin) ────────────────────────────────────────
-inquiriesRouter.delete("/:id", ensureAdmin, async (c) => {
+adminInquiriesRouter.delete("/:id", ensureAdmin, async (c) => {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare("DELETE FROM inquiries WHERE id = ?").bind(id).run();
@@ -232,5 +233,5 @@ export async function purgeOldInquiries(db: D1Database, days: number) {
   return { deleted: meta.changes };
 }
 
-export default inquiriesRouter;
+export { inquiriesRouter, adminInquiriesRouter };
 

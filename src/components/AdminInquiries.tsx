@@ -17,7 +17,7 @@ export default function AdminInquiries() {
   const { data: inquiries = [], isLoading } = useQuery({
     queryKey: ["admin-inquiries"],
     queryFn: async () => {
-      const res = await fetch("/api/inquiries/admin");
+      const res = await fetch("/api/admin/inquiries");
       const d = await res.json() as { inquiries?: Inquiry[] };
       return d.inquiries || [];
     }
@@ -25,7 +25,7 @@ export default function AdminInquiries() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      await fetch(`/api/inquiries/admin/${id}/status`, {
+      await fetch(`/api/admin/inquiries/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -36,7 +36,7 @@ export default function AdminInquiries() {
 
   const deleteInquiry = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`/api/inquiries/admin/${id}`, { method: "DELETE" });
+      await fetch(`/api/admin/inquiries/${id}`, { method: "DELETE" });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] })
   });
