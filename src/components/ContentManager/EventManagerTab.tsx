@@ -84,16 +84,16 @@ export default function EventManagerTab({
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
         <div className="flex items-center gap-4">
-          <h3 className={`font-bold uppercase tracking-widest text-xs ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-ares-gold'}`}>
-            {view === 'active' ? 'Active Events' : view === 'pending' ? 'Pending Events' : 'Trashed Events'}
-          </h3>
-          {view === 'active' && lastSyncedAt && (
+          <h3 className={`font-bold uppercase tracking-widest text-xs ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-ares-cyan'}`}>
+          {view === 'trash' ? 'Trashed Events' : view === 'pending' ? 'Pending Events' : view === 'internal' ? 'Practices' : view === 'outreach' ? 'Outreach Events' : view === 'external' ? 'Community Events' : 'All Events'}
+        </h3>
+        {view !== 'trash' && view !== 'pending' && lastSyncedAt && (
             <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-tight bg-zinc-900 border border-zinc-800 px-2 py-0.5 ares-cut-sm">
               Last Sync: {format(new Date(lastSyncedAt), 'MMM do, h:mm a')}
             </span>
           )}
         </div>
-        {view === 'active' && (
+        {view !== 'trash' && view !== 'pending' && (
           <button 
             onClick={() => syncGcalMutation.mutate(undefined as unknown as void)}
             disabled={syncGcalMutation.isPending}
