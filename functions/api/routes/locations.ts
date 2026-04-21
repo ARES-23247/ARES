@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Bindings, getSessionUser, validateLength, MAX_INPUT_LENGTHS, UserRole, ensureAdmin, parsePagination } from "./_shared";
+import { Bindings, validateLength, MAX_INPUT_LENGTHS, ensureAdmin, parsePagination } from "./_shared";
 
 const locationsRouter = new Hono<{ Bindings: Bindings }>();
 

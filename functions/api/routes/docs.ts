@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { Context } from "hono";
-import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, logAuditAction, parsePagination } from "./_shared";
+import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, parsePagination } from "./_shared";
 import { siteConfig } from "../../utils/site.config";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
