@@ -9,7 +9,7 @@ test.describe('ARESWEB Content Routes', () => {
     
     // We expect there to be some kind of grid or list loading container
     // Let's assert the primary heading exists
-    const heading = page.locator('h1').filter({ hasText: 'Blog' });
+    await expect(page.locator('h1').filter({ hasText: 'Blog' })).toBeVisible();
     // Assuming the blog page has "Blog" or "Engineering Notebook" as h1
     // We will just verify it's a 200 and loads DOM for now, 
     // to protect against blank screens.

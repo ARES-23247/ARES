@@ -74,17 +74,17 @@ const DEFAULT_PROFILE: ProfileData = {
   parents_name: "", parents_email: "", students_name: "", students_email: "",
 };
 
-const safeJSONParse = (val: unknown, fallback: any) => {
+const safeJSONParse = <T,>(val: unknown, fallback: T): T => {
   if (val === null || val === undefined || val === "") return fallback;
   if (typeof val === "string") {
     try {
       const parsed = JSON.parse(val);
-      return parsed === null ? fallback : parsed;
+      return parsed === null ? fallback : (parsed as T);
     } catch {
       return fallback;
     }
   }
-  return val;
+  return val as T;
 };
 
 export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: string }) {
