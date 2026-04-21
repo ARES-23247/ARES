@@ -1,5 +1,5 @@
 import { useState, useEffect, Suspense, lazy } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link, useLocation, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, 
@@ -32,10 +32,11 @@ const SponsorTokensManager = lazy(() => import("@/components/SponsorTokensManage
 // ── NavButton Component ────────────────────────────────────────────
 const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false, currentPath }: { tab: string, icon?: React.ElementType, label: string, disabled?: boolean, sub?: boolean, currentPath: string }) => {
   const isActive = currentPath === `/dashboard/${tab}` || (tab === "profile" && (currentPath === "/dashboard" || currentPath === "/dashboard/"));
+  const Component = disabled ? "button" : Link;
   return (
-    <Link
-      to={disabled ? "#" : `/dashboard/${tab}`}
-      className={`w-full flex items-center gap-3 px-4 py-2.5 ares-cut-sm transition-all font-semibold ${
+    <Component
+      {...(disabled ? { disabled: true } : { to: `/dashboard/${tab}` })}
+      className={`w-full flex items-center gap-3 px-4 py-2.5 ares-cut-sm transition-all font-semibold text-left ${
         isActive 
           ? "bg-ares-red/10 text-white border border-ares-red/30 shadow-[0_0_15px_rgba(192,0,0,0.1)]" 
           : "text-marble/70 hover:bg-white/5 hover:text-white border border-transparent"
@@ -43,7 +44,7 @@ const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false, curr
     >
       {Icon && <Icon size={18} className={isActive ? "text-white" : "text-marble/50"} />}
       <span className="truncate">{label}</span>
-    </Link>
+    </Component>
   );
 };
 
@@ -69,19 +70,14 @@ function TabLoader() {
 }
 
 export default function Dashboard() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const initialDoc = searchParams.get("editDoc");
 
   // ── State ──────────────────────────────────────────────────────────
   const [enrichedSession, setEnrichedSession] = useState<{user: Record<string, unknown>, authenticated: boolean} | null>(null);
   const [isPending, setIsPending] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabState>(initialDoc ? "docs" : "profile");
-  const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
-  const [editEventId, setEditEventId] = useState<string | null>(null);
-  const [editDocSlug, setEditDocSlug] = useState<string | null>(initialDoc);
-  const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
   const session = enrichedSession;
@@ -91,6 +87,12 @@ export default function Dashboard() {
   const isAuthorized = isAdmin || role === "author";
   const isUnverified = role === "unverified" && !isLocalDev;
   const canSeeLogistics = isAdmin || ["parent", "coach", "mentor"].includes(memberType);
+
+  const [editPostSlug, setEditPostSlug] = useState<string | null>(null);
+  const [editEventId, setEditEventId] = useState<string | null>(null);
+  const [editDocSlug, setEditDocSlug] = useState<string | null>(initialDoc);
+  const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (session && isAdmin) {
@@ -129,18 +131,6 @@ export default function Dashboard() {
       });
   }, []);
 
-
-
-  useEffect(() => {
-    if (initialDoc) {
-      const timer = setTimeout(() => {
-        setSearchParams(new URLSearchParams());
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [initialDoc, setSearchParams]);
-
-  // ── Loading State ──────────────────────────────────────────────────
   if (isPending) {
     return (
       <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden font-sans">
@@ -162,14 +152,10 @@ export default function Dashboard() {
     );
   }
 
-  // ── Unauthorized Gate ──────────────────────────────────────────────
-
   if (!session || !session.user) {
     return (
       <div className="w-full min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center relative overflow-hidden font-sans">
-        {/* Background glow effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-red/10 blur-[120px] rounded-full pointer-events-none opacity-50" />
-        
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative z-10 max-w-lg w-full mx-4">
           <div className="bg-black/60 backdrop-blur-2xl ares-cut border border-red-500/20 p-10 shadow-2xl text-center">
             <div className="mb-6 flex justify-center">
@@ -183,7 +169,7 @@ export default function Dashboard() {
             </p>
             <div className="space-y-3">
               <button onClick={() => navigate("/login")} className="w-full px-6 py-4 bg-gradient-to-r from-ares-red to-red-800 text-transparent font-bold text-sm ares-cut transition-all shadow-[0_0_20px_#7f1d1d] hover:shadow-[0_0_30px_#7f1d1d]">
-                <span style={{ backgroundColor: '#c00000', color: '#ffffff' }} className="flex items-center justify-center h-full w-full"><Lock size={16} className="inline mr-2 -mt-1" /> Sign In with ARES ID</span>
+                <span className="flex items-center justify-center h-full w-full bg-ares-red text-white"><Lock size={16} className="inline mr-2 -mt-1" /> Sign In with ARES ID</span>
               </button>
               <button onClick={() => navigate("/")} className="w-full px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-white font-bold text-sm ares-cut transition-all">
                 Return to Home
@@ -194,141 +180,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  // ── Active Tab Content Renderer ────────────────────────────────────
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "blog":
-        return <BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} userRole={session?.user?.role} />;
-      case "event":
-        return <EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} userRole={session?.user?.role} />;
-      case "docs":
-        return <DocsEditor editSlug={editDocSlug} onClearEdit={() => setEditDocSlug(null)} userRole={session?.user?.role} />;
-      case "manage_blog":
-      case "manage_event":
-      case "manage_docs":
-        return (
-          <ContentManager 
-            mode={activeTab === "manage_blog" ? "blog" : activeTab === "manage_event" ? "event" : "docs"}
-            onEditPost={(slug) => { setEditPostSlug(slug); setActiveTab("blog"); }}
-            onEditEvent={(id) => { setEditEventId(id); setActiveTab("event"); }}
-            onEditDoc={(slug) => { setEditDocSlug(slug); setActiveTab("docs"); }}
-          />
-        );
-      case "assets":
-        return <AssetManager />;
-      case "integrations":
-        return <IntegrationsManager />;
-      case "profile":
-        return <ProfileEditor />;
-      case "users":
-        return isAdmin ? <AdminUsers /> : null;
-      case "inquiries":
-        return isAdmin ? (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3"><MessageSquare className="text-ares-gold" /> Team Inquiries</h2>
-              <p className="text-marble/60 text-sm mt-1">Review student, mentor, and sponsor applications.</p>
-            </div>
-            <AdminInquiries />
-          </>
-        ) : null;
-      case "impact_roster":
-        return isAdmin ? <MemberImpactOverview /> : null;
-      case "badges":
-        return isAdmin ? (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3">Badge Management</h2>
-              <p className="text-zinc-500 text-sm mt-1">Define platform-wide awards and distribute them to members.</p>
-            </div>
-            <BadgeManager />
-          </>
-        ) : null;
-      case "logistics":
-        return (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3"><Utensils className="text-ares-gold" /> Team Logistics Summary</h2>
-              <p className="text-marble/60 text-sm mt-1">Aggregated dietary data for event planning and team management.</p>
-            </div>
-            <DietarySummary />
-          </>
-        );
-      case "analytics":
-        return (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3"><BarChart3 className="text-ares-cyan" /> Community Engagement</h2>
-              <p className="text-zinc-500 text-sm mt-1">Real-time data on documentation and blog utility.</p>
-            </div>
-            <AnalyticsDashboard />
-          </>
-        );
-      case "sponsors":
-        return (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3"><Gem className="text-ares-cyan" /> Sponsor Recognition</h2>
-              <p className="text-zinc-500 text-sm mt-1">Manage and showcase our funding partners.</p>
-            </div>
-            <SponsorEditor />
-          </>
-        );
-      case "sponsor_tokens":
-        return isAdmin ? (
-          <>
-             <div className="mb-6 pb-6 border-b border-white/5">
-               <h2 className="text-2xl font-black text-white flex items-center gap-3"><Gem className="text-ares-cyan" /> Sponsor ROI Tokens</h2>
-               <p className="text-zinc-500 text-sm mt-1">Generate secure magic links for sponsors to view their impact report.</p>
-             </div>
-             <SponsorTokensManager />
-          </>
-        ) : null;
-      case "outreach":
-        return (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3"><Target className="text-ares-cyan" /> Community Impact Tracker</h2>
-              <p className="text-zinc-500 text-sm mt-1">Log outreach events and student service hours.</p>
-            </div>
-            <OutreachTracker />
-          </>
-        );
-      case "legacy":
-        return (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3"><Trophy className="text-ares-gold" /> Team Legacy Archive</h2>
-              <p className="text-zinc-500 text-sm mt-1">Manage seasonal achievements and awards.</p>
-            </div>
-            <AwardEditor />
-          </>
-        );
-      case "locations":
-        return (
-          <>
-            <div className="mb-6 pb-6 border-b border-white/5">
-              <h2 className="text-2xl font-black text-white flex items-center gap-3"><MapPin className="text-ares-gold" /> Team Locations</h2>
-              <p className="text-marble/60 text-sm mt-1">Manage physical meeting points, shops, and outreach sites.</p>
-            </div>
-            <LocationsManager />
-          </>
-        );
-      case "command_center":
-        return isAdmin ? <CommandCenter /> : null;
-      default:
-        return null;
-    }
-  };
-
-  const handleNavigate = (tab: TabState) => {
-    setActiveTab(tab); 
-    setIsSidebarOpen(false); 
-    if (tab === "blog") setEditPostSlug(null);
-    if (tab === "event") setEditEventId(null);
-    if (tab === "docs") setEditDocSlug(null);
-  };
 
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
@@ -346,9 +197,9 @@ export default function Dashboard() {
           </div>
           <h1 className="text-lg font-black tracking-tighter text-white">ARES<span className="text-zinc-500 font-bold">Workspace</span></h1>
           {isAdmin && pendingCount > 0 && (
-            <button onClick={() => { setIsSidebarOpen(false); setActiveTab("inquiries"); }} className="ml-2 px-2 py-0.5 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.6)]">
+            <Link to="/dashboard/inquiries" onClick={() => setIsSidebarOpen(false)} className="ml-2 px-2 py-0.5 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.6)]">
               {pendingCount} New
-            </button>
+            </Link>
           )}
         </div>
         <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm text-zinc-300 transition-colors">
@@ -390,28 +241,24 @@ export default function Dashboard() {
 
         {/* Scrollable Navigation */}
         <div className="flex-1 overflow-y-auto py-6 space-y-8 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-          
-          {/* PERSONAL */}
           <div>
             <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Personal</h4>
             <div className="space-y-1 px-3">
-              <NavButton tab="profile" icon={User} label="My Profile" activeTab={activeTab} onNavigate={handleNavigate} />
+              <NavButton tab="profile" icon={User} label="My Profile" currentPath={location.pathname} />
             </div>
           </div>
 
-          {/* AUTHORING */}
           {isAuthorized && (
             <div>
               <h4 className="text-[10px] uppercase font-black tracking-widest text-marble/60 mb-2 px-6 flex items-center gap-2"><PlusCircle size={12} className="text-ares-cyan" /> Quick Create</h4>
               <div className="space-y-1 px-3">
-                <NavButton tab="blog" icon={PenTool} label={editPostSlug ? "Edit Post (Active)" : "New Blog Post"} activeTab={activeTab} onNavigate={handleNavigate} />
-                <NavButton tab="event" icon={Calendar} label={editEventId ? "Edit Event (Active)" : "New Event"} activeTab={activeTab} onNavigate={handleNavigate} />
-                <NavButton tab="docs" icon={Book} label={editDocSlug ? "Edit Doc (Active)" : "New Document"} activeTab={activeTab} onNavigate={handleNavigate} />
+                <NavButton tab="blog" icon={PenTool} label={editPostSlug ? "Edit Post (Active)" : "New Blog Post"} currentPath={location.pathname} />
+                <NavButton tab="event" icon={Calendar} label={editEventId ? "Edit Event (Active)" : "New Event"} currentPath={location.pathname} />
+                <NavButton tab="docs" icon={Book} label={editDocSlug ? "Edit Doc (Active)" : "New Document"} currentPath={location.pathname} />
               </div>
             </div>
           )}
 
-          {/* CONTENT HUB */}
           {isAuthorized && (
             <div>
               <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Content Hub</h4>
@@ -419,49 +266,45 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 px-4 py-2 mt-1 mb-1 text-[11px] font-black uppercase tracking-wider text-zinc-500">
                   <Folders size={14} className="text-zinc-600" /> Database Manager
                 </div>
-                <NavButton tab="manage_blog" label="1. Blogs / News" sub={true} activeTab={activeTab} onNavigate={handleNavigate} />
-                <NavButton tab="manage_event" label="2. Calendar Events" sub={true} activeTab={activeTab} onNavigate={handleNavigate} />
-                <NavButton tab="manage_docs" label="3. ARESLib Docs" sub={true} activeTab={activeTab} onNavigate={handleNavigate} />
-                
+                <NavButton tab="manage_blog" label="1. Blogs / News" sub={true} currentPath={location.pathname} />
+                <NavButton tab="manage_event" label="2. Calendar Events" sub={true} currentPath={location.pathname} />
+                <NavButton tab="manage_docs" label="3. ARESLib Docs" sub={true} currentPath={location.pathname} />
                 <div className="h-px bg-white/5 my-3 mx-4" />
-                <NavButton tab="assets" icon={Image} label="Media Gallery" activeTab={activeTab} onNavigate={handleNavigate} />
-                <NavButton tab="legacy" icon={Trophy} label="Trophy Case Archive" activeTab={activeTab} onNavigate={handleNavigate} />
+                <NavButton tab="assets" icon={Image} label="Media Gallery" currentPath={location.pathname} />
+                <NavButton tab="legacy" icon={Trophy} label="Trophy Case Archive" currentPath={location.pathname} />
               </div>
             </div>
           )}
 
-          {/* OPERATIONS */}
           {isAuthorized && (
             <div>
               <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Operations</h4>
               <div className="space-y-1 px-3">
-                <NavButton tab="outreach" icon={Target} label="Outreach Tracker" activeTab={activeTab} onNavigate={handleNavigate} />
-                <NavButton tab="locations" icon={MapPin} label="Meeting Locations" activeTab={activeTab} onNavigate={handleNavigate} />
-                <NavButton tab="sponsors" icon={Gem} label="Sponsors & Funding" activeTab={activeTab} onNavigate={handleNavigate} />
-                {isAdmin && <NavButton tab="sponsor_tokens" icon={Gem} label="Sponsor ROI Tokens" activeTab={activeTab} onNavigate={handleNavigate} />}
-                <NavButton tab="analytics" icon={BarChart3} label="Analytics" activeTab={activeTab} onNavigate={handleNavigate} />
+                <NavButton tab="outreach" icon={Target} label="Outreach Tracker" currentPath={location.pathname} />
+                <NavButton tab="locations" icon={MapPin} label="Meeting Locations" currentPath={location.pathname} />
+                <NavButton tab="sponsors" icon={Gem} label="Sponsors & Funding" currentPath={location.pathname} />
+                {isAdmin && <NavButton tab="sponsor_tokens" icon={Gem} label="Sponsor ROI Tokens" currentPath={location.pathname} />}
+                <NavButton tab="analytics" icon={BarChart3} label="Analytics" currentPath={location.pathname} />
               </div>
             </div>
           )}
 
-          {/* ADMINISTRATION */}
           {(isAdmin || canSeeLogistics) && (
             <div>
               <h4 className="text-[10px] uppercase font-black tracking-widest text-ares-gold mb-2 px-6">Administration</h4>
               <div className="space-y-1 px-3">
-                {isAdmin && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" activeTab={activeTab} onNavigate={handleNavigate} />}
-                {isAdmin && <NavButton tab="command_center" icon={Radio} label="Command Center" activeTab={activeTab} onNavigate={handleNavigate} />}
-                {isAdmin && <NavButton tab="users" icon={Users} label="User Roles & Sync" activeTab={activeTab} onNavigate={handleNavigate} />}
-                {isAdmin && <NavButton tab="impact_roster" icon={Trophy} label="Impact & Roster" activeTab={activeTab} onNavigate={handleNavigate} />}
-                {isAdmin && <NavButton tab="badges" icon={Award} label="Badges & Awards" activeTab={activeTab} onNavigate={handleNavigate} />}
-                {isAdmin && <NavButton tab="integrations" icon={Settings} label="System Integrations" activeTab={activeTab} onNavigate={handleNavigate} />}
-                {canSeeLogistics && <NavButton tab="logistics" icon={Utensils} label="Dietary / Logistics" activeTab={activeTab} onNavigate={handleNavigate} />}
+                {isAdmin && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" currentPath={location.pathname} />}
+                {isAdmin && <NavButton tab="command_center" icon={Radio} label="Command Center" currentPath={location.pathname} />}
+                {isAdmin && <NavButton tab="users" icon={Users} label="User Roles & Sync" currentPath={location.pathname} />}
+                {isAdmin && <NavButton tab="impact_roster" icon={Trophy} label="Impact & Roster" currentPath={location.pathname} />}
+                {isAdmin && <NavButton tab="badges" icon={Award} label="Badges & Awards" currentPath={location.pathname} />}
+                {isAdmin && <NavButton tab="integrations" icon={Settings} label="System Integrations" currentPath={location.pathname} />}
+                {canSeeLogistics && <NavButton tab="logistics" icon={Utensils} label="Dietary / Logistics" currentPath={location.pathname} />}
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t border-white/5 shrink-0 bg-black/20">
           <button 
               onClick={() => { fetch('/api/auth/sign-out', { method: 'POST' }).then(() => { window.location.href = '/'; }); }}
@@ -472,32 +315,26 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 h-full overflow-y-auto relative bg-zinc-950">
-        {/* Ambient Desktop Background effects */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-ares-red/5 blur-[150px] rounded-full pointer-events-none opacity-60 mix-blend-screen" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-ares-gold/5 blur-[150px] rounded-full pointer-events-none opacity-40 mix-blend-screen" />
         
         <div className="max-w-[1500px] mx-auto w-full min-h-full flex flex-col p-4 pt-24 md:p-8 relative z-10">
-          
-          {/* Main Desktop Header */}
           <div className="hidden md:flex items-center justify-between mb-8">
              <div className="flex items-center gap-4">
                <div className="w-12 h-12 bg-gradient-to-br from-ares-red to-red-900 ares-cut-sm flex items-center justify-center shadow-lg shadow-ares-red/20 border border-red-500/30">
                  <AppWindow className="text-white" size={24} />
                </div>
                <div>
-                  <h1 className="text-3xl font-black tracking-tight text-white mb-1 leading-none">
-                    ARES Workspace
-                  </h1>
+                  <h1 className="text-3xl font-black tracking-tight text-white mb-1 leading-none">ARES Workspace</h1>
                   <p className="text-zinc-500 text-xs font-black uppercase tracking-widest">Internal Systems Portal</p>
                </div>
              </div>
              <div className="flex gap-4">
                {isAdmin && pendingCount > 0 && (
-                 <button onClick={() => setActiveTab("inquiries")} className="px-4 py-2 bg-red-500/20 border border-red-500/40 text-red-100 text-xs font-bold ares-cut animate-pulse hover:bg-red-500/30 transition-colors shadow-[0_0_20px_rgba(239,68,68,0.3)] flex items-center gap-2 uppercase tracking-wider">
+                 <Link to="/dashboard/inquiries" className="px-4 py-2 bg-red-500/20 border border-red-500/40 text-red-100 text-xs font-bold ares-cut animate-pulse hover:bg-red-500/30 transition-colors shadow-[0_0_20px_rgba(239,68,68,0.3)] flex items-center gap-2 uppercase tracking-wider">
                    <MessageSquare size={14} /> {pendingCount} Pending Inquiries
-                 </button>
+                 </Link>
                )}
                {isUnverified && (
                  <span className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold rounded-full uppercase tracking-wider animate-pulse flex items-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
@@ -510,7 +347,7 @@ export default function Dashboard() {
           <div className="flex-1 w-full bg-obsidian border border-white/5 ares-cut-lg shadow-2xl relative overflow-hidden flex flex-col">
             <AnimatePresence mode="wait">
               <motion.div 
-                key={activeTab}
+                key={location.pathname}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
@@ -518,13 +355,35 @@ export default function Dashboard() {
                 className="w-full h-full p-4 sm:p-6 md:p-10 overflow-y-auto"
               >
                 <Suspense fallback={<TabLoader />}>
-                  {renderTabContent()}
+                  <Routes>
+                    <Route index element={<ProfileEditor />} />
+                    <Route path="profile" element={<ProfileEditor />} />
+                    <Route path="blog" element={<BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} userRole={session?.user?.role} />} />
+                    <Route path="event" element={<EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} userRole={session?.user?.role} />} />
+                    <Route path="docs" element={<DocsEditor editSlug={editDocSlug} onClearEdit={() => setEditDocSlug(null)} userRole={session?.user?.role} />} />
+                    <Route path="manage_blog" element={<ContentManager mode="blog" onEditPost={(slug) => { setEditPostSlug(slug); navigate("/dashboard/blog"); }} />} />
+                    <Route path="manage_event" element={<ContentManager mode="event" onEditEvent={(id) => { setEditEventId(id); navigate("/dashboard/event"); }} />} />
+                    <Route path="manage_docs" element={<ContentManager mode="docs" onEditDoc={(slug) => { setEditDocSlug(slug); navigate("/dashboard/docs"); }} />} />
+                    <Route path="assets" element={<AssetManager />} />
+                    <Route path="integrations" element={isAdmin ? <IntegrationsManager /> : <div className="text-center py-20">Access Denied</div>} />
+                    <Route path="users" element={isAdmin ? <AdminUsers /> : <div className="text-center py-20">Access Denied</div>} />
+                    <Route path="inquiries" element={isAdmin ? <><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><MessageSquare className="text-ares-gold" /> Team Inquiries</h2><p className="text-marble/60 text-sm mt-1">Review student, mentor, and sponsor applications.</p></div><AdminInquiries /></> : <div className="text-center py-20">Access Denied</div>} />
+                    <Route path="impact_roster" element={isAdmin ? <MemberImpactOverview /> : <div className="text-center py-20">Access Denied</div>} />
+                    <Route path="badges" element={isAdmin ? <><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3">Badge Management</h2><p className="text-zinc-500 text-sm mt-1">Define platform-wide awards and distribute them to members.</p></div><BadgeManager /></> : <div className="text-center py-20">Access Denied</div>} />
+                    <Route path="logistics" element={canSeeLogistics ? <><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><Utensils className="text-ares-gold" /> Team Logistics Summary</h2><p className="text-marble/60 text-sm mt-1">Aggregated dietary data for event planning and team management.</p></div><DietarySummary /></> : <div className="text-center py-20">Access Denied</div>} />
+                    <Route path="analytics" element={<><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><BarChart3 className="text-ares-cyan" /> Community Engagement</h2><p className="text-zinc-500 text-sm mt-1">Real-time data on documentation and blog utility.</p></div><AnalyticsDashboard /></>} />
+                    <Route path="sponsors" element={<><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><Gem className="text-ares-cyan" /> Sponsor Recognition</h2><p className="text-zinc-500 text-sm mt-1">Manage and showcase our funding partners.</p></div><SponsorEditor /></>} />
+                    <Route path="sponsor_tokens" element={isAdmin ? <><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><Gem className="text-ares-cyan" /> Sponsor ROI Tokens</h2><p className="text-zinc-500 text-sm mt-1">Generate secure magic links for sponsors to view their impact report.</p></div><SponsorTokensManager /></> : <div className="text-center py-20">Access Denied</div>} />
+                    <Route path="outreach" element={<><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><Target className="text-ares-cyan" /> Community Impact Tracker</h2><p className="text-zinc-500 text-sm mt-1">Log outreach events and student service hours.</p></div><OutreachTracker /></>} />
+                    <Route path="legacy" element={<><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><Trophy className="text-ares-gold" /> Team Legacy Archive</h2><p className="text-zinc-500 text-sm mt-1">Manage seasonal achievements and awards.</p></div><AwardEditor /></>} />
+                    <Route path="locations" element={<><div className="mb-6 pb-6 border-b border-white/5"><h2 className="text-2xl font-black text-white flex items-center gap-3"><MapPin className="text-ares-gold" /> Team Locations</h2><p className="text-marble/60 text-sm mt-1">Manage physical meeting points, shops, and outreach sites.</p></div><LocationsManager /></>} />
+                    <Route path="command_center" element={isAdmin ? <CommandCenter /> : <div className="text-center py-20">Access Denied</div>} />
+                  </Routes>
                 </Suspense>
               </motion.div>
             </AnimatePresence>
           </div>
 
-          {/* Footer inside content area */}
           <div className="mt-6 flex items-center justify-between text-zinc-600 text-[10px] font-bold uppercase tracking-widest px-4 pb-4">
              <span>ARES Robotics 23247</span>
              <span>D1 Edge Server</span>
