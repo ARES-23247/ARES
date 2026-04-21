@@ -33,7 +33,7 @@ export default function Footer() {
             <li><Link to="/seasons" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Seasons</Link></li>
             <li><Link to="/outreach" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Outreach</Link></li>
             <li><Link to="/blog" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Team Blog</Link></li>
-            <li><Link to="/docs" className="hover:opacity-80 transition-colors flex items-center gap-2"><span>{"//"}</span> <span className="flex items-center shadow-lg ares-cut-sm overflow-hidden"><span className="bg-ares-red px-2 py-0.5 text-[10px] uppercase text-white font-bold">ARES</span><span className="bg-white/10 text-white font-bold px-2 py-0.5 text-[10px] uppercase">Lib</span></span></Link></li>
+            <li><Link to="/docs" className="hover:opacity-80 transition-colors flex items-center gap-2 group"><span>{"//"}</span> <span className="flex items-center shadow-lg ares-cut-sm overflow-hidden"><span className="bg-ares-red px-2.5 py-0.5 text-[10px] font-heading font-bold uppercase text-white tracking-wider border-r border-white/10">ARES</span><span className="bg-white/10 text-white font-heading font-medium px-2.5 py-0.5 text-[10px] uppercase tracking-widest group-hover:bg-white/20 transition-colors">Lib</span></span></Link></li>
             <li><Link to="/join" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Join Us</Link></li>
             <li><Link to="/tech-stack" className="hover:text-ares-red transition-colors flex items-center gap-2"><span>{"//"}</span> Tech Stack</Link></li>
           </ul>
@@ -95,9 +95,9 @@ export default function Footer() {
 
           <div className="flex gap-8 items-center border-l border-marble/10 pl-8 h-4">
             <Link to="/privacy" className="hover:text-white transition-colors whitespace-nowrap">Privacy</Link>
-            <Link to="/docs" className="hover:opacity-80 transition-colors flex items-center whitespace-nowrap shadow-sm ares-cut-sm overflow-hidden">
-              <span className="bg-ares-red px-1.5 py-0.5 text-[8px] uppercase text-white font-bold">ARES</span>
-              <span className="bg-white/10 text-white font-bold px-1.5 py-0.5 text-[8px] uppercase">Lib</span>
+            <Link to="/docs" className="hover:opacity-80 transition-colors flex items-center whitespace-nowrap shadow-sm ares-cut-sm overflow-hidden group">
+              <span className="bg-ares-red px-2 py-0.5 text-[9px] font-heading font-bold uppercase text-white tracking-wider border-r border-white/10">ARES</span>
+              <span className="bg-white/10 text-white font-heading font-medium px-2 py-0.5 text-[9px] uppercase tracking-widest group-hover:bg-white/20 transition-colors">Lib</span>
             </Link>
             <Link to="/sponsors" className="hover:text-white transition-colors whitespace-nowrap">Support Us</Link>
           </div>

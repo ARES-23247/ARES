@@ -2,7 +2,7 @@ import { memo, useCallback, useState } from "react";
 import { siteConfig } from "../../site.config";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, BookOpen, ChevronRight, ChevronDown, Menu, X, ExternalLink } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, Menu, X, ExternalLink } from "lucide-react";
 
 interface DocRecord {
   slug: string;
@@ -75,13 +75,9 @@ function DocsSidebar({ groupedDocs, currentSlug, onSearchOpen }: DocsSidebarProp
         pt-24 pb-8 px-4
       `}>
         <div className="mb-6 px-2">
-          <Link to="/docs" className="flex items-center gap-2 group">
-            <BookOpen size={20} className="text-ares-red" />
-            <span className="font-heading font-bold text-lg group-hover:text-ares-gold transition-colors flex items-center">
-              <span aria-hidden="true" className="text-ares-red normal-case before:content-['ARES']"></span>
-              <span className="sr-only">ARES</span>
-              <span className="text-white normal-case">Lib</span>
-            </span>
+          <Link to="/docs" className="flex items-center shadow-lg ares-cut-sm overflow-hidden group w-fit">
+            <span className="bg-ares-red px-3 py-1.5 text-xs font-heading font-bold uppercase text-white tracking-wider border-r border-white/10">ARES</span>
+            <span className="bg-white/10 text-white font-heading font-medium px-3 py-1.5 text-xs uppercase tracking-widest group-hover:bg-white/20 transition-colors">Lib</span>
           </Link>
         </div>
 

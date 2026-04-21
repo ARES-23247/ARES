@@ -88,9 +88,9 @@ export default function Navbar() {
           <Link to="/seasons" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Seasons</Link>
           <Link to="/outreach" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Outreach</Link>
           <Link to="/events" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Events</Link>
-          <Link to="/docs" className="hover:opacity-80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-lg">
-            <span className="bg-ares-red px-2 py-1 text-xs font-bold uppercase text-white">ARES</span>
-            <span className="bg-white/10 text-white px-2 py-1 text-xs font-bold uppercase">Lib</span>
+          <Link to="/docs" className="hover:opacity-80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-lg group">
+            <span className="bg-ares-red px-2.5 py-1 text-[10px] font-heading font-bold uppercase text-white tracking-wider border-r border-white/10">ARES</span>
+            <span className="bg-white/10 text-white px-2.5 py-1 text-[10px] font-heading font-medium uppercase tracking-widest group-hover:bg-white/20 transition-colors">Lib</span>
           </Link>
           <Link to="/blog" className="text-marble/70 hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
         </div>

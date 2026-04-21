@@ -241,10 +241,9 @@ export default function Docs() {
             >
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2 text-xs text-white/30">
-                  <Link to="/docs" className="hover:text-ares-gold transition-colors flex items-center">
-                    <span aria-hidden="true" className="text-ares-red normal-case before:content-['ARES']"></span>
-                    <span className="sr-only">ARES</span>
-                    <span className="text-white normal-case">Lib</span>
+                  <Link to="/docs" className="flex items-center shadow-lg ares-cut-sm overflow-hidden group">
+                    <span className="bg-ares-red px-2 py-0.5 text-[10px] font-heading font-bold uppercase text-white tracking-wider border-r border-white/10">ARES</span>
+                    <span className="bg-white/10 text-white font-heading font-medium px-2 py-0.5 text-[10px] uppercase tracking-widest group-hover:bg-white/20 transition-colors">Lib</span>
                   </Link>
                   <ChevronRight size={12} />
                   <span className="text-ares-gold/60">{currentDoc.category}</span>

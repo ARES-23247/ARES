@@ -94,7 +94,7 @@ export default function DocManagerTab({
         <span className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             {view === 'active' ? (
-              <><span className="text-ares-red normal-case tracking-normal">ARES</span><span className="text-white normal-case tracking-normal">Lib</span>&nbsp;Documentation</>
+            <><span className="font-heading font-bold text-ares-red uppercase tracking-wider">ARES</span><span className="font-heading font-medium text-white uppercase tracking-widest">Lib</span>&nbsp;Documentation</>
             ) : view === 'pending' ? 'Pending Docs' : 'Trashed Docs'}
           </span>
           <div className="flex items-center gap-2">
