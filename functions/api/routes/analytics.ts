@@ -93,7 +93,7 @@ analyticsRouter.get("/roster-stats", ensureAdmin, async (c) => {
        FROM user_profiles u
        LEFT JOIN event_signups s ON u.user_id = s.user_id
        LEFT JOIN events e ON s.event_id = e.id AND e.status = 'published' AND e.is_deleted = 0
-       GROUP BY u.user_id
+       GROUP BY u.user_id, u.first_name, u.last_name, u.nickname, u.member_type
        ORDER BY MAX(u.first_name) ASC`
     ).all();
 

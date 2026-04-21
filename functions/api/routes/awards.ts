@@ -8,7 +8,7 @@ awardsRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 100);
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, year, event, team, description, media_url FROM awards ORDER BY year DESC, title ASC LIMIT ? OFFSET ?"
+      "SELECT id, title, date as year, event_name as event, "" as team, description, "" as media_url FROM awards ORDER BY year DESC, title ASC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ awards: results || [] });
   } catch (err) {
@@ -28,9 +28,9 @@ awardsRouter.post("/", ensureAdmin, async (c) => {
     }
 
     await c.env.DB.prepare(
-      "INSERT INTO awards (id, title, year, event, team, description, media_url) VALUES (?, ?, ?, ?, ?, ?, ?) " +
-      "ON CONFLICT(id) DO UPDATE SET title=excluded.title, year=excluded.year, event=excluded.event, team=excluded.team, description=excluded.description, media_url=excluded.media_url"
-    ).bind(id, title, year, event || null, team || "23247", description || null, media_url || null).run();
+      "INSERT INTO awards (title, date, event_name, description) VALUES (?, ?, ?, ?) " +
+      ""
+    ).bind(title, year, event || null, description || null).run();
 
     return c.json({ success: true });
   } catch (err) {
