@@ -32,9 +32,22 @@ import notificationsRouter from "./routes/notifications";
 
 const app = new Hono<{ Bindings: Bindings }>();
 const apiRouter = new Hono<{ Bindings: Bindings }>();
-
-
-
+// ── SEC-DoW: Block *.pages.dev — force all traffic through aresfirst.org ──
+app.use("*", async (c, next) => {
+  const host = c.req.header("host") || "";
+  if (host.endsWith(".pages.dev")) {
+    const url = new URL(c.req.url);
+    // API requests: hard block (no redirect loop risk)
+    if (url.pathname.startsWith("/api/")) {
+      return c.json({ error: "Use aresfirst.org" }, 403);
+    }
+    // Page requests: 301 permanent redirect to production domain
+    url.host = "aresfirst.org";
+    url.protocol = "https:";
+    return c.redirect(url.toString(), 301);
+  }
+  await next();
+});
 
 // ── Isolate-Memory Rate Limiting ─────────────────────────────────────
 app.use("*", async (c, next) => {

@@ -29,24 +29,21 @@ const AdminInquiries = lazy(() => import("@/components/AdminInquiries"));
 const CommandCenter = lazy(() => import("@/components/CommandCenter"));
 const SponsorTokensManager = lazy(() => import("@/components/SponsorTokensManager"));
 
-type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "locations" | "assets" | "integrations" | "profile" | "users" | "logistics" | "analytics" | "sponsors" | "outreach" | "legacy" | "impact_roster" | "badges" | "inquiries" | "command_center" | "sponsor_tokens";
-
 // ── NavButton Component ────────────────────────────────────────────
-const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false, activeTab, onNavigate }: { tab: TabState, icon?: React.ElementType, label: string, disabled?: boolean, sub?: boolean, activeTab: TabState, onNavigate: (tab: TabState) => void }) => {
-  const isActive = activeTab === tab;
+const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false, currentPath }: { tab: string, icon?: React.ElementType, label: string, disabled?: boolean, sub?: boolean, currentPath: string }) => {
+  const isActive = currentPath === `/dashboard/${tab}` || (tab === "profile" && (currentPath === "/dashboard" || currentPath === "/dashboard/"));
   return (
-    <button
-      onClick={() => onNavigate(tab)}
-      disabled={disabled}
+    <Link
+      to={disabled ? "#" : `/dashboard/${tab}`}
       className={`w-full flex items-center gap-3 px-4 py-2.5 ares-cut-sm transition-all font-semibold ${
         isActive 
           ? "bg-ares-red/10 text-white border border-ares-red/30 shadow-[0_0_15px_rgba(192,0,0,0.1)]" 
           : "text-marble/70 hover:bg-white/5 hover:text-white border border-transparent"
-      } ${sub ? "pl-11 text-sm font-bold" : "text-sm"} ${disabled ? "opacity-30 cursor-not-allowed" : ""}`}
+      } ${sub ? "pl-11 text-sm font-bold" : "text-sm"} ${disabled ? "opacity-30 cursor-not-allowed pointer-events-none" : ""}`}
     >
       {Icon && <Icon size={18} className={isActive ? "text-white" : "text-marble/50"} />}
       <span className="truncate">{label}</span>
-    </button>
+    </Link>
   );
 };
 
