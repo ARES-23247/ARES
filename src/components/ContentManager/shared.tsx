@@ -83,8 +83,9 @@ export const ClickToDeleteButton = ({
   );
 };
 
-export const contentFilter = (view: ViewType) => (item: { is_deleted?: number, status?: string }) => {
-  if (view === 'trash') return item.is_deleted === 1;
-  if (view === 'pending') return item.is_deleted !== 1 && (item.status === 'pending' || item.status === 'rejected');
-  return item.is_deleted !== 1 && (item.status === 'published' || !item.status);
+export const contentFilter = (view: ViewType) => (item: { is_deleted?: number | boolean, status?: string }) => {
+  const isDeleted = Number(item.is_deleted) === 1;
+  if (view === 'trash') return isDeleted;
+  if (view === 'pending') return !isDeleted && (item.status === 'pending' || item.status === 'rejected');
+  return !isDeleted && (item.status === 'published' || !item.status);
 };

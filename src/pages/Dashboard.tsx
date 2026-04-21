@@ -245,11 +245,7 @@ export default function Dashboard() {
             <AppWindow size={16} className="text-white" />
           </div>
           <h1 className="text-lg font-black tracking-tighter text-white">ARES<span className="text-zinc-500 font-bold">Workspace</span></h1>
-          {canSeeInquiries && pendingInquiriesCount > 0 && (
-            <Link to="/dashboard/inquiries" onClick={() => setIsSidebarOpen(false)} className="ml-2 px-2 py-0.5 bg-ares-danger text-white text-[10px] font-black uppercase tracking-widest rounded-full animate-bounce shadow-[0_0_15px_rgba(239,68,68,0.6)]">
-              {pendingInquiriesCount} New
-            </Link>
-          )}
+          {/* Blinking light removed per user request */}
         </div>
         <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm text-zinc-300 transition-colors">
           <Menu size={20} />
@@ -380,11 +376,7 @@ export default function Dashboard() {
                </div>
              </div>
              <div className="flex gap-4">
-               {canSeeInquiries && pendingInquiriesCount > 0 && (
-                 <Link to="/dashboard/inquiries" className="px-4 py-2 bg-ares-danger/20 border border-ares-danger/40 text-ares-danger-soft text-xs font-bold ares-cut animate-pulse hover:bg-ares-danger/30 transition-colors shadow-[0_0_20px_rgba(239,68,68,0.3)] flex items-center gap-2 uppercase tracking-wider">
-                   <MessageSquare size={14} /> {pendingInquiriesCount} Pending Inquiries
-                 </Link>
-               )}
+               {/* Blinking light removed per user request */}
                {isUnverified && (
                  <span className="px-4 py-2 bg-ares-danger/10 border border-ares-danger/30 text-ares-danger-soft text-xs font-bold rounded-full uppercase tracking-wider animate-pulse flex items-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
                    <ShieldAlert size={14} /> Locked: View Only

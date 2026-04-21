@@ -21,6 +21,8 @@ export default function Navbar() {
   
   const [pendingInquiries, setPendingInquiries] = useState<{ id: string, name: string, type: string }[]>([]);
   const [pendingPosts, setPendingPosts] = useState<{ slug: string, status: string, title: string, author_nickname?: string }[]>([]);
+  const [pendingEvents, setPendingEvents] = useState<{ id: string, status: string, title: string }[]>([]);
+  const [pendingDocs, setPendingDocs] = useState<{ slug: string, status: string, title: string }[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -84,6 +86,22 @@ export default function Navbar() {
       is_read: false,
       link: '/dashboard/manage_blog',
       is_inquiry: true // Treat as action item (cannot be marked read)
+    })),
+    ...pendingEvents.map(e => ({
+      id: `event-${e.id}`,
+      title: `New Pending Event`,
+      message: `"${e.title}"`,
+      is_read: false,
+      link: '/dashboard/manage_event',
+      is_inquiry: true
+    })),
+    ...pendingDocs.map(d => ({
+      id: `doc-${d.slug}`,
+      title: `New Pending Doc`,
+      message: `"${d.title}"`,
+      is_read: false,
+      link: '/dashboard/manage_docs',
+      is_inquiry: true
     }))
   ];
   
@@ -100,12 +118,30 @@ export default function Navbar() {
           }
         }).catch(() => {});
         
-      fetch("/api/admin/posts/list")
+      fetch("/dashboard/api/admin/posts", { credentials: "include" })
         .then(res => res.json() as Promise<{ posts?: { slug: string, status: string, title: string, author_nickname?: string }[] }>)
         .then((data) => {
           if (data.posts) {
             const pending = data.posts.filter((p) => p.status === "pending");
             setPendingPosts(pending);
+          }
+        }).catch(() => {});
+
+      fetch("/dashboard/api/admin/events", { credentials: "include" })
+        .then(res => res.json() as Promise<{ events?: { id: string, status: string, title: string }[] }>)
+        .then((data) => {
+          if (data.events) {
+            const pending = data.events.filter((e) => e.status === "pending");
+            setPendingEvents(pending);
+          }
+        }).catch(() => {});
+
+      fetch("/dashboard/api/admin/docs", { credentials: "include" })
+        .then(res => res.json() as Promise<{ docs?: { slug: string, status: string, title: string }[] }>)
+        .then((data) => {
+          if (data.docs) {
+            const pending = data.docs.filter((d) => d.status === "pending");
+            setPendingDocs(pending);
           }
         }).catch(() => {});
     }
