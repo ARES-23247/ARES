@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, 
   ShieldAlert, Lock, RefreshCw, LogOut, User, Users, Utensils, BarChart3, 
-  Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare
+  Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio
 } from "lucide-react";
 
 // ── Lazy-loaded Tab Components ───────────────────────────────────────
@@ -26,8 +26,9 @@ const MemberImpactOverview = lazy(() => import("@/components/MemberImpactOvervie
 const BadgeManager = lazy(() => import("@/components/BadgeManager"));
 const LocationsManager = lazy(() => import("@/components/LocationsManager"));
 const AdminInquiries = lazy(() => import("@/components/AdminInquiries"));
+const CommandCenter = lazy(() => import("@/components/CommandCenter"));
 
-type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "locations" | "assets" | "integrations" | "profile" | "users" | "logistics" | "analytics" | "sponsors" | "outreach" | "legacy" | "impact_roster" | "badges" | "inquiries";
+type TabState = "blog" | "event" | "docs" | "manage_blog" | "manage_event" | "manage_docs" | "locations" | "assets" | "integrations" | "profile" | "users" | "logistics" | "analytics" | "sponsors" | "outreach" | "legacy" | "impact_roster" | "badges" | "inquiries" | "command_center";
 
 // ── NavButton Component ────────────────────────────────────────────
 const NavButton = ({ tab, icon: Icon, label, disabled = false, sub = false, activeTab, onNavigate }: { tab: TabState, icon?: React.ElementType, label: string, disabled?: boolean, sub?: boolean, activeTab: TabState, onNavigate: (tab: TabState) => void }) => {
@@ -297,6 +298,8 @@ export default function Dashboard() {
             <LocationsManager />
           </>
         );
+      case "command_center":
+        return isAdmin ? <CommandCenter /> : null;
       default:
         return null;
     }
@@ -429,6 +432,7 @@ export default function Dashboard() {
               <h4 className="text-[10px] uppercase font-black tracking-widest text-ares-gold mb-2 px-6">Administration</h4>
               <div className="space-y-1 px-3">
                 {isAdmin && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" activeTab={activeTab} onNavigate={handleNavigate} />}
+                {isAdmin && <NavButton tab="command_center" icon={Radio} label="Command Center" activeTab={activeTab} onNavigate={handleNavigate} />}
                 {isAdmin && <NavButton tab="users" icon={Users} label="User Roles & Sync" activeTab={activeTab} onNavigate={handleNavigate} />}
                 {isAdmin && <NavButton tab="impact_roster" icon={Trophy} label="Impact & Roster" activeTab={activeTab} onNavigate={handleNavigate} />}
                 {isAdmin && <NavButton tab="badges" icon={Award} label="Badges & Awards" activeTab={activeTab} onNavigate={handleNavigate} />}

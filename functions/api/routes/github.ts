@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import { Bindings } from "./_shared";
+import { Bindings, ensureAdmin, getSocialConfig } from "./_shared";
+import { buildGitHubConfig, fetchProjectBoard, fetchProjectFields, createProjectItem, updateProjectItemStatus, queryProjectItem } from "../../utils/githubProjects";
 
 const githubRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -135,3 +136,96 @@ githubRouter.get("/activity", async (c) => {
 });
 
 export default githubRouter;
+
+// ── GitHub Projects v2 Routes ───────────────────────────────────────
+
+// GET /github/projects — Fetch project board for dashboard
+githubRouter.get("/projects", ensureAdmin, async (c) => {
+  try {
+    const config = await getSocialConfig(c);
+    const ghConfig = buildGitHubConfig(config);
+    if (!ghConfig) {
+      return c.json({ error: "GitHub Projects not configured. Set GITHUB_PAT and GITHUB_PROJECT_ID in Integrations." }, 400);
+    }
+    const board = await fetchProjectBoard(ghConfig);
+    return c.json({ success: true, board });
+  } catch (err) {
+    console.error("GitHub Projects fetch error:", err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+// GET /github/projects/fields — Fetch field definitions
+githubRouter.get("/projects/fields", ensureAdmin, async (c) => {
+  try {
+    const config = await getSocialConfig(c);
+    const ghConfig = buildGitHubConfig(config);
+    if (!ghConfig) {
+      return c.json({ error: "GitHub Projects not configured." }, 400);
+    }
+    const fields = await fetchProjectFields(ghConfig);
+    return c.json({ success: true, fields });
+  } catch (err) {
+    console.error("GitHub Projects fields error:", err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+// GET /github/projects/items/:id — Single project item
+githubRouter.get("/projects/items/:id", ensureAdmin, async (c) => {
+  try {
+    const itemId = c.req.param("id");
+    const config = await getSocialConfig(c);
+    const ghConfig = buildGitHubConfig(config);
+    if (!ghConfig) {
+      return c.json({ error: "GitHub Projects not configured." }, 400);
+    }
+    const item = await queryProjectItem(ghConfig, itemId);
+    if (!item) return c.json({ error: "Item not found" }, 404);
+    return c.json({ success: true, item });
+  } catch (err) {
+    console.error("GitHub Projects item error:", err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+// POST /github/projects/items — Create a new draft item
+githubRouter.post("/projects/items", ensureAdmin, async (c) => {
+  try {
+    const { title, body } = await c.req.json<{ title: string; body?: string }>();
+    if (!title) return c.json({ error: "Title is required" }, 400);
+
+    const config = await getSocialConfig(c);
+    const ghConfig = buildGitHubConfig(config);
+    if (!ghConfig) {
+      return c.json({ error: "GitHub Projects not configured." }, 400);
+    }
+    const itemId = await createProjectItem(ghConfig, title, body);
+    return c.json({ success: true, itemId });
+  } catch (err) {
+    console.error("GitHub Projects create error:", err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});
+
+// PATCH /github/projects/items/:id/status — Update item status
+githubRouter.patch("/projects/items/:id/status", ensureAdmin, async (c) => {
+  try {
+    const itemId = c.req.param("id");
+    const { statusFieldId, statusOptionId } = await c.req.json<{ statusFieldId: string; statusOptionId: string }>();
+    if (!statusFieldId || !statusOptionId) {
+      return c.json({ error: "statusFieldId and statusOptionId are required" }, 400);
+    }
+
+    const config = await getSocialConfig(c);
+    const ghConfig = buildGitHubConfig(config);
+    if (!ghConfig) {
+      return c.json({ error: "GitHub Projects not configured." }, 400);
+    }
+    await updateProjectItemStatus(ghConfig, itemId, statusFieldId, statusOptionId);
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("GitHub Projects status update error:", err);
+    return c.json({ error: (err as Error).message }, 500);
+  }
+});

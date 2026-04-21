@@ -16,8 +16,20 @@ export type Bindings = {
   GOOGLE_CLIENT_SECRET: string;
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
+  // ── GitHub Projects v2 ──
+  GITHUB_PAT?: string;
+  GITHUB_PROJECT_ID?: string;
+  GITHUB_ORG?: string;
+  GITHUB_WEBHOOK_SECRET?: string;
+  // ── Zulip ──
   ZULIP_CLIENT_ID: string;
   ZULIP_CLIENT_SECRET: string;
+  ZULIP_URL?: string;
+  ZULIP_BOT_EMAIL?: string;
+  ZULIP_API_KEY?: string;
+  ZULIP_WEBHOOK_TOKEN?: string;
+  ZULIP_COMMENT_STREAM?: string;
+  ZULIP_ADMIN_STREAM?: string;
   DEV_BYPASS?: string;
 };
 
@@ -195,7 +207,18 @@ export async function getSocialConfig(c: Context<AppEnv>): Promise<Record<string
       INSTAGRAM_ACCESS_TOKEN: dbSettings["INSTAGRAM_ACCESS_TOKEN"],
       CALENDAR_ID: dbSettings["CALENDAR_ID"],
       GCAL_SERVICE_ACCOUNT_EMAIL: dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"],
-      GCAL_PRIVATE_KEY: dbSettings["GCAL_PRIVATE_KEY"]
+      GCAL_PRIVATE_KEY: dbSettings["GCAL_PRIVATE_KEY"],
+      // ── Zulip Integration ──
+      ZULIP_BOT_EMAIL: c.env.ZULIP_BOT_EMAIL || dbSettings["ZULIP_BOT_EMAIL"],
+      ZULIP_API_KEY: c.env.ZULIP_API_KEY || dbSettings["ZULIP_API_KEY"],
+      ZULIP_URL: c.env.ZULIP_URL || dbSettings["ZULIP_URL"] || "https://ares.zulipchat.com",
+      ZULIP_ADMIN_STREAM: c.env.ZULIP_ADMIN_STREAM || dbSettings["ZULIP_ADMIN_STREAM"] || "leadership",
+      ZULIP_COMMENT_STREAM: c.env.ZULIP_COMMENT_STREAM || dbSettings["ZULIP_COMMENT_STREAM"] || "website-discussion",
+      // ── GitHub Projects v2 ──
+      GITHUB_PAT: c.env.GITHUB_PAT || dbSettings["GITHUB_PAT"],
+      GITHUB_PROJECT_ID: c.env.GITHUB_PROJECT_ID || dbSettings["GITHUB_PROJECT_ID"],
+      GITHUB_ORG: c.env.GITHUB_ORG || dbSettings["GITHUB_ORG"] || "ARES-23247",
+      GITHUB_WEBHOOK_SECRET: c.env.GITHUB_WEBHOOK_SECRET || dbSettings["GITHUB_WEBHOOK_SECRET"],
     };
   } catch (err) {
     console.error("Failed to fetch settings for social integration:", err);

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { Bindings, getSocialConfig, extractAstText, getSessionUser, ensureAdmin } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
+import { sendZulipMessage } from "../../utils/zulipSync";
 
 const postsRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -168,6 +169,20 @@ postsRouter.post("/admin/posts", async (c) => {
       }
     } catch(err: unknown) {
       console.error("Critical Social Dispatch Failure:", err);
+    }
+
+    // ── Zulip Announcement ──
+    if (status === "published") {
+      try {
+        c.executionCtx.waitUntil(
+          sendZulipMessage(
+            c.env,
+            "announcements",
+            "Website Updates",
+            `🚀 **New Blog Post Published:** [${body.title}](https://aresfirst.org/blog/${slug})\n\n${snippet.substring(0, 300)}`
+          ).catch(err => console.error("[Posts] Zulip announcement failed:", err))
+        );
+      } catch { /* ignore */ }
     }
 
     return c.json({ success: true, slug });

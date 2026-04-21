@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { Bindings, getSessionUser, MAX_INPUT_LENGTHS } from "./_shared";
+import { sendZulipMessage } from "../../utils/zulipSync";
 
 const commentsRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -69,6 +70,18 @@ commentsRouter.post("/comments/:targetType/:targetId", async (c) => {
     await c.env.DB.prepare(
       "INSERT INTO comments (target_type, target_id, user_id, content) VALUES (?, ?, ?, ?)"
     ).bind(targetType, targetId, user.id, content.trim()).run();
+
+    // ── Zulip Comment Sync ──
+    try {
+      const stream = c.env.ZULIP_COMMENT_STREAM || "website-discussion";
+      const topic = `${targetType}/${targetId}`;
+      const nickname = user.name || "ARES Member";
+      const link = targetType === "blog" ? `/blog/${targetId}` : targetType === "event" ? `/events/${targetId}` : `/docs/${targetId}`;
+      const msg = `💬 **${nickname}** commented on [${targetType}/${targetId}](https://aresfirst.org${link}):\n\n> ${content.trim().substring(0, 500)}`;
+      c.executionCtx.waitUntil(
+        sendZulipMessage(c.env, stream, topic, msg).catch(err => console.error("[Comments] Zulip sync failed:", err))
+      );
+    } catch { /* ignore */ }
 
     return c.json({ success: true });
   } catch (err) {

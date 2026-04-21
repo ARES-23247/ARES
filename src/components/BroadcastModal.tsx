@@ -32,6 +32,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
         if (data.success && data.settings) {
           const config = data.settings;
           const available = [];
+          if (config.ZULIP_BOT_EMAIL && config.ZULIP_API_KEY) available.push("zulip");
           if (config.DISCORD_WEBHOOK_URL) available.push("discord");
           if (config.BLUESKY_HANDLE && config.BLUESKY_APP_PASSWORD) available.push("bluesky");
           if (config.SLACK_WEBHOOK_URL) available.push("slack");

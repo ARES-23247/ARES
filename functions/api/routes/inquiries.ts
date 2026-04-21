@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { Bindings, MAX_INPUT_LENGTHS, validateLength, getSocialConfig } from "./_shared";
+import { sendZulipAlert } from "../../utils/zulipSync";
 
 const inquiriesRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -124,6 +125,24 @@ inquiriesRouter.post("/inquiries", async (c) => {
       }
 
     } catch { /* ignore webhook error */ }
+
+    // ── Zulip Admin Alert ──
+    try {
+      const alertBody = [
+        `📧 **Email:** ${email}`,
+        metadata ? `📎 **Details:** \`${JSON.stringify(metadata)}\`` : "",
+        `🔗 [Review in Dashboard](https://aresfirst.org/dashboard?tab=inquiries)`,
+      ].filter(Boolean).join("\n");
+
+      c.executionCtx.waitUntil(
+        sendZulipAlert(
+          c.env,
+          type === "sponsor" ? "Sponsor" : type === "join" ? "Applicant" : "Outreach",
+          `New ${type} inquiry from ${name}`,
+          alertBody
+        ).catch(err => console.error("[Inquiry] Zulip alert failed:", err))
+      );
+    } catch { /* ignore Zulip error */ }
 
     return c.json({ success: true, id });
   } catch (err) {

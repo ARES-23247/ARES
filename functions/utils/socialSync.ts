@@ -1,4 +1,5 @@
 import { BskyAgent, RichText } from '@atproto/api';
+import { sendZulipMessage } from './zulipSync';
 
 export interface SocialConfig {
   DISCORD_WEBHOOK_URL?: string;
@@ -16,6 +17,12 @@ export interface SocialConfig {
   TWITTER_API_SECRET?: string;
   TWITTER_ACCESS_TOKEN?: string;
   TWITTER_ACCESS_SECRET?: string;
+  // ── Zulip Integration ──
+  ZULIP_BOT_EMAIL?: string;
+  ZULIP_API_KEY?: string;
+  ZULIP_URL?: string;
+  ZULIP_ADMIN_STREAM?: string;
+  ZULIP_COMMENT_STREAM?: string;
 }
 
 export interface PostPayload {
@@ -62,6 +69,23 @@ export async function dispatchSocials(
           ]
         })
       }).catch(err => console.error("Discord webhook failed:", err))
+    );
+  }
+
+  // ── Zulip Announcements Channel ──
+  if (config.ZULIP_BOT_EMAIL && config.ZULIP_API_KEY && isEnabled('zulip')) {
+    const zulipEnv = {
+      ZULIP_BOT_EMAIL: config.ZULIP_BOT_EMAIL,
+      ZULIP_API_KEY: config.ZULIP_API_KEY,
+      ZULIP_URL: config.ZULIP_URL,
+    } as { ZULIP_BOT_EMAIL?: string; ZULIP_API_KEY?: string; ZULIP_URL?: string };
+    promises.push(
+      sendZulipMessage(
+        zulipEnv,
+        "announcements",
+        "Website Updates",
+        `🚀 **${payload.title}**\n\n${payload.snippet}\n\n[🔗 Read more](${payload.url})`
+      ).catch(err => console.error("Zulip social dispatch failed:", err))
     );
   }
 

@@ -22,6 +22,8 @@ import badgesRouter from "./routes/badges";
 import { locationsRouter } from "./routes/locations";
 import sitemapRouter from "./routes/sitemap";
 import githubRouter from "./routes/github";
+import githubWebhookRouter from "./routes/githubWebhook";
+import zulipWebhookRouter from "./routes/zulipWebhook";
 const app = new Hono<{ Bindings: Bindings }>();
 const apiRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -66,6 +68,10 @@ apiRouter.route("/", judgesRouter);
 apiRouter.route("/", sitemapRouter);
 apiRouter.route("/", profilesRouter);
 apiRouter.route("/", badgesRouter);
+
+// Webhooks (public — self-authenticated via signatures/tokens)
+apiRouter.route("/webhooks/github", githubWebhookRouter);
+apiRouter.route("/webhooks/zulip", zulipWebhookRouter);
 
 // ── Global Platform Search (stays in aggregator — crosses domains) ───
 apiRouter.get("/search", async (c) => {

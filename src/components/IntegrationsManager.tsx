@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Settings, Key, Share2, Save, CloudLightning, MessageSquare, Hash, Square, Users, Camera, Zap } from "lucide-react";
+import { Calendar, Settings, Key, Share2, Save, CloudLightning, MessageSquare, Hash, Square, Users, Camera, Zap, Radio, GitBranch } from "lucide-react";
 
 type SettingsData = Record<string, string>;
 
@@ -122,7 +122,68 @@ export default function IntegrationsManager() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
+        {/* Zulip Chat Integration */}
+        <div className="glass-card bg-black/40 p-6 rounded-2xl border border-blue-500/20 relative overflow-hidden group lg:col-span-2">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 blur-3xl rounded-full pointer-events-none" />
+          <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+            <Radio size={20} className="text-blue-400" /> Zulip Team Chat
+          </h3>
+          <p className="text-xs text-zinc-500 mb-4">Bi-directional sync with Zulip — automatic notifications for posts, events, inquiries, and interactive bot commands.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="zulip_url" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Organization URL</label>
+              <input id="zulip_url" type="text" placeholder="https://ares.zulipchat.com" value={localSettings["ZULIP_URL"] || ""} onChange={(e) => handleChange("ZULIP_URL", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition-colors" />
+            </div>
+            <div>
+              <label htmlFor="zulip_bot_email" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Bot Email</label>
+              <input id="zulip_bot_email" type="text" placeholder="ares-bot@ares.zulipchat.com" value={localSettings["ZULIP_BOT_EMAIL"] || ""} onChange={(e) => handleChange("ZULIP_BOT_EMAIL", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition-colors" />
+            </div>
+            <div>
+              <label htmlFor="zulip_api_key" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">API Key</label>
+              <input id="zulip_api_key" type="text" placeholder="••••••••••••••••" value={localSettings["ZULIP_API_KEY"] || ""} onChange={(e) => handleChange("ZULIP_API_KEY", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition-colors" />
+            </div>
+            <div>
+              <label htmlFor="zulip_webhook_token" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Outgoing Webhook Token</label>
+              <input id="zulip_webhook_token" type="text" placeholder="Shared secret for bot commands" value={localSettings["ZULIP_WEBHOOK_TOKEN"] || ""} onChange={(e) => handleChange("ZULIP_WEBHOOK_TOKEN", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition-colors" />
+            </div>
+            <div>
+              <label htmlFor="zulip_admin_stream" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Admin Stream</label>
+              <input id="zulip_admin_stream" type="text" placeholder="leadership" value={localSettings["ZULIP_ADMIN_STREAM"] || ""} onChange={(e) => handleChange("ZULIP_ADMIN_STREAM", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition-colors" />
+            </div>
+            <div>
+              <label htmlFor="zulip_comment_stream" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Comment Stream</label>
+              <input id="zulip_comment_stream" type="text" placeholder="website-discussion" value={localSettings["ZULIP_COMMENT_STREAM"] || ""} onChange={(e) => handleChange("ZULIP_COMMENT_STREAM", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400 transition-colors" />
+            </div>
+          </div>
+        </div>
+
+        {/* GitHub Projects v2 Integration */}
+        <div className="glass-card bg-black/40 p-6 rounded-2xl border border-white/10 relative overflow-hidden group lg:col-span-2">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 blur-3xl rounded-full pointer-events-none" />
+          <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+            <GitBranch size={20} className="text-white" /> GitHub Projects v2
+          </h3>
+          <p className="text-xs text-zinc-500 mb-4">Connect your GitHub Project board for task management via the Command Center and Zulip bot commands.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label htmlFor="github_pat" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Personal Access Token</label>
+              <input id="github_pat" type="text" placeholder="ghp_..." value={localSettings["GITHUB_PAT"] || ""} onChange={(e) => handleChange("GITHUB_PAT", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" />
+            </div>
+            <div>
+              <label htmlFor="github_org" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Organization</label>
+              <input id="github_org" type="text" placeholder="ARES-23247" value={localSettings["GITHUB_ORG"] || ""} onChange={(e) => handleChange("GITHUB_ORG", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" />
+            </div>
+            <div>
+              <label htmlFor="github_project_id" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Project Node ID</label>
+              <input id="github_project_id" type="text" placeholder="PVT_..." value={localSettings["GITHUB_PROJECT_ID"] || ""} onChange={(e) => handleChange("GITHUB_PROJECT_ID", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" />
+            </div>
+            <div>
+              <label htmlFor="github_webhook_secret" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Webhook Secret</label>
+              <input id="github_webhook_secret" type="text" placeholder="HMAC signing secret" value={localSettings["GITHUB_WEBHOOK_SECRET"] || ""} onChange={(e) => handleChange("GITHUB_WEBHOOK_SECRET", e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/40 transition-colors" />
+            </div>
+          </div>
+        </div>
         {/* Discord Setup */}
         <div className="glass-card bg-black/40 p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#5865F2]/10 blur-3xl rounded-full pointer-events-none" />

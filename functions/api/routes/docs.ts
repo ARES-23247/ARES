@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { AppEnv, ensureAdmin, getSessionUser } from "./_shared";
+import { sendZulipMessage } from "../../utils/zulipSync";
 
 const docsRouter = new Hono<AppEnv>();
 
@@ -194,6 +195,21 @@ docsRouter.post("/admin/docs", async (c) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?)`
     ).bind(slug, title, category, sortOrder || 0, description || "", content, email, isPortfolio ? 1 : 0, isExecutiveSummary ? 1 : 0, status).run();
     
+    // ── Zulip Doc Notification ──
+    if (status === "published") {
+      try {
+        const action = existing ? "updated" : "created";
+        c.executionCtx.waitUntil(
+          sendZulipMessage(
+            c.env,
+            "engineering",
+            "Engineering Docs",
+            `📝 **Doc ${action}:** [${title}](https://aresfirst.org/docs/${slug}) (${category})`
+          ).catch(err => console.error("[Docs] Zulip notification failed:", err))
+        );
+      } catch { /* ignore */ }
+    }
+
     return c.json({ success: true, slug });
   } catch (err) {
     console.error("D1 doc write error:", err);
@@ -272,6 +288,19 @@ docsRouter.patch("/admin/docs/:slug/approve", async (c) => {
     }
 
     await c.env.DB.prepare("UPDATE docs SET status = 'published' WHERE slug = ?").bind(slug).run();
+
+    // ── Zulip Content Review ──
+    try {
+      c.executionCtx.waitUntil(
+        sendZulipMessage(
+          c.env,
+          "content-review",
+          "Approvals",
+          `✅ **Doc approved:** [${slug}](https://aresfirst.org/docs/${slug})`
+        ).catch(err => console.error("[Docs] Zulip approval notification failed:", err))
+      );
+    } catch { /* ignore */ }
+
     return c.json({ success: true });
   } catch (err) {
     console.error("D1 approve error (docs):", err);

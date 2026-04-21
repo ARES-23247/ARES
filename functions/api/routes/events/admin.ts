@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { Bindings, getSocialConfig, extractAstText, getSessionUser, getDbSettings } from "../_shared";
 import { pushEventToGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials } from "../../../utils/socialSync";
+import { sendZulipMessage } from "../../../utils/zulipSync";
 
 const adminRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -97,6 +98,23 @@ adminRouter.post("/", async (c) => {
          warnings.push(`Network Syndication Failed: ${(err as Error).message || String(err)}`);
        }
     }
+
+    // ── Zulip Calendar Notification ──
+    if (!isDraft) {
+      try {
+        const eventDate = new Date(dateStart).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+        const desc = extractAstText(description || "").substring(0, 200);
+        c.executionCtx.waitUntil(
+          sendZulipMessage(
+            c.env,
+            "announcements",
+            "Calendar",
+            `📅 **New Event:** ${title}\n📍 ${location || "TBD"} • 📆 ${eventDate}\n${desc ? `\n${desc}` : ""}\n\n[View on ARESWEB](https://aresfirst.org/events)`
+          ).catch(err => console.error("[Events] Zulip notification failed:", err))
+        );
+      } catch { /* ignore */ }
+    }
+
 
     return c.json({ success: true, id: genId, warning: warnings.length > 0 ? warnings.join(" | ") : undefined }, warnings.length > 0 ? 207 : 200);
   } catch (err: unknown) {
