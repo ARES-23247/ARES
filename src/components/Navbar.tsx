@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, LayoutDashboard, LogIn, Bell, Check, Heart } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -19,7 +19,18 @@ export default function Navbar() {
   
   const [pendingCount, setPendingCount] = useState(0);
   const [showNotifs, setShowNotifs] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifs(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const { data: notifData } = useQuery({
     queryKey: ["notifications"],
@@ -66,14 +77,16 @@ export default function Navbar() {
   }, [isAdmin]);
 
   return (
-    <nav role="navigation" aria-label="Main Navigation" className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 pt-4 pb-4 transition-all duration-500 overflow-hidden rounded-bl-xl rounded-br-[2.5rem] border-t-4 border-ares-bronze">
+    <nav role="navigation" aria-label="Main Navigation" className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 pt-4 pb-4 transition-all duration-500 overflow-visible rounded-bl-xl rounded-br-[2.5rem] border-t-4 border-ares-bronze">
       <a 
         href="#main-content" 
         className="sr-only focus:not-sr-only focus:absolute focus:top-24 focus:left-6 bg-ares-red text-white px-6 py-3 ares-cut-sm font-bold z-[100] shadow-2xl border border-white/20 transition-all"
       >
         Skip to Main Content
       </a>
-      <GreekMeander variant="thin" opacity="opacity-40" className="absolute top-0 left-0" />
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden rounded-bl-xl rounded-br-[2.5rem]">
+        <GreekMeander variant="thin" opacity="opacity-40" className="absolute top-0 left-0" />
+      </div>
       <div className="flex items-center justify-between">
         <button 
           onClick={() => navigate("/")} 
@@ -111,9 +124,9 @@ export default function Navbar() {
             </span>
           </button>
           {isSignedIn && (
-            <div className="relative">
-              <button 
-                onClick={() => setShowNotifs(!showNotifs)}
+              <div className="relative" ref={notifRef}>
+                <button 
+                  onClick={() => setShowNotifs(!showNotifs)}
                 className="relative flex items-center justify-center p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
                 aria-label="Notifications"
               >
