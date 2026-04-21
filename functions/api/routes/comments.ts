@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { Bindings, getSessionUser, MAX_INPUT_LENGTHS } from "./_shared";
-import { sendZulipMessage } from "../../utils/zulipSync";
+import { Bindings, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig } from "./_shared";
+import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 
 const commentsRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -67,21 +67,23 @@ commentsRouter.post("/comments/:targetType/:targetId", async (c) => {
   }
 
   try {
-    await c.env.DB.prepare(
-      "INSERT INTO comments (target_type, target_id, user_id, content) VALUES (?, ?, ?, ?)"
-    ).bind(targetType, targetId, user.id, content.trim()).run();
+    const { id } = await c.env.DB.prepare(
+      "INSERT INTO comments (target_type, target_id, user_id, content) VALUES (?, ?, ?, ?) RETURNING id"
+    ).bind(targetType, targetId, user.id, content.trim()).first<{ id: number }>() || {};
 
-    // ── Zulip Comment Sync ──
     try {
-      const stream = c.env.ZULIP_COMMENT_STREAM || "website-discussion";
+      const social = await getSocialConfig(c);
+      const stream = social.ZULIP_COMMENT_STREAM || "website-discussion";
       const topic = `${targetType}/${targetId}`;
-      const nickname = user.name || "ARES Member";
-      const link = targetType === "blog" ? `/blog/${targetId}` : targetType === "event" ? `/events/${targetId}` : `/docs/${targetId}`;
-      const msg = `💬 **${nickname}** commented on [${targetType}/${targetId}](https://aresfirst.org${link}):\n\n> ${content.trim().substring(0, 500)}`;
-      c.executionCtx.waitUntil(
-        sendZulipMessage(c.env, stream, topic, msg).catch(err => console.error("[Comments] Zulip sync failed:", err))
-      );
-    } catch { /* ignore */ }
+      const prefix = `**${user.name || "ARES Member"}** commented:\n\n`;
+      const zulipId = await sendZulipMessage(c.env, stream, topic, prefix + content.trim());
+      
+      if (zulipId && id) {
+         await c.env.DB.prepare("UPDATE comments SET zulip_message_id = ? WHERE id = ?").bind(zulipId, id).run();
+      }
+    } catch (e) {
+      console.error("[Comments] Zulip Sync Error", e);
+    }
 
     return c.json({ success: true });
   } catch (err) {
@@ -107,7 +109,7 @@ commentsRouter.put("/comments/:id", async (c) => {
   }
 
   try {
-    const existing = await c.env.DB.prepare("SELECT user_id FROM comments WHERE id = ? AND is_deleted = 0").bind(id).first();
+    const existing = await c.env.DB.prepare("SELECT user_id, name as user_name, zulip_message_id FROM comments c JOIN user u ON c.user_id = u.id WHERE c.id = ? AND c.is_deleted = 0").bind(id).first<{ user_id: string, user_name: string, zulip_message_id: string }>();
     if (!existing) return c.json({ error: "Not found" }, 404);
 
     if (existing.user_id !== user.id && user.role !== "admin") {
@@ -117,6 +119,11 @@ commentsRouter.put("/comments/:id", async (c) => {
     await c.env.DB.prepare(
       "UPDATE comments SET content = ? WHERE id = ?"
     ).bind(content.trim(), id).run();
+
+    if (existing.zulip_message_id) {
+       const prefix = `**${existing.user_name || "ARES Member"}** commented (edited):\n\n`;
+       c.executionCtx.waitUntil(updateZulipMessage(c.env, existing.zulip_message_id, prefix + content.trim()));
+    }
 
     return c.json({ success: true });
   } catch (err) {
@@ -132,7 +139,7 @@ commentsRouter.delete("/comments/:id", async (c) => {
 
   try {
     const id = c.req.param("id");
-    const existing = await c.env.DB.prepare("SELECT user_id FROM comments WHERE id = ?").bind(id).first();
+    const existing = await c.env.DB.prepare("SELECT user_id, zulip_message_id FROM comments WHERE id = ?").bind(id).first<{ user_id: string, zulip_message_id: string }>();
     if (!existing) return c.json({ error: "Not found" }, 404);
 
     if (existing.user_id !== user.id && user.role !== "admin") {
@@ -140,6 +147,11 @@ commentsRouter.delete("/comments/:id", async (c) => {
     }
 
     await c.env.DB.prepare("UPDATE comments SET is_deleted = 1 WHERE id = ?").bind(id).run();
+    
+    if (existing.zulip_message_id) {
+       c.executionCtx.waitUntil(deleteZulipMessage(c.env, existing.zulip_message_id));
+    }
+    
     return c.json({ success: true });
   } catch (err) {
     console.error("D1 comment delete error:", err);

@@ -4,7 +4,6 @@ function getZulipAuthHeaders(env: Bindings): HeadersInit {
   if (!env.ZULIP_BOT_EMAIL || !env.ZULIP_API_KEY) {
     throw new Error("Missing ZULIP credentials in bindings");
   }
-  const baseUrl = env.ZULIP_URL || "https://ares.zulipchat.com";
   // btoa is available in Cloudflare Workers
   const authHeader = "Basic " + btoa(`${env.ZULIP_BOT_EMAIL}:${env.ZULIP_API_KEY}`);
   return {

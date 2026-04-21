@@ -143,7 +143,7 @@ profilesRouter.get("/profile/:userId", async (c) => {
        FROM user_profiles p 
        LEFT JOIN user u ON p.user_id = u.id 
        WHERE p.user_id = ?`
-    ).bind(userId).first<any>();
+    ).bind(userId).first<Record<string, unknown>>();
 
     if (!profile) {
       console.warn(`[Profile API] 404 - User ID ${userId} not found in user_profiles table.`);

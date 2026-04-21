@@ -172,9 +172,52 @@ zulipWebhookRouter.post("/", async (c) => {
       }
 
       default:
-        return c.json({
-          content: `❓ Unknown command: \`${command || "(empty)"}\`. Type \`!help\` for available commands.`,
-        });
+        // ── Phase 1: Bi-directional Comments Sync ──
+        // Only process stream messages that are not meant as commands
+        if (body.message?.type === "stream" && body.message?.topic) {
+          const topicParts = body.message.topic.split("/");
+          if (topicParts.length >= 2 && ["post", "event", "doc"].includes(topicParts[0])) {
+            const targetType = topicParts[0];
+            const targetId = topicParts.slice(1).join("/");
+
+            let userId: string;
+            const existingUser = await c.env.DB.prepare(
+              "SELECT id FROM user WHERE email = ? AND is_deleted = 0"
+            ).bind(body.message.sender_email).first<{ id: string }>();
+
+            if (existingUser) {
+              userId = existingUser.id;
+            } else {
+              userId = "zulip-shadow";
+            }
+
+            try {
+              await c.env.DB.prepare(
+                `INSERT INTO comments (target_type, target_id, user_id, content, zulip_message_id, zulip_sender_id) 
+                 VALUES (?, ?, ?, ?, ?, ?)`
+              ).bind(
+                targetType, 
+                targetId, 
+                userId, 
+                rawContent, 
+                String(body.trigger === "message" ? (body as Record<string, unknown>).message_id || "0" : "0"), 
+                body.message.sender_email // Storing email as sender_id for easier matching
+              ).run();
+              return c.json({ content: "" }); // empty response to not trigger bot reply
+            } catch (err) {
+              console.error("[ZulipWebhook] Sync Error:", err);
+            }
+          }
+        }
+
+        // If it was a deliberate ping that wasn't a comment sync context, reply with help
+        if (rawContent.includes("@**")) {
+           return c.json({
+             content: `❓ Unknown command: \`${command || "(empty)"}\`. Type \`!help\` for available commands.`,
+           });
+        }
+        
+        return c.json({ content: "" });
     }
   } catch (err) {
     console.error("[ZulipWebhook] Command error:", err);

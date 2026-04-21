@@ -45,8 +45,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    let cancelled = false;
+
     fetch(`/api/profile/${userId}`)
       .then(async r => {
         if (!r.ok) {
@@ -56,14 +56,19 @@ export default function ProfilePage() {
         return r.json();
       })
       .then((data: { profile: ProfilePublic, badges?: BadgeDef[] }) => { 
+        if (cancelled) return;
         setProfile(data.profile); 
         setBadges(data.badges || []);
+        setError(null);
         setLoading(false); 
       })
       .catch((err) => {
+        if (cancelled) return;
         setError(err.status ? err : { status: 500, message: "Network error" });
         setLoading(false);
       });
+
+    return () => { cancelled = true; };
   }, [userId]);
 
   if (loading) {
