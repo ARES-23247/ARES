@@ -20,7 +20,7 @@ import profilesRouter from "./routes/profiles";
 import commentsRouter from "./routes/comments";
 import inquiriesRouter from "./routes/inquiries";
 import badgesRouter from "./routes/badges";
-import { locationsRouter, adminLocationsRouter } from "./routes/locations";
+import { locationsRouter } from "./routes/locations";
 import sitemapRouter from "./routes/sitemap";
 import githubRouter from "./routes/github";
 import githubWebhookRouter from "./routes/githubWebhook";
