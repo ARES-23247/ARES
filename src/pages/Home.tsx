@@ -26,20 +26,20 @@ export default function Home() {
               className="w-32 md:w-56 lg:w-[22rem] h-32 md:h-56 lg:h-[22rem] object-contain drop-shadow-[0_0_25px_rgba(192,0,0,0.6)] shrink-0" 
             />
             <div>
-              <div className="inline-block mb-3">
-                <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-xs md:text-sm font-heading m-0">
+              <div className="inline-block mb-3 px-4 py-2 bg-obsidian" style={{ backgroundColor: '#1A1A1A', borderRadius: '4px' }}>
+                <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-xs md:text-sm font-heading m-0" style={{ color: '#CD7F32' }}>
                   Appalachian Robotics & Engineering Society
                 </p>
               </div>
               <h1 className="text-6xl md:text-[7rem] lg:text-[10rem] font-bold text-white leading-[0.85] uppercase font-heading relative z-10 w-full xl:w-2/3">
-                <span className="inline-block mb-2">Engineered</span> <br />
+                <span className="inline-block mb-2 px-6 py-2 bg-obsidian" style={{ backgroundColor: '#1A1A1A', color: '#ffffff', borderRadius: '16px' }}>Engineered</span> <br />
                 <span className="bg-ares-red px-6 py-2 pb-3 mt-4 inline-block rounded-2xl shadow-[0_20px_25px_-5px_rgba(0,0,0,0.4)]" style={{ backgroundColor: '#c00000', color: '#ffffff' }}>To Inspire</span>
               </h1>
             </div>
           </div>
 
           <div className="max-w-2xl mb-10 border-l-4 border-ares-bronze pl-6">
-            <div id="hero-mountaineer-mindset" className="text-xl md:text-2xl font-medium leading-relaxed text-marble/80">
+            <div id="hero-mountaineer-mindset" className="text-xl md:text-2xl font-medium leading-relaxed text-marble/80 px-4 py-3 bg-obsidian" style={{ backgroundColor: '#1A1A1A', color: '#cccccc', borderRadius: '8px' }}>
               Building the future of West Virginia robotics with the <strong className="text-white">Mountaineer Mindset</strong>. <em className="text-white">FIRST</em>® Tech Challenge Team #23247.
             </div>
           </div>
