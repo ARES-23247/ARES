@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { handle } from "hono/cloudflare-pages";
 import { cors } from "hono/cors";
-import { Bindings, ensureAdmin } from "./routes/_shared";
+import { Bindings, ensureAdmin, checkRateLimit } from "./routes/_shared";
 
 // ── Domain Routers ───────────────────────────────────────────────────
 import authRouter from "./routes/auth";
@@ -34,9 +34,18 @@ const apiRouter = new Hono<{ Bindings: Bindings }>();
 
 
 
-
-
-
+// ── Isolate-Memory Rate Limiting ─────────────────────────────────────
+app.use("*", async (c, next) => {
+  const ip = c.req.header("CF-Connecting-IP") || "unknown";
+  if (ip !== "unknown" && !c.req.path.startsWith("/assets")) {
+    const allowed = checkRateLimit(ip, 150, 60); // 150 requests per minute
+    if (!allowed) {
+      console.warn(`[Local Rate Limit] Blocked IP ${ip}`);
+      return c.json({ error: "Too many requests. Please try again later." }, 429);
+    }
+  }
+  await next();
+});
 
 // ── Request Logger ───────────────────────────────────────────────────
 app.use("*", async (c, next) => {

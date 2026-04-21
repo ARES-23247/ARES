@@ -344,3 +344,30 @@ export function sanitizeProfileForPublic(profile: Record<string, unknown>, membe
   };
 }
 
+// ── Rate Limiting (In-Memory Worker V8 Isolate) ────────────────────────
+// This replaces the dangerous D1 database rate limiter. Since this runs in 
+// local Worker memory, it costs $0 and won't crash the database under DDoS.
+const rateLimitCache = new Map<string, { count: number; expiresAt: number }>();
+
+export function checkRateLimit(ip: string, limit = 100, windowSeconds = 60): boolean {
+  const now = Date.now();
+  
+  // Random garbage collection (5% chance) to prevent memory leaks in the isolate map
+  if (Math.random() < 0.05) {
+    for (const [key, data] of rateLimitCache.entries()) {
+      if (data.expiresAt < now) {
+        rateLimitCache.delete(key);
+      }
+    }
+  }
+
+  let record = rateLimitCache.get(ip);
+  if (!record || record.expiresAt < now) {
+    record = { count: 0, expiresAt: now + windowSeconds * 1000 };
+  }
+
+  record.count += 1;
+  rateLimitCache.set(ip, record);
+
+  return record.count <= limit;
+}
