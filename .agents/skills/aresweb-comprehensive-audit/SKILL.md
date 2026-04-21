@@ -13,6 +13,7 @@ You are the Lead Code Reviewer for Team ARES 23247. When asked to audit a file, 
 - **Injection Prevention:** Are D1 database queries using bound parameters (`?`) rather than template string concatenation? 
 - **Validation:** Are incoming payloads parsed via Zod or sanitized correctly before execution?
 - **Environment Exfiltration:** Does the code log sensitive tokens, keys, or passwords to the console/UI?
+- **DoW & DoS Hardening:** Are public-facing resources protected against Denial-of-Wallet and Denial-of-Service attacks? Verify the presence of Cloudflare Turnstile on unauthenticated forms, strict per-IP write rate limiting on endpoints, and in-memory/CDN caching to minimize superfluous D1 reads and function executions.
 
 ## 2. Privacy 🛡️
 - **YPP & COPPA Compliance:** (Reference `aresweb-youth-data-protection` skill). Does the code leak student PII (email, phone, address, full name)?
