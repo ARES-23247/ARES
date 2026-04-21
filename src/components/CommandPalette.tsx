@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, FileText, Calendar, ShieldCheck, HelpCircle, Terminal, Home, ArrowRight } from "lucide-react";
 import { authClient } from "../utils/auth-client";
+import { sanitizeHtml } from "../utils/security";
 
 interface SearchResult {
   slug?: string;
@@ -242,7 +243,7 @@ export default function CommandPalette() {
                        
                        {res.snippet && (
                          <p className="text-xs text-zinc-500 line-clamp-1 mt-1 font-mono leading-relaxed" 
-                           dangerouslySetInnerHTML={{__html: res.snippet}} 
+                           dangerouslySetInnerHTML={{__html: sanitizeHtml(res.snippet)}} 
                          />
                        )}
                     </div>

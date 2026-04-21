@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/security';
 import './InteractiveTutorial.css';
 
 export interface TutorialStep {
@@ -197,7 +198,7 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
 
             {/* Step Content */}
             <div className="step-content">
-              <div dangerouslySetInnerHTML={{ __html: currentStepData.content }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentStepData.content) }} />
 
               {currentStepData.codeExample && (
                 <div className="code-example">
