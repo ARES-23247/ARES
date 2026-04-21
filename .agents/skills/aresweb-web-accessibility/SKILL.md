@@ -26,3 +26,9 @@ Because ARESWEB uses a futuristic dark theme via Tailwind CSS:
 1. Ensure focus rings match the aesthetic (e.g. `focus-visible:ring-ares-cyan`).
 2. Do not use hardcoded black text on dark components unless visually separated by glassmorphic boundaries.
 3. Injected inline elements or custom React interactive dashboards must map properly to transparent custom fallbacks rather than hardcoded colors, ensuring components hydrate seamlessly from the server.
+
+## Remediation: Axe / Pa11y Background Calculation Errors
+When text overlays a complex background (such as an absolutely positioned image motif or glass/opacity layers), Axe contrast analyzers regularly trigger false-positive color contrast errors.
+**To resolve "zero-box" aesthetic contrast errors without failing automated tests:**
+1. **Explicit Hex Override:** Add inline `style={{ backgroundColor: '#1A1A1A' }}` matching the exact hex of the underlying section color (e.g. `bg-obsidian`) to the text container. This manually instructs the accessibility engine's contrast calculation algorithm.
+2. **Bounding Box Padding:** Automated tools establish a bounding rectangle to determine where text falls onto the background. If a container uses very tight leading (`line-height` < 1.0) or lacks padding, glyphs can visibly "spill" out of the defined background box, causing Axe to fail the verification against the unknown canvas beneath it. Always ensure the text container has sufficient structural padding (e.g., `px-4 py-2` or `px-6 py-2`) so the explicitly colored background fully encompasses the text height boundaries—even if the box visually "disappears" into the matching background color.
