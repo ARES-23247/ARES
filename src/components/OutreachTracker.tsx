@@ -210,7 +210,25 @@ export default function OutreachTracker() {
                  {log.location && <span className="flex items-center gap-1">&middot; <MapPin size={12} /> {log.location}</span>}
               </div>
               <h4 className="text-xl font-bold text-white mb-2">{log.title}</h4>
-              <p className="text-zinc-500 text-sm line-clamp-2">{log.description}</p>
+              <p className="text-zinc-500 text-sm line-clamp-2">
+                {(() => {
+                  try {
+                    const ast = JSON.parse(log.description || "");
+                    if (ast && ast.type === "doc") {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const extract = (node: any): string => {
+                        if (node.text) return node.text;
+                        if (node.content) return node.content.map(extract).join(" ");
+                        return "";
+                      };
+                      return extract(ast);
+                    }
+                  } catch {
+                    // Ignore parse errors to return raw string
+                  }
+                  return log.description;
+                })()}
+              </p>
             </div>
             
             <div className="flex items-center gap-4">
