@@ -169,7 +169,7 @@ inquiriesRouter.post("/", async (c) => {
       c.executionCtx.waitUntil(
         notifyAdmins(c, {
           title: `New ${type.toUpperCase()} Inquiry`,
-          message: `${name} (${email}) submitted a new inquiry.`,
+          message: `${name} submitted a new inquiry.`,
           link: "/dashboard?tab=inquiries",
           priority: type === "sponsor" ? "high" : "medium"
         }).catch(err => console.error("[Inquiry] In-App notification failed:", err))
@@ -182,7 +182,7 @@ inquiriesRouter.post("/", async (c) => {
       const social = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(social as Record<string, string>);
       if (ghConfig) {
-         const markdownBody = `**Email:** ${email}\n\n**Details:**\n\`\`\`json\n${JSON.stringify(metadata, null, 2)}\n\`\`\``;
+         const markdownBody = `**Details:**\n\`\`\`json\n${JSON.stringify(metadata, null, 2)}\n\`\`\``;
          c.executionCtx.waitUntil(
            createProjectItem(ghConfig, `[${type.toUpperCase()}] New Inquiry from ${name}`, markdownBody)
              .catch(err => console.error("[Inquiry] GitHub task creation failed:", err))

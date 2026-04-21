@@ -7,12 +7,13 @@ const outreachRouter = new Hono<AppEnv>();
 async function fetchVolunteerEvents(db: D1Database) {
   const { results } = await db.prepare(
     `SELECT e.id, e.title, e.date_start as date, e.location, e.description,
-            (SELECT count(*) FROM event_signups s WHERE s.event_id = e.id AND s.attended = 1) as students_count,
-            (COALESCE((strftime('%s', e.date_end) - strftime('%s', e.date_start)) / 3600.0, 0) *
-             (SELECT count(*) FROM event_signups s WHERE s.event_id = e.id AND s.attended = 1))
-             + COALESCE((SELECT sum(prep_hours) FROM event_signups s WHERE s.event_id = e.id AND s.attended = 1), 0) as hours_logged
+            COUNT(s.user_id) as students_count,
+            (COALESCE((strftime('%s', e.date_end) - strftime('%s', e.date_start)) / 3600.0, 0) * COUNT(s.user_id))
+             + COALESCE(SUM(s.prep_hours), 0) as hours_logged
      FROM events e
-     WHERE e.is_volunteer = 1 AND e.is_deleted = 0 AND e.status = 'published'`
+     LEFT JOIN event_signups s ON s.event_id = e.id AND s.attended = 1
+     WHERE e.is_volunteer = 1 AND e.is_deleted = 0 AND e.status = 'published'
+     GROUP BY e.id`
   ).all();
   return (results || []).map((e: Record<string, unknown>) => ({
     ...e,

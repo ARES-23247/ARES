@@ -158,16 +158,16 @@ apiRouter.get("/search", async (c) => {
 
     const [postsReq, eventsReq, docsReq, usersReq] = await Promise.all([
       c.env.DB.prepare(
-        "SELECT 'blog' as type, slug as id, title, snippet as matched_text FROM posts_fts WHERE is_deleted = '0' AND status = 'published' AND posts_fts MATCH ? ORDER BY rank LIMIT 5"
+        "SELECT 'blog' as type, f.slug as id, f.title, f.snippet as matched_text FROM posts_fts f JOIN posts p ON f.slug = p.slug WHERE p.is_deleted = 0 AND p.status = 'published' AND f.posts_fts MATCH ? ORDER BY f.rank LIMIT 5"
       ).bind(ftsQ).all(),
       c.env.DB.prepare(
-        "SELECT 'event' as type, id, title, description as matched_text FROM events_fts WHERE is_deleted = 0 AND status = 'published' AND events_fts MATCH ? ORDER BY rank LIMIT 5"
+        "SELECT 'event' as type, f.id, f.title, f.description as matched_text FROM events_fts f JOIN events e ON f.id = e.id WHERE e.is_deleted = 0 AND e.status = 'published' AND f.events_fts MATCH ? ORDER BY f.rank LIMIT 5"
       ).bind(ftsQ).all(),
       c.env.DB.prepare(
-        "SELECT 'doc' as type, slug as id, title, description as matched_text FROM docs_fts WHERE status = 'published' AND is_deleted = '0' AND docs_fts MATCH ? ORDER BY rank LIMIT 5"
+        "SELECT 'doc' as type, f.slug as id, f.title, f.description as matched_text FROM docs_fts f JOIN docs d ON f.slug = d.slug WHERE d.status = 'published' AND d.is_deleted = 0 AND f.docs_fts MATCH ? ORDER BY f.rank LIMIT 5"
       ).bind(ftsQ).all(),
       c.env.DB.prepare(
-        "SELECT 'user' as type, user_id as id, nickname as title, bio as matched_text FROM user_profiles_fts WHERE show_on_about = 1 AND user_profiles_fts MATCH ? ORDER BY rank LIMIT 5"
+        "SELECT 'user' as type, f.user_id as id, f.nickname as title, f.bio as matched_text FROM user_profiles_fts f JOIN user_profiles p ON f.user_id = p.user_id WHERE p.show_on_about = 1 AND f.user_profiles_fts MATCH ? ORDER BY f.rank LIMIT 5"
       ).bind(ftsQ).all()
     ]);
 
@@ -196,7 +196,7 @@ apiRouter.get("/admin/audit-log", async (c) => {
     const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
     const offset = Number(c.req.query("offset") || "0");
     const { results } = await c.env.DB.prepare(
-      "SELECT id, action, target_type, target_id, actor_email, actor_role, details, timestamp FROM audit_log ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+      "SELECT id, action, resource_type, resource_id, actor, details, created_at FROM audit_log ORDER BY created_at DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ logs: results || [] });
   } catch (err) {

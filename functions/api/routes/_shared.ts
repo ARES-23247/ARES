@@ -261,7 +261,19 @@ export function parsePagination(c: Context<AppEnv>, defaultLimit = 50, maxLimit 
 
 // ── Centralized Settings Fetch (EFF-01) ──────────────────────────────
 export async function getDbSettings(c: Context<AppEnv>): Promise<Record<string, string>> {
-  const { results: settingsRows } = await c.env.DB.prepare("SELECT key, value FROM settings").all();
+  const keys = [
+    'DISCORD_WEBHOOK_URL', 'MAKE_WEBHOOK_URL', 'BLUESKY_HANDLE', 'BLUESKY_APP_PASSWORD',
+    'SLACK_WEBHOOK_URL', 'TEAMS_WEBHOOK_URL', 'GCHAT_WEBHOOK_URL', 'FACEBOOK_PAGE_ID',
+    'FACEBOOK_ACCESS_TOKEN', 'TWITTER_API_KEY', 'TWITTER_API_SECRET', 'TWITTER_ACCESS_TOKEN',
+    'TWITTER_ACCESS_SECRET', 'INSTAGRAM_ACCOUNT_ID', 'INSTAGRAM_ACCESS_TOKEN',
+    'CALENDAR_ID', 'GCAL_SERVICE_ACCOUNT_EMAIL', 'GCAL_PRIVATE_KEY',
+    'ZULIP_BOT_EMAIL', 'ZULIP_API_KEY', 'ZULIP_URL', 'ZULIP_ADMIN_STREAM', 'ZULIP_COMMENT_STREAM',
+    'GITHUB_PAT', 'GITHUB_PROJECT_ID', 'GITHUB_ORG', 'GITHUB_WEBHOOK_SECRET',
+    'ENCRYPTION_SECRET', 'BETTER_AUTH_SECRET', 'BETTER_AUTH_URL',
+    'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_DATABASE_ID', 'R2_ACCESS_KEY', 'R2_SECRET_KEY'
+  ];
+  const placeholders = keys.map(() => '?').join(',');
+  const { results: settingsRows } = await c.env.DB.prepare(`SELECT key, value FROM settings WHERE key IN (${placeholders})`).bind(...keys).all();
   const settings: Record<string, string> = {};
   if (settingsRows) {
     for (const row of settingsRows as { key: string, value: string }[]) {

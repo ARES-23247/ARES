@@ -221,7 +221,7 @@ export default function Outreach() {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 text-zinc-200 text-xs font-bold uppercase tracking-widest mb-3">
-                     <span className="flex items-center gap-1"><MapPin size={10} className="text-red-400" /> {log.location || 'Local Community'}</span>
+                     <span className="flex items-center gap-1"><MapPin size={10} className="text-ares-red" /> {log.location || 'Local Community'}</span>
                      <span>&middot;</span>
                      <span>{new Date(log.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                   </div>
@@ -318,7 +318,7 @@ export default function Outreach() {
                   </div>
 
                   <div className="pt-2">
-                    <Turnstile onVerify={setTurnstileToken} theme="dark" size="flexible" className="mb-4" />
+                    <Turnstile onVerify={setTurnstileToken} theme="dark" size="normal" className="mb-4" />
                   </div>
 
                   <button type="submit" disabled={isSubmitting || !turnstileToken} className="w-full py-4 bg-ares-red text-white font-black hover:shadow-[0_0_20px_rgba(220,38,38,0.3)] transition-all ares-cut disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest">

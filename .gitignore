@@ -104,3 +104,6 @@ playwright-report/
 # Scratch directories
 scratch/
 scratch_migration/
+
+_worker.bundle
+

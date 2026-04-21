@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Rocket, Wrench, Code, PenTool, CheckCircle } from "lucide-react";
+import { Rocket, Wrench, Code, PenTool, CheckCircle, GraduationCap } from "lucide-react";
 import SEO from "../components/SEO";
 import { GreekMeander } from "../components/GreekMeander";
 import Turnstile from "../components/Turnstile";
@@ -237,10 +237,3 @@ export default function Join() {
   );
 }
 
-import React from "react";
-// Ensure the icon is imported
-function GraduationCap(props: { size?: number | string } & React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m21.44 11.05-9.19 5.64a1.98 1.98 0 0 1-1.92 0L1.14 11.05a1.98 1.98 0 0 1 0-3.38l9.19-5.64a1.98 1.98 0 0 1 1.92 0l9.19 5.64a1.98 1.98 0 0 1 0 3.38Z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
-  );
-}

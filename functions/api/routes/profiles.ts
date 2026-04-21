@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { AppEnv, getSessionUser, sanitizeProfileForPublic } from "./_shared";
 import { getAuth } from "../../utils/auth";
-import { encrypt, decrypt } from "../../utils/crypto";
+import { decrypt } from "../../utils/crypto";
+import { upsertProfile } from "./_profileUtils";
 
 
 const profilesRouter = new Hono<AppEnv>();
@@ -29,6 +30,7 @@ profilesRouter.get("/me", async (c) => {
       profile.emergency_contact_name = await decrypt(profile.emergency_contact_name as string, secret);
       profile.emergency_contact_phone = await decrypt(profile.emergency_contact_phone as string, secret);
       profile.phone = await decrypt(profile.phone as string, secret);
+      profile.contact_email = await decrypt(profile.contact_email as string, secret);
       profile.parents_name = await decrypt(profile.parents_name as string, secret);
       profile.parents_email = await decrypt(profile.parents_email as string, secret);
       profile.students_name = await decrypt(profile.students_name as string, secret);
@@ -59,78 +61,7 @@ profilesRouter.put("/me", async (c) => {
 
   try {
     const body = await c.req.json();
-    const {
-      nickname, first_name, last_name, pronouns, phone, contact_email,
-      bio, subteams, dietary_restrictions,
-      show_on_about, show_email, show_phone,
-      member_type, grade_year, colleges, employers,
-      favorite_first_thing, fun_fact,
-      favorite_robot_mechanism, pre_match_superstition,
-      leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone,
-      parents_name, parents_email, students_name, students_email, favorite_food
-    } = body;
-
-    const dietaryStr = Array.isArray(dietary_restrictions)
-      ? JSON.stringify(dietary_restrictions)
-      : (dietary_restrictions || "[]");
-
-    const subteamsStr = Array.isArray(subteams) ? JSON.stringify(subteams) : (subteams || "[]");
-
-    const secret = c.env.ENCRYPTION_SECRET;
-    const encryptedName = await encrypt(emergency_contact_name || "", secret);
-    const encryptedPhone = await encrypt(emergency_contact_phone || "", secret);
-    const encryptedUserPhone = await encrypt(phone || "", secret);
-    const encryptedParentsName = await encrypt(parents_name || "", secret);
-    const encryptedParentsEmail = await encrypt(parents_email || "", secret);
-    const encryptedStudentsName = await encrypt(students_name || "", secret);
-    const encryptedStudentsEmail = await encrypt(students_email || "", secret);
-
-    await c.env.DB.prepare(
-      `INSERT INTO user_profiles (
-        user_id, nickname, first_name, last_name, pronouns, phone, contact_email,
-        bio, subteams, dietary_restrictions,
-        show_on_about, show_email, show_phone,
-        member_type, grade_year, colleges, employers,
-        favorite_first_thing, fun_fact,
-        favorite_robot_mechanism, pre_match_superstition,
-        leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone,
-        parents_name, parents_email, students_name, students_email, favorite_food
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(user_id) DO UPDATE SET
-        nickname=excluded.nickname, first_name=excluded.first_name, last_name=excluded.last_name,
-        pronouns=excluded.pronouns, phone=excluded.phone, contact_email=excluded.contact_email,
-        bio=excluded.bio, subteams=excluded.subteams, dietary_restrictions=excluded.dietary_restrictions,
-        show_on_about=excluded.show_on_about, show_email=excluded.show_email, show_phone=excluded.show_phone,
-        member_type=excluded.member_type, grade_year=excluded.grade_year, colleges=excluded.colleges,
-        employers=excluded.employers, favorite_first_thing=excluded.favorite_first_thing,
-        fun_fact=excluded.fun_fact,
-        favorite_robot_mechanism=excluded.favorite_robot_mechanism,
-        pre_match_superstition=excluded.pre_match_superstition,
-        leadership_role=excluded.leadership_role, rookie_year=excluded.rookie_year,
-        tshirt_size=excluded.tshirt_size,
-        emergency_contact_name=excluded.emergency_contact_name,
-        emergency_contact_phone=excluded.emergency_contact_phone,
-        parents_name=excluded.parents_name,
-        parents_email=excluded.parents_email,
-        students_name=excluded.students_name,
-        students_email=excluded.students_email,
-        favorite_food=excluded.favorite_food`
-    ).bind(
-      user.id,
-      nickname || "", first_name || "", last_name || "", pronouns || "",
-      encryptedUserPhone, contact_email || "",
-      bio || "", subteamsStr, dietaryStr,
-      show_on_about ? 1 : 0, show_email ? 1 : 0, show_phone ? 1 : 0,
-      member_type || "student", grade_year || "", colleges || "", employers || "",
-      favorite_first_thing || "", fun_fact || "",
-      favorite_robot_mechanism || "", pre_match_superstition || "",
-      leadership_role || "", rookie_year || "",
-      tshirt_size || "", encryptedName, encryptedPhone,
-      encryptedParentsName, encryptedParentsEmail, encryptedStudentsName, encryptedStudentsEmail,
-      favorite_food || ""
-    ).run();
-
-
+    await upsertProfile(c, user.id, body);
     return c.json({ success: true });
   } catch (err) {
     console.error("D1 profile/me write error:", err);
@@ -191,7 +122,7 @@ profilesRouter.get("/:userId", async (c) => {
   const userId = (c.req.param("userId") || "");
   try {
     const profile = await c.env.DB.prepare(
-      `SELECT p.*, u.image as avatar, u.name 
+      `SELECT p.user_id, p.nickname, p.bio, p.joined_year, p.member_type, p.linkedin_url, p.github_url, p.show_on_about, u.image as avatar, u.name 
        FROM user_profiles p 
        LEFT JOIN user u ON p.user_id = u.id 
        WHERE p.user_id = ?`
@@ -208,9 +139,6 @@ profilesRouter.get("/:userId", async (c) => {
     }
 
     const memberType = String(profile.member_type || "student");
-    if (profile.phone) {
-      profile.phone = await decrypt(profile.phone as string, c.env.ENCRYPTION_SECRET);
-    }
     const sanitized = sanitizeProfileForPublic(profile as Record<string, unknown>, memberType);
 
     const { results: rawBadges } = await c.env.DB.prepare(
