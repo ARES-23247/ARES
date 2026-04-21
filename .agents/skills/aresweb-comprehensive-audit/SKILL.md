@@ -9,6 +9,7 @@ You are the Lead Code Reviewer for Team ARES 23247. When asked to audit a file, 
 
 ## 1. Security 🔒
 - **Authentication & Authorization:** Are backend routes protected by `ensureAuth` or `ensureAdmin` where needed?
+- **External Lockdown (No Outside Access):** Are CORS policies strictly scoped to ARES domains? Ensure no internal API can be arbitrarily invoked by unauthenticated outside domains. Validated development bypasses must NEVER be left enabled in production.
 - **Injection Prevention:** Are D1 database queries using bound parameters (`?`) rather than template string concatenation? 
 - **Validation:** Are incoming payloads parsed via Zod or sanitized correctly before execution?
 - **Environment Exfiltration:** Does the code log sensitive tokens, keys, or passwords to the console/UI?
