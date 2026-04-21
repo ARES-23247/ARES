@@ -24,6 +24,5 @@ database_id = "09c4aafb-89fd-4735-930e-3ff8e2289c34"
 [ai]
 binding = "AI"
 
-[triggers]
-crons = ["0 0 * * *"] # Run maintenance daily at midnight
+
 
