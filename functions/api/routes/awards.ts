@@ -27,7 +27,13 @@ awardsRouter.post("/", ensureAdmin, async (c) => {
       return c.json({ error: "Missing required fields" }, 400);
     }
 
-    if (id && !isNaN(Number(id))) {
+    let exists = false;
+    if (id) {
+      const row = await c.env.DB.prepare("SELECT id FROM awards WHERE id = ?").bind(id).first();
+      if (row) exists = true;
+    }
+
+    if (exists) {
       // Update existing
       await c.env.DB.prepare(
         "UPDATE awards SET title = ?, date = ?, event_name = ?, description = ?, icon_type = ? WHERE id = ?"

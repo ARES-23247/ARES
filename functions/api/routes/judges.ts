@@ -42,12 +42,12 @@ judgesRouter.get("/portfolio", async (c) => {
 
     // Fetch outreach data
     const { results: outreach } = await c.env.DB.prepare(
-      "SELECT id, title, date, location, students_count, hours_logged, reach_count, description FROM outreach_logs ORDER BY date DESC"
+      "SELECT id, title, date, location, COALESCE(students_count, 0) as students_count, COALESCE(hours, 0) as hours_logged, COALESCE(people_reached, 0) as reach_count, impact_summary as description FROM outreach_logs ORDER BY date DESC"
     ).all();
 
     // Fetch awards
     const { results: awards } = await c.env.DB.prepare(
-      "SELECT id, title, year, event_name, image_url, description FROM awards ORDER BY year DESC"
+      "SELECT id, title, date as year, event_name, icon_type as image_url, description FROM awards ORDER BY date DESC"
     ).all();
 
     // Fetch sponsors

@@ -64,6 +64,7 @@ Common resource structures to expect in API responses:
 ## 4. Development Standards
 
 - **Standardized Endpoints**: Use `/admin/list` for pagination lists and `/admin/save` for create/update logic.
+- **D1 Schema Synchronization (CRITICAL)**: Whenever mapping UI models to D1 databases in `INSERT` or `UPDATE` transactions, you MUST verify destructuring and sql parameter bindings strictly match the column definitions in `schema.sql`. Missing a field silently drops user data.
 - **Error Handling**: Use `c.json({ error: "Message" }, status)` for all failures. Never return raw text or unhandled exceptions.
 - **Audit Logging**: Use `logAuditAction` for all sensitive administrative changes (deletions, role changes, settings updates).
 
