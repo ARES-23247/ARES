@@ -346,11 +346,8 @@ export function sanitizeProfileForPublic(profile: Record<string, unknown>, membe
 
 
 // ── Rate Limiting (Distributed via D1) ──────────────────────────────────
-export async function checkRateLimit(c: any, ip: string, limit = 100, windowSeconds = 60): Promise<boolean> {
+export async function checkRateLimit(c: Context<AppEnv>, ip: string, limit = 100, windowSeconds = 60): Promise<boolean> {
   try {
-    const now = Math.floor(Date.now() / 1000);
-    const windowStart = now - windowSeconds;
-
     // Clean up old entries occasionally (1% chance)
     if (Math.random() < 0.01) {
       c.executionCtx.waitUntil(
@@ -359,9 +356,10 @@ export async function checkRateLimit(c: any, ip: string, limit = 100, windowSeco
     }
 
     // Check recent request count for this IP
-    const { count } = await c.env.DB.prepare(
+    const row = await c.env.DB.prepare(
       "SELECT COUNT(*) as count FROM audit_log WHERE actor = ? AND resource_type = 'rate_limit' AND created_at > datetime('now', '-' || ? || ' seconds')"
-    ).bind(ip, windowSeconds).first();
+    ).bind(ip, windowSeconds).first<{ count: number }>();
+    const count = row ? row.count : 0;
 
     if (count > limit) {
       return false;
