@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Context, Hono } from "hono";
 import { Bindings, parsePagination } from "./_shared";
 import { sendZulipAlert } from "../../utils/zulipSync";
 
@@ -28,7 +28,7 @@ sponsorsRouter.get("/admin", async (c) => {
   return handleSponsorList(c);
 });
 
-async function handleSponsorList(c: any) {
+async function handleSponsorList(c: Context<{ Bindings: Bindings }>) {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
     const { results } = await c.env.DB.prepare("SELECT id, name, tier, logo_url, website_url, is_active, created_at FROM sponsors ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
@@ -37,7 +37,7 @@ async function handleSponsorList(c: any) {
     console.error("D1 admin sponsors list error:", err);
     return c.json({ sponsors: [] });
   }
-});
+}
 
 // ── POST /admin — create or update a sponsor (admin) ──────
 // ── POST /save — create or update a sponsor (admin) ──────
@@ -50,7 +50,7 @@ sponsorsRouter.post("/admin", async (c) => {
   return handleSponsorSave(c);
 });
 
-async function handleSponsorSave(c: any) {
+async function handleSponsorSave(c: Context<{ Bindings: Bindings }>) {
   try {
     const body = await c.req.json();
     const { id, name, tier, logo_url, website_url, is_active } = body;
@@ -69,7 +69,7 @@ async function handleSponsorSave(c: any) {
     console.error("D1 sponsor save error:", err);
     return c.json({ error: "Save failed" }, 500);
   }
-});
+}
 
 // ── DELETE /admin/:id — remove a sponsor (admin) ─────────
 // ── DELETE /:id — remove a sponsor (admin) ─────────
@@ -82,7 +82,7 @@ sponsorsRouter.delete("/admin/:id", async (c) => {
   return handleSponsorDelete(c);
 });
 
-async function handleSponsorDelete(c: any) {
+async function handleSponsorDelete(c: Context<{ Bindings: Bindings }>) {
   try {
     const id = c.req.param("id");
     await c.env.DB.prepare("DELETE FROM sponsors WHERE id = ?").bind(id).run();
@@ -91,7 +91,7 @@ async function handleSponsorDelete(c: any) {
     console.error("D1 sponsor delete error:", err);
     return c.json({ error: "Delete failed" }, 500);
   }
-});
+}
 
 // ── GET /sponsors/roi/:token — Public (hidden) Sponsor Dashboard ────
 sponsorsRouter.get("/roi/:token", async (c) => {
@@ -138,7 +138,7 @@ sponsorsRouter.get("/admin/tokens", async (c) => {
   return handleTokenList(c);
 });
 
-async function handleTokenList(c: any) {
+async function handleTokenList(c: Context<{ Bindings: Bindings }>) {
   try {
     // Only admins (protected by middleware on routes ideally, or here)
     const { results } = await c.env.DB.prepare(
@@ -148,7 +148,7 @@ async function handleTokenList(c: any) {
   } catch {
     return c.json({ tokens: [] }, 500);
   }
-});
+}
 
 // ── POST /admin/tokens — Generate Token ──────
 // ── POST /tokens/generate — Generate Token (admin) ──────
@@ -161,7 +161,7 @@ sponsorsRouter.post("/admin/tokens", async (c) => {
   return handleTokenGenerate(c);
 });
 
-async function handleTokenGenerate(c: any) {
+async function handleTokenGenerate(c: Context<{ Bindings: Bindings }>) {
   try {
     const { sponsor_id } = await c.req.json();
     if (!sponsor_id) return c.json({ error: "Missing sponsor_id"}, 400);
@@ -190,6 +190,6 @@ async function handleTokenGenerate(c: any) {
   } catch {
     return c.json({ error: "Failed to generate" }, 500);
   }
-});
+}
 
 export default sponsorsRouter;

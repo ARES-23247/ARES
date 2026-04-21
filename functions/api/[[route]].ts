@@ -25,7 +25,6 @@ import sitemapRouter from "./routes/sitemap";
 import githubRouter from "./routes/github";
 import githubWebhookRouter from "./routes/githubWebhook";
 import zulipWebhookRouter from "./routes/zulipWebhook";
-import swaggerRouter from "./routes/swagger";
 import zulipRouter from "./routes/zulip";
 import notificationsRouter from "./routes/notifications";
 
@@ -127,35 +126,42 @@ apiRouter.route("/admin/inquiries", inquiriesRouter);
 apiRouter.route("/locations", locationsRouter);
 apiRouter.route("/admin/locations", locationsRouter);
 
-// ── Media & Assets
 apiRouter.route("/media", mediaRouter);
-apiRouter.route("/admin/media", mediaRouter);
-apiRouter.route("/admin/upload", mediaRouter); // Specific legacy alias for upload
-
-// ── Data Management & Sponsors
-apiRouter.route("/analytics", analyticsRouter);
-apiRouter.route("/sponsors", sponsorsRouter);
-apiRouter.route("/admin/sponsors", sponsorsRouter);
-
-apiRouter.route("/outreach", outreachRouter);
-apiRouter.route("/admin/outreach", outreachRouter);
-
 apiRouter.route("/awards", awardsRouter);
-apiRouter.route("/admin/awards", awardsRouter);
-
-// ── External Integrations & System
+apiRouter.route("/outreach", outreachRouter);
 apiRouter.route("/tba", tbaRouter);
-apiRouter.route("/github", githubRouter);
-apiRouter.route("/zulip", zulipRouter);
-apiRouter.route("/swagger", swaggerRouter);
-apiRouter.route("/settings", settingsRouter);
-apiRouter.route("/admin/settings", settingsRouter); // Bridge for settings
-
 apiRouter.route("/judges", judgesRouter);
-apiRouter.route("/sitemap", sitemapRouter);
 apiRouter.route("/profile", profilesRouter);
 apiRouter.route("/badges", badgesRouter);
+apiRouter.route("/comments", commentsRouter);
+apiRouter.route("/settings", settingsRouter);
+apiRouter.route("/sitemap", sitemapRouter);
 apiRouter.route("/notifications", notificationsRouter);
+apiRouter.route("/analytics", analyticsRouter);
+apiRouter.route("/github", githubRouter);
+apiRouter.route("/zulip", zulipRouter);
+apiRouter.route("/locations", locationsRouter);
+
+// ── Admin Aliases (Ensure Dashboard stays functional) ───────────────
+apiRouter.route("/admin/posts", postsRouter);
+apiRouter.route("/admin/events", eventsRouter);
+apiRouter.route("/admin/docs", docsRouter);
+apiRouter.route("/admin/sponsors", sponsorsRouter);
+apiRouter.route("/admin/inquiries", inquiriesRouter);
+apiRouter.route("/admin/media", mediaRouter);
+apiRouter.route("/admin/awards", awardsRouter);
+apiRouter.route("/admin/outreach", outreachRouter);
+apiRouter.route("/admin/judges", judgesRouter);
+apiRouter.route("/admin/badges", badgesRouter);
+apiRouter.route("/admin/settings", settingsRouter);
+apiRouter.route("/admin/notifications", notificationsRouter);
+apiRouter.route("/admin/analytics", analyticsRouter);
+apiRouter.route("/admin/github", githubRouter);
+apiRouter.route("/admin/zulip", zulipRouter);
+
+// Special mount for logistics summary fallback (About page / Logistics tab)
+apiRouter.get("/logistics/summary", (c) => profilesRouter.fetch(c.req.raw, c.env, c.executionCtx));
+apiRouter.get("/team-roster", (c) => profilesRouter.fetch(c.req.raw, c.env, c.executionCtx));
 
 // Webhooks (public — self-authenticated via signatures/tokens)
 apiRouter.route("/webhooks/github", githubWebhookRouter);

@@ -40,7 +40,7 @@ export default function Home() {
 
           <div className="max-w-2xl mb-10 border-l-4 border-ares-bronze pl-6">
             <div id="hero-mountaineer-mindset" className="text-xl md:text-2xl font-medium leading-relaxed text-marble/80 px-4 py-3 bg-obsidian" style={{ backgroundColor: '#1A1A1A', color: '#cccccc', borderRadius: '8px' }}>
-              Building the future of West Virginia robotics with the <strong className="text-white">Mountaineer Mindset</strong>. <a href="https://www.firstinspires.org/robotics/ftc" target="_blank" rel="noopener noreferrer" className="text-white hover:text-ares-red transition-colors underline decoration-ares-red/30 underline-offset-4 font-medium italic">FIRST® Tech Challenge</a> Team #23247.
+              Building the future of West Virginia robotics with the <strong className="text-white">Mountaineer Mindset</strong>. Proudly competing as <a href="https://www.firstinspires.org/robotics/ftc" target="_blank" rel="noopener noreferrer" className="text-white hover:text-ares-red transition-all underline decoration-ares-red decoration-2 underline-offset-8 font-black italic tracking-tight">FIRST® Tech Challenge</a> Team #23247.
             </div>
           </div>
 

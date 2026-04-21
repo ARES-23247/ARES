@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Context, Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, parsePagination } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
@@ -106,12 +106,7 @@ postsRouter.post("/save", async (c) => {
   return handlePostSave(c);
 });
 
-// Legacy alias for dashboard POST /api/admin/posts
-postsRouter.post("/", async (c) => {
-  return handlePostSave(c);
-});
-
-async function handlePostSave(c: any) {
+async function handlePostSave(c: Context<AppEnv>) {
   try {
     const body = await c.req.json<{
       title: string;
@@ -209,19 +204,14 @@ async function handlePostSave(c: any) {
     console.error("D1 write error:", err);
     return c.json({ success: false, error: (err as Error)?.message || "Database write failed" }, 500);
   }
-});
+}
 
 // ── PUT /:slug — edit a blog post (admin) ────────────────────
 postsRouter.put("/:slug", async (c) => {
   return handlePostEdit(c);
 });
 
-// Legacy alias for dashboard PUT /api/admin/posts/:slug
-postsRouter.put("/admin/:slug", async (c) => {
-  return handlePostEdit(c);
-});
-
-async function handlePostEdit(c: any) {
+async function handlePostEdit(c: Context<AppEnv>) {
   try {
     const slug = c.req.param("slug");
     const body = await c.req.json<{
@@ -277,7 +267,7 @@ async function handlePostEdit(c: any) {
     console.error("D1 write error:", err);
     return c.json({ success: false, error: (err as Error)?.message || "Database write failed" }, 500);
   }
-});
+}
 
 // ── DELETE /:slug — soft-delete (admin) ──────────────────
 postsRouter.delete("/:slug", async (c) => {

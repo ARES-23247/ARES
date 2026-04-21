@@ -17,8 +17,8 @@ badgesRouter.get("/", async (c) => {
   }
 });
 
-// ── POST /admin/badges — Create a badge class ────────────────────────
-badgesRouter.post("/admin/save", ensureAdmin, async (c) => {
+// ── POST /save — Create a badge class (admin) ────────────────────────
+badgesRouter.post("/save", ensureAdmin, async (c) => {
   try {
     const body = await c.req.json();
     const { id, name, description, icon, color_theme } = body;
@@ -38,8 +38,8 @@ badgesRouter.post("/admin/save", ensureAdmin, async (c) => {
   }
 });
 
-// ── POST /admin/users/:userId/badges — Award a badge ──────────────────
-badgesRouter.post("/admin/users/:userId/award", ensureAdmin, async (c) => {
+// ── POST /users/:userId/award — Award a badge (admin) ──────────────────
+badgesRouter.post("/users/:userId/award", ensureAdmin, async (c) => {
   try {
     const userId = c.req.param("userId");
     const { badge_id } = await c.req.json();
@@ -82,8 +82,8 @@ badgesRouter.post("/admin/users/:userId/award", ensureAdmin, async (c) => {
   }
 });
 
-// ── DELETE /admin/users/:userId/badges/:badgeId — Revoke a badge ──────
-badgesRouter.delete("/admin/users/:userId/:badgeId/revoke", ensureAdmin, async (c) => {
+// ── DELETE /users/:userId/:badgeId/revoke — Revoke a badge (admin) ──────
+badgesRouter.delete("/users/:userId/:badgeId/revoke", ensureAdmin, async (c) => {
   try {
     const userId = c.req.param("userId");
     const badgeId = c.req.param("badgeId");

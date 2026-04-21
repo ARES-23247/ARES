@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { AppEnv, ensureAdmin, getSessionUser, parsePagination } from "./_shared";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
@@ -156,12 +157,7 @@ docsRouter.post("/save", async (c) => {
   return handleDocSave(c);
 });
 
-// Legacy alias for dashboard POST /api/admin/docs
-docsRouter.post("/", async (c) => {
-  return handleDocSave(c);
-});
-
-async function handleDocSave(c: any) {
+async function handleDocSave(c: Context<AppEnv>) {
   try {
     const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = await c.req.json();
     if (!slug || !title || !category || !content) {
@@ -228,7 +224,7 @@ async function handleDocSave(c: any) {
     console.error("D1 doc write error:", err);
     return c.json({ error: "Write failed" }, 500);
   }
-});
+}
 
 // ── DELETE /:slug — soft-delete (admin) ─────────────────────
 docsRouter.delete("/:slug", async (c) => {
@@ -240,7 +236,7 @@ docsRouter.delete("/admin/:slug", async (c) => {
   return handleDocDelete(c);
 });
 
-async function handleDocDelete(c: any) {
+async function handleDocDelete(c: Context<AppEnv>) {
   try {
     const slug = c.req.param("slug");
     await c.env.DB.prepare("UPDATE docs SET is_deleted = 1 WHERE slug = ?").bind(slug).run();
@@ -249,7 +245,7 @@ async function handleDocDelete(c: any) {
     console.error("D1 soft-delete error (docs):", err);
     return c.json({ error: "Soft-delete failed" }, 500);
   }
-});
+}
 
 // ── PATCH /:slug/undelete — restore (admin) ────────────────
 docsRouter.patch("/:slug/undelete", async (c) => {
