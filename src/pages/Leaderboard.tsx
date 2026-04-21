@@ -56,6 +56,9 @@ export default function Leaderboard() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-gold/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-5xl mx-auto px-6 relative z-10">
+        <Link to="/" className="inline-flex items-center gap-2 text-zinc-500 hover:text-white text-xs font-bold uppercase tracking-widest mb-12 transition-colors">
+          <ArrowLeft size={16} /> Back to Portal
+        </Link>
         <header className="mb-20 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}

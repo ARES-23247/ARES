@@ -178,7 +178,7 @@ export default function SponsorROI() {
                   </tr>
                 </thead>
                 <tbody className="text-sm font-medium">
-                  {metrics.map((m, i) => {
+                  {metrics.map((m) => {
                     const actualImpressions = m.impressions + 1200; // Simulated baseline for design 
                     const rate = ((m.clicks / actualImpressions) * 100).toFixed(1);
                     return (
