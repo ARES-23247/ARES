@@ -7,9 +7,9 @@ const adminMediaRouter = new Hono<AppEnv>();
 // ── POST /admin/upload — File Upload via R2 & AI Image Accessibility ──
 adminMediaRouter.post("/upload", ensureAdmin, async (c) => {
   try {
-    const body = await c.req.parseBody();
-    const file = body["file"] as File;
-    const folder = (body["folder"] as string) || "Library";
+    const formData = await c.req.formData();
+    const file = formData.get("file") as File;
+    const folder = (formData.get("folder") as string) || "Library";
 
     if (!file) {
       return c.json({ error: "No file uploaded" }, 400);

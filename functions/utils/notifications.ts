@@ -97,7 +97,7 @@ export async function notifyByRole(
 
     if (!results || results.length === 0) return;
 
-    const promises = results.map((row: any) => 
+    const promises = results.map((row: Record<string, unknown>) => 
       emitNotification(c, {
         userId: row.id as string,
         ...payload

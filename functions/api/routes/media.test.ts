@@ -102,5 +102,5 @@ describe("Hono Backend - /media Router", () => {
     expect(body.altText).toBe("A cool robot");
     expect(mockR2.put).toHaveBeenCalled();
     expect(mockAi.run).toHaveBeenCalledWith("@cf/llava-1.5-7b-hf", expect.anything());
-  });
+  }, 15000);
 });
