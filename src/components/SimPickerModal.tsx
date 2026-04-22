@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, TerminalSquare, Search } from "lucide-react";
 import registry from "../sims/simRegistry.json";
 
@@ -12,6 +12,34 @@ export default function SimPickerModal({
   onSelect: (simId: string) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // ACC-F01: Focus trap and Escape key handler
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "Tab" && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -22,7 +50,13 @@ export default function SimPickerModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className="bg-obsidian border border-white/10 shadow-2xl ares-cut-lg w-full max-w-4xl h-[70vh] flex flex-col overflow-hidden relative">
+      <div 
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sim-picker-title"
+        className="bg-obsidian border border-white/10 shadow-2xl ares-cut-lg w-full max-w-4xl h-[70vh] flex flex-col overflow-hidden relative"
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/40">
@@ -31,7 +65,7 @@ export default function SimPickerModal({
               <TerminalSquare className="text-ares-red" size={20} aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white tracking-widest uppercase">Inject Simulator</h2>
+              <h2 id="sim-picker-title" className="text-xl font-black text-white tracking-widest uppercase">Inject Simulator</h2>
               <p className="text-xs text-white/60 font-mono">Insert interactive React simulators directly into the page hierarchy.</p>
             </div>
           </div>
@@ -51,6 +85,7 @@ export default function SimPickerModal({
            <input
              id="simSearch"
              type="text"
+             autoFocus
              placeholder="Search active simulators (e.g., SwerveSim, PowerShedding, PhysicsCanvas)"
              value={searchQuery}
              onChange={e => setSearchQuery(e.target.value)}
@@ -59,7 +94,10 @@ export default function SimPickerModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-obsidian">
+        <div 
+          className="flex-1 overflow-y-auto p-6 bg-obsidian"
+          aria-live="polite" // ACC-L01: Announce search results changes
+        >
           {sims.length === 0 ? (
             <div className="w-full h-full flex flex-col items-center justify-center text-white/60 gap-4">
               <TerminalSquare size={48} className="opacity-50" aria-hidden="true" />

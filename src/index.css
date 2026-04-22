@@ -75,6 +75,10 @@ h1, h2, h3, h4, .font-heading {
     @apply rounded-tl-[3rem] rounded-br-[3rem] rounded-tr-lg rounded-bl-lg;
   }
 
+  .ares-badge-red {
+    @apply bg-ares-red text-white px-3 py-1.5 ares-cut-sm font-bold uppercase tracking-wider shadow-lg shadow-ares-red/20;
+  }
+
   .meander-divider {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='12' viewBox='0 0 60 12'%3E%3Cpath d='M0 0h9v3H3v6h6v3H0V0zm12 0h9v3H15v6h6v3H12V0zm12 0h9v3H27v6h6v3H24V0zm12 0h9v3H39v6h6v3H36V0zm12 0h9v3H51v6h6v3H48V0z' fill='%23cd7f32'/%3E%3C/svg%3E");
     background-repeat: repeat-x;

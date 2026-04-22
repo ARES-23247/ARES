@@ -52,7 +52,12 @@ commentsRouter.post("/:targetType/:targetId", rateLimitMiddleware(10, 60), turns
 
   const targetType = (c.req.param("targetType") || "");
   const targetId = (c.req.param("targetId") || "");
-  const body = await c.req.json();
+  let body;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+  }
   const content = (body.content || "").trim();
 
   if (!content) return c.json({ error: "Comment content cannot be empty" }, 400);
@@ -112,7 +117,12 @@ commentsRouter.put("/:id", rateLimitMiddleware(10, 60), async (c) => {
   if (!user || user.role === "unverified") return c.json({ error: "Forbidden" }, 403);
 
   const id = (c.req.param("id") || "");
-  const body = await c.req.json();
+  let body;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+  }
   const content = (body.content || "").trim();
 
   if (!content) return c.json({ error: "Comment content cannot be empty" }, 400);

@@ -36,14 +36,21 @@ usersRouter.patch("/:id", rateLimitMiddleware(15, 60), zValidator("json", patchU
   try {
     const id = (c.req.param("id") || "");
     const { role, member_type } = c.req.valid("json");
+    const batch = [];
 
     if (role) {
-      await c.env.DB.prepare("UPDATE user SET role = ? WHERE id = ?").bind(role, id).run();
+      batch.push(c.env.DB.prepare("UPDATE user SET role = ? WHERE id = ?").bind(role, id));
+      // SES-02: Evict sessions on role change to prevent privilege persistence
+      batch.push(c.env.DB.prepare("DELETE FROM session WHERE userId = ?").bind(id));
     }
     if (member_type) {
-      await c.env.DB.prepare(
+      batch.push(c.env.DB.prepare(
         "INSERT INTO user_profiles (user_id, member_type) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET member_type = excluded.member_type"
-      ).bind(id, member_type).run();
+      ).bind(id, member_type));
+    }
+
+    if (batch.length > 0) {
+      await c.env.DB.batch(batch);
     }
 
     return c.json({ success: true });

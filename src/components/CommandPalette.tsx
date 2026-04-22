@@ -187,11 +187,12 @@ export default function CommandPalette() {
     }
   };
 
-  // Handle focus when modal opens
+  // ACC-F03: HARDENED FOCUS TIMING
+  // Using requestAnimationFrame for deterministic focus on the input.
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(() => inputRef.current?.focus(), 50);
-      return () => clearTimeout(timer);
+      const raf = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => cancelAnimationFrame(raf);
     }
   }, [isOpen]);
 
@@ -239,7 +240,12 @@ export default function CommandPalette() {
             </div>
 
             {/* Results Body */}
-            <div id="command-palette-results" role="listbox" className="max-h-[60vh] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            <div 
+              id="command-palette-results" 
+              role="listbox" 
+              className="max-h-[60vh] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+              aria-live="polite" // ACC-L04: Announce search updates to screen readers
+            >
               {isSearching && query.length >= 2 && results.length === 0 ? (
                  <div className="p-8 text-center text-marble/40 animate-pulse font-mono flex items-center justify-center gap-2">
                    <Terminal className="text-ares-cyan" size={16} /> Scanning D1 nodes...

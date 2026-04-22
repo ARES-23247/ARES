@@ -177,8 +177,8 @@ export default function ProfilePage() {
           {/* Admin / Private Details */}
           {(profile.emergency_contact_name || profile.dietary_restrictions || profile.tshirt_size) && (
              <div className="bg-ares-red/5 border border-ares-red/20 ares-cut p-6 mb-8 relative overflow-hidden">
-               <div className="absolute top-0 right-0 bg-ares-red/20 text-ares-red text-[9px] font-black uppercase px-2 py-1 rounded-bl-lg">Private / Admin Only</div>
-               <h3 className="text-xs font-bold text-ares-red uppercase tracking-wider mb-4 flex items-center gap-2"><Shield size={14} /> Internal Records</h3>
+               <div className="absolute top-0 right-0 bg-ares-red text-white text-[9px] font-black uppercase px-2 py-1 rounded-bl-lg">Private / Admin Only</div>
+               <h3 className="ares-badge-red mb-6 flex items-center gap-2"><Shield size={14} /> Internal Records</h3>
                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                  {(profile.emergency_contact_name || profile.emergency_contact_phone) && (
                    <div>
@@ -265,7 +265,8 @@ export default function ProfilePage() {
           {/* Colleges */}
           {colleges && colleges.length > 0 && (
             <div className="bg-white/5 border border-white/10 ares-cut p-6 mb-4">
-              <h3 className="text-xs font-bold text-ares-red uppercase tracking-wider mb-4 flex items-center gap-2"><GraduationCap size={14} /> Education</h3>
+              <h3 className="ares-badge-red mb-6 flex items-center gap-2">
+<GraduationCap size={14} /> Education</h3>
               <div className="space-y-3">
                 {colleges.map((col: { domain: string, name: string, degree: string, years: string }, i: number) => (
                   <div key={i} className="flex items-center gap-3">
@@ -283,7 +284,8 @@ export default function ProfilePage() {
           {/* Employers */}
           {employers && employers.length > 0 && (
             <div className="bg-white/5 border border-white/10 ares-cut p-6">
-              <h3 className="text-xs font-bold text-ares-red uppercase tracking-wider mb-4 flex items-center gap-2"><Briefcase size={14} /> Career</h3>
+              <h3 className="ares-badge-red mb-6 flex items-center gap-2">
+<Briefcase size={14} /> Career</h3>
               <div className="space-y-3">
                 {employers.map((emp: { domain: string, name: string, current: boolean, title: string, years: string }, i: number) => (
                   <div key={i} className="flex items-center gap-3">

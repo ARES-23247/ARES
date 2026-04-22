@@ -35,8 +35,9 @@ export default function AssetPickerModal({
 
   // ACC-D01: Implement focus trapping and Esc key handling
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
       if (e.key === "Escape") {
         onClose();
       }
@@ -67,14 +68,15 @@ export default function AssetPickerModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Auto-focus the close button or first action
+  // ACC-F02: HARDENED FOCUS TIMING
+  // Using requestAnimationFrame instead of setTimeout(50) for deterministic focus.
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(() => {
+      const raf = requestAnimationFrame(() => {
         const closeBtn = modalRef.current?.querySelector('button[aria-label="Close modal"]') as HTMLElement;
         if (closeBtn) closeBtn.focus();
-      }, 50);
-      return () => clearTimeout(timer);
+      });
+      return () => cancelAnimationFrame(raf);
     }
   }, [isOpen]);
 
@@ -132,10 +134,14 @@ export default function AssetPickerModal({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-obsidian">
+        <div 
+          className="flex-1 overflow-y-auto p-6 bg-obsidian"
+          aria-live="polite" // ACC-L01: Announce loading states and search updates
+        >
           {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-full flex flex-col items-center justify-center gap-4">
               <div className="w-10 h-10 border-4 border-white/10 border-t-ares-gold rounded-full animate-spin"></div>
+              <p className="text-xs font-bold uppercase tracking-widest text-ares-gold animate-pulse">Scanning R2 Vault...</p>
             </div>
           ) : assets.length === 0 ? (
             <div className="w-full h-full flex flex-col items-center justify-center text-white/20 gap-2">

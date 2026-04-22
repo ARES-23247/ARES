@@ -57,19 +57,25 @@ mediaRouter.get("/", async (c) => {
     ]);
 
     const results = (dbRes.results || []) as { key: string, folder: string, tags: string }[];
+    const metaMap = new Map();
+    for (const row of results) {
+      metaMap.set(row.key, { tags: row.tags });
+    }
+
     const publicKeys = new Set(results.map(r => r.key));
 
     const merged = objects.objects
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter(obj => publicKeys.has((obj as any).key))
-      .map(obj => ({
-        ...obj,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        url: `/api/media/${(obj as any).key}`,
-        folder: "Gallery",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        tags: results.find(r => r.key === (obj as any).key)?.tags || ""
-      }));
+      .map(obj => {
+        const key = (obj as any).key;
+        return {
+          ...obj,
+          url: `/api/media/${key}`,
+          folder: "Gallery",
+          tags: metaMap.get(key)?.tags || ""
+        };
+      });
 
     const payload = { media: merged };
     // SEC-DoW: Edge-cache gallery for 5 min (replaces fragile per-isolate in-memory cache)

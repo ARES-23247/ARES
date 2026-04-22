@@ -197,7 +197,12 @@ docsRouter.post("/:slug/feedback", async (c) => {
 
   try {
     const slug = (c.req.param("slug") || "");
-    const body = await c.req.json();
+    let body;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
     const { isHelpful, comment, turnstileToken } = body;
 
     // SEC-DoW: Verify Turnstile challenge before D1 write
@@ -248,7 +253,13 @@ docsRouter.post("/save", ensureAuth, rateLimitMiddleware(15, 60), async (c) => {
 
 async function handleDocSave(c: Context<AppEnv>) {
   try {
-    const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = await c.req.json();
+    let json;
+    try {
+      json = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
+    const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = json;
     if (!slug || !title || !category || !content) {
       return c.json({ error: "Missing required fields" }, 400);
     }
@@ -344,7 +355,13 @@ async function handleDocSave(c: Context<AppEnv>) {
 // ── PATCH /:slug/sort — update sort order (admin) ───────────────
 docsRouter.patch("/:slug/sort", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
   const slug = (c.req.param("slug") || "");
-  const { sortOrder } = await c.req.json();
+  let json;
+  try {
+    json = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+  }
+  const { sortOrder } = json;
   if (typeof sortOrder !== 'number') {
     return c.json({ error: "Invalid sortOrder" }, 400);
   }

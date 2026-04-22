@@ -131,9 +131,11 @@ postsRouter.get("/:slug", async (c) => {
 function buildSnippet(ast: unknown): string {
   try {
     type ASTNode = { text?: string; content?: ASTNode[] };
-    const extractText = (node: ASTNode): string => {
+    const extractText = (node: ASTNode, depth = 0): string => {
+      // PERF: Prevent stack overflow from deeply nested ASTs
+      if (depth > 10) return "";
       if (node.text) return node.text;
-      if (node.content) return node.content.map(extractText).join(" ");
+      if (node.content) return node.content.map(n => extractText(n, depth + 1)).join(" ");
       return "";
     };
     const rawText = extractText(ast as ASTNode);
@@ -151,14 +153,19 @@ postsRouter.post("/save", ensureAuth, rateLimitMiddleware(15, 60), async (c) => 
 
 async function handlePostSave(c: Context<AppEnv>) {
   try {
-    const body = await c.req.json<{
-      title: string;
-      author?: string;
-      coverImageUrl?: string;
-      ast: unknown;
-      isDraft?: boolean;
-      publishedAt?: string;
-    }>();
+    let body;
+    try {
+      body = await c.req.json<{
+        title: string;
+        author?: string;
+        coverImageUrl?: string;
+        ast: unknown;
+        isDraft?: boolean;
+        publishedAt?: string;
+      }>();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
 
     if (!body.title) {
       return c.json({ success: false, error: "Title is required" }, 400);
@@ -285,14 +292,19 @@ postsRouter.put("/:slug", ensureAuth, rateLimitMiddleware(15, 60), async (c) => 
 async function handlePostEdit(c: Context<AppEnv>) {
   try {
     const slug = (c.req.param("slug") || "");
-    const body = await c.req.json<{
-      title: string;
-      author?: string;
-      coverImageUrl?: string;
-      ast: unknown;
-      isDraft?: boolean;
-      publishedAt?: string;
-    }>();
+    let body;
+    try {
+      body = await c.req.json<{
+        title: string;
+        author?: string;
+        coverImageUrl?: string;
+        ast: unknown;
+        isDraft?: boolean;
+        publishedAt?: string;
+      }>();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
 
     if (!body.title) {
       return c.json({ success: false, error: "Title is required" }, 400);
@@ -382,7 +394,13 @@ postsRouter.route("/", createContentLifecycleRouter("posts", {
 // ── POST /:slug/repush — manual social broadcast (admin) ──
 postsRouter.post("/:slug/repush", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
   const slug = (c.req.param("slug") || "");
-  const { socials } = await c.req.json<{ socials: Record<string, boolean> }>();
+  let json;
+  try {
+    json = await c.req.json<{ socials: Record<string, boolean> }>();
+  } catch {
+    return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+  }
+  const { socials } = json;
   
   const post = await c.env.DB.prepare(
     "SELECT title, snippet, thumbnail FROM posts WHERE slug = ?"

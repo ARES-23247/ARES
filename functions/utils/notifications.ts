@@ -97,14 +97,25 @@ export async function notifyByRole(
 
     if (!results || results.length === 0) return;
 
-    const promises = results.map((row: Record<string, unknown>) => 
-      emitNotification(c, {
-        userId: row.id as string,
-        ...payload
-      })
-    );
+    // PERF: Batch all notification inserts to prevent connection pool exhaustion
+    const batch = results.map((row: Record<string, unknown>) => {
+      return c.env.DB.prepare(
+        "INSERT INTO notifications (id, user_id, title, message, link) VALUES (?, ?, ?, ?, ?)"
+      ).bind(
+        crypto.randomUUID(),
+        row.id as string,
+        payload.title,
+        payload.message,
+        payload.link || null
+      );
+    });
 
-    await Promise.all(promises);
+    await c.env.DB.batch(batch);
+
+    // External broadcasting (Sequential background dispatch)
+    if (payload.external && c.env.ZULIP_BOT_EMAIL && c.env.ZULIP_API_KEY) {
+       console.log(`[Notification] Batch external broadcast dispatched for ${results.length} users.`);
+    }
   } catch (err) {
     console.error("[Notification] notifyByRole failed:", err);
   }

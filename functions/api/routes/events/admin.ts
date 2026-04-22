@@ -47,7 +47,12 @@ adminRouter.get("/:id", async (c) => {
 // ── POST /admin/events — manual event creation (admin) ─────────────────
 adminRouter.post("/", rateLimitMiddleware(15, 60), async (c) => {
   try {
-    const body = await c.req.json();
+    let body;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
     const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft, publishedAt } = body;
     const cat = category || 'internal';
 
@@ -140,7 +145,12 @@ adminRouter.post("/", rateLimitMiddleware(15, 60), async (c) => {
 adminRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
   try {
     const paramId = (c.req.param("id") || "");
-    const body = await c.req.json();
+    let body;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
     const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft, publishedAt } = body;
     const cat = category || 'internal';
     
@@ -267,7 +277,13 @@ adminRouter.route("/", createContentLifecycleRouter("events", {
 adminRouter.post("/:id/repush", rateLimitMiddleware(15, 60), async (c) => {
   try {
     const id = (c.req.param("id") || "");
-    const { socials } = await c.req.json<{ socials: Record<string, boolean> }>();
+    let json;
+    try {
+      json = await c.req.json<{ socials: Record<string, boolean> }>();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
+    const { socials } = json;
     const event = await c.env.DB.prepare("SELECT title, description, cover_image FROM events WHERE id = ?").bind(id).first<{title: string, description: string, cover_image: string}>();
     if (!event) return c.json({ error: "Event not found" }, 404);
     const socialConfig = await getSocialConfig(c);

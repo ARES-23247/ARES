@@ -13,7 +13,12 @@ judgesRouter.post("/login", async (c) => {
   }
 
   try {
-    const body = await c.req.json();
+    let body;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
     const { code, turnstileToken } = body;
     if (!code) return c.json({ error: "Code required" }, 400);
     if (code.length > 50) return c.json({ error: "Invalid code format" }, 400);
@@ -119,7 +124,13 @@ judgesRouter.get("/admin/codes", ensureAdmin, async (c) => {
 // ── POST /admin/judges/codes — create a new access code (admin) ───────
 judgesRouter.post("/admin/codes", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
   try {
-    const { label, expiresAt } = await c.req.json();
+    let json;
+    try {
+      json = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    }
+    const { label, expiresAt } = json;
     const code = (crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')).slice(0, 12).toUpperCase();
     const id = crypto.randomUUID();
 
