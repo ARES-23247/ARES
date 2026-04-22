@@ -65,7 +65,7 @@ export default function IntegrationsManager() {
   if (isLoading) {
     return (
       <div className="w-full h-64 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-zinc-800 border-t-ares-gold rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-white/10 border-t-ares-gold rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -86,9 +86,9 @@ export default function IntegrationsManager() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Settings className="text-zinc-500" /> API &amp; Integrations
+            <Settings className="text-marble/40" /> API &amp; Integrations
           </h2>
-          <p className="text-zinc-400 mt-1">
+          <p className="text-marble/60 mt-1">
             Manage your Zero Trust configuration tokens securely. Keys are safely obscured upon save.
           </p>
         </div>
@@ -98,7 +98,7 @@ export default function IntegrationsManager() {
           className={`flex items-center gap-2 px-6 py-2.5 ares-cut-sm font-bold transition-all shadow-lg backdrop-blur ${
             isDirty
               ? "bg-gradient-to-r from-ares-gold to-yellow-600 text-black hover:scale-105"
-              : "bg-white/5 text-zinc-500 cursor-not-allowed border border-white/5"
+              : "bg-white/5 text-marble/40 cursor-not-allowed border border-white/5"
           }`}
         >
           {saveMutation.isPending ? (

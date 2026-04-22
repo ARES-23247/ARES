@@ -105,15 +105,15 @@ const Btn = ({ active, onClick, children, className = "", disabled = false }: {
     disabled={disabled}
     className={`px-3 py-2 ares-cut-sm text-sm font-bold transition-all ${
       active
-        ? "bg-zinc-800 text-white"
-        : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+        ? "bg-ares-gray-dark text-white"
+        : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"
     } disabled:opacity-30 ${className}`}
   >
     {children}
   </button>
 );
 
-const Sep = () => <div className="w-px h-6 bg-zinc-800 mx-1" />;
+const Sep = () => <div className="w-px h-6 bg-white/10 mx-1" />;
 
 /* ---------- Component ---------- */
 export default function RichEditorToolbar({ editor, documentTitle }: RichEditorToolbarProps) {
@@ -176,7 +176,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
   return (
     <>
       {/* ===== FLOATING TOOLBAR ===== */}
-      <div className="flex flex-wrap items-center gap-1 bg-zinc-900/95 backdrop-blur-md border border-zinc-800 ares-cut-sm p-2 z-50 w-full mb-0 sticky top-24 overflow-x-auto shadow-lg">
+      <div className="flex flex-wrap items-center gap-1 bg-obsidian/95 backdrop-blur-md border border-white/10 ares-cut-sm p-2 z-50 w-full mb-0 sticky top-24 overflow-x-auto shadow-lg">
         {/* Undo / Redo */}
         <Btn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>↶</Btn>
         <Btn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>↷</Btn>
@@ -244,7 +244,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
             }
           }
           editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-        }} className="px-3 py-2 ares-cut-sm text-sm font-bold transition-all text-ares-cyan hover:bg-zinc-800 hover:text-white">🔗 / YT</button>
+        }} className="px-3 py-2 ares-cut-sm text-sm font-bold transition-all text-ares-cyan hover:bg-ares-gray-dark hover:text-white">🔗 / YT</button>
 
         {/* Table */}
         <Btn onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>Table</Btn>
@@ -254,10 +254,10 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
           const chain = editor.chain().focus() as unknown as { toggleMathInline?: () => { run: () => void }, insertContent: (c: string) => { run: () => void } };
           if (chain.toggleMathInline) chain.toggleMathInline().run();
           else chain.insertContent('$\\Sigma$').run();
-        }} className={`px-3 py-2 ares-cut-sm text-sm font-serif italic transition-all ${editor.isActive("mathematics") ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"}`}>Σ Math</button>
+        }} className={`px-3 py-2 ares-cut-sm text-sm font-serif italic transition-all ${editor.isActive("mathematics") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>Σ Math</button>
 
         {/* Mermaid */}
-        <Btn onClick={() => editor.chain().focus().insertContent({ type: 'mermaidBlock', attrs: { language: 'mermaid' } }).run()} className="border border-zinc-700">Mermaid</Btn>
+        <Btn onClick={() => editor.chain().focus().insertContent({ type: 'mermaidBlock', attrs: { language: 'mermaid' } }).run()} className="border border-white/10">Mermaid</Btn>
         <Sep />
 
         {/* Marks */}
@@ -276,7 +276,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
           type="button"
           onClick={() => importRef.current?.click()}
           disabled={isImporting}
-          className={`px-4 py-2 ares-cut-sm text-sm font-bold transition-all border border-ares-cyan/30 ${isImporting ? "bg-zinc-800 text-zinc-500 animate-pulse" : "text-ares-cyan hover:bg-ares-cyan hover:text-white shadow-sm"}`}
+          className={`px-4 py-2 ares-cut-sm text-sm font-bold transition-all border border-ares-cyan/30 ${isImporting ? "bg-ares-gray-dark text-marble/40 animate-pulse" : "text-ares-cyan hover:bg-ares-cyan hover:text-white shadow-sm"}`}
         >
           {isImporting ? "IMPORTING..." : "Import .DOCX"}
         </button>
@@ -294,7 +294,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
         <button
           type="button"
           onClick={() => exportAsHtml(editor, documentTitle || "")}
-          className="px-4 py-2 ares-cut-sm text-sm font-bold transition-all border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white shadow-sm"
+          className="px-4 py-2 ares-cut-sm text-sm font-bold transition-all border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan hover:text-white shadow-sm"
         >
           Export .HTML
         </button>
@@ -312,30 +312,30 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
       {editor.isActive('table') && (
         <div className="flex flex-wrap items-center gap-2 bg-ares-cyan/10 border-x border-b border-ares-cyan/30 px-3 py-2 w-full text-xs shadow-sm">
           <span className="text-ares-cyan font-bold mr-2 tracking-wider">TABLE</span>
-          <button type="button" onClick={() => editor.chain().focus().addColumnBefore().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">+ Col Before</button>
-          <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">+ Col After</button>
-          <button type="button" onClick={() => editor.chain().focus().deleteColumn().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">- Col</button>
+          <button type="button" onClick={() => editor.chain().focus().addColumnBefore().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">+ Col Before</button>
+          <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">+ Col After</button>
+          <button type="button" onClick={() => editor.chain().focus().deleteColumn().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">- Col</button>
           <div className="w-px h-4 bg-ares-cyan/30 mx-1" />
-          <button type="button" onClick={() => editor.chain().focus().addRowBefore().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">+ Row Before</button>
-          <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">+ Row After</button>
-          <button type="button" onClick={() => editor.chain().focus().deleteRow().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">- Row</button>
+          <button type="button" onClick={() => editor.chain().focus().addRowBefore().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">+ Row Before</button>
+          <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">+ Row After</button>
+          <button type="button" onClick={() => editor.chain().focus().deleteRow().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">- Row</button>
           <div className="w-px h-4 bg-ares-cyan/30 mx-1" />
-          <button type="button" onClick={() => editor.chain().focus().mergeCells().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">Merge</button>
-          <button type="button" onClick={() => editor.chain().focus().splitCell().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">Split</button>
+          <button type="button" onClick={() => editor.chain().focus().mergeCells().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">Merge</button>
+          <button type="button" onClick={() => editor.chain().focus().splitCell().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">Split</button>
           <div className="w-px h-4 bg-ares-cyan/30 mx-1" />
-          <button type="button" onClick={() => editor.chain().focus().toggleHeaderRow().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-zinc-300 border border-zinc-700/50">Toggle Header</button>
+          <button type="button" onClick={() => editor.chain().focus().toggleHeaderRow().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble/80 border border-white/10">Toggle Header</button>
           <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className="px-2 py-1 rounded bg-ares-red/10 hover:bg-ares-red hover:text-white transition-colors text-ares-red ml-auto border border-ares-red/30">Delete Table</button>
         </div>
       )}
 
       {/* ===== EDITOR CONTENT AREA ===== */}
-      <div className="flex-1 bg-ares-black border-x border-b border-zinc-800 rounded-b-xl overflow-hidden shadow-inner w-full min-h-[400px] relative">
+      <div className="flex-1 bg-ares-black border-x border-b border-white/10 rounded-b-xl overflow-hidden shadow-inner w-full min-h-[400px] relative">
         <EditorContent
           editor={editor}
           className="h-full p-4 md:p-6 pb-12"
         />
         {editor.storage.characterCount && (
-          <div className="absolute bottom-4 right-6 text-xs text-zinc-500 font-mono">
+          <div className="absolute bottom-4 right-6 text-xs text-marble/40 font-mono">
             {editor.storage.characterCount.words()} words | {editor.storage.characterCount.characters()} chars
           </div>
         )}

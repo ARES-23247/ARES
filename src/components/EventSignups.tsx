@@ -102,28 +102,28 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
   const totalPrep = signups.reduce((sum, s) => sum + (s.prep_hours || 0), 0);
 
   return (
-    <div className="mt-10 border-t border-zinc-800 pt-8 space-y-8">
+    <div className="mt-10 border-t border-white/10 pt-8 space-y-8">
       {/* Attendance & Provisions Summary (Visible to verified users) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-zinc-900/40 border border-zinc-800 p-5 ares-cut">
-          <h4 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+        <div className="bg-obsidian/40 border border-white/10 p-5 ares-cut">
+          <h4 className="text-marble/40 text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
             <Users size={14} className="text-ares-gold" /> Attendance Stats
           </h4>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-black text-white">{totalAttending}</span>
-            <span className="text-zinc-500 text-sm font-bold">/ {signups.length} present</span>
+            <span className="text-marble/40 text-sm font-bold">/ {signups.length} present</span>
           </div>
           {isVolunteer && (
-            <div className="mt-4 pt-4 border-t border-zinc-800 flex justify-between items-center text-sm font-bold">
-              <span className="text-zinc-500 uppercase tracking-widest text-[10px]">Volunteer Prep Time</span>
+            <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center text-sm font-bold">
+              <span className="text-marble/40 uppercase tracking-widest text-[10px]">Volunteer Prep Time</span>
               <span className="text-ares-gold">{totalPrep} hrs</span>
             </div>
           )}
         </div>
         
         {dietarySummary && (
-          <div className="bg-zinc-900/40 border border-zinc-800 p-5 ares-cut">
-            <h4 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+          <div className="bg-obsidian/40 border border-white/10 p-5 ares-cut">
+            <h4 className="text-marble/40 text-[10px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
               <AlertCircle size={14} className="text-ares-red" /> Dietary Restrictions
             </h4>
             <div className="flex flex-col gap-4">
@@ -137,7 +137,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                       </span>
                     ))
                   ) : (
-                    <span className="text-zinc-600 text-[10px] font-medium leading-relaxed">No dietary restrictions among RSVPs.</span>
+                    <span className="text-marble/30 text-[10px] font-medium leading-relaxed">No dietary restrictions among RSVPs.</span>
                   )}
                 </div>
               </div>
@@ -147,7 +147,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                   <span className="text-xs text-white/50 block mb-2 font-bold uppercase tracking-widest">Entire Team Roster</span>
                   <div className="flex flex-wrap gap-2 opacity-70 grayscale">
                     {Object.entries(teamDietarySummary).map(([restriction, count]) => (
-                      <span key={`team-${restriction}`} className="px-2 py-1 bg-zinc-800 border border-zinc-700 ares-cut-sm text-[10px] font-bold text-zinc-300">
+                      <span key={`team-${restriction}`} className="px-2 py-1 bg-ares-gray-dark border border-white/20 ares-cut-sm text-[10px] font-bold text-marble/80">
                         {count} {restriction}
                       </span>
                     ))}
@@ -173,7 +173,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                 onClick={selfCheckIn}
                 className={`flex items-center gap-2 px-4 py-2 ares-cut-sm text-xs font-black uppercase tracking-widest transition-all ${
                   myEntry?.attended 
-                  ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20" 
+                  ? "bg-ares-gold/10 border border-ares-gold/20 text-ares-gold hover:bg-ares-gold/20" 
                   : "bg-ares-gold hover:bg-yellow-400 text-black shadow-lg shadow-ares-gold/20"
                 }`}
               >
@@ -183,10 +183,10 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto mb-6 bg-zinc-900/20 border border-zinc-800/50 ares-cut">
+            <div className="overflow-x-auto mb-6 bg-obsidian/20 border border-white/10 ares-cut">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-zinc-800 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                  <tr className="border-b border-white/10 text-[10px] font-bold text-marble/40 uppercase tracking-wider">
                     <th className="text-left py-3 px-4">Status</th>
                     <th className="text-left py-3 px-4">Who</th>
                     {isPotluck && <th className="text-left py-3 px-4">Bringing</th>}
@@ -196,17 +196,17 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                 </thead>
                 <tbody>
                   {signups.map(entry => (
-                    <tr key={entry.id} className={`border-b border-zinc-800/30 transition-colors ${entry.attended ? "bg-emerald-500/5" : ""}`}>
+                    <tr key={entry.id} className={`border-b border-white/10 transition-colors ${entry.attended ? "bg-ares-gold/5" : ""}`}>
                       <td className="py-3 px-4">
                         {canManage ? (
                           <button 
                             onClick={() => toggleAttendance(entry.user_id, entry.attended)}
-                            className={`transition-colors ${entry.attended ? "text-emerald-500" : "text-zinc-700 hover:text-zinc-500"}`}
+                            className={`transition-colors ${entry.attended ? "text-ares-gold" : "text-marble/10 hover:text-marble/30"}`}
                           >
                             {entry.attended ? <CheckCircle2 size={18} /> : <Circle size={18} />}
                           </button>
                         ) : (
-                          <div className={entry.attended ? "text-emerald-500" : "text-zinc-800"}>
+                          <div className={entry.attended ? "text-ares-gold" : "text-marble/5"}>
                             {entry.attended ? <CheckCircle2 size={18} /> : <Circle size={18} />}
                           </div>
                         )}
@@ -214,17 +214,17 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <img src={entry.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${entry.user_id}`}
-                            alt="" className="w-6 h-6 ares-cut-sm bg-zinc-800" />
-                          <span className={`text-sm font-bold ${entry.attended ? "text-white" : "text-zinc-400"}`}>{entry.nickname || "ARES Member"}</span>
+                            alt="" className="w-6 h-6 ares-cut-sm bg-ares-gray-dark" />
+                          <span className={`text-sm font-bold ${entry.attended ? "text-white" : "text-marble/40"}`}>{entry.nickname || "ARES Member"}</span>
                         </div>
                       </td>
-                      {isPotluck && <td className="py-3 px-4 text-sm text-zinc-300">{entry.bringing || "—"}</td>}
-                      {isVolunteer && <td className="py-3 px-4 text-sm text-zinc-300">{entry.prep_hours || 0}</td>}
-                      <td className="py-3 px-4 text-sm text-zinc-400">{entry.notes || "—"}</td>
+                      {isPotluck && <td className="py-3 px-4 text-sm text-marble/80">{entry.bringing || "—"}</td>}
+                      {isVolunteer && <td className="py-3 px-4 text-sm text-marble/80">{entry.prep_hours || 0}</td>}
+                      <td className="py-3 px-4 text-sm text-marble/40">{entry.notes || "—"}</td>
                     </tr>
                   ))}
                   {signups.length === 0 && (
-                    <tr><td colSpan={5} className="py-12 text-center text-zinc-600 text-sm">No RSVPs yet. Be the first!</td></tr>
+                    <tr><td colSpan={5} className="py-12 text-center text-marble/30 text-sm">No RSVPs yet. Be the first!</td></tr>
                   )}
                 </tbody>
               </table>
@@ -232,12 +232,12 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
           </div>
 
           {/* Sign Up Form */}
-          <div className="bg-zinc-900/50 border border-zinc-800 ares-cut-lg p-6 space-y-4">
+          <div className="bg-obsidian/50 border border-white/10 ares-cut-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-black text-ares-gold uppercase tracking-[0.2em]">
                 {mySignup !== null ? "Update Your RSVP" : "RSVP to this Event"}
               </p>
-              <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">ARES Event Protocol v3.0</span>
+              <span className="text-[10px] text-marble/20 font-bold uppercase tracking-widest">ARES Event Protocol v3.0</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {isPotluck && (
@@ -245,24 +245,24 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                   placeholder="What are you bringing? (e.g. chips & salsa)"
                   value={mySignup?.bringing || ""}
                   onChange={e => setMySignup(prev => ({ bringing: e.target.value, notes: prev?.notes || "", prep_hours: prev?.prep_hours || 0 }))}
-                  className="w-full bg-zinc-800/40 border border-zinc-700/50 ares-cut-sm px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
+                  className="w-full bg-ares-gray-dark/40 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white placeholder-marble/40 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
                 />
               )}
               <input
                 placeholder={isPotluck ? "Notes (dietary info, arrival time...)" : "Notes (arrival time, etc...)"}
                 value={mySignup?.notes || ""}
                 onChange={e => setMySignup(prev => ({ bringing: prev?.bringing || "", notes: e.target.value, prep_hours: prev?.prep_hours || 0 }))}
-                className={`w-full ${isPotluck && isVolunteer ? 'md:col-span-2' : ''} bg-zinc-800/40 border border-zinc-700/50 ares-cut-sm px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all`}
+                className={`w-full ${isPotluck && isVolunteer ? 'md:col-span-2' : ''} bg-ares-gray-dark/40 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white placeholder-marble/40 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all`}
                 style={(!isPotluck && !isVolunteer) ? { gridColumn: 'span 2' } : {}}
               />
               {isVolunteer && (
                 <div className="flex items-center gap-3">
-                  <span className="text-zinc-500 uppercase tracking-widest text-[10px] font-bold shrink-0">Prep Hrs</span>
+                  <span className="text-marble/40 uppercase tracking-widest text-[10px] font-bold shrink-0">Prep Hrs</span>
                   <input
                     type="number" step="0.5" min="0" placeholder="0"
                     value={mySignup?.prep_hours || 0}
                     onChange={e => setMySignup(prev => ({ bringing: prev?.bringing || "", notes: prev?.notes || "", prep_hours: parseFloat(e.target.value) || 0 }))}
-                    className="w-full md:w-32 bg-zinc-800/40 border border-zinc-700/50 ares-cut-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
+                    className="w-full md:w-32 bg-ares-gray-dark/40 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
                   />
                 </div>
               )}
@@ -285,22 +285,22 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
           </div>
         </>
       ) : (
-        <div className="my-12 p-8 bg-zinc-900/50 border border-zinc-800 ares-cut-lg text-center">
-          <p className="text-sm text-zinc-300 mb-2">
+        <div className="my-12 p-8 bg-obsidian/50 border border-white/10 ares-cut-lg text-center">
+          <p className="text-sm text-marble/80 mb-2">
             <span className="text-ares-gold font-bold">Verified Access Required</span>
           </p>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto mb-6">
+          <p className="text-sm text-marble/40 max-w-md mx-auto mb-6">
             Sign-ups and provisions are restricted to verified ARES members to protect privacy.
           </p>
           {!isAuthenticated ? (
             <div>
               <a href="/login" className="px-6 py-3 bg-ares-gold hover:bg-yellow-400 text-black ares-cut-sm font-black text-xs uppercase tracking-widest inline-block transition-all shadow-lg shadow-ares-gold/20">Sign in with ARES ID</a>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 mt-6 font-bold">
+              <p className="text-[10px] uppercase tracking-widest text-marble/20 mt-6 font-bold">
                 Don&apos;t have an ARES ID? <a href="/about" className="text-ares-gold hover:underline">Contact us</a>
               </p>
             </div>
           ) : (
-            <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold max-w-sm mx-auto">Your account is pending team administrator verification. If you have any questions, <a href="/about" className="text-ares-gold hover:underline">contact us</a>.</p>
+            <p className="text-[10px] uppercase tracking-widest text-marble/40 font-bold max-w-sm mx-auto">Your account is pending team administrator verification. If you have any questions, <a href="/about" className="text-ares-gold hover:underline">contact us</a>.</p>
           )}
         </div>
       )}

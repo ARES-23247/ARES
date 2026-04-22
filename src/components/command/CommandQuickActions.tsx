@@ -4,7 +4,7 @@ import { siteConfig } from "../../site.config";
 
 export default function CommandQuickActions() {
   return (
-    <div className="bg-zinc-900/50 border border-white/5 ares-cut p-6">
+    <div className="bg-obsidian/50 border border-white/5 ares-cut p-6">
       <h3 className="font-black text-white text-sm uppercase tracking-widest flex items-center gap-2 mb-4">
         <ArrowRight size={16} className="text-ares-cyan" />
         Quick Actions
@@ -12,8 +12,8 @@ export default function CommandQuickActions() {
       <div className="space-y-2">
         {[
           { label: "Open Zulip Chat", icon: MessageCircle, href: "https://ares.zulipchat.com", color: "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:border-blue-500/40" },
-          { label: "Open GitHub Org", icon: GitBranch, href: `https://github.com/${siteConfig.urls.githubOrg}`, color: "bg-zinc-800/60 text-white border-white/10 hover:border-white/20" },
-          { label: "View Activity Heatmap", icon: Activity, href: "/about", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:border-emerald-500/40" },
+          { label: "Open GitHub Org", icon: GitBranch, href: `https://github.com/${siteConfig.urls.githubOrg}`, color: "bg-ares-gray-dark/60 text-white border-white/10 hover:border-white/20" },
+          { label: "View Activity Heatmap", icon: Activity, href: "/about", color: "bg-ares-gold/10 text-ares-gold border-ares-gold/20 hover:border-ares-gold/40" },
         ].map(action => (
           <a
             key={action.label}

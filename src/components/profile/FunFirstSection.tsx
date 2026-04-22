@@ -75,7 +75,7 @@ export function FunFirstSection({ profile, setProfile, inputClass, labelClass, s
           <span className={labelClass}>Dietary Restrictions</span>
           <div className="grid grid-cols-2 gap-2 mt-2">
             {DIETARY_OPTIONS.map(opt => (
-              <label key={opt} className="flex items-center gap-2 text-sm text-zinc-300">
+              <label key={opt} className="flex items-center gap-2 text-sm text-marble/80">
                 <input 
                   type="checkbox" 
                   checked={profile.dietary_restrictions.includes(opt)} 
@@ -86,7 +86,7 @@ export function FunFirstSection({ profile, setProfile, inputClass, labelClass, s
               </label>
             ))}
             <div className="col-span-2 mt-1">
-              <label className="flex items-center gap-2 text-sm text-zinc-300 mb-1">
+              <label className="flex items-center gap-2 text-sm text-marble/80 mb-1">
                 <input 
                   type="checkbox" 
                   checked={profile.dietary_restrictions.some(t => t.startsWith("Other:"))} 

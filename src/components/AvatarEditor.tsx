@@ -186,7 +186,7 @@ export default function AvatarEditor({ currentImage, onClose }: AvatarEditorProp
 
   const renderSelect = (label: string, value: string, options: string[], onChange: (val: string) => void) => (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">{label}</label>
+      <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider pl-1">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -201,7 +201,7 @@ export default function AvatarEditor({ currentImage, onClose }: AvatarEditorProp
 
   const renderColorSelect = (label: string, value: string, options: string[], onChange: (val: string) => void) => (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">{label}</label>
+      <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider pl-1">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((hex) => (
           <button
@@ -218,9 +218,9 @@ export default function AvatarEditor({ currentImage, onClose }: AvatarEditorProp
 
   const renderToggle = (label: string, value: boolean, onChange: (val: boolean) => void) => (
     <div className="flex items-center justify-between py-2">
-      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{label}</label>
+      <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">{label}</label>
       <button onClick={() => onChange(!value)} className="text-white">
-        {value ? <ToggleRight size={28} className="text-ares-red" /> : <ToggleLeft size={28} className="text-zinc-600" />}
+        {value ? <ToggleRight size={28} className="text-ares-red" /> : <ToggleLeft size={28} className="text-white/30" />}
       </button>
     </div>
   );
@@ -236,15 +236,15 @@ export default function AvatarEditor({ currentImage, onClose }: AvatarEditorProp
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-4xl bg-zinc-950 border border-white/10 ares-cut-lg shadow-2xl overflow-hidden flex flex-col md:flex-row h-full max-h-[95vh] md:max-h-[85vh] relative"
+          className="w-full max-w-4xl bg-ares-gray-deep border border-white/10 ares-cut-lg shadow-2xl overflow-hidden flex flex-col md:flex-row h-full max-h-[95vh] md:max-h-[85vh] relative"
         >
           {/* Left Panel: Preview */}
-          <div className="w-full md:w-2/5 p-4 md:p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 relative overflow-hidden shrink-0 bg-zinc-900/40">
+          <div className="w-full md:w-2/5 p-4 md:p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 relative overflow-hidden shrink-0 bg-ares-gray-dark/40">
             <div className="absolute inset-0 bg-gradient-to-br from-ares-red/10 to-transparent pointer-events-none" />
             
             <div className="relative group w-28 h-28 md:w-56 md:h-56 mb-3 md:mb-6">
               <div className="absolute inset-0 bg-gradient-to-br from-ares-red/30 to-ares-gold/30 blur-2xl rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative w-full h-full ares-cut md:ares-cut-lg bg-zinc-900 border border-white/10 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] flex items-center justify-center p-2 md:p-4 z-10 backdrop-blur-xl">
+              <div className="relative w-full h-full ares-cut md:ares-cut-lg bg-ares-gray-dark border border-white/10 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] flex items-center justify-center p-2 md:p-4 z-10 backdrop-blur-xl">
                 <img
                   src={currentUrl}
                   alt="Avatar Preview"
@@ -263,13 +263,13 @@ export default function AvatarEditor({ currentImage, onClose }: AvatarEditorProp
           </div>
 
           {/* Right Panel: Editor Controls */}
-          <div className="w-full md:w-3/5 flex flex-col h-full bg-zinc-900/50 min-h-0">
-            <div className="flex items-center justify-between p-4 md:p-5 border-b border-white/5 sticky top-0 bg-zinc-900/90 backdrop-blur-md z-20">
+          <div className="w-full md:w-3/5 flex flex-col h-full bg-ares-gray-dark/50 min-h-0">
+            <div className="flex items-center justify-between p-4 md:p-5 border-b border-white/5 sticky top-0 bg-ares-gray-dark/90 backdrop-blur-md z-20">
               <h2 className="text-base md:text-lg font-black flex items-center gap-2 tracking-tight">
                 <ImageIcon className="text-ares-red" size={18} />
                 Character Creator
               </h2>
-              <button onClick={onClose} className="p-1.5 bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors">
+              <button onClick={onClose} className="p-1.5 bg-white/5 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -279,13 +279,13 @@ export default function AvatarEditor({ currentImage, onClose }: AvatarEditorProp
               <div className="flex bg-black/50 p-1 ares-cut-sm md:ares-cut mb-4 md:mb-6 border border-white/5">
                 <button
                   onClick={() => setStyleMode("avataaars")}
-                  className={`flex-1 py-1.5 md:py-2 ares-cut-sm md:ares-cut-sm text-xs md:text-sm font-bold transition-all ${styleMode === "avataaars" ? "bg-ares-red text-white shadow-lg" : "text-zinc-500 hover:text-white"}`}
+                  className={`flex-1 py-1.5 md:py-2 ares-cut-sm md:ares-cut-sm text-xs md:text-sm font-bold transition-all ${styleMode === "avataaars" ? "bg-ares-red text-white shadow-lg" : "text-white/40 hover:text-white"}`}
                 >
                   👤 Human
                 </button>
                 <button
                   onClick={() => setStyleMode("bottts")}
-                  className={`flex-1 py-1.5 md:py-2 ares-cut-sm md:ares-cut-sm text-xs md:text-sm font-bold transition-all ${styleMode === "bottts" ? "bg-ares-gold text-black shadow-lg" : "text-zinc-500 hover:text-white"}`}
+                  className={`flex-1 py-1.5 md:py-2 ares-cut-sm md:ares-cut-sm text-xs md:text-sm font-bold transition-all ${styleMode === "bottts" ? "bg-ares-gold text-black shadow-lg" : "text-white/40 hover:text-white"}`}
                 >
                   🤖 Robot
                 </button>
