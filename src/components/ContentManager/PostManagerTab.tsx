@@ -74,7 +74,7 @@ export default function PostManagerTab({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/50">
-                {view === 'active' || view === 'pending' ? (
+                {Number(post.is_deleted) !== 1 ? (
                   <>
                     <button
                       onClick={() => onEditPost && onEditPost(post.slug)}

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, 
   ShieldAlert, Lock, RefreshCw, LogOut, User, Users, Utensils, BarChart3, 
-  Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio
+  Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard
 } from "lucide-react";
 
 // ── Lazy-loaded Tab Components ───────────────────────────────────────
@@ -26,6 +26,7 @@ const MemberImpactOverview = lazy(() => import("@/components/MemberImpactOvervie
 const BadgeManager = lazy(() => import("@/components/BadgeManager"));
 const LocationsManager = lazy(() => import("@/components/LocationsManager"));
 const AdminInquiries = lazy(() => import("@/components/AdminInquiries"));
+const DashboardHome = lazy(() => import("@/components/DashboardHome"));
 const CommandCenter = lazy(() => import("@/components/CommandCenter"));
 const SponsorTokensManager = lazy(() => import("@/components/SponsorTokensManager"));
 
@@ -289,6 +290,7 @@ export default function Dashboard() {
           <div>
             <h4 className="text-[10px] uppercase font-black tracking-widest text-zinc-600 mb-2 px-6">Personal</h4>
             <div className="space-y-1 px-3">
+              <NavButton tab="" icon={LayoutDashboard} label="Dashboard Home" currentPath={location.pathname} />
               <NavButton tab="profile" icon={User} label="My Profile" currentPath={location.pathname} />
             </div>
           </div>
@@ -397,7 +399,7 @@ export default function Dashboard() {
               >
                 <Suspense fallback={<TabLoader />}>
                   <Routes>
-                    <Route index element={<ProfileEditor />} />
+                    <Route index element={<DashboardHome />} />
                     <Route path="profile" element={<ProfileEditor />} />
                     <Route path="blog" element={<BlogEditor editSlug={editPostSlug} onClearEdit={() => setEditPostSlug(null)} userRole={session?.user?.role} />} />
                     <Route path="event" element={<EventEditor editId={editEventId} onClearEdit={() => setEditEventId(null)} userRole={session?.user?.role} />} />

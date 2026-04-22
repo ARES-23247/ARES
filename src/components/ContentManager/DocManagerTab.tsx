@@ -167,7 +167,7 @@ export default function DocManagerTab({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/50">
-                {view === 'active' || view === 'pending' ? (
+                {Number(doc.is_deleted) !== 1 ? (
                   <>
                     <button
                       onClick={() => onEditDoc && onEditDoc(doc.slug)}
