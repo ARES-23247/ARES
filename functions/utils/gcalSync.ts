@@ -34,7 +34,7 @@ export async function getGcalAccessToken(config: GCalConfig): Promise<string> {
     .setExpirationTime("1h")
     .sign(pk);
 
-  const res = await fetch("https://oauth2.googleapis.com/token", { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
+  const res = await fetch("https://oauth2.googleapis.com/token", { signal: AbortSignal.timeout(5000),
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -165,7 +165,7 @@ export async function pushEventToGcal(event: ARES_Event, config: GCalConfig): Pr
     method = "PUT";
   }
 
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000),
     method,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -192,7 +192,7 @@ export async function deleteEventFromGcal(gcal_id: string, config: GCalConfig) {
   const token = await getGcalAccessToken(config);
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events/${gcal_id}`;
 
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000),
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -218,7 +218,7 @@ export async function pullEventsFromGcal(config: GCalConfig): Promise<ARES_Event
   
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events?maxResults=2500&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(timeMin.toISOString())}`;
 
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000),
     method: "GET",
     headers: { Authorization: `Bearer ${token}` },
   });

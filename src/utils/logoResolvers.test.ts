@@ -29,8 +29,8 @@ describe("logoResolvers utility", () => {
   });
 
   describe("getLogoUrl", () => {
-    it("generates the correct unavatar URL", () => {
-      expect(getLogoUrl("https://www.apple.com")).toBe("https://unavatar.io/apple.com?fallback=false");
+    it("generates the correct Google Favicon URL", () => {
+      expect(getLogoUrl("https://www.apple.com")).toBe("https://www.google.com/s2/favicons?domain=apple.com&sz=128");
     });
 
     it("returns empty string if domain is invalid", () => {

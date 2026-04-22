@@ -4,9 +4,13 @@ import { AppEnv, UserRole, SessionUser } from "./utils";
 
 // ── Localhost Dev Bypass Check ────────────────────────────────────────
 export function isDevBypassEnabled(c: Context<AppEnv>): boolean {
+  // SEC-03: Only bypass auth in local dev/preview when DEV_BYPASS env var is set
+  const isDev = c.env.ENVIRONMENT === "development" || c.env.ENVIRONMENT === "preview" || c.env.ENVIRONMENT === "test" || process.env.NODE_ENV === "test";
+  if (!isDev) return false;
+
   const url = new URL(c.req.url);
   const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-  // SEC-03: Only bypass auth in local dev when DEV_BYPASS env var is set
+  
   return isLocalhost && (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1");
 }
 

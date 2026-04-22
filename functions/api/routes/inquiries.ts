@@ -220,9 +220,14 @@ inquiriesRouter.post(
       const social = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(social as Record<string, string>);
       if (ghConfig) {
-         const markdownBody = `**Details:**\n\`\`\`json\n${JSON.stringify(metadata, null, 2)}\n\`\`\``;
+         // PII-S03: Redact personal information from GitHub task body
+         const redactedMeta = { ...metadata as any };
+         if (redactedMeta.email) redactedMeta.email = "***@***.***";
+         if (redactedMeta.phone) redactedMeta.phone = "***-***-****";
+         
+         const markdownBody = `**Details:**\n\`\`\`json\n${JSON.stringify(redactedMeta, null, 2)}\n\`\`\``;
          c.executionCtx.waitUntil(
-           createProjectItem(ghConfig, `[${type.toUpperCase()}] New Inquiry from ${name}`, markdownBody)
+           createProjectItem(ghConfig, `[${type.toUpperCase()}] New Inquiry (ID: ${id.slice(0, 8)})`, markdownBody)
              .catch((err: unknown) => console.error("[Inquiry] GitHub task creation failed:", err))
          );
       }

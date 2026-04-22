@@ -70,14 +70,14 @@ export default function Blog() {
                   
                   <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
                     <p className="text-xs text-white/50">{format(new Date(post.date), 'MMMM do, yyyy')}</p>
-                    {(post.author_avatar || post.author_nickname || post.cf_email) && (
-                      <div className="flex items-center gap-1.5" title={post.author_nickname || post.cf_email}>
+                    {(post.author_avatar || post.author_nickname) && (
+                      <div className="flex items-center gap-1.5" title={post.author_nickname}>
                         <img 
-                          src={post.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.cf_email}`}
+                          src={post.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_nickname || post.slug}`}
                           alt="Author"
                           className="w-5 h-5 rounded-full object-cover border border-white/10"
                         />
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-ares-gold/80 truncate max-w-[100px]">{post.author_nickname || post.cf_email?.split('@')[0] || "Author"}</span>
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-ares-gold/80 truncate max-w-[100px]">{post.author_nickname || "ARES Author"}</span>
                       </div>
                     )}
                   </div>

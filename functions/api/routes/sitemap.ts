@@ -17,7 +17,7 @@ sitemapRouter.get(".xml", async (c) => {
       });
     }
 
-    const baseUrl = new URL(c.req.url).origin;
+    const baseUrl = siteConfig.urls.base;
     
     // Fetch published docs and posts
     const [docs, posts] = await Promise.all([

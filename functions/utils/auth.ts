@@ -120,7 +120,7 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
                             if (currentUser && currentUser.role !== "admin") {
                                 const account = await db.prepare("SELECT accessToken FROM account WHERE userId = ? AND providerId = 'github'").bind(session.userId).first<{accessToken: string}>();
                                 if (account && account.accessToken) {
-                                    const res = await fetch("https://api.github.com/user/memberships/orgs/ARES-23247", { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
+                                    const res = await fetch("https://api.github.com/user/memberships/orgs/ARES-23247", { signal: AbortSignal.timeout(5000),
                                         headers: {
                                             "Authorization": `Bearer ${account.accessToken}`,
                                             "Accept": "application/vnd.github.v3+json",

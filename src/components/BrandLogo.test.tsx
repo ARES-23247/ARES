@@ -23,11 +23,11 @@ describe("BrandLogo Component", () => {
     expect(img).toHaveClass("opacity-100");
   });
 
-  it("safely generates a stable Unavatar source url", () => {
+  it("safely generates a stable Google Favicon source url", () => {
     render(<BrandLogo domain="https://www.google.com/search" />);
     
     const img = screen.getByRole("img");
-    expect(img).toHaveAttribute("src", "https://unavatar.io/google.com?fallback=false");
+    expect(img).toHaveAttribute("src", "https://www.google.com/s2/favicons?domain=google.com&sz=128");
   });
 
   it("handles image errors by falling back to the default or custom icon", async () => {
