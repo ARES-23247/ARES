@@ -44,9 +44,16 @@ function TabLoader() {
 export default function DashboardRoutes({
   session,
   permissions,
+  notifications,
 }: {
   session: DashboardSession | null;
   permissions: DashboardPermissions;
+  notifications: {
+    pendingInquiriesCount: number;
+    pendingPostsCount: number;
+    pendingEventsCount: number;
+    pendingDocsCount: number;
+  };
 }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -71,9 +78,9 @@ export default function DashboardRoutes({
               <Route path="blog/:editSlug?" element={<BlogEditor userRole={session?.user?.role} />} />
               <Route path="event/:editId?" element={<EventEditor userRole={session?.user?.role} />} />
               <Route path="docs/:editSlug?" element={<DocsEditor userRole={session?.user?.role} />} />
-              <Route path="manage_blog" element={<ContentManager mode="blog" onEditPost={(slug) => navigate(`/dashboard/blog/${slug}`)} />} />
-              <Route path="manage_event" element={<ContentManager mode="event" onEditEvent={(id) => navigate(`/dashboard/event/${id}`)} />} />
-              <Route path="manage_docs" element={<ContentManager mode="docs" onEditDoc={(slug) => navigate(`/dashboard/docs/${slug}`)} />} />
+              <Route path="manage_blog" element={<ContentManager mode="blog" pendingCount={notifications.pendingPostsCount} onEditPost={(slug) => navigate(`/dashboard/blog/${slug}`)} />} />
+              <Route path="manage_event" element={<ContentManager mode="event" pendingCount={notifications.pendingEventsCount} onEditEvent={(id) => navigate(`/dashboard/event/${id}`)} />} />
+              <Route path="manage_docs" element={<ContentManager mode="docs" pendingCount={notifications.pendingDocsCount} onEditDoc={(slug) => navigate(`/dashboard/docs/${slug}`)} />} />
               <Route path="assets" element={<AssetManager />} />
               <Route path="integrations" element={isAdmin ? <IntegrationsManager /> : <div className="text-center py-20">Access Denied</div>} />
               <Route path="users" element={isAdmin ? <AdminUsers /> : <div className="text-center py-20">Access Denied</div>} />

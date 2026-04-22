@@ -6,7 +6,7 @@ export const eventSchema = z.object({
   dateEnd: z.string().optional(),
   location: z.string().optional(),
   description: z.string().optional(),
-  coverImage: z.string().url("Cover image must be a valid URL").optional().or(z.literal("")),
+  coverImage: z.string().optional().or(z.literal("")),
   category: z.enum(["internal", "outreach", "external"]).default("internal"),
   isPotluck: z.boolean().default(false),
   isVolunteer: z.boolean().default(false),

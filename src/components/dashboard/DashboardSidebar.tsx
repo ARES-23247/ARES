@@ -1,5 +1,5 @@
 import { Suspense, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings,
   User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert
@@ -27,6 +27,7 @@ const NavButton = ({
   currentPath: string;
   pendingCount?: number;
 }) => {
+  const navigate = useNavigate();
   const isActive = currentPath === `/dashboard/${tab}` || (tab === "profile" && (currentPath === "/dashboard" || currentPath === "/dashboard/"));
   const hasPending = pendingCount > 0;
 
@@ -56,9 +57,16 @@ const NavButton = ({
         <span className="truncate">{label}</span>
       </div>
       {hasPending && (
-        <span className="shrink-0 bg-ares-danger text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate(`/dashboard/${tab}?view=pending`);
+          }}
+          className="shrink-0 bg-ares-danger text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)] hover:bg-red-500 hover:scale-110 transition-all z-10 relative cursor-pointer"
+        >
           {pendingCount}
-        </span>
+        </button>
       )}
     </Link>
   );

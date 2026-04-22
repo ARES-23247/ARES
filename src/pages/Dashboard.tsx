@@ -46,7 +46,7 @@ export default function Dashboard() {
 
         <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8 overflow-hidden z-10">
           <div className="mb-4" /> {/* Spacer replaced header */}
-          <DashboardRoutes session={session} permissions={permissions} />
+          <DashboardRoutes session={session} permissions={permissions} notifications={notifications} />
 
           <div className="mt-6 flex items-center justify-between text-marble/40 text-[10px] font-bold uppercase tracking-widest px-4 pb-4">
              <span>ARES Robotics 23247</span>

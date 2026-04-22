@@ -50,16 +50,16 @@ export default function AssetGrid({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 mb-4 pb-2 border-b border-zinc-800/80">
+      <div className="flex flex-wrap gap-2 mb-4 pb-2 border-b border-white/10">
         <button 
           onClick={() => setSelectedFolderFilter("All")}
-          className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border transition-all ${selectedFolderFilter === "All" ? "bg-ares-gold border-ares-gold text-black" : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-white"}`}
+          className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border transition-all ${selectedFolderFilter === "All" ? "bg-ares-gold border-ares-gold text-black" : "bg-obsidian border-white/20 text-marble/40 hover:text-white"}`}
         >All Gallery</button>
         {uniqueFolders.map(folder => (
           <button 
             key={folder}
             onClick={() => setSelectedFolderFilter(folder)}
-            className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border shadow-sm transition-all ${selectedFolderFilter === folder ? "bg-white border-white text-black" : "bg-black/40 border-zinc-700 text-zinc-400 hover:text-white"}`}
+            className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border shadow-sm transition-all ${selectedFolderFilter === folder ? "bg-white border-white text-black" : "bg-black/40 border-white/20 text-marble/40 hover:text-white"}`}
           >{folder}</button>
         ))}
       </div>
@@ -67,10 +67,10 @@ export default function AssetGrid({
         {filteredAssets.map((asset) => (
         <div
           key={asset.key}
-          className="group relative bg-black/40 border border-zinc-800/60 ares-cut-sm overflow-hidden hover:border-zinc-700 transition-colors flex flex-col"
+          className="group relative bg-black/40 border border-white/10 ares-cut-sm overflow-hidden hover:border-white/30 transition-colors flex flex-col"
         >
           {/* Thumbnail */}
-          <div className="relative aspect-square bg-zinc-900">
+          <div className="relative aspect-square bg-black">
             <img
               src={asset.url}
               alt={asset.key}
@@ -100,7 +100,7 @@ export default function AssetGrid({
                 ) : (
                   <button
                     onClick={() => setConfirmKey(asset.key)}
-                    className="px-3 py-1.5 bg-zinc-700 text-zinc-300 text-xs font-bold ares-cut-sm hover:bg-ares-red hover:text-white transition-colors flex-1 text-center"
+                    className="px-3 py-1.5 bg-white/10 text-marble/70 text-xs font-bold ares-cut-sm hover:bg-ares-red hover:text-white transition-colors flex-1 text-center"
                   >
                     Delete
                   </button>
@@ -109,7 +109,7 @@ export default function AssetGrid({
               <div className="flex items-center justify-center gap-2 mt-2">
                 <button
                   onClick={() => setSyndicateKey(asset.key)}
-                  className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold ares-cut-sm hover:from-blue-400 hover:to-purple-500 transition-all text-center shadow-lg"
+                  className="flex-1 px-3 py-2 bg-ares-red text-white text-xs font-bold ares-cut-sm hover:bg-ares-gold hover:text-black transition-all text-center shadow-lg"
                 >
                   📢 Broadcast
                 </button>
@@ -125,7 +125,7 @@ export default function AssetGrid({
                       moveMutation.mutate({ key: asset.key, newFolder: newFolder.trim() });
                     }
                   }}
-                  className="flex-1 px-3 py-2 bg-zinc-700 text-white text-xs font-bold ares-cut-sm hover:bg-ares-gold hover:text-black transition-colors text-center"
+                  className="flex-1 px-3 py-2 bg-white/10 text-white text-xs font-bold ares-cut-sm hover:bg-ares-gold hover:text-black transition-colors text-center"
                 >
                   📁 Move
                 </button>
@@ -134,16 +134,16 @@ export default function AssetGrid({
           </div>
 
           {/* Info strip */}
-          <div className="p-3 bg-zinc-900 border-t border-zinc-800/60">
+          <div className="p-3 bg-black/60 border-t border-white/10">
             <p className="text-white text-xs font-mono font-medium truncate w-full" title={asset.key}>
               {asset.key}
             </p>
-            <div className="flex justify-between items-center mt-2 border-t border-zinc-800/50 pt-2">
-              <p className="text-zinc-500 text-[10px] tracking-widest uppercase">
+            <div className="flex justify-between items-center mt-2 border-t border-white/5 pt-2">
+              <p className="text-marble/30 text-[10px] tracking-widest uppercase">
                 {formatSize(asset.size)}
               </p>
               {asset.folder && (
-                <span className="bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+                <span className="bg-white/5 text-marble/60 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
                   {asset.folder}
                 </span>
               )}

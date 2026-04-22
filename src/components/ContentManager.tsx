@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import BroadcastModal from "./BroadcastModal";
 import { useContentMutation } from "../hooks/useContentMutation";
 import { ViewType } from "./ContentManager/shared";
@@ -10,15 +11,21 @@ export default function ContentManager({
   onEditPost, 
   onEditEvent,
   onEditDoc,
-  mode = "all"
+  mode = "all",
+  pendingCount
 }: { 
   onEditPost?: (slug: string) => void; 
   onEditEvent?: (id: string) => void;
   onEditDoc?: (slug: string) => void;
   mode?: "all" | "blog" | "event" | "docs";
+  pendingCount?: number;
 }) {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialView = (queryParams.get("view") as ViewType) || (mode === "event" ? "all" : "active");
+
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [view, setView] = useState<ViewType>(mode === "event" ? "all" : "active");
+  const [view, setView] = useState<ViewType>(initialView);
   const [broadcastData, setBroadcastData] = useState<{ isOpen: boolean, type: "blog" | "event", id: string, title: string }>({
     isOpen: false,
     type: "blog",
@@ -118,9 +125,12 @@ export default function ContentManager({
               </button>
               <button 
                 onClick={() => setView("pending")}
-                className={`px-3 py-1.5 ares-cut-sm text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap ${view === "pending" ? 'bg-ares-gold/10 text-ares-gold border border-ares-gold/20 shadow-sm' : 'text-zinc-500 hover:text-ares-gold/60'}`}
+                className={`relative px-3 py-1.5 ares-cut-sm text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap ${view === "pending" ? 'bg-ares-gold/10 text-ares-gold border border-ares-gold/20 shadow-sm' : 'text-zinc-500 hover:text-ares-gold/60'} ${(pendingCount && pendingCount > 0 && view !== "pending") ? 'animate-pulse text-ares-danger shadow-[0_0_10px_rgba(239,68,68,0.2)]' : ''}`}
               >
                 PENDING
+                {pendingCount && pendingCount > 0 && view !== "pending" && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-ares-danger rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                )}
               </button>
               <button 
                 onClick={() => setView("trash")}
@@ -139,9 +149,12 @@ export default function ContentManager({
               </button>
               <button 
                 onClick={() => setView("pending")}
-                className={`px-4 py-1.5 ares-cut-sm text-xs font-bold transition-all whitespace-nowrap ${view === "pending" ? 'bg-ares-gold/10 text-ares-gold border border-ares-gold/20 shadow-sm' : 'text-zinc-500 hover:text-ares-gold/60'}`}
+                className={`relative px-4 py-1.5 ares-cut-sm text-xs font-bold transition-all whitespace-nowrap ${view === "pending" ? 'bg-ares-gold/10 text-ares-gold border border-ares-gold/20 shadow-sm' : 'text-zinc-500 hover:text-ares-gold/60'} ${(pendingCount && pendingCount > 0 && view !== "pending") ? 'animate-pulse text-ares-danger shadow-[0_0_10px_rgba(239,68,68,0.2)]' : ''}`}
               >
                 PENDING
+                {pendingCount && pendingCount > 0 && view !== "pending" && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-ares-danger rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                )}
               </button>
               <button 
                 onClick={() => setView("trash")}

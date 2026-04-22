@@ -19,11 +19,11 @@ export default function AssetSyndicateModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-obsidian border border-zinc-700 ares-cut w-full max-w-md p-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full pointer-events-none" />
+      <div className="bg-obsidian border border-white/20 ares-cut w-full max-w-md p-6 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-ares-gold/10 blur-3xl rounded-full pointer-events-none" />
         
         <h3 className="text-xl font-bold text-white mb-2">Broadcast Media</h3>
-        <p className="text-sm text-zinc-400 mb-6">
+        <p className="text-sm text-marble/70 mb-6">
           Dispatch this asset to Instagram, X, Facebook, and Discord securely. Make sure your Integration Keys are populated.
         </p>
         
@@ -36,21 +36,21 @@ export default function AssetSyndicateModal({
         </div>
         
         <div className="mb-6">
-          <label htmlFor="captionInput" className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Social Caption</label>
+          <label htmlFor="captionInput" className="block text-xs font-bold text-marble/50 uppercase tracking-wider mb-2">Social Caption</label>
           <textarea
             id="captionInput"
             value={syndicateCaption}
             onChange={(e) => setSyndicateCaption(e.target.value)}
             rows={4}
             placeholder="Draft an engaging caption for your followers..."
-            className="w-full bg-black/60 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors resize-none"
+            className="w-full bg-black/60 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red transition-colors resize-none"
           />
         </div>
         
         <div className="flex gap-3 justify-end">
           <button
             onClick={() => { setSyndicateKey(null); setSyndicateCaption(""); }}
-            className="px-4 py-2 font-medium text-zinc-400 hover:text-white transition-colors"
+            className="px-4 py-2 font-medium text-marble/40 hover:text-white transition-colors"
           >
             Cancel
           </button>
@@ -59,8 +59,8 @@ export default function AssetSyndicateModal({
             disabled={syndicateMutation.isPending || syndicateCaption.trim() === ""}
             className={`px-6 py-2 ares-cut-sm font-bold transition-all shadow-lg ${
               syndicateMutation.isPending || syndicateCaption.trim() === ""
-               ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-               : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:scale-105"
+               ? "bg-white/5 text-marble/20 cursor-not-allowed"
+               : "bg-ares-red text-white hover:bg-ares-gold hover:text-black hover:scale-105"
             }`}
           >
             {syndicateMutation.isPending ? "Dispatching..." : "Launch Payload"}

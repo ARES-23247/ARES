@@ -128,10 +128,14 @@ export function useEventEditor(editId: string | undefined, editor: Editor | null
         socials 
       };
 
-      const parsed = eventSchema.parse(payload);
+      const payloadResult = eventSchema.safeParse(payload);
+      if (!payloadResult.success) {
+        throw new Error(payloadResult.error.issues[0].message);
+      }
+
       const data = editId
-        ? await adminApi.updateEvent(editId, parsed)
-        : await adminApi.createEvent(parsed);
+        ? await adminApi.updateEvent(editId, payloadResult.data)
+        : await adminApi.createEvent(payloadResult.data);
         
       if (!data.success) throw new Error(data.error || "Event save failed.");
       return data;
