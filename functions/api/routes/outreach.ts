@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, ensureAuth, logAuditAction  } from "../middleware";
+import { AppEnv, ensureAdmin, parsePagination, logAuditAction  } from "../middleware";
 
 const outreachRouter = new Hono<AppEnv>();
 
@@ -22,8 +22,8 @@ function mergeAndSort(logs: Record<string, unknown>[], volunteerEvents: Record<s
   );
 }
 
-// ── GET / ── list all outreach logs (auth required) ──────────
-outreachRouter.get("/", ensureAuth, async (c) => {
+// ── GET / ── list all outreach logs ──────────
+outreachRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
     const { results: logs } = await c.env.DB.prepare(

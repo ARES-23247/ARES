@@ -33,7 +33,7 @@ adminRouter.get("/:id", async (c) => {
   const id = (c.req.param("id") || "");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT id, title, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer FROM events WHERE id = ?"
+      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer, published_at, revision_of FROM events WHERE id = ?"
     ).bind(id).first();
 
     if (!row) return c.json({ error: "Event not found" }, 404);

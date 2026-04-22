@@ -79,9 +79,9 @@ export default function OutreachTracker() {
   };
 
   const totals = logs.reduce((acc, l) => ({
-    hours: acc.hours + l.hours_logged,
-    reach: acc.reach + l.reach_count,
-    students: acc.students + l.students_count,
+    hours: acc.hours + (l.hours_logged || 0),
+    reach: acc.reach + (l.reach_count || 0),
+    students: acc.students + (l.students_count || 0),
     events: acc.events + 1
   }), { hours: 0, reach: 0, students: 0, events: 0 });
 
@@ -222,11 +222,11 @@ export default function OutreachTracker() {
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[80px]">
                 <span className="text-[10px] font-black text-ares-gold uppercase tracking-tighter">Reach</span>
-                <span className="text-lg font-black text-white">{log.reach_count}</span>
+                <span className="text-lg font-black text-white">{log.reach_count || 0}</span>
               </div>
               <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[80px]">
                 <span className="text-[10px] font-black text-ares-cyan uppercase tracking-tighter">Hours</span>
-                <span className="text-lg font-black text-white">{log.hours_logged.toFixed(1)}</span>
+                <span className="text-lg font-black text-white">{(log.hours_logged || 0).toFixed(1)}</span>
               </div>
               
               {log.is_dynamic ? (

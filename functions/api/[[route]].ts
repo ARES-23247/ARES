@@ -228,7 +228,6 @@ app.route("/api", apiRouter);
 app.route("/dashboard/api", apiRouter);
 
 export const onRequest = handle(app);
-
 // ── Scheduled Maintenance (Triggers) ──────────────────────────────────
 import { purgeOldInquiries } from "./routes/inquiries";
 

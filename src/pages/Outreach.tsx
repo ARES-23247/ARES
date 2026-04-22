@@ -96,8 +96,8 @@ export default function Outreach() {
   });
 
   const totals = logs.reduce((acc, l) => ({
-    hours: acc.hours + l.hours_logged,
-    reach: acc.reach + l.reach_count,
+    hours: acc.hours + (l.hours_logged || 0),
+    reach: acc.reach + (l.reach_count || 0),
     events: acc.events + 1
   }), { hours: 0, reach: 0, events: 0 });
 
@@ -231,7 +231,7 @@ export default function Outreach() {
                 <div className="flex items-center gap-4">
                   <div className="px-6 py-4 bg-white/5 ares-cut-lg text-center border border-white/5">
                     <div className="text-xs font-black text-ares-gold uppercase tracking-tighter mb-1">Impact</div>
-                    <div className="text-2xl font-black text-white">{log.reach_count.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-white">{(log.reach_count || 0).toLocaleString()}</div>
                   </div>
                 </div>
               </motion.div>
