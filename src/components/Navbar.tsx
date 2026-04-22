@@ -184,7 +184,7 @@ export default function Navbar() {
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
             aria-label="Open Command Palette"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-marble/90 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan border border-white/10"
+            className="flex items-center gap-2 px-3 py-1.5 ares-cut-sm bg-white/10 hover:bg-white/20 text-marble/90 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan border border-white/10"
           >
             <Search size={14} aria-hidden="true" />
             <span className="text-[10px] sm:text-xs font-mono flex items-center gap-2 whitespace-nowrap">
@@ -199,7 +199,7 @@ export default function Navbar() {
               <div className="relative" ref={notifRef}>
                 <button 
                   onClick={() => setShowNotifs(!showNotifs)}
-                className="relative flex items-center justify-center p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
+                className="relative flex items-center justify-center p-2 ares-cut-sm bg-white/5 hover:bg-white/10 border border-white/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
                 aria-label="Notifications"
               >
                 <Bell size={18} className="text-marble/80" />
@@ -267,7 +267,7 @@ export default function Navbar() {
             </div>
           )}
           {isSignedIn && (
-            <Link to="/dashboard" className="relative flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all group" aria-label="Dashboard">
+            <Link to="/dashboard" className="relative flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm transition-all group" aria-label="Dashboard">
               <img 
                 src={userImage || `https://api.dicebear.com/9.x/bottts/svg?seed=${session?.user?.id}`} 
                 alt="" 
@@ -277,7 +277,7 @@ export default function Navbar() {
             </Link>
           )}
           {!isPending && !isSignedIn && (
-            <Link to="/login" className="flex items-center gap-2 px-4 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-ares-gold/30 rounded-full transition-all group" aria-label="Sign In">
+            <Link to="/login" className="flex items-center gap-2 px-4 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-ares-gold/30 ares-cut-sm transition-all group" aria-label="Sign In">
               <LogIn size={14} className="text-ares-gold" />
               <span className="text-xs font-bold text-marble/80 group-hover:text-ares-gold uppercase tracking-wider">Sign In</span>
             </Link>
