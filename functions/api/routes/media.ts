@@ -110,6 +110,17 @@ mediaRouter.get("/:key", async (c) => {
   return response;
 });
 
+// SCA-F01: Recursive R2 Listing Helper to break 1,000 item limit
+async function listAllObjects(bucket: R2Bucket, options?: R2ListOptions) {
+  let result = await bucket.list(options);
+  const objects = [...result.objects];
+  while (result.truncated) {
+    result = await bucket.list({ ...options, cursor: result.cursor });
+    objects.push(...result.objects);
+  }
+  return { objects };
+}
+
 // ── GET /media — list public R2 objects (Gallery only, Edge-Cached) ───
 mediaRouter.get("/", async (c) => {
   // SEC-DoW: Rate limit gallery listing (30 req/min per IP — list() is expensive)
@@ -127,7 +138,7 @@ mediaRouter.get("/", async (c) => {
     if (cached) return cached;
 
     const [objects, dbRes] = await Promise.all([
-      c.env.ARES_STORAGE.list(),
+      listAllObjects(c.env.ARES_STORAGE),
       c.env.DB.prepare("SELECT key, folder, tags FROM media_tags WHERE folder = 'Gallery'").all().catch(() => ({ results: [] }))
     ]);
 
@@ -164,10 +175,10 @@ mediaRouter.get("/", async (c) => {
 });
 
 // ── GET /admin/media — list all R2 objects (CMS Admins) ───────────────
-adminMediaRouter.get("/", async (c) => {
+adminMediaRouter.get("/", ensureAdmin, async (c) => {
   try {
     const [objects, dbRes] = await Promise.all([
-      c.env.ARES_STORAGE.list(),
+      listAllObjects(c.env.ARES_STORAGE),
       c.env.DB.prepare("SELECT key, folder, tags FROM media_tags").all().catch(() => ({ results: [] }))
     ]);
 
