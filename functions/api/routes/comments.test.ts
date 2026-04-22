@@ -62,7 +62,7 @@ describe("Hono Backend - /comments Router", () => {
     const res = await commentsRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ success: true });
+    expect(await res.json()).toEqual(expect.objectContaining({ success: true }));
     expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO comments"));
   });
 

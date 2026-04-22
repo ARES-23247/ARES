@@ -14,6 +14,7 @@ describe("Hono Backend - /inquiries Router", () => {
       all: vi.fn().mockResolvedValue({ results: [] }),
       run: vi.fn().mockResolvedValue({ success: true }),
       first: vi.fn(),
+      batch: vi.fn().mockResolvedValue([]),
     } as any,
     DEV_BYPASS: "true",
     TURNSTILE_SECRET_KEY: "secret",

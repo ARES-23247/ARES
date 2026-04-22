@@ -240,7 +240,7 @@ adminMediaRouter.put("/move/:key{.+$}", ensureAdmin, rateLimitMiddleware(15, 60)
 
 
 // ── DELETE /media/:key — Delete object (Admin) ───────────────────────
-adminMediaRouter.delete("/:id", ensureAdmin, async (c) => {
+adminMediaRouter.delete("/:key{.+$}", ensureAdmin, async (c) => {
   const key = c.req.param("key");
   try {
     await c.env.ARES_STORAGE.delete(key);

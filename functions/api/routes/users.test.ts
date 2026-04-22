@@ -78,7 +78,7 @@ describe("Hono Backend - /users Router", () => {
   });
 
   it("should handle patch errors gracefully", async () => {
-    env.DB.run.mockRejectedValue(new Error("Update failed"));
+    env.DB.batch.mockRejectedValue(new Error("Update failed"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const req = new Request("http://localhost/1", {

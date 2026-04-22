@@ -34,6 +34,7 @@ describe("Hono Backend - /posts Router", () => {
         all: vi.fn().mockResolvedValue({ results: [] }),
         first: vi.fn().mockResolvedValue(null),
         run: vi.fn().mockResolvedValue({ success: true }),
+        batch: vi.fn().mockResolvedValue([]),
       } as any,
       DEV_BYPASS: "true",
     };
