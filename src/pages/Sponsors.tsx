@@ -32,11 +32,11 @@ const TIER_STYLING: Record<string, { icon: React.ReactNode; glass: string; borde
     text: "text-ares-gold"
   },
   Silver: { 
-    icon: <ShieldCheck className="text-zinc-400" size={24} />, 
+    icon: <ShieldCheck className="text-ares-gray" size={24} />, 
     glass: "bg-white/5", 
     border: "border-white/10", 
     glow: "",
-    text: "text-zinc-400"
+    text: "text-ares-gray"
   },
   Bronze: { 
     icon: <Zap className="text-ares-bronze" size={20} />, 
@@ -46,11 +46,11 @@ const TIER_STYLING: Record<string, { icon: React.ReactNode; glass: string; borde
     text: "text-ares-bronze"
   },
   "In-Kind": {
-    icon: <Package className="text-emerald-500" size={20} />,
-    glass: "bg-emerald-500/5",
-    border: "border-emerald-500/20",
+    icon: <Package className="text-ares-gold" size={20} />,
+    glass: "bg-ares-gold/5",
+    border: "border-ares-gold/20",
     glow: "",
-    text: "text-emerald-500"
+    text: "text-ares-gold"
   },
 };
 
@@ -214,13 +214,13 @@ export default function Sponsors() {
           <div className="flex-1 relative z-10 flex flex-col justify-between">
             <div>
               <h2 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter">Join the<br/><span className="text-ares-gold italic">Engineering Journey.</span></h2>
-              <p className="text-zinc-400 text-lg mb-8 max-w-xl leading-relaxed">
+              <p className="text-ares-gray text-lg mb-8 max-w-xl leading-relaxed">
                 Help us build the next generation of robotics. We are always looking for partners who share our passion for excellence, education, and innovation. Whether you can provide mentorship, machining, material donations, or financial grants, your support is the foundation of our success.
               </p>
             </div>
             
             <div className="mt-12 lg:mt-0">
-              <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs mb-3">Or email the executive board directly</p>
+              <p className="text-ares-gray font-bold uppercase tracking-widest text-xs mb-3">Or email the executive board directly</p>
               <a href={`mailto:${siteConfig.contact.email}`} className="text-2xl font-bold text-white hover:text-ares-gold transition-colors flex items-center gap-3 w-fit group">
                 {siteConfig.contact.email} <span className="group-hover:translate-x-1 transition-transform"><ArrowRight size={20} className="text-ares-red" /></span>
               </a>
@@ -232,7 +232,7 @@ export default function Sponsors() {
               <Heart size={20} className="text-ares-red fill-ares-red/20" /> Become a Sponsor
             </h4>
             {submitStatus === "success" && (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 p-4 ares-cut-sm mb-6 text-sm font-bold flex items-center gap-2">
+              <div className="bg-ares-gold/10 border border-ares-gold/20 text-ares-gold p-4 ares-cut-sm mb-6 text-sm font-bold flex items-center gap-2">
                 <ShieldCheck size={16} /> Request sent successfully. We will follow up soon!
               </div>
             )}
@@ -245,11 +245,11 @@ export default function Sponsors() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="name-input" className="block text-xs font-bold text-white uppercase tracking-widest mb-1.5 ml-1">Company / Name *</label>
-                  <input id="name-input" type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-ares-black-soft border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-zinc-400 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="Stark Industries" />
+                  <input id="name-input" type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-ares-black-soft border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-ares-gray focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="Stark Industries" />
                 </div>
                 <div>
                   <label htmlFor="email-input" className="block text-xs font-bold text-white uppercase tracking-widest mb-1.5 ml-1">Email *</label>
-                  <input id="email-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-ares-black-soft border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-zinc-400 focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="you@stark.com" />
+                  <input id="email-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-ares-black-soft border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-ares-gray focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner" placeholder="you@stark.com" />
                 </div>
               </div>
               <div>
@@ -277,7 +277,7 @@ export default function Sponsors() {
                 <button type="submit" disabled={isSubmitting} className="px-8 py-3.5 w-full bg-ares-red text-white font-black uppercase tracking-widest ares-cut hover:bg-ares-danger hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none">
                   {isSubmitting ? "Sending..." : <><span className="flex items-center gap-2">Submit Interest Request <ArrowRight size={18} /></span></>}
                 </button>
-                <p className="text-center text-[10px] text-zinc-500 font-mono uppercase tracking-tighter mt-4">
+                <p className="text-center text-[10px] text-ares-gray font-mono uppercase tracking-tighter mt-4">
                   {siteConfig.team.fullName} operates under a 501(c)(3) nonprofit umbrella. All donations are tax-deductible.
                 </p>
               </div>

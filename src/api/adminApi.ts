@@ -33,9 +33,9 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
       } catch { /* ignore */ }
     }
     
-    const err = new Error(errorMessage);
-    (err as any).status = res.status;
-    (err as any).url = url;
+    const err = new Error(errorMessage) as Error & { status?: number; url?: string };
+    err.status = res.status;
+    err.url = url;
     throw err;
   }
   

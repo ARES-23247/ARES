@@ -148,7 +148,7 @@ export default function Docs() {
   }, [slug, allDocs, navigate]);
 
   return (
-    <div className="min-h-screen bg-ares-zinc-deep text-ares-offwhite flex flex-col">
+    <div className="min-h-screen bg-ares-gray-deep text-ares-offwhite flex flex-col">
       <SEO title={currentDoc?.title ? `${currentDoc.title} — ARESLib` : "ARESLib Documentation"} description={currentDoc?.description || "ARESLib documentation for the ARES 23247 FTC framework."} />
 
       {/* ── Search Overlay ─────────────────────────────────────────── */}
@@ -165,7 +165,7 @@ export default function Docs() {
               initial={{ y: -20, scale: 0.95 }}
               animate={{ y: 0, scale: 1 }}
               exit={{ y: -20, scale: 0.95 }}
-              className="w-full max-w-2xl bg-ares-zinc-dark border border-white/10 ares-cut-sm shadow-2xl overflow-hidden"
+              className="w-full max-w-2xl bg-ares-gray-dark border border-white/10 ares-cut-sm shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
@@ -279,13 +279,13 @@ export default function Docs() {
                       <>
                         {prevDoc ? (
                           <Link to={`/docs/${prevDoc.slug}`} className="flex flex-col p-4 ares-cut-sm border border-white/10 hover:border-ares-red/50 bg-black/20 hover:bg-black/40 transition-colors group">
-                            <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1"><ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" /> Previous</span>
+                            <span className="text-ares-gray text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1"><ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" /> Previous</span>
                             <span className="text-white font-bold group-hover:text-ares-red transition-colors">{prevDoc.title}</span>
                           </Link>
                         ) : <div />}
                         {nextDoc ? (
                           <Link to={`/docs/${nextDoc.slug}`} className="flex flex-col p-4 ares-cut-sm border border-white/10 hover:border-ares-cyan/50 bg-black/20 hover:bg-black/40 transition-colors group text-right items-end">
-                            <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1">Next <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" /></span>
+                            <span className="text-ares-gray text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1">Next <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" /></span>
                             <span className="text-white font-bold group-hover:text-ares-cyan transition-colors">{nextDoc.title}</span>
                           </Link>
                         ) : <div />}
@@ -304,9 +304,9 @@ export default function Docs() {
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-4 bg-zinc-900/50 p-2 pr-4 rounded-full border border-white/5">
+                  <div className="flex items-center gap-4 bg-obsidian/50 p-2 pr-4 rounded-full border border-white/5">
                     <div className="flex items-center">
-                      <div className="relative z-10 w-8 h-8 rounded-full border-2 border-zinc-950 overflow-hidden bg-zinc-800">
+                      <div className="relative z-10 w-8 h-8 rounded-full border-2 border-ares-gray-deep overflow-hidden bg-ares-gray-dark">
                         <img 
                           src={currentDoc.original_author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentDoc.cf_email}`}
                           alt="Author avatar" 
@@ -326,12 +326,12 @@ export default function Docs() {
                           <span className="text-[10px] uppercase font-bold text-ares-cyan/80 tracking-wider mb-1">Contributors</span>
                           <div className="flex -space-x-2">
                             {contributors.slice(0, 5).map((c, idx) => (
-                              <div key={idx} className="w-6 h-6 rounded-full border border-zinc-950 overflow-hidden bg-zinc-800" title={c.nickname || c.author_email}>
+                              <div key={idx} className="w-6 h-6 rounded-full border border-ares-gray-deep overflow-hidden bg-ares-gray-dark" title={c.nickname || c.author_email}>
                                 <img src={c.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${c.author_email}`} alt="avatar" className="w-full h-full object-cover"/>
                               </div>
                             ))}
                             {contributors.length > 5 && (
-                              <div className="w-6 h-6 rounded-full border border-zinc-950 bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-white z-10">
+                              <div className="w-6 h-6 rounded-full border border-ares-gray-deep bg-ares-gray-dark flex items-center justify-center text-[10px] font-bold text-white z-10">
                                 +{contributors.length - 5}
                               </div>
                             )}
@@ -344,7 +344,7 @@ export default function Docs() {
               )}
 
               {/* ── Documentation Feedback ───────────────────────────── */}
-              <div className="mt-16 p-8 ares-cut bg-zinc-950/50 border border-white/5 relative overflow-hidden group/feedback">
+              <div className="mt-16 p-8 ares-cut bg-obsidian/50 border border-white/5 relative overflow-hidden group/feedback">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/feedback:opacity-20 transition-opacity">
                   <BookOpen size={64} className="text-ares-gold rotate-12" />
                 </div>

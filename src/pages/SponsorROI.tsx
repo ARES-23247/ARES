@@ -88,7 +88,7 @@ export default function SponsorROI() {
       <div className="absolute inset-0 bg-[url('https://api.aresfirst.org/assets/grid.svg')] opacity-[0.03] mix-blend-overlay pointer-events-none z-0" aria-hidden="true" />
 
       <div className="max-w-6xl mx-auto px-6 relative z-10">
-        <Link to="/sponsors" className="inline-flex items-center gap-2 text-zinc-500 hover:text-white text-xs font-bold uppercase tracking-widest mb-12 transition-colors">
+        <Link to="/sponsors" className="inline-flex items-center gap-2 text-ares-gray hover:text-white text-xs font-bold uppercase tracking-widest mb-12 transition-colors">
           <ArrowLeft size={16} /> Public Sponsors Directory
         </Link>
 
@@ -99,7 +99,7 @@ export default function SponsorROI() {
               {sponsor.logo_url ? (
                 <img src={sponsor.logo_url} alt={sponsor.name} className="max-w-full max-h-full object-contain filter grayscale" />
               ) : (
-                <Trophy size={40} className="text-zinc-600" />
+                <Trophy size={40} className="text-ares-gray" />
               )}
             </div>
             <div>
@@ -112,8 +112,8 @@ export default function SponsorROI() {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-zinc-500 text-xs font-mono uppercase tracking-widest mb-1">Impact Report Date</p>
-            <p className="text-zinc-300 font-bold">{new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric'})}</p>
+            <p className="text-ares-gray text-xs font-mono uppercase tracking-widest mb-1">Impact Report Date</p>
+            <p className="text-ares-gray font-bold">{new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric'})}</p>
           </div>
         </motion.div>
 
@@ -122,14 +122,14 @@ export default function SponsorROI() {
           {[
             { label: "Community Impressions", value: (totalImpressions + 5400).toLocaleString(), icon: Users, color: "text-ares-cyan", bg: "bg-ares-cyan/10" },
             { label: "Direct Engagements", value: (totalClicks + 150).toLocaleString(), icon: MousePointerClick, color: "text-ares-gold", bg: "bg-ares-gold/10" },
-            { label: "Growth Trajectory", value: "+14.2%", icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-400/10" }
+            { label: "Growth Trajectory", value: "+14.2%", icon: TrendingUp, color: "text-ares-gold", bg: "bg-ares-gold/10" }
           ].map((kpi, i) => (
             <motion.div 
               key={i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * i }}
-              className="bg-zinc-900/40 border border-white/5 rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group"
+              className="bg-ares-gray-dark/40 border border-white/5 rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group"
             >
               <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-110 group-hover:rotate-12 group-hover:-translate-y-2 group-hover:translate-x-2">
                 <kpi.icon size={80} className={kpi.color} />
@@ -137,7 +137,7 @@ export default function SponsorROI() {
               <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center mb-6 relative z-10`}>
                 <kpi.icon size={20} className={kpi.color} />
               </div>
-              <p className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-2 relative z-10">{kpi.label}</p>
+              <p className="text-ares-gray text-xs font-bold uppercase tracking-widest mb-2 relative z-10">{kpi.label}</p>
               <p className="text-4xl font-black text-white relative z-10">{kpi.value}</p>
             </motion.div>
           ))}
@@ -148,7 +148,7 @@ export default function SponsorROI() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-zinc-900/40 border border-white/5 rounded-3xl p-8 backdrop-blur-md"
+          className="bg-ares-gray-dark/40 border border-white/5 rounded-3xl p-8 backdrop-blur-md"
         >
           <div className="flex items-center gap-3 mb-8">
             <Calendar className="text-ares-red" size={24} />
@@ -156,16 +156,16 @@ export default function SponsorROI() {
           </div>
           
           {metrics.length === 0 ? (
-            <div className="py-12 border-2 border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-center">
-              <MousePointerClick size={32} className="text-zinc-600 mb-4" />
-              <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs">Awaiting Metric Aggregation</p>
-              <p className="text-zinc-600 text-xs max-w-sm mt-2">Data will appear here at the end of the first billing cycle.</p>
+            <div className="py-12 border-2 border-dashed border-ares-gray-dark rounded-2xl flex flex-col items-center justify-center text-center">
+              <MousePointerClick size={32} className="text-ares-gray mb-4" />
+              <p className="text-ares-gray font-bold uppercase tracking-widest text-xs">Awaiting Metric Aggregation</p>
+              <p className="text-ares-gray text-xs max-w-sm mt-2">Data will appear here at the end of the first billing cycle.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/10 uppercase tracking-widest text-[10px] text-zinc-500">
+                  <tr className="border-b border-white/10 uppercase tracking-widest text-[10px] text-ares-gray">
                     <th className="py-4 font-bold">Month</th>
                     <th className="py-4 font-bold text-right">Impressions</th>
                     <th className="py-4 font-bold text-right">Link Clicks</th>
@@ -178,14 +178,14 @@ export default function SponsorROI() {
                     const rate = ((m.clicks / actualImpressions) * 100).toFixed(1);
                     return (
                       <tr key={m.year_month} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                        <td className="py-4 text-zinc-300 flex items-center gap-2">
+                        <td className="py-4 text-ares-gray flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-ares-red/80"></div>
                           {m.year_month}
                         </td>
-                        <td className="py-4 text-right text-zinc-400">{actualImpressions.toLocaleString()}</td>
+                        <td className="py-4 text-right text-ares-gray">{actualImpressions.toLocaleString()}</td>
                         <td className="py-4 text-right text-white font-bold">{m.clicks.toLocaleString()}</td>
                         <td className="py-4 text-right">
-                          <span className={`px-2 py-1 rounded-md text-xs bg-white/5 border border-white/10 ${parseFloat(rate) > 2 ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                          <span className={`px-2 py-1 rounded-md text-xs bg-white/5 border border-white/10 ${parseFloat(rate) > 2 ? 'text-ares-gold' : 'text-ares-gray'}`}>
                             {rate}%
                           </span>
                         </td>
@@ -199,7 +199,7 @@ export default function SponsorROI() {
         </motion.div>
         
         <footer className="mt-24 text-center pb-12">
-          <p className="text-zinc-600 text-xs font-mono uppercase tracking-widest">ARES 23247 Return on Investment Portal</p>
+          <p className="text-ares-gray text-xs font-mono uppercase tracking-widest">ARES 23247 Return on Investment Portal</p>
         </footer>
       </div>
     </div>
