@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { History, RotateCcw, X, Clock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { adminApi } from "../api/adminApi";
 
 export interface Revision {
   id: number;
@@ -26,9 +27,12 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
     queryKey: ["history", type, slug],
     queryFn: async () => {
       const base = type === "doc" ? "docs" : "posts";
-      const res = await fetch(`/api/admin/${base}/${slug}/history`, { credentials: "include" });
-      const data = await res.json() as { history?: Revision[] };
-      return data.history ?? [];
+      try {
+        const data = await adminApi.get<{ history?: Revision[] }>(`/api/admin/${base}/${slug}/history`);
+        return data.history ?? [];
+      } catch {
+        return [];
+      }
     },
     enabled: isOpen && !!slug,
   });
@@ -36,15 +40,9 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
   const restoreMutation = useMutation({
     mutationFn: async (revisionId: number) => {
       const base = type === "doc" ? "docs" : "posts";
-      const res = await fetch(`/api/admin/${base}/${slug}/history/${revisionId}/restore`, {
+      return await adminApi.request(`/api/admin/${base}/${slug}/history/${revisionId}/restore`, {
         method: "PATCH",
-        credentials: "include",
       });
-      if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        throw new Error(data.error || "Restore failed");
-      }
-      return await res.json();
     },
     onSuccess: () => {
       alert("Successfully restored to this version!");

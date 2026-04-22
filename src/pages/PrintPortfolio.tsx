@@ -1,7 +1,8 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ShieldCheck, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import DocsMarkdownRenderer from "../components/docs/DocsMarkdownRenderer";
+import { publicApi } from "../api/publicApi";
 
 interface PortfolioData {
   portfolioDocs: Array<{
@@ -44,16 +45,9 @@ export default function PrintPortfolio() {
 
     const fetchPortfolio = async () => {
       try {
-        const res = await fetch("/api/judges/portfolio", {
+        const data = await publicApi.get<PortfolioData>("/api/judges/portfolio", {
           headers: { "X-Judge-Code": code }
         });
-        
-        if (!res.ok) {
-          setError("Failed to verify access code.");
-          return;
-        }
-
-        const data = await res.json() as PortfolioData;
         
         // Wait, the API returns portfolioDocs, but let's check what we destructured
         setPortfolio(data);

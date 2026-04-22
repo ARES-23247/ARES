@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { sanitizeHtml } from '../utils/security';
+import { publicApi } from '../api/publicApi';
 import './InteractiveTutorial.css';
 
 export interface TutorialStep {
@@ -57,9 +58,8 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
       // Sync to Cloudflare conditionally
       if (syncId) {
         try {
-          await fetch('/api/progress', {
+          await publicApi.request('/api/progress', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ syncId: `${syncId}-${title}`, progressData: progressArray })
           });
         } catch (e) {
@@ -79,18 +79,13 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
     if (!syncId) return;
     setSyncStatus('syncing');
     try {
-      const res = await fetch(`/api/progress?syncId=${syncId}-${title}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-            setCompletedSteps(new Set(data));
-            localStorage.setItem(`tutorial-${title}-progress`, JSON.stringify(data));
-        }
-        setSyncStatus('success');
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      } else {
-        setSyncStatus('error');
+      const data = await publicApi.get<string[]>(`/api/progress?syncId=${syncId}-${title}`);
+      if (Array.isArray(data)) {
+          setCompletedSteps(new Set(data));
+          localStorage.setItem(`tutorial-${title}-progress`, JSON.stringify(data));
       }
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
     } catch {
       setSyncStatus('error');
     }

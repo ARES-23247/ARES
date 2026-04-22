@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Trophy, Award, Medal, Crown, Star, ArrowLeft } from "lucide-react";
 import SEO from "../components/SEO";
+import { publicApi } from "../api/publicApi";
 
 interface LeaderboardUser {
   user_id: string;
@@ -19,8 +20,7 @@ export default function Leaderboard() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/leaderboard")
-      .then(r => r.json() as Promise<{ leaderboard: LeaderboardUser[] }>)
+    publicApi.get<{ leaderboard: LeaderboardUser[] }>("/api/leaderboard")
       .then(d => {
         if (!cancelled && d.leaderboard) {
           setLeaders(d.leaderboard);

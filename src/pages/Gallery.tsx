@@ -1,6 +1,7 @@
 import SEO from "../components/SEO";
 import LazyImage from "../components/LazyImage";
 import { useQuery } from "@tanstack/react-query";
+import { publicApi } from "../api/publicApi";
 
 interface R2MediaResponse {
   media: {
@@ -17,9 +18,7 @@ export default function Gallery() {
   const { data, isLoading, isError } = useQuery<R2MediaResponse>({
     queryKey: ["media"],
     queryFn: async () => {
-      const res = await fetch("/api/media");
-      if (!res.ok) throw new Error("Failed to fetch media");
-      return res.json();
+      return publicApi.get<R2MediaResponse>("/api/media");
     }
   });
 

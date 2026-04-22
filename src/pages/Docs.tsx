@@ -10,6 +10,7 @@ import Turnstile from "../components/Turnstile";
 import DocsMarkdownRenderer from "../components/docs/DocsMarkdownRenderer";
 import DocsSidebar from "../components/docs/DocsSidebar";
 import DocsTableOfContents from "../components/docs/DocsTableOfContents";
+import { publicApi } from "../api/publicApi";
 
 interface DocRecord {
   slug: string;
@@ -70,19 +71,15 @@ export default function Docs() {
   const { data: allDocs = [] } = useQuery<DocRecord[]>({
     queryKey: ["docs-list"],
     queryFn: async () => {
-      const r = await fetch("/api/docs");
-      const data = await r.json();
-      // @ts-expect-error -- D1 untyped response
-      return data.docs ?? [];
+      const { docs } = await publicApi.get<{ docs?: DocRecord[] }>("/api/docs");
+      return docs ?? [];
     },
   });
 
   const ObjectQuery = useQuery<{doc: DocRecord, contributors: Contributor[]}>({
     queryKey: ["doc", slug],
     queryFn: async () => {
-      const r = await fetch(`/api/docs/${slug}`);
-      if (!r.ok) throw new Error("Not found");
-      return r.json();
+      return publicApi.get<{doc: DocRecord, contributors: Contributor[]}>(`/api/docs/${slug}`);
     },
     enabled: !!slug,
   });
@@ -94,10 +91,8 @@ export default function Docs() {
   const { data: searchResults = [] } = useQuery<SearchResult[]>({
     queryKey: ["docs-search", searchQuery],
     queryFn: async () => {
-      const r = await fetch(`/api/docs/search?q=${encodeURIComponent(searchQuery)}`);
-      const data = await r.json();
-      // @ts-expect-error -- D1 untyped response
-      return data.results ?? [];
+      const { results } = await publicApi.get<{ results?: SearchResult[] }>(`/api/docs/search?q=${encodeURIComponent(searchQuery)}`);
+      return results ?? [];
     },
     enabled: searchQuery.length >= 2,
   });
@@ -358,11 +353,7 @@ export default function Docs() {
                   <div className="flex flex-wrap gap-4">
                     <button 
                       onClick={async () => {
-                        await fetch(`/api/docs/${slug}/feedback`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ isHelpful: true, turnstileToken: feedbackToken })
-                        });
+                        await publicApi.submitDocsFeedback(slug!, true, feedbackToken);
                         alert('Thanks for your feedback!');
                       }}
                       className="flex items-center gap-2 px-6 py-2.5 ares-cut-sm bg-ares-cyan/10 border border-ares-cyan/30 text-ares-cyan font-bold hover:bg-ares-cyan hover:text-black transition-all"
@@ -372,11 +363,7 @@ export default function Docs() {
                     <button 
                       onClick={async () => {
                         const comment = window.prompt("How can we improve this page?");
-                        await fetch(`/api/docs/${slug}/feedback`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ isHelpful: false, comment, turnstileToken: feedbackToken })
-                        });
+                        await publicApi.submitDocsFeedback(slug!, false, feedbackToken, comment || "");
                         alert('Thank you! We will use your feedback to improve this page.');
                       }}
                       className="flex items-center gap-2 px-6 py-2.5 ares-cut-sm bg-ares-red/10 border border-ares-red/30 text-ares-red font-bold hover:bg-ares-red hover:text-white transition-all"

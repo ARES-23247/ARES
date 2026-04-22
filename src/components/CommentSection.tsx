@@ -1,5 +1,7 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Send, Trash2, RefreshCw, Pencil, Check, X } from "lucide-react";
+import { publicApi } from "../api/publicApi";
+import { commentSchema } from "../schemas/commentSchema";
 
 interface Comment {
   id: number;
@@ -30,13 +32,11 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
   const [editContent, setEditContent] = useState("");
 
   const fetchComments = useCallback(() => {
-    fetch(`/api/comments/${targetType}/${targetId}`, { credentials: "include" })
-      .then(r => r.json())
+    publicApi.get<{ comments: Comment[]; authenticated: boolean; role: string | null }>(`/api/comments/${targetType}/${targetId}`)
       .then((data) => {
-        const typed = data as { comments: Comment[]; authenticated: boolean; role: string | null };
-        setComments(typed.comments || []);
-        setIsAuthenticated(typed.authenticated);
-        setUserRole(typed.role);
+        setComments(data.comments || []);
+        setIsAuthenticated(data.authenticated);
+        setUserRole(data.role);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -47,32 +47,35 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
   const submitComment = async () => {
     if (!newComment.trim()) return;
     setPosting(true);
-    await fetch(`/api/comments/${targetType}/${targetId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ content: newComment }),
-    });
-    setNewComment("");
-    setPosting(false);
-    fetchComments();
+    try {
+      const payloadResult = commentSchema.safeParse({ content: newComment });
+      if (!payloadResult.success) throw new Error(payloadResult.error.issues[0].message);
+      await publicApi.submitComment(targetType, targetId, payloadResult.data);
+      setNewComment("");
+      fetchComments();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPosting(false);
+    }
   };
 
   const deleteComment = async (id: number) => {
-    await fetch(`/api/comments/${id}`, { method: "DELETE", credentials: "include" });
+    await publicApi.deleteComment(id.toString());
     fetchComments();
   };
 
   const saveEdit = async (id: number) => {
     if (!editContent.trim()) return;
-    await fetch(`/api/comments/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ content: editContent }),
-    });
-    setEditingId(null);
-    fetchComments();
+    try {
+      const payloadResult = commentSchema.safeParse({ content: editContent });
+      if (!payloadResult.success) throw new Error(payloadResult.error.issues[0].message);
+      await publicApi.updateComment(id.toString(), payloadResult.data);
+      setEditingId(null);
+      fetchComments();
+    } catch(e) {
+      console.error(e);
+    }
   };
 
   if (loading) return null;

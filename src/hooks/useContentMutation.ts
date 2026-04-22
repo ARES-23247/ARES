@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { adminApi } from "../api/adminApi";
 
 type HttpMethod = "DELETE" | "POST" | "PATCH" | "PUT";
 
@@ -45,12 +46,12 @@ export function useContentMutation<TVariables = string>(opts: UseContentMutation
         fetchOpts.headers = { "Content-Type": "application/json" };
         fetchOpts.body = JSON.stringify(body(vars));
       }
-      const res = await fetch(endpoint(vars), fetchOpts);
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || `Operation failed. Status: ${res.status}`);
+      try {
+        const res = await adminApi.request<unknown>(endpoint(vars), fetchOpts);
+        return res;
+      } catch (err) {
+        throw new Error((err as Error).message || "Operation failed.", { cause: err });
       }
-      return res.json();
     },
     onSuccess: (data) => {
       for (const key of invalidateKeys) {

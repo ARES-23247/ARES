@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
 import { DocItem, ViewType, ClickToDeleteButton, contentFilter, ContentMutationResult } from "./shared";
 import RevisionManager from "../RevisionManager";
+import { adminApi } from "../../api/adminApi";
+import { publicApi } from "../../api/publicApi";
 
 interface DocManagerTabProps {
   view: ViewType;
@@ -30,8 +32,7 @@ export default function DocManagerTab({
   const { data: docs = [], isLoading } = useQuery<DocItem[]>({
     queryKey: ["docs"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/docs", { credentials: "include" });
-      const data = await res.json() as { docs?: DocItem[] };
+      const data = await adminApi.get<{ docs?: DocItem[] }>("/api/admin/docs");
       return data.docs ?? [];
     },
   });
@@ -52,8 +53,7 @@ export default function DocManagerTab({
 
   const exportSingleDoc = async (slug: string) => {
     try {
-      const res = await fetch(`/api/docs/${slug}`);
-      const data = await res.json() as { doc?: DocItem };
+      const data = await publicApi.get<{ doc?: DocItem }>(`/api/docs/${slug}`);
       const doc = data.doc;
       if (!doc) { alert("Doc not found."); return; }
       const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
@@ -70,9 +70,7 @@ export default function DocManagerTab({
 
   const exportAllDocs = async () => {
     try {
-      const res = await fetch("/api/admin/docs/export-all", { credentials: "include" });
-      if (!res.ok) throw new Error("Export failed");
-      const blob = await res.blob();
+      const blob = await adminApi.downloadFile("/api/admin/docs/export-all");
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -104,9 +102,8 @@ export default function DocManagerTab({
                   onClick={() => {
                     const code = prompt("Enter a name or purpose for this code (e.g. 'Championship Judge'):");
                     if (code !== null) {
-                      fetch("/api/admin/judges/codes", { method: "POST", credentials: "include" })
-                        .then(res => res.json() as Promise<{ code: string; expiresAt: string }>)
-                        .then((data: { code: string; expiresAt: string }) => alert(`JUDGE ACCESS CODE: ${data.code}\nExpires: ${new Date(data.expiresAt).toLocaleDateString()}`));
+                      adminApi.request<{ code: string; expiresAt: string }>("/api/admin/judges/codes", { method: "POST" })
+                        .then((data) => alert(`JUDGE ACCESS CODE: ${data.code}\nExpires: ${new Date(data.expiresAt).toLocaleDateString()}`));
                     }
                   }}
                   className="text-[10px] font-bold text-ares-gold bg-ares-gold/10 hover:bg-ares-gold/20 px-2 py-1 ares-cut-sm transition-colors border border-ares-gold/20"

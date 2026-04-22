@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
 import { PostItem, ViewType, ClickToDeleteButton, contentFilter, ContentMutationResult } from "./shared";
 import RevisionManager from "../RevisionManager";
+import { adminApi } from "../../api/adminApi";
 
 interface PostManagerTabProps {
   view: ViewType;
@@ -35,8 +36,7 @@ export default function PostManagerTab({
   const { data: posts = [], isLoading } = useQuery<PostItem[]>({
     queryKey: ["posts"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/posts", { credentials: "include" });
-      const data = await res.json() as { posts?: PostItem[] };
+      const data = await adminApi.get<{ posts?: PostItem[] }>("/api/admin/posts");
       return data.posts ?? [];
     },
   });

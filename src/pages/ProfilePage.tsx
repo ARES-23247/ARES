@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { GraduationCap, Briefcase, ArrowLeft, Shield, ShieldAlert } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { BrandLogo } from "../components/BrandLogo";
+import { publicApi } from "../api/publicApi";
 
 interface ProfilePublic {
   first_name?: string;
@@ -51,14 +52,7 @@ export default function ProfilePage() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`/api/profile/${userId}`)
-      .then(async r => {
-        if (!r.ok) {
-          const data = await r.json().catch(() => ({})) as { error?: string };
-          throw { status: r.status, message: data.error || "Failed to load profile" };
-        }
-        return r.json() as Promise<{ profile: ProfilePublic, badges?: BadgeDef[] }>;
-      })
+    publicApi.get<{ profile: ProfilePublic, badges?: BadgeDef[] }>(`/api/profile/${userId}`)
       .then((data) => { 
         if (cancelled) return;
         setProfile(data.profile); 
@@ -68,7 +62,7 @@ export default function ProfilePage() {
       })
       .catch((err) => {
         if (cancelled) return;
-        setError(err.status ? err : { status: 500, message: "Network error" });
+        setError({ status: err.message.includes("403") ? 403 : 500, message: err.message || "Network error" });
         setLoading(false);
       });
 

@@ -1,7 +1,8 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, MapPin, Users, Clock, Target, Calendar, CheckCircle, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { adminApi } from "../api/adminApi";
 
 interface OutreachLog {
   id: string;
@@ -32,20 +33,21 @@ export default function OutreachTracker() {
   const { data: logs = [], isLoading } = useQuery<OutreachLog[]>({
     queryKey: ["admin-outreach"],
     queryFn: async () => {
-      const r = await fetch("/api/admin/outreach");
-      const d = await r.json() as { logs?: OutreachLog[] };
-      return d.logs || [];
+      try {
+        const d = await adminApi.get<{ logs?: OutreachLog[] }>("/api/admin/outreach");
+        return d.logs || [];
+      } catch {
+        return [];
+      }
     }
   });
 
   const saveMutation = useMutation({
     mutationFn: async (log: Partial<OutreachLog>) => {
-      const r = await fetch("/api/admin/outreach", {
+      await adminApi.request("/api/admin/outreach", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(log)
       });
-      if (!r.ok) throw new Error("Failed to save outreach log");
     },
     onSuccess: () => {
       queryCenter.invalidateQueries({ queryKey: ["admin-outreach"] });
@@ -59,8 +61,7 @@ export default function OutreachTracker() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const r = await fetch(`/api/admin/outreach/${id}`, { method: "DELETE" });
-      if (!r.ok) throw new Error("Failed to delete log");
+      await adminApi.request(`/api/admin/outreach/${id}`, { method: "DELETE" });
     },
     onSuccess: () => queryCenter.invalidateQueries({ queryKey: ["admin-outreach"] })
   });

@@ -1,9 +1,11 @@
-﻿import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Target, Clock, ArrowRight, Activity, MapPin, Heart, X, CheckCircle } from "lucide-react";
 import SEO from "../components/SEO";
 import Turnstile from "../components/Turnstile";
+import { publicApi } from "../api/publicApi";
+import { inquirySchema } from "../schemas/inquirySchema";
 
 interface OutreachLog {
   id: string;
@@ -61,22 +63,19 @@ export default function Outreach() {
     setIsSubmitting(true);
     setSubmitStatus("idle");
     try {
-      const response = await fetch("/api/inquiries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          type: "outreach", 
-          name, 
-          email, 
-          metadata: { organization, description }, 
-          turnstileToken 
-        }),
+      const payloadResult = inquirySchema.safeParse({
+        type: "outreach",
+        name,
+        email,
+        metadata: { organization, description },
+        turnstileToken
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({})) as { error?: string };
-        throw new Error(errData.error || "Submission failed");
+      if (!payloadResult.success) {
+        throw new Error(payloadResult.error.issues[0].message);
       }
+
+      await publicApi.submitInquiry(payloadResult.data);
       setSubmitStatus("success");
       setName(""); setEmail(""); setOrganization(""); setDescription("");
     } catch (err) {
@@ -90,8 +89,7 @@ export default function Outreach() {
   const { data: logs = [], isLoading } = useQuery<OutreachLog[]>({
     queryKey: ["public-outreach"],
     queryFn: async () => {
-      const r = await fetch("/api/outreach");
-      const d = await r.json() as { logs?: OutreachLog[] };
+      const d = await publicApi.get<{ logs?: OutreachLog[] }>("/api/outreach");
       return d.logs || [];
     }
   });

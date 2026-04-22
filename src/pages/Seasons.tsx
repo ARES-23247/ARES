@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Trophy, History, MapPin } from "lucide-react";
 import SEO from "../components/SEO";
+import { publicApi } from "../api/publicApi";
 
 interface Award {
   id: string;
@@ -16,8 +17,7 @@ export default function Seasons() {
   const { data: awards = [], isLoading } = useQuery<Award[]>({
     queryKey: ["public-awards"],
     queryFn: async () => {
-      const r = await fetch("/api/awards");
-      const d = await r.json() as { awards?: Award[] };
+      const d = await publicApi.get<{ awards?: Award[] }>("/api/awards");
       return d.awards || [];
     }
   });

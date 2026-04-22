@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Send, CheckCircle2, AlertCircle } from "lucide-react";
+import { adminApi } from "../api/adminApi";
 
 interface BroadcastModalProps {
   isOpen: boolean;
@@ -27,8 +28,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
 
     const fetchSettings = async () => {
       try {
-        const res = await fetch("/api/admin/settings", { credentials: "include" });
-        const data = await res.json() as { success: boolean, settings: Record<string, string> };
+        const data = await adminApi.get<{ success: boolean, settings: Record<string, string> }>("/api/admin/settings");
         if (data.success && data.settings) {
           const config = data.settings;
           const available = [];
@@ -65,14 +65,11 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
         ? `/api/admin/posts/${id}/repush` 
         : `/api/admin/events/${id}/repush`;
         
-      const res = await fetch(url, {
+      const data = await adminApi.request<{ success: boolean, error?: string }>(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ socials: selectedsocials }),
       });
       
-      const data = await res.json() as { success: boolean, error?: string };
       if (data.success) {
         setStatus("success");
         setTimeout(onClose, 2000);

@@ -1,5 +1,6 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { adminApi } from "../api/adminApi";
 import { Save, RefreshCw, Shield } from "lucide-react";
 import { IdentityForm } from "./profile/IdentityForm";
 import { RoleForm } from "./profile/RoleForm";
@@ -54,8 +55,7 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
   const saveUrl = adminEditUserId ? `/api/admin/users/${adminEditUserId}` : "/api/profile/me";
 
   useEffect(() => {
-    fetch(fetchUrl, { credentials: "include" })
-      .then(r => r.json() as Promise<ProfileResponse>)
+    adminApi.get<ProfileResponse>(fetchUrl)
       .then((data) => {
         if (data && !data.error) {
           setProfile({
@@ -94,23 +94,20 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
     setIsSaving(true);
     setMessage(null);
     try {
-      const res = await fetch(saveUrl, {
+      const payload = {
+        ...profile,
+        subteams: JSON.stringify(profile.subteams),
+        dietary_restrictions: JSON.stringify(profile.dietary_restrictions),
+        colleges: JSON.stringify(profile.colleges),
+        employers: JSON.stringify(profile.employers),
+        show_email: profile.show_email ? 1 : 0,
+        show_phone: profile.show_phone ? 1 : 0,
+        show_on_about: profile.show_on_about ? 1 : 0,
+      };
+      await adminApi.request(saveUrl, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          ...profile,
-          subteams: JSON.stringify(profile.subteams),
-          dietary_restrictions: JSON.stringify(profile.dietary_restrictions),
-          colleges: JSON.stringify(profile.colleges),
-          employers: JSON.stringify(profile.employers),
-          show_email: profile.show_email ? 1 : 0,
-          show_phone: profile.show_phone ? 1 : 0,
-          show_on_about: profile.show_on_about ? 1 : 0,
-        }),
+        body: JSON.stringify(payload),
       });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(data.error || "Save failed");
       setMessage({ type: "success", text: "Profile saved!" });
     } catch (err) {
       setMessage({ type: "error", text: (err as Error).message || "Failed to save profile." });

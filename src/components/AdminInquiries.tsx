@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, MessageSquare, Mail, Calendar, CheckSquare, Clock } from "lucide-react";
+import { adminApi } from "../api/adminApi";
 
 type Inquiry = {
   id: string;
@@ -17,26 +18,21 @@ export default function AdminInquiries() {
   const { data: inquiries = [], isLoading } = useQuery({
     queryKey: ["admin-inquiries"],
     queryFn: async () => {
-      const res = await fetch("/api/inquiries");
-      const d = await res.json() as { inquiries?: Inquiry[] };
+      const d = await adminApi.get<{ inquiries?: Inquiry[] }>("/api/inquiries");
       return d.inquiries || [];
     }
   });
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      await fetch(`/api/inquiries/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status })
-      });
+      await adminApi.updateInquiryStatus(id, status);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] })
   });
 
   const deleteInquiry = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`/api/inquiries/${id}`, { method: "DELETE" });
+      await adminApi.deleteInquiry(id);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] })
   });

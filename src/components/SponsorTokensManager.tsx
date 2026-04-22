@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, FileKey2, ExternalLink, RefreshCw } from "lucide-react";
+import { adminApi } from "../api/adminApi";
 
 interface Sponsor {
   id: string;
@@ -23,19 +24,12 @@ export default function SponsorTokensManager() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch available sponsors to pick from
-      const sRes = await fetch("/api/sponsors/admin");
-      if (sRes.ok) {
-        const sData = await sRes.json() as { sponsors: Sponsor[] };
-        setSponsors(sData.sponsors || []);
-      }
+      const sData = await adminApi.get<{ sponsors: Sponsor[] }>("/api/sponsors/admin");
+      if (sData) setSponsors(sData.sponsors || []);
       
       // Fetch generated tokens
-      const tRes = await fetch("/api/sponsors/admin/tokens");
-      if (tRes.ok) {
-        const tData = await tRes.json() as { tokens: Token[] };
-        setTokens(tData.tokens || []);
-      }
+      const tData = await adminApi.get<{ tokens: Token[] }>("/api/sponsors/admin/tokens");
+      if (tData) setTokens(tData.tokens || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -54,15 +48,12 @@ export default function SponsorTokensManager() {
     if (!selectedSponsor) return;
     setGenerating(true);
     try {
-      const res = await fetch("/api/sponsors/admin/tokens", {
+      await adminApi.request("/api/sponsors/admin/tokens", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sponsor_id: selectedSponsor }),
       });
-      if (res.ok) {
-        await fetchData();
-        setSelectedSponsor("");
-      }
+      await fetchData();
+      setSelectedSponsor("");
     } catch (err) {
       console.error(err);
     } finally {

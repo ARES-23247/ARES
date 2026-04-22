@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, MapPin, Plus, Trash2, Edit3, CheckCircle, Navigation } from "lucide-react";
+import { adminApi } from "../api/adminApi";
 
 interface LocationRow {
   id: string;
@@ -25,25 +26,20 @@ export default function LocationsManager() {
   const { data: locations = [], isLoading } = useQuery<LocationRow[]>({
     queryKey: ["admin_locations"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/locations");
-      if (!res.ok) throw new Error("Failed to fetch locations");
-      const d = await res.json();
-      // @ts-expect-error - standard response format
+      const d = await adminApi.get<{ locations: LocationRow[] }>("/api/admin/locations");
       return d.locations;
     }
   });
 
   const saveMut = useMutation({
     mutationFn: async (payload: Partial<LocationRow> & { id?: string }) => {
-      const method = payload.id ? "PUT" : "POST";
-      const u = payload.id ? `/api/admin/locations/${payload.id}` : "/api/admin/locations";
-      const r = await fetch(u, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!r.ok) throw new Error("Failed to save location");
-      return r.json();
+      if (payload.id) {
+        // @ts-expect-error - partial payload matches schema
+        return adminApi.updateLocation(payload.id, payload);
+      } else {
+        // @ts-expect-error - partial payload matches schema
+        return adminApi.createLocation(payload);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin_locations"] });
@@ -53,23 +49,13 @@ export default function LocationsManager() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: async (id: string) => {
-      const r = await fetch(`/api/admin/locations/${id}`, { method: "DELETE" });
-      if (!r.ok) throw new Error("Failed to delete location");
-      return r.json();
-    },
+    mutationFn: async (id: string) => adminApi.deleteLocation(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_locations"] })
   });
   
   const restoreMut = useMutation({
     mutationFn: async (l: LocationRow) => {
-       const r = await fetch(`/api/admin/locations/${l.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...l, is_deleted: 0 })
-       });
-       if (!r.ok) throw new Error("Failed to restore");
-       return r.json();
+       return adminApi.updateLocation(l.id, { ...l, is_deleted: 0 });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_locations"] })
   });

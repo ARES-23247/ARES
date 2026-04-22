@@ -4,19 +4,28 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import AssetPickerModal from "./AssetPickerModal";
-import { compressImage } from "../utils/imageProcessor";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
+import { useAdminSettings } from "../hooks/useAdminSettings";
+import { useImageUpload } from "../hooks/useImageUpload";
+import { useEntityFetch } from "../hooks/useEntityFetch";
+import { postSchema } from "../schemas/postSchema";
+import { adminApi } from "../api/adminApi";
 
 export default function BlogEditor({ userRole }: { userRole?: string | unknown }) {
   const { editSlug } = useParams<{ editSlug?: string }>();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  
+  // Custom Hooks
+  const { availableSocials } = useAdminSettings();
+  const { uploadFile, isUploading: isUploadingCover, errorMsg: uploadError, setErrorMsg: setUploadError } = useImageUpload();
+
+  // Local State
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState("");
   const [publishedAt, setPublishedAt] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState(DEFAULT_COVER_IMAGE);
   const [errorMsg, setErrorMsg] = useState("");
-  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
   const [socials, setSocials] = useState<Record<string, boolean>>({
     discord: true,
@@ -28,76 +37,32 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
     twitter: false,
     instagram: false
   });
-  const [availableSocials, setAvailableSocials] = useState<string[]>([]);
 
   const editor = useRichEditor({ placeholder: "<p>Start drafting your robotics article here. Tell us about your journey to Einstein...</p>" });
 
-  const uploadFile = async (file: File): Promise<{url: string, altText?: string}> => {
-    const { blob: compressedBlob, ext } = await compressImage(file);
-    const formData = new FormData();
-    formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ext));
-    const res = await fetch("/api/admin/upload", { method: "POST", credentials: "include", body: formData });
-    const data = await res.json();
-    // @ts-expect-error -- D1 untyped response
-    if (!data.url) throw new Error(data.error || "Upload failed");
-    // @ts-expect-error -- D1 untyped response
-    return { url: data.url, altText: data.altText };
-  };
-
-  useEffect(() => {
-    if (!editSlug) return;
-    const fetchPost = async () => {
-      try {
-        const res = await fetch(`/api/admin/posts/${editSlug}/detail`, { credentials: "include" });
-        const data = await res.json();
-      // @ts-expect-error -- D1 untyped response
-        if (data.post) {
-      // @ts-expect-error -- D1 untyped response
-          setTitle(data.post.title || "");
-      // @ts-expect-error -- D1 untyped response
-          setPublishedAt(data.post.published_at || "");
-      // @ts-expect-error -- D1 untyped response
-          if (data.post.thumbnail) setCoverImageUrl(data.post.thumbnail);
-          if (editor) {
-            try {
-      // @ts-expect-error -- D1 untyped response
-              editor.commands.setContent(JSON.parse(data.post.ast));
-            } catch (e) {
-              console.error("Failed to parse existing AST", e);
-            }
+  useEntityFetch<{ post?: { title: string, published_at: string, thumbnail: string, ast: string } }>(
+    editSlug ? `/api/admin/posts/${editSlug}/detail` : null,
+    (data) => {
+      if (data?.post) {
+        setTitle(data.post.title || "");
+        setPublishedAt(data.post.published_at || "");
+        if (data.post.thumbnail) setCoverImageUrl(data.post.thumbnail);
+        if (editor && data.post.ast) {
+          try {
+            editor.commands.setContent(JSON.parse(data.post.ast));
+          } catch (e) {
+            console.error("Failed to parse existing AST", e);
           }
         }
-      } catch (err) {
-        console.error("Failed to load post for editing", err);
       }
-    };
-    fetchPost();
-  }, [editSlug, editor]);
+    }
+  );
 
+  // Sync upload errors to local error state
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch("/api/admin/settings", { credentials: "include" });
-        const data = await res.json() as { success: boolean, settings: Record<string, string> };
-        if (data.success && data.settings) {
-          const config = data.settings;
-          const available = [];
-          if (config.DISCORD_WEBHOOK_URL) available.push("discord");
-          if (config.BLUESKY_HANDLE && config.BLUESKY_APP_PASSWORD) available.push("bluesky");
-          if (config.SLACK_WEBHOOK_URL) available.push("slack");
-          if (config.TEAMS_WEBHOOK_URL) available.push("teams");
-          if (config.GCHAT_WEBHOOK_URL) available.push("gchat");
-          if (config.FACEBOOK_ACCESS_TOKEN) available.push("facebook");
-          if (config.TWITTER_ACCESS_TOKEN) available.push("twitter");
-          if (config.INSTAGRAM_ACCESS_TOKEN) available.push("instagram");
-          setAvailableSocials(available);
-        }
-      } catch (err) {
-        console.error("Failed to fetch available socials:", err);
-      }
-    };
-    fetchSettings();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (uploadError) setErrorMsg(uploadError);
+  }, [uploadError]);
 
   const handlePublish = async (isDraft: boolean = false) => {
     if (!title || !editor) {
@@ -110,35 +75,38 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
 
     try {
       const ast = editor.getJSON();
-
-      const method = editSlug ? "PUT" : "POST";
-      const url = editSlug ? `/api/admin/posts/${editSlug}` : "/api/admin/posts";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ title, coverImageUrl, ast, socials, isDraft, publishedAt }),
+      
+      const payloadResult = postSchema.safeParse({
+        title,
+        coverImageUrl: coverImageUrl === DEFAULT_COVER_IMAGE ? "" : coverImageUrl,
+        ast,
+        socials,
+        isDraft,
+        publishedAt: publishedAt || undefined,
       });
 
-      const data = await res.json();
+      if (!payloadResult.success) {
+        setErrorMsg(payloadResult.error.issues[0].message);
+        setIsPending(false);
+        return;
+      }
 
-      // @ts-expect-error -- D1 untyped response
+      const data = editSlug 
+        ? await adminApi.updatePost(editSlug, payloadResult.data)
+        : await adminApi.createPost(payloadResult.data);
+
       if (data.success) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
         setTimeout(() => queryClient.invalidateQueries({ queryKey: ["posts"] }), 1500);
         setTimeout(() => queryClient.invalidateQueries({ queryKey: ["posts"] }), 3000);
         queryClient.invalidateQueries({ queryKey: ["admin_posts"] });
-      // @ts-expect-error -- D1 untyped response
+        
         if (data.warning) {
-      // @ts-expect-error -- D1 untyped response
           alert("Post saved successfully, but social syndication had issues:\n\n" + data.warning);
         }
 
-      // @ts-expect-error -- D1 untyped response
         navigate(`/blog/${data.slug}`);
       } else {
-      // @ts-expect-error -- D1 untyped response
         setErrorMsg(data.error || "Failed to publish");
       }
     } catch {
@@ -147,6 +115,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
       setIsPending(false);
     }
   };
+
   const handleDelete = async () => {
     if (!editSlug) return;
     const confirm = window.confirm("Are you sure you want to permanently delete this post?");
@@ -155,13 +124,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
     setIsPending(true);
     setErrorMsg("");
     try {
-      const res = await fetch(`/api/admin/posts/${editSlug}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        throw new Error("Failed to delete post.");
-      }
+      await adminApi.deletePost(editSlug);
       navigate("/dashboard");
     } catch {
       setErrorMsg("Failed to delete the post. Please try again.");
@@ -228,14 +191,12 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                setIsUploadingCover(true);
                 try {
+                  setUploadError("");
                   const { url } = await uploadFile(file);
                   setCoverImageUrl(url);
-                } catch(err) {
-                  setErrorMsg(String(err));
-                } finally {
-                  setIsUploadingCover(false);
+                } catch {
+                  // error is handled by hook
                 }
               }} 
             />

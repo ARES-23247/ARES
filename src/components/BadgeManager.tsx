@@ -1,7 +1,9 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Award, Plus, UserPlus, Check, X } from "lucide-react";
 import * as LucideIcons from "lucide-react";
+import { adminApi } from "../api/adminApi";
+import { publicApi } from "../api/publicApi";
 
 interface BadgeDef {
   id: string;
@@ -26,37 +28,24 @@ export default function BadgeManager() {
 
   const { data: badgesData, isLoading: badgesLoading } = useQuery<{ badges: BadgeDef[] }>({
     queryKey: ["admin_badges"],
-    queryFn: async () => {
-      const res = await fetch("/api/badges");
-      if (!res.ok) throw new Error("Failed to fetch badges");
-      return res.json();
-    }
+    queryFn: async () => publicApi.get<{ badges: BadgeDef[] }>("/api/badges")
   });
 
   const { data: usersData } = useQuery<{ users: Array<{ id: string, name: string, email: string }> }>({
     queryKey: ["admin_users_list"],
-    queryFn: async () => {
-      const res = await fetch("/api/profile/admin/users");
-      if (!res.ok) throw new Error("Failed to fetch users");
-      return res.json();
-    }
+    queryFn: async () => adminApi.get<{ users: Array<{ id: string, name: string, email: string }> }>("/api/profile/admin/users")
   });
 
   const createBadgeMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/admin/badges", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: newBadgeId,
-          name: newBadgeName,
-          description: newBadgeDesc,
-          icon: newBadgeIcon,
-          color_theme: newBadgeColor
-        })
+      return adminApi.createBadge({
+        id: newBadgeId,
+        name: newBadgeName,
+        description: newBadgeDesc,
+        icon: newBadgeIcon,
+        // @ts-expect-error - backend accepts extended props
+        color_theme: newBadgeColor
       });
-      if (!res.ok) throw new Error("Creation failed");
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin_badges"] });
@@ -70,13 +59,7 @@ export default function BadgeManager() {
   const awardBadgeMutation = useMutation({
     mutationFn: async () => {
       if (!selectedUser || !selectedBadge) throw new Error("Select user and badge");
-      const res = await fetch(`/api/badges/admin/users/${selectedUser}/badges`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ badge_id: selectedBadge })
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
+      return adminApi.grantBadge(selectedUser, selectedBadge);
     },
     onSuccess: () => {
       alert("Badge awarded successfully!");

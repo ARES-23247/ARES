@@ -6,6 +6,7 @@ import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import CommentSection from "../components/CommentSection";
 import EventSignups from "../components/EventSignups";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
+import { publicApi } from "../api/publicApi";
 
 interface EventRow {
   id: string;
@@ -34,13 +35,13 @@ export default function EventDetail() {
   const { data: event, isLoading, isError } = useQuery<EventRow>({
     queryKey: ["event", id],
     queryFn: async () => {
-      const r = await fetch(`/api/events/${id}`);
-      if (!r.ok) throw new Error("Event Record Erased or Unfound.");
-      const data = await r.json();
-      // @ts-expect-error -- D1 untyped response
-      if (!data || !data.event) throw new Error("Event Record Erased or Unfound.");
-      // @ts-expect-error -- D1 untyped response
-      return data.event;
+      try {
+        const data = await publicApi.get<{ event: EventRow }>(`/api/events/${id}`);
+        if (!data || !data.event) throw new Error("Event Record Erased or Unfound.");
+        return data.event;
+      } catch {
+        throw new Error("Event Record Erased or Unfound.");
+      }
     },
     enabled: !!id,
     retry: false, // Don't retry 404s

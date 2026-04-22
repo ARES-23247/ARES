@@ -3,6 +3,7 @@ import { Radio } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
 import { EventItem, ViewType, ClickToDeleteButton, ContentMutationResult } from "./shared";
+import { adminApi } from "../../api/adminApi";
 
 
 
@@ -38,8 +39,7 @@ export default function EventManagerTab({
   const { data: eventsResult, isLoading } = useQuery<{ events: EventItem[], lastSyncedAt: string | null }>({
     queryKey: ["admin_events"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/events", { credentials: "include" });
-      const data = await res.json() as { events?: EventItem[], lastSyncedAt?: string | null };
+      const data = await adminApi.get<{ events?: EventItem[], lastSyncedAt?: string | null }>("/api/admin/events");
       return { 
         events: data.events ?? [], 
         lastSyncedAt: data.lastSyncedAt ?? null 

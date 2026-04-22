@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import SEO from "../components/SEO";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
+import { publicApi } from "../api/publicApi";
 
 interface PostRecord {
   slug: string;
@@ -20,9 +21,7 @@ export default function Blog() {
   const { data: posts = [], isLoading } = useQuery<PostRecord[]>({
     queryKey: ["posts"],
     queryFn: async () => {
-      const r = await fetch("/api/posts");
-      const data = await r.json();
-      // @ts-expect-error -- D1 untyped response
+      const data = await publicApi.get<{ posts?: PostRecord[] }>("/api/posts");
       return data.posts ?? [];
     },
   });

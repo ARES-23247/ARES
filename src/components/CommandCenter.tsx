@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+ï»¿import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Radio, AlertTriangle } from "lucide-react";
 import TeamAvailability from "./TeamAvailability";
 import { ProjectBoard, IntegrationHealth } from "./command/types";
@@ -7,6 +7,7 @@ import ProjectBoardKanban from "./command/ProjectBoardKanban";
 import PlatformQuickStats from "./command/PlatformQuickStats";
 import CommandQuickActions from "./command/CommandQuickActions";
 import ZulipBotCommands from "./command/ZulipBotCommands";
+import { adminApi } from "../api/adminApi";
 
 // -- Command Center Component -----------------------------------------
 export default function CommandCenter() {
@@ -27,24 +28,24 @@ export default function CommandCenter() {
 
     try {
       const [boardRes, settingsRes, statsRes] = await Promise.allSettled([
-        fetch("/api/github/projects", { credentials: "include" }),
-        fetch("/api/admin/settings", { credentials: "include" }),
+        adminApi.get<{ success: boolean; board: ProjectBoard }>("/api/github/projects"),
+        adminApi.get<{ success: boolean; settings: Record<string, string> }>("/api/admin/settings"),
         Promise.all([
-          fetch("/api/admin/posts?limit=1", { credentials: "include" }).then(r => r.json() as Promise<{ posts: unknown[] }>),
-          fetch("/api/admin/events?limit=1", { credentials: "include" }).then(r => r.json() as Promise<{ events: unknown[] }>),
-          fetch("/api/admin/docs?limit=1", { credentials: "include" }).then(r => r.json() as Promise<{ docs: unknown[] }>),
+          adminApi.get<{ posts: unknown[] }>("/api/admin/posts?limit=1"),
+          adminApi.get<{ events: unknown[] }>("/api/admin/events?limit=1"),
+          adminApi.get<{ docs: unknown[] }>("/api/admin/docs?limit=1"),
         ]),
       ]);
 
       // GitHub Projects Board
-      if (boardRes.status === "fulfilled" && boardRes.value.ok) {
-        const data = await boardRes.value.json() as { success: boolean; board: ProjectBoard };
+      if (boardRes.status === "fulfilled") {
+        const data = boardRes.value;
         if (data.success) setBoard(data.board);
       }
 
       // Integration Health
-      if (settingsRes.status === "fulfilled" && settingsRes.value.ok) {
-        const data = await settingsRes.value.json() as { success: boolean; settings: Record<string, string> };
+      if (settingsRes.status === "fulfilled") {
+        const data = settingsRes.value;
         if (data.success && data.settings) {
           const cfg = data.settings;
           setHealth([
@@ -88,13 +89,7 @@ export default function CommandCenter() {
     if (!newTaskTitle.trim()) return;
     setIsCreating(true);
     try {
-      const res = await fetch("/api/github/projects/items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ title: newTaskTitle.trim() }),
-      });
-      const data = await res.json() as { success: boolean };
+      const data = await adminApi.request<{ success: boolean }>("/api/github/projects/items", { method: "POST", body: JSON.stringify({ title: newTaskTitle.trim() }) });
       if (data.success) {
         setNewTaskTitle("");
         setShowCreateForm(false);
@@ -146,7 +141,7 @@ export default function CommandCenter() {
       {/* Integration Health Monitor */}
       <IntegrationHealthMonitor health={health} />
 
-      {/* GitHub Project Board — Kanban View */}
+      {/* GitHub Project Board ï¿½ Kanban View */}
       <ProjectBoardKanban 
         board={board}
         isLoading={isLoading}
@@ -175,3 +170,4 @@ export default function CommandCenter() {
     </div>
   );
 }
+

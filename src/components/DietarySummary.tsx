@@ -1,6 +1,7 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Utensils, Shirt, RefreshCw, AlertCircle, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import { adminApi } from "../api/adminApi";
 
 interface LogisticsData {
   dietary: Record<string, number>;
@@ -14,16 +15,9 @@ export default function DietarySummary() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/logistics/summary", { credentials: "include" })
-      .then(async (res) => {
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({})) as { error?: string };
-          throw new Error(errData.error || `HTTP ${res.status}`);
-        }
-        return res.json();
-      })
+    adminApi.get<LogisticsData>("/api/logistics/summary")
       .then((d) => {
-        setData(d as LogisticsData);
+        setData(d);
         setLoading(false);
       })
       .catch((err) => {

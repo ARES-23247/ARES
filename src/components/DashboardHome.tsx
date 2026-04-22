@@ -4,6 +4,7 @@ import { useSession } from "../utils/auth-client";
 import { Activity, Target, MessageSquare, BookOpen, User } from "lucide-react";
 import TeamAvailability from "./TeamAvailability";
 import PlatformQuickStats from "./command/PlatformQuickStats";
+import { adminApi } from "../api/adminApi";
 
 export default function DashboardHome() {
   const { data: session } = useSession();
@@ -17,9 +18,9 @@ export default function DashboardHome() {
     // We only fetch stats if the user isn't unverified, just to give them some data
     if (canSeeInquiries) {
       Promise.allSettled([
-        fetch("/api/admin/posts", { credentials: "include" }).then(r => r.json() as Promise<{ posts?: unknown[] }>),
-        fetch("/api/admin/events", { credentials: "include" }).then(r => r.json() as Promise<{ events?: unknown[] }>),
-        fetch("/api/admin/docs", { credentials: "include" }).then(r => r.json() as Promise<{ docs?: unknown[] }>),
+        adminApi.get<{ posts?: unknown[] }>("/api/admin/posts"),
+        adminApi.get<{ events?: unknown[] }>("/api/admin/events"),
+        adminApi.get<{ docs?: unknown[] }>("/api/admin/docs"),
       ]).then(([postsRes, eventsRes, docsRes]) => {
         let p = 0, e = 0, d = 0;
         if (postsRes.status === "fulfilled" && postsRes.value.posts) p = postsRes.value.posts.length;

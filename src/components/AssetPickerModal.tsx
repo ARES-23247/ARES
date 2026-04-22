@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X, ImagePlus } from "lucide-react";
+import { adminApi } from "../api/adminApi";
 
 export type R2Asset = {
   key: string;
@@ -26,8 +27,7 @@ export default function AssetPickerModal({
   const { data: mediaResponse, isLoading } = useQuery<{ media: R2Asset[] }>({
     queryKey: ["assets"],
     queryFn: async () => {
-      const res = await fetch("/api/admin/media", { credentials: "include" });
-      return res.json();
+      return adminApi.get<{ media: R2Asset[] }>("/api/admin/media");
     },
     enabled: isOpen,
   });

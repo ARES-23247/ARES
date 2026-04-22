@@ -1,6 +1,7 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Shield, Trash2, ChevronDown, Edit3, X } from "lucide-react";
 import ProfileEditor from "./ProfileEditor";
+import { adminApi } from "../api/adminApi";
 
 interface UserRow {
   id: string;
@@ -25,16 +26,9 @@ export default function AdminUsers() {
   const [editUserId, setEditUserId] = useState<string | null>(null);
 
   const fetchUsers = useCallback(() => {
-    fetch("/api/admin/users", { credentials: "include" })
-      .then(async (r) => {
-        if (!r.ok) {
-          const body = await r.json().catch(() => ({})) as Record<string, unknown>;
-          throw new Error((body.error as string) || `HTTP ${r.status}`);
-        }
-        return r.json();
-      })
+    adminApi.get<{ users: UserRow[] }>("/api/admin/users")
       .then((data) => {
-        setUsers((data as { users: UserRow[] }).users || []);
+        setUsers(data.users || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -46,20 +40,16 @@ export default function AdminUsers() {
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const changeRole = async (userId: string, newRole: string) => {
-    await fetch(`/api/admin/users/${userId}`, {
+    await adminApi.request(`/api/admin/users/${userId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ role: newRole }),
     });
     fetchUsers();
   };
 
   const changeMemberType = async (userId: string, newType: string) => {
-    await fetch(`/api/admin/users/${userId}`, {
+    await adminApi.request(`/api/admin/users/${userId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ member_type: newType }),
     });
     fetchUsers();
@@ -67,9 +57,8 @@ export default function AdminUsers() {
 
   const removeUser = async (userId: string, name: string) => {
     if (!confirm(`Remove ${name}? This cannot be undone.`)) return;
-    await fetch(`/api/admin/users/${userId}`, {
+    await adminApi.request(`/api/admin/users/${userId}`, {
       method: "DELETE",
-      credentials: "include",
     });
     fetchUsers();
   };

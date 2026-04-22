@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Trophy, Activity, Clock, Zap, ExternalLink } from "lucide-react";
+import { publicApi } from "../api/publicApi";
 
 interface CompetitionBannerProps {
   eventKey: string;
@@ -26,9 +27,11 @@ export default function CompetitionBanner({ eventKey, teamKey = "frc23247" }: Co
   const { data: rankingsData } = useQuery<{ rankings?: TBARanking[] } | null>({
     queryKey: ["tba-rankings", eventKey],
     queryFn: async () => {
-      const r = await fetch(`/api/tba/rankings/${eventKey}`);
-      if (!r.ok) return null;
-      return r.json();
+      try {
+        return await publicApi.get<{ rankings?: TBARanking[] }>(`/api/tba/rankings/${eventKey}`);
+      } catch {
+        return null;
+      }
     }
   });
 
@@ -36,9 +39,11 @@ export default function CompetitionBanner({ eventKey, teamKey = "frc23247" }: Co
   const { data: matchesData } = useQuery<{ matches?: TBAMatch[] } | null>({
     queryKey: ["tba-matches", eventKey],
     queryFn: async () => {
-      const r = await fetch(`/api/tba/matches/${eventKey}`);
-      if (!r.ok) return null;
-      return r.json();
+      try {
+        return await publicApi.get<{ matches?: TBAMatch[] }>(`/api/tba/matches/${eventKey}`);
+      } catch {
+        return null;
+      }
     }
   });
 

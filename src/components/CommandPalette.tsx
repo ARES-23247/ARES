@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, FileText, Calendar, ShieldCheck, HelpCircle, Terminal, Home, ArrowRight } from "lucide-react";
 import { authClient } from "../utils/auth-client";
 import { sanitizeHtml } from "../utils/security";
+import { publicApi } from "../api/publicApi";
 
 interface SearchResult {
   slug?: string;
@@ -85,8 +86,7 @@ export default function CommandPalette() {
     const fetchSearch = async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json() as { results: Array<{ type: string; id: string; title: string; matched_text?: string }> };
+        const data = await publicApi.get<{ results: Array<{ type: string; id: string; title: string; matched_text?: string }> }>(`/api/search?q=${encodeURIComponent(query)}`);
         
         const searchResults: SearchResult[] = (data.results || []).map(r => {
           let icon = <FileText size={16} />;

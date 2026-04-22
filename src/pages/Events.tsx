@@ -2,29 +2,28 @@ import { useQuery } from "@tanstack/react-query";
 import { isAfter, subDays, addDays, parseISO } from "date-fns";
 import { motion } from "framer-motion";
 import SEO from "../components/SEO";
+import { publicApi } from "../api/publicApi";
 
 import { EventCard, EventItem } from "../components/events/EventCard";
 import CompetitionBanner from "../components/CompetitionBanner";
-
-
 
 export default function Events() {
   const { data: events = [], isLoading } = useQuery<EventItem[]>({
     queryKey: ["events"],
     queryFn: async () => {
-      const res = await fetch("/api/events");
-      const data = await res.json();
-      // @ts-expect-error -- D1 untyped response
-      return data.events ?? [];
+      const res = await publicApi.get<{ events?: EventItem[] }>("/api/events");
+      return res.events ?? [];
     },
   });
 
   const { data: calendarData = null } = useQuery({
     queryKey: ["calendar_config"],
     queryFn: async () => {
-      const res = await fetch("/api/events/calendar");
-      if (!res.ok) return {};
-      return await res.json() as { calendarIdInternal?: string, calendarIdOutreach?: string, calendarIdExternal?: string };
+      try {
+        return await publicApi.get<{ calendarIdInternal?: string, calendarIdOutreach?: string, calendarIdExternal?: string }>("/api/events/calendar");
+      } catch {
+        return {};
+      }
     },
   });
 

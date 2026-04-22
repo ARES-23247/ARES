@@ -4,6 +4,7 @@ import SEO from "../components/SEO";
 import { GraduationCap } from "lucide-react";
 import { BrandLogo } from "../components/BrandLogo";
 import { GreekMeander } from "../components/GreekMeander";
+import { publicApi } from "../api/publicApi";
 
 interface TeamMember {
   user_id: string;
@@ -72,9 +73,8 @@ export default function About() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/profile/team-roster")
-      .then(r => r.json())
-      .then((data) => { setMembers((data as { members: TeamMember[] }).members || []); setLoading(false); })
+    publicApi.get<{ members: TeamMember[] }>("/api/profile/team-roster")
+      .then((data) => { setMembers(data.members || []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 

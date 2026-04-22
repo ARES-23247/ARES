@@ -1,7 +1,8 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Globe, ShieldCheck, Award, Zap, Gem, CheckCircle2, XCircle, Edit2, Package } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { adminApi } from "../api/adminApi";
 
 interface Sponsor {
   id: string;
@@ -35,20 +36,15 @@ export default function SponsorEditor() {
   const { data: sponsors = [], isLoading } = useQuery<Sponsor[]>({
     queryKey: ["admin-sponsors"],
     queryFn: async () => {
-      const r = await fetch("/api/sponsors/admin", { cache: "no-store" });
-      const d = await r.json() as { sponsors?: Sponsor[] };
+      const d = await adminApi.get<{ sponsors?: Sponsor[] }>("/api/sponsors/admin", { cache: "no-store" });
       return d.sponsors || [];
     }
   });
 
   const saveMutation = useMutation({
     mutationFn: async (sponsor: Partial<Sponsor>) => {
-      const r = await fetch("/api/sponsors/admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sponsor)
-      });
-      if (!r.ok) throw new Error("Failed to save sponsor");
+      // @ts-expect-error - partial sponsor matches schema
+      return adminApi.createSponsor(sponsor);
     },
     onError: (err: Error) => {
       alert(`[Failure Exposure] Sponsor sync failed: \n${err.message}`);
@@ -61,10 +57,7 @@ export default function SponsorEditor() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const r = await fetch(`/api/sponsors/admin/${id}`, { method: "DELETE" });
-      if (!r.ok) throw new Error("Failed to delete sponsor");
-    },
+    mutationFn: async (id: string) => adminApi.deleteSponsor(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] })
   });
 

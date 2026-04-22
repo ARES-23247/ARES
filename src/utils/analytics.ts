@@ -5,22 +5,18 @@
 
 export type AnalyticsCategory = 'blog' | 'doc' | 'event' | 'system';
 
+import { publicApi } from '../api/publicApi';
+
 export async function trackPageView(path: string, category: AnalyticsCategory) {
   try {
     // Analytics are now tracked in all environments (including local) to allow testing.
     // If you want to disable local tracking, uncomment the following line:
     // if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return;
 
-    await fetch('/api/analytics/track', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        path,
-        category,
-        referrer: document.referrer,
-      }),
+    await publicApi.trackAnalytics('track', {
+      path,
+      category,
+      referrer: document.referrer,
     });
   } catch (err) {
     // Silent fail to avoid disrupting user experience

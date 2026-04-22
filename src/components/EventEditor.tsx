@@ -1,15 +1,19 @@
-﻿import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import AssetPickerModal from "./AssetPickerModal";
 import { MapPin } from "lucide-react";
-import { compressImage } from "../utils/imageProcessor";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import EventPotluckVolunteerFlags from "./events/EventPotluckVolunteerFlags";
 import EventSocialSyndication from "./events/EventSocialSyndication";
 import EventCoverPicker from "./events/EventCoverPicker";
+import { useAdminSettings } from "../hooks/useAdminSettings";
+import { useImageUpload } from "../hooks/useImageUpload";
+import { eventSchema } from "../schemas/eventSchema";
+import { adminApi } from "../api/adminApi";
+import { publicApi } from "../api/publicApi";
 
 interface LocationRow {
   id: string;
@@ -34,12 +38,6 @@ interface EventData {
   published_at?: string;
 }
 
-interface SyncResponse {
-  success: boolean;
-  id?: string;
-  error?: string;
-  warning?: string;
-}
 
 export default function EventEditor({ userRole }: { userRole?: string | unknown }) {
   const { editId } = useParams<{ editId?: string }>();
@@ -47,27 +45,25 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
   const [errorMsg, setErrorMsg] = useState("");
   const [warningMsg, setWarningMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
+  
   const [socials, setSocials] = useState<Record<string, boolean>>({
-    discord: true,
-    bluesky: true,
-    slack: false,
-    teams: false,
-    gchat: false,
-    facebook: false,
-    twitter: false,
-    instagram: false
+    discord: true, bluesky: true, slack: false, teams: false, gchat: false, facebook: false, twitter: false, instagram: false
   });
-  const [availableSocials, setAvailableSocials] = useState<string[]>([]);
+
+  // Custom Hooks
+  const { availableSocials } = useAdminSettings();
+  const { uploadFile, isUploading, errorMsg: uploadError, setErrorMsg: setUploadError } = useImageUpload();
 
   const { data: locations = [] } = useQuery<LocationRow[]>({
     queryKey: ["locations"],
     queryFn: async () => {
-      const r = await fetch("/api/locations");
-      if (!r.ok) return [];
-      const d = await r.json() as { locations?: LocationRow[] };
-      return d.locations || [];
+      try {
+        const d = await publicApi.get<{ locations?: LocationRow[] }>("/api/locations");
+        return d.locations || [];
+      } catch {
+        return [];
+      }
     }
   });
 
@@ -86,26 +82,14 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
     isVolunteer: false,
     publishedAt: "",
   });
-  
-  const uploadFile = async (file: File): Promise<{url: string, altText?: string}> => {
-    const { blob: compressedBlob, ext } = await compressImage(file);
-    const formData = new FormData();
-    formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ext));
-    const res = await fetch("/api/admin/upload", { method: "POST", credentials: "include", body: formData });
-    const data = await res.json() as { url?: string; altText?: string; error?: string };
-    if (!data.url) throw new Error(data.error || "Upload failed");
-    return { url: data.url, altText: data.altText };
-  };
 
   const handleFileUpload = async (file: File) => {
-    setIsUploading(true);
     try {
+      setUploadError("");
       const { url } = await uploadFile(file);
       setForm({ ...form, coverImage: url });
     } catch(err) {
-      setErrorMsg(String(err));
-    } finally {
-      setIsUploading(false);
+      setErrorMsg(uploadError || String(err));
     }
   };
 
@@ -114,8 +98,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
     queryKey: ["event", editId],
     queryFn: async () => {
       if (!editId) return null;
-      const res = await fetch(`/api/admin/events/${editId}`, { credentials: "include" });
-      const data = await res.json() as { event?: EventData };
+      const data = await adminApi.get<{ event?: EventData }>(`/api/admin/events/${editId}`);
       if (data.event) {
         setIsDeleted(data.event.is_deleted === 1);
         setForm({
@@ -143,31 +126,6 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
     enabled: !!editId && !!editor,
   });
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch("/api/admin/settings", { credentials: "include" });
-        const data = await res.json() as { success?: boolean; settings?: Record<string, string> };
-        if (data.success && data.settings) {
-          const config = data.settings;
-          const available = [];
-          if (config.DISCORD_WEBHOOK_URL) available.push("discord");
-          if (config.BLUESKY_HANDLE && config.BLUESKY_APP_PASSWORD) available.push("bluesky");
-          if (config.SLACK_WEBHOOK_URL) available.push("slack");
-          if (config.TEAMS_WEBHOOK_URL) available.push("teams");
-          if (config.GCHAT_WEBHOOK_URL) available.push("gchat");
-          if (config.FACEBOOK_ACCESS_TOKEN) available.push("facebook");
-          if (config.TWITTER_ACCESS_TOKEN) available.push("twitter");
-          if (config.INSTAGRAM_ACCESS_TOKEN) available.push("instagram");
-          setAvailableSocials(available);
-        }
-      } catch (err) {
-        console.error("Failed to fetch available socials:", err);
-      }
-    };
-    fetchSettings();
-  }, []);
-
   const mutation = useMutation({
     mutationFn: async (isDraft: boolean) => {
       const finalDescription = editor ? JSON.stringify(editor.getJSON()) : form.description;
@@ -178,22 +136,13 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         socials 
       };
 
-      const method = editId ? "PUT" : "POST";
-      const url = editId ? `/api/admin/events/${editId}` : "/api/admin/events";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok && res.status !== 207) {
-        const errorData = await res.json() as { error?: string };
-        throw new Error(errorData.error || "Failed to save event");
-      }
-
-      return await res.json() as SyncResponse;
+      const parsed = eventSchema.parse(payload);
+      const data = editId
+        ? await adminApi.updateEvent(editId, parsed)
+        : await adminApi.createEvent(parsed);
+        
+      if (!data.success) throw new Error(data.error || "Event save failed.");
+      return data;
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -202,11 +151,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         
         queryClient.invalidateQueries({ queryKey: ["events"] });
         queryClient.invalidateQueries({ queryKey: ["admin_events"] });
-        
-        // Multi-stage invalidation to account for D1 propagation delay
         setTimeout(() => queryClient.invalidateQueries({ queryKey: ["events"] }), 1500);
-
-        
 
         if (!editId) {
           setForm({ 
@@ -225,6 +170,21 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
     }
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const data = await adminApi.deleteEvent(id);
+      if (!data.success) throw new Error(data.error || "Failed to delete event.");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+    },
+    onError: () => {
+      setErrorMsg("Failed to delete the event. Please try again.");
+    }
+  });
+
   const handleDelete = async () => {
     if (!editId) return;
     const confirm = window.confirm("Are you sure you want to permanently delete this event?");
@@ -233,20 +193,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
     setErrorMsg("");
     setWarningMsg("");
     setSuccessMsg("");
-    try {
-      const res = await fetch(`/api/events/admin/${editId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        throw new Error("Failed to delete event.");
-      }
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
-      
-    } catch {
-      setErrorMsg("Failed to delete the event. Please try again.");
-    }
+    deleteMutation.mutate(editId);
   };
 
   const handlePublish = (isDraft: boolean = false) => {
@@ -275,7 +222,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
       
       {isDeleted && (
         <div className="bg-ares-danger/10 border-l-4 border-ares-danger p-4 rounded-r-lg mb-6 flex items-start gap-3">
-          <div className="text-ares-danger mt-0.5">??</div>
+          <div className="text-ares-danger mt-0.5">⚠️</div>
           <div>
             <h4 className="text-ares-danger font-bold text-sm tracking-wide uppercase">Ghost Event</h4>
             <p className="text-ares-danger-soft/80 text-sm mt-1">This event is currently soft-deleted and is hidden from the public API and Google Calendar. Modifying and saving it will not undelete it.</p>
@@ -402,7 +349,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
       <div className="mt-6 flex flex-col gap-4">
         {errorMsg && (
           <div className="p-4 bg-ares-danger/10 border border-ares-danger/20 ares-cut flex items-start gap-3">
-            <div className="text-ares-danger mt-0.5">?</div>
+            <div className="text-ares-danger mt-0.5">⚠️</div>
             <div>
               <h4 className="text-ares-danger font-bold text-xs tracking-wide uppercase">Critical Error</h4>
               <p className="text-ares-danger-soft/90 text-sm mt-1">{errorMsg}</p>
@@ -412,7 +359,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
 
         {warningMsg && (
           <div className="p-4 bg-ares-gold/10 border border-ares-gold/20 ares-cut flex items-start gap-3">
-            <div className="text-ares-gold mt-0.5">??</div>
+            <div className="text-ares-gold mt-0.5">⚠️</div>
             <div>
               <h4 className="text-ares-gold font-bold text-xs tracking-wide uppercase">Syndication Warning</h4>
               <p className="text-zinc-300 text-sm mt-1">Event saved, but: {warningMsg}</p>
@@ -422,7 +369,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
 
         {successMsg && (
           <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 ares-cut flex items-start gap-3">
-            <div className="text-emerald-500 mt-0.5">?</div>
+            <div className="text-emerald-500 mt-0.5">✅</div>
             <div>
               <h4 className="text-emerald-500 font-bold text-xs tracking-wide uppercase">Success</h4>
               <p className="text-emerald-400/90 text-sm mt-1">{successMsg}</p>
@@ -469,4 +416,3 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
     </div>
   );
 }
-

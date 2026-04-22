@@ -1,10 +1,12 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { siteConfig } from "../site.config";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Gem, Award, ShieldCheck, Zap, ExternalLink, Heart, Package } from "lucide-react";
 import SEO from "../components/SEO";
 import Turnstile from "../components/Turnstile";
+import { publicApi } from "../api/publicApi";
+import { inquirySchema } from "../schemas/inquirySchema";
 
 interface Sponsor {
   id: string;
@@ -56,8 +58,7 @@ export default function Sponsors() {
   const { data: sponsors = [] } = useQuery<Sponsor[]>({
     queryKey: ["public-sponsors"],
     queryFn: async () => {
-      const r = await fetch("/api/sponsors", { cache: "no-store" });
-      const d = await r.json() as { sponsors?: Sponsor[] };
+      const d = await publicApi.get<{ sponsors?: Sponsor[] }>("/api/sponsors");
       return d.sponsors || [];
     }
   });
@@ -82,11 +83,7 @@ export default function Sponsors() {
   const [turnstileToken, setTurnstileToken] = useState("");
 
   const trackSponsorClick = (sponsorId: string) => {
-    fetch("/api/analytics/sponsor-click", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sponsor_id: sponsorId })
-    }).catch(() => {}); // fire and forget
+    publicApi.trackAnalytics("sponsor-click", { sponsor_id: sponsorId }).catch(() => {});
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,21 +91,19 @@ export default function Sponsors() {
     setIsSubmitting(true);
     setSubmitStatus("idle");
     try {
-      const response = await fetch("/api/inquiries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "sponsor",
-          name,
-          email,
-          metadata: { level, message },
-          turnstileToken,
-        }),
+      const payloadResult = inquirySchema.safeParse({
+        type: "sponsor",
+        name,
+        email,
+        metadata: { level, message },
+        turnstileToken,
       });
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({})) as { error?: string };
-        throw new Error(errData.error || "Failed");
+
+      if (!payloadResult.success) {
+        throw new Error(payloadResult.error.issues[0].message);
       }
+
+      await publicApi.submitInquiry(payloadResult.data);
       setSubmitStatus("success");
       setName(""); setEmail(""); setLevel("Interested in Details"); setMessage("");
     } catch (err) {

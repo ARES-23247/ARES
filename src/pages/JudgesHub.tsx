@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ShieldCheck, BookOpen, Trophy, Users, ArrowRight, Lock, AlertCircle, FileText, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import Turnstile from "../components/Turnstile";
+import { publicApi } from "../api/publicApi";
 
 interface PortfolioData {
   docs: Array<{
@@ -36,13 +37,10 @@ export default function JudgesHub() {
 
   const fetchPortfolio = useCallback(async (code: string) => {
     try {
-      const res = await fetch("/api/judges/portfolio", {
+      const data = await publicApi.get<PortfolioData>("/api/judges/portfolio", {
         headers: { "Authorization": `Bearer ${code}` }
       });
-      const data = await res.json() as PortfolioData;
-      if (res.ok) {
-        setPortfolio(data);
-      }
+      setPortfolio(data);
     } catch {
       console.error("Failed to fetch portfolio");
     }
@@ -55,14 +53,8 @@ export default function JudgesHub() {
     setError("");
 
     try {
-      const res = await fetch("/api/judges/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, turnstileToken }),
-      });
-
-      const data = await res.json() as { success: boolean, error?: string };
-      if (res.ok && data.success) {
+      const data = await publicApi.judgesLogin(code, turnstileToken);
+      if (data.success) {
         localStorage.setItem("ares_judge_code", code);
         setIsAuthenticated(true);
         fetchPortfolio(code);
@@ -70,8 +62,9 @@ export default function JudgesHub() {
         setError(data.error || "Invalid access code.");
         localStorage.removeItem("ares_judge_code");
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error. Please try again.");
+      localStorage.removeItem("ares_judge_code");
     } finally {
       setIsLoading(false);
     }

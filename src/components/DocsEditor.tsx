@@ -3,6 +3,20 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
+import { useEntityFetch } from "../hooks/useEntityFetch";
+import { docSchema } from "../schemas/docSchema";
+import { adminApi } from "../api/adminApi";
+
+interface DocData {
+  slug: string;
+  title: string;
+  category: string;
+  sort_order: number;
+  description: string;
+  is_portfolio: number;
+  is_executive_summary: number;
+  content: string;
+}
 
 export default function DocsEditor({ userRole }: { userRole?: string | unknown }) {
   const { editSlug } = useParams<{ editSlug?: string }>();
@@ -22,48 +36,38 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
 
   const editor = useRichEditor({ placeholder: "<p>Start writing documentation here...</p>" });
 
-  useEffect(() => {
-    if (!editSlug) return;
-    const fetchDoc = async () => {
-      try {
-        const res = await fetch(`/api/admin/docs/${editSlug}/detail`, { credentials: "include" });
-        const data = await res.json();
-      // @ts-expect-error -- D1 untyped response
-        if (data.doc) {
-      // @ts-expect-error -- D1 untyped response
-          setSlug(data.doc.slug || "");
-      // @ts-expect-error -- D1 untyped response
-          setTitle(data.doc.title || "");
-      // @ts-expect-error -- D1 untyped response
-          setCategory(data.doc.category || "Getting Started");
-      // @ts-expect-error -- D1 untyped response
-          setSortOrder(data.doc.sort_order || 10);
-      // @ts-expect-error -- D1 untyped response
-          setDescription(data.doc.description || "");
-      // @ts-expect-error -- D1 untyped response
-          setIsPortfolio(!!data.doc.is_portfolio);
-      // @ts-expect-error -- D1 untyped response
-          setIsExecutiveSummary(!!data.doc.is_executive_summary);
-          
-      // @ts-expect-error -- D1 untyped response
-          const loadedContent = data.doc.content || "";
-          if (editor) {
-            try {
-              const parsed = JSON.parse(loadedContent);
-              editor.commands.setContent(parsed);
-            } catch {
-              // Not JSON, assume HTML or legacy Markdown (fallback)
-              editor.commands.setContent(loadedContent);
-            }
+  // Custom Hooks
+  const { error: fetchError } = useEntityFetch<{ doc?: DocData }>(
+    editSlug ? `/api/admin/docs/${editSlug}/detail` : null,
+    (data) => {
+      if (data?.doc) {
+        const doc = data.doc;
+        setSlug(doc.slug || "");
+        setTitle(doc.title || "");
+        setCategory(doc.category || "Getting Started");
+        setSortOrder(doc.sort_order || 10);
+        setDescription(doc.description || "");
+        setIsPortfolio(!!doc.is_portfolio);
+        setIsExecutiveSummary(!!doc.is_executive_summary);
+        
+        const loadedContent = doc.content || "";
+        if (editor) {
+          try {
+            const parsed = JSON.parse(loadedContent);
+            editor.commands.setContent(parsed);
+          } catch {
+            // Not JSON, assume HTML or legacy Markdown (fallback)
+            editor.commands.setContent(loadedContent);
           }
         }
-      } catch (err) {
-        console.error("Failed to load doc for editing", err);
-        setErrorMsg("Failed to load document data.");
       }
-    };
-    fetchDoc();
-  }, [editSlug, editor]);
+    }
+  );
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (fetchError) setErrorMsg("Failed to load document data.");
+  }, [fetchError]);
 
   const handlePublish = async (isDraft: boolean = false) => {
     if (!editor) return;
@@ -78,38 +82,38 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
     const jsonAST = JSON.stringify(editor.getJSON());
 
     try {
-      const res = await fetch("/api/admin/docs", {
-        method: "POST", // API does an INSERT OR REPLACE
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ 
-          slug, 
-          title, 
-          category, 
-          sortOrder, 
-          description, 
-          content: jsonAST,
-          isPortfolio,
-          isExecutiveSummary,
-          isDraft
-        }),
+      const payloadResult = docSchema.safeParse({
+        slug,
+        title,
+        category,
+        sortOrder,
+        description: description || undefined,
+        content: jsonAST,
+        isPortfolio,
+        isExecutiveSummary,
+        isDraft
       });
 
-      const data = await res.json();
+      if (!payloadResult.success) {
+        setErrorMsg(payloadResult.error.issues[0].message);
+        setIsPending(false);
+        return;
+      }
 
-      // @ts-expect-error -- D1 untyped response
+      const data = editSlug
+        ? await adminApi.updateDoc(payloadResult.data)
+        : await adminApi.createDoc(payloadResult.data);
+
       if (data.success) {
         queryClient.invalidateQueries({ queryKey: ["docs"] });
         queryClient.invalidateQueries({ queryKey: ["admin_docs"] });
         
-      // @ts-expect-error -- D1 untyped response
         navigate(`/docs/${data.slug}`);
       } else {
-      // @ts-expect-error -- D1 untyped response
         setErrorMsg(data.error || "Failed to publish");
       }
     } catch {
-      setErrorMsg("Network error â€” could not reach the API.");
+      setErrorMsg("Network error — could not reach the API.");
     } finally {
       setIsPending(false);
     }
@@ -123,17 +127,11 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
     setIsPending(true);
     setErrorMsg("");
     try {
-      const res = await fetch(`/api/admin/docs/${editSlug}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        throw new Error("Failed to delete document.");
-      }
+      await adminApi.deleteDoc(editSlug);
       queryClient.invalidateQueries({ queryKey: ["docs"] });
       queryClient.invalidateQueries({ queryKey: ["admin_docs"] });
       
-      navigate("/docs");
+      navigate("/dashboard/manage_docs");
     } catch {
       setErrorMsg("Failed to delete the document. Please try again.");
     } finally {
@@ -291,4 +289,3 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
     </div>
   );
 }
-

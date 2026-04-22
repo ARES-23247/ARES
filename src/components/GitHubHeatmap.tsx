@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { siteConfig } from "../site.config";
+import { publicApi } from "../api/publicApi";
 
 interface DayCell {
   date: string;
@@ -29,18 +30,10 @@ export default function GitHubHeatmap() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/github/activity");
-        if (!res.ok) throw new Error("Failed to load activity");
+        const data = await publicApi.get<{ grid: DayCell[][], totalCommits: number, repoCount: number }>("/api/github/activity");
         
-        const data = await res.json();
-        // @ts-expect-error - Expected API shape
-        if (data.error) throw new Error(data.error);
-
-        // @ts-expect-error - Expected API shape
         setGrid(data.grid);
-        // @ts-expect-error - Expected API shape
         setTotalCommits(data.totalCommits);
-        // @ts-expect-error - Expected API shape
         setRepoCount(data.repoCount);
         setLoading(false);
       } catch (err) {

@@ -1,5 +1,6 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ClipboardList, Plus, Save, RefreshCw, Trash2, CheckCircle2, Circle, AlertCircle, Users } from "lucide-react";
+import { publicApi } from "../api/publicApi";
 
 interface SignupEntry {
   id: number;
@@ -31,17 +32,16 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchSignups = useCallback(() => {
-    fetch(`/api/events/${eventId}/signups`, { credentials: "include" })
-      .then(r => r.json())
+    publicApi.get<{ 
+      signups: SignupEntry[]; 
+      authenticated: boolean; 
+      role: string | null; 
+      can_manage: boolean;
+      dietary_summary: Record<string, number> | null;
+      team_dietary_summary: Record<string, number> | null;
+    }>(`/api/events/${eventId}/signups`)
       .then((data) => {
-        const typed = data as { 
-          signups: SignupEntry[]; 
-          authenticated: boolean; 
-          role: string | null; 
-          can_manage: boolean;
-          dietary_summary: Record<string, number> | null;
-          team_dietary_summary: Record<string, number> | null;
-        };
+        const typed = data;
         setSignups(typed.signups || []);
         setIsAuthenticated(typed.authenticated);
         setUserRole(typed.role);
@@ -60,27 +60,27 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
 
   const handleSignUp = async () => {
     setIsSaving(true);
-    await fetch(`/api/events/${eventId}/signups`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(mySignup || { bringing: "", notes: "", prep_hours: 0 }),
-    });
+    try {
+      await publicApi.request(`/api/events/${eventId}/signups`, {
+        method: "POST",
+        body: JSON.stringify(mySignup || { bringing: "", notes: "", prep_hours: 0 }),
+      });
+    } catch (e) {
+      console.error(e);
+    }
     setIsSaving(false);
     fetchSignups();
   };
 
   const handleRemove = async () => {
-    await fetch(`/api/events/${eventId}/signups/me`, { method: "DELETE", credentials: "include" });
+    await publicApi.request(`/api/events/${eventId}/signups/me`, { method: "DELETE" });
     setMySignup(null);
     fetchSignups();
   };
 
   const toggleAttendance = async (userId: string, currentStatus: boolean) => {
-    await fetch(`/api/events/${eventId}/signups/${userId}/attendance`, {
+    await publicApi.request(`/api/events/${eventId}/signups/${userId}/attendance`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ attended: !currentStatus }),
     });
     fetchSignups();
@@ -88,10 +88,8 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
 
   const selfCheckIn = async () => {
     const isCurrentlyAttended = myEntry?.attended || false;
-    await fetch(`/api/events/${eventId}/signups/me/attendance`, {
+    await publicApi.request(`/api/events/${eventId}/signups/me/attendance`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ attended: !isCurrentlyAttended }),
     });
     fetchSignups();

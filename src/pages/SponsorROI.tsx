@@ -1,8 +1,9 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShieldAlert, TrendingUp, Users, MousePointerClick, Calendar, ArrowLeft, Trophy } from "lucide-react";
 import SEO from "../components/SEO";
+import { publicApi } from "../api/publicApi";
 
 interface SponsorMetrics {
   year_month: string;
@@ -30,13 +31,7 @@ export default function SponsorROI() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`/api/sponsors/roi/${tokenId}`)
-      .then(async r => {
-        if (!r.ok) {
-          throw new Error("Invalid or expired token");
-        }
-        return r.json() as Promise<SponsorROI>;
-      })
+    publicApi.get<SponsorROI>(`/api/sponsors/roi/${tokenId}`)
       .then((d) => {
         if (!cancelled) {
           setData(d);

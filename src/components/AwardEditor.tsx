@@ -1,7 +1,8 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Trophy, Star, Calendar, MapPin, XCircle, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { adminApi } from "../api/adminApi";
 
 interface Award {
   id: string;
@@ -27,20 +28,17 @@ export default function AwardEditor() {
   const { data: awards = [], isLoading } = useQuery<Award[]>({
     queryKey: ["admin-awards"],
     queryFn: async () => {
-      const r = await fetch("/api/admin/awards");
-      const d = await r.json() as { awards: Award[] };
+      const d = await adminApi.get<{ awards: Award[] }>("/api/admin/awards");
       return d.awards || [];
     }
   });
 
   const saveMutation = useMutation({
     mutationFn: async (award: Partial<Award>) => {
-      const r = await fetch("/api/admin/awards", {
+      await adminApi.request("/api/admin/awards", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(award)
       });
-      if (!r.ok) throw new Error("Failed to save award");
     },
     onSuccess: () => {
       queryCenter.invalidateQueries({ queryKey: ["admin-awards"] });
@@ -54,8 +52,7 @@ export default function AwardEditor() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const r = await fetch(`/api/admin/awards/${id}`, { method: "DELETE" });
-      if (!r.ok) throw new Error("Failed to delete award");
+      await adminApi.request(`/api/admin/awards/${id}`, { method: "DELETE" });
     },
     onSuccess: () => queryCenter.invalidateQueries({ queryKey: ["admin-awards"] })
   });

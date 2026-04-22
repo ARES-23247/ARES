@@ -9,6 +9,7 @@ import { Edit2 } from "lucide-react";
 
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import CommentSection from "../components/CommentSection";
+import { publicApi } from "../api/publicApi";
 
 interface PostRow {
   slug: string;
@@ -31,13 +32,13 @@ export default function BlogPost() {
   const { data: post, isLoading, isError } = useQuery<PostRow>({
     queryKey: ["post", slug],
     queryFn: async () => {
-      const r = await fetch(`/api/posts/${slug}`);
-      if (!r.ok) throw new Error("Not found");
-      const data = await r.json();
-      // @ts-expect-error -- D1 untyped response
-      if (!data || !data.post) throw new Error("Not found");
-      // @ts-expect-error -- D1 untyped response
-      return data.post;
+      try {
+        const data = await publicApi.get<{ post: PostRow }>(`/api/posts/${slug}`);
+        if (!data || !data.post) throw new Error("Not found");
+        return data.post;
+      } catch {
+        throw new Error("Not found");
+      }
     },
     enabled: !!slug,
     retry: false, // Don't retry 404s

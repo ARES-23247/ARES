@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Database, Download } from "lucide-react";
+import { adminApi } from "../../api/adminApi";
 
 export function DataBackupCard() {
   const [isExporting, setIsExporting] = useState(false);
@@ -9,10 +10,7 @@ export function DataBackupCard() {
     setIsExporting(true);
     setErrorMsg("");
     try {
-      const res = await fetch("/api/admin/backup", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to generate backup");
-      
-      const blob = await res.blob();
+      const blob = await adminApi.downloadFile("/api/admin/backup");
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

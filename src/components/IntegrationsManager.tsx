@@ -6,6 +6,7 @@ import { ZulipCard } from "./integrations/ZulipCard";
 import { GithubCard } from "./integrations/GithubCard";
 import { SocialCard } from "./integrations/SocialCard";
 import { DataBackupCard } from "./integrations/DataBackupCard";
+import { adminApi } from "../api/adminApi";
 
 type SettingsData = Record<string, string>;
 
@@ -19,9 +20,7 @@ export default function IntegrationsManager() {
     queryKey: ["admin_settings"],
     queryFn: async () => {
       try {
-        const res = await fetch("/api/admin/settings", { credentials: "include" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        const json = await res.json() as { settings: SettingsData };
+        const json = await adminApi.get<{ settings: SettingsData }>("/api/admin/settings");
         return json;
       } catch (err) {
         console.error("[IntegrationsManager] Fetch error:", err);
@@ -45,16 +44,7 @@ export default function IntegrationsManager() {
   }, [data?.settings]); // Depend on settings object specifically
 
   const saveMutation = useMutation({
-    mutationFn: async (settings: SettingsData) => {
-      const res = await fetch("/api/admin/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(settings),
-      });
-      if (!res.ok) throw new Error("Failed to save settings");
-      return res.json();
-    },
+    mutationFn: async (settings: SettingsData) => adminApi.updateIntegrations(settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin_settings"] });
       setSuccessMsg("Integrations synchronized securely.");

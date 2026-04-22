@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useSession } from "../utils/auth-client";
 import { GreekMeander } from "./GreekMeander";
+import { adminApi } from "../api/adminApi";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -41,9 +42,12 @@ export default function Navbar() {
   const { data: notifData } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
-      const res = await fetch("/api/notifications");
-      if (!res.ok) return { notifications: [] };
-      return res.json() as Promise<{ notifications: { id: string; title: string; message: string; is_read: boolean; link?: string }[] }>;
+      try {
+        const res = await adminApi.get<{ notifications: { id: string; title: string; message: string; is_read: boolean; link?: string }[] }>("/api/notifications");
+        return res || { notifications: [] };
+      } catch {
+        return { notifications: [] };
+      }
     },
     enabled: !!isSignedIn,
     refetchInterval: 30000 // Poll every 30s
@@ -51,7 +55,7 @@ export default function Navbar() {
 
   const markAllRead = useMutation({
     mutationFn: async () => {
-      await fetch("/api/notifications/read-all", { method: "PUT" });
+      await adminApi.request("/api/notifications/read-all", { method: "PUT" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -60,7 +64,7 @@ export default function Navbar() {
 
   const markRead = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`/api/notifications/${id}/read`, { method: "PUT" });
+      await adminApi.request(`/api/notifications/${id}/read`, { method: "PUT" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -110,37 +114,33 @@ export default function Navbar() {
 
   useEffect(() => {
     if (canSeeInquiries) {
-      fetch("/api/inquiries")
-        .then(res => res.json() as Promise<{ inquiries?: { id: string, status: string, name: string, type: string }[] }>)
+      adminApi.get<{ inquiries?: { id: string, status: string, name: string, type: string }[] }>("/api/inquiries")
         .then((data) => {
-          if (data.inquiries) {
+          if (data && data.inquiries) {
             const pending = data.inquiries.filter((i) => i.status === "pending");
             setPendingInquiries(pending);
           }
         }).catch(() => {});
         
-      fetch("/api/admin/posts", { credentials: "include" })
-        .then(res => res.json() as Promise<{ posts?: { slug: string, status: string, title: string, author_nickname?: string }[] }>)
+      adminApi.get<{ posts?: { slug: string, status: string, title: string, author_nickname?: string }[] }>("/api/admin/posts")
         .then((data) => {
-          if (data.posts) {
+          if (data && data.posts) {
             const pending = data.posts.filter((p) => p.status === "pending");
             setPendingPosts(pending);
           }
         }).catch(() => {});
 
-      fetch("/api/admin/events", { credentials: "include" })
-        .then(res => res.json() as Promise<{ events?: { id: string, status: string, title: string }[] }>)
+      adminApi.get<{ events?: { id: string, status: string, title: string }[] }>("/api/admin/events")
         .then((data) => {
-          if (data.events) {
+          if (data && data.events) {
             const pending = data.events.filter((e) => e.status === "pending");
             setPendingEvents(pending);
           }
         }).catch(() => {});
 
-      fetch("/api/admin/docs", { credentials: "include" })
-        .then(res => res.json() as Promise<{ docs?: { slug: string, status: string, title: string }[] }>)
+      adminApi.get<{ docs?: { slug: string, status: string, title: string }[] }>("/api/admin/docs")
         .then((data) => {
-          if (data.docs) {
+          if (data && data.docs) {
             const pending = data.docs.filter((d) => d.status === "pending");
             setPendingDocs(pending);
           }

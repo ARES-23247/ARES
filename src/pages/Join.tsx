@@ -1,9 +1,11 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Rocket, Wrench, Code, PenTool, CheckCircle, GraduationCap } from "lucide-react";
 import SEO from "../components/SEO";
 import { GreekMeander } from "../components/GreekMeander";
 import Turnstile from "../components/Turnstile";
+import { publicApi } from "../api/publicApi";
+import { inquirySchema } from "../schemas/inquirySchema";
 
 export default function Join() {
   const [role, setRole] = useState<"student" | "mentor">("student");
@@ -28,16 +30,12 @@ export default function Join() {
         ? { school, grade, interests, additional }
         : { occupation, interests, additional };
 
-      const response = await fetch("/api/inquiries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: role, name, email, metadata, turnstileToken }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({})) as { error?: string };
-        throw new Error(errData.error || "Failed");
+      const payloadResult = inquirySchema.safeParse({ type: role, name, email, metadata, turnstileToken });
+      if (!payloadResult.success) {
+        throw new Error(payloadResult.error.issues[0].message);
       }
+
+      await publicApi.submitInquiry(payloadResult.data);
       setSubmitStatus("success");
       setName(""); setEmail(""); setSchool(""); setGrade(""); setOccupation(""); setInterests([]); setAdditional("");
     } catch (err) {

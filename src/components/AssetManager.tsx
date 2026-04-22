@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { compressImage } from "../utils/imageProcessor";
+import { adminApi } from "../api/adminApi";
 
 interface R2Asset {
   key: string;
@@ -22,8 +23,7 @@ export default function AssetManager() {
   const { data, isLoading } = useQuery<{ media: (R2Asset & { folder: string; tags: string; })[] }>({
     queryKey: ['media'],
     queryFn: async () => {
-      const res = await fetch("/api/admin/media", { credentials: "include" });
-      const data: { media: (R2Asset & { folder: string; tags: string; })[] } = await res.json();
+      const data = await adminApi.get<{ media: (R2Asset & { folder: string; tags: string; })[] }>("/api/admin/media");
       return data;
     }
   });
@@ -38,8 +38,7 @@ export default function AssetManager() {
         const formData = new FormData();
         formData.append("file", compressed, file.name.replace(/\.[^/.]+$/, ext));
         formData.append("folder", activeFolder);
-        const res = await fetch("/api/admin/media/upload", { method: "POST", credentials: "include", body: formData });
-        if (!res.ok) throw new Error("Upload failed");
+        await adminApi.uploadFile("/api/admin/media/upload", formData);
         setUploadProgress({ current: i + 1, total: files.length });
       }
     },
@@ -52,8 +51,7 @@ export default function AssetManager() {
 
   const deleteMutation = useMutation({
     mutationFn: async (key: string) => {
-      const res = await fetch(`/api/admin/media/${key}`, { method: "DELETE", credentials: "include" });
-      if (!res.ok) throw new Error("Delete failed");
+      await adminApi.request(`/api/admin/media/${key}`, { method: "DELETE" });
       return key;
     },
     onSuccess: () => {
@@ -64,13 +62,7 @@ export default function AssetManager() {
 
   const moveMutation = useMutation({
     mutationFn: async (data: { key: string, newFolder: string }) => {
-      const res = await fetch(`/api/admin/media/${data.key}/move`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ folder: data.newFolder })
-      });
-      if (!res.ok) throw new Error("Move failed");
+      await adminApi.moveMedia(data.key, data.newFolder);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["media"] });
@@ -79,14 +71,7 @@ export default function AssetManager() {
 
   const syndicateMutation = useMutation({
     mutationFn: async ({ key, caption }: { key: string, caption: string }) => {
-      const res = await fetch(`/api/admin/media/syndicate`, { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ key, caption }) 
-      });
-      if (!res.ok) throw new Error("Syndication failed");
-      return res.json();
+      return adminApi.syndicateMedia(key, caption);
     },
     onSuccess: () => {
       setSyndicateKey(null);

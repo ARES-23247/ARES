@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { BarChart3, TrendingUp, Users, Clock, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import { adminApi } from "../api/adminApi";
 
 interface AnalyticsSummary {
   topPages: { path: string; category: string; views: number }[];
@@ -13,9 +14,12 @@ export default function AnalyticsDashboard() {
   const { data, isLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["analytics-summary"],
     queryFn: async () => {
-      const r = await fetch("/api/admin/analytics/summary");
-      if (!r.ok) throw new Error("Failed to fetch analytics");
-      return r.json();
+      try {
+        const data = await adminApi.get<AnalyticsSummary>("/api/admin/analytics/summary");
+        return data;
+      } catch {
+        throw new Error("Failed to fetch analytics");
+      }
     }
   });
 
