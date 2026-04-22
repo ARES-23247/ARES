@@ -82,7 +82,7 @@ export default function BlogPost() {
           </Link>
           <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
              <span className="w-fit px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-ares-cyan/20 text-ares-cyan border border-ares-cyan/50 shadow-[0_0_15px_rgba(0,192,192,0.4)]">
-               {format(new Date(post.date), 'MMMM do, yyyy')}
+               {post.date && !isNaN(new Date(post.date).getTime()) ? format(new Date(post.date), 'MMMM do, yyyy') : "Unpublished"}
              </span>
              {(post.author_avatar || post.author_nickname || post.cf_email) && (
                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 w-fit">
