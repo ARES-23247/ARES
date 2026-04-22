@@ -73,7 +73,8 @@ export default function EventManagerTab({
     const isDeleted = Number(e.is_deleted) === 1;
     if (view === 'trash') return isDeleted;
     if (view === 'pending') return !isDeleted && (e.status === 'pending' || e.status === 'rejected');
-    return !isDeleted && (e.status === 'published' || !e.status);
+    // "all" and category views: show all non-deleted, non-pending events
+    return !isDeleted && e.status !== 'pending' && e.status !== 'rejected';
   });
 
   const filtered = (view === 'active' || view === 'all') ? lifecycleFiltered :
@@ -126,7 +127,7 @@ export default function EventManagerTab({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/50">
-                {view === 'active' || view === 'pending' ? (
+                {Number(event.is_deleted) !== 1 ? (
                   <>
                     <button
                       onClick={() => onEditEvent && onEditEvent(event.id)}

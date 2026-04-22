@@ -47,7 +47,7 @@ export default function BlogEditor({ editSlug, onClearEdit, userRole }: { editSl
     if (!editSlug) return;
     const fetchPost = async () => {
       try {
-        const res = await fetch(`/dashboard/api/admin/posts/${editSlug}`, { credentials: "include" });
+        const res = await fetch(`/dashboard/api/admin/posts/${editSlug}/detail`, { credentials: "include" });
         const data = await res.json();
       // @ts-expect-error -- D1 untyped response
         if (data.post) {

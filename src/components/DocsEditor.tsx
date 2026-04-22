@@ -25,7 +25,7 @@ export default function DocsEditor({ editSlug, onClearEdit, userRole }: { editSl
     if (!editSlug) return;
     const fetchDoc = async () => {
       try {
-        const res = await fetch(`/dashboard/api/admin/docs/${editSlug}`, { credentials: "include" });
+        const res = await fetch(`/dashboard/api/admin/docs/${editSlug}/detail`, { credentials: "include" });
         const data = await res.json();
       // @ts-expect-error -- D1 untyped response
         if (data.doc) {
