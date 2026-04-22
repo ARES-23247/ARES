@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination  } from "./_shared";
+import { AppEnv, ensureAdmin, parsePagination, logAuditAction  } from "./_shared";
 
 const outreachRouter = new Hono<AppEnv>();
 
@@ -77,11 +77,12 @@ outreachRouter.post("/", ensureAdmin, async (c) => {
   }
 });
 
-// ── DELETE /:id ── remove an outreach log ────────────────
+// ── DELETE /:id ── soft-delete an outreach log ────────────────
 outreachRouter.delete("/:id", ensureAdmin, async (c) => {
   try {
     const id = (c.req.param("id") || "");
-    await c.env.DB.prepare("DELETE FROM outreach_logs WHERE id = ?").bind(id).run();
+    await c.env.DB.prepare("UPDATE outreach_logs SET is_deleted = 1 WHERE id = ?").bind(id).run();
+    await logAuditAction(c, "outreach_deleted", "outreach_logs", id, "Outreach log soft-deleted");
     return c.json({ success: true });
   } catch (err) {
     console.error("D1 outreach delete error:", err);

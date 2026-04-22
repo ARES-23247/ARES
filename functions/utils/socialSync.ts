@@ -69,15 +69,14 @@ export async function dispatchSocials(
 
   // 2. Zulip Announcements Channel
   if (config.ZULIP_BOT_EMAIL && config.ZULIP_API_KEY && isEnabled('zulip')) {
-    const zulipEnv = {
-      DB: db, // Fake Bindings but we only need DB
-      ZULIP_BOT_EMAIL: config.ZULIP_BOT_EMAIL,
-      ZULIP_API_KEY: config.ZULIP_API_KEY,
-      ZULIP_URL: config.ZULIP_URL,
-    } as unknown as import('../api/routes/_shared').Bindings;
     promises.push(
       sendZulipMessage(
-        zulipEnv,
+        {
+          ZULIP_BOT_EMAIL: config.ZULIP_BOT_EMAIL,
+          ZULIP_API_KEY: config.ZULIP_API_KEY,
+          ZULIP_URL: config.ZULIP_URL,
+          DB: db,
+        },
         "announcements",
         "Website Updates",
         `🚀 **${payload.title}**\n\n${payload.snippet}\n\n[🔗 Read more](${payload.url})`

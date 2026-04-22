@@ -1,4 +1,4 @@
-import { siteConfig } from "../../src/site.config";
+import { siteConfig } from "./site.config";
 
 /**
  * GitHub Projects v2 — GraphQL Client Utility

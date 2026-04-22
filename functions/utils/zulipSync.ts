@@ -1,26 +1,42 @@
 import { Bindings, logSystemError } from "../api/routes/_shared";
 
-function getZulipAuthHeaders(env: Bindings): HeadersInit {
-  if (!env.ZULIP_BOT_EMAIL || !env.ZULIP_API_KEY) {
+/**
+ * Minimal credentials needed for Zulip API calls.
+ * REF-F01: Allows callers to pass explicit params instead of full Bindings.
+ */
+export interface ZulipCredentials {
+  ZULIP_BOT_EMAIL?: string;
+  ZULIP_API_KEY?: string;
+  ZULIP_URL?: string;
+  ZULIP_ADMIN_STREAM?: string;
+  ZULIP_COMMENT_STREAM?: string;
+  DB?: D1Database;
+}
+
+type ZulipEnv = Bindings | ZulipCredentials;
+
+function getZulipAuthHeaders(creds: ZulipEnv): HeadersInit {
+  if (!creds.ZULIP_BOT_EMAIL || !creds.ZULIP_API_KEY) {
     throw new Error("Missing ZULIP credentials in bindings");
   }
   // btoa is available in Cloudflare Workers
-  const authHeader = "Basic " + btoa(`${env.ZULIP_BOT_EMAIL}:${env.ZULIP_API_KEY}`);
+  const authHeader = "Basic " + btoa(`${creds.ZULIP_BOT_EMAIL}:${creds.ZULIP_API_KEY}`);
   return {
     "Authorization": authHeader,
   };
 }
 
-function getZulipBaseUrl(env: Bindings): string {
-  return env.ZULIP_URL || "https://ares.zulipchat.com";
+function getZulipBaseUrl(creds: ZulipEnv): string {
+  return creds.ZULIP_URL || "https://ares.zulipchat.com";
 }
 
 /**
  * Sends a message to a specific Zulip stream and topic.
+ * Accepts either full Bindings or minimal ZulipCredentials.
  * Returns the Zulip message ID if successful.
  */
 export async function sendZulipMessage(
-  env: Bindings,
+  env: Bindings | ZulipCredentials,
   stream: string,
   topic: string,
   content: string
@@ -47,7 +63,8 @@ export async function sendZulipMessage(
     if (!res.ok) {
       const errorText = await res.text();
       console.error("[ZulipSync] Failed to send message:", errorText);
-      await logSystemError(env.DB, "Zulip", "Failed to send message", errorText);
+      const db = 'DB' in env ? env.DB : undefined;
+      if (db) await logSystemError(db as D1Database, "Zulip", "Failed to send message", errorText);
       return null;
     }
 
@@ -55,11 +72,13 @@ export async function sendZulipMessage(
     if (data.result === "success") {
       return String(data.id);
     }
-    await logSystemError(env.DB, "Zulip", "Zulip API returned non-success", JSON.stringify(data));
+    const db = 'DB' in env ? env.DB : undefined;
+    if (db) await logSystemError(db as D1Database, "Zulip", "Zulip API returned non-success", JSON.stringify(data));
     return null;
   } catch (err) {
     console.error("[ZulipSync] Exception sending message:", err);
-    await logSystemError(env.DB, "Zulip", "Exception in sendZulipMessage", String(err));
+    const db = 'DB' in env ? env.DB : undefined;
+    if (db) await logSystemError(db as D1Database, "Zulip", "Exception in sendZulipMessage", String(err));
     return null;
   }
 }
@@ -68,7 +87,7 @@ export async function sendZulipMessage(
  * Updates an existing Zulip message.
  */
 export async function updateZulipMessage(
-  env: Bindings,
+  env: ZulipEnv,
   messageId: string,
   newContent: string
 ): Promise<boolean> {
@@ -103,7 +122,7 @@ export async function updateZulipMessage(
  * Deletes a Zulip message.
  */
 export async function deleteZulipMessage(
-  env: Bindings,
+  env: ZulipEnv,
   messageId: string
 ): Promise<boolean> {
   try {
@@ -130,7 +149,7 @@ export async function deleteZulipMessage(
  * Convenience method to send administrative alerts (inquiries/applications) to Zulip
  */
 export async function sendZulipAlert(
-  env: Bindings,
+  env: ZulipEnv,
   type: "Applicant" | "Sponsor" | "Outreach" | "System",
   title: string,
   markdownBody: string

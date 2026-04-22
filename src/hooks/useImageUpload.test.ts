@@ -46,7 +46,7 @@ describe("useImageUpload", () => {
     await act(async () => {
       try {
         await result.current.uploadFile(file);
-      } catch (err) {
+      } catch {
         // Expected
       }
     });
@@ -68,7 +68,7 @@ describe("useImageUpload", () => {
     await act(async () => {
       try {
         await result.current.uploadFile(file);
-      } catch (err) {
+      } catch {
         // Expected
       }
     });

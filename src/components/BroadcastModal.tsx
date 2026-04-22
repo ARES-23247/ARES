@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { X, Send, CheckCircle2, AlertCircle } from "lucide-react";
 import { adminApi } from "../api/adminApi";
+import { useAdminSettings } from "../hooks/useAdminSettings";
 
 interface BroadcastModalProps {
   isOpen: boolean;
@@ -11,49 +12,27 @@ interface BroadcastModalProps {
 }
 
 export default function BroadcastModal({ isOpen, onClose, type, id, title }: BroadcastModalProps) {
-  const [availableSocials, setAvailableSocials] = useState<string[]>([]);
-  const [selectedsocials, setSelectedSocials] = useState<Record<string, boolean>>({});
+  const { availableSocials } = useAdminSettings();
+  // Track user overrides (toggled off platforms). Derived state avoids setState-in-effect.
+  const [toggleOverrides, setToggleOverrides] = useState<Record<string, boolean>>({});
+  const selectedsocials = useMemo(() => {
+    const result: Record<string, boolean> = {};
+    availableSocials.forEach(p => result[p] = toggleOverrides[p] !== undefined ? toggleOverrides[p] : true);
+    return result;
+  }, [availableSocials, toggleOverrides]);
   const [isPending, setIsPending] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Reset status/error after modal close animation completes
   useEffect(() => {
-    if (!isOpen) {
-      const timer = setTimeout(() => {
-        setStatus("idle");
-        setErrorMsg("");
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-
-    const fetchSettings = async () => {
-      try {
-        const data = await adminApi.get<{ success: boolean, settings: Record<string, string> }>("/api/admin/settings");
-        if (data.success && data.settings) {
-          const config = data.settings;
-          const available = [];
-          if (config.ZULIP_BOT_EMAIL && config.ZULIP_API_KEY) available.push("zulip");
-          if (config.DISCORD_WEBHOOK_URL) available.push("discord");
-          if (config.BLUESKY_HANDLE && config.BLUESKY_APP_PASSWORD) available.push("bluesky");
-          if (config.SLACK_WEBHOOK_URL) available.push("slack");
-          if (config.TEAMS_WEBHOOK_URL) available.push("teams");
-          if (config.GCHAT_WEBHOOK_URL) available.push("gchat");
-          if (config.FACEBOOK_ACCESS_TOKEN) available.push("facebook");
-          if (config.TWITTER_ACCESS_TOKEN) available.push("twitter");
-          if (config.INSTAGRAM_ACCESS_TOKEN) available.push("instagram");
-          
-          setAvailableSocials(available);
-          
-          // Default all available to true
-          const initial: Record<string, boolean> = {};
-          available.forEach(p => initial[p] = true);
-          setSelectedSocials(initial);
-        }
-      } catch (err) {
-        console.error("Failed to fetch available socials for broadcast:", err);
-      }
-    };
-    fetchSettings();
+    if (isOpen) return;
+    const timer = setTimeout(() => {
+      setStatus("idle");
+      setErrorMsg("");
+      setToggleOverrides({});
+    }, 300);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   const handleBroadcast = async () => {
@@ -126,7 +105,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
                       <input 
                         type="checkbox" 
                         checked={selectedsocials[platform] || false}
-                        onChange={(e) => setSelectedSocials(prev => ({ ...prev, [platform]: e.target.checked }))}
+                        onChange={(e) => setToggleOverrides(prev => ({ ...prev, [platform]: e.target.checked }))}
                         className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-ares-cyan focus:ring-ares-cyan"
                       />
                       <span className="text-sm font-bold capitalize">{platform}</span>

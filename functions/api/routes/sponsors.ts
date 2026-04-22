@@ -71,12 +71,12 @@ async function handleSponsorSave(c: Context<AppEnv>) {
   }
 }
 
-// ── DELETE /admin/:id — remove a sponsor (admin) ─────────
+// ── DELETE /admin/:id — deactivate a sponsor (admin) ─────────
 sponsorsRouter.delete("/admin/:id", ensureAdmin, async (c) => {
   try {
     const id = (c.req.param("id") || "");
-    await c.env.DB.prepare("DELETE FROM sponsors WHERE id = ?").bind(id).run();
-    await logAuditAction(c, "sponsor_deleted", "sponsors", id || "unknown", "Sponsor permanently deleted");
+    await c.env.DB.prepare("UPDATE sponsors SET is_active = 0 WHERE id = ?").bind(id).run();
+    await logAuditAction(c, "sponsor_deactivated", "sponsors", id, "Sponsor deactivated (soft-delete)");
     return c.json({ success: true });
   } catch (err) {
     console.error("D1 sponsor delete error:", err);

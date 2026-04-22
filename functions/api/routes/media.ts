@@ -230,6 +230,12 @@ adminMediaRouter.put("/:key/move", ensureAdmin, async (c) => {
     const body = await c.req.json();
     const newFolder = body?.folder || "";
 
+    // SEC-F06: Validate folder name against allowed values
+    const ALLOWED_FOLDERS = ["Gallery", "Library", "Blog", "Events", "Sponsors", "Docs", "Archived"];
+    if (!ALLOWED_FOLDERS.includes(newFolder)) {
+      return c.json({ error: `Invalid folder. Must be one of: ${ALLOWED_FOLDERS.join(", ")}` }, 400);
+    }
+
     await c.env.DB.prepare("UPDATE media_tags SET folder = ? WHERE key = ?").bind(newFolder, key).run();
     return c.json({ success: true, folder: newFolder });
   } catch (err) {

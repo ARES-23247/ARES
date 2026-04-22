@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, expect, vi } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
 import usersRouter from "./users";
 import { createMockUser } from "../../../src/test/factories/userFactory";

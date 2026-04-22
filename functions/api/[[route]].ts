@@ -216,9 +216,8 @@ app.onError(async (err, c) => {
     console.error("Failed to log system error in global handler", logErr);
   }
 
-  // Handle Hono HTTPExceptions
   if (err instanceof Error && err.name === "HTTPException") {
-    return (err as any).getResponse();
+    return (err as { getResponse: () => Response }).getResponse();
   }
 
   return c.json({ error: "Internal Server Error", message: err.message }, 500);

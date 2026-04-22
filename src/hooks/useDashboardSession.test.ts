@@ -1,20 +1,21 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import { useDashboardSession } from "./useDashboardSession";
 import { renderWithProviders } from "../test/utils";
 import { server } from "../test/mocks/server";
 import { http, HttpResponse } from "msw";
-import { mockAuthState } from "../test/mocks/handlers/auth";
 
 describe("useDashboardSession", () => {
+
   beforeEach(() => {
     vi.clearAllMocks();
-    // Stub hostname to prevent automatic admin bypass in tests
-    vi.stubGlobal("window", {
-      location: {
-        hostname: "ares23247.com",
-      },
-    });
+    // Surgical stubbing of location to avoid breaking JSDOM globals like Node/HTMLElement
+    const mockLocation = new URL("https://ares23247.com/dashboard");
+    vi.stubGlobal("location", mockLocation);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("should compute permissions correctly for admin", async () => {

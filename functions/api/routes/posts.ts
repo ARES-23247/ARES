@@ -32,7 +32,7 @@ postsRouter.get("/list", ensureAdmin, async (c) => {
 // ── GET /export-all — export all posts (admin) ───────────────────
 postsRouter.get("/export-all", ensureAdmin, async (c) => {
   try {
-    const { results } = await c.env.DB.prepare("SELECT * FROM posts").all();
+    const { results } = await c.env.DB.prepare("SELECT slug, title, date, snippet, thumbnail, author, ast, is_deleted, status, revision_of, published_at, is_portfolio FROM posts").all();
     return c.json({ posts: results ?? [] });
   } catch (err) {
     console.error("D1 export error (posts):", err);
@@ -348,7 +348,7 @@ postsRouter.route("/", createContentLifecycleRouter("posts", {
       }
     }
   },
-  onRestore: async (c, slug) => {
+  onRestore: async (_c, _slug) => {
     // We don't want to break the standard `/undelete` functionality which is just setting is_deleted = 0
     // The history restore logic is separate on `/:slug/history/:id/restore`
   }

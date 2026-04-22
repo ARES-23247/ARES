@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
 import docsRouter from "./docs";
@@ -28,6 +29,13 @@ describe("Hono Backend - /docs Router", () => {
       DEV_BYPASS: "true",
       TURNSTILE_SECRET_KEY: "test-secret",
     };
+    // SEC-DoW: Mock Cloudflare Edge Cache for tests
+    vi.stubGlobal("caches", {
+      default: {
+        match: vi.fn().mockResolvedValue(null),
+        put: vi.fn().mockResolvedValue(undefined),
+      }
+    });
   });
 
   it("GET / - list published docs", async () => {
@@ -53,9 +61,10 @@ describe("Hono Backend - /docs Router", () => {
 
   it("POST /:slug/feedback - submit feedback", async () => {
     // Mock fetch for Turnstile
-    (globalThis.fetch as any) = vi.fn().mockResolvedValue({
+    (globalThis as Record<string, unknown>).fetch = vi.fn().mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve({ success: true }),
-    });
+    } as any);
 
     const req = new Request("http://localhost/test/feedback", {
       method: "POST",

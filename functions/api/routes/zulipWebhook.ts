@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig } from "./_shared";
+import { sendZulipMessage } from "../../utils/zulipSync";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem, fetchProjectFields, updateProjectItemStatus } from "../../utils/githubProjects";
 
 const zulipWebhookRouter = new Hono<AppEnv>();
@@ -51,7 +52,7 @@ zulipWebhookRouter.post("/", async (c) => {
     const senderEmail = body.message?.sender_email;
     if (senderEmail) {
       const user = await c.env.DB.prepare(
-        "SELECT u.role FROM user u WHERE u.email = ? AND u.role IN ('admin', 'author')"
+        "SELECT u.role FROM user u WHERE u.email = ? AND u.role IN ('admin', 'author') AND u.is_deleted = 0"
       ).bind(senderEmail).first<{ role: string }>();
       if (!user) {
         return c.json({ content: `🔒 Permission denied. \`${command}\` requires admin or author privileges. Your Zulip email (${senderEmail}) is not linked to an authorized ARESWEB account.` });
@@ -199,27 +200,11 @@ zulipWebhookRouter.post("/", async (c) => {
            return c.json({ content: "⚠️ Usage: `!broadcast <stream> <message...>`" });
         }
         
-        // Dynamic import to prevent circular dependency problems if they exist, or just use sendZulipMessage if imported.
-        // Actually we can simply use the identical fetch logic since we already have c.env credentials right here.
-        const authHeader = "Basic " + btoa(`${c.env.ZULIP_BOT_EMAIL}:${c.env.ZULIP_API_KEY}`);
-        const url = `${c.env.ZULIP_URL || "https://ares.zulipchat.com"}/api/v1/messages`;
-        
-        const content = `${msgCore}\n\n*— Broadcasted by ${body.message.sender_full_name} via ARES Bot*`;
-        const formData = new URLSearchParams();
-        formData.append("type", "stream");
-        formData.append("to", streamTarget);
-        formData.append("topic", "Broadcast");
-        formData.append("content", content);
+        const broadcastContent = `${msgCore}\n\n*— Broadcasted by ${body.message.sender_full_name} via ARES Bot*`;
 
         c.executionCtx.waitUntil(
-          fetch(url, {
-            method: "POST",
-            headers: {
-              "Authorization": authHeader,
-              "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: formData.toString()
-          }).catch(err => console.error("[ZulipBroadcast] Error:", err))
+          sendZulipMessage(c.env, streamTarget, "Broadcast", broadcastContent)
+            .catch(err => console.error("[ZulipBroadcast] Error:", err))
         );
 
         return c.json({ content: `✅ Broadcast dispatched to \`${streamTarget}\`.` });
@@ -256,7 +241,7 @@ zulipWebhookRouter.post("/", async (c) => {
                 userId, 
                 rawContent, 
                 String(body.trigger === "message" ? (body as unknown as Record<string, unknown>).message_id || "0" : "0"), 
-                body.message.sender_email // Storing email as sender_id for easier matching
+                userId // PII-F04: Use resolved user ID instead of raw email
               ).run();
               return c.json({ content: "" }); // empty response to not trigger bot reply
             } catch (err) {

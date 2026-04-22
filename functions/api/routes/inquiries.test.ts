@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { inquiriesRouter, adminInquiriesRouter } from "./inquiries";
+import { inquiriesRouter } from "./inquiries";
 import { createMockInquiry } from "../../../src/test/factories/logisticsFactory";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { http, HttpResponse } from "msw";
@@ -26,14 +27,18 @@ describe("Hono Backend - /inquiries Router", () => {
         return HttpResponse.json({ success: true });
       })
     );
+    // Mock MailChannels fallback
+    server.use(
+      http.post("https://api.mailchannels.net/tx/v1/send", () => {
+        return new HttpResponse(null, { status: 202 });
+      })
+    );
   });
 
   it("should submit a new inquiry (public)", async () => {
     const payload = { 
       name: "John Doe", 
       email: "john@example.com", 
-      subject: "Hello", 
-      message: "World", 
       type: "outreach", 
       turnstileToken: "token" 
     };
@@ -49,12 +54,12 @@ describe("Hono Backend - /inquiries Router", () => {
     expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO inquiries"));
   });
 
-  it("should list inquiries (admin)", async () => {
+  it("should list inquiries (authorized users)", async () => {
     const mockInquiries = [createMockInquiry()];
     env.DB.all.mockResolvedValue({ results: mockInquiries });
 
     const req = new Request("http://localhost/", { method: "GET" });
-    const res = await adminInquiriesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     const body = await res.json() as any;

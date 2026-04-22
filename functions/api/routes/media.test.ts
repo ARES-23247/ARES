@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import mediaRouter from "./media";
-import { createMockMedia } from "../../../src/test/factories/contentFactory";
+import mediaRouter, { adminMediaRouter } from "./media";
 import { mockExecutionContext } from "../../../src/test/utils";
 
 describe("Hono Backend - /media Router", () => {
@@ -53,7 +53,7 @@ describe("Hono Backend - /media Router", () => {
 
   it("should delete media asset (admin)", async () => {
     const req = new Request("http://localhost/img1.png", { method: "DELETE" });
-    const res = await mediaRouter.request(req, {}, env, mockExecutionContext);
+    const res = await adminMediaRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     expect(mockR2.delete).toHaveBeenCalledWith("img1.png");
@@ -67,10 +67,10 @@ describe("Hono Backend - /media Router", () => {
 
     const req = new Request("http://localhost/img1.png/move", {
       method: "PUT",
-      body: JSON.stringify({ folder: "archive" }),
+      body: JSON.stringify({ folder: "Gallery" }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await mediaRouter.request(req, {}, env, mockExecutionContext);
+    const res = await adminMediaRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
   });

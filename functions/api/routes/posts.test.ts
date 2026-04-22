@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
 import postsRouter from "./posts";
@@ -91,11 +92,11 @@ describe("Hono Backend - /posts Router", () => {
     expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("UPDATE posts SET is_deleted = 1 WHERE slug = ? OR id = ?"));
   });
 
-  it("PATCH /:slug/undelete - restore", async () => {
-    const req = new Request("http://localhost/test-post/undelete", { method: "PATCH" });
+  it("PATCH /:slug/restore - restore", async () => {
+    const req = new Request("http://localhost/test-post/restore", { method: "PATCH" });
     const res = await postsRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("UPDATE posts SET is_deleted = 0 WHERE slug = ? OR id = ?"));
+    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("UPDATE posts SET is_deleted = 0, status = 'draft' WHERE slug = ? OR id = ?"));
   });
 
   it("DELETE /:slug/purge - permanent delete", async () => {

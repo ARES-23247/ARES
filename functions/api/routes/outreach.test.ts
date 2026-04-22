@@ -1,28 +1,30 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import outreachRouter from "./outreach";
 import { createMockOutreach } from "../../../src/test/factories/logisticsFactory";
 import { mockExecutionContext } from "../../../src/test/utils";
 
 describe("Hono Backend - /outreach Router", () => {
-  const env = {
-    DB: {
-      prepare: vi.fn().mockReturnThis(),
-      bind: vi.fn().mockReturnThis(),
-      all: vi.fn(),
-      run: vi.fn().mockResolvedValue({ success: true }),
-    } as any,
-    DEV_BYPASS: "true",
-  };
+  let env: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    env = {
+      DB: {
+        prepare: vi.fn().mockReturnThis(),
+        bind: vi.fn().mockReturnThis(),
+        all: vi.fn().mockResolvedValue({ results: [] }),
+        run: vi.fn().mockResolvedValue({ success: true }),
+      } as any,
+      DEV_BYPASS: "true",
+    };
   });
 
   it("should list all outreach records", async () => {
     const mockOutreach = [createMockOutreach(), createMockOutreach()];
-    // Mock the direct outreach logs query
+    // First call for direct logs
     env.DB.all.mockResolvedValueOnce({ results: mockOutreach });
-    // Mock the volunteer events query
+    // Second call for volunteer events
     env.DB.all.mockResolvedValueOnce({ results: [] });
 
     const req = new Request("http://localhost/", { method: "GET" });
@@ -43,5 +45,6 @@ describe("Hono Backend - /outreach Router", () => {
     const res = await outreachRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
+    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO outreach_logs"));
   });
 });

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
 import commentsRouter from "./comments";
@@ -15,23 +16,20 @@ vi.mock("../../utils/notifications", () => ({
 }));
 
 describe("Hono Backend - /comments Router", () => {
-  const env = {
-    DB: {
-      prepare: vi.fn().mockReturnThis(),
-      bind: vi.fn().mockReturnThis(),
-      all: vi.fn(),
-      run: vi.fn(),
-      first: vi.fn(),
-    } as any,
-    DEV_BYPASS: "true",
-  };
-
-  const executionCtx = {
-    waitUntil: vi.fn(),
-  };
+  let env: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    env = {
+      DB: {
+        prepare: vi.fn().mockReturnThis(),
+        bind: vi.fn().mockReturnThis(),
+        all: vi.fn().mockResolvedValue({ results: [] }),
+        run: vi.fn().mockResolvedValue({ success: true }),
+        first: vi.fn().mockResolvedValue(null),
+      } as any,
+      DEV_BYPASS: "true",
+    };
   });
 
   it("should list comments for a target", async () => {
@@ -61,7 +59,7 @@ describe("Hono Backend - /comments Router", () => {
       body: JSON.stringify({ content: "New comment content" }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await commentsRouter.request(req, undefined, env, executionCtx as any);
+    const res = await commentsRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: true });
@@ -88,7 +86,7 @@ describe("Hono Backend - /comments Router", () => {
       body: JSON.stringify({ content: "Updated content" }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await commentsRouter.request(req, undefined, env, executionCtx as any);
+    const res = await commentsRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: true });
@@ -103,7 +101,7 @@ describe("Hono Backend - /comments Router", () => {
       body: JSON.stringify({ content: "Updated content" }),
       headers: { "Content-Type": "application/json" },
     });
-    const res = await commentsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await commentsRouter.request(req, {}, { ...env, DEV_BYPASS: "false" }, mockExecutionContext);
 
     expect(res.status).toBe(403);
   });
@@ -113,7 +111,7 @@ describe("Hono Backend - /comments Router", () => {
     env.DB.run.mockResolvedValue({ success: true });
 
     const req = new Request("http://localhost/1", { method: "DELETE" });
-    const res = await commentsRouter.request(req, undefined, env, executionCtx as any);
+    const res = await commentsRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: true });

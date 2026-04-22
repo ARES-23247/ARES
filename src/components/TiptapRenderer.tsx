@@ -1,11 +1,11 @@
-﻿import { ReactNode, lazy, Suspense, useState } from "react";
+import { ReactNode, lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Eye } from "lucide-react";
 import { CodeBlock } from "./docs/CodeBlock";
 
 const CodePlayground = lazy(() => import('./docs/CodePlayground').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load CodePlayground</div> })));
 const InteractiveTutorial = lazy(() => import('./InteractiveTutorial').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load InteractiveTutorial</div> })));
-      // @ts-expect-error -- D1 untyped response
+// @ts-expect-error -- CoreValueCallout uses named export; catch fallback provides default shape
 const CoreValueCallout = lazy(() => import('./CoreValueCallout').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load CoreValueCallout</div> })));
 const SwerveSimulator = lazy(() => import('../sims/SwerveSimulator'));
 const SOTMSimulator = lazy(() => import('../sims/SOTMSimulator'));
@@ -235,7 +235,6 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
       );
     }
     case "reveal": {
-      console.log("Rendering reveal block:", node.attrs?.summary);
       const summary = (node.attrs?.summary || "Show Answer") as string;
       return <RevealBlock summary={summary}>{children}</RevealBlock>;
     }

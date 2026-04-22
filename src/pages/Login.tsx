@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { signIn } from "@/utils/auth-client";
 import { Key, LogIn, AlertCircle, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
@@ -15,15 +15,13 @@ export default function Login() {
         return;
       }
 
-      const { data, error } = await signIn.social({
+      const { error } = await signIn.social({
         provider,
         callbackURL: "/dashboard",
       });
       if (error) {
         console.error("Login Error:", error);
         setErrorMessage(`Login failed: ${error.message || error.statusText || "Server misconfiguration or unhandled exception"} (${error.status})`);
-      } else {
-        console.log("Login initiated:", data);
       }
     } catch (e: unknown) {
       console.error("Critical Login Exception:", e);

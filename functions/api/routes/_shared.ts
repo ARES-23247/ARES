@@ -477,8 +477,8 @@ export async function verifyTurnstile(
     return result.success === true;
   } catch (err) {
     console.error("[Turnstile] Verification failed:", err);
-    // On network error, fail open to avoid blocking legitimate traffic
-    return true;
+    // SEC-F02: On network error, fail CLOSED to prevent bot bypass
+    return false;
   }
 }
 
@@ -510,7 +510,7 @@ export const turnstileMiddleware = () => {
       const clonedReq = c.req.raw.clone();
       const body = await clonedReq.json() as { turnstileToken?: string };
       token = body.turnstileToken;
-    } catch (err) {
+    } catch {
       // Body might not be JSON, skip token extraction
     }
 
