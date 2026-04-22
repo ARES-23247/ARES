@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, getDbSettings  } from "./_shared";
+import { AppEnv, ensureAdmin, getDbSettings, checkRateLimit } from "./_shared";
 
 const mediaRouter = new Hono<AppEnv>();
 const adminMediaRouter = new Hono<AppEnv>();
@@ -20,7 +20,8 @@ adminMediaRouter.post("/upload", ensureAdmin, async (c) => {
       return c.json({ error: "File too large. Maximum size is 10MB." }, 413);
     }
 
-    const key = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+    // SEC-DoW: UUID prefix makes keys unguessable — prevents enumeration attacks
+    const key = `${crypto.randomUUID().slice(0, 8)}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
     const arrayBuffer = await file.arrayBuffer();
 
     // 1. Storage Upload
@@ -67,13 +68,33 @@ adminMediaRouter.post("/upload", ensureAdmin, async (c) => {
   }
 });
 
-// ── GET /media/:key — proxy R2 images ─────────────────────────────────
+// ── GET /media/:key — proxy R2 images (Edge-Cached) ───────────────────
 mediaRouter.get("/:key", async (c) => {
-  const key = (c.req.param("key") || "");
+  // SEC-DoW: Rate limit public media access (200 req/min per IP)
+  const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
+  if (!checkRateLimit(ip, 200, 60)) {
+    return c.text("Too many requests", 429);
+  }
+
+  // SEC-DoW: Check Cloudflare Edge CDN cache first — costs $0, skips R2 Class B op
+  // @ts-expect-error — Cloudflare Workers runtime: caches.default is the global Edge Cache
+  const cache = caches.default;
+  const cacheKey = new Request(c.req.url, { method: "GET" });
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  // Cache miss — fetch from R2 (billable Class B operation)
+  const key = c.req.param("key") || "";
   const object = await c.env.ARES_STORAGE.get(key);
 
   if (!object) {
-    return c.text("Not found", 404);
+    // SEC-DoW: Cache 404s to prevent brute-force key enumeration from burning R2 ops
+    const notFound = new Response("Not found", {
+      status: 404,
+      headers: { "Cache-Control": "public, max-age=60" },
+    });
+    c.executionCtx.waitUntil(cache.put(cacheKey, notFound.clone()));
+    return notFound;
   }
 
   const headers = new Headers();
@@ -81,19 +102,28 @@ mediaRouter.get("/:key", async (c) => {
   headers.set("etag", object.httpEtag);
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
-  return new Response(object.body, { headers });
+  const response = new Response(object.body, { headers });
+  // SEC-DoW: Store in Edge CDN — subsequent requests from same PoP skip R2 entirely
+  c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+
+  return response;
 });
 
-// SEC-DoW: Cache public gallery listing (R2 list() is expensive Class B operation)
-let galleryCache: { data: unknown; expiresAt: number } | null = null;
-
-// ── GET /media — list public R2 objects (Gallery only) ────────────────
+// ── GET /media — list public R2 objects (Gallery only, Edge-Cached) ───
 mediaRouter.get("/", async (c) => {
+  // SEC-DoW: Rate limit gallery listing (30 req/min per IP — list() is expensive)
+  const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
+  if (!checkRateLimit(ip, 30, 60)) {
+    return c.text("Too many requests", 429);
+  }
+
   try {
-    const now = Date.now();
-    if (galleryCache && galleryCache.expiresAt > now) {
-      return c.json(galleryCache.data);
-    }
+    // SEC-DoW: Check Edge CDN cache — saves R2 list() Class B op + D1 query
+    // @ts-expect-error — Cloudflare Workers runtime: caches.default is the global Edge Cache
+    const cache = caches.default;
+    const cacheKey = new Request(c.req.url, { method: "GET" });
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
 
     const [objects, dbRes] = await Promise.all([
       c.env.ARES_STORAGE.list(),
@@ -116,9 +146,16 @@ mediaRouter.get("/", async (c) => {
       }));
 
     const payload = { media: merged };
-    galleryCache = { data: payload, expiresAt: now + 300000 }; // 5 min cache
+    // SEC-DoW: Edge-cache gallery for 5 min (replaces fragile per-isolate in-memory cache)
+    const response = new Response(JSON.stringify(payload), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=300",
+      },
+    });
+    c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
 
-    return c.json(payload);
+    return response;
   } catch (err) {
     console.error("R2 public list error:", err);
     return c.json({ error: "List failed", media: [] }, 500);
