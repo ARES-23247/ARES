@@ -7,6 +7,7 @@ export function useImageUpload() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const uploadFile = async (file: File): Promise<{url: string, altText?: string}> => {
+    if (isUploading) throw new Error("An upload is already in progress.");
     setIsUploading(true);
     setErrorMsg("");
     try {

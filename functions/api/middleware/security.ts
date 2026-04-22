@@ -97,14 +97,21 @@ export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
 export const turnstileMiddleware = () => {
   return async (c: Context<AppEnv>, next: Next) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
+    const contentType = c.req.header("Content-Type") || "";
     
     let token: string | undefined;
     try {
-      const clonedReq = c.req.raw.clone();
-      const body = await clonedReq.json() as { turnstileToken?: string };
-      token = body.turnstileToken;
-    } catch {
-      // Body might not be JSON, skip token extraction
+      if (contentType.includes("application/json")) {
+        const clonedReq = c.req.raw.clone();
+        const body = await clonedReq.json() as { turnstileToken?: string };
+        token = body.turnstileToken;
+      } else if (contentType.includes("multipart/form-data")) {
+        const clonedReq = c.req.raw.clone();
+        const formData = await clonedReq.formData();
+        token = formData.get("turnstileToken") as string;
+      }
+    } catch (err) {
+      console.error("[Turnstile] Token extraction failed:", err);
     }
 
     const valid = await verifyTurnstile(token, c.env.TURNSTILE_SECRET_KEY, ip);

@@ -25,10 +25,9 @@ inquiriesRouter.get("/", ensureAuth, async (c) => {
     let filterClause = "";
     let maskPII = false;
     
-    // If not admin, check member_type
+    // EFF-05: Use member_type already fetched by getSessionUser
     if (user.role !== "admin") {
-       const profile = await c.env.DB.prepare("SELECT member_type FROM user_profiles WHERE user_id = ?").bind(user.id).first<{member_type: string}>();
-       const memberType = profile?.member_type || "student";
+       const memberType = user.member_type || "student";
        
        if (memberType === "student") {
          // Students only see outreach/support and PII is masked
@@ -49,14 +48,22 @@ inquiriesRouter.get("/", ensureAuth, async (c) => {
 
     const { results } = await c.env.DB.prepare(query).bind(limit, offset).all();
     
-    // Also mask phone in metadata if present
+    // PII-M01: Whitelist-based metadata masking
+    const METADATA_WHITELIST = ['level', 'org', 'message', 'event_type', 'date', 'topic', 'position', 'subteam'];
+    
     const sanitizedResults = maskPII ? (results || []).map((r: unknown) => {
       const row = r as Record<string, unknown>;
       if (typeof row.metadata === "string") {
         try {
           const meta = JSON.parse(row.metadata) as Record<string, unknown>;
-          if (meta.phone) meta.phone = "***-***-****";
-          row.metadata = JSON.stringify(meta);
+          const cleanMeta: Record<string, unknown> = {};
+          
+          // Only allow whitelisted keys
+          for (const key of METADATA_WHITELIST) {
+            if (key in meta) cleanMeta[key] = meta[key];
+          }
+          
+          row.metadata = JSON.stringify(cleanMeta);
         } catch { /* ignore */ }
       }
       return row;
@@ -95,25 +102,30 @@ inquiriesRouter.post(
     }
 
     const id = crypto.randomUUID();
+    const batchRequests = [];
 
-    await c.env.DB.prepare(
-      "INSERT INTO inquiries (id, type, name, email, metadata) VALUES (?, ?, ?, ?, ?)"
-    ).bind(id, type, name, email, metadata ? JSON.stringify(metadata) : null).run();
+    // 1. Core Inquiry Insertion
+    batchRequests.push(
+      c.env.DB.prepare(
+        "INSERT INTO inquiries (id, type, name, email, metadata) VALUES (?, ?, ?, ?, ?)"
+      ).bind(id, type, name, email, metadata ? JSON.stringify(metadata) : null)
+    );
 
-    // Auto-create a pending sponsor record in the dashboard
+    // 2. Auto-create a pending sponsor record (Batched)
     if (type === "sponsor") {
       let tierStr = "Pending";
       if (metadata && typeof metadata.level === "string") {
         tierStr = metadata.level.replace(" Tier Sponsor", "");
       }
-      try {
-        await c.env.DB.prepare(
+      batchRequests.push(
+        c.env.DB.prepare(
           "INSERT INTO sponsors (id, name, tier, logo_url, website_url, is_active) VALUES (?, ?, ?, ?, ?, 0)"
-        ).bind(id, name, tierStr, null, null).run();
-      } catch (err) {
-        console.error("Failed to insert sponsor draft", err);
-      }
+        ).bind(id, name, tierStr, null, null)
+      );
     }
+
+    // EFF-01: Use DB.batch() for atomic/consolidated writes
+    await c.env.DB.batch(batchRequests);
 
     // Webhook or Email Notification
     try {
@@ -221,7 +233,7 @@ inquiriesRouter.post(
       const ghConfig = buildGitHubConfig(social as Record<string, string>);
       if (ghConfig) {
          // PII-S03: Redact personal information from GitHub task body
-         const redactedMeta = { ...metadata as any };
+         const redactedMeta = { ...(metadata as Record<string, unknown>) };
          if (redactedMeta.email) redactedMeta.email = "***@***.***";
          if (redactedMeta.phone) redactedMeta.phone = "***-***-****";
          

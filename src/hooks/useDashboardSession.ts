@@ -38,6 +38,7 @@ export function useDashboardSession() {
     (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
   useEffect(() => {
+    let isMounted = true;
     publicApi.get<{
       auth: Record<string, unknown>;
       member_type: string;
@@ -46,6 +47,7 @@ export function useDashboardSession() {
       nickname: string;
     }>("/api/profile/me")
       .then((data) => {
+        if (!isMounted) return;
         setSession({
           authenticated: true,
           user: {
@@ -60,9 +62,14 @@ export function useDashboardSession() {
         setIsPending(false);
       })
       .catch(() => {
+        if (!isMounted) return;
         setSession(null);
         setIsPending(false);
       });
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const role = session?.user?.role || "unverified";

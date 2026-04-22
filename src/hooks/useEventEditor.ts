@@ -186,7 +186,7 @@ export function useEventEditor(editId: string | undefined, editor: Editor | null
   });
 
   const handleDelete = async () => {
-    if (!editId) return;
+    if (!editId || deleteMutation.isPending || mutation.isPending) return;
     const confirmed = await modal.confirm({
       title: "Delete Event",
       description: "Are you sure you want to permanently delete this event?",
@@ -202,6 +202,7 @@ export function useEventEditor(editId: string | undefined, editor: Editor | null
   };
 
   const handlePublish = (isDraft: boolean = false) => {
+    if (mutation.isPending || deleteMutation.isPending) return;
     if (!form.title || !form.dateStart) {
       setErrorMsg("Title and Start Date are required.");
       return;

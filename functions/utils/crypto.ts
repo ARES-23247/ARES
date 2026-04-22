@@ -6,15 +6,27 @@
 
 async function getCryptoKey(secret: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
-  const keyMaterial = enc.encode(secret);
-  
-  // Use SHA-256 to derive a 256-bit key from the secret string
-  const hash = await crypto.subtle.digest("SHA-256", keyMaterial);
-  
-  return await crypto.subtle.importKey(
+  const keyMaterial = await crypto.subtle.importKey(
     "raw",
-    hash,
-    { name: "AES-GCM" },
+    enc.encode(secret),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
+
+  // SEC-H02: Use PBKDF2 with a fixed salt for deterministic but hardened key derivation
+  // In a multi-tenant system, this salt would be unique per user.
+  const salt = enc.encode("aresweb-pii-salt-v1");
+
+  return await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
     false,
     ["encrypt", "decrypt"]
   );
