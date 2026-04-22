@@ -48,27 +48,27 @@ export default function PostManagerTab({
     setConfirmId,
   });
 
-  if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-800 border-t-ares-red rounded-full animate-spin"></div></div>;
+  if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-ares-red rounded-full animate-spin"></div></div>;
 
   const filtered = posts.filter(contentFilter(view));
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-zinc-800 pb-2 ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-zinc-100'}`}>
+      <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-white/10 pb-2 ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-marble'}`}>
          {view === 'active' ? 'Published Blog Posts' : view === 'pending' ? 'Pending Posts' : 'Trashed Posts'}
       </h3>
       <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
         {filtered.length === 0 ? (
           <DashboardEmptyState
-            className="text-zinc-500 text-xs italic py-8 text-center border border-dashed border-zinc-800/50 ares-cut-sm"
+            className="text-marble/50 text-xs italic py-8 text-center border border-dashed border-white/5 ares-cut-sm"
             icon={<FileText size={24} />}
             message={`No ${view} posts found.`}
           />
         ) : (
           filtered.map((post) => (
-            <div key={post.slug} className={`bg-black/40 border ${Number(post.is_deleted) === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-zinc-800/60'} ares-cut-sm p-4 flex flex-col justify-between gap-4 hover:border-zinc-700 transition-colors`}>
+            <div key={post.slug} className={`bg-black/40 border ${Number(post.is_deleted) === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-white/10'} ares-cut-sm p-4 flex flex-col justify-between gap-4 hover:border-white/20 transition-colors`}>
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-zinc-200 truncate flex items-center gap-2">
+                <div className="font-bold text-marble/90 truncate flex items-center gap-2">
                   {post.title}
                   {Number(post.is_deleted) === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
                   {post.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
@@ -76,22 +76,22 @@ export default function PostManagerTab({
                   {post.status === 'draft' && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 ares-cut-sm">{format(new Date(post.date), 'MMM do, yyyy')}</span>
+                  <span className="text-xs text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">{format(new Date(post.date), 'MMM do, yyyy')}</span>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/50">
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
                 {Number(post.is_deleted) !== 1 ? (
                   <>
                     <button
                       onClick={() => onEditPost && onEditPost(post.slug)}
-                      className="text-xs font-bold text-zinc-400 hover:text-ares-cyan bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 ares-cut-sm transition-colors"
+                      className="text-xs font-bold text-marble/40 hover:text-ares-cyan bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
                     >
                       EDIT
                     </button>
                     {view === 'active' && (
                       <button
                         onClick={() => setHistoryTarget({ slug: post.slug, title: post.title })}
-                        className="text-xs font-bold text-zinc-400 hover:text-ares-gold bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 ares-cut-sm transition-colors"
+                        className="text-xs font-bold text-marble/40 hover:text-ares-gold bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
                       >
                         HISTORY
                       </button>

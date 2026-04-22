@@ -69,7 +69,7 @@ export default function EventManagerTab({
     },
   });
 
-  if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-800 border-t-ares-red rounded-full animate-spin"></div></div>;
+  if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-ares-red rounded-full animate-spin"></div></div>;
 
   const lifecycleFiltered = events.filter(e => {
     const isDeleted = Number(e.is_deleted) === 1;
@@ -85,13 +85,13 @@ export default function EventManagerTab({
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
+      <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
         <div className="flex items-center gap-4">
           <h3 className={`font-bold uppercase tracking-widest text-xs ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-ares-cyan'}`}>
           {view === 'trash' ? 'Trashed Events' : view === 'pending' ? 'Pending Events' : view === 'internal' ? 'Practices' : view === 'outreach' ? 'Outreach Events' : view === 'external' ? 'Community Events' : 'All Events'}
         </h3>
         {view !== 'trash' && view !== 'pending' && lastSyncedAt && (
-            <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-tight bg-zinc-900 border border-zinc-800 px-2 py-0.5 ares-cut-sm">
+            <span className="text-[10px] text-marble/50 font-medium uppercase tracking-tight bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">
               Last Sync: {format(new Date(lastSyncedAt), 'MMM do, h:mm a')}
             </span>
           )}
@@ -112,15 +112,15 @@ export default function EventManagerTab({
       <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
         {filtered.length === 0 ? (
           <DashboardEmptyState
-            className="text-zinc-500 text-xs italic py-8 text-center border border-dashed border-zinc-800/50 ares-cut-sm"
+            className="text-marble/50 text-xs italic py-8 text-center border border-dashed border-white/5 ares-cut-sm"
             icon={<Calendar size={24} />}
             message={`No ${view} events found.`}
           />
         ) : (
           filtered.map((event) => (
-            <div key={event.id} className={`bg-black/40 border ${Number(event.is_deleted) === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-zinc-800/60'} ares-cut-sm p-4 flex flex-col justify-between gap-4 hover:border-zinc-700 transition-colors`}>
+            <div key={event.id} className={`bg-black/40 border ${Number(event.is_deleted) === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-white/10'} ares-cut-sm p-4 flex flex-col justify-between gap-4 hover:border-white/20 transition-colors`}>
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-zinc-200 truncate flex items-center gap-2">
+                <div className="font-bold text-marble/90 truncate flex items-center gap-2">
                   {event.title}
                   {Number(event.is_deleted) === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
                   {event.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
@@ -129,15 +129,15 @@ export default function EventManagerTab({
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`w-2 h-2 rounded-full ${event.category === 'internal' ? 'bg-ares-red' : event.category === 'outreach' ? 'bg-ares-gold' : 'bg-ares-cyan'}`}></span>
-                  <span className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 ares-cut-sm">{format(new Date(event.date_start), 'MMM do, yyyy')}</span>
+                  <span className="text-xs text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">{format(new Date(event.date_start), 'MMM do, yyyy')}</span>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/50">
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
                 {Number(event.is_deleted) !== 1 ? (
                   <>
                     <button
                       onClick={() => onEditEvent && onEditEvent(event.id)}
-                      className="text-xs font-bold text-zinc-400 hover:text-ares-cyan bg-zinc-800/50 hover:bg-zinc-800 px-3 py-1 ares-cut-sm transition-colors"
+                      className="text-xs font-bold text-marble/40 hover:text-ares-cyan bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
                     >
                       EDIT
                     </button>

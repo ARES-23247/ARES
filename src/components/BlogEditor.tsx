@@ -159,7 +159,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
   };
 
 
-  if (!editor) return <div className="text-zinc-300 animate-pulse font-mono tracking-widest text-sm">Booting Editor System...</div>;
+  if (!editor) return <div className="text-marble/80 animate-pulse font-mono tracking-widest text-sm">Booting Editor System...</div>;
 
   return (
     <div className="flex flex-col gap-6 w-full relative">
@@ -167,7 +167,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
           {editSlug ? "Edit Entry" : "Publish Entry"}
         </h2>
-        <p className="text-zinc-400 text-sm">
+        <p className="text-marble/40 text-sm">
           {editSlug ? "Modify an existing engineering or outreach update." : "Draft rich-text engineering and outreach updates."}
         </p>
       </div>
@@ -175,13 +175,13 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
       {/* Settings Grid */}
       <div className="flex flex-col md:flex-row gap-4 mt-2">
         <div className="flex-1">
-          <label htmlFor="post-title" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Post Title</label>
+          <label htmlFor="post-title" className="block text-xs font-bold text-marble/40 uppercase tracking-wider mb-2">Post Title</label>
           <input
             id="post-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-800 ares-cut-sm px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all shadow-inner lg:text-lg"
+            className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all shadow-inner lg:text-lg"
             placeholder='e.g. Our Road to State'
           />
         </div>
@@ -207,11 +207,11 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
       
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 md:max-w-xs">
-          <label htmlFor="post-published-at" className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Schedule Publish Time</label>
+          <label htmlFor="post-published-at" className="block text-xs font-bold text-marble/40 uppercase tracking-wider mb-2">Schedule Publish Time</label>
           <input
             id="post-published-at" type="datetime-local"
             value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-800 ares-cut-sm px-4 py-3 text-zinc-100 placeholder-zinc-400 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
+            className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
           />
         </div>
       </div>

@@ -356,7 +356,7 @@ postsRouter.route("/", createContentLifecycleRouter("posts", {
     // We don't want to break the standard `/undelete` functionality which is just setting is_deleted = 0
     // The history restore logic is separate on `/:slug/history/:id/restore`
   }
-}));
+}, "slug"));
 
 // ── POST /:slug/repush — manual social broadcast (admin) ──
 postsRouter.post("/:slug/repush", ensureAdmin, async (c) => {

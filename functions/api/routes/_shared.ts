@@ -534,7 +534,7 @@ export interface ContentLifecycleHooks {
   onDelete?: (c: Context<AppEnv>, id: string, type: "trashed" | "purged") => Promise<boolean | void>;
 }
 
-export function createContentLifecycleRouter(tableName: string, hooks?: ContentLifecycleHooks) {
+export function createContentLifecycleRouter(tableName: string, hooks?: ContentLifecycleHooks, idColumn: string = "id") {
   const router = new Hono<AppEnv>();
 
   // Use ensureAdmin for all lifecycle routes
@@ -549,8 +549,8 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
     if (!handled) {
       const { success } = await c.env.DB.prepare(
-        `UPDATE ${tableName} SET status = 'published' WHERE slug = ? OR id = ?`
-      ).bind(id, id).run();
+        `UPDATE ${tableName} SET status = 'published' WHERE ${idColumn} = ?`
+      ).bind(id).run();
       if (!success) return c.json({ error: "Failed to approve" }, 500);
     }
 
@@ -568,8 +568,8 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
     if (!handled) {
       const { success } = await c.env.DB.prepare(
-        `UPDATE ${tableName} SET status = 'rejected' WHERE slug = ? OR id = ?`
-      ).bind(id, id).run();
+        `UPDATE ${tableName} SET status = 'rejected' WHERE ${idColumn} = ?`
+      ).bind(id).run();
       if (!success) return c.json({ error: "Failed to reject" }, 500);
     }
 
@@ -586,8 +586,8 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
     if (!handled) {
       const { success } = await c.env.DB.prepare(
-        `UPDATE ${tableName} SET is_deleted = 0, status = 'draft' WHERE slug = ? OR id = ?`
-      ).bind(id, id).run();
+        `UPDATE ${tableName} SET is_deleted = 0, status = 'draft' WHERE ${idColumn} = ?`
+      ).bind(id).run();
       if (!success) return c.json({ error: "Failed to restore" }, 500);
     }
 
@@ -604,8 +604,8 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
     if (!handled) {
       const { success } = await c.env.DB.prepare(
-        `UPDATE ${tableName} SET is_deleted = 1 WHERE slug = ? OR id = ?`
-      ).bind(id, id).run();
+        `UPDATE ${tableName} SET is_deleted = 1 WHERE ${idColumn} = ?`
+      ).bind(id).run();
       if (!success) return c.json({ error: "Operation failed" }, 500);
     }
     
@@ -622,8 +622,8 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
     if (!handled) {
       const { success } = await c.env.DB.prepare(
-        `DELETE FROM ${tableName} WHERE slug = ? OR id = ?`
-      ).bind(id, id).run();
+        `DELETE FROM ${tableName} WHERE ${idColumn} = ?`
+      ).bind(id).run();
       if (!success) return c.json({ error: "Operation failed" }, 500);
     }
     

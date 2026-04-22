@@ -115,7 +115,7 @@ h1, h2, h3, h4, .font-heading {
 
 /* Tiptap CodeBlock syntax highlighting enforcement */
 .tiptap pre {
-  @apply bg-[#0d1117] border border-ares-gray/50 rounded-xl p-4 my-4 font-mono text-sm shadow-inner overflow-x-auto text-[#c9d1d9];
+  @apply bg-[#0d1117] border border-white/10 rounded-xl p-4 my-4 font-mono text-sm shadow-inner overflow-x-auto text-[#c9d1d9];
 }
 .tiptap pre code {
   @apply bg-transparent p-0 text-inherit;

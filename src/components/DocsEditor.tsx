@@ -176,7 +176,7 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
         </div>
         
         <div className="col-span-1 lg:col-span-1">
-          <label htmlFor="doc-slug" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Slug</label>
+          <label htmlFor="doc-slug" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Slug (URL Path)</label>
           <input
             id="doc-slug"
             type="text"

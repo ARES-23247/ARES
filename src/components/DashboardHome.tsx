@@ -55,7 +55,7 @@ export default function DashboardHome() {
         {/* Left Column: Quick Links & Stats */}
         <div className="lg:col-span-1 space-y-6 flex flex-col">
           
-          <div className="bg-obsidian/50 border border-white/5 ares-cut p-6">
+          <div className="p-2">
             <h3 className="font-black text-white text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
               <Activity size={16} className="text-ares-cyan" />
               Quick Actions
@@ -87,7 +87,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Right Column: Team Availability */}
-        <div className="lg:col-span-2 bg-obsidian/50 border border-white/5 ares-cut p-6 flex flex-col h-[500px] lg:h-auto">
+        <div className="lg:col-span-2 p-2 flex flex-col h-[500px] lg:h-auto">
           <TeamAvailability />
         </div>
 

@@ -26,7 +26,6 @@ export default function Seasons() {
       <SEO title="Team Legacy" description="A chronicle of ARES 23247's journey through FIRST Robotics. Explore our seasonal achievements, awards, and growth." />
       
       {/* Ambience */}
-      <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-ares-red/10 to-transparent pointer-events-none blur-[100px]" />
 
       <section className="py-32 px-6 relative z-10 text-center">
         <motion.div
@@ -139,13 +138,13 @@ export default function Seasons() {
 
       {/* Footer Support */}
       <section className="py-32 px-6">
-         <div className="max-w-4xl mx-auto p-12 rounded-[3.5rem] bg-gradient-to-tr from-ares-gold/20 via-ares-gray-dark to-black border border-ares-gold/20 text-center">
-            <Trophy className="text-ares-gold mx-auto mb-8" size={64} strokeWidth={1} />
+         <div className="max-w-4xl mx-auto p-12 ares-cut bg-ares-red text-center">
+            <Trophy className="text-white mx-auto mb-8" size={64} strokeWidth={1} />
             <h2 className="text-4xl font-black text-white mb-6 italic tracking-tighter">Support the Legacy.</h2>
-            <p className="text-marble/70 text-lg mb-10 max-w-xl mx-auto">Our history is written by the mentors, students, and sponsors who invest in our success. Join us in building the future.</p>
+            <p className="text-white/90 text-lg mb-10 max-w-xl mx-auto">Our history is written by the mentors, students, and sponsors who invest in our success. Join us in building the future.</p>
             <div className="flex flex-wrap justify-center gap-4">
-               <a href="/sponsors" className="px-8 py-4 bg-ares-gold text-black font-black ares-cut hover:scale-105 transition-all">Sponsor ARES</a>
-               <a href="/contact" className="px-8 py-4 bg-white/5 border border-white/10 text-white font-black ares-cut hover:bg-white/10 transition-all">Join the Team</a>
+               <a href="/sponsors" className="px-8 py-4 bg-white text-ares-red font-black ares-cut hover:scale-105 transition-all">Sponsor ARES</a>
+               <a href="/contact" className="px-8 py-4 bg-black/20 text-white font-black ares-cut hover:bg-black/40 transition-all">Join the Team</a>
             </div>
          </div>
       </section>

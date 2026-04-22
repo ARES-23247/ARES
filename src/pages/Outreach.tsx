@@ -241,11 +241,10 @@ export default function Outreach() {
 
       {/* CTA Footer */}
       <section className="py-32 px-6">
-        <div className="max-w-4xl mx-auto ares-cut-lg bg-gradient-to-br from-ares-red/30 to-ares-gray-dark border border-ares-red/40 p-12 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-ares-red/20 blur-[100px] rounded-full pointer-events-none" />
+        <div className="max-w-4xl mx-auto ares-cut bg-ares-red p-12 text-center relative overflow-hidden">
           <h2 className="text-4xl md:text-5xl font-black text-white mb-6 italic tracking-tighter">Have a volunteer need?</h2>
-          <p className="text-marble/80 text-lg mb-10 max-w-xl mx-auto font-medium">Whether it&apos;s a elementary school demo, a science fair, or a community workshop—ARES is here to inspire.</p>
-          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black ares-cut hover:bg-ares-gold hover:text-black transition-all shadow-2xl">
+          <p className="text-white/90 text-lg mb-10 max-w-xl mx-auto font-medium">Whether it&apos;s a elementary school demo, a science fair, or a community workshop—ARES is here to inspire.</p>
+          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-3 px-10 py-5 bg-white text-ares-red font-black ares-cut hover:bg-black hover:text-white transition-all shadow-2xl">
             Get In Touch <ArrowRight size={20} />
           </button>
         </div>

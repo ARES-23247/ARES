@@ -36,7 +36,8 @@ adminMediaRouter.post("/upload", ensureAdmin, async (c) => {
         if (arrayBuffer.byteLength > 2.5 * 1024 * 1024) {
           console.warn("Image exceeds Edge AI memory threshold. Falling back to generic alt text.");
         } else {
-          const uint8 = Array.from(new Uint8Array(arrayBuffer));
+          // SCALE-F01: Use Uint8Array directly instead of Array.from to prevent isolate OOM
+          const uint8 = new Uint8Array(arrayBuffer);
           const aiResponse = await c.env.AI.run('@cf/llava-1.5-7b-hf', {
             prompt: 'Describe this image for screen readers in 1 sentence. Make it helpful, concise, and focused on robotics if applicable.',
             image: uint8

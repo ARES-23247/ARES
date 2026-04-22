@@ -372,7 +372,7 @@ docsRouter.route("/", createContentLifecycleRouter("docs", {
       }
     }
   }
-}));
+}, "slug"));
 
 
 // ── PATCH /:slug/history/:id/restore — restore from history (admin) ──
