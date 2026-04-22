@@ -19,7 +19,7 @@ export function useDashboardNotifications(
   const { data: postsData } = useQuery({
     queryKey: ["admin_posts"],
     queryFn: async () => {
-      const d = await adminApi.get<{ posts?: { slug: string, status: string, title: string, author_nickname?: string }[] }>("/api/admin/posts/list");
+      const d = await adminApi.get<{ posts?: { slug: string, status: string, title: string, is_deleted?: number, author_nickname?: string }[] }>("/api/admin/posts/list");
       return d.posts || [];
     },
     enabled: !!(session && permissions.isAuthorized),
@@ -29,7 +29,7 @@ export function useDashboardNotifications(
   const { data: eventsData } = useQuery({
     queryKey: ["admin_events"],
     queryFn: async () => {
-      const d = await adminApi.get<{ events?: { id: string, status: string, title: string }[] }>("/api/admin/events");
+      const d = await adminApi.get<{ events?: { id: string, status: string, title: string, is_deleted?: number }[] }>("/api/admin/events");
       return d.events || [];
     },
     enabled: !!(session && permissions.isAuthorized),
@@ -39,7 +39,7 @@ export function useDashboardNotifications(
   const { data: docsData } = useQuery({
     queryKey: ["admin_docs"],
     queryFn: async () => {
-      const d = await adminApi.get<{ docs?: { slug: string, status: string, title: string }[] }>("/api/admin/docs/list");
+      const d = await adminApi.get<{ docs?: { slug: string, status: string, title: string, is_deleted?: number }[] }>("/api/admin/docs/list");
       return d.docs || [];
     },
     enabled: !!(session && permissions.isAuthorized),
@@ -47,9 +47,9 @@ export function useDashboardNotifications(
   });
 
   const pendingInquiries = inquiriesData?.filter((i) => i.status === "pending") || [];
-  const pendingPosts = postsData?.filter((p) => p.status === "pending") || [];
-  const pendingEvents = eventsData?.filter((e) => e.status === "pending") || [];
-  const pendingDocs = docsData?.filter((d) => d.status === "pending") || [];
+  const pendingPosts = postsData?.filter((p) => p.status === "pending" && !p.is_deleted) || [];
+  const pendingEvents = eventsData?.filter((e) => e.status === "pending" && !e.is_deleted) || [];
+  const pendingDocs = docsData?.filter((d) => d.status === "pending" && !d.is_deleted) || [];
 
   return {
     pendingInquiriesCount: pendingInquiries.length,

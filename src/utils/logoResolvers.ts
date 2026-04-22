@@ -26,6 +26,7 @@ export function extractDomain(input: string): string {
 export function getLogoUrl(domain: string): string {
   if (!domain) return "";
   const clean = extractDomain(domain);
-  // We use unavatar.io with the microlink fallback for highest reliability
-  return `https://unavatar.io/${clean}?fallback=false`;
+  // We use Google's Favicon API as it is highly reliable and provides 128px high-res icons.
+  // It correctly returns 404 for unknown domains, allowing our BrandLogo component's fallback to trigger.
+  return `https://www.google.com/s2/favicons?domain=${clean}&sz=128`;
 }
