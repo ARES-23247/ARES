@@ -11,19 +11,26 @@ async function verifyGitHubSignature(
   signature: string
 ): Promise<boolean> {
   try {
+    if (!signature.startsWith("sha256=")) return false;
+    
     const enc = new TextEncoder();
     const key = await crypto.subtle.importKey(
       "raw",
       enc.encode(secret),
       { name: "HMAC", hash: "SHA-256" },
       false,
-      ["sign"]
+      ["verify"]
     );
-    const sig = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
-    const computed = "sha256=" + Array.from(new Uint8Array(sig))
-      .map(b => b.toString(16).padStart(2, "0"))
-      .join("");
-    return computed === signature;
+
+    const sigHex = signature.slice(7); // remove "sha256="
+    const sigBytes = new Uint8Array(sigHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+    
+    return await crypto.subtle.verify(
+      "HMAC",
+      key,
+      sigBytes,
+      enc.encode(payload)
+    );
   } catch {
     return false;
   }

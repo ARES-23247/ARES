@@ -473,10 +473,13 @@ export async function verifyTurnstile(
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
 
-    const result = await res.json() as { success: boolean };
+    const result = await res.json() as { success: boolean, 'error-codes'?: string[] };
+    if (!result.success) {
+      console.warn("[Turnstile] Validation failed:", JSON.stringify(result));
+    }
     return result.success === true;
   } catch (err) {
-    console.error("[Turnstile] Verification failed:", err);
+    console.error("[Turnstile] Verification exception:", err);
     // SEC-F02: On network error, fail CLOSED to prevent bot bypass
     return false;
   }

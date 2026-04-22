@@ -20,6 +20,16 @@ interface ZulipOutgoingPayload {
   trigger: string;
 }
 
+// SEC-F03: Timing-safe comparison for webhook tokens
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 // ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
 zulipWebhookRouter.post("/", async (c) => {
   let body: ZulipOutgoingPayload;
@@ -35,7 +45,7 @@ zulipWebhookRouter.post("/", async (c) => {
     console.error("[ZulipWebhook] ZULIP_WEBHOOK_TOKEN is not configured. Rejecting all requests.");
     return c.json({ content: "❌ Webhook token not configured on server." }, 403);
   }
-  if (body.token !== expectedToken) {
+  if (!timingSafeEqual(body.token, expectedToken)) {
     console.warn("[ZulipWebhook] Invalid token");
     return c.json({ content: "❌ Unauthorized: Invalid webhook token." }, 403);
   }
@@ -43,6 +53,12 @@ zulipWebhookRouter.post("/", async (c) => {
   const rawContent = body.message?.content || "";
   // Strip the bot mention prefix (e.g., "@**ARES Bot**")
   const cleaned = rawContent.replace(/@\*\*[^*]+\*\*/g, "").trim();
+  
+  // FUN-F01: Handle empty content after bot mention
+  if (!cleaned) {
+    return c.json({ content: "🤖 Hello! I am the ARES Bot. Type `!help` to see what I can do." });
+  }
+
   const parts = cleaned.split(/\s+/);
   const command = parts[0]?.toLowerCase();
 

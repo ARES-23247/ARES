@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Radio, AlertTriangle } from "lucide-react";
 import TeamAvailability from "./TeamAvailability";
 import { ProjectBoard, IntegrationHealth } from "./command/types";
@@ -118,6 +118,10 @@ export default function CommandCenter() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <span className="px-3 py-1.5 bg-white/5 border border-white/10 ares-cut-sm text-xs font-bold text-marble/80 flex items-center gap-2 shadow-inner">
+            <div className="w-2 h-2 rounded-full bg-ares-gold animate-pulse" />
+            D1 Connected
+          </span>
           <span className="text-[10px] font-mono text-zinc-600 uppercase">
             Last sync: {lastRefresh.toLocaleTimeString()}
           </span>
@@ -141,7 +145,7 @@ export default function CommandCenter() {
       {/* Integration Health Monitor */}
       <IntegrationHealthMonitor health={health} />
 
-      {/* GitHub Project Board � Kanban View */}
+      {/* GitHub Project Board – Kanban View */}
       <ProjectBoardKanban 
         board={board}
         isLoading={isLoading}
@@ -170,4 +174,3 @@ export default function CommandCenter() {
     </div>
   );
 }
-

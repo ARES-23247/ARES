@@ -19,14 +19,24 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   });
   
   if (!res.ok && res.status !== 207) {
-    let errorMessage = `HTTP error! status: ${res.status}`;
+    let errorMessage = `API Error [${res.status}]: ${res.statusText || "Unknown error"}`;
     try {
-      const errorData = await res.json() as { error?: string };
-      if (errorData.error) errorMessage = errorData.error;
+      const errorData = await res.json() as { error?: string; details?: string };
+      if (errorData.error) {
+        errorMessage = errorData.error + (errorData.details ? `: ${errorData.details}` : "");
+      }
     } catch {
-      // Ignored
+      // If not JSON, try text
+      try {
+        const text = await res.text();
+        if (text) errorMessage += ` - ${text.substring(0, 100)}`;
+      } catch { /* ignore */ }
     }
-    throw new Error(errorMessage);
+    
+    const err = new Error(errorMessage);
+    (err as any).status = res.status;
+    (err as any).url = url;
+    throw err;
   }
   
   return res.json() as Promise<T>;

@@ -72,7 +72,7 @@ h1, h2, h3, h4, .font-heading {
   }
 
   .spartan-plate {
-    clip-path: polygon(48px 0, 100% 0, 100% calc(100% - 48px), calc(100% - 48px) 100%, 0 100%, 0 48px);
+    @apply rounded-tl-[3rem] rounded-br-[3rem] rounded-tr-lg rounded-bl-lg;
   }
 
   .meander-divider {

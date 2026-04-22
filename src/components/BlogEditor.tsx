@@ -116,7 +116,17 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         setErrorMsg(data.error || "Failed to publish");
       }
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Network error — could not reach the API.");
+      console.error("[BlogEditor] Publication failed:", e);
+      if (e instanceof Error) {
+        // If it's a TypeError and the message is "Failed to fetch", it's usually a network/CORS error
+        if (e.name === "TypeError" && e.message.includes("fetch")) {
+          setErrorMsg("Network error — could not reach the API. Please check your connection or try again.");
+        } else {
+          setErrorMsg(e.message);
+        }
+      } else {
+        setErrorMsg("An unexpected non-standard error occurred. Check console for details.");
+      }
     } finally {
       setIsPending(false);
     }

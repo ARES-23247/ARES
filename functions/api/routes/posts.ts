@@ -1,6 +1,6 @@
 import { Context, Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, parsePagination, createContentLifecycleRouter } from "./_shared";
+import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, parsePagination, createContentLifecycleRouter, logAuditAction } from "./_shared";
 import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { emitNotification, notifyByRole } from "../../utils/notifications";
@@ -208,8 +208,9 @@ async function handlePostSave(c: Context<AppEnv>) {
       .run();
 
     // ── Phase 3: Omnichannel Social Media Integration ──
-    try {
-      const socialConfig = await getSocialConfig(c);
+    c.executionCtx.waitUntil((async () => {
+
+        const socialConfig = await getSocialConfig(c);
       const socialsFilter = (body as { socials?: Record<string, boolean> }).socials || null;
 
       try {
@@ -221,27 +222,27 @@ async function handlePostSave(c: Context<AppEnv>) {
            snippet: snippet || "Read the latest engineering update from ARES 23247!",
            coverImageUrl: body.coverImageUrl || "/gallery_1.png",
            baseUrl: new URL(c.req.url).origin
-        }, socialConfig, socialsFilter);
+                  },
+          socialConfig,
+          socialsFilter
+        );
       } catch (err: unknown) {
-        console.error("Social dispatch returned top-level rejection:", err);
-        return c.json({ success: true, slug, warning: `Network Syndication Failed: ${(err as Error)?.message || String(err)}` }, 207);
+        console.error("Social dispatch failed in background:", err);
+        await logAuditAction(c, "SYNDICATION_FAILURE", "posts", slug, (err as Error)?.message || String(err));
       }
-    } catch(err: unknown) {
-      console.error("Critical Social Dispatch Failure:", err);
-    }
+
+    })());
 
     // ── Zulip Announcement ──
     if (status === "published") {
-      try {
-        c.executionCtx.waitUntil(
-          sendZulipMessage(
-            c.env,
-            "announcements",
-            "Website Updates",
-            `🚀 **New Blog Post Published:** [${body.title}](${siteConfig.urls.base}/blog/${slug})\n\n${snippet.substring(0, 300)}`
-          ).catch(err => console.error("[Posts] Zulip announcement failed:", err))
-        );
-      } catch { /* ignore */ }
+      c.executionCtx.waitUntil(
+        sendZulipMessage(
+          c.env,
+          "announcements",
+          "Website Updates",
+          `🚀 **New Blog Post Published:** [${body.title}](${siteConfig.urls.base}/blog/${slug})\n\n${snippet.substring(0, 300)}`
+        ).catch(err => console.error("[Posts] Zulip announcement failed:", err))
+      );
     }
     // ── Notify admins and mentors of pending content ──
     if (status === "pending") {
@@ -255,6 +256,7 @@ async function handlePostSave(c: Context<AppEnv>) {
         }).catch(err => console.error("[Posts] Admin notification failed:", err))
       );
     }
+    await logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`);
 
     return c.json({ success: true, slug });
   } catch (err: unknown) {
@@ -318,6 +320,8 @@ async function handlePostEdit(c: Context<AppEnv>) {
         slug
       )
       .run();
+
+    await logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${body.title} (${status})`);
 
     return c.json({ success: true, slug });
   } catch (err: unknown) {

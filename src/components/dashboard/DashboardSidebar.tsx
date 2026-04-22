@@ -2,7 +2,7 @@ import { Suspense, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings,
-  User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut
+  User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert
 } from "lucide-react";
 import { signOut } from "../../utils/auth-client";
 import { DashboardSession, DashboardPermissions } from "../../hooks/useDashboardSession";
@@ -152,9 +152,16 @@ export default function DashboardSidebar({
             </button>
             <div className="flex flex-col min-w-0">
               <span className="text-white text-sm font-bold truncate tracking-tight">{(session?.user?.name as string) || "ARES Member"}</span>
-              <span className="text-ares-gold text-[10px] font-black uppercase tracking-widest truncate">
-                {role} • {memberType}
-              </span>
+              <div className="flex flex-col gap-1">
+                <span className="text-ares-gold text-[10px] font-black uppercase tracking-widest truncate">
+                  {role} • {memberType}
+                </span>
+                {permissions.isUnverified && (
+                  <span className="w-fit px-1.5 py-0.5 bg-ares-danger/10 border border-ares-danger/30 text-ares-danger-soft text-[8px] font-bold rounded uppercase tracking-wider animate-pulse flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.1)]">
+                    <ShieldAlert size={8} /> Locked: View Only
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

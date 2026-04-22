@@ -31,8 +31,9 @@ export function useDashboardSession() {
   const [session, setSession] = useState<DashboardSession | null>(null);
   const [isPending, setIsPending] = useState(true);
 
-  // Compute localhost bypass
+  // Compute localhost bypass — SEC-F01: Harden to only allow in explicit DEV mode
   const isLocalDev =
+    import.meta.env.DEV &&
     typeof window !== "undefined" &&
     (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
