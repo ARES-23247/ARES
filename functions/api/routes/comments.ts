@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig } from "../middleware";
+import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, turnstileMiddleware } from "../middleware";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
 
@@ -51,7 +51,7 @@ commentsRouter.get("/:targetType/:targetId", async (c) => {
 });
 
 // ── POST /comments/:targetType/:targetId — create a comment ───────────
-commentsRouter.post("/:targetType/:targetId", async (c) => {
+commentsRouter.post("/:targetType/:targetId", turnstileMiddleware(), async (c) => {
   const user = await getSessionUser(c);
   if (!user || user.role === "unverified") {
     return c.json({ error: "Forbidden: Your account is pending team verification." }, 403);

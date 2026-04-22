@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, getSessionUser  } from "../../middleware";
+import { AppEnv, getSessionUser, turnstileMiddleware  } from "../../middleware";
 
 const signupsRouter = new Hono<AppEnv>();
 
@@ -24,16 +24,21 @@ signupsRouter.get("/:id/signups", async (c) => {
       nickname?: string;
       attended?: number | boolean;
       prep_hours?: number | string;
+      notes?: string;
     }
 
     const signups = isVerified ? (results || []).map((r: unknown) => {
       const rec = r as SignupRecord;
+      const isOwn = user ? rec.user_id === user.id : false;
+      
+      // PII-S02: Redact notes for non-admin users, unless it's their own signup
       return {
         ...rec,
         nickname: rec.nickname || "ARES Member",
-        is_own: user ? rec.user_id === user.id : false,
+        is_own: isOwn,
         attended: !!rec.attended,
         prep_hours: Number(rec.prep_hours || 0),
+        notes: (isManagement || isOwn) ? rec.notes : undefined
       };
     }) : [];
 
@@ -87,7 +92,7 @@ signupsRouter.get("/:id/signups", async (c) => {
   }
 });
 
-signupsRouter.post("/:id/signups", async (c) => {
+signupsRouter.post("/:id/signups", turnstileMiddleware(), async (c) => {
   const user = await getSessionUser(c);
   if (!user || user.role === "unverified") {
     return c.json({ error: "Forbidden: Your account is pending team verification." }, 403);

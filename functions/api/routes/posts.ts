@@ -208,31 +208,31 @@ async function handlePostSave(c: Context<AppEnv>) {
       .run();
 
     // ── Phase 3: Omnichannel Social Media Integration ──
-    c.executionCtx.waitUntil((async () => {
+    const socialConfig = await getSocialConfig(c);
+    const socialsFilter = (body as { socials?: Record<string, boolean> }).socials || null;
 
-        const socialConfig = await getSocialConfig(c);
-      const socialsFilter = (body as { socials?: Record<string, boolean> }).socials || null;
-
-      try {
-        await dispatchSocials(
-          c.env.DB,
-          {
-           title: body.title,
-           url: `${siteConfig.urls.base}/blog/${slug}`,
-           snippet: snippet || "Read the latest engineering update from ARES 23247!",
-           coverImageUrl: body.coverImageUrl || "/gallery_1.png",
-           baseUrl: siteConfig.urls.base
-                  },
-          socialConfig,
-          socialsFilter
-        );
-
-      } catch (err: unknown) {
-        console.error("Social dispatch failed in background:", err);
-        await logAuditAction(c, "SYNDICATION_FAILURE", "posts", slug, (err as Error)?.message || String(err));
-      }
-
-    })());
+    try {
+      await dispatchSocials(
+        c.env.DB,
+        {
+          title: body.title,
+          url: `${siteConfig.urls.base}/blog/${slug}`,
+          snippet: snippet || "Read the latest engineering update from ARES 23247!",
+          coverImageUrl: body.coverImageUrl || "/gallery_1.png",
+          baseUrl: siteConfig.urls.base
+        },
+        socialConfig,
+        socialsFilter
+      );
+    } catch (err: unknown) {
+      console.error("Social dispatch failed:", err);
+      // Return 207 Multi-Status if post was saved but social syndication failed
+      return c.json({ 
+        success: true, 
+        slug, 
+        warning: `Post saved to database, but social syndication failed: ${(err as Error)?.message || String(err)}` 
+      }, 207);
+    }
 
     // ── Zulip Announcement ──
     if (status === "published") {

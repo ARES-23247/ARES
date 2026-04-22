@@ -49,7 +49,7 @@ export async function dispatchTwitterPhoto(imageUrl: string, caption: string, co
 
   try {
     // Fetch image bytes to push to X upload server
-    const imgRes = await fetch(imageUrl);
+    const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(5000) });
     const imgBuffer = await imgRes.arrayBuffer();
     const imgBlob = new Blob([imgBuffer], { type: imgRes.headers.get("content-type") || "image/jpeg" });
 
@@ -59,7 +59,7 @@ export async function dispatchTwitterPhoto(imageUrl: string, caption: string, co
     const formData = new FormData();
     formData.append("media", imgBlob);
 
-    const mediaRes = await fetch(uploadUrl, { method: "POST", headers: { "Authorization": authHeader }, body: formData });
+    const mediaRes = await fetch(uploadUrl, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }), method: "POST", headers: { "Authorization": authHeader }, body: formData });
     const mediaData = await mediaRes.json() as { media_id_string?: string };
 
     if (mediaData.media_id_string) {
@@ -69,7 +69,7 @@ export async function dispatchTwitterPhoto(imageUrl: string, caption: string, co
         text: caption,
         media: { media_ids: [mediaData.media_id_string] }
       };
-      await fetch(tweetUrl, { method: "POST", headers: { "Authorization": tweetAuthHeader, "Content-Type": "application/json" }, body: JSON.stringify(tweetPayload) });
+      await fetch(tweetUrl, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }), method: "POST", headers: { "Authorization": tweetAuthHeader, "Content-Type": "application/json" }, body: JSON.stringify(tweetPayload) });
     }
   } catch (err) { 
     console.error("X (Twitter) Native Push failed:", err); 

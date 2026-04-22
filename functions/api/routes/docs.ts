@@ -27,8 +27,12 @@ docsRouter.get("/list", ensureAdmin, async (c) => {
 // ── GET /export-all — export all docs (admin) ─────────────────
 docsRouter.get("/export-all", ensureAdmin, async (c) => {
   try {
+    // PII-S01: Refactor backup to only export documentation content, not infrastructure secrets.
     const { results } = await c.env.DB.prepare(
-      `SELECT slug, title, category, sort_order, description, content, is_portfolio, is_executive_summary, status FROM docs WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY category, sort_order`
+      `SELECT slug, title, category, sort_order, description, content, is_portfolio, is_executive_summary, status 
+       FROM docs 
+       WHERE is_deleted = 0 OR is_deleted IS NULL 
+       ORDER BY category, sort_order`
     ).all();
 
     const backup = {

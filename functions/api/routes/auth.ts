@@ -16,11 +16,9 @@ authRouter.get("/auth-check", async (c) => {
 
 // ── Better Auth Routes ────────────────────────────────────────────────
 authRouter.on(["POST", "GET"], "/*", async (c) => {
-  console.log(`[Auth Handler] Request URL: ${c.req.url}`);
   try {
     const auth = getAuth(c.env.DB, c.env, c.req.url);
     const response = await auth.handler(c.req.raw);
-    console.log(`[Auth Handler] Response Status: ${response.status}`);
     return response;
   } catch (error: unknown) {
     const err = error as Error & { status?: number };

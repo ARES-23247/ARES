@@ -220,7 +220,13 @@ app.onError(async (err, c) => {
     return (err as { getResponse: () => Response }).getResponse();
   }
 
-  return c.json({ error: "Internal Server Error", message: err.message }, 500);
+  // SEC-Z01: Mask technical error details for end users in production
+  const isProd = c.env?.ENVIRONMENT === "production";
+  return c.json({ 
+    error: "Internal Server Error", 
+    message: isProd ? "An unexpected system error occurred. ARES engineers have been notified." : err.message,
+    stack: isProd ? undefined : err.stack
+  }, 500);
 });
 
 // ── Mount at /api and /dashboard/api ─────────────────────────────────

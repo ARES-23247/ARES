@@ -54,7 +54,7 @@ export async function sendZulipMessage(
       "Content-Type": "application/x-www-form-urlencoded"
     };
 
-    const res = await fetch(url, {
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
       method: "POST",
       headers,
       body: formData.toString()
@@ -101,7 +101,7 @@ export async function updateZulipMessage(
       "Content-Type": "application/x-www-form-urlencoded"
     };
 
-    const res = await fetch(url, {
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
       method: "PATCH",
       headers,
       body: formData.toString()
@@ -129,7 +129,7 @@ export async function deleteZulipMessage(
     const url = `${getZulipBaseUrl(env)}/api/v1/messages/${messageId}`;
     const headers = getZulipAuthHeaders(env);
 
-    const res = await fetch(url, {
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
       method: "DELETE",
       headers
     });

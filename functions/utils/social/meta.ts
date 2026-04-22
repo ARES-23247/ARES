@@ -10,7 +10,7 @@ export async function dispatchFacebook(payload: PostPayload, config: SocialConfi
     access_token: config.FACEBOOK_ACCESS_TOKEN
   });
 
-  return fetch(fbUrl, {
+  return fetch(fbUrl, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: fbPayload.toString()
@@ -35,7 +35,7 @@ export async function dispatchMetaPhoto(imageUrl: string, caption: string, confi
           caption: caption,
           access_token: config.INSTAGRAM_ACCESS_TOKEN || ""
         });
-        const createRes = await fetch(creationUrl, { method: "POST", body: creationPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
+        const createRes = await fetch(creationUrl, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }), method: "POST", body: creationPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
         if (!createRes.ok) {
           const errText = await createRes.text();
           throw new Error(`Instagram Photo Creation Rejected: ${errText}`);
@@ -46,7 +46,7 @@ export async function dispatchMetaPhoto(imageUrl: string, caption: string, confi
         if (createData.id) {
           const publishUrl = `https://graph.facebook.com/v19.0/${config.INSTAGRAM_ACCOUNT_ID}/media_publish`;
           const publishPayload = new URLSearchParams({ creation_id: createData.id, access_token: config.INSTAGRAM_ACCESS_TOKEN || "" });
-          const pubRes = await fetch(publishUrl, { method: "POST", body: publishPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
+          const pubRes = await fetch(publishUrl, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }), method: "POST", body: publishPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
           if (!pubRes.ok) {
             const errText = await pubRes.text();
             throw new Error(`Instagram Photo Publish Rejected: ${errText}`);
@@ -62,7 +62,7 @@ export async function dispatchMetaPhoto(imageUrl: string, caption: string, confi
       (async () => {
         const fbUrl = `https://graph.facebook.com/v19.0/${config.FACEBOOK_PAGE_ID}/photos`;
         const fbPayload = new URLSearchParams({ url: imageUrl, message: caption, access_token: config.FACEBOOK_ACCESS_TOKEN || "" });
-        const res = await fetch(fbUrl, { method: "POST", body: fbPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
+        const res = await fetch(fbUrl, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }), method: "POST", body: fbPayload.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } });
         if (!res.ok) {
           const text = await res.text();
           throw new Error(`Facebook Photo API Rejected: ${text}`);

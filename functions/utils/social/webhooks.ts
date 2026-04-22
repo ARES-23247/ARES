@@ -3,7 +3,7 @@ import { PostPayload, SocialConfig } from "../socialSync";
 export async function dispatchDiscord(payload: PostPayload, config: SocialConfig) {
   if (!config.DISCORD_WEBHOOK_URL) return;
   
-  return fetch(config.DISCORD_WEBHOOK_URL, {
+  return fetch(config.DISCORD_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -26,7 +26,7 @@ export async function dispatchDiscord(payload: PostPayload, config: SocialConfig
 export async function dispatchDiscordPhoto(imageUrl: string, caption: string, config: SocialConfig) {
   if (!config.DISCORD_WEBHOOK_URL) return;
 
-  return fetch(config.DISCORD_WEBHOOK_URL, {
+  return fetch(config.DISCORD_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -47,7 +47,7 @@ export async function dispatchDiscordPhoto(imageUrl: string, caption: string, co
 export async function dispatchSlack(payload: PostPayload, config: SocialConfig) {
   if (!config.SLACK_WEBHOOK_URL) return;
 
-  return fetch(config.SLACK_WEBHOOK_URL, {
+  return fetch(config.SLACK_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -59,7 +59,7 @@ export async function dispatchSlack(payload: PostPayload, config: SocialConfig) 
 export async function dispatchSlackPhoto(imageUrl: string, caption: string, config: SocialConfig) {
   if (!config.SLACK_WEBHOOK_URL) return;
 
-  return fetch(config.SLACK_WEBHOOK_URL, {
+  return fetch(config.SLACK_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -78,7 +78,7 @@ export async function dispatchSlackPhoto(imageUrl: string, caption: string, conf
 export async function dispatchTeams(payload: PostPayload, config: SocialConfig) {
   if (!config.TEAMS_WEBHOOK_URL) return;
 
-  return fetch(config.TEAMS_WEBHOOK_URL, {
+  return fetch(config.TEAMS_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -107,7 +107,7 @@ export async function dispatchTeams(payload: PostPayload, config: SocialConfig) 
 export async function dispatchTeamsPhoto(imageUrl: string, caption: string, config: SocialConfig) {
   if (!config.TEAMS_WEBHOOK_URL) return;
 
-  return fetch(config.TEAMS_WEBHOOK_URL, {
+  return fetch(config.TEAMS_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -134,7 +134,7 @@ export async function dispatchTeamsPhoto(imageUrl: string, caption: string, conf
 export async function dispatchGChat(payload: PostPayload, config: SocialConfig) {
   if (!config.GCHAT_WEBHOOK_URL) return;
 
-  return fetch(config.GCHAT_WEBHOOK_URL, {
+  return fetch(config.GCHAT_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -151,7 +151,7 @@ export async function dispatchGChat(payload: PostPayload, config: SocialConfig) 
 export async function dispatchGChatPhoto(imageUrl: string, caption: string, config: SocialConfig) {
   if (!config.GCHAT_WEBHOOK_URL) return;
 
-  return fetch(config.GCHAT_WEBHOOK_URL, {
+  return fetch(config.GCHAT_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -178,7 +178,7 @@ export async function dispatchGChatPhoto(imageUrl: string, caption: string, conf
 export async function dispatchMake(payload: PostPayload, config: SocialConfig) {
   if (!config.MAKE_WEBHOOK_URL) return;
 
-  return fetch(config.MAKE_WEBHOOK_URL, {
+  return fetch(config.MAKE_WEBHOOK_URL, { signal: AbortSignal.timeout(5000, { signal: AbortSignal.timeout(5000) }),
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
