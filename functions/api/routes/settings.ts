@@ -70,11 +70,11 @@ settingsRouter.get("/stats", ensureAdmin, async (c) => {
     ]);
 
     return c.json({
-      posts: (posts.results?.[0] as any)?.count || 0,
-      events: (events.results?.[0] as any)?.count || 0,
-      docs: (docs.results?.[0] as any)?.count || 0,
-      inquiries: (inquiries.results?.[0] as any)?.count || 0,
-      users: (users.results?.[0] as any)?.count || 0,
+      posts: (posts.results?.[0] as { count: number })?.count || 0,
+      events: (events.results?.[0] as { count: number })?.count || 0,
+      docs: (docs.results?.[0] as { count: number })?.count || 0,
+      inquiries: (inquiries.results?.[0] as { count: number })?.count || 0,
+      users: (users.results?.[0] as { count: number })?.count || 0,
     });
   } catch (err) {
     console.error("D1 stats error:", err);

@@ -21,7 +21,7 @@ commentsRouter.get("/:targetType/:targetId", async (c) => {
        ORDER BY c.created_at ASC`
     ).bind(targetType, targetId).all();
 
-    const mapped = (results || []).map((r: any) => ({
+    const mapped = (results || []).map((r: Record<string, unknown>) => ({
       id: r.id,
       content: r.content,
       created_at: r.created_at,

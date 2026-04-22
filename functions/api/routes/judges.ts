@@ -61,6 +61,7 @@ judgesRouter.get("/portfolio", async (c) => {
     const valid = await c.env.DB.prepare(
       "SELECT code FROM judge_access_codes WHERE code = ? AND (expires_at IS NULL OR expires_at > datetime('now'))"
     ).bind(code).first();
+    if (!valid) return c.json({ error: "Invalid or expired access code" }, 403);
     // wait, v.env.DB is wrong, should be c.env.DB. 
     // And actually it was c.env.DB in previous read. I must have misread or it changed.
     

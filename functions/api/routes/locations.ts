@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, logAuditAction, MAX_INPUT_LENGTHS  } from "../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, MAX_INPUT_LENGTHS  } from "../middleware";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 

@@ -5,7 +5,7 @@ import { AppEnv } from "./utils";
 const MAX_RATE_LIMIT_CACHE = 500;
 const rateLimitCache = new Map<string, { count: number; expiresAt: number }>();
 
-function pruneCache(cache: Map<string, any>) {
+function pruneCache(cache: Map<string, unknown>) {
   if (cache.size >= MAX_RATE_LIMIT_CACHE) {
     const first = cache.keys().next().value;
     if (first !== undefined) cache.delete(first);
