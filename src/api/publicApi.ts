@@ -16,8 +16,22 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   if (!res.ok && res.status !== 207) {
     let errorMessage = `HTTP error! status: ${res.status}`;
     try {
-      const errorData = await res.json() as { error?: string };
-      if (errorData.error) errorMessage = errorData.error;
+      const errorData = await res.json() as any;
+      if (errorData.error) {
+        if (typeof errorData.error === "string") {
+          errorMessage = errorData.error;
+        } else if (typeof errorData.error === "object") {
+          if (errorData.error.issues && Array.isArray(errorData.error.issues)) {
+            errorMessage = errorData.error.issues.map((i: any) => `${i.path ? i.path.join('.') + ': ' : ''}${i.message}`).join(", ");
+          } else if (errorData.error.message) {
+            errorMessage = errorData.error.message;
+          } else {
+            errorMessage = JSON.stringify(errorData.error);
+          }
+        }
+      } else if (errorData.message && typeof errorData.message === "string") {
+        errorMessage = errorData.message;
+      }
     } catch {
       // Ignored
     }

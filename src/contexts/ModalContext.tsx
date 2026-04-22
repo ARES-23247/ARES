@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from "react";
 import ConfirmModal, { ConfirmOptions } from "../components/modals/ConfirmModal";
 import PromptModal, { PromptOptions } from "../components/modals/PromptModal";
 
@@ -7,7 +7,7 @@ interface ModalContextType {
   prompt: (options: PromptOptions) => Promise<string | null>;
 }
 
-const ModalContext = createContext<ModalContextType | undefined>(undefined);
+export const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export function ModalProvider({ children }: { children: ReactNode }) {
   // Confirm State
@@ -32,32 +32,35 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = useCallback(() => {
     if (confirmResolver) confirmResolver(true);
     setConfirmOptions(null);
     setConfirmResolver(null);
-  };
+  }, [confirmResolver]);
 
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = useCallback(() => {
     if (confirmResolver) confirmResolver(false);
     setConfirmOptions(null);
     setConfirmResolver(null);
-  };
+  }, [confirmResolver]);
 
-  const handlePromptSubmit = (value: string) => {
+  const handlePromptSubmit = useCallback((value: string) => {
     if (promptResolver) promptResolver(value);
     setPromptOptions(null);
     setPromptResolver(null);
-  };
+  }, [promptResolver]);
 
-  const handlePromptCancel = () => {
+  const handlePromptCancel = useCallback(() => {
     if (promptResolver) promptResolver(null);
     setPromptOptions(null);
     setPromptResolver(null);
-  };
+  }, [promptResolver]);
+
+  // EFF-D02: Memoize context value to prevent full-app re-renders on state change
+  const value = useMemo(() => ({ confirm, prompt }), [confirm, prompt]);
 
   return (
-    <ModalContext.Provider value={{ confirm, prompt }}>
+    <ModalContext.Provider value={value}>
       {children}
       
       <ConfirmModal

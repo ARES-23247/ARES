@@ -141,7 +141,7 @@ export default function About() {
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-heading uppercase">Ready to Join ARES?</h2>
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-            We welcome students from 6th–12th grade across Monongalia and Harrison counties. No experience needed — just bring your curiosity.
+            We welcome students from 6th–12th grade across Monongalia, Harrison, and Preston counties, SW PA, and anyone within driving distance of Morgantown. No experience needed — just bring your curiosity.
           </p>
           <Link
             to="/join"
@@ -218,7 +218,7 @@ export default function About() {
             {[
               { q: "Our Mission?", a: "To bridge the untapped talent within West Virginia with the technical opportunities of the global stage." },
               { q: "Prerequisites?", a: "Zero. Many of our roster are FLL veterans, others are dual-rostering with MARS FRC, but most start with just a drive to learn." },
-              { q: "School Requirements?", a: "We are community-based. We accept Monongalia and Harrison county public students, homeschoolers, and HOPE scholars." },
+              { q: "School Requirements?", a: "We are community-based. We accept public students, homeschoolers, and HOPE scholars from Monongalia, Harrison, and Preston counties, SW PA, and anywhere within driving distance of Morgantown." },
               { q: "Cost of Entry?", a: "Zero. Our operations are fully funded by the generous support of our sponsors and the ARES community donors." },
               { q: "The Season?", a: "Rules drop in September. Build season begins in December. High-stakes competition rounds run through May." },
               { q: "Time Commitment?", a: "One major weekend team meeting per week, with optional weekday lab openings for technical iteration." },

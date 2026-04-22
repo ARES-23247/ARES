@@ -21,9 +21,23 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   if (!res.ok && res.status !== 207) {
     let errorMessage = `API Error [${res.status}]: ${res.statusText || "Unknown error"}`;
     try {
-      const errorData = await res.json() as { error?: string; details?: string };
+      const errorData = await res.json() as any;
       if (errorData.error) {
-        errorMessage = errorData.error + (errorData.details ? `: ${errorData.details}` : "");
+        let errStr = "";
+        if (typeof errorData.error === "string") {
+          errStr = errorData.error;
+        } else if (typeof errorData.error === "object") {
+          if (errorData.error.issues && Array.isArray(errorData.error.issues)) {
+            errStr = errorData.error.issues.map((i: any) => `${i.path ? i.path.join('.') + ': ' : ''}${i.message}`).join(", ");
+          } else if (errorData.error.message) {
+            errStr = errorData.error.message;
+          } else {
+            errStr = JSON.stringify(errorData.error);
+          }
+        }
+        errorMessage = errStr + (errorData.details ? `: ${errorData.details}` : "");
+      } else if (errorData.message && typeof errorData.message === "string") {
+        errorMessage = errorData.message;
       }
     } catch {
       // If not JSON, try text
@@ -228,12 +242,11 @@ export const adminApi = {
     });
   },
   moveMedia: async (key: string, folder: string) => {
-    return fetchJson<{ success?: boolean }>(`/api/admin/media/${key}/move`, {
+    return fetchJson<{ success?: boolean }>(`/api/admin/media/move/${key}`, {
       method: "PUT",
       body: JSON.stringify({ folder }),
     });
-  },
-  syndicateMedia: async (key: string, caption: string) => {
+  },  syndicateMedia: async (key: string, caption: string) => {
     return fetchJson<{ success?: boolean }>(`/api/admin/media/syndicate`, {
       method: "POST",
       body: JSON.stringify({ key, caption }),

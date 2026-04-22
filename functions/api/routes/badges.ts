@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { AppEnv, ensureAdmin, getSessionUser  } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 
 const badgesRouter = new Hono<AppEnv>();
 
@@ -18,12 +20,17 @@ badgesRouter.get("/", async (c) => {
 });
 
 // ── POST /save — Create a badge class (admin) ────────────────────────
-badgesRouter.post("/save", ensureAdmin, async (c) => {
+const badgeSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  icon: z.string().optional(),
+  color_theme: z.string().optional()
+});
+
+badgesRouter.post("/save", ensureAdmin, zValidator("json", badgeSchema), async (c) => {
   try {
-    const body = await c.req.json();
-    const { id, name, description, icon, color_theme } = body;
-    
-    if (!id || !name) return c.json({ error: "Missing id or name" }, 400);
+    const { id, name, description, icon, color_theme } = c.req.valid("json");
 
     await c.env.DB.prepare(
       "INSERT INTO badges (id, name, description, icon, color_theme) VALUES (?, ?, ?, ?, ?)"
@@ -39,10 +46,14 @@ badgesRouter.post("/save", ensureAdmin, async (c) => {
 });
 
 // ── POST /users/:userId/award — Award a badge (admin) ──────────────────
-badgesRouter.post("/users/:userId/award", ensureAdmin, async (c) => {
+const awardBadgeSchema = z.object({
+  badge_id: z.string().min(1)
+});
+
+badgesRouter.post("/users/:userId/award", ensureAdmin, zValidator("json", awardBadgeSchema), async (c) => {
   try {
     const userId = (c.req.param("userId") || "");
-    const { badge_id } = await c.req.json();
+    const { badge_id } = c.req.valid("json");
     const user = await getSessionUser(c);
     const sessionId = user?.id || "system";
 

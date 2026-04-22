@@ -1,5 +1,7 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, logAuditAction, validateLength, MAX_INPUT_LENGTHS  } from "../middleware";
+import { AppEnv, ensureAdmin, parsePagination, logAuditAction, MAX_INPUT_LENGTHS  } from "../middleware";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 
 const awardsRouter = new Hono<AppEnv>();
 
@@ -18,22 +20,18 @@ awardsRouter.get("/", async (c) => {
 });
 
 // ── POST / ── create or update an award ───────────
-awardsRouter.post("/", ensureAdmin, async (c) => {
+const awardSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1).max(MAX_INPUT_LENGTHS.name),
+  year: z.union([z.number(), z.string()]),
+  event_name: z.string().max(MAX_INPUT_LENGTHS.name).optional(),
+  description: z.string().max(MAX_INPUT_LENGTHS.generic).optional(),
+  image_url: z.string().optional()
+});
+
+awardsRouter.post("/", ensureAdmin, zValidator("json", awardSchema), async (c) => {
   try {
-    const body = await c.req.json();
-    const { id, title, year, event_name, description, image_url } = body;
-
-    if (!title || !year) {
-      return c.json({ error: "Missing required fields" }, 400);
-    }
-
-    // SEC-F05: Input length validation
-    const titleErr = validateLength(title, MAX_INPUT_LENGTHS.name, "Title");
-    if (titleErr) return c.json({ error: titleErr }, 400);
-    const descErr = validateLength(description, MAX_INPUT_LENGTHS.generic, "Description");
-    if (descErr) return c.json({ error: descErr }, 400);
-    const eventErr = validateLength(event_name, MAX_INPUT_LENGTHS.name, "Event name");
-    if (eventErr) return c.json({ error: eventErr }, 400);
+    const { id, title, year, event_name, description, image_url } = c.req.valid("json");
 
     let exists = false;
     if (id) {

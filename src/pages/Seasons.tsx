@@ -70,8 +70,8 @@ export default function Seasons() {
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-ares-gold/5 blur-3xl rounded-full pointer-events-none" />
                   <div className="flex justify-between items-start mb-6">
-                    <div className="w-16 h-16 ares-cut bg-ares-gold/10 border border-ares-gold/20 flex items-center justify-center">
-                       <Trophy className="text-ares-gold" size={32} />
+                    <div className="w-16 h-16 ares-cut bg-ares-red flex items-center justify-center shadow-lg shadow-ares-red/20">
+                       <Trophy className="text-white" size={32} />
                     </div>
                     <span className="text-2xl font-black text-white/20 italic">{award.year}</span>
                   </div>
@@ -84,7 +84,7 @@ export default function Seasons() {
               ))
             ) : (
               <div className="col-span-full py-32 text-center border-2 border-dashed border-white/5 ares-cut-lg">
-                 <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-marble/40">
+                 <div className="w-20 h-20 bg-ares-red ares-cut flex items-center justify-center mx-auto mb-6 text-white shadow-lg shadow-ares-red/20">
                     <Trophy size={40} />
                  </div>
                  <h3 className="text-2xl font-bold text-white mb-2">The Case is Open.</h3>
@@ -110,13 +110,13 @@ export default function Seasons() {
              <div className="relative pl-8 md:pl-0">
                 <div className="absolute left-[-5px] md:left-1/2 md:-translate-x-1/2 top-0 w-3 h-3 rounded-full bg-ares-red shadow-[0_0_10px_rgba(192,0,0,0.8)]" />
                 <div className="md:w-[45%] md:mr-auto text-left md:text-right">
-                   <div className="mb-3"><span className="bg-ares-red text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-md">2025 - 2026</span></div>
+                   <div className="mb-3"><span className="bg-ares-red text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 ares-cut-sm shadow-md">2025 - 2026</span></div>
                    <h3 className="text-3xl font-black text-white italic tracking-tighter mb-4 uppercase">FTC DECODE</h3>
                    <p className="text-marble/70 leading-relaxed mb-6">
                       The rookie year. Establishing the ARES project, building our first competitive robot, and learning the values of <em>FIRST</em>. Focused on archaeological investigations and autonomous navigation.
                    </p>
                    <div className="flex flex-wrap gap-2 md:justify-end">
-                      {["ROOKIE", "BUILDING", "COMMUNITY"].map(t => <span key={t} className="px-3 py-1 bg-white/5 border border-white/10 ares-cut-sm text-[9px] font-bold text-marble/60 tracking-widest">{t}</span>)}
+                      {["ROOKIE", "BUILDING", "COMMUNITY"].map(t => <span key={t} className="px-3 py-1 bg-ares-red text-white ares-cut-sm text-[9px] font-black tracking-widest shadow-md">{t}</span>)}
                    </div>
                 </div>
              </div>
@@ -125,7 +125,7 @@ export default function Seasons() {
              <div className="relative pl-8 md:pl-0">
                 <div className="absolute left-[-5px] md:left-1/2 md:-translate-x-1/2 top-0 w-3 h-3 rounded-full bg-ares-gray border border-ares-gray-dark" />
                 <div className="md:w-[45%] md:ml-auto text-left">
-                   <div className="mb-3"><span className="bg-white/10 text-marble text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-sm border border-white/10">2026 - 2027</span></div>
+                   <div className="mb-3"><span className="bg-ares-red text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 ares-cut-sm shadow-md">2026 - 2027</span></div>
                    <h3 className="text-3xl font-black text-white italic tracking-tighter mb-4 uppercase">Next Frontier</h3>
                    <p className="text-marble/70 leading-relaxed italic">
                       Expanding the ARES engine, mentoring younger teams, and striving for consistent championship performance.

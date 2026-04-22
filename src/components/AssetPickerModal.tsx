@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X, ImagePlus } from "lucide-react";
 import { adminApi } from "../api/adminApi";
@@ -23,6 +23,7 @@ export default function AssetPickerModal({
   onSelect: (url: string, altText: string) => void;
 }) {
   const [selectedFolderFilter, setSelectedFolderFilter] = useState<string>("All");
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const { data: mediaResponse, isLoading } = useQuery<{ media: R2Asset[] }>({
     queryKey: ["assets"],
@@ -32,6 +33,51 @@ export default function AssetPickerModal({
     enabled: isOpen,
   });
 
+  // ACC-D01: Implement focus trapping and Esc key handling
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === "Escape") {
+        onClose();
+      }
+      if (e.key === "Tab") {
+        const focusableElements = modalRef.current?.querySelectorAll(
+          'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+        ) as NodeListOf<HTMLElement>;
+        
+        if (focusableElements && focusableElements.length > 0) {
+          const firstElement = focusableElements[0];
+          const lastElement = focusableElements[focusableElements.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              lastElement.focus();
+              e.preventDefault();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              firstElement.focus();
+              e.preventDefault();
+            }
+          }
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Auto-focus the close button or first action
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        const closeBtn = modalRef.current?.querySelector('button[aria-label="Close modal"]') as HTMLElement;
+        if (closeBtn) closeBtn.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const assets = mediaResponse?.media ?? [];
@@ -40,7 +86,13 @@ export default function AssetPickerModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className="bg-ares-gray-deep border border-white/10 shadow-2xl ares-cut-lg w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden relative">
+      <div 
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="asset-picker-title"
+        className="bg-obsidian border border-white/10 shadow-2xl ares-cut-lg w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden relative"
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/40">
@@ -49,7 +101,7 @@ export default function AssetPickerModal({
               <ImagePlus className="text-ares-gold" size={20} aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-white tracking-widest uppercase">Select Asset</h2>
+              <h2 id="asset-picker-title" className="text-xl font-black text-white tracking-widest uppercase">Select Asset</h2>
               <p className="text-xs text-white/40 font-mono">Inject multimedia into the rich text block</p>
             </div>
           </div>
@@ -64,7 +116,7 @@ export default function AssetPickerModal({
 
         {/* Filters */}
         {!isLoading && assets.length > 0 && (
-          <div className="px-6 py-4 bg-ares-gray-dark border-b border-white/10 flex flex-wrap gap-2 shadow-inner">
+          <div className="px-6 py-4 bg-white/5 border-b border-white/10 flex flex-wrap gap-2 shadow-inner">
             <button 
               onClick={() => setSelectedFolderFilter("All")}
               className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border transition-all ${selectedFolderFilter === "All" ? "bg-ares-gold border-ares-gold text-black shadow-md" : "bg-black/50 border-white/10 text-white/40 hover:text-white hover:bg-white/10"}`}
@@ -80,7 +132,7 @@ export default function AssetPickerModal({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-ares-gray-deep">
+        <div className="flex-1 overflow-y-auto p-6 bg-obsidian">
           {isLoading ? (
             <div className="w-full h-full flex items-center justify-center">
               <div className="w-10 h-10 border-4 border-white/10 border-t-ares-gold rounded-full animate-spin"></div>
@@ -97,7 +149,7 @@ export default function AssetPickerModal({
                   key={asset.key}
                   onClick={() => onSelect(asset.url, asset.tags || "ARES Media")}
                   aria-label={`Select asset ${asset.key}`}
-                  className="group relative bg-obsidian border border-white/10 ares-cut-sm overflow-hidden hover:border-ares-gold transition-colors flex flex-col text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
+                  className="group relative bg-black/20 border border-white/10 ares-cut-sm overflow-hidden hover:border-ares-gold transition-colors flex flex-col text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
                 >
                   <div className="relative aspect-square w-full">
                     <img src={asset.url} alt={asset.key} className="w-full h-full object-cover" loading="lazy" />

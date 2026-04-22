@@ -9,48 +9,56 @@ export function useDashboardNotifications(
   const { data: inquiriesData } = useQuery({
     queryKey: ["admin-inquiries"],
     queryFn: async () => {
-      const d = await adminApi.get<{ inquiries?: { status: string }[] }>("/api/inquiries");
+      const d = await adminApi.get<{ inquiries?: { id: string, status: string, name: string, type: string }[] }>("/api/inquiries");
       return d.inquiries || [];
     },
     enabled: !!(session && permissions.canSeeInquiries),
+    refetchInterval: 30000,
   });
 
   const { data: postsData } = useQuery({
     queryKey: ["admin_posts"],
     queryFn: async () => {
-      const d = await adminApi.get<{ posts?: { status: string }[] }>("/api/admin/posts/list");
+      const d = await adminApi.get<{ posts?: { slug: string, status: string, title: string, author_nickname?: string }[] }>("/api/admin/posts/list");
       return d.posts || [];
     },
     enabled: !!(session && permissions.isAuthorized),
+    refetchInterval: 30000,
   });
 
   const { data: eventsData } = useQuery({
     queryKey: ["admin_events"],
     queryFn: async () => {
-      const d = await adminApi.get<{ events?: { status: string }[] }>("/api/admin/events");
+      const d = await adminApi.get<{ events?: { id: string, status: string, title: string }[] }>("/api/admin/events");
       return d.events || [];
     },
     enabled: !!(session && permissions.isAuthorized),
+    refetchInterval: 30000,
   });
 
   const { data: docsData } = useQuery({
     queryKey: ["admin_docs"],
     queryFn: async () => {
-      const d = await adminApi.get<{ docs?: { status: string }[] }>("/api/admin/docs/list");
+      const d = await adminApi.get<{ docs?: { slug: string, status: string, title: string }[] }>("/api/admin/docs/list");
       return d.docs || [];
     },
     enabled: !!(session && permissions.isAuthorized),
+    refetchInterval: 30000,
   });
 
-  const pendingInquiriesCount = inquiriesData?.filter((i) => i.status === "pending").length || 0;
-  const pendingPostsCount = postsData?.filter((p) => p.status === "pending").length || 0;
-  const pendingEventsCount = eventsData?.filter((e) => e.status === "pending").length || 0;
-  const pendingDocsCount = docsData?.filter((d) => d.status === "pending").length || 0;
+  const pendingInquiries = inquiriesData?.filter((i) => i.status === "pending") || [];
+  const pendingPosts = postsData?.filter((p) => p.status === "pending") || [];
+  const pendingEvents = eventsData?.filter((e) => e.status === "pending") || [];
+  const pendingDocs = docsData?.filter((d) => d.status === "pending") || [];
 
   return {
-    pendingInquiriesCount,
-    pendingPostsCount,
-    pendingEventsCount,
-    pendingDocsCount,
+    pendingInquiriesCount: pendingInquiries.length,
+    pendingPostsCount: pendingPosts.length,
+    pendingEventsCount: pendingEvents.length,
+    pendingDocsCount: pendingDocs.length,
+    pendingInquiries,
+    pendingPosts,
+    pendingEvents,
+    pendingDocs,
   };
 }

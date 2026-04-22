@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { GreekMeander } from "./GreekMeander";
 import { adminApi } from "../api/adminApi";
 import { useDashboardSession } from "../hooks/useDashboardSession";
-
+import { useDashboardNotifications } from "../hooks/useDashboardNotifications";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -21,10 +21,8 @@ export default function Navbar() {
    
   const { canSeeInquiries, isAuthorized } = permissions;
   
-  const [pendingInquiries, setPendingInquiries] = useState<{ id: string, name: string, type: string }[]>([]);
-  const [pendingPosts, setPendingPosts] = useState<{ slug: string, status: string, title: string, author_nickname?: string }[]>([]);
-  const [pendingEvents, setPendingEvents] = useState<{ id: string, status: string, title: string }[]>([]);
-  const [pendingDocs, setPendingDocs] = useState<{ slug: string, status: string, title: string }[]>([]);
+  const { pendingInquiries, pendingPosts, pendingEvents, pendingDocs } = useDashboardNotifications(session, permissions);
+  
   const [showNotifs, setShowNotifs] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -111,42 +109,6 @@ export default function Navbar() {
   ];
   
   const unreadCount = notifications.filter((n) => !n.is_read).length;
-
-  useEffect(() => {
-    if (isAuthorized) {
-      adminApi.get<{ inquiries?: { id: string, status: string, name: string, type: string }[] }>("/api/inquiries")
-        .then((data) => {
-          if (data && data.inquiries) {
-            const pending = data.inquiries.filter((i) => i.status === "pending");
-            setPendingInquiries(pending);
-          }
-        }).catch(() => {});
-        
-      adminApi.get<{ posts?: { slug: string, status: string, title: string, author_nickname?: string }[] }>("/api/admin/posts/list")
-        .then((data) => {
-          if (data && data.posts) {
-            const pending = data.posts.filter((p) => p.status === "pending");
-            setPendingPosts(pending);
-          }
-        }).catch(() => {});
-
-      adminApi.get<{ events?: { id: string, status: string, title: string }[] }>("/api/admin/events")
-        .then((data) => {
-          if (data && data.events) {
-            const pending = data.events.filter((e) => e.status === "pending");
-            setPendingEvents(pending);
-          }
-        }).catch(() => {});
-
-      adminApi.get<{ docs?: { slug: string, status: string, title: string }[] }>("/api/admin/docs/list")
-        .then((data) => {
-          if (data && data.docs) {
-            const pending = data.docs.filter((d) => d.status === "pending");
-            setPendingDocs(pending);
-          }
-        }).catch(() => {});
-    }
-  }, [canSeeInquiries, isAuthorized]);
 
   return (
     <nav role="navigation" aria-label="Main Navigation" className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 pt-4 pb-4 transition-all duration-500 overflow-visible ares-cut-lg rounded-t-none border-t-4 border-ares-bronze">

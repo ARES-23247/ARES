@@ -76,36 +76,46 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
   router.delete("/:id", async (c) => {
     const id = c.req.param("id");
     
-    let handled = false;
-    if (hooks?.onDelete) handled = (await hooks.onDelete(c, id, "trashed")) === true;
+    try {
+      let handled = false;
+      if (hooks?.onDelete) handled = (await hooks.onDelete(c, id, "trashed")) === true;
 
-    if (!handled) {
-      const { success } = await c.env.DB.prepare(
-        `UPDATE ${tableName} SET is_deleted = 1 WHERE ${idColumn} = ?`
-      ).bind(id).run();
-      if (!success) return c.json({ error: "Operation failed" }, 500);
+      if (!handled) {
+        const { success } = await c.env.DB.prepare(
+          `UPDATE ${tableName} SET is_deleted = 1 WHERE ${idColumn} = ?`
+        ).bind(id).run();
+        if (!success) return c.json({ error: "Operation failed" }, 500);
+      }
+      
+      await logAuditAction(c, `DELETE_${tableName.toUpperCase()}`, tableName, id);
+      return c.json({ success: true, action: "trashed" });
+    } catch (err) {
+      console.error(`[Lifecycle] Soft delete error for ${tableName}:`, err);
+      return c.json({ error: (err as Error).message || "Operation failed" }, 500);
     }
-    
-    await logAuditAction(c, `DELETE_${tableName.toUpperCase()}`, tableName, id);
-    return c.json({ success: true, action: "trashed" });
   });
 
   // Hard Delete (Purge)
   router.delete("/:id/purge", async (c) => {
     const id = c.req.param("id");
     
-    let handled = false;
-    if (hooks?.onDelete) handled = (await hooks.onDelete(c, id, "purged")) === true;
+    try {
+      let handled = false;
+      if (hooks?.onDelete) handled = (await hooks.onDelete(c, id, "purged")) === true;
 
-    if (!handled) {
-      const { success } = await c.env.DB.prepare(
-        `DELETE FROM ${tableName} WHERE ${idColumn} = ?`
-      ).bind(id).run();
-      if (!success) return c.json({ error: "Operation failed" }, 500);
+      if (!handled) {
+        const { success } = await c.env.DB.prepare(
+          `DELETE FROM ${tableName} WHERE ${idColumn} = ?`
+        ).bind(id).run();
+        if (!success) return c.json({ error: "Operation failed" }, 500);
+      }
+      
+      await logAuditAction(c, `PURGE_${tableName.toUpperCase()}`, tableName, id);
+      return c.json({ success: true, action: "purged" });
+    } catch (err) {
+      console.error(`[Lifecycle] Purge error for ${tableName}:`, err);
+      return c.json({ error: (err as Error).message || "Operation failed" }, 500);
     }
-    
-    await logAuditAction(c, `PURGE_${tableName.toUpperCase()}`, tableName, id);
-    return c.json({ success: true, action: "purged" });
   });
 
   return router;

@@ -25,6 +25,7 @@ export default function CommandPalette() {
   const { data: session } = authClient.useSession();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Toggle Command Palette with Ctrl+K or Cmd+K
   useEffect(() => {
@@ -35,6 +36,29 @@ export default function CommandPalette() {
       }
       if (e.key === "Escape") {
         setIsOpen(false);
+      }
+      // ACC-D01: Focus trapping for Command Palette
+      if (isOpen && e.key === "Tab") {
+        const focusableElements = modalRef.current?.querySelectorAll(
+          'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+        ) as NodeListOf<HTMLElement>;
+        
+        if (focusableElements && focusableElements.length > 0) {
+          const firstElement = focusableElements[0];
+          const lastElement = focusableElements[focusableElements.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              lastElement.focus();
+              e.preventDefault();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              firstElement.focus();
+              e.preventDefault();
+            }
+          }
+        }
       }
     };
     
@@ -47,7 +71,7 @@ export default function CommandPalette() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("open-command-palette", handleCustomOpen);
     };
-  }, []);
+  }, [isOpen]);
 
    
   // @ts-expect-error - BetterAuth session typing
@@ -133,7 +157,7 @@ export default function CommandPalette() {
   }, [query, userRole, staticLinks]);
 
   // Handle Keyboard Navigation (Up/Down/Enter)
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyboardNav = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
@@ -183,6 +207,11 @@ export default function CommandPalette() {
           onClick={handleBackdropClick}
         >
           <motion.div
+            ref={modalRef}
+            role="combobox"
+            aria-expanded="true"
+            aria-haspopup="listbox"
+            aria-controls="command-palette-results"
             initial={{ scale: 0.95, opacity: 0, y: -10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
@@ -201,7 +230,7 @@ export default function CommandPalette() {
                   setQuery(e.target.value);
                   setSelectedIndex(0);
                 }}
-                onKeyDown={handleKeyDown}
+                onKeyDown={handleKeyboardNav}
               />
               <div className="flex shrink-0 items-center gap-1 ml-3 hidden sm:flex">
                 <kbd className="bg-white/10 text-marble/40 text-xs px-2 py-1 rounded font-mono border border-white/10">ESC</kbd>
@@ -210,7 +239,7 @@ export default function CommandPalette() {
             </div>
 
             {/* Results Body */}
-            <div className="max-h-[60vh] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            <div id="command-palette-results" role="listbox" className="max-h-[60vh] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
               {isSearching && query.length >= 2 && results.length === 0 ? (
                  <div className="p-8 text-center text-marble/40 animate-pulse font-mono flex items-center justify-center gap-2">
                    <Terminal className="text-ares-cyan" size={16} /> Scanning D1 nodes...
@@ -223,6 +252,8 @@ export default function CommandPalette() {
                 results.map((res, idx) => (
                   <button
                     key={idx}
+                    role="option"
+                    aria-selected={selectedIndex === idx}
                     onClick={() => handleSelect(res)}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`w-full text-left flex items-center px-4 py-3 rounded-lg mb-1 transition-colors ares-cut-sm group ${

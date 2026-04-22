@@ -119,7 +119,7 @@ export default function Join() {
               <h3 className="text-ares-gold font-bold uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><CheckCircle size={14} /> Eligibility</h3>
               <ul className="text-sm text-marble/80 space-y-2">
                 <li>• Students in grades 6-12</li>
-                <li>• Serving Monongalia & Harrison Counties</li>
+                <li>• Serving Monongalia, Harrison, and Preston Counties, SW PA, and anyone within driving distance of Morgantown</li>
                 <li>• No cost to join or compete</li>
               </ul>
             </div>
@@ -227,7 +227,7 @@ export default function Join() {
                 
                 <div className="pt-4">
                   <Turnstile onVerify={setTurnstileToken} theme="light" className="mb-4" />
-                  <button type="submit" disabled={isSubmitting} className={`px-8 py-4 w-full text-white font-black uppercase tracking-widest ares-cut-sm hover:-translate-y-1 active:translate-y-0 transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 ${role === "student" ? "bg-ares-red hover:shadow-[0_10px_30px_rgba(220,38,38,0.3)] hover:bg-ares-bronze" : "bg-obsidian hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"}`}>
+                  <button type="submit" disabled={isSubmitting || !turnstileToken} className={`px-8 py-4 w-full text-white font-black uppercase tracking-widest ares-cut-sm hover:-translate-y-1 active:translate-y-0 transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 ${role === "student" ? "bg-ares-red hover:shadow-[0_10px_30px_rgba(220,38,38,0.3)] hover:bg-ares-bronze" : "bg-obsidian hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"}`}>
                     {isSubmitting ? "Submitting..." : `Submit ${role === "student" ? "Student" : "Mentor"} Application`}
                   </button>
                   <p className="text-center text-[11px] text-obsidian/80 font-bold uppercase tracking-widest mt-4">

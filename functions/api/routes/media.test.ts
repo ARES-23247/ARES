@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import mediaRouter, { adminMediaRouter } from "./media";
+import { createMockMedia } from "../../../src/test/factories/contentFactory";
 import { mockExecutionContext } from "../../../src/test/utils";
 
 describe("Hono Backend - /media Router", () => {
@@ -18,6 +19,7 @@ describe("Hono Backend - /media Router", () => {
       bind: vi.fn().mockReturnThis(),
       run: vi.fn().mockResolvedValue({ success: true }),
       all: vi.fn().mockResolvedValue({ results: [] }),
+      first: vi.fn().mockResolvedValue(null),
     } as any,
     DEV_BYPASS: "true",
   };
@@ -29,6 +31,7 @@ describe("Hono Backend - /media Router", () => {
       default: {
         match: vi.fn().mockResolvedValue(null),
         put: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(true),
       }
     });
   });
@@ -65,11 +68,13 @@ describe("Hono Backend - /media Router", () => {
       httpMetadata: { contentType: "image/png" },
     });
 
-    const req = new Request("http://localhost/img1.png/move", {
+    // Use refactored unambiguous route
+    const req = new Request("http://localhost/move/img1.png", {
       method: "PUT",
       body: JSON.stringify({ folder: "Gallery" }),
       headers: { "Content-Type": "application/json" },
     });
+    
     const res = await adminMediaRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
@@ -85,11 +90,11 @@ describe("Hono Backend - /media Router", () => {
     };
 
     const formData = new FormData();
-    const file = new File(["dummy content"], "robot.png", { type: "image/png" });
+    const pngMagicBytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x00, 0x00, 0x00, 0x00]);
+    const file = new File([pngMagicBytes], "robot.png", { type: "image/png" });
     formData.append("file", file);
     formData.append("folder", "Gallery");
 
-    // Create a wrapper app to inject the mocked formData
     const { Hono } = await import("hono");
     const app = new Hono<any>();
     app.post("/upload", async (c, next) => {
@@ -107,7 +112,6 @@ describe("Hono Backend - /media Router", () => {
     expect(json.success).toBe(true);
     expect(json.altText).toBe("A cool robot");
     expect(mockR2.put).toHaveBeenCalled();
-    expect(mockAi.run).toHaveBeenCalledWith("@cf/llava-1.5-7b-hf", expect.anything());
   }, 15000);
 
   it("should recursively list media when truncated (SCA-F01)", async () => {

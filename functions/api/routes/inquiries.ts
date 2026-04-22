@@ -23,6 +23,7 @@ inquiriesRouter.get("/", ensureAuth, async (c) => {
     }
     
     let filterClause = "";
+    let maskPII = false;
     
     // If not admin, check member_type
     if (user.role !== "admin") {
@@ -30,18 +31,37 @@ inquiriesRouter.get("/", ensureAuth, async (c) => {
        const memberType = profile?.member_type || "student";
        
        if (memberType === "student") {
+         // Students only see outreach/support and PII is masked
          filterClause = "WHERE type IN ('outreach', 'support')";
+         maskPII = true;
        } else if (memberType !== "coach" && memberType !== "mentor") {
          return c.json({ error: "Unauthorized" }, 403);
        }
     }
 
+    // PII-D01: Mask email/phone for unauthorized roles
+    const nameSelect = maskPII ? "SUBSTR(name, 1, 1) || '***' as name" : "name";
+    const emailSelect = maskPII ? "'***@***.***' as email" : "email";
+
     const query = filterClause 
-      ? `SELECT id, type, name, email, metadata, status, created_at FROM inquiries ${filterClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+      ? `SELECT id, type, ${nameSelect}, ${emailSelect}, metadata, status, created_at FROM inquiries ${filterClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
       : `SELECT id, type, name, email, metadata, status, created_at FROM inquiries ORDER BY created_at DESC LIMIT ? OFFSET ?`;
 
     const { results } = await c.env.DB.prepare(query).bind(limit, offset).all();
-    return c.json({ inquiries: results });
+    
+    // Also mask phone in metadata if present
+    const sanitizedResults = maskPII ? (results || []).map((r: any) => {
+      if (r.metadata) {
+        try {
+          const meta = JSON.parse(r.metadata);
+          if (meta.phone) meta.phone = "***-***-****";
+          r.metadata = JSON.stringify(meta);
+        } catch { /* ignore */ }
+      }
+      return r;
+    }) : results;
+
+    return c.json({ inquiries: sanitizedResults });
   } catch (err) {
     console.error("D1 inquiry list error:", err);
     return c.json({ inquiries: [] }, 500);
@@ -50,7 +70,7 @@ inquiriesRouter.get("/", ensureAuth, async (c) => {
 
 // ── POST /inquiries — Submit a new inquiry ─────────────────────────────
 const inquirySchema = z.object({
-  type: z.enum(["sponsor", "join", "outreach", "support"]),
+  type: z.enum(["sponsor", "student", "mentor", "outreach", "support"]),
   name: z.string().min(1).max(MAX_INPUT_LENGTHS.name),
   email: z.string().email().max(MAX_INPUT_LENGTHS.email),
   metadata: z.record(z.string(), z.unknown()).optional(),
@@ -159,7 +179,7 @@ inquiriesRouter.post(
     // ── Zulip Admin Alert ──
     try {
       const metadataObj = metadata as Record<string, unknown> | undefined;
-      const phoneStr = metadataObj?.phone ? `\n📱 **Phone:** ${metadataObj.phone}` : "";
+      const phoneStr = metadataObj?.phone ? `\n📱 **Phone:** (Masked)` : "";
       
       const alertBody = [
         `📧 **Contact:** (see Dashboard for details)${phoneStr}`,
@@ -169,7 +189,7 @@ inquiriesRouter.post(
       c.executionCtx.waitUntil(
         sendZulipAlert(
           c.env,
-          type === "sponsor" ? "Sponsor" : type === "join" ? "Applicant" : "Outreach",
+          type === "sponsor" ? "Sponsor" : (type === "student" || type === "mentor") ? "Applicant" : "Outreach",
           `New ${type} inquiry received (ID: ${id.slice(0, 8)})`,
           alertBody
         ).catch(err => console.error("[Inquiry] Zulip alert failed:", err))

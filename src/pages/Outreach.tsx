@@ -106,7 +106,7 @@ export default function Outreach() {
       <SEO title="Community Impact" description="Empowering Morgantown and beyond through STEM outreach. Track our service hours, community reach, and impact initiatives." />
       
       {/* Background Ambience */}
-      <div className="absolute top-0 right-0 w-1/2 h-[600px] bg-ares-red/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 right-0 w-1/2 h-[600px] bg-ares-gold/5 blur-[150px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-1/2 h-[600px] bg-ares-cyan/5 blur-[150px] rounded-full pointer-events-none" />
 
       {/* Hero */}
@@ -115,7 +115,7 @@ export default function Outreach() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ares-red text-white text-xs font-bold uppercase tracking-widest mb-8 shadow-lg shadow-ares-red/20"
+            className="inline-flex items-center gap-2 px-6 py-2 ares-cut-sm bg-ares-red text-white text-xs font-black uppercase tracking-widest mb-8 shadow-lg shadow-ares-red/20"
           >
             <Activity size={14} className="animate-pulse" />
             Active Impact Reporting
@@ -143,9 +143,9 @@ export default function Outreach() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { label: "Community Reach", val: totals.reach.toLocaleString(), icon: <Target className="text-ares-red" size={32} />, desc: "Estimated lives touched by ARES demos and events." },
-              { label: "Service Hours", val: totals.hours.toLocaleString(), icon: <Clock className="text-ares-gold" size={32} />, desc: "Total student hours dedicated to community STEM engagement." },
-              { label: "Impact Events", val: totals.events, icon: <Heart className="text-ares-cyan" size={32} />, desc: "Unique workshops, demos, and volunteer sessions completed." },
+              { label: "Community Reach", val: totals.reach.toLocaleString(), icon: <div className="w-16 h-16 ares-cut bg-ares-red flex items-center justify-center shadow-lg"><Target className="text-white" size={32} /></div>, desc: "Estimated lives touched by ARES demos and events." },
+              { label: "Service Hours", val: totals.hours.toLocaleString(), icon: <div className="w-16 h-16 ares-cut bg-ares-gold flex items-center justify-center shadow-lg"><Clock className="text-black" size={32} /></div>, desc: "Total student hours dedicated to community STEM engagement." },
+              { label: "Impact Events", val: totals.events, icon: <div className="w-16 h-16 ares-cut bg-ares-cyan flex items-center justify-center shadow-lg"><Heart className="text-black" size={32} /></div>, desc: "Unique workshops, demos, and volunteer sessions completed." },
             ].map((stat, idx) => (
               <motion.div
                 key={stat.label}
@@ -181,10 +181,9 @@ export default function Outreach() {
             </div>
           </div>
           <div className="relative">
-             <div className="aspect-square bg-ares-gray/10 ares-cut-lg overflow-hidden rotate-3 shadow-2xl border-8 border-white">
-                <div className="absolute inset-0 bg-gradient-to-br from-ares-red to-ares-gold opacity-10" />
-                <div className="w-full h-full flex items-center justify-center text-ares-gray">
-                   <Target size={120} strokeWidth={0.5} />
+             <div className="aspect-square bg-ares-red ares-cut-lg overflow-hidden rotate-3 shadow-2xl border-8 border-white">
+                <div className="w-full h-full flex items-center justify-center text-white">
+                   <Target size={120} strokeWidth={1} />
                 </div>
              </div>
              <div className="absolute -bottom-8 -left-8 bg-ares-gold text-black p-8 ares-cut-lg font-black -rotate-6 shadow-xl max-w-[200px] text-center">
@@ -229,9 +228,9 @@ export default function Outreach() {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="px-6 py-4 bg-white/5 ares-cut-lg text-center border border-white/5">
-                    <div className="text-xs font-black text-ares-gold uppercase tracking-tighter mb-1">Impact</div>
-                    <div className="text-2xl font-black text-white">{(log.reach_count || 0).toLocaleString()}</div>
+                  <div className="px-6 py-4 bg-ares-red text-white ares-cut-lg text-center shadow-lg shadow-ares-red/20">
+                    <div className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Impact</div>
+                    <div className="text-3xl font-black">{log.reach_count || 0}</div>
                   </div>
                 </div>
               </motion.div>

@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { AppEnv, ensureAdmin  } from "../middleware";
 import { upsertProfile } from "./_profileUtils";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 
 const usersRouter = new Hono<AppEnv>();
 
@@ -25,11 +27,15 @@ usersRouter.get("/", async (c) => {
 });
 
 // ── PATCH /:id — update user role or type ────
-usersRouter.patch("/:id", async (c) => {
+const patchUserSchema = z.object({
+  role: z.enum(["admin", "author", "user", "unverified"]).optional(),
+  member_type: z.enum(["student", "coach", "mentor", "parent", "alumni"]).optional()
+});
+
+usersRouter.patch("/:id", zValidator("json", patchUserSchema), async (c) => {
   try {
     const id = (c.req.param("id") || "");
-    const body = await c.req.json();
-    const { role, member_type } = body;
+    const { role, member_type } = c.req.valid("json");
 
     if (role) {
       await c.env.DB.prepare("UPDATE user SET role = ? WHERE id = ?").bind(role, id).run();

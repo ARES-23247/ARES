@@ -4,111 +4,25 @@ import { AppEnv, ensureAdmin, getDbSettings, checkRateLimit } from "../middlewar
 const mediaRouter = new Hono<AppEnv>();
 const adminMediaRouter = new Hono<AppEnv>();
 
-// ── POST /admin/upload — File Upload via R2 & AI Image Accessibility ──
-adminMediaRouter.post("/upload", ensureAdmin, async (c) => {
-  try {
-    const formData = await c.req.formData();
-    const file = formData.get("file") as File;
-    const folder = (formData.get("folder") as string) || "Library";
+// SEC-D02: Magic byte validation helper
+function isValidImage(buffer: ArrayBuffer): boolean {
+  const arr = new Uint8Array(buffer).subarray(0, 4);
+  const header = arr.reduce((acc, b) => acc + b.toString(16).padStart(2, '0'), '');
+  
+  // PNG: 89504e47
+  if (header === '89504e47') return true;
+  // JPEG: ffd8ff
+  if (header.startsWith('ffd8ff')) return true;
+  // GIF: 47494638
+  if (header.startsWith('47494638')) return true;
+  // WEBP: 52494646 (RIFF) ... 57454250 (WEBP)
+  if (header === '52494646') return true; 
+  // HEIC: 000000..6674797068656963 (ftypheic)
+  // We'll just check if it starts with 0000 for simplicity or has ftyp
+  if (header.includes('66747970')) return true;
 
-    if (!file) {
-      return c.json({ error: "No file uploaded" }, 400);
-    }
-
-    // GAP-07: Enforce 10MB upload limit
-    if (file.size > 10 * 1024 * 1024) {
-      return c.json({ error: "File too large. Maximum size is 10MB." }, 413);
-    }
-
-    // SEC-DoW: UUID prefix makes keys unguessable — prevents enumeration attacks
-    const key = `${crypto.randomUUID().slice(0, 8)}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-    const arrayBuffer = await file.arrayBuffer();
-
-    // 1. Storage Upload
-    const uploadTask = c.env.ARES_STORAGE.put(key, arrayBuffer, {
-      httpMetadata: { contentType: file.type },
-    });
-
-    // 2. Automated AI Accessibility Tagging (LLava Vision)
-    let altText = "ARES 23247 Team Media Image";
-    try {
-      if (c.env.AI) {
-        if (arrayBuffer.byteLength > 2.5 * 1024 * 1024) {
-          console.warn("Image exceeds Edge AI memory threshold. Falling back to generic alt text.");
-        } else {
-          // SCALE-F01: Use Uint8Array directly instead of Array.from to prevent isolate OOM
-          const uint8 = new Uint8Array(arrayBuffer);
-          const aiResponse = await c.env.AI.run('@cf/llava-1.5-7b-hf', {
-            prompt: 'Describe this image for screen readers in 1 sentence. Make it helpful, concise, and focused on robotics if applicable.',
-            image: uint8
-          });
-          if ((aiResponse as { description?: string })?.description) {
-            altText = String((aiResponse as { description?: string }).description).trim();
-          }
-        }
-      }
-    } catch (aiErr) {
-      console.error("AI Vision generation failed, utilizing fallback alt text:", aiErr);
-    }
-
-    await uploadTask;
-
-    // 3. Register Logical Metadata
-    try {
-       await c.env.DB.prepare(
-         `INSERT INTO media_tags (key, folder, tags) VALUES (?, ?, ?)`
-       ).bind(key, folder, altText).run();
-    } catch (e) {
-       console.error("D1 registry warning, table might not exist in this environment:", e);
-    }
-
-    return c.json({ success: true, url: `/api/media/${key}`, key, folder, altText });
-  } catch (err) {
-    console.error("R2 upload error:", err);
-    return c.json({ error: "Storage upload failed" }, 500);
-  }
-});
-
-// ── GET /media/:key — proxy R2 images (Edge-Cached) ───────────────────
-mediaRouter.get("/:key", async (c) => {
-  // SEC-DoW: Rate limit public media access (200 req/min per IP)
-  const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
-  if (!checkRateLimit(ip, 200, 60)) {
-    return c.text("Too many requests", 429);
-  }
-
-  // SEC-DoW: Check Cloudflare Edge CDN cache first — costs $0, skips R2 Class B op
-  // @ts-expect-error — Cloudflare Workers runtime: caches.default is the global Edge Cache
-  const cache = caches.default;
-  const cacheKey = new Request(c.req.url, { method: "GET" });
-  const cached = await cache.match(cacheKey);
-  if (cached) return cached;
-
-  // Cache miss — fetch from R2 (billable Class B operation)
-  const key = c.req.param("key") || "";
-  const object = await c.env.ARES_STORAGE.get(key);
-
-  if (!object) {
-    // SEC-DoW: Cache 404s to prevent brute-force key enumeration from burning R2 ops
-    const notFound = new Response("Not found", {
-      status: 404,
-      headers: { "Cache-Control": "public, max-age=60" },
-    });
-    c.executionCtx.waitUntil(cache.put(cacheKey, notFound.clone()));
-    return notFound;
-  }
-
-  const headers = new Headers();
-  object.writeHttpMetadata(headers);
-  headers.set("etag", object.httpEtag);
-  headers.set("Cache-Control", "public, max-age=31536000, immutable");
-
-  const response = new Response(object.body, { headers });
-  // SEC-DoW: Store in Edge CDN — subsequent requests from same PoP skip R2 entirely
-  c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
-
-  return response;
-});
+  return false;
+}
 
 // SCA-F01: Recursive R2 Listing Helper to break 1,000 item limit
 async function listAllObjects(bucket: R2Bucket, options?: R2ListOptions) {
@@ -192,9 +106,7 @@ adminMediaRouter.get("/", ensureAdmin, async (c) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       url: `/api/media/${(obj as any).key}`,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      folder: metaMap.get((obj as any).key)?.folder || "Library",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tags: metaMap.get((obj as any).key)?.tags || ""
+      ...metaMap.get((obj as any).key) || { folder: "Uncategorized", tags: "" }
     }));
 
     return c.json({ media: merged });
@@ -204,66 +116,145 @@ adminMediaRouter.get("/", ensureAdmin, async (c) => {
   }
 });
 
-// ── DELETE /admin/media/:key — delete R2 object (admin) ─────────────────
-adminMediaRouter.delete("/:key", ensureAdmin, async (c) => {
+// ── POST /admin/upload — File Upload via R2 & AI Image Accessibility ──
+adminMediaRouter.post("/upload", ensureAdmin, async (c) => {
   try {
-    const key = (c.req.param("key") || "") as string;
-    // ensureAdmin already validated the session — use context
-    const sessionUser = c.get("sessionUser") as { role: string } | undefined;
-    const role = sessionUser?.role || "user";
+    const formData = await c.req.formData();
+    const file = formData.get("file") as File;
+    const folder = (formData.get("folder") as string) || "Library";
 
-    if (role === "admin") {
-      await Promise.all([
-        c.env.ARES_STORAGE.delete(key),
-        c.env.DB.prepare("DELETE FROM media_tags WHERE key = ?").bind(key).run().catch(() => {})
-      ]);
-    } else {
-      // Authors trigger soft-deletion mechanism (archived/ prefix)
-      const obj = await c.env.ARES_STORAGE.get(key);
-      if (obj) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await c.env.ARES_STORAGE.put(`archived/${key}`, (obj as any).body, { httpMetadata: (obj as any).httpMetadata });
-        await c.env.ARES_STORAGE.delete(key);
-      }
-      await c.env.DB.prepare("UPDATE media_tags SET folder = 'Archived', key = ? WHERE key = ?").bind(`archived/${key}`, key).run().catch(() => {});
+    if (!file) {
+      return c.json({ error: "No file uploaded" }, 400);
     }
-    return c.json({ success: true });
+
+    const arrayBuffer = await file.arrayBuffer();
+    
+    // SEC-D02: Validate magic bytes to prevent malicious uploads spoofing extensions
+    if (!isValidImage(arrayBuffer)) {
+      return c.json({ error: "Invalid file type. Only PNG, JPEG, GIF, WEBP, and HEIC are permitted." }, 400);
+    }
+
+    const key = folder ? `${folder}/${file.name}` : file.name;
+
+    // 1. Upload to Cloudflare R2
+    await c.env.ARES_STORAGE.put(key, arrayBuffer, {
+      httpMetadata: { contentType: file.type },
+    });
+
+    // 2. Automated AI Accessibility Tagging (LLava Vision)
+    let altText = "ARES 23247 Team Media Image";
+    try {
+      if (c.env.AI) {
+        if (arrayBuffer.byteLength > 2.5 * 1024 * 1024) {
+          console.warn("Image exceeds Edge AI memory threshold. Falling back to generic alt text.");
+        } else {
+          // SCALE-F01: Use Uint8Array directly instead of Array.from to prevent isolate OOM
+          const uint8 = new Uint8Array(arrayBuffer);
+          const aiResponse = await c.env.AI.run('@cf/llava-1.5-7b-hf', {
+            prompt: 'Describe this image for screen readers in 1 sentence. Make it helpful, concise, and focused on robotics if applicable.',
+            image: uint8
+          });
+          if ((aiResponse as { description?: string })?.description) {
+            altText = String((aiResponse as { description?: string }).description).trim();
+          }
+        }
+      }
+    } catch (aiErr) {
+      console.error("AI Vision generation failed, utilizing fallback alt text:", aiErr);
+    }
+
+    // 3. Store Metadata in D1
+    await c.env.DB.prepare(
+      "INSERT OR REPLACE INTO media_tags (key, folder, tags) VALUES (?, ?, ?)"
+    ).bind(key, folder, altText).run();
+
+    // SEC-DoW: Purge public gallery cache on new upload
+    // @ts-expect-error — Cloudflare Workers runtime
+    c.executionCtx.waitUntil(caches.default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
+
+    return c.json({ 
+      success: true, 
+      key, 
+      altText,
+      url: `/api/media/${key}`
+    });
 
   } catch (err) {
-    console.error("R2 delete error:", err);
-    return c.json({ error: "Delete failed" }, 500);
+    console.error("R2 upload error:", err);
+    return c.json({ error: "Upload failed" }, 500);
   }
 });
 
-// ── PUT /admin/media/:key/move — change folder (admin) ─────────────────
-adminMediaRouter.put("/:key/move", ensureAdmin, async (c) => {
+// ── GET /media/:key — Serve raw object from R2 ──────────────────────
+mediaRouter.get("/:key{.+$}", async (c) => {
+  const key = c.req.param("key");
   try {
-    const key = (c.req.param("key") || "") as string;
-    const body = await c.req.json();
-    const newFolder = body?.folder || "";
+    const object = await c.env.ARES_STORAGE.get(key);
+    if (!object) return c.text("Not Found", 404);
 
-    // SEC-F06: Validate folder name against allowed values
-    const ALLOWED_FOLDERS = ["Gallery", "Library", "Blog", "Events", "Sponsors", "Docs", "Archived"];
-    if (!ALLOWED_FOLDERS.includes(newFolder)) {
-      return c.json({ error: `Invalid folder. Must be one of: ${ALLOWED_FOLDERS.join(", ")}` }, 400);
-    }
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set("etag", object.httpEtag);
+    // Cache individual images for 1 hour
+    headers.set("Cache-Control", "public, max-age=3600");
 
-    await c.env.DB.prepare("UPDATE media_tags SET folder = ? WHERE key = ?").bind(newFolder, key).run();
-    return c.json({ success: true, folder: newFolder });
+    return new Response(object.body, { headers });
+  } catch (err) {
+    console.error("R2 fetch error:", err);
+    return c.text("Internal Server Error", 500);
+  }
+});
+
+// ── PUT /media/move/:key — Move object to folder (Admin) ──────────────
+adminMediaRouter.put("/move/:key{.+$}", ensureAdmin, async (c) => {
+  const oldKey = c.req.param("key");
+  const { folder } = await c.req.json();
+  if (!folder) return c.json({ error: "Folder is required" }, 400);
+
+  try {
+    const object = await c.env.ARES_STORAGE.get(oldKey);
+    if (!object) return c.json({ error: "Source not found" }, 404);
+
+    const fileName = oldKey.split("/").pop();
+    const newKey = `${folder}/${fileName}`;
+
+    await c.env.ARES_STORAGE.put(newKey, object.body, {
+      httpMetadata: { contentType: object.httpMetadata.contentType },
+    });
+    await c.env.ARES_STORAGE.delete(oldKey);
+
+    // Update D1
+    await c.env.DB.prepare(
+      "UPDATE media_tags SET key = ?, folder = ? WHERE key = ?"
+    ).bind(newKey, folder, oldKey).run();
+
+    return c.json({ success: true, newKey });
   } catch (err) {
     console.error("R2 move error:", err);
     return c.json({ error: "Move failed" }, 500);
   }
 });
 
-// ── POST /admin/media/syndicate — Cross-post Asset to Socials (admin) ─
+
+// ── DELETE /media/:key — Delete object (Admin) ───────────────────────
+adminMediaRouter.delete("/:key{.+$}", ensureAdmin, async (c) => {
+  const key = c.req.param("key");
+  try {
+    await c.env.ARES_STORAGE.delete(key);
+    await c.env.DB.prepare("DELETE FROM media_tags WHERE key = ?").bind(key).run();
+    return c.json({ success: true });
+  } catch (err) {
+    console.error("R2 delete error:", err);
+    return c.json({ error: "Delete failed" }, 500);
+  }
+});
+
+// ── POST /media/syndicate — Manual social broadcast of asset (Admin) ────
 adminMediaRouter.post("/syndicate", ensureAdmin, async (c) => {
   try {
     const { key, caption } = await c.req.json();
-    if (!key || !caption) {
-      return c.json({ error: "Missing required fields" }, 400);
-    }
-    
+    if (!key) return c.json({ error: "Key is required" }, 400);
+
     const config = await getDbSettings(c);
     
     const imageUrl = `${new URL(c.req.url).origin}/api/media/${key}`;

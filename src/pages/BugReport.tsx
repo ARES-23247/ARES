@@ -31,7 +31,7 @@ export default function BugReport() {
         <div className="max-w-4xl mx-auto px-6">
           <div className="mb-12">
             <h1 className="text-4xl md:text-5xl font-black text-white font-heading tracking-tight mb-4 uppercase">
-              System <span aria-hidden="true" className="text-ares-red before:content-['Diagnostics']"></span>
+              System <span aria-hidden="true" className="text-ares-gold before:content-['Diagnostics']"></span>
               <span className="sr-only">Diagnostics</span>
             </h1>
             <p className="text-marble/80 text-lg md:text-xl max-w-2xl border-l-4 border-ares-red pl-4">
@@ -42,42 +42,42 @@ export default function BugReport() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Form Column */}
             <div>
-              <div className="bg-obsidian/50 border border-white/10 ares-cut-sm p-8 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-ares-red to-ares-bronze"></div>
+              <div className="bg-white/5 border border-white/10 ares-cut-sm p-8 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-ares-red to-ares-gold"></div>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label htmlFor="issue-title" className="block text-xs font-bold text-ares-bronze uppercase tracking-widest mb-2">Short Summary *</label>
+                    <label htmlFor="issue-title" className="block text-xs font-bold text-ares-gold uppercase tracking-widest mb-2">Short Summary *</label>
                     <input 
                       id="issue-title"
                       type="text" 
                       required
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full bg-black/50 border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all font-mono"
+                      className="w-full bg-black/40 border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-ares-gold focus:border-ares-gold transition-all font-mono"
                       placeholder="e.g. Gallery images fail to load on mobile"
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="issue-desc" className="block text-xs font-bold text-ares-bronze uppercase tracking-widest mb-2">Details (Optional)</label>
+                    <label htmlFor="issue-desc" className="block text-xs font-bold text-ares-gold uppercase tracking-widest mb-2">Details (Optional)</label>
                     <textarea 
                       id="issue-desc"
                       rows={5}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="w-full bg-black/50 border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all font-mono resize-none text-sm"
+                      className="w-full bg-black/40 border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-ares-gold focus:border-ares-gold transition-all font-mono resize-none text-sm"
                       placeholder="Walk us through the steps to reproduce the error..."
                     />
                     <p className="text-xs text-white/60 mt-2 italic">You can always add screenshots or more info on GitHub directly.</p>
                   </div>
 
                   <div>
-                    <label htmlFor="repo-select" className="block text-xs font-bold text-ares-bronze uppercase tracking-widest mb-2">Target Repository</label>
+                    <label htmlFor="repo-select" className="block text-xs font-bold text-ares-gold uppercase tracking-widest mb-2">Target Repository</label>
                     <select 
                       id="repo-select"
                       value={repoStr}
                       onChange={(e) => setRepoStr(e.target.value)}
-                      className="w-full bg-black/50 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all font-mono appearance-none"
+                      className="w-full bg-black/40 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-ares-gold focus:border-ares-gold transition-all font-mono appearance-none"
                     >
                       <option value={`${siteConfig.urls.githubOrg}/ARESWEB`}>ARESWEB (Web Portal)</option>
                       <option value={`${siteConfig.urls.githubOrg}/IntoTheDeep`}>IntoTheDeep (Robot Code)</option>
@@ -109,7 +109,7 @@ export default function BugReport() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-obsidian rounded-full flex items-center justify-center shrink-0 border border-white/10 text-white/60 text-xl">
+                <div className="w-12 h-12 bg-black/40 rounded-full flex items-center justify-center shrink-0 border border-white/10 text-white/60 text-xl">
                   <i className="fab fa-github"></i>
                 </div>
                 <div>
