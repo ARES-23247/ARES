@@ -20,12 +20,23 @@ interface ZulipOutgoingPayload {
   trigger: string;
 }
 
-// SEC-F03: Timing-safe comparison for webhook tokens
+// SEC-F01: Timing-safe comparison for webhook tokens (Length-Independent)
 function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  const enc = new TextEncoder();
+  const aBuf = enc.encode(a);
+  const bBuf = enc.encode(b);
+  
+  // Use a fixed length for comparison to avoid leaking the target length
+  // We'll use 64 bytes as a safe ceiling for tokens
+  const maxLength = Math.max(aBuf.length, bBuf.length, 64);
+  const aFixed = new Uint8Array(maxLength);
+  const bFixed = new Uint8Array(maxLength);
+  aFixed.set(aBuf);
+  bFixed.set(bBuf);
+
+  let result = aBuf.length === bBuf.length ? 0 : 1;
+  for (let i = 0; i < maxLength; i++) {
+    result |= aFixed[i] ^ bFixed[i];
   }
   return result === 0;
 }
@@ -39,10 +50,10 @@ zulipWebhookRouter.post("/", async (c) => {
     return c.json({ content: "❌ Invalid request payload." });
   }
 
-  // Validate webhook token — fail-closed: reject if no token is configured
+  // Validate webhook token — fail-closed
   const expectedToken = c.env.ZULIP_WEBHOOK_TOKEN;
   if (!expectedToken) {
-    console.error("[ZulipWebhook] ZULIP_WEBHOOK_TOKEN is not configured. Rejecting all requests.");
+    console.error("[ZulipWebhook] ZULIP_WEBHOOK_TOKEN is not configured.");
     return c.json({ content: "❌ Webhook token not configured on server." }, 403);
   }
   if (!timingSafeEqual(body.token, expectedToken)) {
@@ -51,16 +62,20 @@ zulipWebhookRouter.post("/", async (c) => {
   }
 
   const rawContent = body.message?.content || "";
-  // Strip the bot mention prefix (e.g., "@**ARES Bot**")
+  // Strip the bot mention prefix
   const cleaned = rawContent.replace(/@\*\*[^*]+\*\*/g, "").trim();
   
-  // FUN-F01: Handle empty content after bot mention
   if (!cleaned) {
     return c.json({ content: "🤖 Hello! I am the ARES Bot. Type `!help` to see what I can do." });
   }
 
-  const parts = cleaned.split(/\s+/);
-  const command = parts[0]?.toLowerCase();
+  // FUN-F01: Use regex to handle quoted arguments (supporting spaces in stream names)
+  // e.g. !broadcast "Engineering Team" Hello world
+  const args = cleaned.match(/[^\s"']+|"([^"]*)"|'([^']*)'/g)?.map(arg => 
+    arg.replace(/^["']|["']$/g, "")
+  ) || [];
+  
+  const command = args[0]?.toLowerCase();
 
   // SEC-05: Authorize destructive commands by checking sender role in DB
   const PRIVILEGED_COMMANDS = ["!task", "!broadcast"];
@@ -117,14 +132,14 @@ zulipWebhookRouter.post("/", async (c) => {
       }
 
       case "!task": {
-        const args = parts.slice(1);
-        if (args.length === 0) {
+        const taskArgs = args.slice(1);
+        if (taskArgs.length === 0) {
           return c.json({ content: "Usage: `!task <title>` to create, or `!task <#> done` to complete." });
         }
 
         // Check if it's a completion command: "!task 3 done"
-        const indexArg = parseInt(args[0]);
-        if (!isNaN(indexArg) && args[1]?.toLowerCase() === "done") {
+        const indexArg = parseInt(taskArgs[0]);
+        if (!isNaN(indexArg) && taskArgs[1]?.toLowerCase() === "done") {
           const config = await getSocialConfig(c);
           const ghConfig = buildGitHubConfig(config);
           if (!ghConfig) return c.json({ content: "⚠️ GitHub Projects not configured." });
@@ -147,7 +162,7 @@ zulipWebhookRouter.post("/", async (c) => {
         }
 
         // Otherwise, create a new task
-        const title = args.join(" ");
+        const title = taskArgs.join(" ");
         const config = await getSocialConfig(c);
         const ghConfig = buildGitHubConfig(config);
         if (!ghConfig) return c.json({ content: "⚠️ GitHub Projects not configured." });
@@ -210,10 +225,10 @@ zulipWebhookRouter.post("/", async (c) => {
       }
 
       case "!broadcast": {
-        const streamTarget = parts[1];
-        const msgCore = parts.slice(2).join(" ");
+        const streamTarget = args[1];
+        const msgCore = args.slice(2).join(" ");
         if (!streamTarget || !msgCore) {
-           return c.json({ content: "⚠️ Usage: `!broadcast <stream> <message...>`" });
+           return c.json({ content: "⚠️ Usage: `!broadcast <stream> <message...>` (use quotes for stream names with spaces)" });
         }
         
         const broadcastContent = `${msgCore}\n\n*— Broadcasted by ${body.message.sender_full_name} via ARES Bot*`;

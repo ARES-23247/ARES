@@ -26,26 +26,26 @@ export default function Home() {
               className="w-32 md:w-56 lg:w-[22rem] h-32 md:h-56 lg:h-[22rem] object-contain drop-shadow-[0_0_25px_rgba(192,0,0,0.6)] shrink-0" 
             />
             <div>
-              <div className="inline-block mb-3 px-4 py-2 bg-obsidian" style={{ backgroundColor: '#1A1A1A', borderRadius: '4px' }}>
-                <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-xs md:text-sm font-heading m-0" style={{ color: '#CD7F32' }}>
+              <div className="inline-block mb-3 px-4 py-2 bg-obsidian rounded">
+                <p className="text-ares-bronze font-bold uppercase tracking-[0.4em] text-xs md:text-sm font-heading m-0">
                   Appalachian Robotics & Engineering Society
                 </p>
               </div>
               <h1 className="text-6xl md:text-[7rem] lg:text-[10rem] font-bold text-white leading-[0.85] uppercase font-heading relative z-10 w-full xl:w-2/3">
-                <span className="inline-block mb-2 px-6 py-2 bg-obsidian rounded-tl-[1.5rem] rounded-br-[1.5rem] rounded-tr-md rounded-bl-md" style={{ backgroundColor: '#1A1A1A', color: '#ffffff' }}>Engineered</span> <br />
-                <span className="bg-ares-red px-6 py-2 pb-3 mt-4 inline-block rounded-tl-[1.5rem] rounded-br-[1.5rem] rounded-tr-md rounded-bl-md shadow-[0_20px_25px_-5px_rgba(0,0,0,0.4)]" style={{ backgroundColor: '#c00000', color: '#ffffff' }}>To Inspire</span>
+                <span className="inline-block mb-2 px-6 py-2 bg-obsidian rounded-tl-[1.5rem] rounded-br-[1.5rem] rounded-tr-md rounded-bl-md text-white">Engineered</span> <br />
+                <span className="bg-ares-red px-6 py-2 pb-3 mt-4 inline-block rounded-tl-[1.5rem] rounded-br-[1.5rem] rounded-tr-md rounded-bl-md shadow-[0_20px_25px_-5px_rgba(0,0,0,0.4)] text-white">To Inspire</span>
               </h1>
             </div>
           </div>
 
           <div className="max-w-2xl mb-10 border-l-4 border-ares-bronze pl-6">
-            <div id="hero-mountaineer-mindset" className="text-xl md:text-2xl font-medium leading-relaxed text-marble/80 px-4 py-3 bg-obsidian" style={{ backgroundColor: '#1A1A1A', color: '#cccccc', borderRadius: '8px' }}>
+            <div id="hero-mountaineer-mindset" className="text-xl md:text-2xl font-medium leading-relaxed text-marble/80 px-4 py-3 bg-obsidian rounded-lg">
               Building the future of West Virginia robotics with the <strong className="text-white">Mountaineer Mindset</strong>. Proudly competing as <a href="https://www.firstinspires.org/robotics/ftc" target="_blank" rel="noopener noreferrer" className="text-white hover:text-ares-red transition-all underline decoration-ares-red decoration-2 underline-offset-8 font-black italic tracking-tight">FIRST® Tech Challenge</a> Team #23247.
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-6 mt-4">
-            <Link to="/about" className="clipped-button bg-ares-red hover:bg-ares-bronze transition-all shadow-xl" style={{ backgroundColor: '#c00000', color: '#ffffff' }}>
+            <Link to="/about" className="clipped-button bg-ares-red hover:bg-ares-bronze transition-all shadow-xl text-white">
               Meet the Team
             </Link>
             <Link to="/sponsors" className="clipped-button bg-obsidian border-2 border-ares-bronze text-ares-bronze hover:bg-ares-bronze hover:text-white transition-all">
@@ -89,9 +89,9 @@ export default function Home() {
             ].map((card) => (
               <div key={card.title} className="marble-card hero-card p-10 flex flex-col h-full group">
                 <h3 className="text-ares-red text-2xl font-bold mb-6 font-heading group-hover:text-ares-bronze transition-colors">{card.title}</h3>
-                <p className="text-obsidian/70 text-base leading-relaxed mb-8 flex-grow">{card.body}</p>
+                <p className="text-obsidian/70 text-base leading-relaxed mb-8 flex-grow" dangerouslySetInnerHTML={{ __html: card.body }} />
                 <Link to={card.link} className="text-ares-red font-bold text-sm tracking-widest uppercase hover:translate-x-2 transition-transform inline-flex items-center gap-2">
-                  <span style={{ backgroundColor: '#e8e8e8', color: '#c00000' }}>{card.linkText}</span> <ArrowRight size={16} className="text-ares-red" />
+                  <span className="bg-marble text-ares-red">{card.linkText}</span> <ArrowRight size={16} className="text-ares-red" />
                 </Link>
               </div>
             ))}
@@ -104,7 +104,7 @@ export default function Home() {
       <section className="py-24 obsidian-section relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <h2 className="text-4xl md:text-6xl font-bold mb-8 font-heading">
-            Join <span className="bg-ares-red px-3 py-1 pb-2 ares-cut-sm" style={{ backgroundColor: '#c00000', color: '#ffffff' }}>ARES</span>
+            Join <span className="bg-ares-red px-3 py-1 pb-2 ares-cut-sm text-white">ARES</span>
           </h2>
           <p className="text-marble/80 text-xl mb-12 leading-relaxed">
             Whether you&apos;re a student looking to build monsters of engineering or a sponsor looking to invest in the future of WV technology, there is a place for you at the table.

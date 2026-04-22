@@ -16,6 +16,7 @@ interface PostRow {
   title: string;
   date: string;
   ast: string;
+  thumbnail?: string;
   author_nickname?: string;
   author_avatar?: string;
   cf_email?: string;
@@ -60,21 +61,31 @@ export default function BlogPost() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="w-full min-h-screen bg-obsidian text-marble py-8"
+      className="w-full min-h-screen bg-obsidian text-marble"
     >
-      <div className="w-full max-w-4xl mx-auto px-6 py-12 md:py-24">
-        <Link to="/blog" className="text-ares-gold hover:underline text-sm mb-8 inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">&larr; Back to all posts</Link>
-        <motion.header 
+      {/* ─── STANDALONE BLOG HERO ─── */}
+      <section className="relative w-full h-[50vh] min-h-[400px] flex items-center overflow-hidden bg-obsidian border-b-4 border-ares-cyan">
+        <img src={post.thumbnail || "/api/media/1776551060548-favicon.webp"} alt={post.title} className={`absolute inset-0 w-full h-full opacity-60 mix-blend-luminosity ${post.thumbnail ? 'object-cover' : 'object-contain p-16 bg-black/80'}`} />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/70 to-transparent"></div>
+        
+        {/* Motif: Glowing orb overlay */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vh] h-[80vh] rounded-full border border-ares-cyan/10 shadow-[0_0_120px_rgba(0,192,192,0.15)] pointer-events-none mix-blend-screen animate-pulse-slow" aria-hidden="true"></div>
+        
+        <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="mb-12"
+          className="relative z-10 max-w-4xl mx-auto px-6 w-full mt-16"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter mb-4">{post.title}</h1>
-          <div className="flex items-center gap-4 text-ares-red font-medium">
-             <span>{format(new Date(post.date), 'MMMM do, yyyy')}</span>
+          <Link to="/blog" className="text-ares-gold hover:text-white uppercase tracking-widest text-xs font-bold transition-all flex items-center gap-2 mb-6 w-fit">
+            <span>&larr;</span> Back to all posts
+          </Link>
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+             <span className="w-fit px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-ares-cyan/20 text-ares-cyan border border-ares-cyan/50 shadow-[0_0_15px_rgba(0,192,192,0.4)]">
+               {format(new Date(post.date), 'MMMM do, yyyy')}
+             </span>
              {(post.author_avatar || post.author_nickname || post.cf_email) && (
-               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 w-fit">
                  <img 
                    src={post.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.cf_email}`}
                    alt="Author"
@@ -86,14 +97,21 @@ export default function BlogPost() {
             {isEditor && (
               <Link 
                 to={`/dashboard/blog/${post.slug}`}
-                className="flex items-center gap-2 ml-auto px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-ares-cyan/10 hover:bg-ares-cyan text-ares-cyan hover:text-black border border-ares-cyan/30 transition-all shadow-lg backdrop-blur-sm"
+                className="w-fit flex items-center gap-2 md:ml-auto px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-ares-gold/10 hover:bg-ares-gold text-ares-gold hover:text-black border border-ares-gold/30 transition-all shadow-lg backdrop-blur-sm"
               >
                 <Edit2 size={14} /> Edit Post
               </Link>
             )}
           </div>
-        </motion.header>
-        <motion.article 
+          <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tighter drop-shadow-2xl">
+            {post.title}
+          </h1>
+        </motion.div>
+      </section>
+
+      {/* ─── BLOG CONTENT BODY ─── */}
+      <div className="w-full max-w-4xl mx-auto px-6 py-12 md:py-24">
+        <motion.article
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}

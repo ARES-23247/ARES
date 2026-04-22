@@ -109,4 +109,29 @@ describe("Hono Backend - /media Router", () => {
     expect(mockR2.put).toHaveBeenCalled();
     expect(mockAi.run).toHaveBeenCalledWith("@cf/llava-1.5-7b-hf", expect.anything());
   }, 15000);
+
+  it("should recursively list media when truncated (SCA-F01)", async () => {
+    // Page 1
+    mockR2.list.mockResolvedValueOnce({
+      objects: [{ key: "page1.png" }],
+      truncated: true,
+      cursor: "c1",
+    });
+    // Page 2
+    mockR2.list.mockResolvedValueOnce({
+      objects: [{ key: "page2.png" }],
+      truncated: false,
+    });
+    // Mock DB metadata
+    env.DB.all.mockResolvedValue({ results: [{ key: "page1.png" }, { key: "page2.png" }] });
+
+    const req = new Request("http://localhost/", { method: "GET" });
+    const res = await mediaRouter.request(req, {}, env, mockExecutionContext);
+
+    expect(res.status).toBe(200);
+    const json = await res.json() as any;
+    expect(json.media).toHaveLength(2);
+    expect(mockR2.list).toHaveBeenCalledTimes(2);
+    expect(mockR2.list).toHaveBeenNthCalledWith(2, expect.objectContaining({ cursor: "c1" }));
+  });
 });

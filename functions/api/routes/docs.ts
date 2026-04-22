@@ -1,11 +1,9 @@
 import { Hono } from "hono";
 import { Context } from "hono";
-import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, parsePagination, createContentLifecycleRouter, rateLimitMiddleware, turnstileMiddleware } from "../middleware";
+import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, parsePagination, checkWriteRateLimit, verifyTurnstile, createContentLifecycleRouter } from "../middleware";
 import { siteConfig } from "../../utils/site.config";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { emitNotification, notifyByRole } from "../../utils/notifications";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
 
 
 const docsRouter = new Hono<AppEnv>();
@@ -158,8 +156,9 @@ docsRouter.get("/:slug", async (c) => {
     if (!row) return c.json({ error: "Doc not found" }, 404);
 
     // Fetch contributors from history
+    // PII-F02: Exclude raw emails from contributor list
     const { results: historyKeys } = await c.env.DB.prepare(
-      `SELECT DISTINCT h.author_email, p.nickname, u.image as avatar
+      `SELECT DISTINCT p.nickname, u.image as avatar
        FROM docs_history h
        LEFT JOIN user u ON h.author_email = u.email
        LEFT JOIN user_profiles p ON u.id = p.user_id
@@ -177,27 +176,38 @@ docsRouter.get("/:slug", async (c) => {
 });
 
 // ── POST /docs/:slug/feedback — Submit doc feedback ───────────────────
-const feedbackSchema = z.object({
-  isHelpful: z.boolean(),
-  comment: z.string().max(2000).optional(),
-  turnstileToken: z.string().optional()
-});
+docsRouter.post("/:slug/feedback", async (c) => {
+  // SEC-DoW: Unauthenticated D1 write — enforce strict per-IP write limit
+  const ip = c.req.header("CF-Connecting-IP") || "unknown";
+  if (!checkWriteRateLimit(`feedback:${ip}`, 10, 60)) {
+    return c.json({ error: "Too many submissions" }, 429);
+  }
 
-docsRouter.post(
-  "/:slug/feedback",
-  rateLimitMiddleware(10, 60),
-  turnstileMiddleware(),
-  zValidator("json", feedbackSchema),
-  async (c) => {
+  try {
     const slug = (c.req.param("slug") || "");
-    const { isHelpful, comment } = c.req.valid("json");
+    const body = await c.req.json();
+    const { isHelpful, comment, turnstileToken } = body;
+
+    // SEC-DoW: Verify Turnstile challenge before D1 write
+    const valid = await verifyTurnstile(turnstileToken, c.env.TURNSTILE_SECRET_KEY, ip);
+    if (!valid) {
+      return c.json({ error: "Security verification failed" }, 403);
+    }
+
+    // SEC-04: Validate comment length
+    if (comment && typeof comment === "string" && comment.length > 2000) {
+      return c.json({ error: "Comment too long" }, 400);
+    }
 
     await c.env.DB.prepare(
       "INSERT INTO docs_feedback (slug, is_helpful, comment) VALUES (?, ?, ?)"
     ).bind(slug, isHelpful ? 1 : 0, comment || null).run();
     return c.json({ success: true });
+  } catch (err) {
+    console.error("D1 feedback error:", err);
+    return c.json({ error: "Feedback failed" }, 500);
   }
-);
+});
 
 // ── POST /save — create/update a doc (auth required) ────────────────────
 docsRouter.post("/save", ensureAuth, async (c) => {

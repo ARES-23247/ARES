@@ -1,25 +1,19 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, logAuditAction  } from "../middleware";
+import { AppEnv, ensureAdmin, parsePagination, ensureAuth, logAuditAction  } from "../middleware";
 
 const outreachRouter = new Hono<AppEnv>();
 
 // EFF-02: Shared volunteer event query
 async function fetchVolunteerEvents(db: D1Database) {
-  const { results } = await db.prepare(
-    `SELECT e.id, e.title, e.date_start as date, e.location, e.description,
-            COUNT(s.user_id) as students_count,
-            (COALESCE((strftime('%s', e.date_end) - strftime('%s', e.date_start)) / 3600.0, 0) * COUNT(s.user_id))
-             + COALESCE(SUM(s.prep_hours), 0) as hours_logged
-     FROM events e
-     LEFT JOIN event_signups s ON s.event_id = e.id AND s.attended = 1
-     WHERE e.is_volunteer = 1 AND e.is_deleted = 0 AND e.status = 'published'
-     GROUP BY e.id`
-  ).all();
-  return (results || []).map((e: Record<string, unknown>) => ({
-    ...e,
-    reach_count: 0,
-    is_dynamic: true,
-  }));
+  try {
+    const { results } = await db.prepare(
+      "SELECT id, title, date_start as date, location, 'volunteer' as type FROM events WHERE is_volunteer = 1 AND is_deleted = 0 AND status = 'published' ORDER BY date_start DESC"
+    ).all();
+    return (results || []) as Record<string, unknown>[];
+  } catch (err) {
+    console.error("D1 volunteer fetch error:", err);
+    return [];
+  }
 }
 
 function mergeAndSort(logs: Record<string, unknown>[], volunteerEvents: Record<string, unknown>[]) {
@@ -28,8 +22,8 @@ function mergeAndSort(logs: Record<string, unknown>[], volunteerEvents: Record<s
   );
 }
 
-// ── GET / ── list all outreach logs ──────────
-outreachRouter.get("/", async (c) => {
+// ── GET / ── list all outreach logs (auth required) ──────────
+outreachRouter.get("/", ensureAuth, async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
     const { results: logs } = await c.env.DB.prepare(

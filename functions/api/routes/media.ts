@@ -269,13 +269,12 @@ adminMediaRouter.post("/syndicate", ensureAdmin, async (c) => {
     const imageUrl = `${new URL(c.req.url).origin}/api/media/${key}`;
     const { dispatchPhotoSocials } = await import("../../utils/socialSync");
     
-    try {
-      await dispatchPhotoSocials(imageUrl, caption, config);
-      return c.json({ success: true, message: "Syndication dispatched successfully" });
-    } catch (err: unknown) {
-      console.error("Dispatch photo socials failed:", err);
-      return c.json({ error: `Network Syndication Failed: ${(err as Error)?.message || String(err)}` }, 502);
-    }
+    c.executionCtx.waitUntil(
+      dispatchPhotoSocials(imageUrl, caption, config)
+        .catch(err => console.error("[MediaSyndicate] Background failure:", err))
+    );
+    
+    return c.json({ success: true, message: "Syndication dispatched to background" });
   } catch (err) {
     console.error("Syndicate dispatch error:", err);
     return c.json({ error: "Failed to dispatch syndication hook" }, 500);

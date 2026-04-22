@@ -46,7 +46,7 @@ export async function createShadowRevision(
     data.title,
     data.author || "ARES Team",
     dateStr,
-    data.coverImageUrl || "/gallery_1.png",
+    data.coverImageUrl || "",
     data.snippet,
     data.astStr,
     user.email,

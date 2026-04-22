@@ -42,10 +42,8 @@ export default function TechStack() {
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-purple-500/30 flex items-center justify-center bg-purple-500/10 text-purple-500 mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
+              <Zap size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Edge AI Vision</h3>
             <p className="text-marble/70 leading-relaxed mb-4 flex-1">
@@ -66,7 +64,7 @@ export default function TechStack() {
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-orange-500/30 flex items-center justify-center bg-orange-500/10 text-orange-500 mb-6">
+            <div className="w-12 h-12 rounded-full border border-ares-bronze/30 flex items-center justify-center bg-ares-bronze/10 text-ares-bronze mb-6">
               <HardDrive size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Cloudflare R2 Storage</h3>
@@ -88,7 +86,7 @@ export default function TechStack() {
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-blue-500/30 flex items-center justify-center bg-blue-500/10 text-blue-500 mb-6">
+            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6">
               <LayoutDashboard size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Headless CMS</h3>
@@ -99,7 +97,7 @@ export default function TechStack() {
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-green-500/30 flex items-center justify-center bg-green-500/10 text-green-500 mb-6">
+            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
               <GlobeLock size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Progressive App Mode</h3>
@@ -110,7 +108,7 @@ export default function TechStack() {
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-teal-500/30 flex items-center justify-center bg-teal-500/10 text-teal-500 mb-6">
+            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
               <MessageSquare size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Zulip Cloud</h3>
@@ -130,7 +128,7 @@ export default function TechStack() {
         <div className="max-w-4xl mx-auto space-y-12">
           
           <div className="flex flex-col md:flex-row items-start gap-8">
-            <div className="w-16 h-16 shrink-0 ares-cut bg-gradient-to-br from-green-500 to-green-900 flex items-center justify-center text-white shadow-lg">
+            <div className="w-16 h-16 shrink-0 ares-cut bg-gradient-to-br from-ares-gold to-ares-bronze flex items-center justify-center text-white shadow-lg">
               <DollarSign size={28} />
             </div>
             <div>
@@ -145,7 +143,7 @@ export default function TechStack() {
           </div>
 
           <div className="flex flex-col md:flex-row items-start gap-8">
-            <div className="w-16 h-16 shrink-0 ares-cut bg-gradient-to-br from-indigo-500 to-purple-900 flex items-center justify-center text-white shadow-lg">
+            <div className="w-16 h-16 shrink-0 ares-cut bg-gradient-to-br from-ares-red to-ares-bronze flex items-center justify-center text-white shadow-lg">
               <GlobeLock size={28} />
             </div>
             <div>
@@ -153,7 +151,7 @@ export default function TechStack() {
               <p className="text-marble/70 text-lg leading-relaxed mb-4">
                 We didn&apos;t just build it free; we built it secure. Our custom Content Management System (CMS) is protected by <strong>Better-Auth</strong> session management and strict role-based access controls.
               </p>
-              <div className="mb-6 p-4 bg-white/5 border-l-2 border-purple-500 text-sm text-marble/60 italic">
+              <div className="mb-6 p-4 bg-white/5 border-l-2 border-ares-red text-sm text-marble/60 italic">
                 <strong>What this means:</strong> We implement verified session boundaries. Only authorized, verified team members can interact with sensitive robotics data, RSVP for events, or publish content.
               </div>
               <p className="text-marble/70 leading-relaxed">

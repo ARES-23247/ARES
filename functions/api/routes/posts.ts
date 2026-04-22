@@ -5,10 +5,10 @@ import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { emitNotification, notifyByRole } from "../../utils/notifications";
 import { 
-  createShadowRevision, 
   approvePost, 
   getPostHistory, 
-  restorePostFromHistory 
+  restorePostFromHistory,
+  createShadowRevision
 } from "../../utils/postHistory";
 
 
@@ -49,7 +49,7 @@ postsRouter.get("/", async (c) => {
     if (q) {
       // FTS5 Search Route (Using JOIN rule for metadata)
       const { results } = await c.env.DB.prepare(
-        `SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail, p.cf_email,
+        `SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail,
                 uP.nickname as author_nickname, u.image as author_avatar
          FROM posts_fts f
          JOIN posts p ON f.slug = p.slug
@@ -64,7 +64,7 @@ postsRouter.get("/", async (c) => {
 
     // Standard Route
     const { results } = await c.env.DB.prepare(
-      `SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail, p.cf_email,
+      `SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail,
               uP.nickname as author_nickname, u.image as author_avatar
        FROM posts p
        LEFT JOIN user u ON p.cf_email = u.email
@@ -111,7 +111,7 @@ postsRouter.get("/:slug", async (c) => {
   const slug = (c.req.param("slug") || "");
   try {
     const row = await c.env.DB.prepare(
-      `SELECT p.slug, p.title, p.date, p.ast, p.cf_email,
+      `SELECT p.slug, p.title, p.date, p.ast, p.thumbnail,
               uP.nickname as author_nickname, u.image as author_avatar
        FROM posts p
        LEFT JOIN user u ON p.cf_email = u.email
@@ -198,7 +198,7 @@ async function handlePostSave(c: Context<AppEnv>) {
         body.title,
         body.author || "ARES Team",
         dateStr,
-        body.coverImageUrl || "/gallery_1.png",
+        body.coverImageUrl || "",
         snippet,
         astStr,
         email,
@@ -312,7 +312,7 @@ async function handlePostEdit(c: Context<AppEnv>) {
       .bind(
         body.title,
         body.author || "ARES Team",
-        body.coverImageUrl || "/gallery_1.png",
+        body.coverImageUrl || "",
         snippet,
         astStr,
         status,
@@ -378,7 +378,7 @@ postsRouter.post("/:slug/repush", ensureAdmin, async (c) => {
       title: post.title,
       url: `${new URL(c.req.url).origin}/blog/${slug}`,
       snippet: extractAstText(post.snippet || "").substring(0, 250) || "Read the latest update from ARES 23247!",
-      coverImageUrl: post.thumbnail || "/gallery_1.png",
+      coverImageUrl: post.thumbnail || "",
       baseUrl: new URL(c.req.url).origin
     }, socialConfig, socials);
   } catch (err: unknown) {
