@@ -29,6 +29,7 @@ export default function PromptModal({
   const [value, setValue] = useState(defaultValue);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   const inputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
@@ -50,8 +51,36 @@ export default function PromptModal({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
-      if (e.key === "Escape") onCancel();
-      if (e.key === "Enter") onSubmit(value);
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onCancel();
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onSubmit(value);
+      }
+      if (e.key === "Tab") {
+        const focusableElements = modalRef.current?.querySelectorAll(
+          'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select, [tabindex]:not([tabindex="-1"])'
+        ) as NodeListOf<HTMLElement>;
+        
+        if (focusableElements && focusableElements.length > 0) {
+          const firstElement = focusableElements[0];
+          const lastElement = focusableElements[focusableElements.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              lastElement.focus();
+              e.preventDefault();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              firstElement.focus();
+              e.preventDefault();
+            }
+          }
+        }
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -69,6 +98,11 @@ export default function PromptModal({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           <motion.div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="prompt-modal-title"
+            aria-describedby="prompt-modal-desc"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -81,10 +115,10 @@ export default function PromptModal({
                 <MessageSquare size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-heading font-bold text-white mb-2 uppercase tracking-wide">
+                <h3 id="prompt-modal-title" className="text-xl font-heading font-bold text-white mb-2 uppercase tracking-wide">
                   {title}
                 </h3>
-                <p className="text-sm text-zinc-400 leading-relaxed mb-4">
+                <p id="prompt-modal-desc" className="text-sm text-zinc-400 leading-relaxed mb-4">
                   {description}
                 </p>
                 <input

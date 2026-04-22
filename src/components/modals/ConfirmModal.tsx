@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, Check } from "lucide-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 export interface ConfirmOptions {
   title?: string;
@@ -26,15 +26,56 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
-      if (e.key === "Escape") onCancel();
-      if (e.key === "Enter") onConfirm();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onCancel();
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onConfirm();
+      }
+      if (e.key === "Tab") {
+        const focusableElements = modalRef.current?.querySelectorAll(
+          'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select, [tabindex]:not([tabindex="-1"])'
+        ) as NodeListOf<HTMLElement>;
+        
+        if (focusableElements && focusableElements.length > 0) {
+          const firstElement = focusableElements[0];
+          const lastElement = focusableElements[focusableElements.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              lastElement.focus();
+              e.preventDefault();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              firstElement.focus();
+              e.preventDefault();
+            }
+          }
+        }
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onCancel, onConfirm]);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Auto-focus first button on open
+      const timer = setTimeout(() => {
+        const confirmBtn = modalRef.current?.querySelector('button:last-of-type') as HTMLElement;
+        if (confirmBtn) confirmBtn.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -48,6 +89,11 @@ export default function ConfirmModal({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           <motion.div
+            ref={modalRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
+            aria-describedby="confirm-modal-desc"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -60,10 +106,10 @@ export default function ConfirmModal({
                 {destructive ? <AlertTriangle size={24} /> : <Check size={24} />}
               </div>
               <div>
-                <h3 className="text-xl font-heading font-bold text-white mb-2 uppercase tracking-wide">
+                <h3 id="confirm-modal-title" className="text-xl font-heading font-bold text-white mb-2 uppercase tracking-wide">
                   {title}
                 </h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">
+                <p id="confirm-modal-desc" className="text-sm text-zinc-400 leading-relaxed">
                   {description}
                 </p>
               </div>

@@ -7,7 +7,7 @@ describe('analytics utility', () => {
 
   beforeEach(() => {
     // Mock fetch
-    globalThis.fetch = vi.fn(() => Promise.resolve({ ok: true } as Response));
+    globalThis.fetch = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as unknown as Response));
     
     // Mock window.location generically (jsdom allows some edits, but we overwrite properties)
     Object.defineProperty(window, 'location', {
