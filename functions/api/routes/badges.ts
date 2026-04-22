@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, getSessionUser  } from "./_shared";
+import { AppEnv, ensureAdmin, getSessionUser  } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
 const badgesRouter = new Hono<AppEnv>();

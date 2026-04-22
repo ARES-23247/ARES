@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, logAuditAction, validateLength, MAX_INPUT_LENGTHS  } from "./_shared";
+import { AppEnv, ensureAdmin, parsePagination, logAuditAction, validateLength, MAX_INPUT_LENGTHS  } from "../middleware";
 
 const awardsRouter = new Hono<AppEnv>();
 

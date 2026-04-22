@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, getSessionUser, ensureAuth, parsePagination } from "./_shared";
+import { AppEnv, getSessionUser, ensureAuth, parsePagination } from "../middleware";
 
 const notificationsRouter = new Hono<AppEnv>();
 

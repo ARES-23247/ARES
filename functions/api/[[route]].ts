@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { handle } from "hono/cloudflare-pages";
 import { cors } from "hono/cors";
-import { Bindings, AppEnv, ensureAdmin, checkRateLimit, logSystemError } from "./routes/_shared";
+import { Bindings, AppEnv, ensureAdmin, checkRateLimit, logSystemError } from "./middleware";
 
 // ── Domain Routers ───────────────────────────────────────────────────
 import authRouter from "./routes/auth";

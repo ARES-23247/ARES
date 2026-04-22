@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, checkWriteRateLimit  } from "./_shared";
+import { AppEnv, ensureAdmin, checkWriteRateLimit  } from "../middleware";
 
 const analyticsRouter = new Hono<AppEnv>();
 

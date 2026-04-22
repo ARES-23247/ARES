@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AppEnv } from "../api/routes/_shared";
+import { AppEnv } from "../api/middleware";
 
 
 /**
@@ -97,7 +97,7 @@ export async function notifyByRole(
 
     if (!results || results.length === 0) return;
 
-    const promises = results.map(row => 
+    const promises = results.map((row: any) => 
       emitNotification(c, {
         userId: row.id as string,
         ...payload

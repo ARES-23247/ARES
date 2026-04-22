@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin  } from "./_shared";
+import { AppEnv, ensureAdmin  } from "../middleware";
 import { upsertProfile } from "./_profileUtils";
 
 const usersRouter = new Hono<AppEnv>();

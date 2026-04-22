@@ -89,20 +89,20 @@ describe("Hono Backend - /posts Router", () => {
     const req = new Request("http://localhost/test-post", { method: "DELETE" });
     const res = await postsRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("UPDATE posts SET is_deleted = 1 WHERE slug = ? OR id = ?"));
+    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("UPDATE posts SET is_deleted = 1 WHERE slug = ?"));
   });
 
   it("PATCH /:slug/restore - restore", async () => {
     const req = new Request("http://localhost/test-post/restore", { method: "PATCH" });
     const res = await postsRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("UPDATE posts SET is_deleted = 0, status = 'draft' WHERE slug = ? OR id = ?"));
+    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("UPDATE posts SET is_deleted = 0, status = 'draft' WHERE slug = ?"));
   });
 
   it("DELETE /:slug/purge - permanent delete", async () => {
     const req = new Request("http://localhost/test-post/purge", { method: "DELETE" });
     const res = await postsRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("DELETE FROM posts WHERE slug = ? OR id = ?"));
+    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("DELETE FROM posts WHERE slug = ?"));
   });
 });

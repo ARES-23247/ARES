@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AppEnv, SessionUser } from "../api/routes/_shared";
+import { AppEnv, SessionUser } from "../api/middleware";
 import { emitNotification } from "./notifications";
 
 export interface PostHistoryRow {

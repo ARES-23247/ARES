@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { Context } from "hono";
-import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, parsePagination, createContentLifecycleRouter, rateLimitMiddleware, turnstileMiddleware } from "./_shared";
+import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, parsePagination, createContentLifecycleRouter, rateLimitMiddleware, turnstileMiddleware } from "../middleware";
 import { siteConfig } from "../../utils/site.config";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { emitNotification, notifyByRole } from "../../utils/notifications";

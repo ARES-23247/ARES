@@ -2,11 +2,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
 import authRouter from "./auth";
-import * as shared from "./_shared";
+import * as shared from "../middleware";
 import * as authUtils from "../../utils/auth";
 
-vi.mock("./_shared", async () => {
-  const actual = await vi.importActual<typeof shared>("./_shared");
+vi.mock("../middleware", async () => {
+  const actual = await vi.importActual<typeof shared>("../middleware");
   return {
     ...actual,
     getSessionUser: vi.fn(),

@@ -39,7 +39,7 @@ export function useDashboardNotifications(
         })
         .catch(() => {});
 
-      adminApi.get<{ docs?: { status: string }[] }>("/api/admin/docs")
+      adminApi.get<{ docs?: { status: string }[] }>("/api/admin/docs/list")
         .then((data) => {
           if (data.docs) {
             setPendingDocsCount(data.docs.filter((d) => d.status === "pending").length);

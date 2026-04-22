@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv  } from "./_shared";
+import { AppEnv  } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
 const githubWebhookRouter = new Hono<AppEnv>();

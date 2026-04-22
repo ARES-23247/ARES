@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, MAX_INPUT_LENGTHS, getSocialConfig, parsePagination, getSessionUser, ensureAuth, logAuditAction, rateLimitMiddleware, turnstileMiddleware } from "./_shared";
+import { AppEnv, MAX_INPUT_LENGTHS, getSocialConfig, parsePagination, getSessionUser, ensureAuth, logAuditAction, rateLimitMiddleware, turnstileMiddleware } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../utils/notifications";
 import { buildGitHubConfig, createProjectItem } from "../../utils/githubProjects";

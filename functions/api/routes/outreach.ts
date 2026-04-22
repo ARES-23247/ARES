@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, logAuditAction  } from "./_shared";
+import { AppEnv, ensureAdmin, parsePagination, logAuditAction  } from "../middleware";
 
 const outreachRouter = new Hono<AppEnv>();
 

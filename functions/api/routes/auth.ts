@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, getSessionUser  } from "./_shared";
+import { AppEnv, getSessionUser  } from "../middleware";
 import { getAuth } from "../../utils/auth";
 
 const authRouter = new Hono<AppEnv>();

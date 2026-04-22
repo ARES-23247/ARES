@@ -1,5 +1,5 @@
 import { Hono, Context } from "hono";
-import { AppEnv  } from "./_shared";
+import { AppEnv  } from "../middleware";
 
 const tbaRouter = new Hono<AppEnv>();
 

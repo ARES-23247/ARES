@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AppEnv } from "./_shared";
+import { AppEnv } from "../middleware";
 import { encrypt } from "../../utils/crypto";
 
 export async function upsertProfile(

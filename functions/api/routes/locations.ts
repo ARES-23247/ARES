@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, validateLength, MAX_INPUT_LENGTHS, ensureAdmin, parsePagination  } from "./_shared";
+import { AppEnv, validateLength, MAX_INPUT_LENGTHS, ensureAdmin, parsePagination  } from "../middleware";
 
 const locationsRouter = new Hono<AppEnv>();
 const adminLocationsRouter = new Hono<AppEnv>();

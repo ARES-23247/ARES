@@ -1,4 +1,4 @@
-import { Bindings, logSystemError } from "../api/routes/_shared";
+import { Bindings, logSystemError } from "../api/middleware";
 
 /**
  * Minimal credentials needed for Zulip API calls.

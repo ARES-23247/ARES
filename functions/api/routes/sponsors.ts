@@ -1,5 +1,5 @@
 import { Context, Hono } from "hono";
-import { AppEnv, ensureAdmin, logAuditAction, parsePagination, validateLength, MAX_INPUT_LENGTHS } from "./_shared";
+import { AppEnv, ensureAdmin, logAuditAction, parsePagination, validateLength, MAX_INPUT_LENGTHS } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 
 const sponsorsRouter = new Hono<AppEnv>();

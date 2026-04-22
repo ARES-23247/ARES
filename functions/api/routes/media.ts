@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, getDbSettings, checkRateLimit } from "./_shared";
+import { AppEnv, ensureAdmin, getDbSettings, checkRateLimit } from "../middleware";
 
 const mediaRouter = new Hono<AppEnv>();
 const adminMediaRouter = new Hono<AppEnv>();

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, parsePagination  } from "../_shared";
+import { AppEnv, parsePagination  } from "../../middleware";
 import signupsRouter from "./signups";
 
 const eventsRouter = new Hono<AppEnv>();

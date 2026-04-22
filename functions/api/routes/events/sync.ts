@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, getSessionUser, getDbSettings  } from "../_shared";
+import { AppEnv, getSessionUser, getDbSettings  } from "../../middleware";
 import { pullEventsFromGcal } from "../../../utils/gcalSync";
 
 const syncRouter = new Hono<AppEnv>();

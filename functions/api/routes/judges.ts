@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, checkWriteRateLimit, verifyTurnstile  } from "./_shared";
+import { AppEnv, ensureAdmin, checkWriteRateLimit, verifyTurnstile  } from "../middleware";
 
 const judgesRouter = new Hono<AppEnv>();
 

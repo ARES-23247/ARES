@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv  } from "./_shared";
+import { AppEnv  } from "../middleware";
 
 const sitemapRouter = new Hono<AppEnv>();
 

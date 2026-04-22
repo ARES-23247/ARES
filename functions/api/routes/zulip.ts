@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, getSocialConfig } from "./_shared";
+import { AppEnv, ensureAdmin, getSocialConfig } from "../middleware";
 
 const zulipRouter = new Hono<AppEnv>();
 

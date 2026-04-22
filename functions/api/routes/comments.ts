@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig } from "./_shared";
+import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig } from "../middleware";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
 

@@ -9,7 +9,7 @@ import {
 import { dispatchBluesky } from './social/bluesky';
 import { dispatchTwitterPhoto } from './social/twitter';
 import { dispatchFacebook, dispatchMetaPhoto } from './social/meta';
-import { logSystemError } from '../api/routes/_shared';
+import { logSystemError } from '../api/middleware';
 
 export interface SocialConfig {
   DISCORD_WEBHOOK_URL?: string;
