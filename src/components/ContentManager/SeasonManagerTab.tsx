@@ -18,8 +18,8 @@ interface SeasonManagerTabProps {
   onEditSeason?: (id: string) => void;
   confirmId: string | null;
   setConfirmId: (id: string | null) => void;
-  restoreMutation: any;
-  purgeMutation: any;
+  restoreMutation: ReturnType<typeof useContentMutation<string>>;
+  purgeMutation: ReturnType<typeof useContentMutation<{type: string, id: string}>>;
 }
 
 export default function SeasonManagerTab({

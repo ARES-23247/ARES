@@ -104,8 +104,8 @@ export default function SeasonEditor() {
       queryClient.invalidateQueries({ queryKey: ["admin-seasons"] });
       queryClient.invalidateQueries({ queryKey: ["seasons"] });
       navigate("/dashboard/manage_seasons");
-    } catch (e: any) {
-      setErrorMsg(e.message || "Failed to save season.");
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "Failed to save season.");
     } finally {
       setIsPending(false);
     }
@@ -127,8 +127,9 @@ export default function SeasonEditor() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
         <div className="space-y-4">
           <div>
-            <label className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Season ID</label>
+            <label htmlFor="season-id" className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Season ID</label>
             <input
+              id="season-id"
               type="text"
               value={seasonId}
               onChange={(e) => setSeasonId(e.target.value)}
@@ -138,8 +139,9 @@ export default function SeasonEditor() {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Challenge Name</label>
+            <label htmlFor="challenge-name" className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Challenge Name</label>
             <input
+              id="challenge-name"
               type="text"
               value={challengeName}
               onChange={(e) => setChallengeName(e.target.value)}
@@ -150,7 +152,7 @@ export default function SeasonEditor() {
         </div>
 
         <div>
-          <label className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Robot / Season Cover</label>
+          <span className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Robot / Season Cover</span>
           <CoverAssetPicker 
             coverImage={robotImageUrl}
             isUploading={isUploadingCover}
@@ -166,8 +168,9 @@ export default function SeasonEditor() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Robot Name</label>
+          <label htmlFor="robot-name" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Robot Name</label>
           <input
+            id="robot-name"
             type="text"
             value={robotName}
             onChange={(e) => setRobotName(e.target.value)}
@@ -176,8 +179,9 @@ export default function SeasonEditor() {
           />
         </div>
         <div>
-          <label className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">CAD Link</label>
+          <label htmlFor="cad-link" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">CAD Link</label>
           <input
+            id="cad-link"
             type="text"
             value={cadUrl}
             onChange={(e) => setCadUrl(e.target.value)}
@@ -187,19 +191,20 @@ export default function SeasonEditor() {
         </div>
         <div className="flex gap-2">
             <div className="flex-1">
-                <label className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Start Date</label>
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble [&::-webkit-calendar-picker-indicator]:invert" />
+                <label htmlFor="start-date" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Start Date</label>
+                <input id="start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble [&::-webkit-calendar-picker-indicator]:invert" />
             </div>
             <div className="flex-1">
-                <label className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">End Date</label>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble [&::-webkit-calendar-picker-indicator]:invert" />
+                <label htmlFor="end-date" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">End Date</label>
+                <input id="end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble [&::-webkit-calendar-picker-indicator]:invert" />
             </div>
         </div>
       </div>
 
       <div>
-        <label className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Brief Summary</label>
+        <label htmlFor="summary" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Brief Summary</label>
         <textarea
+          id="summary"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble h-20"
@@ -208,7 +213,7 @@ export default function SeasonEditor() {
       </div>
 
       <div className="space-y-2">
-        <label className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em]">Robot Design & Season Highlights</label>
+        <span className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em]">Robot Design & Season Highlights</span>
         <RichEditorToolbar editor={editor} documentTitle={challengeName} />
       </div>
 

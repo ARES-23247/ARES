@@ -192,8 +192,9 @@ export default function OutreachTracker() {
                 fullWidth
               />
               <div className="flex flex-col">
-                <label className="block text-xs font-bold text-marble/60 uppercase tracking-widest mb-2 ml-1">Relate to Season</label>
+                <label htmlFor="outreach-season" className="block text-xs font-bold text-marble/60 uppercase tracking-widest mb-2 ml-1">Relate to Season</label>
                 <select
+                  id="outreach-season"
                   value={formData.season_id || ""}
                   onChange={(e) => setFormData({ ...formData, season_id: e.target.value })}
                   className="w-full bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red transition-all appearance-none"

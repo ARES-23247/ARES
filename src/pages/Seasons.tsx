@@ -40,7 +40,7 @@ export default function Seasons() {
     }
   });
 
-  const isLoading = isLoadingSeasons || isLoadingAwards;
+
 
   return (
     <div className="flex flex-col w-full bg-ares-gray-deep min-h-screen text-marble relative overflow-hidden">
