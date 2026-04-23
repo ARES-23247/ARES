@@ -39,7 +39,7 @@ async function listAllObjects(bucket: R2Bucket, options?: R2ListOptions) {
 mediaRouter.get("/", async (c) => {
   // SEC-DoW: Rate limit gallery listing (30 req/min per IP — list() is expensive)
   const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
-  if (!checkRateLimit(ip, 30, 60)) {
+  if (c.env.DEV_BYPASS !== "true" && c.env.DEV_BYPASS !== "1" && !checkRateLimit(ip, 30, 60)) {
     return c.text("Too many requests", 429);
   }
 

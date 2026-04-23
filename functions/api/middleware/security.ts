@@ -100,6 +100,11 @@ export async function verifyTurnstile(
  */
 export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
   return async (c: Context<AppEnv>, next: Next) => {
+    // SEC-03: Bypass rate limiting in local dev/test if DEV_BYPASS is enabled
+    if (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1") {
+      return await next();
+    }
+
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     if (!checkRateLimit(`mw:${ip}`, limit, windowSeconds)) {
       return c.json({ error: "Too many submissions. Please try again later." }, 429);

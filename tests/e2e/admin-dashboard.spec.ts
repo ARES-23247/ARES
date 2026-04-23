@@ -64,7 +64,7 @@ test.describe('Admin Dashboard', () => {
     
     // Verify user profile section rendered the mocked user
     await page.screenshot({ path: 'admin-dashboard.png', fullPage: true });
-    await expect(page.getByText('Admin User')).toBeVisible();
+    await expect(page.getByText('Admin User', { exact: true }).first()).toBeVisible();
     
     // Verify admin hubs are accessible
     await expect(page.getByText(/User Roles/i)).toBeVisible();
