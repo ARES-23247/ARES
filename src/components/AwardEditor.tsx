@@ -8,6 +8,8 @@ import { Plus, Trash2, Trophy, Star, Calendar, MapPin, XCircle, Save } from "luc
 import { motion, AnimatePresence } from "framer-motion";
 import { adminApi } from "../api/adminApi";
 
+import SeasonPicker from "./SeasonPicker";
+
 interface Award {
   id: string;
   title: string;
@@ -15,6 +17,7 @@ interface Award {
   event_name: string | null;
   image_url: string | null;
   description: string | null;
+  season_id?: string;
 }
 
 export default function AwardEditor() {
@@ -26,7 +29,8 @@ export default function AwardEditor() {
     year: new Date().getFullYear(),
     event_name: "",
     image_url: "",
-    description: ""
+    description: "",
+    season_id: ""
   });
 
   const { data: awards = [], isLoading } = useQuery<Award[]>({
@@ -123,6 +127,7 @@ export default function AwardEditor() {
                 placeholder="e.g. West Virginia State Championship"
                 focusColor="ares-gold"
               />
+              <SeasonPicker value={formData.season_id} onChange={(val) => setFormData({ ...formData, season_id: val })} />
               <DashboardInput
                 id="award-image"
                 label="Image URL (Optional)"

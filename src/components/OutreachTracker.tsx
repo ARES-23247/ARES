@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, MapPin, Users, Clock, Target, Calendar, CheckCircle, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminApi } from "../api/adminApi";
+import SeasonPicker from "./SeasonPicker";
 
 interface OutreachLog {
   id: string;
@@ -20,11 +21,6 @@ interface OutreachLog {
   description: string | null;
   season_id?: string | null;
   is_dynamic?: boolean;
-}
-
-interface Season {
-  id: string;
-  challenge_name: string;
 }
 
 export default function OutreachTracker() {
@@ -40,14 +36,6 @@ export default function OutreachTracker() {
     reach_count: 0,
     description: "",
     season_id: ""
-  });
-
-  const { data: seasons = [] } = useQuery<Season[]>({
-    queryKey: ["public-seasons"],
-    queryFn: async () => {
-      const d = await adminApi.get<{ seasons?: Season[] }>("/api/seasons");
-      return d.seasons || [];
-    }
   });
 
   const { data: logs = [], isLoading } = useQuery<OutreachLog[]>({
@@ -191,20 +179,7 @@ export default function OutreachTracker() {
                 focusColor="ares-red"
                 fullWidth
               />
-              <div className="flex flex-col">
-                <label htmlFor="outreach-season" className="block text-xs font-bold text-marble/60 uppercase tracking-widest mb-2 ml-1">Relate to Season</label>
-                <select
-                  id="outreach-season"
-                  value={formData.season_id || ""}
-                  onChange={(e) => setFormData({ ...formData, season_id: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red transition-all appearance-none"
-                >
-                  <option value="" className="bg-ares-gray-deep">General / No Season</option>
-                  {seasons.map(s => (
-                    <option key={s.id} value={s.id} className="bg-ares-gray-deep">{s.id} - {s.challenge_name}</option>
-                  ))}
-                </select>
-              </div>
+              <SeasonPicker value={formData.season_id || ""} onChange={(val) => setFormData({ ...formData, season_id: val })} />
             </div>
             <DashboardSubmitButton 
               isPending={saveMutation.isPending} 

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, logAuditAction, MAX_INPUT_LENGTHS } from "../../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, MAX_INPUT_LENGTHS, rateLimitMiddleware } from "../../middleware";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 
@@ -32,7 +32,7 @@ adminSeasonsRouter.get("/", ensureAdmin, async (c) => {
 });
 
 // ── POST /admin/seasons ── create or update ───────────
-adminSeasonsRouter.post("/", ensureAdmin, zValidator("json", seasonSchema), async (c) => {
+adminSeasonsRouter.post("/", ensureAdmin, rateLimitMiddleware(15, 60), zValidator("json", seasonSchema), async (c) => {
   try {
     const data = c.req.valid("json");
     const { id } = data;
