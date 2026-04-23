@@ -262,13 +262,13 @@ export default function Sponsors() {
               <div>
                 <label htmlFor="subject-select" className="block text-xs font-bold text-marble uppercase tracking-widest mb-1.5 ml-1">Sponsorship Level</label>
                 <div className="relative">
-                  <select id="subject-select" value={level} onChange={e => setLevel(e.target.value)} className="w-full bg-ares-black-soft border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner appearance-none cursor-pointer">
-                    <option className="bg-white text-obsidian">Interested in Details</option>
+                  <select id="subject-select" value={level} onChange={e => setLevel(e.target.value)} className="w-full bg-ares-black-soft border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner appearance-none cursor-pointer" style={{ colorScheme: 'dark' }}>
+                    <option className="bg-obsidian text-white">Interested in Details</option>
                     {dropdownTiers.map(t => (
-                      <option key={t} className="bg-white text-obsidian">{t} Tier Sponsor</option>
+                      <option key={t} className="bg-obsidian text-white">{t} Tier Sponsor</option>
                     ))}
-                    <option className="bg-white text-obsidian">In-Kind Donation / Material</option>
-                    <option className="bg-white text-obsidian">Mentorship / Engineering Support</option>
+                    <option className="bg-obsidian text-white">In-Kind Donation / Material</option>
+                    <option className="bg-obsidian text-white">Mentorship / Engineering Support</option>
                   </select>
                   <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-marble/60">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
