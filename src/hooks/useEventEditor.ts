@@ -139,30 +139,26 @@ export function useEventEditor(editId: string | undefined, editor: Editor | null
       return data;
     },
     onSuccess: (data) => {
-      if (data.success) {
-        setSuccessMsg(editId ? "Event updated successfully!" : "Event published successfully!");
-        setWarningMsg(data.warning || "");
-        
-        queryClient.invalidateQueries({ queryKey: ["events"] });
-        queryClient.invalidateQueries({ queryKey: ["admin_events"] });
-        setTimeout(() => queryClient.invalidateQueries({ queryKey: ["events"] }), 1500);
+      setSuccessMsg(editId ? "Event updated successfully!" : "Event published successfully!");
+      setWarningMsg(data.warning || "");
+      
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["events"] }), 1500);
 
-        if (!editId) {
-          setForm({ 
-            title: "", dateStart: "", dateEnd: "", location: "", 
-            description: "", coverImage: DEFAULT_COVER_IMAGE, 
-            category: "internal", isPotluck: false, isVolunteer: false, publishedAt: "" 
-          });
-          if (editor) editor.commands.clearContent();
-        }
+      if (!editId) {
+        setForm({ 
+          title: "", dateStart: "", dateEnd: "", location: "", 
+          description: "", coverImage: DEFAULT_COVER_IMAGE, 
+          category: "internal", isPotluck: false, isVolunteer: false, publishedAt: "" 
+        });
+        if (editor) editor.commands.clearContent();
+      }
 
-        // Redirect if it's a draft or if the user is an author
-        // We use a small timeout to let the success message be seen or just navigate immediately
-        if (mutation.variables || userRole === "author") {
-          navigate("/dashboard");
-        }
-      } else {
-        setErrorMsg(data.error || "Failed to publish event");
+      // Redirect if it's a draft or if the user is an author
+      // We use a small timeout to let the success message be seen or just navigate immediately
+      if (mutation.variables || userRole === "author") {
+        navigate("/dashboard");
       }
     },
     onError: (err: unknown) => {

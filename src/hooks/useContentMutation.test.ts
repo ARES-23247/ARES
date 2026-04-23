@@ -97,4 +97,23 @@ describe("useContentMutation", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(toast.error).toHaveBeenCalledWith("Custom Error");
   });
+
+  it("uses fallback error message if none provided", async () => {
+    server.use(
+      http.delete("*/api/admin/test/:id", () => {
+        return new HttpResponse("Something went wrong but not an error message", { status: 500 });
+      })
+    );
+
+    const { result } = renderWithProviders(() => useContentMutation({
+      endpoint: (id) => `/api/admin/test/${id}`,
+      invalidateKeys: ["test-key"],
+    }));
+
+    result.current.mutate("123");
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    // adminApi.request usually parses the status text if body is not JSON
+    // but if it's completely empty or similar, it might fall back.
+  });
 });

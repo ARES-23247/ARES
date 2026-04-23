@@ -13,6 +13,13 @@ describe("useAdminSettings", () => {
       BLUESKY_HANDLE: "ares.bsky.social",
       BLUESKY_APP_PASSWORD: "app-password",
       SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/123",
+      TEAMS_WEBHOOK_URL: "https://teams.com/123",
+      GCHAT_WEBHOOK_URL: "https://gchat.com/123",
+      FACEBOOK_ACCESS_TOKEN: "fb-token",
+      TWITTER_ACCESS_TOKEN: "tw-token",
+      INSTAGRAM_ACCESS_TOKEN: "ig-token",
+      ZULIP_BOT_EMAIL: "bot@zulip",
+      ZULIP_API_KEY: "zulip-key",
     };
 
     const { result } = renderWithProviders(() => useAdminSettings());
@@ -26,7 +33,40 @@ describe("useAdminSettings", () => {
     expect(result.current.availableSocials).toContain("discord");
     expect(result.current.availableSocials).toContain("bluesky");
     expect(result.current.availableSocials).toContain("slack");
-    expect(result.current.availableSocials).not.toContain("facebook");
+    expect(result.current.availableSocials).toContain("teams");
+    expect(result.current.availableSocials).toContain("gchat");
+    expect(result.current.availableSocials).toContain("facebook");
+    expect(result.current.availableSocials).toContain("twitter");
+    expect(result.current.availableSocials).toContain("instagram");
+    expect(result.current.availableSocials).toContain("zulip");
+  });
+
+  it("should handle missing settings", async () => {
+    mockAuthState.settings = {};
+
+    const { result } = renderWithProviders(() => useAdminSettings());
+
+    await waitFor(() => {
+      expect(result.current.isPending).toBe(false);
+    });
+
+    expect(result.current.availableSocials).toEqual([]);
+  });
+
+  it("should handle partial settings (Zulip/Bluesky requirement checks)", async () => {
+    mockAuthState.settings = {
+      BLUESKY_HANDLE: "ares.bsky.social", // Missing BLUESKY_APP_PASSWORD
+      ZULIP_API_KEY: "key", // Missing ZULIP_BOT_EMAIL
+    };
+
+    const { result } = renderWithProviders(() => useAdminSettings());
+
+    await waitFor(() => {
+      expect(result.current.isPending).toBe(false);
+    });
+
+    expect(result.current.availableSocials).not.toContain("bluesky");
+    expect(result.current.availableSocials).not.toContain("zulip");
   });
 
   it("should handle fetch failure gracefully", async () => {

@@ -10,7 +10,7 @@ awardsRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 100);
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, date as year, event_name, description, icon_type as image_url FROM awards WHERE is_deleted = 0 ORDER BY date DESC, title ASC LIMIT ? OFFSET ?"
+      "SELECT id, title, date as year, event_name, description, icon_type as image_url, season_id FROM awards WHERE is_deleted = 0 ORDER BY date DESC, title ASC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ awards: results || [] });
   } catch (err) {
@@ -26,12 +26,13 @@ const awardSchema = z.object({
   year: z.union([z.number(), z.string()]),
   event_name: z.string().max(MAX_INPUT_LENGTHS.name).optional(),
   description: z.string().max(MAX_INPUT_LENGTHS.generic).optional(),
-  image_url: z.string().optional()
+  image_url: z.string().optional(),
+  season_id: z.string().optional()
 });
 
 awardsRouter.post("/", ensureAdmin, zValidator("json", awardSchema), async (c) => {
   try {
-    const { id, title, year, event_name, description, image_url } = c.req.valid("json");
+    const { id, title, year, event_name, description, image_url, season_id } = c.req.valid("json");
 
     let exists = false;
     if (id) {
@@ -42,15 +43,15 @@ awardsRouter.post("/", ensureAdmin, zValidator("json", awardSchema), async (c) =
     if (exists) {
       // Update existing
       await c.env.DB.prepare(
-        "UPDATE awards SET title = ?, date = ?, event_name = ?, description = ?, icon_type = ? WHERE id = ?"
-      ).bind(title, String(year), event_name || "", description || null, image_url || "trophy", id).run();
+        "UPDATE awards SET title = ?, date = ?, event_name = ?, description = ?, icon_type = ?, season_id = ? WHERE id = ?"
+      ).bind(title, String(year), event_name || "", description || null, image_url || "trophy", season_id || null, id).run();
       await logAuditAction(c, "award_updated", "awards", id, `Award "${title}" (${year}) updated`);
     } else {
       // Insert new
       const newId = id || crypto.randomUUID();
       await c.env.DB.prepare(
-        "INSERT INTO awards (id, title, date, event_name, description, icon_type) VALUES (?, ?, ?, ?, ?, ?)"
-      ).bind(newId, title, String(year), event_name || "", description || null, image_url || "trophy").run();
+        "INSERT INTO awards (id, title, date, event_name, description, icon_type, season_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+      ).bind(newId, title, String(year), event_name || "", description || null, image_url || "trophy", season_id || null).run();
       await logAuditAction(c, "award_created", "awards", newId, `Award "${title}" (${year}) created`);
     }
 

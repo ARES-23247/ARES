@@ -111,4 +111,20 @@ adminSeasonsRouter.delete("/:id", ensureAdmin, async (c) => {
   }
 });
 
+// ── GET /admin/seasons/:id ── get season details ──────────────
+adminSeasonsRouter.get("/:id", ensureAdmin, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const season = await c.env.DB.prepare(
+      "SELECT * FROM seasons WHERE id = ? AND is_deleted = 0"
+    ).bind(id).first();
+    
+    if (!season) return c.json({ error: "Season not found" }, 404);
+    return c.json({ season });
+  } catch (err) {
+    console.error("D1 admin season details error:", err);
+    return c.json({ error: "Failed to fetch season details" }, 500);
+  }
+});
+
 export default adminSeasonsRouter;

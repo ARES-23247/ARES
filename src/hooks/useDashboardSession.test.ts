@@ -77,4 +77,52 @@ describe("useDashboardSession", () => {
     expect(result.current.session).toBeNull();
     expect(result.current.permissions.isUnverified).toBe(true);
   });
+
+  it("should allow coach to see inquiries", async () => {
+    server.use(
+      http.get("*/api/profile/me", () => {
+        return HttpResponse.json({
+          authenticated: true,
+          auth: { role: "coach" },
+          member_type: "mentor",
+        });
+      })
+    );
+
+    const { result } = renderWithProviders(() => useDashboardSession());
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(result.current.permissions.canSeeInquiries).toBe(true);
+  });
+
+  it("should allow lead to see inquiries", async () => {
+    server.use(
+      http.get("*/api/profile/me", () => {
+        return HttpResponse.json({
+          authenticated: true,
+          auth: { role: "lead" },
+          member_type: "student",
+        });
+      })
+    );
+
+    const { result } = renderWithProviders(() => useDashboardSession());
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(result.current.permissions.canSeeInquiries).toBe(true);
+  });
+
+  it("should allow manager to see inquiries", async () => {
+    server.use(
+      http.get("*/api/profile/me", () => {
+        return HttpResponse.json({
+          authenticated: true,
+          auth: { role: "manager" },
+          member_type: "mentor",
+        });
+      })
+    );
+
+    const { result } = renderWithProviders(() => useDashboardSession());
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(result.current.permissions.canSeeInquiries).toBe(true);
+  });
 });

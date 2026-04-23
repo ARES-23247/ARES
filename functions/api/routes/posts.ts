@@ -146,6 +146,7 @@ async function handlePostSave(c: Context<AppEnv>) {
         ast: unknown;
         isDraft?: boolean;
         publishedAt?: string;
+        seasonId?: string;
       }>();
     } catch {
       return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
@@ -181,8 +182,8 @@ async function handlePostSave(c: Context<AppEnv>) {
 
     await c.env.DB.batch([
       c.env.DB.prepare(
-        `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, published_at, season_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(
         slug,
         body.title,
@@ -193,7 +194,8 @@ async function handlePostSave(c: Context<AppEnv>) {
         astStr,
         email,
         status,
-        body.publishedAt || null
+        body.publishedAt || null,
+        body.seasonId || null
       ),
       c.env.DB.prepare(
         `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
@@ -293,6 +295,7 @@ async function handlePostEdit(c: Context<AppEnv>) {
         ast: unknown;
         isDraft?: boolean;
         publishedAt?: string;
+        seasonId?: string;
       }>();
     } catch {
       return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
@@ -314,7 +317,8 @@ async function handlePostEdit(c: Context<AppEnv>) {
         coverImageUrl: body.coverImageUrl,
         snippet,
         astStr,
-        publishedAt: body.publishedAt
+        publishedAt: body.publishedAt,
+        seasonId: body.seasonId
       });
 
       return c.json({ success: true, slug: revSlug });
@@ -324,7 +328,7 @@ async function handlePostEdit(c: Context<AppEnv>) {
     const status = body.isDraft ? "pending" : "published";
     await c.env.DB.batch([
       c.env.DB.prepare(
-        `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = ?, published_at = ? WHERE slug = ?`
+        `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = ?, published_at = ?, season_id = ? WHERE slug = ?`
       ).bind(
         body.title,
         body.author || "ARES Team",
@@ -333,6 +337,7 @@ async function handlePostEdit(c: Context<AppEnv>) {
         astStr,
         status,
         body.publishedAt || null,
+        body.seasonId || null,
         slug
       ),
       c.env.DB.prepare(

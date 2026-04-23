@@ -33,6 +33,7 @@ export async function createShadowRevision(
     snippet: string;
     astStr: string;
     publishedAt?: string;
+    seasonId?: string;
   }
 ) {
   const suffix = Math.random().toString(36).substring(2, 6);
@@ -40,8 +41,8 @@ export async function createShadowRevision(
   const dateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "2-digit" });
 
   await c.env.DB.prepare(
-    `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, revision_of, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`
+    `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, revision_of, published_at, season_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`
   ).bind(
     revSlug,
     data.title,
@@ -52,7 +53,8 @@ export async function createShadowRevision(
     data.astStr,
     user.email,
     originalSlug,
-    data.publishedAt || null
+    data.publishedAt || null,
+    data.seasonId || null
   ).run();
 
   return revSlug;
@@ -65,12 +67,12 @@ export async function approveAndMergeRevision(
   c: Context<AppEnv>,
   shadowSlug: string,
   originalSlug: string,
-  row: { title: string; author: string; thumbnail: string; snippet: string; ast: string; cf_email: string }
+  row: { title: string; author: string; thumbnail: string; snippet: string; ast: string; cf_email: string; season_id?: string }
 ) {
   // Update original
   await c.env.DB.prepare(
-    "UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = 'published' WHERE slug = ?"
-  ).bind(row.title, row.author || "ARES Team", row.thumbnail, row.snippet, row.ast, originalSlug).run();
+    "UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = 'published', season_id = COALESCE(?, season_id) WHERE slug = ?"
+  ).bind(row.title, row.author || "ARES Team", row.thumbnail, row.snippet, row.ast, row.season_id || null, originalSlug).run();
   
   // Delete shadow
   await c.env.DB.prepare("DELETE FROM posts WHERE slug = ?").bind(shadowSlug).run();
@@ -171,9 +173,9 @@ export async function restorePostFromHistory(
  * Approves a pending post or shadow revision.
  */
 export async function approvePost(c: Context<AppEnv>, slug: string) {
-  type PostRow = { revision_of?: string; title: string; author: string; thumbnail: string; snippet: string; ast: string; cf_email: string };
+  type PostRow = { revision_of?: string; title: string; author: string; thumbnail: string; snippet: string; ast: string; cf_email: string; season_id?: string };
   const row = await c.env.DB.prepare(
-    "SELECT revision_of, title, author, thumbnail, snippet, ast, cf_email FROM posts WHERE slug = ?"
+    "SELECT revision_of, title, author, thumbnail, snippet, ast, cf_email, season_id FROM posts WHERE slug = ?"
   ).bind(slug).first<PostRow>();
 
   if (!row) return { success: false, error: "Post not found" };

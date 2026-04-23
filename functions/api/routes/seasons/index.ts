@@ -23,7 +23,7 @@ seasonsRouter.get("/:id", async (c) => {
     
     // Get season record
     const season = await c.env.DB.prepare(
-      "SELECT * FROM seasons WHERE id = ? AND is_deleted = 0"
+      "SELECT * FROM seasons WHERE id = ? AND is_deleted = 0 AND status = 'published'"
     ).bind(id).first();
 
     if (!season) {
