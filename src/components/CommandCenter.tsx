@@ -30,7 +30,7 @@ export default function CommandCenter() {
       const [boardRes, settingsRes, statsRes] = await Promise.allSettled([
         adminApi.get<{ success: boolean; board: ProjectBoard }>("/api/github/projects"),
         adminApi.get<{ success: boolean; settings: Record<string, string> }>("/api/admin/settings"),
-        adminApi.get<{ posts: number; events: number; docs: number }>("/api/admin/stats"),
+        adminApi.get<{ posts: number; events: number; docs: number }>("/api/admin/settings/stats"),
       ]);
 
       // GitHub Projects Board
