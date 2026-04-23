@@ -137,7 +137,7 @@ describe("Settings Router", () => {
       expect(body.success).toBe(true);
       expect(body.backup).toBeDefined();
       expect(body.backup.posts).toEqual([{ id: 1, data: "test" }]);
-      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('SELECT * FROM "posts"'));
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('FROM "posts"'));
     });
 
     it("should handle missing tables gracefully", async () => {

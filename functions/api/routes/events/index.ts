@@ -13,7 +13,7 @@ eventsRouter.get("/", async (c) => {
     if (q) {
       // FTS5 Search Route
       const { results } = await c.env.DB.prepare(
-        `SELECT e.id, e.title, e.category, e.date_start, e.date_end, e.location, e.description, e.cover_image, e.gcal_event_id, e.cf_email, e.is_potluck, e.is_volunteer, e.published_at 
+        `SELECT e.id, e.title, e.category, e.date_start, e.date_end, e.location, e.description, e.cover_image, e.tba_event_key, e.gcal_event_id, e.cf_email, e.is_potluck, e.is_volunteer, e.published_at 
          FROM events_fts f
          JOIN events e ON f.id = e.id
          WHERE e.is_deleted = 0 AND e.status = 'published' AND (e.published_at IS NULL OR datetime(e.published_at) <= datetime('now'))
@@ -24,7 +24,7 @@ eventsRouter.get("/", async (c) => {
     }
 
     const { results } = await c.env.DB.prepare(
-      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_potluck, is_volunteer, published_at FROM events WHERE is_deleted = 0 AND status = 'published' AND (published_at IS NULL OR datetime(published_at) <= datetime('now')) ORDER BY date_start DESC LIMIT ? OFFSET ?"
+      "SELECT id, title, category, date_start, date_end, location, description, cover_image, tba_event_key, gcal_event_id, cf_email, is_potluck, is_volunteer, published_at FROM events WHERE is_deleted = 0 AND status = 'published' AND (published_at IS NULL OR datetime(published_at) <= datetime('now')) ORDER BY date_start DESC LIMIT ? OFFSET ?"
     ).bind(limit, offset).all();
     return c.json({ events: results ?? [] });
   } catch (err) {

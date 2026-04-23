@@ -226,30 +226,25 @@ async function handlePostSave(c: Context<AppEnv>) {
     ]);
 
     // ── Phase 3: Omnichannel Social Media Integration ──
-    const socialConfig = await getSocialConfig(c);
-    const socialsFilter = (body as { socials?: Record<string, boolean> }).socials || null;
+    if (status === "published") {
+      const socialConfig = await getSocialConfig(c);
+      const socialsFilter = (body as { socials?: Record<string, boolean> }).socials || null;
+      const baseUrl = new URL(c.req.url).origin;
 
-    try {
-      await dispatchSocials(
-        c.env.DB,
-        {
-          title: body.title,
-          url: `${siteConfig.urls.base}/blog/${slug}`,
-          snippet: snippet || "Read the latest engineering update from ARES 23247!",
-          coverImageUrl: body.coverImageUrl || "/gallery_1.png",
-          baseUrl: siteConfig.urls.base
-        },
-        socialConfig,
-        socialsFilter
+      c.executionCtx.waitUntil(
+        dispatchSocials(
+          c.env.DB,
+          {
+            title: body.title,
+            url: `${baseUrl}/blog/${slug}`,
+            snippet: snippet || "Read the latest engineering update from ARES 23247!",
+            coverImageUrl: body.coverImageUrl || "/gallery_1.png",
+            baseUrl: baseUrl
+          },
+          socialConfig,
+          socialsFilter
+        ).catch(err => console.error("Social dispatch failed:", err))
       );
-    } catch (err: unknown) {
-      console.error("Social dispatch failed:", err);
-      // Return 207 Multi-Status if post was saved but social syndication failed
-      return c.json({ 
-        success: true, 
-        slug, 
-        warning: `Post saved to database, but social syndication failed: ${(err as Error)?.message || String(err)}` 
-      }, 207);
     }
 
     // ── Zulip Announcement ──
@@ -409,16 +404,17 @@ postsRouter.post("/:slug/repush", ensureAdmin, rateLimitMiddleware(15, 60), asyn
   if (!post) return c.json({ error: "Post not found" }, 404);
 
   const socialConfig = await getSocialConfig(c);
+  const baseUrl = new URL(c.req.url).origin;
   
   try {
     await dispatchSocials(
       c.env.DB,
       {
       title: post.title,
-      url: `${siteConfig.urls.base}/blog/${slug}`,
+      url: `${baseUrl}/blog/${slug}`,
       snippet: extractAstText(post.snippet || "").substring(0, 250) || "Read the latest update from ARES 23247!",
       coverImageUrl: post.thumbnail || "",
-      baseUrl: siteConfig.urls.base
+      baseUrl: baseUrl
     }, socialConfig, socials);
   } catch (err: unknown) {
     console.error("Post repush failed:", err);

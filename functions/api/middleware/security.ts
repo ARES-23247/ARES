@@ -65,7 +65,10 @@ export async function verifyTurnstile(
   secretKey: string | undefined,
   clientIp: string
 ): Promise<boolean> {
-  if (!secretKey) return true;
+  if (!secretKey) {
+    console.warn("[Turnstile] TURNSTILE_SECRET_KEY is not configured — CAPTCHA verification is disabled. This is expected in local development but should be resolved in production.");
+    return true;
+  }
   if (!token) return false;
 
   try {

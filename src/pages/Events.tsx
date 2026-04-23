@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isAfter, subDays, addDays, parseISO } from "date-fns";
 import { motion } from "framer-motion";
@@ -27,51 +28,53 @@ export default function Events() {
     },
   });
 
-  const calendars = calendarData 
-    ? [
-        { id: calendarData.calendarIdInternal, color: "%23A32929" },
-        { id: calendarData.calendarIdOutreach, color: "%23BE6D00" },
-        { id: calendarData.calendarIdExternal, color: "%2329527A" }
-      ].filter(c => c.id)
-    : [];
+  // EFF-N01: Memoize calendar configuration mapping
+  const calendars = useMemo(() => {
+    if (!calendarData) return [];
+    return [
+      { id: calendarData.calendarIdInternal, color: "%23A32929" },
+      { id: calendarData.calendarIdOutreach, color: "%23BE6D00" },
+      { id: calendarData.calendarIdExternal, color: "%2329527A" }
+    ].filter(c => c.id);
+  }, [calendarData]);
 
-  const iframeSrc = calendars.length > 0 
-    ? `https://calendar.google.com/calendar/embed?${calendars.map(c => `src=${encodeURIComponent(c.id as string)}&color=${c.color}`).join("&")}&ctz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}&bgcolor=%23ffffff&showPrint=0&showTabs=1&showCalendars=1` 
-    : "";
+  const iframeSrc = useMemo(() => {
+    if (calendars.length === 0) return "";
+    return `https://calendar.google.com/calendar/embed?${calendars.map(c => `src=${encodeURIComponent(c.id as string)}&color=${c.color}`).join("&")}&ctz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}&bgcolor=%23ffffff&showPrint=0&showTabs=1&showCalendars=1`;
+  }, [calendars]);
   
-  // Consider an event "past" if its date_start is before yesterday
-  const now = new Date();
-  const bufferTime = subDays(now, 1);
-  
-  // Filter into categories
-  const outreachEvents = [...events]
-    .filter((e) => e.category === "outreach")
-    .sort((a, b) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime());
-  
-  const internalPractices = [...events]
-    .filter((e) => e.category === "internal")
-    .sort((a, b) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime());
+  // EFF-N02: Memoize complex filtering and sorting
+  const { 
+    upcomingOutreach, 
+    upcomingPractices, 
+    upcomingExternal, 
+    pastOutreach, 
+    pastPractices,
+    activeCompetition
+  } = useMemo(() => {
+    const now = new Date();
+    const bufferTime = subDays(now, 1);
 
-  const externalEvents = [...events]
-    .filter((e) => e.category === "external")
-    .sort((a, b) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime());
-  
-  const upcomingOutreach = outreachEvents.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
-  const upcomingPractices = internalPractices.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
-  const upcomingExternal = externalEvents.filter((e) => isAfter(parseISO(e.date_start), bufferTime));
-  
-  const pastOutreach = outreachEvents.filter((e) => !isAfter(parseISO(e.date_start), bufferTime)).reverse();
-  const pastPractices = internalPractices.filter((e) => !isAfter(parseISO(e.date_start), bufferTime)).reverse();
-  // External events are omitted from the archive.
+    const outreach = events.filter(e => e.category === "outreach");
+    const internal = events.filter(e => e.category === "internal");
+    const external = events.filter(e => e.category === "external");
 
-  const activeCompetition = events.find(e => {
-    if (!e.tba_event_key) return false;
-    const start = parseISO(e.date_start);
-    const end = e.date_end ? parseISO(e.date_end) : addDays(start, 3);
-    return now >= start && now <= end;
-  });
+    const sortAsc = (a: EventItem, b: EventItem) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime();
 
-
+    return {
+      upcomingOutreach: outreach.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
+      upcomingPractices: internal.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
+      upcomingExternal: external.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
+      pastOutreach: outreach.filter(e => !isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc).reverse(),
+      pastPractices: internal.filter(e => !isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc).reverse(),
+      activeCompetition: events.find(e => {
+        if (!e.tba_event_key) return false;
+        const start = parseISO(e.date_start);
+        const end = e.date_end ? parseISO(e.date_end) : addDays(start, 3);
+        return now >= start && now <= end;
+      })
+    };
+  }, [events]);
 
   return (
     <motion.div 
@@ -94,12 +97,10 @@ export default function Events() {
           transition={{ delay: 0.1 }}
           className="relative z-10 max-w-4xl mx-auto space-y-6"
         >
-          <div dangerouslySetInnerHTML={{ __html: '<!-- pa11y-ignore -->' }} />
+          {/* ACC-F01: Fixed H1 for screen readers while maintaining visual style */}
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
-            Team <span aria-hidden="true" className="text-ares-gold before:content-['Events']"></span>
-            <span className="sr-only">Events</span>
+            Team <span className="text-ares-gold">Events</span>
           </h1>
-          <div dangerouslySetInnerHTML={{ __html: '<!-- pa11y-ignore -->' }} />
           <p className="text-xl md:text-2xl text-marble/70 font-medium max-w-2xl mx-auto">
             Join us at our upcoming competitions, community outreach demos, and robotics workshops.
           </p>
@@ -132,6 +133,8 @@ export default function Events() {
                     className="w-full h-[600px] md:h-[700px] border-0"
                     style={{ filter: "invert(1) hue-rotate(180deg) opacity(0.85) contrast(1.05)" }}
                     allowFullScreen
+                    // SEC-F04: Added sandbox for security hardening
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                   />
                 </div>
               ) : (

@@ -45,9 +45,18 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-// ── Request Logger ───────────────────────────────────────────────────
+// ── Request Logger (suppressed in production to reduce log noise) ────
 app.use("*", async (c, next) => {
-  console.log(`[${c.req.method}] ${c.req.url} (Path: ${c.req.path})`);
+  if (c.env?.ENVIRONMENT !== "production") {
+    const logUrl = new URL(c.req.url);
+    // SEC-F03: Strip auth-related query params before logging
+    for (const key of [...logUrl.searchParams.keys()]) {
+      if (/token|secret|key|auth|session/i.test(key)) {
+        logUrl.searchParams.set(key, "***");
+      }
+    }
+    console.log(`[${c.req.method}] ${logUrl.pathname}${logUrl.search}`);
+  }
   await next();
 });
 

@@ -91,21 +91,21 @@ adminRouter.post("/", rateLimitMiddleware(15, 60), async (c) => {
       gcalId || null, email, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null
     ).run();
 
-    if (socials) {
-       try {
-         await dispatchSocials(c.env.DB, {
-            title: title, url: `${siteConfig.urls.base}/events`,
-            snippet: extractAstText(description).substring(0, 250) || "New event scheduled!",
-            coverImageUrl: coverImage || "/gallery_1.png",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            baseUrl: siteConfig.urls.base} as any as any, socialConfig, socials);
-       } catch (err: unknown) {
-         warnings.push(`Network Syndication Failed: ${(err as Error).message || String(err)}`);
-       }
+    const baseUrl = new URL(c.req.url).origin;
+
+    if (socials && status === "published") {
+      c.executionCtx.waitUntil(
+        dispatchSocials(c.env.DB, {
+          title: title, url: `${baseUrl}/events`,
+          snippet: extractAstText(description).substring(0, 250) || "New event scheduled!",
+          coverImageUrl: coverImage || "/gallery_1.png",
+          baseUrl: baseUrl
+        } as any, socialConfig, socials).catch(err => console.error("Event social dispatch failed:", err))
+      );
     }
 
     // ── Zulip Calendar Notification ──
-    if (!isDraft) {
+    if (status === "published") {
       try {
         const eventDate = new Date(dateStart).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
         const desc = extractAstText(description || "").substring(0, 200);
@@ -114,7 +114,7 @@ adminRouter.post("/", rateLimitMiddleware(15, 60), async (c) => {
             c.env,
             "announcements",
             "Calendar",
-            `📅 **New Event:** ${title}\n📍 ${location || "TBD"} • 📆 ${eventDate}\n${desc ? `\n${desc}` : ""}\n\n[View on ${siteConfig.team.name}WEB](${siteConfig.urls.base}/events)`
+            `📅 **New Event:** ${title}\n📍 ${location || "TBD"} • 📆 ${eventDate}\n${desc ? `\n${desc}` : ""}\n\n[View on ${siteConfig.team.name}WEB](${baseUrl}/events)`
           ).catch(err => console.error("[Events] Zulip notification failed:", err))
         );
       } catch { /* ignore */ }
@@ -200,17 +200,17 @@ adminRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
       `UPDATE events SET title = ?, category = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ?, published_at = ? WHERE id = ?`
     ).bind(title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null, paramId).run();
 
-     if (socials) {
-       try {
-         await dispatchSocials(c.env.DB, {
-            title: title, url: `${siteConfig.urls.base}/events`,
-            snippet: extractAstText(description).substring(0, 250) || "New event scheduled!",
-            coverImageUrl: coverImage || "/gallery_1.png",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            baseUrl: siteConfig.urls.base} as any as any, socialConfig, socials);
-       } catch (err: unknown) {
-         warnings.push(`Network Syndication Failed: ${(err as Error).message || String(err)}`);
-       }
+    const baseUrl = new URL(c.req.url).origin;
+
+    if (socials && status === "published") {
+      c.executionCtx.waitUntil(
+        dispatchSocials(c.env.DB, {
+          title: title, url: `${baseUrl}/events`,
+          snippet: extractAstText(description).substring(0, 250) || "New event scheduled!",
+          coverImageUrl: coverImage || "/gallery_1.png",
+          baseUrl: baseUrl
+        } as any, socialConfig, socials).catch(err => console.error("Event social update failed:", err))
+      );
     }
 
     return c.json({ success: true, id: paramId, warning: warnings.length > 0 ? warnings.join(" | ") : undefined }, warnings.length > 0 ? 207 : 200);
@@ -287,10 +287,18 @@ adminRouter.post("/:id/repush", rateLimitMiddleware(15, 60), async (c) => {
     const event = await c.env.DB.prepare("SELECT title, description, cover_image FROM events WHERE id = ?").bind(id).first<{title: string, description: string, cover_image: string}>();
     if (!event) return c.json({ error: "Event not found" }, 404);
     const socialConfig = await getSocialConfig(c);
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await dispatchSocials(c.env.DB, { title: event.title, url: `${siteConfig.urls.base}/events`, snippet: extractAstText(event.description || "").substring(0, 250) || "Join us for our upcoming event!", coverImageUrl: event.cover_image || "/gallery_1.png", baseUrl: siteConfig.urls.base} as any, socialConfig, socials);
-    } catch (err: unknown) { return c.json({ error: `Network Repush Failed: ${(err as Error).message || String(err)}` }, 502); }
+    const baseUrl = new URL(c.req.url).origin;
+    
+    c.executionCtx.waitUntil(
+      dispatchSocials(c.env.DB, { 
+        title: event.title, 
+        url: `${baseUrl}/events`, 
+        snippet: extractAstText(event.description || "").substring(0, 250) || "Join us for our upcoming event!", 
+        coverImageUrl: event.cover_image || "/gallery_1.png", 
+        baseUrl: baseUrl
+      } as any, socialConfig, socials).catch(err => console.error("Event social repush failed:", err))
+    );
+    
     return c.json({ success: true });
   } catch (err) {
     console.error("Event repush error:", err);

@@ -96,10 +96,18 @@ settingsRouter.get("/admin/backup", ensureAdmin, async (c) => {
       "page_analytics", "audit_log"
     ];
     
+    // SEC-F02: Explicit column selections per table to prevent accidental PII/secret transit.
+    // Tables without a mapping use SELECT * (safe because they contain no secrets).
+    const TABLE_COLUMNS: Record<string, string> = {
+      user_profiles: "user_id, nickname, pronouns, subteams, member_type, bio, favorite_first_thing, fun_fact, show_on_about, favorite_robot_mechanism, pre_match_superstition, leadership_role, rookie_year, avatar, updated_at",
+      inquiries: "id, type, SUBSTR(name, 1, 1) || '***' as name, '***@***.***' as email, status, created_at",
+    };
+    
     const backup: Record<string, Record<string, unknown>[]> = {};
     for (const tableName of SAFE_TABLES) {
       try {
-        const { results } = await c.env.DB.prepare(`SELECT * FROM "${tableName}"`).all();
+        const cols = TABLE_COLUMNS[tableName] || "*";
+        const { results } = await c.env.DB.prepare(`SELECT ${cols} FROM "${tableName}"`).all();
         backup[tableName] = results;
       } catch {
         // Table may not exist yet — skip silently
