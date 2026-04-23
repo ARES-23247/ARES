@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: process.env.CI 
     ? {
-        command: 'npm run preview',
+        command: 'cross-env CLOUDFLARE_API_TOKEN=dummy npm run preview',
         url: 'http://localhost:8788',
         reuseExistingServer: false,
         timeout: 120 * 1000,
