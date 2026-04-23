@@ -15,7 +15,7 @@ interface SeasonItem {
 
 interface SeasonManagerTabProps {
   view: ViewType;
-  onEditSeason?: (id: string) => void;
+  onEdit?: (id: string) => void;
   confirmId: string | null;
   setConfirmId: (id: string | null) => void;
   restoreMutation: ReturnType<typeof useContentMutation<string>>;
@@ -24,7 +24,7 @@ interface SeasonManagerTabProps {
 
 export default function SeasonManagerTab({
   view,
-  onEditSeason,
+  onEdit,
   confirmId,
   setConfirmId,
   restoreMutation,
@@ -100,7 +100,7 @@ export default function SeasonManagerTab({
                 {Number(season.is_deleted) !== 1 ? (
                   <>
                     <button
-                      onClick={() => onEditSeason && onEditSeason(season.id)}
+                      onClick={() => onEdit && onEdit(season.id)}
                       className="text-xs font-bold text-marble/40 hover:text-ares-gold bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
                     >
                       EDIT

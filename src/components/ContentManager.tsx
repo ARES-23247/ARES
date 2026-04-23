@@ -196,7 +196,7 @@ export default function ContentManager({
         {(mode === "all" || mode === "seasons") && (
           <SeasonManagerTab 
             {...sharedProps} 
-            onEditSeason={onEditSeason}
+            onEdit={onEditSeason}
           />
         )}
       </div>
