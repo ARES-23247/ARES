@@ -9,7 +9,7 @@ export default defineConfig({
   reporter: 'html',
   timeout: 60000,
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: process.env.CI ? 'http://localhost:8788' : 'http://localhost:5173',
     trace: 'on-first-retry',
   },
   projects: [
