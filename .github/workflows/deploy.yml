@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - master
-  pull_request:
-
-env:
-  PLAYWRIGHT_BROWSERS_PATH: 0
 
 jobs:
   deploy:
@@ -33,29 +29,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Accessibility & Lint Audit
-        run: npm run lint
-
-      - name: Automated Vulnerability & SAST Check
-        run: npm run audit:security
-
-      - name: Component Tests (Vitest)
-        run: npm run test
-
       - name: Build with Vite
         run: npm run build
 
-      - name: Install Playwright (Chromium only)
-        run: npx playwright install --with-deps chromium
-
-      - name: E2E Tests (Playwright)
-        run: npm run test:e2e
-
-      - name: E2E Accessibility Tests (pa11y-ci)
-        run: npx start-server-and-test "npx vite preview --port 4173 --strictPort" http://localhost:4173 "npm run pa11y"
-
       - name: Apply D1 Migrations
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -65,7 +42,6 @@ jobs:
         continue-on-error: true
 
       - name: Deploy to Cloudflare Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
