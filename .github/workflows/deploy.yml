@@ -10,6 +10,9 @@ jobs:
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       contents: read
       deployments: write
