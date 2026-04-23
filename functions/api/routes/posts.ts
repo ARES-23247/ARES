@@ -42,7 +42,7 @@ postsRouter.get("/export-all", ensureAdmin, async (c) => {
 });
 
 // ── GET /posts — list all blog posts (public) ─────────────────────────────
-postsRouter.get("/", async (c) => {
+postsRouter.get("/", rateLimitMiddleware(15, 60), async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 10, 100);
     const q = c.req.query("q") || "";

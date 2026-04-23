@@ -66,7 +66,7 @@ function setCache(key: string, value: { data: unknown; expiresAt: number }) {
   docSearchCache.set(key, value);
 }
 
-docsRouter.get("/search", async (c) => {
+docsRouter.get("/search", rateLimitMiddleware(15, 60), async (c) => {
   const q = c.req.query("q");
   if (!q || q.length < 3) return c.json({ results: [] });
   try {

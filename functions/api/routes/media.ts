@@ -188,18 +188,38 @@ adminMediaRouter.post("/upload", ensureAdmin, rateLimitMiddleware(15, 60), async
   }
 });
 
-// ── GET /media/:key — Serve raw object from R2 ──────────────────────
+// ── GET /media/:key — Serve raw object from R2 (with Access Control) ──
 mediaRouter.get("/:key{.+$}", async (c) => {
   const key = c.req.param("key");
+  
   try {
+    // SEC-DoW: Determine folder from key (e.g., "Gallery/image.png" -> "Gallery")
+    const folder = key.includes("/") ? key.split("/")[0] : "Uncategorized";
+    
+    // SEC-F15: Folder-level access control
+    // Files in the 'Gallery' and 'Library' folders are public. Everything else requires at least a login.
+    const publicFolders = ["Gallery", "Library"];
+    if (!publicFolders.includes(folder)) {
+      const { getSessionUser } = await import("../middleware");
+      const user = await getSessionUser(c);
+      if (!user) {
+        return c.text("Unauthorized: Access to this resource requires authentication.", 401);
+      }
+    }
+
     const object = await c.env.ARES_STORAGE.get(key);
     if (!object) return c.text("Not Found", 404);
 
     const headers = new Headers();
     object.writeHttpMetadata(headers);
     headers.set("etag", object.httpEtag);
-    // Cache individual images for 1 hour
-    headers.set("Cache-Control", "public, max-age=3600");
+    
+    // Cache individual images (Public = 1hr, Private = No Cache for security)
+    if (publicFolders.includes(folder)) {
+      headers.set("Cache-Control", "public, max-age=3600");
+    } else {
+      headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    }
 
     return new Response(object.body, { headers });
   } catch (err) {
