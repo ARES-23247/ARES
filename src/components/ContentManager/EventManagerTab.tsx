@@ -93,7 +93,7 @@ export default function EventManagerTab({
           <h3 className={`font-bold uppercase tracking-widest text-xs ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-ares-cyan'}`}>
           {view === 'trash' ? 'Trashed Events' : view === 'pending' ? 'Pending Events' : view === 'internal' ? 'Practices' : view === 'outreach' ? 'Outreach Events' : view === 'external' ? 'Community Events' : 'All Events'}
         </h3>
-        {view !== 'trash' && view !== 'pending' && lastSyncedAt && (
+        {view !== 'trash' && view !== 'pending' && lastSyncedAt && !isNaN(new Date(lastSyncedAt).getTime()) && (
             <span className="text-[10px] text-marble/50 font-medium uppercase tracking-tight bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">
               Last Sync: {format(new Date(lastSyncedAt), 'MMM do, h:mm a')}
             </span>
@@ -128,7 +128,7 @@ export default function EventManagerTab({
             <div key={event.id} className={`bg-black/40 border ${Number(event.is_deleted) === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-white/10'} ares-cut-sm p-4 flex flex-col justify-between gap-4 hover:border-white/20 transition-colors`}>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-marble/90 truncate flex items-center gap-2">
-                  {event.title}
+                  {event.title || "Untitled Event"}
                   {Number(event.is_deleted) === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
                   {event.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
                   {event.status === 'rejected' && <span className="text-[9px] font-bold text-ares-bronze bg-ares-bronze/10 border border-ares-bronze/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
@@ -136,7 +136,9 @@ export default function EventManagerTab({
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`w-2 h-2 rounded-full ${event.category === 'internal' ? 'bg-ares-red' : event.category === 'outreach' ? 'bg-ares-gold' : 'bg-ares-cyan'}`}></span>
-                  <span className="text-xs text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">{format(new Date(event.date_start), 'MMM do, yyyy')}</span>
+                  <span className="text-xs text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">
+                    {event.date_start ? format(new Date(event.date_start), 'MMM do, yyyy') : 'No Date'}
+                  </span>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">

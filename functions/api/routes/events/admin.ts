@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../../utils/site.config";
-import { AppEnv, getSocialConfig, extractAstText, getSessionUser, getDbSettings, parsePagination, createContentLifecycleRouter, rateLimitMiddleware, ensureAdmin } from "../../middleware";
+import { AppEnv, getSocialConfig, extractAstText, getSessionUser, getDbSettings, parsePagination, createContentLifecycleRouter, rateLimitMiddleware, ensureAdmin, logAuditAction } from "../../middleware";
 import { pushEventToGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials, PostPayload, SocialConfig } from "../../../utils/socialSync";
 import { sendZulipMessage } from "../../../utils/zulipSync";
@@ -14,17 +14,18 @@ adminRouter.use("*", ensureAdmin);
 adminRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 100, 500);
+    
+    // SEC-Z10: Full Schema Resilience - Check for all potential missing columns
     const tableInfo = await c.env.DB.prepare("PRAGMA table_info(events)").all();
-    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
-    const hasRevisionCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'revision_of');
-
-    const selectCols = [
+    const cols = (tableInfo.results as { name: string }[]).map(col => col.name);
+    
+    const possibleCols = [
       "id", "title", "category", "date_start", "date_end", "location", "description", 
       "cover_image", "tba_event_key", "gcal_event_id", "cf_email", "is_deleted", "status", 
-      "is_potluck", "is_volunteer"
+      "is_potluck", "is_volunteer", "revision_of", "season_id", "published_at"
     ];
-    if (hasRevisionCol) selectCols.push("revision_of");
-    if (hasSeasonCol) selectCols.push("season_id");
+    
+    const selectCols = possibleCols.filter(col => cols.includes(col));
 
     const { results: events } = await c.env.DB.prepare(
       `SELECT ${selectCols.join(", ")} FROM events ORDER BY date_start DESC LIMIT ? OFFSET ?`
@@ -112,25 +113,26 @@ adminRouter.post("/", rateLimitMiddleware(15, 60), async (c) => {
     const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
     const tableInfo = await c.env.DB.prepare("PRAGMA table_info(events)").all();
-    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
+    const cols = (tableInfo.results as { name: string }[]).map(col => col.name);
 
-    if (hasSeasonCol) {
-      await c.env.DB.prepare(
-        `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, published_at, season_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).bind(
-        genId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "",
-        gcalId || null, email, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null, seasonId || null
-      ).run();
-    } else {
-      await c.env.DB.prepare(
-        `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).bind(
-        genId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "",
-        gcalId || null, email, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null
-      ).run();
-    }
+    const data: Record<string, unknown> = {
+      id: genId, title, category: cat, date_start: dateStart, date_end: dateEnd || null,
+      location: location || "", description: description || "", cover_image: coverImage || "",
+      gcal_event_id: gcalId || null, cf_email: email, status,
+      is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
+      published_at: publishedAt || null, season_id: seasonId || null
+    };
+
+    const insertCols = Object.keys(data).filter(col => cols.includes(col));
+    const placeholders = insertCols.map(() => '?').join(', ');
+    const values = insertCols.map(col => data[col]);
+
+    await c.env.DB.prepare(
+      `INSERT INTO events (${insertCols.join(", ")}) VALUES (${placeholders})`
+    ).bind(...values).run();
+
+    // SEC-Z10: Log audit action
+    c.executionCtx.waitUntil(logAuditAction(c, "CREATE_EVENT", "events", genId, `Created event: ${title} (${status})`));
 
     const baseUrl = new URL(c.req.url).origin;
 
@@ -228,21 +230,30 @@ adminRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
     const user = await getSessionUser(c);
 
     const tableInfo = await c.env.DB.prepare("PRAGMA table_info(events)").all();
-    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
+    const cols = (tableInfo.results as { name: string }[]).map(col => col.name);
 
     if (user?.role !== "admin") {
       const revId = `${paramId}-rev-${Math.random().toString(36).substring(2, 6)}`;
-      if (hasSeasonCol) {
-        await c.env.DB.prepare(
-          `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, tba_event_key, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of, published_at, season_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?, ?, ?)`
-        ).bind(revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", tbaEventKey || null, gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId, publishedAt || null, seasonId || null).run();
-      } else {
-        await c.env.DB.prepare(
-          `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, tba_event_key, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of, published_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?, ?)`
-        ).bind(revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", tbaEventKey || null, gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId, publishedAt || null).run();
-      }
+      const revData: Record<string, unknown> = {
+        id: revId, title, category: cat, date_start: dateStart, date_end: dateEnd || null,
+        location: location || "", description: description || "", cover_image: coverImage || "",
+        tba_event_key: tbaEventKey || null, gcal_event_id: gcalId || null,
+        cf_email: user?.email || "anonymous_author", status: 'pending',
+        is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
+        revision_of: paramId, published_at: publishedAt || null, season_id: seasonId || null
+      };
+
+      const insertCols = Object.keys(revData).filter(col => cols.includes(col));
+      const placeholders = insertCols.map(() => '?').join(', ');
+      const values = insertCols.map(col => revData[col]);
+
+      await c.env.DB.prepare(
+        `INSERT INTO events (${insertCols.join(", ")}) VALUES (${placeholders})`
+      ).bind(...values).run();
+
+      // SEC-Z10: Log audit action
+      c.executionCtx.waitUntil(logAuditAction(c, "REVISE_EVENT", "events", paramId, `Created revision for: ${title}`));
+
       c.executionCtx.waitUntil(
         notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📅 Event Revision Pending",
@@ -256,15 +267,24 @@ adminRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
     }
 
     const status = isDraft ? "pending" : "published";
-    if (hasSeasonCol) {
-      await c.env.DB.prepare(
-        `UPDATE events SET title = ?, category = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, tba_event_key = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ?, published_at = ?, season_id = ? WHERE id = ?`
-      ).bind(title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", tbaEventKey || null, gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null, seasonId || null, paramId).run();
-    } else {
-      await c.env.DB.prepare(
-        `UPDATE events SET title = ?, category = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, tba_event_key = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ?, published_at = ? WHERE id = ?`
-      ).bind(title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", tbaEventKey || null, gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null, paramId).run();
-    }
+    const updateData: Record<string, unknown> = {
+      title, category: cat, date_start: dateStart, date_end: dateEnd || null,
+      location: location || "", description: description || "", cover_image: coverImage || "",
+      tba_event_key: tbaEventKey || null, gcal_event_id: gcalId || null,
+      status, is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
+      published_at: publishedAt || null, season_id: seasonId || null
+    };
+
+    const updateCols = Object.keys(updateData).filter(col => cols.includes(col));
+    const setClause = updateCols.map(col => `${col} = ?`).join(', ');
+    const updateValues = updateCols.map(col => updateData[col]);
+
+    await c.env.DB.prepare(
+      `UPDATE events SET ${setClause} WHERE id = ?`
+    ).bind(...updateValues, paramId).run();
+
+    // SEC-Z10: Log audit action
+    c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_EVENT", "events", paramId, `Updated event: ${title} (${status})`));
 
     const baseUrl = new URL(c.req.url).origin;
 

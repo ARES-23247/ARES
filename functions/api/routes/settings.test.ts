@@ -58,7 +58,9 @@ describe("Settings Router", () => {
   describe("POST /", () => {
     it("should upsert settings and log audit action", async () => {
       mockDb.run.mockResolvedValue({ success: true });
-      // For logAuditAction
+      // Mock PRAGMA for logAuditAction
+      mockDb.all.mockResolvedValue({ results: [{ name: "resource_type" }, { name: "resource_id" }] });
+      // For logAuditAction user lookup
       mockDb.first.mockResolvedValue({ member_type: "mentor" });
 
       const req = new Request("http://localhost/", {
@@ -66,12 +68,23 @@ describe("Settings Router", () => {
         body: JSON.stringify({ site_name: "New Name", GITHUB_PAT: "ghp_123456" }),
         headers: { "Content-Type": "application/json" },
       });
+
+      // Capture the waitUntil promise
+      let auditPromise: Promise<any> | null = null;
+      mockExecutionContext.waitUntil.mockImplementationOnce((p: Promise<any>) => {
+        auditPromise = p;
+        return p;
+      });
+
       const res = await settingsRouter.request(req, {}, env, mockExecutionContext);
 
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.success).toBe(true);
       expect(body.updated).toBe(2);
+      
+      // Await audit log completion
+      if (auditPromise) await auditPromise;
       
       expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO settings"));
       expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining("INSERT INTO audit_log"));

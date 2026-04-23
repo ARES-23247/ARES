@@ -7,7 +7,7 @@ const seasonsRouter = new Hono<AppEnv>();
 seasonsRouter.get("/", async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      "SELECT * FROM seasons WHERE is_deleted = 0 AND status = 'published' ORDER BY start_date DESC"
+      "SELECT * FROM seasons WHERE is_deleted = 0 AND status = 'published' ORDER BY start_year DESC"
     ).all();
     return c.json({ seasons: results || [] });
   } catch (err) {
@@ -16,15 +16,15 @@ seasonsRouter.get("/", async (c) => {
   }
 });
 
-// ── GET /:id ── get season details + related data ───────
-seasonsRouter.get("/:id", async (c) => {
+// ── GET /:year ── get season details + related data ───────
+seasonsRouter.get("/:year", async (c) => {
   try {
-    const id = c.req.param("id");
+    const year = c.req.param("year");
     
     // Get season record
     const season = await c.env.DB.prepare(
-      "SELECT * FROM seasons WHERE id = ? AND is_deleted = 0 AND status = 'published'"
-    ).bind(id).first();
+      "SELECT * FROM seasons WHERE start_year = ? AND is_deleted = 0 AND status = 'published'"
+    ).bind(year).first();
 
     if (!season) {
       return c.json({ error: "Season not found" }, 404);
@@ -32,10 +32,10 @@ seasonsRouter.get("/:id", async (c) => {
 
     // Get related records in a batch
     const [{ results: awards }, { results: events }, { results: posts }, { results: outreach }] = await c.env.DB.batch([
-      c.env.DB.prepare("SELECT id, title, date as year, event_name, description, icon_type as image_url FROM awards WHERE season_id = ? AND is_deleted = 0").bind(id),
-      c.env.DB.prepare("SELECT id, title, category, date_start, date_end, location, description, cover_image FROM events WHERE season_id = ? AND is_deleted = 0 AND status = 'published'").bind(id),
-      c.env.DB.prepare("SELECT slug, title, date, snippet, thumbnail FROM posts WHERE season_id = ? AND is_deleted = 0 AND status = 'published'").bind(id),
-      c.env.DB.prepare("SELECT id, title, date, location, hours, people_reached, students_count, impact_summary as description FROM outreach_logs WHERE season_id = ? AND is_deleted = 0").bind(id)
+      c.env.DB.prepare("SELECT id, title, date as year, event_name, description, icon_type as image_url FROM awards WHERE season_id = ? AND is_deleted = 0").bind(year),
+      c.env.DB.prepare("SELECT id, title, category, date_start, date_end, location, description, cover_image FROM events WHERE season_id = ? AND is_deleted = 0 AND status = 'published'").bind(year),
+      c.env.DB.prepare("SELECT slug, title, date, snippet, thumbnail FROM posts WHERE season_id = ? AND is_deleted = 0 AND status = 'published'").bind(year),
+      c.env.DB.prepare("SELECT id, title, date, location, hours, people_reached, students_count, impact_summary as description FROM outreach_logs WHERE season_id = ? AND is_deleted = 0").bind(year)
     ]);
 
     return c.json({

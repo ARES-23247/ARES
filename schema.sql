@@ -1,9 +1,4 @@
 -- ── Platform Settings ──────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-);
-
 -- ── Better Auth Core Tables ──────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS user (
@@ -89,9 +84,11 @@ CREATE TABLE IF NOT EXISTS posts_history (
     snippet TEXT,
     ast TEXT NOT NULL,
     author_email TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
+    created_at TEXT DEFAULT (datetime('now')),
+    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_posts_history_slug ON posts_history(slug);
+CREATE INDEX IF NOT EXISTS idx_posts_history_season ON posts_history(season_id);
 
 
 -- ── Content: Events ──────────────────────────────────────────────────────
@@ -499,7 +496,8 @@ CREATE VIRTUAL TABLE IF NOT EXISTS user_profiles_fts USING fts5(
 
 CREATE TRIGGER IF NOT EXISTS user_profiles_fts_insert AFTER INSERT ON user_profiles BEGIN
     INSERT INTO user_profiles_fts (user_id, nickname, first_name, last_name, bio, show_on_about)
-    VALUES (new.user_id, new.nickname, new.first_name, new.last_name, new.bio, new.show_on_about);
+    SELECT new.user_id, new.nickname, new.first_name, new.last_name, new.bio, new.show_on_about
+    WHERE new.show_on_about = 1;
 END;
 
 CREATE TRIGGER IF NOT EXISTS user_profiles_fts_delete AFTER DELETE ON user_profiles BEGIN
@@ -509,5 +507,27 @@ END;
 CREATE TRIGGER IF NOT EXISTS user_profiles_fts_update AFTER UPDATE ON user_profiles BEGIN
     DELETE FROM user_profiles_fts WHERE user_id = old.user_id;
     INSERT INTO user_profiles_fts (user_id, nickname, first_name, last_name, bio, show_on_about)
-    VALUES (new.user_id, new.nickname, new.first_name, new.last_name, new.bio, new.show_on_about);
+    SELECT new.user_id, new.nickname, new.first_name, new.last_name, new.bio, new.show_on_about
+    WHERE new.show_on_about = 1;
 END;
+
+
+-- -- Rate Limits ---------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS rate_limits (
+    ip TEXT PRIMARY KEY, 
+    count INTEGER NOT NULL, 
+    expires_at INTEGER NOT NULL
+);
+
+-- -- Missing Indexes from Migrations --------------------------------------
+
+CREATE INDEX IF NOT EXISTS idx_events_visibility ON events(is_deleted, status, published_at, date_start);
+CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_member_type ON user_profiles(member_type);
+CREATE INDEX IF NOT EXISTS idx_inquiries_type ON inquiries(type);
+CREATE INDEX IF NOT EXISTS idx_docs_status_deleted ON docs(status, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_user_badges_badge ON user_badges(badge_id);
+CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);
+

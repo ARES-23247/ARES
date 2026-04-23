@@ -100,7 +100,7 @@ export default function SysIdSim() {
       const graphW = width - 70;
       const graphH = height - 60;
       
-      ctx!.strokeStyle = '#555';
+      ctx!.strokeStyle = 'var(--ifm-color-emphasis-400)';
       ctx!.lineWidth = 2;
       ctx!.beginPath();
       ctx!.moveTo(offsetX, offsetY);
@@ -113,7 +113,7 @@ export default function SysIdSim() {
       if (historyRef.current.length > 0) {
         // Voltage
         ctx!.beginPath();
-        ctx!.strokeStyle = '#e5e112'; // Yellow
+        ctx!.strokeStyle = '#FFB81C'; // ARES Gold
         ctx!.lineWidth = 2;
         const scaleX = graphW / 8.0; // Max 8 seconds
         const scaleV = graphH / 12.0; // Max 12 volts
@@ -130,7 +130,7 @@ export default function SysIdSim() {
 
         // Velocity
         ctx!.beginPath();
-        ctx!.strokeStyle = '#29b6f6'; // Blue
+        ctx!.strokeStyle = '#00E5FF'; // ARES Cyan
         ctx!.lineWidth = 2;
         for(let i = 0; i < historyRef.current.length; i++) {
           const pt = historyRef.current[i];
@@ -143,7 +143,7 @@ export default function SysIdSim() {
       }
       
       // Labels
-      ctx!.fillStyle = '#ccc';
+      ctx!.fillStyle = '#c9d1d9';
       ctx!.font = '11px sans-serif';
       ctx!.fillText('Time (s)', width / 2, height - 10);
       
@@ -168,26 +168,26 @@ export default function SysIdSim() {
   }, []);
 
   return (
-    <div style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ width: '100%', backgroundColor: '#1A1A1A', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={canvasRef} style={{ display: 'block', width: '100%', touchAction: 'none' }} />
-      <div style={{ padding: '15px', borderTop: '1px solid #2a2a2a', display: 'flex', gap: '20px', background: '#111', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: '15px', borderTop: '1px solid var(--ifm-color-emphasis-200)', display: 'flex', gap: '20px', background: '#1A1A1A', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '15px' }}>
             <button 
                 onClick={() => setTestMode('quasistatic')} 
                 disabled={testMode !== 'idle'}
-                style={{ background: '#29b6f6', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: testMode !== 'idle' ? 'not-allowed' : 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold', opacity: testMode !== 'idle' ? 0.5 : 1 }}>
+                style={{ background: '#00E5FF', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: testMode !== 'idle' ? 'not-allowed' : 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold', opacity: testMode !== 'idle' ? 0.5 : 1 }}>
                 RUN QUASISTATIC
             </button>
             <button 
                 onClick={() => setTestMode('dynamic')} 
                 disabled={testMode !== 'idle'}
-                style={{ background: '#e5e112', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: testMode !== 'idle' ? 'not-allowed' : 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold', opacity: testMode !== 'idle' ? 0.5 : 1 }}>
+                style={{ background: '#FFB81C', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: testMode !== 'idle' ? 'not-allowed' : 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold', opacity: testMode !== 'idle' ? 0.5 : 1 }}>
                 RUN DYNAMIC
             </button>
         </div>
         <div style={{ display: 'flex', gap: '15px', fontFamily: '"Orbitron", sans-serif', fontSize: '13px' }}>
-           <span style={{ color: '#e5e112' }}>■ Voltage (V)</span>
-           <span style={{ color: '#29b6f6' }}>■ Velocity (rad/s)</span>
+           <span style={{ color: '#FFB81C' }}>■ Voltage (V)</span>
+           <span style={{ color: '#00E5FF' }}>■ Velocity (rad/s)</span>
         </div>
       </div>
     </div>

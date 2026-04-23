@@ -212,8 +212,17 @@ apiRouter.get("/admin/audit-log", ensureAdmin, async (c) => {
   try {
     const limit = Math.min(Number(c.req.query("limit") || "50"), 200);
     const offset = Number(c.req.query("offset") || "0");
+    
+    // Schema resilience for audit_log
+    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(audit_log)").all();
+    const cols = (tableInfo.results as { name: string }[]).map(col => col.name);
+    
+    const selectCols = ["id", "action", "actor", "details", "created_at"];
+    if (cols.includes('resource_type')) selectCols.push("resource_type");
+    if (cols.includes('resource_id')) selectCols.push("resource_id");
+
     const { results } = await c.env.DB.prepare(
-      "SELECT id, action, resource_type, resource_id, actor, details, created_at FROM audit_log ORDER BY created_at DESC LIMIT ? OFFSET ?"
+      `SELECT ${selectCols.join(", ")} FROM audit_log ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(limit, offset).all();
     return c.json({ logs: results || [] });
   } catch (err) {

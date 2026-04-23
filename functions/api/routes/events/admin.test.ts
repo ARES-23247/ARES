@@ -24,6 +24,10 @@ vi.mock("../../middleware", async (importOriginal) => {
   };
 });
 
+vi.mock("../../../utils/notifications", () => ({
+  notifyByRole: vi.fn().mockResolvedValue(undefined)
+}));
+
 vi.mock("../../../utils/socialSync", () => ({
   dispatchSocials: vi.fn().mockResolvedValue(true)
 }));
@@ -36,11 +40,36 @@ describe("Events Admin Router", () => {
   let mockDb: Record<string, ReturnType<typeof vi.fn>>;
   let env: { DB: Record<string, ReturnType<typeof vi.fn>> };
 
-  beforeEach(() => {
+  let lastSql = "";
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { notifyByRole } = await import("../../../utils/notifications");
+    const { dispatchSocials } = await import("../../../utils/socialSync");
+    // @ts-expect-error mocking
+    vi.mocked(notifyByRole).mockResolvedValue(true);
+    // @ts-expect-error mocking
+    vi.mocked(dispatchSocials).mockResolvedValue(true);
+
+    lastSql = "";
     mockDb = {
-      prepare: vi.fn().mockReturnThis(),
+      prepare: vi.fn().mockImplementation((sql: string) => {
+        lastSql = sql;
+        return mockDb;
+      }),
       bind: vi.fn().mockReturnThis(),
-      all: vi.fn().mockResolvedValue({ results: [] }),
+      all: vi.fn().mockImplementation(async () => {
+        if (lastSql.includes("PRAGMA table_info")) {
+          return { results: [
+            { name: 'id' }, { name: 'title' }, { name: 'date_start' }, 
+            { name: 'date_end' }, { name: 'location' }, { name: 'category' }, 
+            { name: 'status' }, { name: 'is_deleted' }, { name: 'season_id' }
+          ] };
+        }
+        if (lastSql.includes("SELECT * FROM events")) {
+          return { results: [{ id: '1', title: 'Test Event' }] };
+        }
+        return { results: [] };
+      }),
       first: vi.fn().mockResolvedValue(null),
       run: vi.fn().mockResolvedValue({ success: true }),
       batch: vi.fn().mockResolvedValue([]),
@@ -50,7 +79,12 @@ describe("Events Admin Router", () => {
   });
 
   it("GET / should return events and last sync", async () => {
-    mockDb.all.mockResolvedValueOnce({ results: [{ id: "e1", title: "Test Event" }] });
+    mockDb.all.mockImplementation(async () => {
+      if (lastSql.includes("PRAGMA")) {
+        return { results: [{ name: 'id' }, { name: 'title' }, { name: 'date_start' }, { name: 'date_end' }, { name: 'location' }, { name: 'category' }, { name: 'status' }, { name: 'is_deleted' }, { name: 'season_id' }] };
+      }
+      return { results: [{ id: "e1", title: "Test Event" }] };
+    });
     mockDb.first.mockResolvedValueOnce({ value: "2026-01-01" });
 
     const req = new Request("http://localhost/");
@@ -150,7 +184,12 @@ describe("Events Admin Router", () => {
   });
 
   it("GET / should handle DB errors", async () => {
-    mockDb.all.mockRejectedValueOnce(new Error("DB error"));
+    mockDb.all.mockImplementation(async () => {
+      if (lastSql.includes("PRAGMA")) {
+        return { results: [{ name: 'id' }] };
+      }
+      throw new Error("DB error");
+    });
     const req = new Request("http://localhost/");
     const res = await adminRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(500);

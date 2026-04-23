@@ -82,8 +82,8 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
     <div style={{
       width: '100%',
       minHeight: '600px',
-      backgroundColor: '#0a0a0a',
-      border: '1px solid #2a2a2a',
+      backgroundColor: '#1A1A1A',
+      border: '1px solid var(--ifm-color-emphasis-200)',
       borderRadius: '8px',
       overflow: 'hidden',
       display: 'flex',
@@ -92,8 +92,8 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
       {/* Header with example selector */}
       <div style={{
         padding: '15px',
-        borderBottom: '1px solid #2a2a2a',
-        background: '#111',
+        borderBottom: '1px solid var(--ifm-color-emphasis-200)',
+        background: '#1A1A1A',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -109,9 +109,9 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
             value={selectedExample}
             onChange={(e) => handleExampleChange(Number(e.target.value))}
             style={{
-              background: '#222',
+              background: '#1A1A1A',
               color: '#fff',
-              border: '1px solid #444',
+              border: '1px solid var(--ifm-color-emphasis-200)',
               padding: '8px 12px',
               borderRadius: '4px',
               fontFamily: '"Ubuntu", sans-serif',
@@ -129,7 +129,7 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
             onClick={runCode}
             disabled={isRunning}
             style={{
-              background: isRunning ? '#444' : '#B32416',
+              background: isRunning ? 'var(--ifm-color-emphasis-400)' : '#C00000',
               color: '#fff',
               border: 'none',
               padding: '8px 20px',
@@ -145,9 +145,9 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
           <button
             onClick={resetCode}
             style={{
-              background: '#333',
+              background: 'var(--ifm-color-emphasis-200)',
               color: '#fff',
-              border: '1px solid #444',
+              border: '1px solid var(--ifm-color-emphasis-300)',
               padding: '8px 15px',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -161,9 +161,9 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
       </div>
 
       {/* Description */}
-      <div style={{ padding: '12px 15px', background: '#0f0f0f', borderBottom: '1px solid #2a2a2a' }}>
+      <div style={{ padding: '12px 15px', background: '#1A1A1A', borderBottom: '1px solid var(--ifm-color-emphasis-200)' }}>
         <p style={{
-          color: '#aaa',
+          color: '#c9d1d9',
           fontFamily: '"Ubuntu", sans-serif',
           fontSize: '13px',
           margin: 0,
@@ -176,12 +176,12 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
       {/* Main content area */}
       <div style={{ display: 'flex', flex: 1, minHeight: '400px' }}>
         {/* Code editor */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid #2a2a2a' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--ifm-color-emphasis-200)' }}>
           <div style={{
             padding: '8px 15px',
-            background: '#1a1a1a',
-            borderBottom: '1px solid #2a2a2a',
-            color: '#888',
+            background: '#1A1A1A',
+            borderBottom: '1px solid var(--ifm-color-emphasis-200)',
+            color: 'var(--ifm-color-emphasis-600)',
             fontFamily: '"Orbitron", sans-serif',
             fontSize: '12px',
             fontWeight: 'bold'
@@ -193,7 +193,7 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
             onChange={(e) => setCode(e.target.value)}
             style={{
               flex: 1,
-              background: '#0a0a0a',
+              background: '#1A1A1A',
               color: '#d4d4d4',
               border: 'none',
               padding: '15px',
@@ -212,9 +212,9 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{
             padding: '8px 15px',
-            background: '#1a1a1a',
-            borderBottom: '1px solid #2a2a2a',
-            color: '#888',
+            background: '#1A1A1A',
+            borderBottom: '1px solid var(--ifm-color-emphasis-200)',
+            color: 'var(--ifm-color-emphasis-600)',
             fontFamily: '"Orbitron", sans-serif',
             fontSize: '12px',
             fontWeight: 'bold'
@@ -223,12 +223,12 @@ export default function CodePlayground({ examples = EXAMPLES }: CodePlaygroundPr
           </div>
           <div style={{
             flex: 1,
-            background: '#0a0a0a',
+            background: '#1A1A1A',
             padding: '15px',
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: '13px',
             lineHeight: '1.6',
-            color: hasError ? '#f48771' : '#a5d6ff',
+            color: hasError ? '#FF4D4D' : '#00E5FF',
             overflow: 'auto',
             whiteSpace: 'pre-wrap'
           }}>

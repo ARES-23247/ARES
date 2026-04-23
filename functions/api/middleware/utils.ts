@@ -103,17 +103,27 @@ export async function logAuditAction(
   try {
     const sessionUser = c.get("sessionUser") as SessionUser | undefined;
     const actor = sessionUser?.email || "unknown";
-    await c.env.DB.prepare(
-      `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-    ).bind(
-      (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `test-uuid-${Date.now()}`,
-      actor,
-      action,
-      resource_type,
-      resource_id || null,
-      details || null
-    ).run();
+    
+    // Schema resilience for audit_log
+    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(audit_log)").all();
+    const cols = (tableInfo.results as { name: string }[]).map(col => col.name);
+    const hasResourceType = cols.includes('resource_type');
+    const hasResourceId = cols.includes('resource_id');
+
+    const id = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `log-${Date.now()}`;
+    
+    if (hasResourceType && hasResourceId) {
+      await c.env.DB.prepare(
+        `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+      ).bind(id, actor, action, resource_type, resource_id || null, details || null).run();
+    } else {
+      // Fallback for legacy schema
+      await c.env.DB.prepare(
+        `INSERT INTO audit_log (id, actor, action, details, created_at)
+         VALUES (?, ?, ?, ?, datetime('now'))`
+      ).bind(id, actor, action, `${resource_type}:${resource_id || ''} | ${details || ''}`).run();
+    }
   } catch (err) {
     console.error("[AuditLog] Failed to record action:", action, err);
   }
@@ -126,17 +136,25 @@ export async function logSystemError(
   details?: string
 ): Promise<void> {
   try {
-    await db.prepare(
-      `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-    ).bind(
-      (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `test-uuid-${Date.now()}`,
-      "system",
-      "INTEGRATION_FAILURE",
-      service,
-      null,
-      JSON.stringify({ error, details, timestamp: new Date().toISOString() })
-    ).run();
+    // Schema resilience for audit_log
+    const tableInfo = await db.prepare("PRAGMA table_info(audit_log)").all();
+    const cols = (tableInfo.results as { name: string }[]).map(col => col.name);
+    const hasResourceType = cols.includes('resource_type');
+    const hasResourceId = cols.includes('resource_id');
+
+    const id = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `err-${Date.now()}`;
+    
+    if (hasResourceType && hasResourceId) {
+      await db.prepare(
+        `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+      ).bind(id, "system", "INTEGRATION_FAILURE", service, null, JSON.stringify({ error, details, timestamp: new Date().toISOString() })).run();
+    } else {
+      await db.prepare(
+        `INSERT INTO audit_log (id, actor, action, details, created_at)
+         VALUES (?, ?, ?, ?, datetime('now'))`
+      ).bind(id, "system", `INTEGRATION_FAILURE:${service}`, JSON.stringify({ error, details, timestamp: new Date().toISOString() })).run();
+    }
   } catch (err) {
     console.error("[AuditLog] Failed to log system error:", err);
   }

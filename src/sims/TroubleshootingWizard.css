@@ -30,8 +30,8 @@
   align-items: center;
   margin-bottom: 30px;
   padding: 15px 20px;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--foreground); /* Obsidian */
+  border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 8px;
 }
 
@@ -45,7 +45,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #2a2a2a;
+  background: var(--ifm-color-emphasis-200);
   color: #888;
   display: flex;
   align-items: center;
@@ -55,12 +55,12 @@
 }
 
 .progress-step.completed {
-  background: #4CAF50;
+  background: green;
   color: #fff;
 }
 
 .progress-step.current {
-  background: #B32416;
+  background: var(--ares-red);
   color: #fff;
   animation: pulse 2s infinite;
 }
@@ -76,7 +76,7 @@
 
 .reset-btn {
   background: transparent;
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--ifm-color-emphasis-200);
   color: #888;
   padding: 6px 12px;
   border-radius: 4px;
@@ -86,7 +86,7 @@
 }
 
 .reset-btn:hover {
-  border-color: #3a3a3a;
+  border-color: var(--ifm-color-emphasis-300);
   color: #ccc;
 }
 
@@ -113,8 +113,8 @@
 
 /* Question Card */
 .question-card {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--foreground); /* Obsidian */
+  border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 12px;
   padding: 40px;
   text-align: center;
@@ -143,7 +143,7 @@
 .choice-btn,
 .yesno-btn {
   background: #252525;
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 8px;
   padding: 16px 24px;
   color: #ccc;
@@ -155,53 +155,53 @@
 
 .choice-btn:hover,
 .yesno-btn:hover {
-  background: #2a2a2a;
-  border-color: #3a3a3a;
+  background: var(--ifm-color-emphasis-200);
+  border-color: var(--ifm-color-emphasis-300);
   color: #fff;
 }
 
 .yesno-yes {
-  background: rgba(76, 175, 80, 0.2);
-  border-color: #4CAF50;
-  color: #4CAF50;
+  background: rgba(34, 197, 94, 0.2);
+  border-color: green;
+  color: green;
   text-align: center;
   font-weight: 600;
 }
 
 .yesno-yes:hover {
-  background: rgba(76, 175, 80, 0.3);
+  background: rgba(34, 197, 94, 0.3);
 }
 
 .yesno-no {
-  background: rgba(244, 67, 54, 0.2);
-  border-color: #F44336;
-  color: #F44336;
+  background: rgba(192, 0, 0, 0.2);
+  border-color: var(--ares-red);
+  color: var(--ares-red);
   text-align: center;
   font-weight: 600;
 }
 
 .yesno-no:hover {
-  background: rgba(244, 67, 54, 0.3);
+  background: rgba(192, 0, 0, 0.3);
 }
 
 /* Solution Card */
 .solution-card {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--foreground); /* Obsidian */
+  border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 12px;
   padding: 30px;
 }
 
 .solution-card.severity-high {
-  border-left: 4px solid #F44336;
+  border-left: 4px solid var(--ares-red);
 }
 
 .solution-card.severity-medium {
-  border-left: 4px solid #FF9800;
+  border-left: 4px solid var(--ares-gold);
 }
 
 .solution-card.severity-low {
-  border-left: 4px solid #4CAF50;
+  border-left: 4px solid green;
 }
 
 .solution-header {
@@ -235,15 +235,15 @@
 }
 
 .severity-high .solution-severity {
-  color: #F44336;
+  color: var(--ares-red);
 }
 
 .severity-medium .solution-severity {
-  color: #FF9800;
+  color: var(--ares-gold);
 }
 
 .severity-low .solution-severity {
-  color: #4CAF50;
+  color: green;
 }
 
 .solution-time {
@@ -298,7 +298,7 @@
 }
 
 .doc-link {
-  color: #B32416;
+  color: var(--ares-red);
   text-decoration: none;
   font-size: 14px;
 }
@@ -313,12 +313,12 @@
   gap: 15px;
   justify-content: center;
   padding-top: 20px;
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
 }
 
 .nav-btn {
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
+  background: var(--ifm-color-emphasis-200);
+  border: 1px solid var(--ifm-color-emphasis-300);
   color: #ccc;
   padding: 10px 20px;
   border-radius: 6px;
@@ -328,13 +328,13 @@
 }
 
 .nav-btn:hover {
-  background: #3a3a3a;
+  background: var(--ifm-color-emphasis-300);
   color: #fff;
 }
 
 .nav-btn-reset {
-  background: #B32416;
-  border-color: #B32416;
+  background: var(--ares-red);
+  border-color: var(--ares-red);
   color: #fff;
 }
 
@@ -346,8 +346,8 @@
 .wizard-footer {
   text-align: center;
   padding: 20px;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--foreground); /* Obsidian */
+  border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 8px;
 }
 
@@ -358,13 +358,14 @@
 }
 
 .wizard-footer a {
-  color: #B32416;
+  color: var(--ares-red);
   text-decoration: none;
 }
 
 .wizard-footer a:hover {
   text-decoration: underline;
 }
+
 
 /* Responsive */
 @media (max-width: 768px) {

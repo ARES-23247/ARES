@@ -6,7 +6,8 @@ import { ViewType, ClickToDeleteButton } from "./shared";
 import { adminApi } from "../../api/adminApi";
 
 interface SeasonItem {
-  id: string;
+  start_year: number;
+  end_year: number;
   challenge_name: string;
   robot_name?: string;
   status: string;
@@ -18,7 +19,7 @@ interface SeasonManagerTabProps {
   onEdit?: (id: string) => void;
   confirmId: string | null;
   setConfirmId: (id: string | null) => void;
-  restoreMutation: ReturnType<typeof useContentMutation<string>>;
+  restoreMutation: ReturnType<typeof useContentMutation<{type: string, id: string}>>;
   purgeMutation: ReturnType<typeof useContentMutation<{type: string, id: string}>>;
 }
 
@@ -84,56 +85,59 @@ export default function SeasonManagerTab({
             message={`No ${view} seasons found.`}
           />
         ) : (
-          filtered.map((season) => (
-            <div key={season.id} className={`bg-black/40 border ${Number(season.is_deleted) === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-white/10'} ares-cut-sm p-4 flex flex-col justify-between gap-4 hover:border-ares-gold/20 transition-colors`}>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-marble/90 truncate flex items-center gap-2">
-                  {season.id} - {season.challenge_name}
-                  {Number(season.is_deleted) === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
-                  {season.status === 'draft' && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
+          filtered.map((season) => {
+            const seasonId = season.start_year.toString();
+            return (
+              <div key={seasonId} className={`bg-black/40 border ${Number(season.is_deleted) === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-white/10'} ares-cut-sm p-4 flex flex-col justify-between gap-4 hover:border-ares-gold/20 transition-colors`}>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-marble/90 truncate flex items-center gap-2">
+                    {season.start_year}-{season.end_year} | {season.challenge_name}
+                    {Number(season.is_deleted) === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
+                    {season.status === 'draft' && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm uppercase tracking-widest">{season.robot_name || 'No Robot Assigned'}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm uppercase tracking-widest">{season.robot_name || 'No Robot Assigned'}</span>
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                  {Number(season.is_deleted) !== 1 ? (
+                    <>
+                      <button
+                        onClick={() => onEdit && onEdit(seasonId)}
+                        className="text-xs font-bold text-marble/40 hover:text-ares-gold bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
+                      >
+                        EDIT
+                      </button>
+                      <ClickToDeleteButton 
+                        id={seasonId} 
+                        onDelete={() => deleteSeasonMutation.mutate(seasonId)} 
+                        isDeleting={deleteSeasonMutation.isPending && deleteSeasonMutation.variables === seasonId} 
+                        confirmId={confirmId}
+                        setConfirmId={setConfirmId}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => restoreMutation.mutate({ type: 'season', id: seasonId })}
+                        disabled={restoreMutation.isPending}
+                        className="text-xs font-bold text-ares-gold bg-ares-gold/10 hover:bg-ares-gold/20 px-3 py-1 ares-cut-sm transition-colors"
+                      >
+                        {restoreMutation.isPending && restoreMutation.variables?.id === seasonId ? "RESTORING..." : "RESTORE"}
+                      </button>
+                      <ClickToDeleteButton 
+                        id={`purge-${seasonId}`} 
+                        onDelete={() => purgeMutation.mutate({ type: 'season', id: seasonId })} 
+                        isDeleting={purgeMutation.isPending && purgeMutation.variables?.id === seasonId} 
+                        confirmId={confirmId}
+                        setConfirmId={setConfirmId}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
-                {Number(season.is_deleted) !== 1 ? (
-                  <>
-                    <button
-                      onClick={() => onEdit && onEdit(season.id)}
-                      className="text-xs font-bold text-marble/40 hover:text-ares-gold bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
-                    >
-                      EDIT
-                    </button>
-                    <ClickToDeleteButton 
-                      id={season.id} 
-                      onDelete={() => deleteSeasonMutation.mutate(season.id)} 
-                      isDeleting={deleteSeasonMutation.isPending && deleteSeasonMutation.variables === season.id} 
-                      confirmId={confirmId}
-                      setConfirmId={setConfirmId}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => restoreMutation.mutate({ type: 'season', id: season.id })}
-                      disabled={restoreMutation.isPending}
-                      className="text-xs font-bold text-ares-gold bg-ares-gold/10 hover:bg-ares-gold/20 px-3 py-1 ares-cut-sm transition-colors"
-                    >
-                      {restoreMutation.isPending && restoreMutation.variables?.id === season.id ? "RESTORING..." : "RESTORE"}
-                    </button>
-                    <ClickToDeleteButton 
-                      id={`purge-${season.id}`} 
-                      onDelete={() => purgeMutation.mutate({ type: 'season', id: season.id })} 
-                      isDeleting={purgeMutation.isPending && purgeMutation.variables?.id === season.id} 
-                      confirmId={confirmId}
-                      setConfirmId={setConfirmId}
-                    />
-                  </>
-                )}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

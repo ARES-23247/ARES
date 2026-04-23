@@ -1,6 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, verifyTurnstile, rateLimitMiddleware  } from "../middleware";
-import { getSessionUser } from "../middleware";
+import { AppEnv, ensureAdmin, verifyTurnstile, rateLimitMiddleware, logAuditAction  } from "../middleware";
 
 const judgesRouter = new Hono<AppEnv>();
 
@@ -137,15 +136,12 @@ judgesRouter.post("/admin/codes", ensureAdmin, rateLimitMiddleware(15, 60), asyn
     const code = (crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')).slice(0, 12).toUpperCase();
     const id = crypto.randomUUID();
 
-    await c.env.DB.batch([
-      c.env.DB.prepare(
+    await c.env.DB.prepare(
         "INSERT INTO judge_access_codes (id, code, label, expires_at) VALUES (?, ?, ?, ?)"
-      ).bind(id, code, label || "Judge Access", expiresAt || null),
-      c.env.DB.prepare(
-        `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-      ).bind(crypto.randomUUID(), (await getSessionUser(c))?.email || "system", "CREATE_JUDGE_CODE", "judge_access", id, `Created access code: ${label}`)
-    ]);
+      ).bind(id, code, label || "Judge Access", expiresAt || null).run();
+
+    // SEC-Z10: Log action
+    c.executionCtx.waitUntil(logAuditAction(c, "CREATE_JUDGE_CODE", "judge_access", id, `Created access code: ${label}`));
 
     return c.json({ success: true, code, id });
   } catch (err) {

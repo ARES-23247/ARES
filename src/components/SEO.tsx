@@ -37,7 +37,7 @@ export default function SEO({
       {/* Standard Metadata */}
       <title>{siteTitle}</title>
       <meta name="description" content={description} />
-      <meta name="theme-color" content="#dc2626" />
+      <meta name="theme-color" content="#C00000" />
       <meta name="robots" content="index, follow" />
       <link rel="canonical" href={currentUrl} />
 

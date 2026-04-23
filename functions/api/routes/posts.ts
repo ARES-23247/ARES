@@ -201,17 +201,10 @@ async function handlePostSave(c: Context<AppEnv>) {
       );
     }
 
-    queries.push(
-      c.env.DB.prepare(
-        `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-      ).bind(
-        (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `test-uuid-${Date.now()}`,
-        email, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`
-      )
-    );
-
     await c.env.DB.batch(queries);
+
+    // SEC-Z10: Log action after batch success
+    c.executionCtx.waitUntil(logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`));
 
     const warnings: string[] = [];
 
@@ -329,8 +322,7 @@ async function handlePostEdit(c: Context<AppEnv>) {
 
     // ── Direct Update Logic (Admin Edits) ──
     const status = body.isDraft ? "pending" : "published";
-    await c.env.DB.batch([
-      c.env.DB.prepare(
+    await c.env.DB.prepare(
         `UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = ?, published_at = ?, season_id = ? WHERE slug = ?`
       ).bind(
         body.title,
@@ -342,19 +334,10 @@ async function handlePostEdit(c: Context<AppEnv>) {
         body.publishedAt || null,
         body.seasonId || null,
         slug
-      ),
-      c.env.DB.prepare(
-        `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-      ).bind(
-        (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `test-uuid-${Date.now()}`,
-        user?.email || "unknown",
-        "UPDATE_POST",
-        "posts",
-        slug,
-        `Updated post: ${body.title} (${status})`
-      )
-    ]);
+      ).run();
+
+    // SEC-Z10: Log action
+    c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${body.title} (${status})`));
 
     return c.json({ success: true, slug });
   } catch (err: unknown) {

@@ -52,18 +52,18 @@ export default function SwerveSimulator() {
         const mX = CENTER.x + mod.x;
         const mY = CENTER.y + mod.y;
         
-        ctx.fillStyle = "#1e1e1e";
+        ctx.fillStyle = "#1A1A1A";
         ctx.fillRect(mX - 10, mY - 10, 20, 20);
         ctx.strokeStyle = "rgba(255,255,255,0.2)";
         ctx.strokeRect(mX - 10, mY - 10, 20, 20);
 
         const tVecX = transX * SCALE;
         const tVecY = transY * SCALE;
-        drawArrow(mX, mY, mX + tVecX, mY + tVecY, "#4169E1", 1, 5);
+        drawArrow(mX, mY, mX + tVecX, mY + tVecY, "#00E5FF", 1, 5);
 
         const rVecX = -mod.y * rotVel * (SCALE/50);
         const rVecY = mod.x * rotVel * (SCALE/50);
-        drawArrow(mX, mY, mX + rVecX, mY + rVecY, "#B32416", 1, 5);
+        drawArrow(mX, mY, mX + rVecX, mY + rVecY, "#C00000", 1, 5);
 
         const resX = tVecX + rVecX;
         const resY = tVecY + rVecY;
@@ -71,8 +71,8 @@ export default function SwerveSimulator() {
     });
 
     ctx.font = "12px Inter";
-    ctx.fillStyle = "#4169E1"; ctx.fillText("Translation Component", 20, 340);
-    ctx.fillStyle = "#B32416"; ctx.fillText("Rotation Component", 20, 360);
+    ctx.fillStyle = "#00E5FF"; ctx.fillText("Translation Component", 20, 340);
+    ctx.fillStyle = "#C00000"; ctx.fillText("Rotation Component", 20, 360);
     ctx.fillStyle = "#CD7F32"; ctx.fillText("Final Module State", 20, 380);
   }, [transX, transY, rotVel]);
 
@@ -85,7 +85,7 @@ export default function SwerveSimulator() {
       <canvas 
         ref={canvasRef} 
         width={800} height={400} 
-        className="w-full h-[400px] bg-ares-black-soft ares-cut-sm border border-white/10" 
+        className="w-full h-[400px] bg-obsidian ares-cut-sm border border-white/10" 
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
         <div>

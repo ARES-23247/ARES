@@ -8,7 +8,7 @@
 .tutorial-header {
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
 }
 
 .tutorial-title h1 {
@@ -38,14 +38,14 @@
 
 .progress-bar {
   height: 4px;
-  background: #2a2a2a;
+  background: var(--ifm-color-emphasis-200);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #B32416, #d42e1e);
+  background: linear-gradient(90deg, var(--ares-red), var(--ares-red-light));
   transition: width 0.3s ease;
 }
 
@@ -61,8 +61,8 @@
 .tutorial-sidebar {
   position: sticky;
   top: 20px;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--foreground); /* Obsidian */
+  border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 8px;
   padding: 20px;
   max-height: calc(100vh - 40px);
@@ -97,26 +97,26 @@
 }
 
 .tutorial-step-item:hover {
-  background: #252525;
-  border-color: #2a2a2a;
+  background: var(--ifm-color-emphasis-100);
+  border-color: var(--ifm-color-emphasis-200);
   color: #ccc;
 }
 
 .tutorial-step-item.current {
-  background: rgba(179, 36, 22, 0.1);
-  border-color: #B32416;
+  background: rgba(192, 0, 0, 0.1);
+  border-color: var(--ares-red);
   color: #fff;
 }
 
 .tutorial-step-item.completed {
-  color: #4CAF50;
+  color: green;
 }
 
 .step-indicator {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #2a2a2a;
+  background: var(--ifm-color-emphasis-200);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,12 +126,12 @@
 }
 
 .tutorial-step-item.completed .step-indicator {
-  background: #4CAF50;
+  background: green;
   color: #fff;
 }
 
 .tutorial-step-item.current .step-indicator {
-  background: #B32416;
+  background: var(--ares-red);
   color: #fff;
 }
 
@@ -157,8 +157,8 @@
 }
 
 .tutorial-step-card {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--foreground); /* Obsidian */
+  border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 8px;
   padding: 30px;
 }
@@ -166,7 +166,7 @@
 .step-header {
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
 }
 
 .step-header h2 {
@@ -186,7 +186,7 @@
 }
 
 .step-checkpoint {
-  color: #FF9800;
+  color: var(--ares-gold);
   font-weight: 500;
 }
 
@@ -213,7 +213,7 @@
 }
 
 .step-content code {
-  background: #2a2a2a;
+  background: var(--ifm-color-emphasis-200);
   padding: 2px 6px;
   border-radius: 3px;
   font-family: 'Fira Code', monospace;
@@ -225,7 +225,7 @@
 }
 
 .code-toggle {
-  background: #B32416;
+  background: var(--ares-red);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -236,12 +236,12 @@
 }
 
 .code-toggle:hover {
-  background: #d42e1e;
+  background: var(--ares-red-light);
 }
 
 .code-block {
-  background: #0a0a0a;
-  border: 1px solid #2a2a2a;
+  background: var(--foreground); /* Obsidian */
+  border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 6px;
   padding: 15px;
   margin-top: 10px;
@@ -260,8 +260,8 @@
 .checkpoint-section {
   margin-top: 25px;
   padding: 15px;
-  background: rgba(76, 175, 80, 0.1);
-  border: 1px solid #4CAF50;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid green;
   border-radius: 6px;
 }
 
@@ -289,7 +289,7 @@
   display: flex;
   gap: 15px;
   padding-top: 20px;
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
 }
 
 .nav-btn {
@@ -309,24 +309,24 @@
 }
 
 .nav-btn-previous {
-  background: #2a2a2a;
+  background: var(--ifm-color-emphasis-200);
   color: #ccc;
 }
 
 .nav-btn-previous:hover:not(:disabled) {
-  background: #3a3a3a;
+  background: var(--ifm-color-emphasis-300);
   color: #fff;
 }
 
 .nav-btn-next,
 .nav-btn-complete {
-  background: #B32416;
+  background: var(--ares-red);
   color: #fff;
 }
 
 .nav-btn-next:hover:not(:disabled),
 .nav-btn-complete:hover:not(:disabled) {
-  background: #d42e1e;
+  background: var(--ares-red-light);
 }
 
 /* Responsive */

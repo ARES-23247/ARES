@@ -42,6 +42,8 @@ vi.mock("../middleware", async () => {
   return {
     ...actual,
     rateLimitMiddleware: vi.fn().mockImplementation(() => async (c: any, next: any) => await next()),
+    ensureAdmin: vi.fn().mockImplementation(async (_c: any, next: any) => await next()),
+    logAuditAction: vi.fn().mockResolvedValue(true),
   };
 });
 

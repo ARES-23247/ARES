@@ -1,11 +1,11 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, logAuditAction, MAX_INPUT_LENGTHS  } from "../middleware";
+import { AppEnv, ensureAdmin, parsePagination, logAuditAction, MAX_INPUT_LENGTHS } from "../middleware";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 
 const awardsRouter = new Hono<AppEnv>();
 
-// ── GET / ── list all awards ──────────
+// --- GET / --- list all awards ----------
 awardsRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 100);
@@ -25,7 +25,7 @@ awardsRouter.get("/", async (c) => {
   }
 });
 
-// ── POST / ── create or update an award ───────────
+// --- POST / --- create or update an award ----------
 const awardSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1).max(MAX_INPUT_LENGTHS.name),
@@ -60,7 +60,7 @@ awardsRouter.post("/", ensureAdmin, zValidator("json", awardSchema), async (c) =
           "UPDATE awards SET title = ?, date = ?, event_name = ?, description = ?, icon_type = ? WHERE id = ?"
         ).bind(title, String(year), event_name || "", description || null, image_url || "trophy", id).run();
       }
-      await logAuditAction(c, "award_updated", "awards", id, `Award "${title}" (${year}) updated`);
+      await logAuditAction(c, "award_updated", "awards", id as string, `Award "${title}" (${year}) updated`);
     } else {
       // Insert new
       const newId = id || crypto.randomUUID();
@@ -83,10 +83,10 @@ awardsRouter.post("/", ensureAdmin, zValidator("json", awardSchema), async (c) =
   }
 });
 
-// ── DELETE /:id ── soft-delete an award ────────────────
+// --- DELETE /:id --- soft-delete an award ----------
 awardsRouter.delete("/:id", ensureAdmin, async (c) => {
   try {
-    const id = (c.req.param("id") || "");
+    const id = c.req.param("id") || "";
     await c.env.DB.prepare("UPDATE awards SET is_deleted = 1 WHERE id = ?").bind(id).run();
     await logAuditAction(c, "award_deleted", "awards", id, "Award soft-deleted");
     return c.json({ success: true });

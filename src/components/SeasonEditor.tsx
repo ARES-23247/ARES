@@ -13,15 +13,16 @@ import CoverAssetPicker from "./editor/CoverAssetPicker";
 import EditorFooter from "./editor/EditorFooter";
 
 interface SeasonData {
-  id: string;
+  start_year: number;
+  end_year: number;
   challenge_name: string;
   robot_name?: string;
   robot_image?: string;
   robot_description?: string;
   robot_cad_url?: string;
   summary?: string;
-  start_date?: string;
-  end_date?: string;
+  album_url?: string;
+  album_cover?: string;
   status: "published" | "draft";
 }
 
@@ -31,34 +32,38 @@ export default function SeasonEditor() {
   const navigate = useNavigate();
   
   const { uploadFile, isUploading: isUploadingCover } = useImageUpload();
+  const { uploadFile: uploadAlbumCover, isUploading: isUploadingAlbumCover } = useImageUpload();
 
   // Local State
   const [isPending, setIsPending] = useState(false);
-  const [seasonId, setSeasonId] = useState(""); // e.g. 2025-2026
+  const [startYear, setStartYear] = useState<number>(new Date().getFullYear());
+  const [endYear, setEndYear] = useState<number>(new Date().getFullYear() + 1);
   const [challengeName, setChallengeName] = useState("");
   const [robotName, setRobotName] = useState("");
   const [robotImageUrl, setRobotImageUrl] = useState(DEFAULT_COVER_IMAGE);
   const [cadUrl, setCadUrl] = useState("");
   const [summary, setSummary] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [albumUrl, setAlbumUrl] = useState("");
+  const [albumCoverUrl, setAlbumCoverUrl] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
+  const [isAlbumCoverPickerOpen, setIsAlbumCoverPickerOpen] = useState(false);
 
   const editor = useRichEditor({ placeholder: "<p>Describe the robot's design, mechanisms, and season highlights...</p>" });
 
   useEntityFetch<{ season?: SeasonData }>(
-    editId ? `/api/admin/seasons/${editId}` : null, // Assuming a detail endpoint
+    editId ? `/api/admin/seasons/${editId}` : null,
     (data) => {
       if (data?.season) {
-        setSeasonId(data.season.id);
+        setStartYear(data.season.start_year);
+        setEndYear(data.season.end_year);
         setChallengeName(data.season.challenge_name);
         setRobotName(data.season.robot_name || "");
         setRobotImageUrl(data.season.robot_image || DEFAULT_COVER_IMAGE);
         setCadUrl(data.season.robot_cad_url || "");
         setSummary(data.season.summary || "");
-        setStartDate(data.season.start_date || "");
-        setEndDate(data.season.end_date || "");
+        setAlbumUrl(data.season.album_url || "");
+        setAlbumCoverUrl(data.season.album_cover || "");
         if (editor && data.season.robot_description) {
           try {
             editor.commands.setContent(JSON.parse(data.season.robot_description));
@@ -71,8 +76,8 @@ export default function SeasonEditor() {
   );
 
   const handleSave = async (isDraft: boolean = false) => {
-    if (!seasonId || !challengeName) {
-      setErrorMsg("Season ID (e.g. 2025-2026) and Challenge Name are required.");
+    if (!startYear || !challengeName) {
+      setErrorMsg("Start Year and Challenge Name are required.");
       return;
     }
 
@@ -83,15 +88,16 @@ export default function SeasonEditor() {
       const robot_description = editor ? JSON.stringify(editor.getJSON()) : null;
       
       const payload = {
-        id: seasonId,
+        start_year: Number(startYear),
+        end_year: Number(endYear),
         challenge_name: challengeName,
         robot_name: robotName,
         robot_image: robotImageUrl === DEFAULT_COVER_IMAGE ? null : robotImageUrl,
         robot_description,
         robot_cad_url: cadUrl,
         summary,
-        start_date: startDate,
-        end_date: endDate,
+        album_url: albumUrl,
+        album_cover: albumCoverUrl,
         status: isDraft ? "draft" : "published"
       };
 
@@ -100,7 +106,7 @@ export default function SeasonEditor() {
         body: JSON.stringify(payload)
       });
 
-      toast.success(`Season ${seasonId} saved successfully.`);
+      toast.success(`Season ${startYear}-${endYear} saved successfully.`);
       queryClient.invalidateQueries({ queryKey: ["admin-seasons"] });
       queryClient.invalidateQueries({ queryKey: ["seasons"] });
       navigate("/dashboard/manage_seasons");
@@ -126,17 +132,30 @@ export default function SeasonEditor() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
         <div className="space-y-4">
-          <div>
-            <label htmlFor="season-id" className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Season ID</label>
-            <input
-              id="season-id"
-              type="text"
-              value={seasonId}
-              onChange={(e) => setSeasonId(e.target.value)}
-              disabled={!!editId}
-              className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:ring-1 focus:ring-ares-gold transition-all"
-              placeholder='e.g. 2025-2026'
-            />
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label htmlFor="start-year" className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Start Year</label>
+              <input
+                id="start-year"
+                type="number"
+                value={startYear}
+                onChange={(e) => setStartYear(parseInt(e.target.value))}
+                disabled={!!editId}
+                className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:ring-1 focus:ring-ares-gold transition-all"
+                placeholder='2025'
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor="end-year" className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">End Year</label>
+              <input
+                id="end-year"
+                type="number"
+                value={endYear}
+                onChange={(e) => setEndYear(parseInt(e.target.value))}
+                className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:ring-1 focus:ring-ares-gold transition-all"
+                placeholder='2026'
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="challenge-name" className="block text-[10px] font-black text-ares-gold uppercase tracking-[0.2em] mb-2">Challenge Name</label>
@@ -166,38 +185,54 @@ export default function SeasonEditor() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label htmlFor="robot-name" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Robot Name</label>
-          <input
-            id="robot-name"
-            type="text"
-            value={robotName}
-            onChange={(e) => setRobotName(e.target.value)}
-            className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30"
-            placeholder='e.g. ARES-1'
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="album-url" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Google Photos Album Link</label>
+            <input
+              id="album-url"
+              type="text"
+              value={albumUrl}
+              onChange={(e) => setAlbumUrl(e.target.value)}
+              className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30"
+              placeholder='https://photos.app.goo.gl/...'
+            />
+          </div>
+          <div>
+            <label htmlFor="robot-name" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Robot Name</label>
+            <input
+              id="robot-name"
+              type="text"
+              value={robotName}
+              onChange={(e) => setRobotName(e.target.value)}
+              className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30"
+              placeholder='e.g. ARES-1'
+            />
+          </div>
+          <div>
+            <label htmlFor="cad-link" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">CAD Link</label>
+            <input
+              id="cad-link"
+              type="text"
+              value={cadUrl}
+              onChange={(e) => setCadUrl(e.target.value)}
+              className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30"
+              placeholder='https://onshape.com/...'
+            />
+          </div>
         </div>
         <div>
-          <label htmlFor="cad-link" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">CAD Link</label>
-          <input
-            id="cad-link"
-            type="text"
-            value={cadUrl}
-            onChange={(e) => setCadUrl(e.target.value)}
-            className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30"
-            placeholder='https://onshape.com/...'
+          <span className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Album Cover / Hero Card</span>
+          <CoverAssetPicker 
+            coverImage={albumCoverUrl}
+            isUploading={isUploadingAlbumCover}
+            onLibraryClick={() => setIsAlbumCoverPickerOpen(true)}
+            onUrlChange={setAlbumCoverUrl}
+            onFileChange={async (file) => {
+              const { url } = await uploadAlbumCover(file);
+              setAlbumCoverUrl(url);
+            }}
           />
-        </div>
-        <div className="flex gap-2">
-            <div className="flex-1">
-                <label htmlFor="start-date" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Start Date</label>
-                <input id="start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble [&::-webkit-calendar-picker-indicator]:invert" />
-            </div>
-            <div className="flex-1">
-                <label htmlFor="end-date" className="block text-[10px] font-black text-marble/40 uppercase tracking-[0.2em] mb-2">End Date</label>
-                <input id="end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble [&::-webkit-calendar-picker-indicator]:invert" />
-            </div>
         </div>
       </div>
 
@@ -223,6 +258,15 @@ export default function SeasonEditor() {
         onSelect={(url) => {
           setRobotImageUrl(url);
           setIsImagePickerOpen(false);
+        }}
+      />
+
+      <AssetPickerModal 
+        isOpen={isAlbumCoverPickerOpen}
+        onClose={() => setIsAlbumCoverPickerOpen(false)}
+        onSelect={(url) => {
+          setAlbumCoverUrl(url);
+          setIsAlbumCoverPickerOpen(false);
         }}
       />
 

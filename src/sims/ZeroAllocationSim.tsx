@@ -5,7 +5,7 @@ export default function ZeroAllocationSim() {
   const heapCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const [mode, setMode] = useState<"STD" | "MARS">("MARS");
-  const [loopTxt, setLoopTxt] = useState<{ text: string, color: string }>({ text: "20.0ms", color: "#00d0ff" });
+  const [loopTxt, setLoopTxt] = useState<{ text: string, color: string }>({ text: "20.0ms", color: "#00E5FF" });
 
   const loopTimesRef = useRef<{ ts: number, gc: boolean }[]>([]);
   const heapFillRef = useRef(0);
@@ -48,7 +48,7 @@ export default function ZeroAllocationSim() {
         const lw = lCanvas.width, lh = lCanvas.height;
         const targetY = lh - (20 / 80) * lh;
         
-        lCtx.strokeStyle = 'rgba(41, 182, 246, 0.3)';
+        lCtx.strokeStyle = 'rgba(0, 229, 255, 0.3)';
         lCtx.setLineDash([5, 5]);
         lCtx.beginPath(); lCtx.moveTo(0, targetY); lCtx.lineTo(lw, targetY); lCtx.stroke();
         lCtx.setLineDash([]);
@@ -75,7 +75,7 @@ export default function ZeroAllocationSim() {
             if (loopTimes[i].gc) {
                 const y = lh - (loopTimes[i].ts / 80) * lh;
                 lCtx.beginPath(); lCtx.arc(i * slice, Math.max(0, y), 4, 0, Math.PI * 2);
-                lCtx.fillStyle = '#ff4d4d'; // var(--mars-red-light)
+                lCtx.fillStyle = '#FF4D4D'; // var(--ares-red-light)
                 lCtx.fill();
             }
         }
@@ -84,8 +84,8 @@ export default function ZeroAllocationSim() {
         const hw = hCanvas.width, hh = hCanvas.height;
         const fillH = heapFill * hh;
         
-        hCtx.fillStyle = '#333'; hCtx.fillRect(0, 0, hw, hh);
-        hCtx.fillStyle = heapFill > 0.9 ? '#ff4d4d' : '#00d0ff';
+        hCtx.fillStyle = '#4a4a4a'; hCtx.fillRect(0, 0, hw, hh);
+        hCtx.fillStyle = heapFill > 0.9 ? '#FF4D4D' : '#00E5FF';
         hCtx.fillRect(0, hh - fillH, hw, fillH);
         
         if (heapFill > 0.9) {
@@ -116,9 +116,9 @@ export default function ZeroAllocationSim() {
         draw();
         
         if (isGC) {
-            setLoopTxt({ text: loopMs.toFixed(1) + "ms (GC SPIKE)", color: "#ff4d4d" });
+            setLoopTxt({ text: loopMs.toFixed(1) + "ms (GC SPIKE)", color: "#FF4D4D" });
         } else {
-            setLoopTxt({ text: loopMs.toFixed(1) + "ms", color: "#00d0ff" });
+            setLoopTxt({ text: loopMs.toFixed(1) + "ms", color: "#00E5FF" });
         }
         
         if (document.hasFocus() || window.document.visibilityState === 'visible') {
@@ -142,25 +142,25 @@ export default function ZeroAllocationSim() {
         <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
           <button 
             onClick={() => setMode("STD")}
-            style={{ flex: 1, background: mode === "STD" ? '#ff4d4d' : '#222', color: '#fff', border: mode === "STD" ? '1px solid #ff4d4d' : '1px solid #444', padding: '12px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
+            style={{ flex: 1, background: mode === "STD" ? '#FF4D4D' : '#1A1A1A', color: '#fff', border: mode === "STD" ? '1px solid #FF4D4D' : '1px solid #4a4a4a', padding: '12px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
             STANDARD FRC (Allocating)
           </button>
           <button 
             onClick={() => setMode("MARS")}
-            style={{ flex: 1, background: mode === "MARS" ? '#00d0ff' : '#222', color: mode === "MARS" ? '#000' : '#fff', border: mode === "MARS" ? '1px solid #00d0ff' : '1px solid #444', padding: '12px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
+            style={{ flex: 1, background: mode === "MARS" ? '#00E5FF' : '#1A1A1A', color: mode === "MARS" ? '#000' : '#fff', border: mode === "MARS" ? '1px solid #00E5FF' : '1px solid #4a4a4a', padding: '12px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
             MARSLIB (Zero-Allocation)
           </button>
         </div>
       </div>
       <div style={{ display: 'flex', padding: '20px', gap: '20px', alignItems: 'stretch', height: '400px' }}>
         <div style={{ flex: 1, position: 'relative' }}>
-          <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={loopCanvasRef} style={{ width: '100%', height: '100%', display: 'block', border: '1px solid #333', background: '#111', borderRadius: '6px' }}></canvas>
+          <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={loopCanvasRef} style={{ width: '100%', height: '100%', display: 'block', border: '1px solid var(--ifm-color-emphasis-200)', background: '#1A1A1A', borderRadius: '6px' }}></canvas>
           <div style={{ position: 'absolute', top: '10px', left: '15px', fontFamily: '"JetBrains Mono", monospace', fontSize: '11px', color: '#e8e8e8' }}>
             LOOP TIME: <span style={{ color: loopTxt.color }}>{loopTxt.text}</span>
           </div>
         </div>
         <div style={{ flex: '0 0 100px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-          <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={heapCanvasRef} style={{ flex: 1, display: 'block', border: '1px solid #333', background: '#111', borderRadius: '6px' }}></canvas>
+          <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={heapCanvasRef} style={{ flex: 1, display: 'block', border: '1px solid var(--ifm-color-emphasis-200)', background: '#1A1A1A', borderRadius: '6px' }}></canvas>
           <div style={{ textAlign: 'center', fontFamily: '"JetBrains Mono", monospace', fontSize: '10px', color: '#999', marginTop: '5px' }}>JVM HEAP</div>
         </div>
       </div>

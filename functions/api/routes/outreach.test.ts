@@ -1,31 +1,46 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import outreachRouter from "./outreach";
 import { createMockOutreach } from "../../../src/test/factories/logisticsFactory";
 import { mockExecutionContext } from "../../../src/test/utils";
 
 describe("Hono Backend - /outreach Router", () => {
-  let env: { DB: Record<string, ReturnType<typeof vi.fn>>; DEV_BYPASS: string };
+  let env: { DB: any; DEV_BYPASS: string };
+  let lastSql = "";
 
   beforeEach(() => {
     vi.clearAllMocks();
+    lastSql = "";
+    
+    const dbMock = {
+      prepare: vi.fn().mockImplementation((sql: string) => {
+        lastSql = sql;
+        return dbMock;
+      }),
+      bind: vi.fn().mockReturnThis(),
+      all: vi.fn().mockImplementation(async () => {
+        if (lastSql.includes("PRAGMA table_info")) {
+          return { results: [{ name: 'id' }, { name: 'season_id' }] };
+        }
+        return { results: [] };
+      }),
+      run: vi.fn().mockResolvedValue({ success: true }),
+      first: vi.fn().mockResolvedValue(null),
+    };
+
     env = {
-      DB: {
-        prepare: vi.fn().mockReturnThis(),
-        bind: vi.fn().mockReturnThis(),
-        all: vi.fn().mockResolvedValue({ results: [] }),
-        run: vi.fn().mockResolvedValue({ success: true }),
-        first: vi.fn().mockResolvedValue(null),
-      },
+      DB: dbMock as any,
       DEV_BYPASS: "true",
     };
   });
 
   it("should list all outreach records", async () => {
     const mockOutreach = [createMockOutreach(), createMockOutreach()];
-    // First call for direct logs
-    env.DB.all.mockResolvedValueOnce({ results: mockOutreach });
-    // Second call for volunteer events
-    env.DB.all.mockResolvedValueOnce({ results: [] });
+    env.DB.all.mockImplementation(async () => {
+      if (lastSql.includes("PRAGMA")) return { results: [{ name: 'id' }, { name: 'season_id' }] };
+      if (lastSql.includes("FROM outreach_logs")) return { results: mockOutreach };
+      return { results: [] }; // for volunteer events
+    });
 
     const req = new Request("http://localhost/", { method: "GET" });
     const res = await outreachRouter.request(req, {}, env, mockExecutionContext);
@@ -105,8 +120,12 @@ describe("Hono Backend - /outreach Router", () => {
   });
 
   it("GET / should handle volunteer events DB errors", async () => {
-    env.DB.all.mockResolvedValueOnce({ results: [] }); // logs success
-    env.DB.all.mockRejectedValueOnce(new Error("DB error")); // volunteer fail
+    env.DB.all.mockImplementation(async () => {
+      if (lastSql.includes("PRAGMA")) return { results: [{ name: 'id' }, { name: 'season_id' }] };
+      if (lastSql.includes("FROM outreach_logs")) return { results: [] };
+      if (lastSql.includes("FROM events")) throw new Error("DB error");
+      return { results: [] };
+    });
     const req = new Request("http://localhost/", { method: "GET" });
     const res = await outreachRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);

@@ -1,12 +1,13 @@
 import { useEntityFetch } from "../hooks/useEntityFetch";
 
 interface Season {
-  id: string;
+  start_year: number;
+  end_year: number;
   challenge_name: string;
 }
 
 interface SeasonPickerProps {
-  value?: string;
+  value?: string | number;
   onChange: (value: string) => void;
   label?: string;
 }
@@ -27,8 +28,8 @@ export default function SeasonPicker({ value, onChange, label = "Linked Season" 
       >
         <option value="">-- No Season Link --</option>
         {seasons.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.id} - {s.challenge_name}
+          <option key={s.start_year} value={s.start_year.toString()}>
+            {s.start_year}-{s.end_year} | {s.challenge_name}
           </option>
         ))}
       </select>
