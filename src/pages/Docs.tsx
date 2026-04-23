@@ -1,151 +1,39 @@
-import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, BookOpen, Edit2, ChevronRight, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "../components/SEO";
 import { useSession } from "../utils/auth-client";
-import { trackPageView } from "../utils/analytics";
 import Turnstile from "../components/Turnstile";
 import DocsMarkdownRenderer from "../components/docs/DocsMarkdownRenderer";
 import DocsSidebar from "../components/docs/DocsSidebar";
 import DocsTableOfContents from "../components/docs/DocsTableOfContents";
 import { publicApi } from "../api/publicApi";
 import { useModal } from "../contexts/ModalContext";
-
-interface DocRecord {
-  slug: string;
-  title: string;
-  category: string;
-  sort_order: number;
-  description: string;
-  content?: string;
-  updated_at?: string;
-  snippet?: string;
-  cf_email?: string;
-  original_author_nickname?: string;
-  original_author_avatar?: string;
-}
-
-interface Contributor {
-  author_email: string;
-  nickname?: string;
-  avatar?: string;
-}
-
-interface SearchResult {
-  slug: string;
-  title: string;
-  category: string;
-  snippet: string;
-}
-
-// ── Sidebar structure matching Starlight layout ──────────────────────
-const SIDEBAR_ORDER = [
-  "Getting Started",
-  "Migration Guides",
-  "Support",
-  "Community",
-  "Reference",
-  "The ARESLib Standard",
-  "Foundation Track",
-  "Precision Track",
-  "Reliability Track",
-  "HMI & Control",
-];
+import { useParams, Link } from "react-router-dom";
+import { useDocs } from "../hooks/useDocs";
 
 export default function Docs() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const { data: session } = useSession();
   const modal = useModal();
 
   const userRole = (session?.user as Record<string, unknown>)?.role || "user";
   const isEditor = userRole === "admin" || userRole === "author";
 
-  // ── State ──────────────────────────────────────────────────────────
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [feedbackToken, setFeedbackToken] = useState("");
-
-  // ── Data Fetching ──────────────────────────────────────────────────
-  const { data: allDocs = [] } = useQuery<DocRecord[]>({
-    queryKey: ["docs-list"],
-    queryFn: async () => {
-      const { docs } = await publicApi.get<{ docs?: DocRecord[] }>("/api/docs");
-      return docs ?? [];
-    },
-  });
-
-  const ObjectQuery = useQuery<{doc: DocRecord, contributors: Contributor[]}>({
-    queryKey: ["doc", slug],
-    queryFn: async () => {
-      return publicApi.get<{doc: DocRecord, contributors: Contributor[]}>(`/api/docs/${slug}`);
-    },
-    enabled: !!slug,
-  });
-  
-  const currentDoc = ObjectQuery.data?.doc;
-  const contributors = ObjectQuery.data?.contributors || [];
-  const docLoading = ObjectQuery.isLoading;
-
-  const { data: searchResults = [] } = useQuery<SearchResult[]>({
-    queryKey: ["docs-search", searchQuery],
-    queryFn: async () => {
-      const { results } = await publicApi.get<{ results?: SearchResult[] }>(`/api/docs/search?q=${encodeURIComponent(searchQuery)}`);
-      return results ?? [];
-    },
-    enabled: searchQuery.length >= 2,
-  });
-
-  // ── Grouped Docs ──────────────────────────────────────────────────
-  const groupedDocs = useMemo(() => {
-    const groups: Record<string, DocRecord[]> = {};
-    for (const doc of allDocs) {
-      if (!groups[doc.category]) groups[doc.category] = [];
-      groups[doc.category].push(doc);
-    }
-    const ordered: [string, DocRecord[]][] = [];
-    for (const cat of SIDEBAR_ORDER) {
-      if (groups[cat]) ordered.push([cat, groups[cat]]);
-    }
-    for (const [cat, docs] of Object.entries(groups)) {
-      if (!SIDEBAR_ORDER.includes(cat)) ordered.push([cat, docs]);
-    }
-    return ordered;
-  }, [allDocs]);
-
-  // ── Effects ────────────────────────────────────────────────────────
-  // Keyboard Search Shortcut
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        setSearchOpen((o) => !o);
-      }
-      if (e.key === "Escape") {
-        setSearchOpen(false);
-        setSearchQuery("");
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  // Track Page view
-  useEffect(() => {
-    if (currentDoc) {
-      trackPageView(`/docs/${currentDoc.slug}`, 'doc');
-    }
-  }, [currentDoc]);
-
-  // Auto-navigate to first doc if homepage requested
-  useEffect(() => {
-    if (!slug && allDocs.length > 0) {
-      navigate(`/docs/${allDocs[0].slug}`, { replace: true });
-    }
-  }, [slug, allDocs, navigate]);
+  const {
+    allDocs,
+    currentDoc,
+    contributors,
+    docLoading,
+    searchResults,
+    groupedDocs,
+    searchQuery,
+    setSearchQuery,
+    searchOpen,
+    setSearchOpen,
+    feedbackToken,
+    setFeedbackToken,
+  } = useDocs(slug);
 
   return (
     <div className="min-h-screen bg-ares-gray-deep text-ares-offwhite flex flex-col">

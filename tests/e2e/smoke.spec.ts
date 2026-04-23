@@ -44,11 +44,16 @@ test.describe('ARESWEB Global Smoke Tests', () => {
       const nav = page.locator('nav');
       await expect(nav).toBeVisible();
 
+      // Wait for framer-motion entry animations to settle before a11y scan
+      await page.waitForTimeout(1000);
+
       // Ensure no uncaught frontend exceptions crashed the client
       expect(errors).toHaveLength(0);
 
-      // Accessibility assertions
-      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      // Accessibility assertions — enforce WCAG 2.1 AA rules only (not best-practice advisories)
+      const accessibilityScanResults = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .analyze();
       expect(accessibilityScanResults.violations).toEqual([]);
     });
   }

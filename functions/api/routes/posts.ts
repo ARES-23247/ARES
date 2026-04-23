@@ -214,8 +214,8 @@ async function handlePostSave(c: Context<AppEnv>) {
       const socialsFilter = (body as { socials?: Record<string, boolean> }).socials || null;
       const baseUrl = new URL(c.req.url).origin;
 
-      try {
-        await dispatchSocials(
+      c.executionCtx.waitUntil(
+        dispatchSocials(
           c.env.DB,
           {
             title: body.title,
@@ -226,41 +226,33 @@ async function handlePostSave(c: Context<AppEnv>) {
           },
           socialConfig,
           socialsFilter
-        );
-      } catch (err) {
-        console.error("Social dispatch failed:", err);
-        warnings.push(`Social Syndication Failed: ${(err as Error).message}`);
-      }
+        ).catch(err => console.error("Social dispatch failed:", err))
+      );
     }
 
     // ── Zulip Announcement ──
     if (status === "published") {
-      try {
-        await sendZulipMessage(
+      c.executionCtx.waitUntil(
+        sendZulipMessage(
           c.env,
           "announcements",
           "Website Updates",
           `🚀 **New Blog Post Published:** [${body.title}](${siteConfig.urls.base}/blog/${slug})\n\n${snippet.substring(0, 300)}`
-        );
-      } catch (err) {
-        console.error("[Posts] Zulip announcement failed:", err);
-        warnings.push(`Zulip Notification Failed: ${(err as Error).message}`);
-      }
+        ).catch(err => console.error("[Posts] Zulip announcement failed:", err))
+      );
     }
 
     // ── Notify admins and mentors of pending content ──
     if (status === "pending") {
-      try {
-        await notifyByRole(c, ["admin", "coach", "mentor"], {
+      c.executionCtx.waitUntil(
+        notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📝 Pending Blog Post",
           message: `"${body.title}" submitted by ${email} needs review.`,
           link: "/dashboard",
           external: true,
           priority: "medium"
-        });
-      } catch (err) {
-        console.error("[Posts] Admin notification failed:", err);
-      }
+        }).catch(err => console.error("[Posts] Admin notification failed:", err))
+      );
     }
 
     return c.json({ 

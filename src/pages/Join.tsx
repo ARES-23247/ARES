@@ -230,7 +230,7 @@ export default function Join() {
                   <button type="submit" disabled={isSubmitting || !turnstileToken} className={`px-8 py-4 w-full text-white font-black uppercase tracking-widest ares-cut-sm hover:-translate-y-1 active:translate-y-0 transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 ${role === "student" ? "bg-ares-red hover:shadow-[0_10px_30px_rgba(220,38,38,0.3)] hover:bg-ares-bronze" : "bg-obsidian hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"}`}>
                     {isSubmitting ? "Submitting..." : `Submit ${role === "student" ? "Student" : "Mentor"} Application`}
                   </button>
-                  <p className="text-center text-[11px] text-obsidian/80 font-bold uppercase tracking-widest mt-4">
+                  <p className="text-center text-[11px] text-obsidian font-bold uppercase tracking-widest mt-4">
                     Your personal information is protected under the FIRST Youth Protection Program guidelines.
                   </p>
                 </div>

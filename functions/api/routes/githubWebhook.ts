@@ -72,12 +72,12 @@ githubWebhookRouter.post("/", async (c) => {
         const changes = payload.changes as Record<string, { from?: unknown; to?: unknown }> | undefined;
 
         if (action === "created") {
-          await sendZulipMessage(
+          c.executionCtx.waitUntil(sendZulipMessage(
             c.env,
             engineeringStream,
             "Project Board",
             `📋 **New project item created**\nItem ID: \`${item?.node_id || "unknown"}\``
-          );
+          ).catch(err => console.error(err)));
         } else if (action === "edited" && changes) {
           // Check if status field changed
           const fieldChanges = Object.entries(changes)
@@ -85,20 +85,20 @@ githubWebhookRouter.post("/", async (c) => {
             .join("\n");
 
           if (fieldChanges) {
-            await sendZulipMessage(
+            c.executionCtx.waitUntil(sendZulipMessage(
               c.env,
               engineeringStream,
               "Project Board",
               `🔄 **Project item updated**\nItem: \`${item?.node_id || "unknown"}\`\n${fieldChanges}`
-            );
+            ).catch(err => console.error(err)));
           }
         } else if (action === "deleted") {
-          await sendZulipMessage(
+          c.executionCtx.waitUntil(sendZulipMessage(
             c.env,
             engineeringStream,
             "Project Board",
             `🗑️ **Project item removed** from board`
-          );
+          ).catch(err => console.error(err)));
         }
         break;
       }
@@ -116,12 +116,12 @@ githubWebhookRouter.post("/", async (c) => {
             .map(c => `• ${c.message.split("\n")[0]} *(${c.author.name})*`)
             .join("\n");
 
-          await sendZulipMessage(
+          c.executionCtx.waitUntil(sendZulipMessage(
             c.env,
             engineeringStream,
             `${repo}`,
             `⚡ **${commitCount} new commit${commitCount > 1 ? "s" : ""}** pushed to \`${branch}\`\n\n${commitList}${commitCount > 5 ? `\n...and ${commitCount - 5} more` : ""}`
-          );
+          ).catch(err => console.error(err)));
         }
         break;
       }
@@ -134,12 +134,12 @@ githubWebhookRouter.post("/", async (c) => {
         if (["opened", "closed", "reopened"].includes(action2)) {
           const emoji = action2 === "opened" ? "🟢" : pr?.merged ? "🟣" : action2 === "closed" ? "🔴" : "🟡";
           const status = pr?.merged ? "merged" : action2;
-          await sendZulipMessage(
+          c.executionCtx.waitUntil(sendZulipMessage(
             c.env,
             engineeringStream,
             `${repo2}`,
             `${emoji} **PR ${status}**: [${pr?.title || "Untitled"}](${pr?.html_url || "#"}) by @${pr?.user?.login || "unknown"}`
-          );
+          ).catch(err => console.error(err)));
         }
         break;
       }
@@ -151,12 +151,12 @@ githubWebhookRouter.post("/", async (c) => {
 
         if (["opened", "closed", "reopened"].includes(action3)) {
           const emoji = action3 === "opened" ? "📝" : action3 === "closed" ? "✅" : "🔄";
-          await sendZulipMessage(
+          c.executionCtx.waitUntil(sendZulipMessage(
             c.env,
             engineeringStream,
             `${repo3}`,
             `${emoji} **Issue ${action3}**: [${issue?.title || "Untitled"}](${issue?.html_url || "#"}) by @${issue?.user?.login || "unknown"}`
-          );
+          ).catch(err => console.error(err)));
         }
         break;
       }

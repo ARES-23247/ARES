@@ -153,35 +153,30 @@ adminRouter.post("/", rateLimitMiddleware(15, 60), async (c) => {
 
     // ── Zulip Calendar Notification ──
     if (status === "published") {
-      try {
-        const eventDate = new Date(dateStart).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-        const desc = extractAstText(description || "").substring(0, 200);
-        await sendZulipMessage(
+      const eventDate = new Date(dateStart).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      const desc = extractAstText(description || "").substring(0, 200);
+      c.executionCtx.waitUntil(
+        sendZulipMessage(
           c.env,
           "announcements",
           "Calendar",
           `📅 **New Event:** ${title}\n📍 ${location || "TBD"} • 📆 ${eventDate}\n${desc ? `\n${desc}` : ""}\n\n[View on ${siteConfig.team.name}WEB](${baseUrl}/events)`
-        );
-      } catch (err) {
-        console.error("[Events] Zulip notification failed:", err);
-        warnings.push(`Zulip Notification Failed: ${(err as Error).message}`);
-      }
+        ).catch(err => console.error("[Events] Zulip notification failed:", err))
+      );
     }
 
 
     // ── Notify admins and mentors of pending content ──
     if (status === "pending") {
-      try {
-        await notifyByRole(c, ["admin", "coach", "mentor"], {
+      c.executionCtx.waitUntil(
+        notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📅 Pending Event",
           message: `"${title}" submitted by ${email} needs review.`,
           link: "/dashboard",
           external: true,
           priority: "medium"
-        });
-      } catch (err) {
-        console.error("[Events] Admin notification failed:", err);
-      }
+        }).catch(err => console.error("[Events] Admin notification failed:", err))
+      );
     }
 
     return c.json({ success: true, id: genId, warning: warnings.length > 0 ? warnings.join(" | ") : undefined }, warnings.length > 0 ? 207 : 200);

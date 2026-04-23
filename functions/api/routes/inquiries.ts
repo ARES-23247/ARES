@@ -213,42 +213,37 @@ inquiriesRouter.post(
     }
 
     // ── Zulip Admin Alert ──
-    try {
-      const metadataObj = metadata as Record<string, unknown> | undefined;
-      const phoneStr = metadataObj?.phone ? `\n📱 **Phone:** (Masked)` : "";
-      
-      const alertBody = [
-        `📧 **Contact:** (see Dashboard for details)${phoneStr}`,
-        `🔗 [Review in Dashboard](${baseUrl}/dashboard?tab=inquiries)`,
-      ].filter(Boolean).join("\n");
+    const metadataObj = metadata as Record<string, unknown> | undefined;
+    const phoneStr = metadataObj?.phone ? `\n📱 **Phone:** (Masked)` : "";
+    
+    const alertBody = [
+      `📧 **Contact:** (see Dashboard for details)${phoneStr}`,
+      `🔗 [Review in Dashboard](${baseUrl}/dashboard?tab=inquiries)`,
+    ].filter(Boolean).join("\n");
 
-      await sendZulipAlert(
+    c.executionCtx.waitUntil(
+      sendZulipAlert(
         c.env,
         type === "sponsor" ? "Sponsor" : (type === "student" || type === "mentor") ? "Applicant" : "Outreach",
         `New ${type} inquiry received (ID: ${id.slice(0, 8)})`,
         alertBody
-      );
-    } catch (err) {
-      console.error("[Inquiry] Zulip alert failed:", err);
-      warnings.push(`Zulip alert failed: ${(err as Error).message}`);
-    }
+      ).catch(err => console.error("[Inquiry] Zulip alert failed:", err))
+    );
  
     // ── In-App Dashboard Notification ──
-    try {
-      const audiences: NotifyAudience[] = 
-        (type === "outreach" || type === "support") 
-          ? ["admin", "coach", "mentor", "student"]
-          : ["admin", "coach", "mentor"];
-          
-      await notifyByRole(c, audiences, {
+    const audiences: NotifyAudience[] = 
+      (type === "outreach" || type === "support") 
+        ? ["admin", "coach", "mentor", "student"]
+        : ["admin", "coach", "mentor"];
+        
+    c.executionCtx.waitUntil(
+      notifyByRole(c, audiences, {
         title: `New ${type.toUpperCase()} Inquiry`,
         message: `${name} submitted a new inquiry.`,
         link: "/dashboard?tab=inquiries",
         priority: type === "sponsor" ? "high" : "medium"
-      });
-    } catch (err) {
-      console.error("[Inquiry] In-App notification failed:", err);
-    }
+      }).catch(err => console.error("[Inquiry] In-App notification failed:", err))
+    );
 
 
     // ── GitHub Auto-Escalation ──
