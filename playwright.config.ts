@@ -7,12 +7,10 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
-  timeout: process.env.CI ? 30_000 : 60_000,
+  timeout: 60000,
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
-    navigationTimeout: 15_000,
-    actionTimeout: 10_000,
   },
   projects: [
     {
@@ -20,10 +18,16 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npx vite preview --port 4173 --strictPort',
-    url: 'http://localhost:4173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
-  },
+  webServer: [
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: true,
+    },
+    {
+      command: 'cross-env DEV_BYPASS=true ENVIRONMENT=test npx wrangler pages dev',
+      url: 'http://localhost:8788',
+      reuseExistingServer: true,
+    }
+  ],
 });

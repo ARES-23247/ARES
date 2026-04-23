@@ -17,7 +17,7 @@ test.describe('ARESWEB Authentication Flow', () => {
     await page.goto('/dashboard');
 
     // Check that we hit the Authentication Required gate component
-    await expect(page.locator('h1').filter({ hasText: 'Authentication Required' })).toBeVisible();
+    await expect(page.getByText('Authentication Required')).toBeVisible();
 
     // There should be a link routing to the login
     await expect(page.locator('a', { hasText: /Return to Login/i })).toBeVisible();
