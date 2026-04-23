@@ -1,18 +1,20 @@
-import { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode } from "react";
+import React, { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode, forwardRef } from "react";
 
 interface SharedProps {
   label: string;
   focusColor?: "ares-red" | "ares-gold" | "ares-cyan";
   fullWidth?: boolean;
+  error?: string;
 }
 
-export function DashboardInput({ 
+export const DashboardInput = forwardRef<HTMLInputElement, SharedProps & InputHTMLAttributes<HTMLInputElement>>(({ 
   label, 
   focusColor = "ares-red", 
   fullWidth = false, 
   className = "",
+  error,
   ...props 
-}: SharedProps & InputHTMLAttributes<HTMLInputElement>) {
+}, ref) => {
   const colorMap = {
     "ares-red": "focus:border-ares-red",
     "ares-gold": "focus:border-ares-gold",
@@ -25,20 +27,25 @@ export function DashboardInput({
         {label}
       </label>
       <input
-        className={`w-full bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-white outline-none transition-colors ${colorMap[focusColor]} ${className}`}
+        ref={ref}
+        className={`w-full bg-white/5 border ${error ? 'border-ares-red' : 'border-white/10'} ares-cut-sm px-4 py-3 text-white outline-none transition-colors ${colorMap[focusColor]} ${className}`}
         {...props}
       />
+      {error && <p className="text-[10px] font-black uppercase tracking-tighter text-ares-red">{error}</p>}
     </div>
   );
-}
+});
 
-export function DashboardTextarea({ 
+DashboardInput.displayName = "DashboardInput";
+
+export const DashboardTextarea = forwardRef<HTMLTextAreaElement, SharedProps & TextareaHTMLAttributes<HTMLTextAreaElement>>(({ 
   label, 
   focusColor = "ares-red", 
   fullWidth = false,
   className = "",
+  error,
   ...props 
-}: SharedProps & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+}, ref) => {
   const colorMap = {
     "ares-red": "focus:border-ares-red",
     "ares-gold": "focus:border-ares-gold",
@@ -51,12 +58,16 @@ export function DashboardTextarea({
         {label}
       </label>
       <textarea
-        className={`w-full bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-white outline-none transition-colors min-h-[100px] ${colorMap[focusColor]} ${className}`}
+        ref={ref}
+        className={`w-full bg-white/5 border ${error ? 'border-ares-red' : 'border-white/10'} ares-cut-sm px-4 py-3 text-white outline-none transition-colors min-h-[100px] ${colorMap[focusColor]} ${className}`}
         {...props}
       />
+      {error && <p className="text-[10px] font-black uppercase tracking-tighter text-ares-red">{error}</p>}
     </div>
   );
-}
+});
+
+DashboardTextarea.displayName = "DashboardTextarea";
 
 interface DashboardSubmitButtonProps {
   isPending: boolean;

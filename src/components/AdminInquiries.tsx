@@ -1,6 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2, MessageSquare, Mail, Calendar, CheckSquare, Clock } from "lucide-react";
+import { Trash2, MessageSquare, Mail, Calendar, CheckSquare, Clock, Search, ChevronUp, ChevronDown, Filter } from "lucide-react";
+import { format } from "date-fns";
 import { adminApi } from "../api/adminApi";
+import { useState, useMemo } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  flexRender,
+  createColumnHelper,
+  SortingState,
+} from "@tanstack/react-table";
 
 type Inquiry = {
   id: string;
@@ -18,6 +29,8 @@ import DashboardLoadingGrid from "./dashboard/DashboardLoadingGrid";
 
 export default function AdminInquiries() {
   const queryClient = useQueryClient();
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const { data: inquiries = [], isLoading, isError } = useQuery({
     queryKey: ["admin-inquiries"],
@@ -41,6 +54,90 @@ export default function AdminInquiries() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] })
   });
 
+  const columnHelper = createColumnHelper<Inquiry>();
+
+  const columns = useMemo(() => [
+    columnHelper.accessor("created_at", {
+      header: "Date",
+      cell: info => format(new Date(info.getValue()), "MMM d, yyyy"),
+      sortingFn: "datetime",
+    }),
+    columnHelper.accessor("type", {
+      header: "Type",
+      cell: info => (
+        <span className={`px-2 py-0.5 ares-cut-xs text-[10px] font-black uppercase ${
+          info.getValue() === "student" ? "bg-ares-red text-white" : 
+          info.getValue() === "mentor" ? "bg-ares-gold text-black" : "bg-ares-cyan text-black"
+        }`}>
+          {info.getValue()}
+        </span>
+      ),
+    }),
+    columnHelper.accessor("name", {
+      header: "Sender",
+      cell: info => (
+        <div className="flex flex-col">
+          <span className="font-bold text-white">{info.getValue()}</span>
+          <span className="text-xs text-marble/40 flex items-center gap-1"><Mail size={10} /> {info.row.original.email}</span>
+        </div>
+      ),
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: info => (
+        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+          info.getValue() === 'pending' ? 'bg-ares-gold/20 text-ares-gold border border-ares-gold/30' : 'bg-ares-cyan/20 text-ares-cyan border border-ares-cyan/30'
+        }`}>
+          {info.getValue()}
+        </span>
+      ),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: info => (
+        <div className="flex items-center gap-2">
+          {info.row.original.status === 'pending' ? (
+            <button onClick={() => updateStatus.mutate({ id: info.row.original.id, status: 'resolved' })} 
+              className="p-2 bg-white/5 hover:bg-ares-cyan/20 text-marble/40 hover:text-ares-cyan transition-all ares-cut-xs" 
+              title="Mark Resolved"
+            >
+              <CheckSquare size={14} />
+            </button>
+          ) : (
+            <button onClick={() => updateStatus.mutate({ id: info.row.original.id, status: 'pending' })} 
+              className="p-2 bg-white/5 hover:bg-ares-gold/20 text-marble/40 hover:text-ares-gold transition-all ares-cut-xs" 
+              title="Mark Pending"
+            >
+              <Clock size={14} />
+            </button>
+          )}
+          <button onClick={() => { if(confirm("Delete inquiry?")) deleteInquiry.mutate(info.row.original.id); }} 
+            className="p-2 bg-white/5 hover:bg-ares-red/20 text-marble/40 hover:text-ares-red transition-all ares-cut-xs" 
+            title="Delete"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ),
+    }),
+  ], [updateStatus, deleteInquiry, columnHelper]);
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: inquiries,
+    columns,
+    state: {
+      sorting,
+      globalFilter,
+    },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
   return (
     <div className="space-y-6">
       <DashboardPageHeader 
@@ -48,101 +145,72 @@ export default function AdminInquiries() {
         subtitle="Manage communication requests and outreach leads."
         icon={<MessageSquare className="text-ares-gold" />}
       />
+
       {isError && (
         <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
           TELEMETRY FAULT: Failed to synchronize inquiry data.
         </div>
       )}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-marble/30" size={18} />
+          <input
+            type="text"
+            value={globalFilter ?? ""}
+            onChange={e => setGlobalFilter(e.target.value)}
+            placeholder="Search inquiries (name, email, type...)"
+            className="w-full bg-white/5 border border-white/10 ares-cut-sm pl-12 pr-4 py-3 text-white outline-none focus:border-ares-gold transition-colors"
+          />
+        </div>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 ares-cut-lg overflow-hidden">
         {isLoading ? (
-           <DashboardLoadingGrid count={3} heightClass="h-40" />
-        ) : inquiries.map((iq) => {
-          let meta: Record<string, string | string[]> = {};
-          try {
-            if (iq.metadata) meta = JSON.parse(iq.metadata);
-          } catch { /* ignore */ }
-          
-          return (
-            <div key={iq.id} className="bg-black/40 border border-white/5 ares-cut-lg p-6 relative group transition-all hover:border-white/20 flex flex-col h-full">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-            <div className={`p-1.5 ares-cut-sm ${iq.type === 'student' ? 'bg-ares-red text-white' : iq.type === 'mentor' ? 'bg-ares-gold text-black' : 'bg-ares-cyan text-black'}`}>
-              {iq.type} Form
-            </div>
-            <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
-              iq.status === 'pending' ? 'bg-ares-gold text-black shadow-lg shadow-ares-gold/20' : 'bg-ares-cyan text-black shadow-lg shadow-ares-cyan/20'
-            }`}>
-                    {iq.status}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {iq.status === 'pending' && (
-                    <button onClick={() => updateStatus.mutate({ id: iq.id, status: 'resolved' })} 
-                      className="text-marble/40 hover:text-ares-cyan transition-colors" 
-                      title="Mark Resolved"
-                      aria-label={`Mark inquiry from ${iq.name} as resolved`}
-                    >
-                      <CheckSquare size={16} />
-                    </button>
-                  )}
-                  {iq.status === 'resolved' && (
-                    <button onClick={() => updateStatus.mutate({ id: iq.id, status: 'pending' })} 
-                      className="text-marble/40 hover:text-ares-gold transition-colors" 
-                      title="Mark Pending"
-                      aria-label={`Mark inquiry from ${iq.name} as pending`}
-                    >
-                      <Clock size={16} />
-                    </button>
-                  )}
-                  <button onClick={() => { if(confirm("Delete inquiry?")) deleteInquiry.mutate(iq.id); }} 
-                    className="text-marble/40 hover:text-ares-red transition-colors" 
-                    title="Delete"
-                    aria-label={`Delete inquiry from ${iq.name}`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-4 flex-shrink-0">
-                <h4 className="text-xl font-bold text-white mb-1">{iq.name}</h4>
-                <div className="flex items-center gap-2 text-sm text-marble/90">
-                  <Mail size={14} /> <a href={`mailto:${iq.email}`} className="hover:text-white transition-colors">{iq.email}</a>
-                  <span className="mx-2 text-marble/20">•</span>
-                  <Calendar size={14} /> {new Date(iq.created_at).toLocaleDateString()}
-                </div>
-              </div>
-
-              <div className="bg-white/5 ares-cut-sm p-4 text-sm text-marble flex-1">
-                <div className="grid grid-cols-2 gap-y-3 mb-2">
-                  {Object.entries(meta).map(([k, v]) => (
-                    k !== 'additional' && v && (
-                      <div key={k}>
-                        <span className="block text-xs font-black uppercase text-marble/40 tracking-widest">{k}</span>
-                        {k === 'phone' ? (
-                          <a href={`tel:${String(v).replace(/[^0-9+]/g, '')}`} className="font-medium text-white hover:text-ares-cyan underline decoration-white/20 underline-offset-4">{String(v)}</a>
-                        ) : (
-                          <span className="font-medium text-white">{Array.isArray(v) ? v.join(', ') : String(v)}</span>
-                        )}
-                      </div>
-                    )
-                  ))}
-                </div>
-                {meta.additional && (
-                  <div className="mt-4 pt-4 border-t border-white/5">
-                    <span className="block text-xs font-black uppercase text-marble/40 tracking-widest">Additional Notes</span>
-                    <p className="mt-1 italic text-marble/90 whitespace-pre-wrap">{meta.additional}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+          <DashboardLoadingGrid count={5} heightClass="h-12" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id} className="border-b border-white/5 bg-white/5">
+                    {headerGroup.headers.map(header => (
+                      <th 
+                        key={header.id} 
+                        className="px-6 py-4 text-xs font-black uppercase tracking-widest text-marble/40 cursor-pointer hover:text-white transition-colors"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        <div className="flex items-center gap-2">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {{
+                            asc: <ChevronUp size={14} />,
+                            desc: <ChevronDown size={14} />,
+                          }[header.column.getIsSorted() as string] ?? null}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="hover:bg-white/5 transition-colors group">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-6 py-4 text-sm text-marble/80">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {inquiries.length === 0 && !isLoading && (
           <DashboardEmptyState
-            className="col-span-1 lg:col-span-2 py-16 text-center border-2 border-dashed border-white/5 ares-cut-lg"
+            className="py-16 text-center"
             icon={<MessageSquare size={32} />}
             message="No active inquiries or applications."
           />

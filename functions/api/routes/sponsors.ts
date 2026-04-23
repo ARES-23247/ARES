@@ -1,88 +1,78 @@
 import { Context, Hono } from "hono";
 import { AppEnv, ensureAdmin, logAuditAction, parsePagination, validateLength, MAX_INPUT_LENGTHS, rateLimitMiddleware } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
+import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { sponsorContract } from "../../../src/schemas/contracts/sponsorContract";
 
 const sponsorsRouter = new Hono<AppEnv>();
+const s = initServer<AppEnv>();
 
-// ── GET /sponsors — list active sponsors for public display ───────────
-sponsorsRouter.get("/", async (c) => {
-  try {
-    const { results } = await c.env.DB.prepare(
-      "SELECT id, name, tier, logo_url, website_url FROM sponsors WHERE is_active = 1 ORDER BY CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END"
-    ).all();
-    const response = c.json({ sponsors: results || [] });
-    // SEC-DoW: CDN cache for 5 min — sponsors rarely change
-    response.headers.set("Cache-Control", "public, s-maxage=300, max-age=60");
-    return response;
-  } catch (err) {
-    console.error("D1 sponsors list error:", err);
-    return c.json({ sponsors: [] });
-  }
-});
-
-// ── GET /admin — list all sponsors (admin) ──────
-sponsorsRouter.get("/admin", ensureAdmin, async (c) => {
-  return handleSponsorList(c);
-});
-
-async function handleSponsorList(c: Context<AppEnv>) {
-  try {
-    const { limit, offset } = parsePagination(c, 50, 200);
-    const { results } = await c.env.DB.prepare("SELECT id, name, tier, logo_url, website_url, is_active, created_at FROM sponsors ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
-    return c.json({ sponsors: results || [] });
-  } catch (err) {
-    console.error("D1 admin sponsors list error:", err);
-    return c.json({ sponsors: [] });
-  }
-}
-
-// ── POST /admin — create or update a sponsor (admin) ──────
-sponsorsRouter.post("/admin", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
-  return handleSponsorSave(c);
-});
-
-async function handleSponsorSave(c: Context<AppEnv>) {
-  try {
-    const body = await c.req.json();
-    const { id, name, tier, logo_url, website_url, is_active } = body;
-    
-    if (!id || !name || !tier) {
-      return c.json({ error: "Missing required fields" }, 400);
+const sponsorTsRestRouter = s.router(sponsorContract, {
+  getSponsors: async ({ c }) => {
+    try {
+      const { results } = await c.env.DB.prepare(
+        "SELECT id, name, tier, logo_url, website_url, is_active FROM sponsors WHERE is_active = 1 ORDER BY CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END"
+      ).all();
+      return {
+        status: 200,
+        body: { sponsors: results as any || [] },
+      };
+    } catch (err) {
+      console.error("D1 sponsors list error:", err);
+      return { status: 200, body: { sponsors: [] } };
     }
-
-    // REF-06: Input validation
-    const VALID_TIERS = ["Titanium", "Gold", "Silver", "Bronze", "Community"];
-    if (!VALID_TIERS.includes(tier)) {
-      return c.json({ error: `Invalid tier. Must be one of: ${VALID_TIERS.join(", ")}` }, 400);
+  },
+  getAdminSponsors: async ({ c }) => {
+    try {
+      const { limit, offset } = parsePagination(c, 50, 200);
+      const { results } = await c.env.DB.prepare("SELECT id, name, tier, logo_url, website_url, is_active FROM sponsors ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
+      return {
+        status: 200,
+        body: { sponsors: results as any || [] },
+      };
+    } catch (err) {
+      console.error("D1 admin sponsors list error:", err);
+      return { status: 200, body: { sponsors: [] } };
     }
-    const nameErr = validateLength(name, MAX_INPUT_LENGTHS.name, "Sponsor name");
-    if (nameErr) return c.json({ error: nameErr }, 400);
+  },
+  createSponsor: async ({ body, c }) => {
+    try {
+      const { id, name, tier, logo_url, website_url, is_active } = body;
+      const finalId = id || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-    await c.env.DB.prepare(
-      "INSERT INTO sponsors (id, name, tier, logo_url, website_url, is_active) VALUES (?, ?, ?, ?, ?, ?) " +
-      "ON CONFLICT(id) DO UPDATE SET name=excluded.name, tier=excluded.tier, logo_url=excluded.logo_url, website_url=excluded.website_url, is_active=excluded.is_active"
-    ).bind(id, name, tier, logo_url || null, website_url || null, is_active ?? 1).run();
+      await c.env.DB.prepare(
+        "INSERT INTO sponsors (id, name, tier, logo_url, website_url, is_active) VALUES (?, ?, ?, ?, ?, ?) " +
+        "ON CONFLICT(id) DO UPDATE SET name=excluded.name, tier=excluded.tier, logo_url=excluded.logo_url, website_url=excluded.website_url, is_active=excluded.is_active"
+      ).bind(finalId, name, tier, logo_url || null, website_url || null, is_active ?? 1).run();
 
-    await logAuditAction(c, "sponsor_saved", "sponsors", id, `Sponsor "${name}" (${tier}) saved`);
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 sponsor save error:", err);
-    return c.json({ error: "Save failed" }, 500);
-  }
-}
-
-// ── DELETE /admin/:id — deactivate a sponsor (admin) ─────────
-sponsorsRouter.delete("/admin/:id", ensureAdmin, async (c) => {
-  try {
-    const id = (c.req.param("id") || "");
-    await c.env.DB.prepare("UPDATE sponsors SET is_active = 0 WHERE id = ?").bind(id).run();
-    await logAuditAction(c, "sponsor_deactivated", "sponsors", id, "Sponsor deactivated (soft-delete)");
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 sponsor delete error:", err);
-    return c.json({ error: "Delete failed" }, 500);
-  }
+      await logAuditAction(c, "sponsor_saved", "sponsors", finalId, `Sponsor "${name}" (${tier}) saved`);
+      return {
+        status: 200,
+        body: { success: true, id: finalId },
+      };
+    } catch (err) {
+      console.error("D1 sponsor save error:", err);
+      return { status: 200, body: { success: false } }; // Map to internal errors if needed
+    }
+  },
+  deleteSponsor: async ({ params, c }) => {
+    try {
+      const { id } = params;
+      await c.env.DB.prepare("UPDATE sponsors SET is_active = 0 WHERE id = ?").bind(id).run();
+      await logAuditAction(c, "sponsor_deactivated", "sponsors", id, "Sponsor deactivated (soft-delete)");
+      return {
+        status: 200,
+        body: { success: true },
+      };
+    } catch (err) {
+      console.error("D1 sponsor delete error:", err);
+      return { status: 200, body: { success: false } };
+    }
+  },
 });
+
+// Register ts-rest endpoints
+createHonoEndpoints(sponsorContract, sponsorTsRestRouter, sponsorsRouter);
 
 // ── GET /sponsors/roi/:token — Public (hidden) Sponsor Dashboard ────
 sponsorsRouter.get("/roi/:token", async (c) => {

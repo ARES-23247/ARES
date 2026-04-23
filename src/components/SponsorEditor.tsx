@@ -3,12 +3,17 @@ import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
 import DashboardLoadingGrid from "./dashboard/DashboardLoadingGrid";
 import { DashboardInput, DashboardSubmitButton } from "./dashboard/DashboardFormInputs";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Globe, ShieldCheck, Award, Zap, Gem, CheckCircle2, XCircle, Edit2, Package } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { adminApi } from "../api/adminApi";
+
 import { useModal } from "../contexts/ModalContext";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { sponsorSchema, SponsorPayload } from "../schemas/sponsorSchema";
+
+import { apiContractClient } from "../api/apiContractClient";
 
 interface Sponsor {
   id: string;
@@ -31,48 +36,65 @@ export default function SponsorEditor() {
   const queryClient = useQueryClient();
   const modal = useModal();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<Sponsor>>({
-    id: "",
-    name: "",
-    tier: "Gold",
-    logo_url: "",
-    website_url: "",
-    is_active: 1
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { data: sponsors = [], isLoading, isError } = useQuery<Sponsor[]>({
-    queryKey: ["admin-sponsors"],
-    queryFn: async () => {
-      const d = await adminApi.get<{ sponsors?: Sponsor[] }>("/api/sponsors/admin", { cache: "no-store" });
-      return d.sponsors || [];
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<SponsorPayload>({
+    resolver: zodResolver(sponsorSchema),
+    defaultValues: {
+      tier: "Gold",
+      is_active: 1
     }
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (sponsor: Partial<Sponsor>) => {
-      // @ts-expect-error - partial sponsor matches schema
-      return adminApi.createSponsor(sponsor);
-    },
-    onError: (err: Error) => {
-      toast.error(`[Failure Exposure] Sponsor sync failed: \n${err.message}`);
-    },
+  const { data: sponsorData, isLoading, isError } = apiContractClient.getAdminSponsors.useQuery({
+    queryKey: ["admin-sponsors"],
+  });
+  const sponsors = (sponsorData?.body?.sponsors || []) as Sponsor[];
+
+  const saveMutation = apiContractClient.createSponsor.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
       setIsFormOpen(false);
-      setFormData({ id: "", name: "", tier: "Gold", logo_url: "", website_url: "", is_active: 1 });
+      setEditingId(null);
+      reset();
+    },
+    onError: (err: Error) => {
+      toast.error(`[Failure Exposure] Sponsor sync failed: \n${err.message}`);
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => adminApi.deleteSponsor(id),
+  const deleteMutation = apiContractClient.deleteSponsor.useMutation({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] })
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name || !formData.tier) return;
-    const finalId = formData.id || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    saveMutation.mutate({ ...formData, id: finalId });
+  const onFormSubmit = (data: SponsorPayload) => {
+    const finalId = editingId || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    saveMutation.mutate({ body: { ...data, id: finalId } });
+  };
+
+  const handleEdit = (s: Sponsor) => {
+    setEditingId(s.id);
+    reset({
+      id: s.id,
+      name: s.name,
+      tier: s.tier,
+      logo_url: s.logo_url || "",
+      website_url: s.website_url || "",
+      is_active: s.is_active
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (s: Sponsor) => {
+    const confirmed = await modal.confirm({
+      title: "Delete Partner",
+      description: `Are you sure you want to permanently remove ${s.name} from the ARES registry?`,
+      confirmText: "Delete",
+      destructive: true
+    });
+    if (confirmed) {
+      deleteMutation.mutate({ params: { id: s.id }, body: {} });
+    }
   };
 
   return (
@@ -84,8 +106,13 @@ export default function SponsorEditor() {
         action={
           <button
             onClick={() => {
-              if (!isFormOpen) setFormData({ id: "", name: "", tier: "Gold", logo_url: "", website_url: "", is_active: 1 });
-              setIsFormOpen(!isFormOpen);
+              if (isFormOpen) {
+                setIsFormOpen(false);
+                setEditingId(null);
+                reset();
+              } else {
+                setIsFormOpen(true);
+              }
             }}
             className="flex items-center gap-2 px-4 py-2 bg-ares-red text-white font-bold ares-cut-sm hover:bg-ares-danger transition-colors shadow-lg shadow-ares-red/20"
           >
@@ -108,50 +135,49 @@ export default function SponsorEditor() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onFormSubmit)}
             className="bg-black/40 border border-white/10 ares-cut-lg p-6 space-y-4 overflow-hidden"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DashboardInput
                 id="sponsor-name"
                 label="Partner Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                {...register("name")}
+                error={errors.name?.message}
                 placeholder="e.g. Google DeepMind"
                 focusColor="ares-red"
-                required
               />
               <div className="space-y-1">
                 <label htmlFor="sponsor-tier" className="text-xs font-bold uppercase tracking-widest text-marble/40">Tier</label>
                 <select
                   id="sponsor-tier"
-                  value={formData.tier}
-                  onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
+                  {...register("tier")}
                   className="w-full bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:border-ares-red outline-none transition-colors"
                 >
                   {TIERS.map(t => <option key={t.name} value={t.name} className="bg-obsidian">{t.name}</option>)}
                 </select>
+                {errors.tier && <p className="text-[10px] font-black uppercase tracking-tighter text-ares-red">{errors.tier.message}</p>}
               </div>
               <DashboardInput
                 id="sponsor-logo"
                 label="Logo URL"
-                value={formData.logo_url || ""}
-                onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                {...register("logo_url")}
+                error={errors.logo_url?.message}
                 placeholder="https://..."
                 focusColor="ares-red"
               />
               <DashboardInput
                 id="sponsor-link"
                 label="Website URL"
-                value={formData.website_url || ""}
-                onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                {...register("website_url")}
+                error={errors.website_url?.message}
                 placeholder="https://..."
                 focusColor="ares-red"
               />
             </div>
             <DashboardSubmitButton 
               isPending={saveMutation.isPending} 
-              defaultText={formData.id ? "Update Partner in D1" : "Commit Partner to D1"} 
+              defaultText={editingId ? "Update Partner in D1" : "Commit Partner to D1"} 
               theme="red" 
             />
           </motion.form>
@@ -172,25 +198,14 @@ export default function SponsorEditor() {
               </div>
               <div className="flex items-center gap-2 transition-opacity">
                 <button
-                  onClick={() => {
-                    setFormData(s);
-                    setIsFormOpen(true);
-                  }}
+                  onClick={() => handleEdit(s)}
                   aria-label={`Edit ${s.name}`}
                   className="text-white/60 hover:text-ares-cyan transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded"
                 >
                   <Edit2 size={16} />
                 </button>
                 <button
-                  onClick={async () => { 
-                    const confirmed = await modal.confirm({
-                      title: "Delete Partner",
-                      description: `Are you sure you want to permanently remove ${s.name} from the ARES registry?`,
-                      confirmText: "Delete",
-                      destructive: true
-                    });
-                    if (confirmed) deleteMutation.mutate(s.id); 
-                  }}
+                  onClick={() => handleDelete(s)}
                   aria-label={`Delete ${s.name}`}
                   className="text-white/60 hover:text-ares-red transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-red rounded"
                 >
