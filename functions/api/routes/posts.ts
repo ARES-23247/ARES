@@ -180,35 +180,38 @@ async function handlePostSave(c: Context<AppEnv>) {
     const email = user?.email || "anonymous_dashboard_user";
     const status = body.isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
-    await c.env.DB.batch([
-      c.env.DB.prepare(
-        `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, published_at, season_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).bind(
-        slug,
-        body.title,
-        body.author || "ARES Team",
-        dateStr,
-        body.coverImageUrl || "",
-        snippet,
-        astStr,
-        email,
-        status,
-        body.publishedAt || null,
-        body.seasonId || null
-      ),
+    // SEC-Z10: Schema Resilience - Check if season_id column exists before inserting
+    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(posts)").all();
+    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
+
+    const queries = [];
+    if (hasSeasonCol) {
+      queries.push(
+        c.env.DB.prepare(
+          `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, published_at, season_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(slug, body.title, body.author || "ARES Team", dateStr, body.coverImageUrl || "", snippet, astStr, email, status, body.publishedAt || null, body.seasonId || null)
+      );
+    } else {
+      queries.push(
+        c.env.DB.prepare(
+          `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, published_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(slug, body.title, body.author || "ARES Team", dateStr, body.coverImageUrl || "", snippet, astStr, email, status, body.publishedAt || null)
+      );
+    }
+
+    queries.push(
       c.env.DB.prepare(
         `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
          VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
       ).bind(
         (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `test-uuid-${Date.now()}`,
-        email,
-        "CREATE_POST",
-        "posts",
-        slug,
-        `Created post: ${body.title} (${status})`
+        email, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`
       )
-    ]);
+    );
+
+    await c.env.DB.batch(queries);
 
     const warnings: string[] = [];
 

@@ -19,7 +19,7 @@ import DashboardLoadingGrid from "./dashboard/DashboardLoadingGrid";
 export default function AdminInquiries() {
   const queryClient = useQueryClient();
 
-  const { data: inquiries = [], isLoading } = useQuery({
+  const { data: inquiries = [], isLoading, isError } = useQuery({
     queryKey: ["admin-inquiries"],
     queryFn: async () => {
       const d = await adminApi.get<{ inquiries?: Inquiry[] }>("/api/inquiries");
@@ -44,10 +44,16 @@ export default function AdminInquiries() {
   return (
     <div className="space-y-6">
       <DashboardPageHeader 
-        title="Team Inquiries" 
-        subtitle="Review student, mentor, and sponsor applications."
+        title="Admin Inquiries" 
+        subtitle="Manage communication requests and outreach leads."
         icon={<MessageSquare className="text-ares-gold" />}
       />
+      {isError && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Failed to synchronize inquiry data.
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {isLoading ? (
            <DashboardLoadingGrid count={3} heightClass="h-40" />

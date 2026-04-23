@@ -12,6 +12,7 @@ export default function ContentManager({
   onEditPost, 
   onEditEvent,
   onEditDoc,
+  onEditSeason,
   mode = "all",
   pendingCount
 }: { 

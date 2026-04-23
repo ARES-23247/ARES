@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Search, Clock, Users } from "lucide-react";
+import { Search, Clock, Users, Activity } from "lucide-react";
 import { useState } from "react";
 import { adminApi } from "../api/adminApi";
 
@@ -19,7 +19,7 @@ import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 export default function MemberImpactOverview() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: roster = [], isLoading } = useQuery<RosterMember[]>({
+  const { data: roster = [], isLoading, isError } = useQuery<RosterMember[]>({
     queryKey: ["admin-roster-stats"],
     queryFn: async () => {
       try {
@@ -61,10 +61,16 @@ export default function MemberImpactOverview() {
   return (
     <div className="space-y-12">
       <DashboardPageHeader 
-        title="Impact Overview" 
-        subtitle="Track member attendance and outreach hours across the season."
-        icon={<Users className="text-ares-cyan" />}
+        title="Member Impact Registry" 
+        subtitle="Tracking the direct contribution and service hours of ARES 23247."
+        icon={<Activity className="text-ares-red" />}
       />
+      {isError && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Failed to synchronize roster data. Displaying cached or empty state.
+        </div>
+      )}
       {/* MVP Podiums */}
       {students.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

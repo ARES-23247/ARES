@@ -250,7 +250,8 @@ export const adminApi = {
       method: "PUT",
       body: JSON.stringify({ folder }),
     });
-  },  syndicateMedia: async (key: string, caption: string) => {
+  },
+  syndicateMedia: async (key: string, caption: string) => {
     return fetchJson<{ success?: boolean }>(`/api/admin/media/syndicate`, {
       method: "POST",
       body: JSON.stringify({ key, caption }),

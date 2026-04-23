@@ -26,8 +26,18 @@ function mergeAndSort(logs: Record<string, unknown>[], volunteerEvents: Record<s
 outreachRouter.get("/", async (c) => {
   try {
     const { limit, offset } = parsePagination(c, 50, 200);
+    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(outreach_logs)").all();
+    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
+
+    const selectCols = [
+      "id", "title", "date", "location", "COALESCE(hours, 0) as hours_logged", 
+      "COALESCE(people_reached, 0) as reach_count", "COALESCE(students_count, 0) as students_count", 
+      "impact_summary as description"
+    ];
+    if (hasSeasonCol) selectCols.push("season_id");
+
     const { results: logs } = await c.env.DB.prepare(
-        "SELECT id, title, date, location, COALESCE(hours, 0) as hours_logged, COALESCE(people_reached, 0) as reach_count, COALESCE(students_count, 0) as students_count, impact_summary as description, season_id FROM outreach_logs WHERE is_deleted = 0 ORDER BY date DESC LIMIT ? OFFSET ?"
+      `SELECT ${selectCols.join(", ")} FROM outreach_logs WHERE is_deleted = 0 ORDER BY date DESC LIMIT ? OFFSET ?`
     ).bind(limit, offset).all();
     
     const volunteerEvents = await fetchVolunteerEvents(c.env.DB);
@@ -54,15 +64,30 @@ outreachRouter.post("/", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => 
       if (row) exists = true;
     }
 
+    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(outreach_logs)").all();
+    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
+
     if (exists) {
-      await c.env.DB.prepare(
-        "UPDATE outreach_logs SET title = ?, date = ?, location = ?, hours = ?, people_reached = ?, students_count = ?, impact_summary = ?, season_id = ? WHERE id = ?"
-      ).bind(title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, season_id || null, id).run();
+      if (hasSeasonCol) {
+        await c.env.DB.prepare(
+          "UPDATE outreach_logs SET title = ?, date = ?, location = ?, hours = ?, people_reached = ?, students_count = ?, impact_summary = ?, season_id = ? WHERE id = ?"
+        ).bind(title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, season_id || null, id).run();
+      } else {
+        await c.env.DB.prepare(
+          "UPDATE outreach_logs SET title = ?, date = ?, location = ?, hours = ?, people_reached = ?, students_count = ?, impact_summary = ?, outreach_logs.impact_summary = ? WHERE id = ?"
+        ).bind(title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, id).run();
+      }
     } else {
       const newId = id || crypto.randomUUID();
-      await c.env.DB.prepare(
-        "INSERT INTO outreach_logs (id, title, date, location, hours, people_reached, students_count, impact_summary, season_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-      ).bind(newId, title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, season_id || null).run();
+      if (hasSeasonCol) {
+        await c.env.DB.prepare(
+          "INSERT INTO outreach_logs (id, title, date, location, hours, people_reached, students_count, impact_summary, season_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        ).bind(newId, title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, season_id || null).run();
+      } else {
+        await c.env.DB.prepare(
+          "INSERT INTO outreach_logs (id, title, date, location, hours, people_reached, students_count, impact_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        ).bind(newId, title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null).run();
+      }
     }
 
     return c.json({ success: true });

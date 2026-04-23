@@ -49,16 +49,26 @@ export default function PostManagerTab({
   });
 
   if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-ares-red rounded-full animate-spin"></div></div>;
-  if (isError) return <div className="h-32 flex flex-col items-center justify-center text-ares-red gap-2"><p className="font-bold">FAILED TO LOAD POSTS</p><p className="text-[10px] text-marble/40">The database query failed. Check console for details.</p></div>;
 
 
   const filtered = posts.filter(contentFilter(view));
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <h3 className={`font-bold uppercase tracking-widest text-xs mb-4 border-b border-white/10 pb-2 ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-marble'}`}>
-         {view === 'active' ? 'Published Blog Posts' : view === 'pending' ? 'Pending Posts' : 'Trashed Posts'}
+      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4 px-1 flex items-center gap-2">
+        <Radio size={12} className={isLoading ? "animate-pulse text-ares-red" : "text-ares-red"} />
+        Post Registry
+        {isError && (
+          <span className="ml-auto text-[9px] text-ares-red animate-pulse flex items-center gap-1">
+            TELEMETRY FAULT
+          </span>
+        )}
       </h3>
+
+      <div className="text-[10px] text-marble/20 mb-2 px-1 flex justify-between items-center font-mono uppercase tracking-widest border-b border-white/5 pb-1">
+        <span>VIEW: {view} | RAW: {posts.length} | FILTERED: {filtered.length}</span>
+        {isError && <span className="text-ares-red font-bold">API ERROR!</span>}
+      </div>
       <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
         {filtered.length === 0 ? (
           <DashboardEmptyState

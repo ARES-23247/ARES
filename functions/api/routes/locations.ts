@@ -6,6 +6,19 @@ import { z } from "zod";
 const locationsRouter = new Hono<AppEnv>();
 const adminLocationsRouter = new Hono<AppEnv>();
 
+// ── GET / — list all (including deleted) for admin ────────
+adminLocationsRouter.get("/", ensureAdmin, async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      "SELECT id, name, address, maps_url, is_deleted FROM locations ORDER BY name ASC"
+    ).all();
+    return c.json({ locations: results || [] });
+  } catch (err) {
+    console.error("D1 admin locations list error:", err);
+    return c.json({ locations: [] }, 500);
+  }
+});
+
 // ── GET / — list all locations ──────────────────────────
 locationsRouter.get("/", async (c) => {
   try {

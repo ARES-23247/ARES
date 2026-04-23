@@ -13,7 +13,7 @@ import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardMetricsGrid from "./dashboard/DashboardMetricsGrid";
 
 export default function AnalyticsDashboard() {
-  const { data, isLoading } = useQuery<AnalyticsSummary>({
+  const { data, isLoading, isError } = useQuery<AnalyticsSummary>({
     queryKey: ["analytics-summary"],
     queryFn: async () => {
       try {
@@ -47,10 +47,16 @@ export default function AnalyticsDashboard() {
   return (
     <div className="space-y-8">
       <DashboardPageHeader 
-        title="Community Engagement" 
-        subtitle="Real-time data on documentation and blog utility."
+        title="Engagement Analytics" 
+        subtitle="Real-time visibility into platform traffic and content performance."
         icon={<BarChart3 className="text-ares-cyan" />}
       />
+      {isError && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Failed to synchronize engagement metrics.
+        </div>
+      )}
       {/* Overview Stats */}
       <DashboardMetricsGrid 
         metrics={data?.totals.map(t => ({

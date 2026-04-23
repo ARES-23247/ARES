@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw, Radio, AlertTriangle } from "lucide-react";
+import { RefreshCw, Radio } from "lucide-react";
 import TeamAvailability from "./TeamAvailability";
 import { ProjectBoard, IntegrationHealth } from "./command/types";
 import IntegrationHealthMonitor from "./command/IntegrationHealthMonitor";
@@ -18,7 +18,7 @@ export default function CommandCenter() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // -- Queries --------------------------------------------------------
-  const { data: board, isLoading: isBoardLoading, error: boardError } = useQuery<ProjectBoard | null>({
+  const { data: board, isLoading: isBoardLoading, isError: isBoardError } = useQuery<ProjectBoard | null>({
     queryKey: ["command-board"],
     queryFn: async () => {
       const data = await adminApi.get<{ success: boolean; board: ProjectBoard }>("/api/github/projects");
@@ -27,7 +27,7 @@ export default function CommandCenter() {
     refetchInterval: 60000,
   });
 
-  const { data: health = [], isLoading: isHealthLoading } = useQuery<IntegrationHealth[]>({
+  const { data: health = [], isLoading: isHealthLoading, isError: isHealthError } = useQuery<IntegrationHealth[]>({
     queryKey: ["command-health"],
     queryFn: async () => {
       const data = await adminApi.get<{ success: boolean; settings: Record<string, string> }>("/api/admin/settings");
@@ -47,7 +47,7 @@ export default function CommandCenter() {
     refetchInterval: 120000,
   });
 
-  const { data: stats = { posts: 0, events: 0, docs: 0 }, isLoading: isStatsLoading } = useQuery({
+  const { data: stats = { posts: 0, events: 0, docs: 0 }, isLoading: isStatsLoading, isError: isStatsError } = useQuery({
     queryKey: ["command-stats"],
     queryFn: async () => {
       const data = await adminApi.get<{ posts: number; events: number; docs: number }>("/api/admin/settings/stats");
@@ -61,7 +61,7 @@ export default function CommandCenter() {
   });
 
   const isLoading = isBoardLoading || isHealthLoading || isStatsLoading;
-  const error = boardError ? (boardError as Error).message : null;
+  const isError = isBoardError || isHealthError || isStatsError;
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["command-board"] });
@@ -117,10 +117,10 @@ export default function CommandCenter() {
         </div>
       </div>
 
-      {error && (
-        <div className="p-4 ares-cut-sm bg-ares-red text-white text-sm font-bold shadow-lg shadow-ares-red/20">
-          <AlertTriangle size={16} className="inline mr-2" />
-          {error}
+      {isError && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Command Center synchronization partially degraded.
         </div>
       )}
 

@@ -84,6 +84,7 @@ mediaRouter.get("/", async (c) => {
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "public, max-age=300",
+        "Vary": "Accept",
       },
     });
     c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));

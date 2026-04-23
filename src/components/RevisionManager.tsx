@@ -24,16 +24,12 @@ interface RevisionManagerProps {
 export default function RevisionManager({ isOpen, onClose, type, slug, displayTitle }: RevisionManagerProps) {
   const queryClient = useQueryClient();
 
-  const { data: revisions = [], isLoading } = useQuery<Revision[]>({
+  const { data: revisions = [], isLoading, isError } = useQuery<Revision[]>({
     queryKey: ["history", type, slug],
     queryFn: async () => {
       const base = type === "doc" ? "docs" : "posts";
-      try {
-        const data = await adminApi.get<{ history?: Revision[] }>(`/api/admin/${base}/${slug}/history`);
-        return data.history ?? [];
-      } catch {
-        return [];
-      }
+      const data = await adminApi.get<{ history?: Revision[] }>(`/api/admin/${base}/${slug}/history`);
+      return data.history ?? [];
     },
     enabled: isOpen && !!slug,
   });
@@ -76,6 +72,12 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+          {isError && (
+            <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+              TELEMETRY FAULT: Failed to retrieve archive timeline.
+            </div>
+          )}
           {isLoading ? (
             <div className="h-48 flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-white/10 border-t-ares-gold rounded-full animate-spin"></div>

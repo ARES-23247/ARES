@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { RefreshCw, Shield, Trash2, ChevronDown, Edit3, X } from "lucide-react";
 import ProfileEditor from "./ProfileEditor";
 import { adminApi } from "../api/adminApi";
+import { useQuery } from "@tanstack/react-query";
 
 interface UserRow {
   id: string;
@@ -20,31 +21,22 @@ const ROLES = ["unverified", "user", "author", "admin"];
 const MEMBER_TYPES = ["student", "alumni", "parent", "coach", "mentor", "sponsor"];
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<UserRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editUserId, setEditUserId] = useState<string | null>(null);
 
-  const fetchUsers = useCallback(() => {
-    adminApi.get<{ users: UserRow[] }>("/api/admin/users")
-      .then((data) => {
-        setUsers(data.users || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message || "Failed to load users.");
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  const { data, isLoading, isError, refetch } = useQuery<{ users: UserRow[] }>({
+    queryKey: ["admin_users"],
+    queryFn: async () => {
+      return adminApi.get<{ users: UserRow[] }>("/api/admin/users");
+    }
+  });
+  const users = data?.users ?? [];
 
   const changeRole = async (userId: string, newRole: string) => {
     await adminApi.request(`/api/admin/users/${userId}`, {
       method: "PATCH",
       body: JSON.stringify({ role: newRole }),
     });
-    fetchUsers();
+    refetch();
   };
 
   const changeMemberType = async (userId: string, newType: string) => {
@@ -52,7 +44,7 @@ export default function AdminUsers() {
       method: "PATCH",
       body: JSON.stringify({ member_type: newType }),
     });
-    fetchUsers();
+    refetch();
   };
 
   const removeUser = async (userId: string, name: string) => {
@@ -60,15 +52,11 @@ export default function AdminUsers() {
     await adminApi.request(`/api/admin/users/${userId}`, {
       method: "DELETE",
     });
-    fetchUsers();
+    refetch();
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex items-center justify-center py-20"><RefreshCw className="animate-spin text-ares-red" size={32} /></div>;
-  }
-
-  if (error) {
-    return <div className="bg-ares-red text-white font-bold ares-cut p-4 text-center py-10 shadow-lg shadow-ares-red/20">{error}</div>;
   }
 
   return (
@@ -79,6 +67,13 @@ export default function AdminUsers() {
         </h2>
         <span className="text-white/60 text-sm font-bold">{users.length} registered</span>
       </div>
+
+      {isError && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Failed to synchronize user authority records.
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full">

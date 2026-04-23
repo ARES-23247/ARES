@@ -30,7 +30,7 @@ export default function SeasonManagerTab({
   restoreMutation,
   purgeMutation
 }: SeasonManagerTabProps) {
-  const { data: seasonsResult, isLoading, isError, error } = useQuery({
+  const { data: seasonsResult, isLoading, isError } = useQuery({
     queryKey: ["admin-seasons"],
     queryFn: async () => {
       const data = await adminApi.get<{ seasons?: SeasonItem[] }>("/api/admin/seasons");
@@ -50,17 +50,7 @@ export default function SeasonManagerTab({
 
   if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-ares-gold rounded-full animate-spin"></div></div>;
 
-  if (isError) {
-    return (
-      <div className="p-6 border border-ares-red/30 bg-ares-red/5 ares-cut-sm">
-        <h3 className="text-ares-red font-bold uppercase tracking-tighter italic mb-2">Failed to load seasons</h3>
-        <p className="text-marble/60 text-xs mb-4">The ARES core was unable to fetch the legacy archives.</p>
-        <div className="bg-black/50 p-4 font-mono text-[10px] text-ares-red border border-ares-red/20 overflow-auto max-h-40">
-          {(error as Error).message}
-        </div>
-      </div>
-    );
-  }
+
 
   const filtered = seasons.filter(s => {
     const isDeleted = Number(s.is_deleted) === 1;
@@ -71,13 +61,19 @@ export default function SeasonManagerTab({
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-        <div className="flex flex-col items-end">
-          <h3 className={`font-bold uppercase tracking-widest text-xs ${view === 'trash' ? 'text-ares-red' : view === 'pending' ? 'text-ares-gold' : 'text-ares-gold'}`}>
-            {view === 'trash' ? 'Trashed Legacies' : view === 'pending' ? 'Draft Legacies' : 'Active Legacies'}
-          </h3>
-          <p className="text-[10px] text-marble/30 mt-1 uppercase tracking-tighter font-mono">RAW: {seasons.length} | FILTERED: {filtered.length}</p>
-        </div>
+      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4 px-1 flex items-center gap-2">
+        <History size={12} className={isLoading ? "animate-pulse text-ares-red" : "text-ares-red"} />
+        Season Archive
+        {isError && (
+          <span className="ml-auto text-[9px] text-ares-red animate-pulse flex items-center gap-1">
+            TELEMETRY FAULT
+          </span>
+        )}
+      </h3>
+
+      <div className="text-[10px] text-marble/20 mb-2 px-1 flex justify-between items-center font-mono uppercase tracking-widest border-b border-white/5 pb-1">
+        <span>VIEW: {view} | RAW: {seasons.length} | FILTERED: {filtered.length}</span>
+        {isError && <span className="text-ares-red font-bold">API ERROR!</span>}
       </div>
 
       <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">

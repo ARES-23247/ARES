@@ -33,7 +33,7 @@ export default function AwardEditor() {
     season_id: ""
   });
 
-  const { data: awards = [], isLoading } = useQuery<Award[]>({
+  const { data: awards = [], isLoading, isError } = useQuery<Award[]>({
     queryKey: ["admin-awards"],
     queryFn: async () => {
       const d = await adminApi.get<{ awards: Award[] }>("/api/admin/awards");
@@ -89,6 +89,13 @@ export default function AwardEditor() {
           </button>
         }
       />
+
+      {isError && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Failed to synchronize achievement records.
+        </div>
+      )}
 
       <AnimatePresence>
         {isAdding && (

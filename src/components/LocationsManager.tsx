@@ -25,7 +25,7 @@ export default function LocationsManager() {
   const [isSearchingOSM, setIsSearchingOSM] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const { data: locations = [], isLoading } = useQuery<LocationRow[]>({
+  const { data: locations = [], isLoading, isError } = useQuery<LocationRow[]>({
     queryKey: ["admin_locations"],
     queryFn: async () => {
       const d = await adminApi.get<{ locations: LocationRow[] }>("/api/admin/locations");
@@ -121,10 +121,16 @@ export default function LocationsManager() {
     <div className="w-full flex flex-col items-center h-full p-4 md:p-8 overflow-y-auto">
       <div className="w-full max-w-4xl">
         <DashboardPageHeader 
-          title="Location Registry" 
-          subtitle="Manage physical meeting points, shops, and outreach sites."
+          title="Locations Registry" 
+          subtitle="Manage the physical venues and hotspots for ARES operations."
           icon={<MapPin className="text-ares-red" />}
         />
+        {isError && (
+          <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+            TELEMETRY FAULT: Failed to synchronize venue data.
+          </div>
+        )}
       </div>
       <div className="w-full max-w-4xl bg-obsidian border border-white/10 ares-cut-sm shadow-2xl p-6 relative">
 

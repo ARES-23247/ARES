@@ -29,12 +29,12 @@ export default function BadgeManager() {
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [selectedBadge, setSelectedBadge] = useState<string>("");
 
-  const { data: badgesData, isLoading: badgesLoading } = useQuery<{ badges: BadgeDef[] }>({
+  const { data: badgesData, isLoading: badgesLoading, isError: isBadgesError } = useQuery<{ badges: BadgeDef[] }>({
     queryKey: ["admin_badges"],
     queryFn: async () => publicApi.get<{ badges: BadgeDef[] }>("/api/badges")
   });
 
-  const { data: usersData } = useQuery<{ users: Array<{ id: string, name: string, email: string }> }>({
+  const { data: usersData, isError: isUsersError } = useQuery<{ users: Array<{ id: string, name: string, email: string }> }>({
     queryKey: ["admin_users_list"],
     queryFn: async () => adminApi.get<{ users: Array<{ id: string, name: string, email: string }> }>("/api/profile/admin/users")
   });
@@ -84,6 +84,12 @@ export default function BadgeManager() {
         subtitle="Define platform-wide awards and distribute them to members."
         icon={<Award className="text-ares-gold" />}
       />
+      {(isBadgesError || isUsersError) && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Failed to synchronize merit records.
+        </div>
+      )}
       {/* Creation Panel */}
       <div className="bg-ares-gray-dark border border-white/10 ares-cut overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-white/10 flex justify-between items-center">

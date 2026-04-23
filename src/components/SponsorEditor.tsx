@@ -40,7 +40,7 @@ export default function SponsorEditor() {
     is_active: 1
   });
 
-  const { data: sponsors = [], isLoading } = useQuery<Sponsor[]>({
+  const { data: sponsors = [], isLoading, isError } = useQuery<Sponsor[]>({
     queryKey: ["admin-sponsors"],
     queryFn: async () => {
       const d = await adminApi.get<{ sponsors?: Sponsor[] }>("/api/sponsors/admin", { cache: "no-store" });
@@ -94,6 +94,13 @@ export default function SponsorEditor() {
           </button>
         }
       />
+
+      {isError && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Failed to synchronize partner registry.
+        </div>
+      )}
 
       <AnimatePresence>
         {isFormOpen && (

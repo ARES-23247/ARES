@@ -77,6 +77,7 @@ export default function EventManagerTab({
     const isDeleted = Number(e.is_deleted) === 1;
     if (view === 'trash') return isDeleted;
     if (view === 'pending') return !isDeleted && (e.status === 'pending' || e.status === 'rejected' || e.status === 'draft');
+    if (view === 'all') return !isDeleted; // Show all non-deleted events in 'all' view
     return !isDeleted && e.status !== 'pending' && e.status !== 'rejected' && e.status !== 'draft';
   });
 

@@ -16,7 +16,7 @@ export default function IntegrationsManager() {
   const [isDirty, setIsDirty] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
-  const { data, isLoading, isError, error } = useQuery<{ settings: SettingsData }, Error>({
+  const { data, isLoading, isError } = useQuery<{ settings: SettingsData }, Error>({
     queryKey: ["admin_settings"],
     queryFn: async () => {
       try {
@@ -70,17 +70,6 @@ export default function IntegrationsManager() {
     );
   }
 
-  if (isError) {
-    return (
-      <div className="text-white bg-ares-red border border-ares-red ares-cut-sm p-4 font-bold text-center shadow-lg shadow-ares-red/20">
-        Failed to load integrations. Access denied or network error.
-        <div className="text-sm font-mono mt-2 opcaity-80">{error?.message || "Unknown Error"}</div>
-      </div>
-    );
-  }
-
-  if (!localSettings) return null;
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -109,6 +98,13 @@ export default function IntegrationsManager() {
           Save Changes
         </button>
       </div>
+
+      {isError && (
+        <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          TELEMETRY FAULT: Failed to synchronize Zero Trust secrets. Access denied.
+        </div>
+      )}
 
       {successMsg && (
         <div className="absolute top-0 right-0 -translate-y-full mb-4 bg-ares-cyan/20 border border-ares-cyan/50 text-ares-cyan px-4 py-2 ares-cut-sm font-medium text-sm">
