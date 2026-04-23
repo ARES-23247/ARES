@@ -1,3 +1,4 @@
 -- Migration 024: Add resource_type to audit_log
--- Required for the new unified audit system when saving blog posts, events, etc.
-ALTER TABLE audit_log ADD COLUMN resource_type TEXT NOT NULL DEFAULT 'unknown';
+-- RESOLVED: Column already exists in production schema.
+-- This file is kept as a no-op so wrangler marks it as applied and proceeds.
+SELECT 1;

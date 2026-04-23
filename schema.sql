@@ -299,6 +299,7 @@ CREATE TABLE IF NOT EXISTS awards (
     date TEXT NOT NULL,
     description TEXT,
     icon_type TEXT DEFAULT 'trophy',
+    is_deleted INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_awards_date ON awards(date);
