@@ -27,7 +27,7 @@ export function useDashboardNotifications(
   });
 
   const { data: eventsData } = useQuery({
-    queryKey: ["admin_events"],
+    queryKey: ["admin_events_notifications"],
     queryFn: async () => {
       const d = await adminApi.get<{ events?: { id: string, status: string, title: string, is_deleted?: number }[] }>("/api/admin/events");
       return d.events || [];

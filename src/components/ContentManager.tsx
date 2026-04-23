@@ -43,7 +43,7 @@ export default function ContentManager({
       return `/api/admin/${base}/${id}/undelete`;
     },
     method: "PATCH",
-    invalidateKeys: ["events", "admin_events", "posts", "docs", "admin-seasons"],
+    invalidateKeys: ["events", "admin_events", "admin_events_notifications", "posts", "docs", "admin-seasons"],
     clearConfirm: false,
   });
 
@@ -52,7 +52,7 @@ export default function ContentManager({
       const base = type === "event" ? "events" : type === "post" ? "posts" : type === "doc" ? "docs" : "seasons";
       return `/api/admin/${base}/${id}/purge`;
     },
-    invalidateKeys: ["events", "admin_events", "posts", "docs", "admin-seasons"],
+    invalidateKeys: ["events", "admin_events", "admin_events_notifications", "posts", "docs", "admin-seasons"],
     setConfirmId,
   });
 
@@ -62,7 +62,7 @@ export default function ContentManager({
       return `/api/admin/${base}/${id}/approve`;
     },
     method: "PATCH",
-    invalidateKeys: ["events", "admin_events", "posts", "docs"],
+    invalidateKeys: ["events", "admin_events", "admin_events_notifications", "posts", "docs"],
     clearConfirm: false,
   });
 
@@ -72,7 +72,7 @@ export default function ContentManager({
       return `/api/admin/${base}/${id}/reject`;
     },
     method: "PATCH",
-    invalidateKeys: ["events", "admin_events", "posts", "docs"],
+    invalidateKeys: ["events", "admin_events", "admin_events_notifications", "posts", "docs"],
     clearConfirm: false,
   });
 

@@ -152,6 +152,7 @@ export function useEventEditor(editId: string | undefined, editor: Editor | null
       
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_events_notifications"] });
       setTimeout(() => queryClient.invalidateQueries({ queryKey: ["events"] }), 1500);
 
       if (!editId) {
@@ -184,6 +185,7 @@ export function useEventEditor(editId: string | undefined, editor: Editor | null
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_events_notifications"] });
       navigate("/dashboard");
     },
     onError: () => {

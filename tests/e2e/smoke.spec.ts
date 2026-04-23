@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -16,7 +17,7 @@ const PUBLIC_ROUTES = [
 
 test.describe('ARESWEB Global Smoke Tests', () => {
   for (const route of PUBLIC_ROUTES) {
-    test(`Route ${route} should load successfully without errors`, async ({ page }) => {
+    test(`Route ${route} should load successfully without errors and pass basic accessibility`, async ({ page }) => {
       const errors: string[] = [];
       
       // Listen for unhandled exceptions or error boundary catches in console
@@ -45,6 +46,10 @@ test.describe('ARESWEB Global Smoke Tests', () => {
 
       // Ensure no uncaught frontend exceptions crashed the client
       expect(errors).toHaveLength(0);
+
+      // Accessibility assertions
+      const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+      expect(accessibilityScanResults.violations).toEqual([]);
     });
   }
 });

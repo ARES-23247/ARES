@@ -54,14 +54,14 @@ export default function EventManagerTab({
 
   const deleteEventMutation = useContentMutation<string>({
     endpoint: (id) => `/api/admin/events/${id}`,
-    invalidateKeys: ["admin_events", "events"],
+    invalidateKeys: ["admin_events", "admin_events_notifications", "events"],
     setConfirmId,
   });
 
   const syncGcalMutation = useContentMutation<void>({
     endpoint: () => `/api/admin/events/sync`,
     method: "POST",
-    invalidateKeys: ["admin_events", "events"],
+    invalidateKeys: ["admin_events", "admin_events_notifications", "events"],
     clearConfirm: false,
     onSuccess: (data: unknown) => {
       const res = data as { synced: number; newEvents: number; updatedEvents: number; lastSyncedAt: string };
