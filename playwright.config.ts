@@ -7,9 +7,12 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  timeout: process.env.CI ? 30_000 : 60_000,
   use: {
     baseURL: process.env.CI ? 'http://localhost:8788' : 'http://localhost:5173',
     trace: 'on-first-retry',
+    navigationTimeout: 15_000,
+    actionTimeout: 10_000,
   },
   projects: [
     {
@@ -19,10 +22,10 @@ export default defineConfig({
   ],
   webServer: process.env.CI 
     ? {
-        command: 'cross-env CLOUDFLARE_API_TOKEN=dummy npx wrangler pages dev --binding DEV_BYPASS=true --binding ENVIRONMENT=test',
+        command: 'cross-env CLOUDFLARE_API_TOKEN=dummy npx wrangler pages dev dist --binding DEV_BYPASS=true --binding ENVIRONMENT=test',
         url: 'http://localhost:8788',
         reuseExistingServer: false,
-        timeout: 120 * 1000,
+        timeout: 120_000,
       }
     : [
         {
