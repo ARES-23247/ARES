@@ -18,7 +18,13 @@ interface OutreachLog {
   hours_logged: number;
   reach_count: number;
   description: string | null;
+  season_id?: string | null;
   is_dynamic?: boolean;
+}
+
+interface Season {
+  id: string;
+  challenge_name: string;
 }
 
 export default function OutreachTracker() {
@@ -32,7 +38,16 @@ export default function OutreachTracker() {
     students_count: 0,
     hours_logged: 0,
     reach_count: 0,
-    description: ""
+    description: "",
+    season_id: ""
+  });
+
+  const { data: seasons = [] } = useQuery<Season[]>({
+    queryKey: ["public-seasons"],
+    queryFn: async () => {
+      const d = await adminApi.get<{ seasons?: Season[] }>("/api/seasons");
+      return d.seasons || [];
+    }
   });
 
   const { data: logs = [], isLoading } = useQuery<OutreachLog[]>({
@@ -59,7 +74,7 @@ export default function OutreachTracker() {
       setIsAdding(false);
       setFormData({ 
         id: "", title: "", date: new Date().toISOString().split('T')[0], 
-        location: "", students_count: 0, hours_logged: 0, reach_count: 0, description: "" 
+        location: "", students_count: 0, hours_logged: 0, reach_count: 0, description: "", season_id: "" 
       });
     }
   });
@@ -176,6 +191,19 @@ export default function OutreachTracker() {
                 focusColor="ares-red"
                 fullWidth
               />
+              <div className="flex flex-col">
+                <label className="block text-xs font-bold text-marble/60 uppercase tracking-widest mb-2 ml-1">Relate to Season</label>
+                <select
+                  value={formData.season_id || ""}
+                  onChange={(e) => setFormData({ ...formData, season_id: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red transition-all appearance-none"
+                >
+                  <option value="" className="bg-ares-gray-deep">General / No Season</option>
+                  {seasons.map(s => (
+                    <option key={s.id} value={s.id} className="bg-ares-gray-deep">{s.id} - {s.challenge_name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <DashboardSubmitButton 
               isPending={saveMutation.isPending} 

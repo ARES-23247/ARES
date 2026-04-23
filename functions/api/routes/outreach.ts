@@ -42,7 +42,7 @@ outreachRouter.get("/", async (c) => {
 outreachRouter.post("/", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
   try {
     const body = await c.req.json();
-    const { id, title, date, location, hours_logged, reach_count, students_count, description } = body;
+    const { id, title, date, location, hours_logged, reach_count, students_count, description, season_id } = body;
 
     if (!title || !date) {
       return c.json({ error: "Missing required fields" }, 400);
@@ -56,13 +56,13 @@ outreachRouter.post("/", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => 
 
     if (exists) {
       await c.env.DB.prepare(
-        "UPDATE outreach_logs SET title = ?, date = ?, location = ?, hours = ?, people_reached = ?, students_count = ?, impact_summary = ? WHERE id = ?"
-      ).bind(title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, id).run();
+        "UPDATE outreach_logs SET title = ?, date = ?, location = ?, hours = ?, people_reached = ?, students_count = ?, impact_summary = ?, season_id = ? WHERE id = ?"
+      ).bind(title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, season_id || null, id).run();
     } else {
-      const newId = crypto.randomUUID();
+      const newId = id || crypto.randomUUID();
       await c.env.DB.prepare(
-        "INSERT INTO outreach_logs (id, title, date, location, hours, people_reached, students_count, impact_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-      ).bind(newId, title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null).run();
+        "INSERT INTO outreach_logs (id, title, date, location, hours, people_reached, students_count, impact_summary, season_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      ).bind(newId, title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, season_id || null).run();
     }
 
     return c.json({ success: true });

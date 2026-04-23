@@ -8,6 +8,7 @@ import { DashboardSession, DashboardPermissions } from "../../hooks/useDashboard
 const BlogEditor = lazy(() => import("@/components/BlogEditor"));
 const EventEditor = lazy(() => import("@/components/EventEditor"));
 const ContentManager = lazy(() => import("@/components/ContentManager"));
+const SeasonEditor = lazy(() => import("@/components/SeasonEditor"));
 const AssetManager = lazy(() => import("@/components/AssetManager"));
 const DocsEditor = lazy(() => import("@/components/DocsEditor"));
 const IntegrationsManager = lazy(() => import("@/components/IntegrationsManager"));
@@ -81,6 +82,8 @@ export default function DashboardRoutes({
               <Route path="manage_blog" element={<ContentManager mode="blog" pendingCount={notifications.pendingPostsCount} onEditPost={(slug) => navigate(`/dashboard/blog/${slug}`)} />} />
               <Route path="manage_event" element={<ContentManager mode="event" pendingCount={notifications.pendingEventsCount} onEditEvent={(id) => navigate(`/dashboard/event/${id}`)} />} />
               <Route path="manage_docs" element={<ContentManager mode="docs" pendingCount={notifications.pendingDocsCount} onEditDoc={(slug) => navigate(`/dashboard/docs/${slug}`)} />} />
+              <Route path="manage_seasons" element={<ContentManager mode="seasons" onEditSeason={(id) => navigate(`/dashboard/seasons/${id}`)} />} />
+              <Route path="seasons/:editId?" element={<SeasonEditor />} />
               <Route path="assets" element={<AssetManager />} />
               <Route path="integrations" element={isAdmin ? <IntegrationsManager /> : <div className="text-center py-20">Access Denied</div>} />
               <Route path="users" element={isAdmin ? <AdminUsers /> : <div className="text-center py-20">Access Denied</div>} />

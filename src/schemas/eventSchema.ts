@@ -8,6 +8,7 @@ export const eventSchema = z.object({
   description: z.string().optional(),
   coverImage: z.string().optional().or(z.literal("")),
   category: z.enum(["internal", "outreach", "external"]).default("internal"),
+  tbaEventKey: z.string().optional().or(z.literal("")),
   isPotluck: z.boolean().default(false),
   isVolunteer: z.boolean().default(false),
   publishedAt: z.string().optional(),

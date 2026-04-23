@@ -1,0 +1,54 @@
+import { Hono } from "hono";
+import { AppEnv } from "../../middleware";
+
+const seasonsRouter = new Hono<AppEnv>();
+
+// ── GET / ── list all seasons ──────────
+seasonsRouter.get("/", async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      "SELECT * FROM seasons WHERE is_deleted = 0 AND status = 'published' ORDER BY start_date DESC"
+    ).all();
+    return c.json({ seasons: results || [] });
+  } catch (err) {
+    console.error("D1 seasons list error:", err);
+    return c.json({ seasons: [] });
+  }
+});
+
+// ── GET /:id ── get season details + related data ───────
+seasonsRouter.get("/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    
+    // Get season record
+    const season = await c.env.DB.prepare(
+      "SELECT * FROM seasons WHERE id = ? AND is_deleted = 0"
+    ).bind(id).first();
+
+    if (!season) {
+      return c.json({ error: "Season not found" }, 404);
+    }
+
+    // Fetch related awards
+    const { results: awards } = await c.env.DB.prepare(
+      "SELECT id, title, date as year, event_name, description, icon_type as image_url FROM awards WHERE season_id = ? AND is_deleted = 0"
+    ).bind(id).all();
+
+    // Fetch related events
+    const { results: events } = await c.env.DB.prepare(
+      "SELECT id, title, date_start, location, status FROM events WHERE season_id = ? AND is_deleted = 0"
+    ).bind(id).all();
+
+    return c.json({
+      season,
+      awards: awards || [],
+      events: events || []
+    });
+  } catch (err) {
+    console.error("D1 season details error:", err);
+    return c.json({ error: "Failed to fetch season details" }, 500);
+  }
+});
+
+export default seasonsRouter;

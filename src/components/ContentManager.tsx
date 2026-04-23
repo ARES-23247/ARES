@@ -6,6 +6,7 @@ import { ViewType } from "./ContentManager/shared";
 import EventManagerTab from "./ContentManager/EventManagerTab";
 import PostManagerTab from "./ContentManager/PostManagerTab";
 import DocManagerTab from "./ContentManager/DocManagerTab";
+import SeasonManagerTab from "./ContentManager/SeasonManagerTab";
 
 export default function ContentManager({ 
   onEditPost, 
@@ -17,7 +18,8 @@ export default function ContentManager({
   onEditPost?: (slug: string) => void; 
   onEditEvent?: (id: string) => void;
   onEditDoc?: (slug: string) => void;
-  mode?: "all" | "blog" | "event" | "docs";
+  onEditSeason?: (id: string) => void;
+  mode?: "all" | "blog" | "event" | "docs" | "seasons";
   pendingCount?: number;
 }) {
   const location = useLocation();
@@ -34,22 +36,22 @@ export default function ContentManager({
   });
 
   // ── Shared Mutations ──────────────────────────────────────────────
-  const restoreMutation = useContentMutation<{ type: "event" | "post" | "doc", id: string }>({
+  const restoreMutation = useContentMutation<{ type: "event" | "post" | "doc" | "season", id: string }>({
     endpoint: ({ type, id }) => {
-      const base = type === "event" ? "events" : type === "post" ? "posts" : "docs";
+      const base = type === "event" ? "events" : type === "post" ? "posts" : type === "doc" ? "docs" : "seasons";
       return `/api/admin/${base}/${id}/undelete`;
     },
     method: "PATCH",
-    invalidateKeys: ["events", "admin_events", "posts", "docs"],
+    invalidateKeys: ["events", "admin_events", "posts", "docs", "admin-seasons"],
     clearConfirm: false,
   });
 
-  const purgeMutation = useContentMutation<{ type: "event" | "post" | "doc", id: string }>({
+  const purgeMutation = useContentMutation<{ type: "event" | "post" | "doc" | "season", id: string }>({
     endpoint: ({ type, id }) => {
-      const base = type === "event" ? "events" : type === "post" ? "posts" : "docs";
+      const base = type === "event" ? "events" : type === "post" ? "posts" : type === "doc" ? "docs" : "seasons";
       return `/api/admin/${base}/${id}/purge`;
     },
-    invalidateKeys: ["events", "admin_events", "posts", "docs"],
+    invalidateKeys: ["events", "admin_events", "posts", "docs", "admin-seasons"],
     setConfirmId,
   });
 
@@ -88,7 +90,7 @@ export default function ContentManager({
       <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white tracking-tighter">
-            {mode === "blog" ? "Manage Blogs & News" : mode === "event" ? "Manage Events" : mode === "docs" ? "Manage Documentation" : "Manage Content"}
+            {mode === "blog" ? "Manage Blogs & News" : mode === "event" ? "Manage Events" : mode === "docs" ? "Manage Documentation" : mode === "seasons" ? "Manage Seasonal Legacy" : "Manage Content"}
           </h2>
           <p className="text-marble/40 text-sm mt-1">Review and manage the lifecycle of Database entries.</p>
         </div>
@@ -188,6 +190,12 @@ export default function ContentManager({
           <DocManagerTab 
             {...sharedProps} 
             onEditDoc={onEditDoc}
+          />
+        )}
+        {(mode === "all" || mode === "seasons") && (
+          <SeasonManagerTab 
+            {...sharedProps} 
+            onEditSeason={onEditSeason}
           />
         )}
       </div>

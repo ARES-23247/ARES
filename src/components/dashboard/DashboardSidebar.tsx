@@ -1,7 +1,7 @@
 import { Suspense, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings,
+  PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, History,
   User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert
 } from "lucide-react";
 import { signOut } from "../../utils/auth-client";
@@ -193,6 +193,7 @@ export default function DashboardSidebar({
                 <NavButton tab="blog" icon={PenTool} label={location.pathname.includes("/dashboard/blog/") ? "Edit Post (Active)" : "New Blog Post"} currentPath={location.pathname} />
                 <NavButton tab="event" icon={Calendar} label={location.pathname.includes("/dashboard/event/") ? "Edit Event (Active)" : "New Event"} currentPath={location.pathname} />
                 <NavButton tab="docs" icon={Book} label={location.pathname.includes("/dashboard/docs/") ? "Edit Doc (Active)" : "New Document"} currentPath={location.pathname} />
+                <NavButton tab="seasons" icon={History} label={location.pathname.includes("/dashboard/seasons/") ? "Edit Legacy (Active)" : "Forge Legacy"} currentPath={location.pathname} />
               </div>
             </div>
           )}
@@ -207,6 +208,7 @@ export default function DashboardSidebar({
                 <NavButton tab="manage_blog" label="1. Blogs / News" sub={true} currentPath={location.pathname} pendingCount={pendingPostsCount} />
                 <NavButton tab="manage_event" label="2. Calendar Events" sub={true} currentPath={location.pathname} pendingCount={pendingEventsCount} />
                 <NavButton tab="manage_docs" label="3. ARESLib Docs" sub={true} currentPath={location.pathname} pendingCount={pendingDocsCount} />
+                <NavButton tab="manage_seasons" label="4. Seasonal Legacies" sub={true} currentPath={location.pathname} />
                 <div className="h-px bg-white/5 my-3 mx-4" />
                 <NavButton tab="assets" icon={Image} label="Media Gallery" currentPath={location.pathname} />
                 <NavButton tab="legacy" icon={Trophy} label="Trophy Case Archive" currentPath={location.pathname} />

@@ -199,7 +199,7 @@ export default function Outreach() {
           <header className="mb-16 flex flex-col md:flex-row items-end justify-between gap-6">
             <div>
               <h2 className="text-4xl font-black text-white italic tracking-tighter">Impact Log</h2>
-              <p className="text-marble/60 font-medium">A chronological record of our community interactions.</p>
+              <p className="text-marble/80 font-medium">A chronological record of our community interactions.</p>
             </div>
             <div className="h-px flex-1 bg-white/5 mx-6 hidden md:block" />
             <button onClick={() => setIsModalOpen(true)} className="text-ares-gold font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-all">
@@ -218,13 +218,13 @@ export default function Outreach() {
                 className="bg-ares-gray-dark/50 border border-white/5 p-8 ares-cut-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-8 group hover:border-white/10 transition-all backdrop-blur-sm"
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 text-marble/60 text-xs font-bold uppercase tracking-widest mb-3">
+                  <div className="flex items-center gap-3 text-marble/80 text-xs font-bold uppercase tracking-widest mb-3">
                      <span className="flex items-center gap-1"><MapPin size={10} className="text-ares-red" /> {log.location || 'Local Community'}</span>
                      <span>&middot;</span>
                      <span>{new Date(log.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                   <h3 className="text-2xl font-black text-white mb-3 group-hover:text-ares-gold transition-colors">{log.title}</h3>
-                  <p className="text-marble/70 leading-relaxed max-w-2xl">{extractTextFromAst(log.description)}</p>
+                  <p className="text-marble leading-relaxed max-w-2xl">{extractTextFromAst(log.description)}</p>
                 </div>
                 
                 <div className="flex items-center gap-4">

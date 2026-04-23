@@ -35,7 +35,7 @@ adminRouter.get("/:id", async (c) => {
   const id = (c.req.param("id") || "");
   try {
     const row = await c.env.DB.prepare(
-      "SELECT id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer, published_at, revision_of FROM events WHERE id = ?"
+      "SELECT id, title, category, date_start, date_end, location, description, cover_image, tba_event_key, gcal_event_id, cf_email, is_deleted, status, is_potluck, is_volunteer, published_at, revision_of FROM events WHERE id = ?"
     ).bind(id).first();
 
     if (!row) return c.json({ error: "Event not found" }, 404);
@@ -162,7 +162,7 @@ adminRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
     } catch {
       return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
     }
-    const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft, publishedAt } = body;
+    const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, socials, isPotluck, isVolunteer, isDraft, publishedAt } = body;
     const cat = category || 'internal';
     
     if (!title || !dateStart) return c.json({ error: "Missing required fields" }, 400);
@@ -193,9 +193,9 @@ adminRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
     if (user?.role !== "admin") {
       const revId = `${paramId}-rev-${Math.random().toString(36).substring(2, 6)}`;
       await c.env.DB.prepare(
-        `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?, ?)`
-      ).bind(revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId, publishedAt || null).run();
+        `INSERT INTO events (id, title, category, date_start, date_end, location, description, cover_image, tba_event_key, gcal_event_id, cf_email, status, is_potluck, is_volunteer, revision_of, published_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, gcal_event_id), ?, 'pending', ?, ?, ?, ?)`
+      ).bind(revId, title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", tbaEventKey || null, gcalId || null, user?.email || "anonymous_author", isPotluck ? 1 : 0, isVolunteer ? 1 : 0, paramId, publishedAt || null).run();
       c.executionCtx.waitUntil(
         notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📅 Event Revision Pending",
@@ -210,8 +210,8 @@ adminRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
 
     const status = isDraft ? "pending" : "published";
     await c.env.DB.prepare(
-      `UPDATE events SET title = ?, category = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ?, published_at = ? WHERE id = ?`
-    ).bind(title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null, paramId).run();
+      `UPDATE events SET title = ?, category = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, tba_event_key = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = ?, is_potluck = ?, is_volunteer = ?, published_at = ? WHERE id = ?`
+    ).bind(title, cat, dateStart, dateEnd || null, location || "", description || "", coverImage || "", tbaEventKey || null, gcalId || null, status, isPotluck ? 1 : 0, isVolunteer ? 1 : 0, publishedAt || null, paramId).run();
 
     const baseUrl = new URL(c.req.url).origin;
 
@@ -245,17 +245,18 @@ adminRouter.route("/", createContentLifecycleRouter("events", {
       location: string; 
       description: string; 
       cover_image: string; 
+      tba_event_key: string;
       gcal_event_id: string; 
       is_potluck: number; 
       is_volunteer: number; 
     }
-    const row = await c.env.DB.prepare("SELECT revision_of, title, date_start, date_end, location, description, cover_image, gcal_event_id, is_potluck, is_volunteer FROM events WHERE id = ?").bind(id).first<EventRevisionRow>();
+    const row = await c.env.DB.prepare("SELECT revision_of, title, date_start, date_end, location, description, cover_image, tba_event_key, gcal_event_id, is_potluck, is_volunteer FROM events WHERE id = ?").bind(id).first<EventRevisionRow>();
 
     if (row && row.revision_of) {
       await c.env.DB.batch([
         c.env.DB.prepare(
-          "UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = 'published', is_potluck = ?, is_volunteer = ? WHERE id = ?"
-        ).bind(row.title, row.date_start, row.date_end, row.location, row.description, row.cover_image, row.gcal_event_id, row.is_potluck, row.is_volunteer, row.revision_of),
+          "UPDATE events SET title = ?, date_start = ?, date_end = ?, location = ?, description = ?, cover_image = ?, tba_event_key = ?, gcal_event_id = COALESCE(?, gcal_event_id), status = 'published', is_potluck = ?, is_volunteer = ? WHERE id = ?"
+        ).bind(row.title, row.date_start, row.date_end, row.location, row.description, row.cover_image, row.tba_event_key, row.gcal_event_id, row.is_potluck, row.is_volunteer, row.revision_of),
         c.env.DB.prepare("DELETE FROM events WHERE id = ?").bind(id)
       ]);
       return true; // DB logic handled

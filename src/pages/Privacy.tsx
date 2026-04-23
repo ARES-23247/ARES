@@ -89,7 +89,7 @@ export default function Privacy() {
           </section>
         </div>
 
-        <div className="mt-16 text-center text-marble/50 text-sm">
+        <div className="mt-16 text-center text-marble/80 text-sm">
           <p>This privacy policy is actively maintained by ARES 23247.</p>
           <p>For inquiries, contact us at <a href={`mailto:${siteConfig.contact.email}`} aria-label={`Send an email to ${siteConfig.team.name} robotics team`} className="text-marble/80 hover:text-ares-red transition-colors font-bold tracking-widest uppercase">{siteConfig.contact.email}</a></p>
         </div>

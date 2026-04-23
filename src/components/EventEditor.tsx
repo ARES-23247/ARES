@@ -92,6 +92,18 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
           </select>
         </div>
         <div className="flex-1">
+          <label htmlFor="event-tba-key" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>TBA Event Key</span>
+            <span className="text-[10px] text-white/60 font-normal normal-case">Optional</span>
+          </label>
+          <input
+            id="event-tba-key" type="text"
+            value={form.tbaEventKey} onChange={(e) => setForm({ ...form, tbaEventKey: e.target.value })}
+            className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
+            placeholder="e.g. 2024wvcmp"
+          />
+        </div>
+        <div className="flex-1">
           <label htmlFor="event-location" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center justify-between">
             <span>Location</span>
             <span className="text-[10px] text-white/60 font-normal normal-case">Pick from registry</span>

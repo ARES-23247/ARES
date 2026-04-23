@@ -100,6 +100,7 @@ export function useEventEditor(editId: string | undefined, editor: Editor | null
           description: data.event.description || "",
           coverImage: data.event.cover_image || DEFAULT_COVER_IMAGE,
           category: data.event.category || "internal",
+          tbaEventKey: data.event.tba_event_key || "",
           isPotluck: data.event.is_potluck === 1,
           isVolunteer: data.event.is_volunteer === 1,
           publishedAt: data.event.published_at || "",

@@ -73,8 +73,10 @@ CREATE TABLE IF NOT EXISTS posts (
     status TEXT DEFAULT 'published',
     revision_of TEXT,
     published_at TEXT,
-    is_portfolio INTEGER DEFAULT 0
+    is_portfolio INTEGER DEFAULT 0,
+    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL
 );
+CREATE INDEX IF NOT EXISTS idx_posts_season ON posts(season_id);
 CREATE INDEX IF NOT EXISTS idx_posts_date ON posts(date);
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status, is_deleted);
 
@@ -111,7 +113,27 @@ CREATE TABLE IF NOT EXISTS events (
     is_potluck INTEGER DEFAULT 0,
     is_volunteer INTEGER DEFAULT 0,
     revision_of TEXT,
-    published_at TEXT
+    published_at TEXT,
+    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_events_season ON events(season_id);
+
+-- ── Seasons ──────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS seasons (
+    id TEXT PRIMARY KEY, -- e.g. '2025-2026'
+    challenge_name TEXT NOT NULL, -- e.g. 'DECODE'
+    robot_name TEXT,
+    robot_image TEXT,
+    robot_description TEXT, -- JSON AST for rich text
+    robot_cad_url TEXT,
+    summary TEXT,
+    start_date TEXT,
+    end_date TEXT,
+    status TEXT DEFAULT 'published',
+    is_deleted INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_events_status ON events(status, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(date_start);
@@ -300,8 +322,11 @@ CREATE TABLE IF NOT EXISTS awards (
     description TEXT,
     icon_type TEXT DEFAULT 'trophy',
     is_deleted INTEGER DEFAULT 0,
+    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL,
     created_at TEXT DEFAULT (datetime('now'))
 );
+CREATE INDEX IF NOT EXISTS idx_awards_season ON awards(season_id);
+
 CREATE INDEX IF NOT EXISTS idx_awards_date ON awards(date);
 
 
@@ -317,8 +342,11 @@ CREATE TABLE IF NOT EXISTS outreach_logs (
     students_count INTEGER DEFAULT 0,
     impact_summary TEXT,
     is_deleted INTEGER DEFAULT 0,
+    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL,
     created_at TEXT DEFAULT (datetime('now'))
 );
+CREATE INDEX IF NOT EXISTS idx_outreach_season ON outreach_logs(season_id);
+
 CREATE INDEX IF NOT EXISTS idx_outreach_date ON outreach_logs(date);
 
 

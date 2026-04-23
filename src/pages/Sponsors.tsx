@@ -32,7 +32,7 @@ const TIER_STYLING: Record<string, { icon: React.ReactNode; glass: string; borde
     text: "text-ares-gold"
   },
   Silver: { 
-    icon: <ShieldCheck className="text-marble/60" size={24} />, 
+    icon: <ShieldCheck className="text-marble/80" size={24} />, 
     glass: "bg-white/5", 
     border: "border-white/10", 
     glow: "",
@@ -221,7 +221,7 @@ export default function Sponsors() {
             </div>
             
             <div className="mt-12 lg:mt-0">
-              <p className="text-marble/60 font-bold uppercase tracking-widest text-xs mb-3">Or email the executive board directly</p>
+              <p className="text-marble/80 font-bold uppercase tracking-widest text-xs mb-3">Or email the executive board directly</p>
               <a href={`mailto:${siteConfig.contact.email}`} className="text-2xl font-bold text-white hover:text-ares-gold transition-colors flex items-center gap-3 w-fit group">
                 {siteConfig.contact.email} <span className="group-hover:translate-x-1 transition-transform"><ArrowRight size={20} className="text-ares-red" /></span>
               </a>
@@ -270,7 +270,7 @@ export default function Sponsors() {
                     <option className="bg-obsidian text-white">In-Kind Donation / Material</option>
                     <option className="bg-obsidian text-white">Mentorship / Engineering Support</option>
                   </select>
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-marble/60">
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-marble/80">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export default function Sponsors() {
                 <button type="submit" disabled={isSubmitting} className="px-8 py-3.5 w-full bg-ares-red text-white font-black uppercase tracking-widest ares-cut hover:bg-ares-bronze hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none">
                   {isSubmitting ? "Sending..." : <><span className="flex items-center gap-2">Submit Interest Request <ArrowRight size={18} /></span></>}
                 </button>
-                <p className="text-center text-[10px] text-marble/50 font-mono uppercase tracking-tighter mt-4">
+                <p className="text-center text-[10px] text-marble/70 font-mono uppercase tracking-tighter mt-4">
                   {siteConfig.team.fullName} operates under a 501(c)(3) nonprofit umbrella. All donations are tax-deductible.
                 </p>
               </div>

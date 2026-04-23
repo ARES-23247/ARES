@@ -85,4 +85,10 @@ test.describe("Event Editor E2E", () => {
     await expect(potluckCheckbox).toBeChecked();
     await expect(volunteerCheckbox).toBeChecked();
   });
+
+  test("should allow entering a TBA event key", async ({ page }) => {
+    const tbaKeyInput = page.locator("#event-tba-key");
+    await tbaKeyInput.fill("2024wvcmp");
+    await expect(tbaKeyInput).toHaveValue("2024wvcmp");
+  });
 });
