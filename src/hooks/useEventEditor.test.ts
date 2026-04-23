@@ -273,7 +273,7 @@ describe("useEventEditor (MSW Integrated)", () => {
         ...result.current.form,
         title: "Valid Title",
         dateStart: "2024-05-01T10:00:00.000Z",
-        category: "invalid" as any,
+        category: "invalid" as unknown as "internal",
       });
     });
 

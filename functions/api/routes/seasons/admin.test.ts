@@ -10,14 +10,14 @@ vi.mock("../../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (c: any, next: () => Promise<void>) => next(),
+    ensureAdmin: async (c: unknown, next: () => Promise<void>) => next(),
     logAuditAction: vi.fn().mockResolvedValue(undefined),
   };
 });
 
 describe("Seasons Admin Router", () => {
-  let mockDb: any;
-  let env: { DB: any };
+  let mockDb: Record<string, ReturnType<typeof vi.fn>>;
+  let env: { DB: unknown };
 
   beforeEach(() => {
     mockDb = {
@@ -39,7 +39,7 @@ describe("Seasons Admin Router", () => {
     const res = await adminSeasonsRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as { seasons: any[] };
+    const body = await res.json() as { seasons: Record<string, unknown>[] };
     expect(body.seasons).toHaveLength(1);
   });
 
@@ -48,7 +48,7 @@ describe("Seasons Admin Router", () => {
     const req = new Request("http://localhost/");
     const res = await adminSeasonsRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as { seasons: any[] };
+    const body = await res.json() as { seasons: Record<string, unknown>[] };
     expect(body.seasons).toHaveLength(0);
   });
 
@@ -57,7 +57,7 @@ describe("Seasons Admin Router", () => {
     const req = new Request("http://localhost/");
     const res = await adminSeasonsRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as { seasons: any[] };
+    const body = await res.json() as { seasons: Record<string, unknown>[] };
     expect(body.seasons).toHaveLength(0);
   });
 
@@ -171,7 +171,7 @@ describe("Seasons Admin Router", () => {
     const res = await adminSeasonsRouter.request(req, {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { season: { id: string } };
     expect(body.season.id).toBe("2024-2025");
   });
 

@@ -8,7 +8,7 @@ const mockExecutionContext = {
 
 describe("Seasons Public Router", () => {
   let mockDb: any;
-  let env: { DB: any };
+  let env: { DB: unknown };
 
   beforeEach(() => {
     mockDb = {
