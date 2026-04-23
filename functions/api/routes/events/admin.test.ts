@@ -154,7 +154,7 @@ describe("Events Admin Router", () => {
     const req = new Request("http://localhost/");
     const res = await adminRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(500);
-    const body = await res.json() as any;
+    const body = await res.json() as { error: string };
     expect(body.error).toBeDefined();
   });
 
