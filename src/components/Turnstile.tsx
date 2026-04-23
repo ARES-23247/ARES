@@ -17,6 +17,7 @@ declare global {
       reset: (widgetId: string) => void;
       remove: (widgetId: string) => void;
     };
+    ARES_E2E_BYPASS?: boolean;
   }
 }
 
@@ -67,7 +68,7 @@ export default function Turnstile({ onVerify, onExpire, theme = "dark", size = "
   useEffect(() => {
     // SEC-03: Bypass Turnstile for E2E tests and local development if requested
     const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const hasBypass = localStorage.getItem("ARES_DEV_BYPASS") === "true" || (window as any).ARES_E2E_BYPASS;
+    const hasBypass = localStorage.getItem("ARES_DEV_BYPASS") === "true" || window.ARES_E2E_BYPASS;
     if (isLocal && hasBypass) {
       onVerify("test-bypass-token");
       return;
@@ -94,7 +95,7 @@ export default function Turnstile({ onVerify, onExpire, theme = "dark", size = "
         widgetIdRef.current = null;
       }
     };
-  }, [renderWidget]);
+  }, [renderWidget, onVerify]);
 
   return <div ref={containerRef} className={className} />;
 }
