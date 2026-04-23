@@ -38,7 +38,7 @@ export default function EventManagerTab({
 }: EventManagerTabProps) {
   // Removed local category filter state since it is now controlled by the parent view
 
-  const { data: eventsResult, isLoading } = useQuery<{ events: EventItem[], lastSyncedAt: string | null }>({
+  const { data: eventsResult, isLoading, isError } = useQuery<{ events: EventItem[], lastSyncedAt: string | null }>({
     queryKey: ["admin_events"],
     queryFn: async () => {
       const data = await adminApi.get<{ events?: EventItem[], lastSyncedAt?: string | null }>("/api/admin/events");
