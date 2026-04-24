@@ -33,8 +33,10 @@ export default function SponsorTokensManager() {
     }
   });
 
-  const sponsors = sponsorsData?.status === 200 ? sponsorsData.body.sponsors : [];
-  const tokens = tokensData?.status === 200 ? tokensData.body.tokens : [];
+  const rawSponsorsBody = (sponsorsData as any)?.body;
+  const sponsors = sponsorsData?.status === 200 ? (Array.isArray(rawSponsorsBody) ? rawSponsorsBody : (Array.isArray(rawSponsorsBody?.sponsors) ? rawSponsorsBody.sponsors : [])) : [];
+  const rawTokensBody = (tokensData as any)?.body;
+  const tokens = tokensData?.status === 200 ? (Array.isArray(rawTokensBody) ? rawTokensBody : (Array.isArray(rawTokensBody?.tokens) ? rawTokensBody.tokens : [])) : [];
   const isLoading = loadingSponsors || loadingTokens;
   const isError = isSponsorsError || isTokensError;
 

@@ -64,8 +64,9 @@ export function useDocs(slug: string | undefined) {
     enabled: !!slug,
   });
 
-  const currentDoc = ObjectQuery.data?.status === 200 ? ObjectQuery.data.body.doc : undefined;
-  const contributors = ObjectQuery.data?.status === 200 ? ObjectQuery.data.body.contributors : [];
+  const rawDocBody = (ObjectQuery.data as any)?.body;
+  const currentDoc = ObjectQuery.data?.status === 200 ? (rawDocBody?.doc) : undefined;
+  const contributors = ObjectQuery.data?.status === 200 ? (Array.isArray(rawDocBody) ? rawDocBody : (Array.isArray(rawDocBody?.contributors) ? rawDocBody.contributors : [])) : [];
   const docLoading = ObjectQuery.isLoading;
 
   const { data: searchRes } = api.docs.searchDocs.useQuery({
@@ -74,7 +75,8 @@ export function useDocs(slug: string | undefined) {
     queryKey: ["docs-search", searchQuery],
     enabled: searchQuery.length >= 2,
   });
-  const searchResults = searchRes?.status === 200 ? searchRes.body.results : [];
+  const rawSearchBody = (searchRes as any)?.body;
+  const searchResults = searchRes?.status === 200 ? (Array.isArray(rawSearchBody) ? rawSearchBody : (Array.isArray(rawSearchBody?.results) ? rawSearchBody.results : [])) : [];
 
   const groupedDocs = useMemo(() => {
     const groups: Record<string, DocRecord[]> = {};

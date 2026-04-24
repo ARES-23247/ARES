@@ -32,7 +32,10 @@ export default function About() {
     queryKey: ["team-roster"],
   });
 
-  const members = useMemo(() => (rosterRes?.status === 200 ? rosterRes.body.members : []) || [], [rosterRes]);
+  const members = useMemo(() => {
+    const rawBody = (rosterRes as any)?.body;
+    return rosterRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.members) ? rawBody.members : [])) : [];
+  }, [rosterRes]);
 
   const grouped = useMemo(() => SECTION_ORDER.map(section => ({
     ...section,

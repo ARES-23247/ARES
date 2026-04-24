@@ -30,7 +30,8 @@ export default function Seasons() {
   const { data: seasonsRes, isLoading: isLoadingSeasons } = api.seasons.list.useQuery({}, {
     queryKey: ["public-seasons"],
   });
-  const seasons = (seasonsRes?.status === 200 ? seasonsRes.body.seasons : []) || [];
+  const rawBody = (seasonsRes as any)?.body;
+  const seasons = seasonsRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.seasons) ? rawBody.seasons : [])) : [];
 
   const { data: awardsRes, isLoading: isLoadingAwards } = api.awards.getAwards.useQuery({}, {
     queryKey: ["public-awards"],

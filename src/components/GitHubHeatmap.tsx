@@ -32,8 +32,8 @@ export default function GitHubHeatmap() {
       try {
         const res = await api.github.getActivity.query();
         if (res.status === 200) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setGrid((res.body.grid || []) as any);
+          const rawGridBody = (res.body as any)?.grid;
+          setGrid(Array.isArray(rawGridBody) ? rawGridBody : (Array.isArray((res.body as any)?.body?.grid) ? (res.body as any)?.body?.grid : []));
           setTotalCommits(res.body.totalCommits || 0);
           setRepoCount(res.body.repoCount || 0);
         }
