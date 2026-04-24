@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { logisticsContract } from "../../src/schemas/contracts/logisticsContract";
+import { logisticsContract } from "../../../src/schemas/contracts/logisticsContract";
 import { AppEnv, ensureAdmin  } from "../middleware";
 
 const s = initServer<AppEnv>();
