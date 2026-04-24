@@ -8,7 +8,7 @@ import { RecursiveRouterObj } from "@ts-rest/hono";
 import { profileContract } from "../../../src/schemas/contracts/userContract";
 
 const s = initServer<AppEnv>();
-const profilesRouter = new Hono<AppEnv>();
+export const profilesRouter = new Hono<AppEnv>();
 
 const profileHandlers: RecursiveRouterObj<typeof profileContract, AppEnv> = {
   getMe: async (_, c) => {

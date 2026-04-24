@@ -4,7 +4,7 @@ import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { mediaContract } from "../../../src/schemas/contracts/mediaContract";
 
 const s = initServer<AppEnv>();
-const mediaRouter = new Hono<AppEnv>();
+export const mediaRouter = new Hono<AppEnv>();
 
 // SEC-D02: Magic byte validation helper
 function isValidImage(buffer: ArrayBuffer): boolean {
@@ -232,5 +232,4 @@ mediaRouter.use("/admin", ensureAdmin);
 
 createHonoEndpoints(mediaContract, mediaTsRestRouter, mediaRouter);
 
-export { mediaRouter };
 export default mediaRouter;

@@ -6,7 +6,7 @@ import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
-const seasonsRouter = new Hono<AppEnv>();
+export const seasonsRouter = new Hono<AppEnv>();
 
 // @ts-expect-error - ts-rest-hono inference quirk with complex AppEnv
 const seasonsTsRestRouter = s.router(seasonsContract, {
@@ -206,5 +206,4 @@ seasonsRouter.use("/admin", rateLimitMiddleware(15, 60));
 
 createHonoEndpoints(seasonsContract, seasonsTsRestRouter, seasonsRouter);
 
-export { seasonsRouter };
 export default seasonsRouter;

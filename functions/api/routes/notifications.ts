@@ -6,7 +6,7 @@ import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
-const notificationsRouter = new Hono<AppEnv>();
+export const notificationsRouter = new Hono<AppEnv>();
 
 const notificationTsRestRouter = s.router(notificationContract, {
   getNotifications: async (_, c) => {

@@ -6,7 +6,7 @@ import { outreachContract } from "../../../src/schemas/contracts/outreachContrac
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 
 const s = initServer<AppEnv>();
-const outreachRouter = new Hono<AppEnv>();
+export const outreachRouter = new Hono<AppEnv>();
 
 // SCA-F01: Synchronize volunteer events as outreach records
 async function fetchVolunteerEvents(db: Kysely<DB>) {
@@ -177,5 +177,5 @@ outreachRouter.use("/admin", rateLimitMiddleware(15, 60));
 
 
 createHonoEndpoints(outreachContract, outreachTsRestRouter, outreachRouter);
-export { outreachRouter };
+
 export default outreachRouter;

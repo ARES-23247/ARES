@@ -6,7 +6,7 @@ import { sql, Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
-const analyticsRouter = new Hono<AppEnv>();
+export const analyticsRouter = new Hono<AppEnv>();
 
 const analyticsTsRestRouter = s.router(analyticsContract, {
   trackPageView: async ({ body }: { body: any }, c: any) => {

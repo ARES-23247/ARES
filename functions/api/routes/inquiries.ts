@@ -9,7 +9,7 @@ import { sql, Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
-const inquiriesRouter = new Hono<AppEnv>();
+export const inquiriesRouter = new Hono<AppEnv>();
 
 // @ts-expect-error - ts-rest-hono inference quirk with complex AppEnv
 const inquiriesTsRestRouter = s.router(inquiryContract, {
@@ -199,5 +199,5 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
 
 
 createHonoEndpoints(inquiryContract, inquiriesTsRestRouter, inquiriesRouter);
-export { inquiriesRouter };
+
 export default inquiriesRouter;

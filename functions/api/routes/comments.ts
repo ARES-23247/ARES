@@ -8,7 +8,7 @@ import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { commentContract } from "../../../src/schemas/contracts/commentContract";
 
 const s = initServer<AppEnv>();
-const commentsRouter = new Hono<AppEnv>();
+export const commentsRouter = new Hono<AppEnv>();
 
 // @ts-expect-error - ts-rest-hono inference quirk with complex AppEnv
 const commentTsRestRouter = s.router(commentContract, {

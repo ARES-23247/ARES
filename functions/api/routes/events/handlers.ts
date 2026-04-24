@@ -167,16 +167,6 @@ export const eventHandlers = s.router(eventContract, {
       const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
       const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
       
-      let gcalId = null;
-      if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
-        try {
-          gcalId = await pushEventToGcal(
-            { id: genId, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined },
-            { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
-          );
-        } catch (_err) { /* ignore GCal failure */ }
-      }
-
       const user = await getSessionUser(c);
       const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
@@ -184,21 +174,37 @@ export const eventHandlers = s.router(eventContract, {
         .values({
           id: genId, title: title || "", category: cat, date_start: dateStart, date_end: dateEnd || null,
           location: location || "", description: description || "", cover_image: coverImage || "",
-          gcal_event_id: gcalId || null, cf_email: user?.email || "anonymous_admin", status,
+          gcal_event_id: null, cf_email: user?.email || "anonymous_admin", status,
           is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
           published_at: publishedAt || null, season_id: seasonId || null
         })
         .execute();
 
-      c.executionCtx.waitUntil(logAuditAction(c, "CREATE_EVENT", "events", genId, `Created event: ${title} (${status})`));
-
-      if (status === "published") {
-        const baseUrl = new URL(c.req.url).origin;
-        if (socials) {
-          c.executionCtx.waitUntil(dispatchSocials(c.env.DB, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", coverImageUrl: coverImage || "/gallery_1.png", baseUrl }, socialConfig, socials));
+      // EFF-F02: Unblock response via waitUntil
+      c.executionCtx.waitUntil((async () => {
+        let gcalId = null;
+        if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
+          try {
+            gcalId = await pushEventToGcal(
+              { id: genId, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined },
+              { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
+            );
+            if (gcalId) {
+              await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", genId).execute();
+            }
+          } catch (_err) { /* ignore GCal failure */ }
         }
-        c.executionCtx.waitUntil(sendZulipMessage(c.env, "announcements", "Calendar", `📅 **New Event:** ${title}\n📍 ${location || "TBD"}\n[View](${baseUrl}/events)`));
-      }
+
+        if (status === "published") {
+          const baseUrl = new URL(c.req.url).origin;
+          if (socials) {
+            await dispatchSocials(c.env.DB, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", coverImageUrl: coverImage || "/gallery_1.png", baseUrl }, socialConfig, socials).catch(() => {});
+          }
+          await sendZulipMessage(c.env, "announcements", "Calendar", `📅 **New Event:** ${title}\n📍 ${location || "TBD"}\n[View](${baseUrl}/events)`).catch(() => {});
+        }
+      })());
+
+      c.executionCtx.waitUntil(logAuditAction(c, "CREATE_EVENT", "events", genId, `Created event: ${title} (${status})`));
 
       return { status: 200, body: { success: true, id: genId } };
     } catch (_err) {

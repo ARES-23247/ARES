@@ -7,7 +7,7 @@ import { AppEnv, ensureAdmin, getSessionUser, rateLimitMiddleware } from "../mid
 import { sendZulipMessage } from "../../utils/zulipSync";
 
 const s = initServer<AppEnv>();
-const badgesRouter = new Hono<AppEnv>();
+export const badgesRouter = new Hono<AppEnv>();
 
 const badgesTsRestRouter = s.router(badgeContract, {
   list: async (_, c) => {

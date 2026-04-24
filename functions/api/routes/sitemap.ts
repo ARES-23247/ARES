@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { AppEnv  } from "../middleware";
 import { siteConfig } from "../../../src/site.config";
 
-const sitemapRouter = new Hono<AppEnv>();
+export const sitemapRouter = new Hono<AppEnv>();
 
 // SEC-DoW: Cache sitemap to prevent repeated D1 queries from bots/crawlers
 let sitemapCache: { xml: string; expiresAt: number } | null = null;

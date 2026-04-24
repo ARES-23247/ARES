@@ -7,7 +7,7 @@ import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 
 const s = initServer<AppEnv>();
-const sponsorsRouter = new Hono<AppEnv>();
+export const sponsorsRouter = new Hono<AppEnv>();
 
 const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
   getSponsors: async (_, c) => {

@@ -6,7 +6,7 @@ import { AppEnv, getSocialConfig } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem, fetchProjectFields, updateProjectItemStatus } from "../../utils/githubProjects";
 
-const zulipWebhookRouter = new Hono<AppEnv>();
+export const zulipWebhookRouter = new Hono<AppEnv>();
 
 interface ZulipOutgoingPayload {
   token: string;

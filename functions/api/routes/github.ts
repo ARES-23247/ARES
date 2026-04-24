@@ -7,7 +7,7 @@ import { RecursiveRouterObj } from "@ts-rest/hono";
 import { githubContract } from "../../../src/schemas/contracts/githubContract";
 
 const s = initServer<AppEnv>();
-const githubRouter = new Hono<AppEnv>();
+export const githubRouter = new Hono<AppEnv>();
 
 interface WeekData {
   total: number;

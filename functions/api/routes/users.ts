@@ -6,7 +6,7 @@ import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 import { upsertProfile } from "./_profileUtils";
 
 const s = initServer<AppEnv>();
-const usersRouter = new Hono<AppEnv>();
+export const usersRouter = new Hono<AppEnv>();
 
 const userHandlers: RecursiveRouterObj<typeof userContract, AppEnv> = {
   getUsers: async ({ query }, c) => {

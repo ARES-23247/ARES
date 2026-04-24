@@ -8,7 +8,7 @@ import { sql, Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
-const docsRouter = new Hono<AppEnv>();
+export const docsRouter = new Hono<AppEnv>();
 
 // SEC-Z01: Cache doc search results
 const MAX_CACHE_SIZE = 100;

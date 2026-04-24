@@ -4,7 +4,7 @@ import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { zulipContract } from "../../../src/schemas/contracts/zulipContract";
 
 const s = initServer<AppEnv>();
-const zulipRouter = new Hono<AppEnv>();
+export const zulipRouter = new Hono<AppEnv>();
 
 // @ts-expect-error - ts-rest-hono inference quirk with complex AppEnv
 const zulipTsRestRouter = s.router(zulipContract, {

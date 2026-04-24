@@ -17,7 +17,7 @@ import {
 } from "../../utils/postHistory";
 
 const s = initServer<AppEnv>();
-const postsRouter = new Hono<AppEnv>();
+export const postsRouter = new Hono<AppEnv>();
 
 const postTsRestRouter = s.router(postContract, {
   getPosts: async ({ query }: { query: any }, c: any) => {
@@ -231,23 +231,26 @@ const postTsRestRouter = s.router(postContract, {
         const socialsFilter = body.socials || null;
         const baseUrl = new URL(c.req.url).origin;
 
-        try {
-          await dispatchSocials(
-            c.env.DB,
-            {
-              title: body.title,
-              url: `${baseUrl}/blog/${slug}`,
-              snippet: snippet || "Read the latest engineering update from ARES 23247!",
-              coverImageUrl: body.coverImageUrl || "/gallery_1.png",
-              baseUrl: baseUrl
-            },
-            socialConfig,
-            socialsFilter
-          );
-        } catch (err) {
-          console.error("Social dispatch failed:", err);
-          warnings.push("Social Syndication Failed");
-        }
+        // EFF-F01: Unblock response via waitUntil
+        c.executionCtx.waitUntil((async () => {
+          try {
+            await dispatchSocials(
+              c.env.DB,
+              {
+                title: body.title,
+                url: `${baseUrl}/blog/${slug}`,
+                snippet: snippet || "Read the latest engineering update from ARES 23247!",
+                coverImageUrl: body.coverImageUrl || "/gallery_1.png",
+                baseUrl: baseUrl
+              },
+              socialConfig,
+              socialsFilter
+            );
+          } catch (err) {
+            console.error("Social dispatch failed:", err);
+          }
+        })());
+      }
 
         try {
           await sendZulipMessage(

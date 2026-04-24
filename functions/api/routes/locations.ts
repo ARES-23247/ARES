@@ -6,7 +6,7 @@ import { locationContract } from "../../../src/schemas/contracts/locationContrac
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 
 const s = initServer<AppEnv>();
-const locationsRouter = new Hono<AppEnv>();
+export const locationsRouter = new Hono<AppEnv>();
 
 const locationsTsRestRouter = s.router(locationContract, {
   list: async (_, c) => {

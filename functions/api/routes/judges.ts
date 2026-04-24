@@ -6,7 +6,7 @@ import { judgeContract } from "../../../src/schemas/contracts/judgeContract";
 import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction } from "../middleware";
 
 const s = initServer<AppEnv>();
-const judgesRouter = new Hono<AppEnv>();
+export const judgesRouter = new Hono<AppEnv>();
 
 const portfolioCache = new Map<string, { data: any; expiresAt: number }>();
 

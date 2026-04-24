@@ -6,7 +6,7 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { awardContract } from "../../../src/schemas/contracts/awardContract";
 
 const s = initServer<AppEnv>();
-const awardsRouter = new Hono<AppEnv>();
+export const awardsRouter = new Hono<AppEnv>();
 
 const awardsTsRestRouter = s.router(awardContract, {
   getAwards: async ({ query }: { query: any }, c: any) => {
@@ -91,5 +91,4 @@ const awardsTsRestRouter = s.router(awardContract, {
 awardsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(awardContract, awardsTsRestRouter, awardsRouter);
 
-export { awardsRouter };
 export default awardsRouter;

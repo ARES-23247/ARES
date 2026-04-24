@@ -6,7 +6,7 @@ import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
-const tbaRouter = new Hono<AppEnv>();
+export const tbaRouter = new Hono<AppEnv>();
 
 const tbaCache = new Map<string, { data: any; expiresAt: number }>();
 
