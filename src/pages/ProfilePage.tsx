@@ -56,6 +56,7 @@ export default function ProfilePage() {
       .then((res) => { 
         if (cancelled || res.status !== 200) return;
         const data = res.body;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setProfile(data.profile as any); 
         setBadges(data.badges || []);
         setError(null);

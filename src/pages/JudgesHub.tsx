@@ -41,6 +41,7 @@ export default function JudgesHub() {
         headers: { "Authorization": `Bearer ${code}` }
       });
       if (res.status === 200) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setPortfolio(res.body as any);
       }
     } catch {
@@ -63,6 +64,7 @@ export default function JudgesHub() {
         setIsAuthenticated(true);
         fetchPortfolio(code);
       } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setError((res.body as any)?.error || "Invalid access code.");
         localStorage.removeItem("ares_judge_code");
       }

@@ -5,6 +5,15 @@ export default function FlywheelKvSim() {
   const wCanvasRef = useRef<HTMLCanvasElement>(null);
   const fwGCanvasRef = useRef<HTMLCanvasElement>(null);
   
+  const velRef = useRef(0);
+  const shoot = () => {
+    velRef.current -= 40; 
+    if(velRef.current < 0) velRef.current = 0;
+  };
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setRef = useRef<any>(null);
+
   const [{ kV, kP, fwSet }, set] = useControls(() => ({
     'Flywheel Physics': {
       kV: { value: 0.12, min: 0, max: 0.3, step: 0.01, label: 'kV (Feedforward)' },
@@ -14,21 +23,18 @@ export default function FlywheelKvSim() {
     'Interactions': {
       'Inject Ball': button(() => shoot()),
       'Reset Simulation': button(() => {
-        set({ kV: 0.12, kP: 0.08, fwSet: 80 });
+        setRef.current?.({ kV: 0.12, kP: 0.08, fwSet: 80 });
         velRef.current = 0;
       })
     }
   }));
 
+  useEffect(() => { setRef.current = set; }, [set]);
+
   const stateRef = useRef({ kV, kP, fwSet });
   useEffect(() => { stateRef.current = { kV, kP, fwSet }; }, [kV, kP, fwSet]);
   
-  const velRef = useRef(0);
 
-  const shoot = () => {
-    velRef.current -= 40; 
-    if(velRef.current < 0) velRef.current = 0;
-  };
 
   useEffect(() => {
     const wCanvas = wCanvasRef.current;

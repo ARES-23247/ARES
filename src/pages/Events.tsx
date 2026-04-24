@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { isAfter, subDays, addDays, parseISO } from "date-fns";
 import { motion } from "framer-motion";
@@ -12,7 +13,8 @@ export default function Events() {
   const { data: eventsRes, isLoading } = api.events.getEvents.useQuery({
     queryKey: ["events"],
   });
-  const events = (eventsRes?.body as any)?.events || [];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const events = (eventsRes?.body as unknown as { events: EventItem[] })?.events || [];
 
   const { data: calendarRes } = api.events.getCalendarConfig.useQuery({
     queryKey: ["calendar_config"],

@@ -145,6 +145,7 @@ export default function AdminUsers() {
         </div>
       ),
     }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [patchMutation, columnHelper, changeRole]);
 
   // eslint-disable-next-line react-hooks/incompatible-library

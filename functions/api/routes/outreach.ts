@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../src/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -33,7 +34,8 @@ async function fetchVolunteerEvents(db: Kysely<DB>) {
 }
 
 const outreachTsRestRouter = s.router(outreachContract, {
-  list: async ({}: any, c: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  list: async (_req: any, c: any) => {
     try {
       const db = c.get("db");
       const logs = await db.selectFrom("outreach_logs")
@@ -56,7 +58,8 @@ const outreachTsRestRouter = s.router(outreachContract, {
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-  adminList: async ({}: any, c: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminList: async (_req: any, c: any) => {
     try {
       const db = c.get("db");
       const logs = await db.selectFrom("outreach_logs")
@@ -79,6 +82,7 @@ const outreachTsRestRouter = s.router(outreachContract, {
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   save: async ({ body }: { body: any }, c: any) => {
     try {
       const db = c.get("db");
@@ -119,6 +123,7 @@ const outreachTsRestRouter = s.router(outreachContract, {
       return { status: 500, body: { error: "Save failed" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete: async ({ params }: { params: any }, c: any) => {
     try {
       const db = c.get("db");

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unknown-property */
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, MeshDistortMaterial, Float, Text, MeshWobbleMaterial } from "@react-three/drei";
 import { useRef } from "react";

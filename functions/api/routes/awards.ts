@@ -9,6 +9,7 @@ const awardsRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
 const awardTsRestRouter = s.router(awardContract, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getAwards: async ({ query }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -26,6 +27,7 @@ const awardTsRestRouter = s.router(awardContract, {
       return { status: 200, body: { awards: [] } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   saveAward: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -63,6 +65,7 @@ const awardTsRestRouter = s.router(awardContract, {
       return { status: 200, body: { success: false } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deleteAward: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;

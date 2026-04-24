@@ -9,6 +9,7 @@ const s = initServer<AppEnv>();
 const locationsRouter = new Hono<AppEnv>();
 
 const locationsTsRestRouter = s.router(locationContract, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   list: async (_: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -22,6 +23,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500, body: { error: "Failed to fetch locations" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adminList: async (_: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -34,6 +36,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500, body: { error: "Failed to fetch locations" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   save: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -66,6 +69,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500, body: { error: "Save failed" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;

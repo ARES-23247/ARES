@@ -13,6 +13,7 @@ import mammoth from "mammoth";
 import { compressImage } from "../../utils/imageProcessor";
 import AssetPickerModal from "../AssetPickerModal";
 import SimPickerModal from "../SimPickerModal";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { api, uploadFile } from "../../api/client";
 import { useModal } from "../../contexts/ModalContext";
 
@@ -24,6 +25,7 @@ export interface RichEditorToolbarProps {
 }
 
 /* ---------- Helper: file upload ---------- */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const internalUpload = async (file: File): Promise<{url: string, altText?: string}> => {
   const { blob: compressedBlob, ext } = await compressImage(file);
   const formData = new FormData();

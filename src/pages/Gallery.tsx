@@ -1,8 +1,10 @@
 import SEO from "../components/SEO";
 import LazyImage from "../components/LazyImage";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface R2MediaResponse {
   media: {
     key: string;

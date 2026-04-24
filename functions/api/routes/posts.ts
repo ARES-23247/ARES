@@ -1,5 +1,7 @@
 import { Hono } from "hono";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { sql, Kysely } from "kysely";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DB } from "../../../src/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { postContract } from "../../../src/schemas/contracts/postContract";

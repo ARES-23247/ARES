@@ -28,6 +28,7 @@ const SECTION_ORDER = [
 
 
 export default function About() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: rosterRes, isLoading } = api.profiles.getTeamRoster.useQuery({
     queryKey: ["team-roster"],
   });

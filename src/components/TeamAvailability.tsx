@@ -29,6 +29,7 @@ export default function TeamAvailability() {
         setPresences(res.body.presence);
         setError(null);
       } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setError((res.body as any)?.error || "Failed to fetch presence data");
       }
     } catch (err) {

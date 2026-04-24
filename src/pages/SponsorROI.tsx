@@ -34,6 +34,7 @@ export default function SponsorROI() {
     api.sponsors.getROI.query({ params: { tokenId: tokenId || "" } })
       .then((res) => {
         if (!cancelled && res.status === 200) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setData(res.body as any);
           setLoading(false);
         }

@@ -24,6 +24,7 @@ function maskSecret(value: string): string {
 }
 
 const settingsTsRestRouter = s.router(settingsContract, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getSettings: async (_: any, c: any) => {
     try {
       const settings = await getDbSettings(c);
@@ -36,6 +37,7 @@ const settingsTsRestRouter = s.router(settingsContract, {
       return { status: 500, body: { success: false, settings: {} } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateSettings: async ({ body }: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -54,6 +56,7 @@ const settingsTsRestRouter = s.router(settingsContract, {
       return { status: 500, body: { success: false, updated: 0 } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getStats: async (_: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {

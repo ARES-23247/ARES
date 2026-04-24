@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/client";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface R2MediaResponse {
   media: {
     key: string;

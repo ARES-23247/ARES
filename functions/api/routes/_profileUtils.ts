@@ -5,6 +5,7 @@ import { encrypt } from "../../utils/crypto";
 export async function upsertProfile(
   c: Context<AppEnv>,
   userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>
 ) {
   const secret = c.env.ENCRYPTION_SECRET;
@@ -43,6 +44,7 @@ export async function upsertProfile(
   let dietaryStr = (data.dietary_restrictions as string) || "[]";
   if (Array.isArray(data.dietary_restrictions)) dietaryStr = JSON.stringify(data.dietary_restrictions);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values: any = {
     user_id: userId,
     nickname: (data.nickname as string) || "",

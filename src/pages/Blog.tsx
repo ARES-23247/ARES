@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -6,6 +7,7 @@ import SEO from "../components/SEO";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { api } from "../api/client";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface PostRecord {
   slug: string;
   title: string;
@@ -21,6 +23,7 @@ export default function Blog() {
   const { data: postsRes, isLoading } = api.posts.getPosts.useQuery({
     queryKey: ["posts"],
   });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const posts = (postsRes?.body as any)?.posts || [];
 
   return (

@@ -278,11 +278,13 @@ zulipWebhookRouter.post("/", async (c) => {
             try {
               await db.insertInto("comments")
                 .values({
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   id: crypto.randomUUID() as any,
                   target_type: targetType,
                   target_id: targetId,
                   user_id: userId,
                   content: rawContent,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   zulip_message_id: String(body.trigger === "message" ? (body as any).message_id || 0 : 0),
                   zulip_sender_id: 0, // Placeholder for shadow user or resolve to number if possible
                   created_at: new Date().toISOString()

@@ -202,7 +202,7 @@ export default function BadgeManager() {
             <label htmlFor="grant-user" className="text-xs font-bold text-white/60 uppercase tracking-widest pl-1">Target Member</label>
             <select id="grant-user" value={selectedUser} onChange={e => setSelectedUser(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red mt-1">
               <option value="">-- Select Member --</option>
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {users.map((u: any) => (
                 <option key={u.id} value={u.id}>{u.name || u.nickname} ({u.email})</option>
               ))}
@@ -212,7 +212,7 @@ export default function BadgeManager() {
             <label htmlFor="grant-badge" className="text-xs font-bold text-white/60 uppercase tracking-widest pl-1">Select Badge</label>
             <select id="grant-badge" value={selectedBadge} onChange={e => setSelectedBadge(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red mt-1">
               <option value="">-- Select Badge --</option>
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {badges.map((b: any) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}

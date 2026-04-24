@@ -17,6 +17,7 @@ export default function Join() {
   const [occupation, setOccupation] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [additional, setAdditional] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -29,6 +30,7 @@ export default function Join() {
         setName(""); setEmail(""); setPhone(""); setSchool(""); setGrade(""); setOccupation(""); setInterests([]); setAdditional("");
       } else {
         setSubmitStatus("error");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setErrorMessage((res.body as any).error || "Something went wrong");
       }
     },
@@ -51,6 +53,7 @@ export default function Join() {
         throw new Error(payloadResult.error.issues[0].message);
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       submitMutation.mutate({ body: payloadResult.data as any });
     } catch (err) {
       setSubmitStatus("error");

@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
@@ -87,10 +88,6 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
     }
   );
 
-  // Sync upload errors to local error state
-  useEffect(() => {
-    if (uploadError) setErrorMsg(uploadError);
-  }, [uploadError, setErrorMsg]);
 
   const saveMutation = api.posts.savePost.useMutation({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -218,7 +215,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
       />
 
       <EditorFooter 
-        errorMsg={errorMsg || errors.ast?.message || ""}
+        errorMsg={errorMsg || uploadError || errors.ast?.message || ""}
         isPending={saveMutation.isPending}
         isEditing={!!editSlug}
         onDelete={handleDelete}

@@ -67,6 +67,7 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
   };
 
   const isRestoring = postRestoreMutation.isPending || docRestoreMutation.isPending;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const restoringId = (postRestoreMutation.variables as any)?.params?.id || (docRestoreMutation.variables as any)?.params?.id;
 
   if (!isOpen) return null;

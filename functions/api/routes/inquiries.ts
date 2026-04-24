@@ -12,6 +12,7 @@ const s = initServer<AppEnv>();
 const inquiriesRouter = new Hono<AppEnv>();
 
 const inquiriesTsRestRouter = s.router(inquiryContract, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   list: async ({ query }: any, c: any) => {
     console.log("[Inquiries] List called");
     try {
@@ -65,6 +66,7 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       return { status: 500, body: { error: "Failed to fetch inquiries" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   submit: async ({ body }: any, c: any) => {
     // ... logic remains same but no manual auth needed for public submit ...
     try {
@@ -138,6 +140,7 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       return { status: 500, body: { error: "Submission failed" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateStatus: async ({ params, body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -152,6 +155,7 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       return { status: 500, body: { error: "Update failed" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;

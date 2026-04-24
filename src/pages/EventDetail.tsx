@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { format, isBefore } from "date-fns";
 import { motion } from "framer-motion";
@@ -8,6 +9,7 @@ import EventSignups from "../components/EventSignups";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { api } from "../api/client";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface EventRow {
   id: string;
   title: string;

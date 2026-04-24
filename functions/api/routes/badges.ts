@@ -10,6 +10,7 @@ const s = initServer<AppEnv>();
 const badgesRouter = new Hono<AppEnv>();
 
 const badgesTsRestRouter = s.router(badgeContract, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   list: async (_: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -22,6 +23,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to fetch badges" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   create: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -39,6 +41,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to create badge" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   grant: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -85,6 +88,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to award badge" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   revoke: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -97,6 +101,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to revoke badge" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;

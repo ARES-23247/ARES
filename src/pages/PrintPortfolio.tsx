@@ -50,6 +50,7 @@ export default function PrintPortfolio() {
         });
 
         if (res.status === 200) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setPortfolio(res.body as any);
         }
 

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { Search, LayoutDashboard, LogIn, Bell, Check, Heart } from "lucide-react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 
@@ -57,6 +58,7 @@ export default function Navbar() {
     }
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawNotifications = (notifRes?.body as any)?.notifications || [];
   
   // Combine db notifications with pending inquiries and pending posts

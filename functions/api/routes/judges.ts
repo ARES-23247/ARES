@@ -11,6 +11,7 @@ const judgesRouter = new Hono<AppEnv>();
 const portfolioCache = new Map<string, { data: unknown; expiresAt: number }>();
 
 const judgesTsRestRouter = s.router(judgeContract, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   login: async ({ body, headers: _headers }: any, c: any) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const { checkPersistentRateLimit } = await import("../middleware/security");
@@ -43,6 +44,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500, body: { error: "Login failed" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   portfolio: async ({ headers }: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -107,6 +109,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500, body: { error: "Portfolio fetch failed" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   listCodes: async (_: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -119,6 +122,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500, body: { error: "Failed to fetch codes" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createCode: async ({ body }: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -136,6 +140,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500, body: { error: "Create failed" } };
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deleteCode: async ({ params }: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {

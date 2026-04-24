@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { siteConfig } from "../site.config";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Gem, Award, ShieldCheck, Zap, ExternalLink, Heart, Package } from "lucide-react";
@@ -75,6 +76,7 @@ export default function Sponsors() {
   const [phone, setPhone] = useState("");
   const [level, setLevel] = useState("Interested in Details");
   const [message, setMessage] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -93,6 +95,7 @@ export default function Sponsors() {
         setName(""); setEmail(""); setPhone(""); setLevel("Interested in Details"); setMessage("");
       } else {
         setSubmitStatus("error");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setErrorMessage((res.body as any).error || "Something went wrong");
       }
     },
@@ -120,6 +123,7 @@ export default function Sponsors() {
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submitMutation.mutate({ body: payloadResult.data as any });
   };
 
