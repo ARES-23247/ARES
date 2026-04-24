@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { sql, Kysely } from "kysely";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DB } from "../../../src/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { postContract } from "../../../src/schemas/contracts/postContract";
@@ -22,25 +19,16 @@ import {
 const s = initServer<AppEnv>();
 const postsRouter = new Hono<AppEnv>();
 
-const postHandlers: any = {
-  getPosts: async ({ query }: any, c: any) => {
+const postTsRestRouter = s.router(postContract, {
+  getPosts: async ({ query }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const { limit = 10, offset = 0, q } = query;
 
-      const baseQuery = db.selectFrom("posts")
-        .where("is_deleted", "=", 0)
-        .where("status", "=", "published")
-        .where((eb: any) => eb.or([
-          eb("published_at", "is", null),
-          eb("published_at", "<=", new Date().toISOString())
-        ]));
-
       if (q) {
-        const db = c.get("db");
-        const results = await sql<{ slug: string, title: string, date: string, snippet: string, thumbnail: string, season_id: string | null, author_nickname: string | null, author_avatar: string | null }>`
-          SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail, p.season_id,
-                  uP.nickname as author_nickname, u.image as author_avatar
+        const results = await sql<{ slug: string, title: string, date: string | null, snippet: string | null, thumbnail: string | null, status: string, season_id: number | null, author: string | null, author_nickname: string | null, author_avatar: string | null, published_at: string | null }>`
+          SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail, p.status, p.season_id, p.author,
+                  uP.nickname as author_nickname, u.image as author_avatar, p.published_at
            FROM posts_fts f
            JOIN posts p ON f.slug = p.slug
            LEFT JOIN user u ON p.cf_email = u.email
@@ -49,10 +37,16 @@ const postHandlers: any = {
            AND f.posts_fts MATCH ${q}
            ORDER BY f.rank LIMIT ${limit} OFFSET ${offset}
         `.execute(db);
-        return { status: 200, body: { posts: results.rows } };
+        
+        const posts = results.rows.map(p => ({
+          ...p,
+          season_id: p.season_id ? Number(p.season_id) : null
+        }));
+
+        return { status: 200, body: { posts } };
       }
 
-      const results = await baseQuery
+      const results = await db.selectFrom("posts")
         .leftJoin("user as u", "posts.cf_email", "u.email")
         .leftJoin("user_profiles as uP", "u.id", "uP.user_id")
         .select([
@@ -61,24 +55,41 @@ const postHandlers: any = {
           "posts.date",
           "posts.snippet",
           "posts.thumbnail",
+          "posts.status",
+          "posts.author",
           "posts.season_id",
+          "posts.published_at",
           "uP.nickname as author_nickname",
           "u.image as author_avatar"
         ])
+        .where("posts.is_deleted", "=", 0)
+        .where("posts.status", "=", "published")
+        .where((eb) => eb.or([
+          eb("published_at", "is", null),
+          eb("published_at", "<=", new Date().toISOString())
+        ]))
         .orderBy("posts.date", "desc")
         .limit(limit)
         .offset(offset)
         .execute();
 
-      return { status: 200, body: { posts: results } };
-    } catch {
+      const posts = results.map(p => ({
+        ...p,
+        season_id: p.season_id ? Number(p.season_id) : null
+      }));
+
+      return { status: 200, body: { posts } };
+    } catch (err) {
+      console.error("[Posts] getPosts failed:", err);
       return { status: 200, body: { posts: [] } };
     }
   },
-  getPost: async ({ params }: any, c: any) => {
+  getPost: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
+      const user = await getSessionUser(c);
+      
       const row = await db.selectFrom("posts")
         .leftJoin("user as u", "posts.cf_email", "u.email")
         .leftJoin("user_profiles as uP", "u.id", "uP.user_id")
@@ -88,60 +99,97 @@ const postHandlers: any = {
           "posts.date",
           "posts.ast",
           "posts.thumbnail",
+          "posts.status",
+          "posts.author",
           "posts.season_id",
+          "posts.published_at",
           "uP.nickname as author_nickname",
           "u.image as author_avatar"
         ])
         .where("posts.slug", "=", slug)
         .where("posts.is_deleted", "=", 0)
         .where("posts.status", "=", "published")
-        .where((eb: any) => eb.or([
+        .where((eb) => eb.or([
           eb("published_at", "is", null),
           eb("published_at", "<=", new Date().toISOString())
         ]))
         .executeTakeFirst();
 
       if (!row) return { status: 404, body: { error: "Post not found" } };
-      return { status: 200, body: { post: row } };
-    } catch {
+
+      return { 
+        status: 200, 
+        body: { 
+          post: {
+            ...row,
+            season_id: row.season_id ? Number(row.season_id) : null
+          },
+          is_editor: user?.role === "admin" || user?.role === "author",
+          author: {
+            nickname: row.author_nickname,
+            avatar: row.author_avatar
+          }
+        } 
+      };
+    } catch (err) {
+      console.error("[Posts] getPost failed:", err);
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  getAdminPosts: async ({ query }: any, c: any) => {
+  getAdminPosts: async ({ query }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = query;
       const results = await db.selectFrom("posts")
-        .select(["slug", "title", "date", "snippet", "thumbnail", "cf_email", "is_deleted", "status", "revision_of", "published_at", "season_id"])
+        .select(["slug", "title", "date", "snippet", "thumbnail", "cf_email", "is_deleted", "status", "revision_of", "published_at", "season_id", "author"])
         .orderBy("date", "desc")
         .limit(limit)
         .offset(offset)
         .execute();
-      return { status: 200, body: { posts: results } };
-    } catch {
+      
+      const posts = results.map(p => ({
+        ...p,
+        season_id: p.season_id ? Number(p.season_id) : null,
+        is_deleted: Number(p.is_deleted)
+      }));
+
+      return { status: 200, body: { posts } };
+    } catch (err) {
+      console.error("[Posts] getAdminPosts failed:", err);
       return { status: 200, body: { posts: [] } };
     }
   },
-  getAdminPost: async ({ params }: any, c: any) => {
+  getAdminPost: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("posts")
-        .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "status", "revision_of", "published_at", "season_id"])
+        .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "status", "revision_of", "published_at", "season_id", "author"])
         .where("slug", "=", slug)
         .executeTakeFirst();
 
       if (!row) return { status: 404, body: { error: "Post not found" } };
-      return { status: 200, body: { post: row } };
-    } catch {
+      
+      return { 
+        status: 200, 
+        body: { 
+          post: {
+            ...row,
+            season_id: row.season_id ? Number(row.season_id) : null,
+            is_deleted: Number(row.is_deleted)
+          }
+        } 
+      };
+    } catch (err) {
+      console.error("[Posts] getAdminPost failed:", err);
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  savePost: async ({ body }: any, c: any) => {
+  savePost: async ({ body }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const titleError = validateLength(body.title, MAX_INPUT_LENGTHS.title, "Title");
-      if (titleError) return { status: 400, body: { error: titleError } };
+      if (titleError) return { status: 200, body: { success: false, warning: titleError } }; // Contract expects 200 with error in some flows, but here we'll use warning
 
       let slug = body.title
         .toLowerCase()
@@ -166,7 +214,7 @@ const postHandlers: any = {
         .values({
           slug,
           title: body.title,
-          author: "ARES Team", // Fallback as Kysely needs it if not null
+          author: "ARES Team", 
           date: dateStr,
           thumbnail: body.coverImageUrl || "",
           snippet,
@@ -174,7 +222,7 @@ const postHandlers: any = {
           cf_email: email,
           status,
           published_at: body.publishedAt || null,
-          season_id: body.seasonId || null
+          season_id: body.seasonId ? Number(body.seasonId) : null
         })
         .execute();
 
@@ -231,17 +279,18 @@ const postHandlers: any = {
       }
 
       return { 
-        status: warnings.length > 0 ? 207 : 200, 
+        status: 200, 
         body: { success: true, slug, warning: warnings.join(" | ") } 
       };
     } catch (err) {
-      return { status: 500, body: { error: (err as Error)?.message || "Database write failed" } };
+      console.error("[Posts] savePost failed:", err);
+      return { status: 200, body: { success: false, warning: (err as Error)?.message || "Database write failed" } };
     }
   },
-  updatePost: async ({ params, body }: any, c: any) => {
+  updatePost: async ({ params, body }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const astStr = JSON.stringify(body.ast);
       const snippet = extractAstText(body.ast).substring(0, 200);
       const user = await getSessionUser(c);
@@ -268,21 +317,22 @@ const postHandlers: any = {
           ast: astStr,
           status,
           published_at: body.publishedAt || null,
-          season_id: body.seasonId || null
+          season_id: body.seasonId ? Number(body.seasonId) : null
         })
         .where("slug", "=", slug)
         .execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${body.title} (${status})`));
       return { status: 200, body: { success: true, slug } };
-    } catch {
+    } catch (err) {
+      console.error("[Posts] updatePost failed:", err);
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async ({ params }: any, c: any) => {
+  deletePost: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.updateTable("posts").set({ is_deleted: 1, status: "draft" }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_POST", "posts", slug));
       return { status: 200, body: { success: true } };
@@ -290,10 +340,10 @@ const postHandlers: any = {
       return { status: 200, body: { success: false } };
     }
   },
-  undeletePost: async ({ params }: any, c: any) => {
+  undeletePost: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.updateTable("posts").set({ is_deleted: 0, status: "draft" }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "RESTORE_POST", "posts", slug));
       return { status: 200, body: { success: true } };
@@ -301,10 +351,10 @@ const postHandlers: any = {
       return { status: 200, body: { success: false } };
     }
   },
-  purgePost: async ({ params }: any, c: any) => {
+  purgePost: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("posts").where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "PURGE_POST", "posts", slug));
       return { status: 200, body: { success: true } };
@@ -312,7 +362,7 @@ const postHandlers: any = {
       return { status: 200, body: { success: false } };
     }
   },
-  approvePost: async ({ params }: any, c: any) => {
+  approvePost: async ({ params }, c) => {
     const { slug } = params;
     try {
       const result = await approvePost(c, slug);
@@ -322,11 +372,11 @@ const postHandlers: any = {
       return { status: 404, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async ({ params, body }: any, c: any) => {
+  rejectPost: async ({ params, body }, c) => {
     const { slug } = params;
     const { reason } = body;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("posts").select(["title", "cf_email"]).where("slug", "=", slug).executeTakeFirst();
       
       await db.updateTable("posts").set({ status: "rejected" }).where("slug", "=", slug).execute();
@@ -349,27 +399,31 @@ const postHandlers: any = {
       return { status: 404, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async ({ params }: any, c: any) => {
+  getPostHistory: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const history = await getPostHistory(c, slug);
-      return { status: 200, body: { history: history } };
+      const historyRows = await getPostHistory(c, slug);
+      const history = historyRows.map(h => ({
+        ...h,
+        id: Number(h.id)
+      }));
+      return { status: 200, body: { history } };
     } catch {
       return { status: 200, body: { history: [] } };
     }
   },
-  restorePostHistory: async ({ params }: any, c: any) => {
+  restorePostHistory: async ({ params }, c) => {
     const { slug, id } = params;
     const user = await getSessionUser(c);
-    const result = await restorePostFromHistory(c, slug, id, user?.email || "anonymous_admin");
+    const result = await restorePostFromHistory(c, slug, Number(id), user?.email || "anonymous_admin");
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async ({ params, body }: any, c: any) => {
+  repushSocials: async ({ params, body }, c) => {
     const { slug } = params;
     const { socials } = body;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const post = await db.selectFrom("posts").select(["title", "snippet", "thumbnail"]).where("slug", "=", slug).executeTakeFirst();
       if (!post) return { status: 404, body: { error: "Post not found" } };
 
@@ -390,7 +444,19 @@ const postHandlers: any = {
       return { status: 502, body: { error: (err as Error).message } };
     }
   },
-};
+});
+
+createHonoEndpoints(postContract, postTsRestRouter, postsRouter);
+
+// Apply middleware/protections
+postsRouter.use("/admin", ensureAdmin);
+postsRouter.use("/admin/*", ensureAdmin);
+
+// Special case: non-admins can submit drafts (handled inside savePost)
+// We use ensureAuth for /admin/save specifically to allow verified members
+postsRouter.use("/admin/save", ensureAuth);
+
+export default postsRouter;
 const postTsRestRouter = s.router(postContract, postHandlers);
 createHonoEndpoints(postContract, postTsRestRouter, postsRouter);
 

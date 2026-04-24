@@ -103,7 +103,6 @@ CREATE TABLE IF NOT EXISTS events (
     cover_image TEXT,
     gcal_event_id TEXT,
     tba_event_key TEXT,
-    cf_email TEXT,
     is_deleted INTEGER DEFAULT 0,
     status TEXT DEFAULT 'published',
     category TEXT DEFAULT 'internal',
@@ -549,7 +548,6 @@ CREATE INDEX IF NOT EXISTS idx_session_userId ON session(userId);
 CREATE INDEX IF NOT EXISTS idx_account_userId ON account(userId);
 CREATE INDEX IF NOT EXISTS idx_posts_author ON posts(author);
 CREATE INDEX IF NOT EXISTS idx_posts_cf_email ON posts(cf_email);
-CREATE INDEX IF NOT EXISTS idx_events_cf_email ON events(cf_email);
 CREATE INDEX IF NOT EXISTS idx_comments_is_deleted ON comments(is_deleted);
 CREATE INDEX IF NOT EXISTS idx_audit_log_resource ON audit_log(resource_type, resource_id);
 

@@ -1,16 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { notificationContract } from "../../../src/schemas/contracts/notificationContract";
 import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware } from "../middleware";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
 const notificationsRouter = new Hono<AppEnv>();
 
-const notificationHandlers: any = {
-  getNotifications: async (_: any, c: any) => {
+const notificationTsRestRouter = s.router(notificationContract, {
+  getNotifications: async (_, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
@@ -21,14 +22,20 @@ const notificationHandlers: any = {
         .limit(50)
         .execute();
 
-      return { status: 200, body: { notifications: results as unknown[] } };
-    } catch {
-      return { status: 500, body: { notifications: [] } };
+      const notifications = results.map(n => ({
+        ...n,
+        is_read: Number(n.is_read || 0)
+      }));
+
+      return { status: 200, body: { notifications } };
+    } catch (err) {
+      console.error("[Notifications] getNotifications failed:", err);
+      return { status: 500, body: { error: "Fetch failed", notifications: [] } };
     }
   },
-  markAsRead: async ({ params }: any, c: any) => {
+  markAsRead: async ({ params }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
@@ -39,13 +46,14 @@ const notificationHandlers: any = {
         .execute();
 
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Notifications] markAsRead failed:", err);
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-  markAllAsRead: async (_: any, c: any) => {
+  markAllAsRead: async (_, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
@@ -55,17 +63,17 @@ const notificationHandlers: any = {
         .execute();
 
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Notifications] markAllAsRead failed:", err);
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-};
-const notificationTsRestRouter = s.router(notificationContract, notificationHandlers);
-createHonoEndpoints(notificationContract, notificationTsRestRouter, notificationsRouter);
+});
 
-// Middlewares
 notificationsRouter.use("*", ensureAuth);
 notificationsRouter.use("/:id/read", rateLimitMiddleware(20, 60));
 notificationsRouter.use("/read-all", rateLimitMiddleware(10, 60));
+
+createHonoEndpoints(notificationContract, notificationTsRestRouter, notificationsRouter);
 
 export default notificationsRouter;

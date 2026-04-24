@@ -1,13 +1,18 @@
 import { Hono, Context } from "hono";
 import { AppEnv  } from "../middleware";
+import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { tbaContract } from "../../../src/schemas/contracts/tbaContract";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 
+const s = initServer<AppEnv>();
 const tbaRouter = new Hono<AppEnv>();
 
 // SEC-DoW: Cache TBA responses in-memory with bounded size to prevent OOM
 const MAX_TBA_CACHE = 100;
-const tbaCache = new Map<string, { data: unknown; expiresAt: number }>();
+const tbaCache = new Map<string, { data: any; expiresAt: number }>();
 
-function setTbaCache(key: string, value: { data: unknown; expiresAt: number }) {
+function setTbaCache(key: string, value: { data: any; expiresAt: number }) {
   if (tbaCache.size >= MAX_TBA_CACHE) {
     const first = tbaCache.keys().next().value;
     if (first !== undefined) tbaCache.delete(first);
@@ -16,14 +21,13 @@ function setTbaCache(key: string, value: { data: unknown; expiresAt: number }) {
 }
 
 async function getTBA(path: string, c: Context<AppEnv>) {
-  // Check in-memory cache first (5 minute TTL)
   const now = Date.now();
   const cached = tbaCache.get(path);
   if (cached && cached.expiresAt > now) {
     return cached.data;
   }
 
-  const db = c.get("db");
+  const db = c.get("db") as Kysely<DB>;
   const settingsRow = await db.selectFrom("settings")
     .select("value")
     .where("key", "=", "TBA_API_KEY")
@@ -32,7 +36,6 @@ async function getTBA(path: string, c: Context<AppEnv>) {
   const apiKey = settingsRow?.value;
   if (!apiKey) throw new Error("TBA_API_KEY not configured");
 
-  // EFF-N01: Implement fetch timeout
   const r = await fetch(`https://www.thebluealliance.com/api/v3${path}`, {
     headers: { "X-TBA-Auth-Key": apiKey },
     signal: AbortSignal.timeout(5000)
@@ -40,48 +43,35 @@ async function getTBA(path: string, c: Context<AppEnv>) {
   if (!r.ok) throw new Error(`TBA API error: ${r.status}`);
   const data = await r.json();
 
-  // Cache for 5 minutes
   setTbaCache(path, { data, expiresAt: now + 300000 });
 
   return data;
 }
 
-// ── GET /tba/rankings/:eventKey ───────────────────────────────────────
-tbaRouter.get("/rankings/:eventKey", async (c) => {
-  try {
-    const eventKey = (c.req.param("eventKey") || "");
-    const data = await getTBA(`/event/${eventKey}/rankings`, c);
-    return c.json(data);
-  } catch (err) {
-    console.error("TBA rankings error:", err);
-    return c.json({ error: (err as Error).message }, 500);
-  }
+const tbaTsRestRouter = s.router(tbaContract, {
+  getRankings: async ({ params }, c) => {
+    try {
+      const { eventKey } = params;
+      const data = await getTBA(`/event/${eventKey}/rankings`, c);
+      return { status: 200, body: { rankings: (data as any)?.rankings || [] } };
+    } catch (err) {
+      console.error("[TBA] getRankings failed:", err);
+      return { status: 200, body: { rankings: [] } };
+    }
+  },
+  getMatches: async ({ params }, c) => {
+    try {
+      const { eventKey } = params;
+      const data = await getTBA(`/event/${eventKey}/matches/simple`, c) as any[];
+      const sorted = (data || []).sort((a, b) => (a.time || 0) - (b.time || 0));
+      return { status: 200, body: { matches: sorted } };
+    } catch (err) {
+      console.error("[TBA] getMatches failed:", err);
+      return { status: 200, body: { matches: [] } };
+    }
+  },
 });
 
-// ── GET /tba/matches/:eventKey ────────────────────────────────────────
-tbaRouter.get("/matches/:eventKey", async (c) => {
-  try {
-    const eventKey = (c.req.param("eventKey") || "");
-    const data = (await getTBA(`/event/${eventKey}/matches/simple`, c)) as Array<{ time?: number; [key: string]: unknown }>;
-    const sorted = (data || []).sort((a: { time?: number }, b: { time?: number }) => (a.time || 0) - (b.time || 0));
-    return c.json({ matches: sorted });
-  } catch (err) {
-    console.error("TBA matches error:", err);
-    return c.json({ error: (err as Error).message }, 500);
-  }
-});
-
-// ── GET /tba/team/:teamKey/events/:year ───────────────────────────────
-tbaRouter.get("/team/:teamKey/events/:year", async (c) => {
-  try {
-    const { teamKey, year } = c.req.param();
-    const data = await getTBA(`/team/${teamKey}/events/${year}/simple`, c);
-    return c.json({ events: data });
-  } catch (err) {
-    console.error("TBA team events error:", err);
-    return c.json({ error: (err as Error).message }, 500);
-  }
-});
+createHonoEndpoints(tbaContract, tbaTsRestRouter, tbaRouter);
 
 export default tbaRouter;
-

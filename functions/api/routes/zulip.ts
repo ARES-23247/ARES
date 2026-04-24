@@ -1,34 +1,43 @@
 import { Hono } from "hono";
 import { AppEnv, ensureAdmin, getSocialConfig } from "../middleware";
+import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { zulipContract } from "../../../src/schemas/contracts/zulipContract";
 
+const s = initServer<AppEnv>();
 const zulipRouter = new Hono<AppEnv>();
 
-// GET /zulip/presence — Fetch realm presence
-zulipRouter.get("/presence", ensureAdmin, async (c) => {
-  try {
-    const config = await getSocialConfig(c);
-    if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
-      return c.json({ error: "Zulip not configured." }, 400);
+const zulipTsRestRouter = s.router(zulipContract, {
+  getPresence: async (_, c) => {
+    try {
+      const config = await getSocialConfig(c);
+      if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
+        return { status: 500, body: { success: false, error: "Zulip not configured." } };
+      }
+      
+      const authHeader = "Basic " + btoa(`${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`);
+      const url = `${config.ZULIP_URL || "https://ares.zulipchat.com"}/api/v1/realm/presence`;
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { "Authorization": authHeader }
+      });
+
+      if (!res.ok) {
+        return { status: 500, body: { success: false, error: await res.text() } };
+      }
+
+      const data = await res.json() as { result: string; presences: any };
+      return { status: 200, body: { success: true, presence: data.presences } };
+    } catch (err) {
+      console.error("[Zulip] getPresence failed:", err);
+      return { status: 500, body: { success: false, error: (err as Error).message } };
     }
-    
-    const authHeader = "Basic " + btoa(`${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`);
-    const url = `${config.ZULIP_URL || "https://ares.zulipchat.com"}/api/v1/realm/presence`;
-
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { "Authorization": authHeader }
-    });
-
-    if (!res.ok) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return c.json({ error: await res.text() }, res.status as any);
-    }
-
-    const data = await res.json() as { result: string; presences: Record<string, unknown> };
-    return c.json({ success: true, presence: data.presences });
-  } catch (err) {
-    return c.json({ error: (err as Error).message }, 500);
-  }
+  },
 });
+
+// Enforce admin for presence
+zulipRouter.use("/presence", ensureAdmin);
+
+createHonoEndpoints(zulipContract, zulipTsRestRouter, zulipRouter);
 
 export default zulipRouter;

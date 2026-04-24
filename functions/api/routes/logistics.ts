@@ -1,16 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { logisticsContract } from "../../../src/schemas/contracts/logisticsContract";
 import { AppEnv, ensureAdmin  } from "../middleware";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
 const logisticsRouter = new Hono<AppEnv>();
 
-const logisticsHandlers: any = {
-   
-  getSummary: async (_: any, c: Context<AppEnv>) => {
-    const db = c.get("db");
+const logisticsTsRestRouter = s.router(logisticsContract, {
+  getSummary: async (_, c) => {
+    const db = c.get("db") as Kysely<DB>;
 
     try {
       const results = await db.selectFrom("user_profiles as p")
@@ -32,16 +32,17 @@ const logisticsHandlers: any = {
           tshirtSummary[r.tshirt_size] = (tshirtSummary[r.tshirt_size] || 0) + 1;
         }
 
-        try {
-          const restrictions = JSON.parse(r.dietary_restrictions || "[]") as string[];
+        // Schema uses comma-separated strings for dietary restrictions
+        if (r.dietary_restrictions) {
+          const restrictions = r.dietary_restrictions.split(",").map(s => s.trim());
           for (const dr of restrictions) {
-            summary[dr] = (summary[dr] || 0) + 1;
+            if (dr) summary[dr] = (summary[dr] || 0) + 1;
           }
-        } catch { /* ignore */ }
+        }
       }
 
       return {
-        status: 200 as const,
+        status: 200,
         body: {
           totalCount: totalMembers,
           memberCounts,
@@ -50,17 +51,16 @@ const logisticsHandlers: any = {
         }
       };
     } catch (err) {
-      console.error("D1 logistics summary error:", err);
-      return { status: 500 as const, body: { error: "Logistics fetch failed" } };
+      console.error("[Logistics] Summary failed:", err);
+      return { status: 500, body: { error: "Logistics fetch failed" } };
     }
   },
-};
+});
 
 // Hardening: Enforce ensureAdmin for all routes
 logisticsRouter.use("/admin", ensureAdmin);
 logisticsRouter.use("/admin/*", ensureAdmin);
 
-const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers);
 createHonoEndpoints(logisticsContract, logisticsTsRestRouter, logisticsRouter);
 
 export default logisticsRouter;

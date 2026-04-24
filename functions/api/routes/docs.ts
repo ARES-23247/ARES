@@ -1,20 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Context, Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { docContract } from "../../../src/schemas/contracts/docContract";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkRateLimit, verifyTurnstile, emitNotification, notifyByRole } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
-import { sql } from "kysely";
+import { sql, Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
 const docsRouter = new Hono<AppEnv>();
 
 // SEC-Z01: Cache doc search results
 const MAX_CACHE_SIZE = 100;
-const docSearchCache = new Map<string, { data: unknown; expiresAt: number }>();
+const docSearchCache = new Map<string, { data: { results: any[] }; expiresAt: number }>();
 
-function setCache(key: string, value: { data: unknown; expiresAt: number }) {
+function setCache(key: string, value: { data: { results: any[] }; expiresAt: number }) {
   if (docSearchCache.size >= MAX_CACHE_SIZE) {
     const firstKey = docSearchCache.keys().next().value;
     if (firstKey !== undefined) docSearchCache.delete(firstKey);
@@ -24,7 +24,7 @@ function setCache(key: string, value: { data: unknown; expiresAt: number }) {
 
 async function pruneDocHistory(c: Context<AppEnv>, slug: string, limit = 10) {
   try {
-    const db = c.get("db");
+    const db = c.get("db") as Kysely<DB>;
     const results = await db.selectFrom("docs_history")
       .select("id")
       .where("slug", "=", slug)
@@ -45,10 +45,10 @@ async function pruneDocHistory(c: Context<AppEnv>, slug: string, limit = 10) {
   }
 }
 
-const docHandlers: any = {
-  getDocs: async (_: any, c: any) => {
+const docTsRestRouter = s.router(docContract, {
+  getDocs: async (_, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("docs")
         .leftJoin("user as u", "docs.cf_email", "u.email")
         .leftJoin("user_profiles as p", "u.id", "p.user_id")
@@ -60,6 +60,9 @@ const docHandlers: any = {
           "docs.description",
           "docs.is_portfolio",
           "docs.is_executive_summary",
+          "docs.is_deleted",
+          "docs.status",
+          "docs.revision_of",
           "p.nickname as original_author_nickname",
           "u.image as original_author_avatar"
         ])
@@ -68,15 +71,27 @@ const docHandlers: any = {
         .orderBy("docs.category")
         .orderBy("docs.sort_order", "asc")
         .execute();
-      return { status: 200, body: { docs: results as unknown[] } };
-    } catch {
+      
+      const docs = results.map(d => ({
+        ...d,
+        sort_order: Number(d.sort_order || 0),
+        is_portfolio: Number(d.is_portfolio || 0),
+        is_executive_summary: Number(d.is_executive_summary || 0),
+        is_deleted: Number(d.is_deleted || 0),
+        original_author_nickname: d.original_author_nickname || undefined,
+        original_author_avatar: d.original_author_avatar || undefined
+      }));
+
+      return { status: 200, body: { docs } };
+    } catch (err) {
+      console.error("[Docs] getDocs failed:", err);
       return { status: 200, body: { docs: [] } };
     }
   },
-  getDoc: async ({ params }: any, c: any) => {
+  getDoc: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("docs")
         .leftJoin("user as u", "docs.cf_email", "u.email")
         .leftJoin("user_profiles as p", "u.id", "p.user_id")
@@ -89,6 +104,9 @@ const docHandlers: any = {
           "docs.updated_at",
           "docs.is_portfolio",
           "docs.is_executive_summary",
+          "docs.is_deleted",
+          "docs.status",
+          "docs.revision_of",
           "p.nickname as original_author_nickname",
           "u.image as original_author_avatar"
         ])
@@ -99,7 +117,7 @@ const docHandlers: any = {
 
       if (!row) return { status: 404, body: { error: "Doc not found" } };
 
-      const contributors = await db.selectFrom("docs_history as h")
+      const contributorRows = await db.selectFrom("docs_history as h")
         .leftJoin("user as u", "h.author_email", "u.email")
         .leftJoin("user_profiles as p", "u.id", "p.user_id")
         .select([
@@ -111,12 +129,32 @@ const docHandlers: any = {
         .where("h.author_email", "is not", null)
         .execute();
 
-      return { status: 200, body: { doc: row as unknown, contributors: contributors as unknown[] } };
-    } catch {
+      const contributors = contributorRows.map(c => ({
+        nickname: c.nickname || null,
+        avatar: c.avatar || null
+      }));
+
+      return { 
+        status: 200, 
+        body: { 
+          doc: {
+            ...row,
+            is_portfolio: Number(row.is_portfolio || 0),
+            is_executive_summary: Number(row.is_executive_summary || 0),
+            is_deleted: Number(row.is_deleted || 0),
+            updated_at: row.updated_at || undefined,
+            original_author_nickname: row.original_author_nickname || undefined,
+            original_author_avatar: row.original_author_avatar || undefined
+          }, 
+          contributors 
+        } 
+      };
+    } catch (err) {
+      console.error("[Docs] getDoc failed:", err);
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  searchDocs: async ({ query }: any, c: any) => {
+  searchDocs: async ({ query }, c) => {
     const { q } = query;
     if (!q || q.length < 3) return { status: 200, body: { results: [] } };
     try {
@@ -124,8 +162,8 @@ const docHandlers: any = {
       const cached = docSearchCache.get(q);
       if (cached && cached.expiresAt > now) return { status: 200, body: cached.data };
 
-      const db = c.get("db");
-      const results = await sql<Record<string, unknown>>`
+      const db = c.get("db") as Kysely<DB>;
+      const results = await sql<{ slug: string, title: string, category: string, description: string | null }>`
         SELECT f.slug, f.title, f.category, f.description 
         FROM docs_fts f 
         JOIN docs d ON f.slug = d.slug 
@@ -133,13 +171,12 @@ const docHandlers: any = {
         ORDER BY f.rank LIMIT 20
       `.execute(db);
 
-      const mapped = (results.rows ?? []).map((r) => {
-        const row = r as Record<string, unknown>;
+      const mapped = (results.rows ?? []).map((row) => {
         return {
           slug: String(row.slug),
           title: String(row.title),
           category: String(row.category),
-          description: String(row.description),
+          description: row.description || null,
           // eslint-disable-next-line security/detect-non-literal-regexp
           snippet: String(row.description || "").replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi"), "**$1**")
         };
@@ -148,40 +185,65 @@ const docHandlers: any = {
       const payload = { results: mapped };
       setCache(q, { data: payload, expiresAt: now + 60000 });
       return { status: 200, body: payload };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] searchDocs failed:", err);
       return { status: 500, body: { error: "Search failed" } };
     }
   },
-  adminList: async (_: any, c: any) => {
+  adminList: async (_, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("docs")
         .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
         .orderBy("category")
         .orderBy("sort_order", "asc")
         .execute();
-      return { status: 200, body: { docs: results as unknown[] } };
-    } catch {
+      
+      const docs = results.map(d => ({
+        ...d,
+        sort_order: Number(d.sort_order || 0),
+        is_portfolio: Number(d.is_portfolio || 0),
+        is_executive_summary: Number(d.is_executive_summary || 0),
+        is_deleted: Number(d.is_deleted || 0)
+      }));
+
+      return { status: 200, body: { docs } };
+    } catch (err) {
+      console.error("[Docs] adminList failed:", err);
       return { status: 200, body: { docs: [] } };
     }
   },
-  adminDetail: async ({ params }: any, c: any) => {
+  adminDetail: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("docs")
         .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
         .where("slug", "=", slug)
         .executeTakeFirst();
+      
       if (!row) return { status: 404, body: { error: "Doc not found" } };
-      return { status: 200, body: { doc: row as unknown } };
-    } catch {
+      
+      return { 
+        status: 200, 
+        body: { 
+          doc: {
+            ...row,
+            sort_order: Number(row.sort_order || 0),
+            is_portfolio: Number(row.is_portfolio || 0),
+            is_executive_summary: Number(row.is_executive_summary || 0),
+            is_deleted: Number(row.is_deleted || 0)
+          } 
+        } 
+      };
+    } catch (err) {
+      console.error("[Docs] adminDetail failed:", err);
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  saveDoc: async ({ body }: any, c: any) => {
+  saveDoc: async ({ body }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = body;
       const user = await getSessionUser(c);
       const email = user?.email || "anonymous_admin";
@@ -236,7 +298,6 @@ const docHandlers: any = {
 
       const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
       
-      // UPSERT equivalent in Kysely/SQLite
       await db.insertInto("docs")
         .values({
           slug,
@@ -251,7 +312,7 @@ const docHandlers: any = {
           is_executive_summary: isExecutiveSummary ? 1 : 0,
           status
         })
-        .onConflict((oc: any) => oc.column("slug").doUpdateSet({
+        .onConflict((oc) => oc.column("slug").doUpdateSet({
           title,
           category,
           sort_order: sortOrder || 0,
@@ -281,22 +342,24 @@ const docHandlers: any = {
       }
 
       return { status: 200, body: { success: true, slug } };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] saveDoc failed:", err);
       return { status: 500, body: { error: "Write failed" } };
     }
   },
-  updateSort: async ({ params, body }: any, c: any) => {
+  updateSort: async ({ params, body }, c) => {
     const { slug } = params;
     const { sortOrder } = body;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.updateTable("docs").set({ sort_order: sortOrder }).where("slug", "=", slug).execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] updateSort failed:", err);
       return { status: 200, body: { success: false } };
     }
   },
-  submitFeedback: async ({ params, body }: any, c: any) => {
+  submitFeedback: async ({ params, body }, c) => {
     const { slug } = params;
     const { isHelpful, comment, turnstileToken } = body;
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
@@ -308,32 +371,40 @@ const docHandlers: any = {
     if (comment && comment.length > 2000) return { status: 400, body: { error: "Comment too long" } };
 
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.insertInto("docs_feedback").values({ slug, is_helpful: isHelpful ? 1 : 0, comment: comment || null }).execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] submitFeedback failed:", err);
       return { status: 500, body: { error: "Feedback failed" } };
     }
   },
-  getHistory: async ({ params }: any, c: any) => {
+  getHistory: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("docs_history")
-        .select(["id", "title", "category", "description", "created_at"])
+        .selectAll()
         .where("slug", "=", slug)
         .orderBy("created_at", "desc")
         .limit(50)
         .execute();
-      return { status: 200, body: { history: results as unknown[] } };
-    } catch {
+      
+      const history = results.map(h => ({
+        ...h,
+        id: Number(h.id)
+      }));
+
+      return { status: 200, body: { history } };
+    } catch (err) {
+      console.error("[Docs] getHistory failed:", err);
       return { status: 200, body: { history: [] } };
     }
   },
-  restoreHistory: async ({ params }: any, c: any) => {
+  restoreHistory: async ({ params }, c) => {
     const { slug, id } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("docs_history").select(["title", "category", "description", "content"]).where("id", "=", Number(id)).where("slug", "=", slug).executeTakeFirst();
       if (!row) return { status: 404, body: { error: "Version not found" } };
 
@@ -357,14 +428,15 @@ const docHandlers: any = {
 
       await db.updateTable("docs").set({ title: row.title, category: row.category, description: row.description, content: row.content, cf_email: email, updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] restoreHistory failed:", err);
       return { status: 404, body: { error: "Restore failed" } };
     }
   },
-  approveDoc: async ({ params }: any, c: any) => {
+  approveDoc: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("docs").select(["revision_of", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "cf_email"]).where("slug", "=", slug).executeTakeFirst();
       if (!row) return { status: 200, body: { success: false } };
 
@@ -387,15 +459,16 @@ const docHandlers: any = {
         }
       }
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] approveDoc failed:", err);
       return { status: 200, body: { success: false } };
     }
   },
-  rejectDoc: async ({ params, body }: any, c: any) => {
+  rejectDoc: async ({ params, body }, c) => {
     const { slug } = params;
     const { reason } = body;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("docs").select(["title", "cf_email"]).where("slug", "=", slug).executeTakeFirst();
       await db.updateTable("docs").set({ status: "rejected" }).where("slug", "=", slug).execute();
       if (row?.cf_email) {
@@ -403,31 +476,46 @@ const docHandlers: any = {
         if (author) await emitNotification(c, { userId: author.id, title: "Doc Rejected", message: `Your document "${row.title}" was rejected${reason ? `: "${reason}"` : "."}`, link: "/dashboard?tab=docs", priority: "high" });
       }
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] rejectDoc failed:", err);
       return { status: 200, body: { success: false } };
     }
   },
-  undeleteDoc: async ({ params }: any, c: any) => {
+  undeleteDoc: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.updateTable("docs").set({ is_deleted: 0, status: "draft" }).where("slug", "=", slug).execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] undeleteDoc failed:", err);
       return { status: 200, body: { success: false } };
     }
   },
-  purgeDoc: async ({ params }: any, c: any) => {
+  purgeDoc: async ({ params }, c) => {
     const { slug } = params;
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("docs").where("slug", "=", slug).execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Docs] purgeDoc failed:", err);
       return { status: 200, body: { success: false } };
     }
   },
-};
+});
+
+createHonoEndpoints(docContract, docTsRestRouter, docsRouter);
+
+// Apply middleware/protections
+docsRouter.use("/admin", ensureAdmin);
+docsRouter.use("/admin/*", ensureAdmin);
+
+// Special case: non-admins can submit drafts (handled inside saveDoc)
+// We use ensureAuth for /admin/save specifically to allow verified members
+docsRouter.use("/admin/save", ensureAuth);
+
+export default docsRouter;
 const docTsRestRouter = s.router(docContract, docHandlers);
 createHonoEndpoints(docContract, docTsRestRouter, docsRouter);
 

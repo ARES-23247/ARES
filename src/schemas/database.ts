@@ -159,7 +159,6 @@ export interface DocsHistory {
 
 export interface Events {
   category: Generated<string | null>;
-  cf_email: string | null;
   cover_image: string | null;
   date_end: string | null;
   date_start: string;

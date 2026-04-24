@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Kysely, sql } from "kysely";
+import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { outreachContract } from "../../../src/schemas/contracts/outreachContract";
@@ -22,11 +20,15 @@ async function fetchVolunteerEvents(db: Kysely<DB>) {
       .execute();
     
     return results.map((r) => ({
-      ...r,
+      id: r.id,
+      title: r.title,
+      date: r.date,
+      location: r.location || null,
       students_count: 0,
       hours_logged: 0,
       reach_count: 0,
       description: "Volunteer Event (Synced)",
+      season_id: r.season_id ? Number(r.season_id) : undefined,
       is_dynamic: true
     }));
   } catch {
@@ -34,12 +36,11 @@ async function fetchVolunteerEvents(db: Kysely<DB>) {
   }
 }
 
-const outreachHandlers: any = {
-   
-  list: async (_req: any, c: any) => {
+const outreachTsRestRouter = s.router(outreachContract, {
+  list: async (_, c) => {
     try {
-      const db = c.get("db");
-      const logs = await db.selectFrom("outreach_logs")
+      const db = c.get("db") as Kysely<DB>;
+      const results = await db.selectFrom("outreach_logs")
         .select([
           "id", "title", "date", "location", 
           "hours as hours_logged", "people_reached as reach_count", 
@@ -50,20 +51,34 @@ const outreachHandlers: any = {
         .execute();
       
       const volunteerEvents = await fetchVolunteerEvents(db);
+      
+      const logs = results.map(r => ({
+        id: String(r.id),
+        title: r.title,
+        date: r.date,
+        location: r.location || null,
+        students_count: Number(r.students_count || 0),
+        hours_logged: Number(r.hours_logged || 0),
+        reach_count: Number(r.reach_count || 0),
+        description: r.description || null,
+        season_id: r.season_id ? Number(r.season_id) : null,
+        is_dynamic: false
+      }));
+
       const combined = [...logs, ...volunteerEvents].sort(
-        (a, b) => new Date((b as { date: string }).date).getTime() - new Date((a as { date: string }).date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 
-      return { status: 200, body: { logs: combined as unknown[] } };
-    } catch {
+      return { status: 200, body: { logs: combined } };
+    } catch (err) {
+      console.error("[Outreach] list failed:", err);
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-   
-  adminList: async (_req: any, c: any) => {
+  adminList: async (_, c) => {
     try {
-      const db = c.get("db");
-      const logs = await db.selectFrom("outreach_logs")
+      const db = c.get("db") as Kysely<DB>;
+      const results = await db.selectFrom("outreach_logs")
         .select([
           "id", "title", "date", "location", 
           "hours as hours_logged", "people_reached as reach_count", 
@@ -74,19 +89,33 @@ const outreachHandlers: any = {
         .execute();
       
       const volunteerEvents = await fetchVolunteerEvents(db);
+      
+      const logs = results.map(r => ({
+        id: String(r.id),
+        title: r.title,
+        date: r.date,
+        location: r.location || null,
+        students_count: Number(r.students_count || 0),
+        hours_logged: Number(r.hours_logged || 0),
+        reach_count: Number(r.reach_count || 0),
+        description: r.description || null,
+        season_id: r.season_id ? Number(r.season_id) : null,
+        is_dynamic: false
+      }));
+
       const combined = [...logs, ...volunteerEvents].sort(
-        (a, b) => new Date((b as { date: string }).date).getTime() - new Date((a as { date: string }).date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 
-      return { status: 200, body: { logs: combined as unknown[] } };
-    } catch {
+      return { status: 200, body: { logs: combined } };
+    } catch (err) {
+      console.error("[Outreach] adminList failed:", err);
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-   
-  save: async ({ body }: { body: any }, c: any) => {
+  save: async ({ body }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       if (body.id) {
         await db.updateTable("outreach_logs")
           .set({
@@ -99,14 +128,15 @@ const outreachHandlers: any = {
             impact_summary: body.description,
             season_id: body.season_id,
           })
-          .where("id", "=", body.id)
+          .where("id", "=", Number(body.id) as any)
           .execute();
         c.executionCtx.waitUntil(logAuditAction(c, "update_outreach", "outreach_logs", body.id, `Updated outreach: ${body.title}`));
+        return { status: 200, body: { success: true, id: body.id } };
       } else {
         const id = crypto.randomUUID();
         await db.insertInto("outreach_logs")
           .values({
-            id,
+            id: Number(id) as any, // SQLite PK handling if needed
             title: body.title,
             date: body.date,
             location: body.location,
@@ -118,32 +148,32 @@ const outreachHandlers: any = {
           })
           .execute();
         c.executionCtx.waitUntil(logAuditAction(c, "create_outreach", "outreach_logs", id, `Created outreach: ${body.title}`));
+        return { status: 200, body: { success: true, id } };
       }
-      return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Outreach] save failed:", err);
       return { status: 500, body: { error: "Save failed" } };
     }
   },
-   
-  delete: async ({ params }: { params: any }, c: any) => {
+  delete: async ({ params }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.updateTable("outreach_logs")
         .set({ is_deleted: 1 })
-        .where("id", "=", params.id)
+        .where("id", "=", Number(params.id) as any)
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "delete_outreach", "outreach_logs", params.id, "Outreach log soft-deleted"));
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Outreach] delete failed:", err);
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-};
-const outreachTsRestRouter = s.router(outreachContract, outreachHandlers);
+});
+
 createHonoEndpoints(outreachContract, outreachTsRestRouter, outreachRouter);
 
 // Middlewares
-// Protections
 outreachRouter.use("/admin", ensureAdmin);
 outreachRouter.use("/admin/*", ensureAdmin);
 outreachRouter.use("/admin", rateLimitMiddleware(15, 60));

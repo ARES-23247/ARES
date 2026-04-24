@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
@@ -9,11 +8,10 @@ import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction } from "../middlew
 const s = initServer<AppEnv>();
 const judgesRouter = new Hono<AppEnv>();
 
-const portfolioCache = new Map<string, { data: unknown; expiresAt: number }>();
+const portfolioCache = new Map<string, { data: any; expiresAt: number }>();
 
-const judgeHandlers: any = {
-   
-  login: async ({ body, headers: _headers }: any, c: any) => {
+const judgesTsRestRouter = s.router(judgeContract, {
+  login: async ({ body }, c) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const { checkPersistentRateLimit } = await import("../middleware/security");
     const db = c.get("db") as Kysely<DB>;
@@ -24,15 +22,14 @@ const judgeHandlers: any = {
     try {
       const { code, turnstileToken } = body;
       if (!code) return { status: 400, body: { error: "Code required" } };
-      if (code.length > 50) return { status: 400, body: { error: "Invalid code format" } };
 
-      const validToken = await verifyTurnstile(turnstileToken, c.env.TURNSTILE_SECRET_KEY, ip);
-      if (!validToken) return { status: 403, body: { error: "Security verification failed. Please try again." } };
+      const validToken = await verifyTurnstile(turnstileToken || "", c.env.TURNSTILE_SECRET_KEY, ip);
+      if (!validToken) return { status: 403, body: { error: "Security verification failed." } };
 
       const row = await db.selectFrom("judge_access_codes")
-        .select(["code", "label", "expires_at"] as any)
+        .select(["code", "label", "expires_at"])
         .where("code", "=", code)
-        .where((eb: any) => eb.or([
+        .where((eb) => eb.or([
           eb("expires_at", "is", null),
           eb("expires_at", ">", new Date().toISOString())
         ]))
@@ -40,13 +37,12 @@ const judgeHandlers: any = {
 
       if (!row) return { status: 403, body: { error: "Invalid or expired access code" } };
 
-      return { status: 200, body: { success: true, label: (row as any).label } };
-    } catch {
+      return { status: 200, body: { success: true, label: row.label } };
+    } catch (err) {
       return { status: 500, body: { error: "Login failed" } };
     }
   },
-   
-  portfolio: async ({ headers }: any, c: any) => {
+  portfolio: async ({ headers }, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const code = headers["x-judge-code"];
@@ -60,7 +56,7 @@ const judgeHandlers: any = {
       const valid = await db.selectFrom("judge_access_codes")
         .select("code")
         .where("code", "=", code)
-        .where((eb: any) => eb.or([
+        .where((eb) => eb.or([
           eb("expires_at", "is", null),
           eb("expires_at", ">", new Date().toISOString())
         ]))
@@ -76,7 +72,7 @@ const judgeHandlers: any = {
           .select(["slug", "title", "category", "description", "content"])
           .where("is_deleted", "=", 0)
           .where("status", "=", "published")
-          .where((eb: any) => eb.or([eb("is_portfolio", "=", 1), eb("is_executive_summary", "=", 1)]))
+          .where((eb) => eb.or([eb("is_portfolio", "=", 1), eb("is_executive_summary", "=", 1)]))
           .orderBy("is_executive_summary", "desc")
           .orderBy("category")
           .orderBy("sort_order")
@@ -87,7 +83,7 @@ const judgeHandlers: any = {
           .orderBy("date", "desc")
           .execute(),
         db.selectFrom("awards")
-          .select(["id", "title", "date as year", "event_name", "icon_type as image_url", "description"])
+          .select(["id", "title", "date", "event_name", "icon_type as image_url", "description"])
           .where("is_deleted", "=", 0)
           .orderBy("date", "desc")
           .execute(),
@@ -98,33 +94,39 @@ const judgeHandlers: any = {
       ]);
 
       const payload = {
-        portfolioDocs: portfolioDocs || [],
-        outreach: outreach || [],
-        awards: awards || [],
-        sponsors: sponsors || [],
+        portfolioDocs: portfolioDocs.map(d => ({ ...d })),
+        outreach: outreach.map(o => ({ ...o, students_count: Number(o.students_count), hours_logged: Number(o.hours_logged), reach_count: Number(o.reach_count) })),
+        awards: awards.map(a => ({ ...a, year: Number(a.date) })),
+        sponsors: sponsors.map(s => ({ ...s }))
       };
 
       portfolioCache.set("portfolio", { data: payload, expiresAt: now + 300000 });
       return { status: 200, body: payload };
-    } catch {
+    } catch (err) {
+      console.error("[Judges] Portfolio failed:", err);
       return { status: 500, body: { error: "Portfolio fetch failed" } };
     }
   },
-   
-  listCodes: async (_: any, c: any) => {
+  listCodes: async (_, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("judge_access_codes")
-        .select(["id", "code", "label", "created_at", "expires_at"] as any)
+        .select(["id", "code", "label", "created_at", "expires_at"])
         .orderBy("created_at", "desc")
         .execute();
-      return { status: 200, body: { codes: results || [] } };
-    } catch {
+      
+      const codes = results.map(r => ({
+        ...r,
+        created_at: String(r.created_at),
+        expires_at: r.expires_at || null
+      }));
+
+      return { status: 200, body: { codes } };
+    } catch (err) {
       return { status: 500, body: { error: "Failed to fetch codes" } };
     }
   },
-   
-  createCode: async ({ body }: any, c: any) => {
+  createCode: async ({ body }, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const { label, expiresAt } = body;
@@ -132,30 +134,32 @@ const judgeHandlers: any = {
       const id = crypto.randomUUID();
 
       await db.insertInto("judge_access_codes")
-        .values({ id, code, label: label || "Judge Access", expires_at: expiresAt || null } as any)
+        .values({
+          id,
+          code,
+          label: label || "Judge Access",
+          expires_at: expiresAt || null
+        })
         .execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_JUDGE_CODE", "judge_access", id, `Created access code: ${label}`));
       return { status: 200, body: { success: true, code, id } };
-    } catch {
+    } catch (err) {
       return { status: 500, body: { error: "Create failed" } };
     }
   },
-   
-  deleteCode: async ({ params }: any, c: any) => {
+  deleteCode: async ({ params }, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       await db.deleteFrom("judge_access_codes").where("id", "=", params.id).execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-};
-const judgesTsRestRouter = s.router(judgeContract, judgeHandlers);
-createHonoEndpoints(judgeContract, judgesTsRestRouter, judgesRouter);
+});
 
-// Admin protection for admin paths
 judgesRouter.use("/admin/*", ensureAdmin);
+createHonoEndpoints(judgeContract, judgesTsRestRouter, judgesRouter);
 
 export default judgesRouter;

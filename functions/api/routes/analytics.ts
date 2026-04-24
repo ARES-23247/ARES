@@ -1,21 +1,21 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { analyticsContract } from "../../../src/schemas/contracts/analyticsContract";
-import { AppEnv, ensureAdmin, checkRateLimit, turnstileMiddleware  } from "../middleware";
-import { sql } from "kysely";
+import { AppEnv, ensureAdmin, checkRateLimit, turnstileMiddleware, getDbSettings  } from "../middleware";
+import { sql, Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
 const analyticsRouter = new Hono<AppEnv>();
 
-const analyticsHandlers: any = {
-  trackPageView: async ({ body }: any, c: any) => {
+const analyticsTsRestRouter = s.router(analyticsContract, {
+  trackPageView: async ({ body }, c) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     if (!checkRateLimit(`track:${ip}`, 20, 600)) {
       return { status: 429, body: { success: false, error: "Rate limit exceeded" } };
     }
 
-    const db = c.get("db");
+    const db = c.get("db") as Kysely<DB>;
     try {
       const { path, category, referrer } = body;
       const userAgent = c.req.header("user-agent") || "";
@@ -32,17 +32,17 @@ const analyticsHandlers: any = {
 
       return { status: 200, body: { success: true } };
     } catch (err) {
-      console.error("Analytics tracking error:", err);
-      return { status: 500, body: { success: false, error: "Tracking failed" } };
+      console.error("[Analytics] trackPageView failed:", err);
+      return { status: 500, body: { success: false } };
     }
   },
-  trackSponsorClick: async ({ body }: any, c: any) => {
+  trackSponsorClick: async ({ body }, c) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     if (!checkRateLimit(`click:${ip}`, 10, 600)) {
       return { status: 429, body: { success: false, error: "Rate limit exceeded" } };
     }
 
-    const db = c.get("db");
+    const db = c.get("db") as Kysely<DB>;
     try {
       const { sponsor_id } = body;
       const yearMonth = new Date().toISOString().slice(0, 7);
@@ -55,23 +55,23 @@ const analyticsHandlers: any = {
           clicks: 1,
           impressions: 0
         })
-        .onConflict((oc: any) => oc.columns(["sponsor_id", "year_month"]).doUpdateSet({
-          clicks: (eb: any) => eb.bxp("clicks", "+", 1)
+        .onConflict((oc) => oc.columns(["sponsor_id", "year_month"]).doUpdateSet({
+          clicks: (eb) => eb.bxp("clicks", "+", 1)
         }))
         .execute();
 
       return { status: 200, body: { success: true } };
     } catch (err) {
-      console.error("Sponsor tracking error:", err);
-      return { status: 500, body: { success: false, error: "Sponsor tracking failed" } };
+      console.error("[Analytics] trackSponsorClick failed:", err);
+      return { status: 500, body: { success: false } };
     }
   },
-  getSummary: async (_: unknown, c: any) => {
-    const db = c.get("db");
+  getSummary: async (_, c) => {
+    const db = c.get("db") as Kysely<DB>;
     try {
-      const [topPages, recentViews, totals] = await Promise.all([
+      const [topPagesRow, recentViewsRow, totalsRow] = await Promise.all([
         db.selectFrom("page_analytics")
-          .select(["path", "category", (eb: any) => eb.fn.count("path").as("views")])
+          .select(["path", "category", (eb) => eb.fn.count("path").as("views")])
           .groupBy(["path", "category"])
           .orderBy("views", "desc")
           .limit(10)
@@ -82,27 +82,42 @@ const analyticsHandlers: any = {
           .limit(20)
           .execute(),
         db.selectFrom("page_analytics")
-          .select(["category", (eb: any) => eb.fn.count("category").as("total")])
+          .select(["category", (eb) => eb.fn.count("category").as("total")])
           .groupBy("category")
           .execute()
       ]);
 
-      return { status: 200, body: {
-        topPages: topPages as unknown as unknown[],
-        recentViews: recentViews as unknown as unknown[],
-        totals: totals as unknown as unknown[]
-      }};
+      const topPages = topPagesRow.map(p => ({
+        path: String(p.path),
+        category: String(p.category),
+        views: Number(p.views)
+      }));
+
+      const recentViews = recentViewsRow.map(v => ({
+        path: String(v.path),
+        category: String(v.category),
+        user_agent: String(v.user_agent || ""),
+        referrer: String(v.referrer || ""),
+        timestamp: String(v.timestamp)
+      }));
+
+      const totals = totalsRow.map(t => ({
+        category: String(t.category),
+        total: Number(t.total)
+      }));
+
+      return { status: 200, body: { topPages, recentViews, totals } };
     } catch (err) {
-      console.error("Analytics summary error:", err);
+      console.error("[Analytics] getSummary failed:", err);
       return { status: 500, body: { topPages: [], recentViews: [], totals: [] } };
     }
   },
-  getRosterStats: async (_: unknown, c: any) => {
-    const db = c.get("db");
+  getRosterStats: async (_, c) => {
+    const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user_profiles as u")
         .leftJoin("event_signups as s", "u.user_id", "s.user_id")
-        .leftJoin("events as e", (join: any) => join
+        .leftJoin("events as e", (join) => join
           .onRef("s.event_id", "=", "e.id")
           .on("e.status", "=", "published")
           .on("e.is_deleted", "=", 0)
@@ -111,9 +126,9 @@ const analyticsHandlers: any = {
           "u.user_id",
           "u.nickname",
           "u.member_type",
-          (eb: any) => eb.fn.sum(eb.case().when("s.attended", "=", 1).then(1).else(0).end()).as("attended_events"),
-          (eb: any) => eb.fn.coalesce(eb.fn.sum(eb.case().when("s.attended", "=", 1).then("s.prep_hours").else(0).end()), sql`0`).as("manual_prep_hours"),
-          (eb: any) => eb.fn.coalesce(
+          (eb) => eb.fn.sum(eb.case().when("s.attended", "=", 1).then(1).else(0).end()).as("attended_events"),
+          (eb) => eb.fn.coalesce(eb.fn.sum(eb.case().when("s.attended", "=", 1).then("s.prep_hours").else(0).end()), sql`0`).as("manual_prep_hours"),
+          (eb) => eb.fn.coalesce(
             eb.fn.sum(eb.case()
               .when("s.attended", "=", 1)
               .and("e.is_volunteer", "=", 1)
@@ -127,13 +142,112 @@ const analyticsHandlers: any = {
         .orderBy("u.nickname", "asc")
         .execute();
 
-      return { status: 200, body: { roster: results as unknown as unknown[] } };
+      const roster = results.map(r => ({
+        user_id: String(r.user_id),
+        nickname: r.nickname || null,
+        member_type: r.member_type || null,
+        attended_events: Number(r.attended_events || 0),
+        manual_prep_hours: Number(r.manual_prep_hours || 0),
+        event_volunteer_hours: Number(r.event_volunteer_hours || 0)
+      }));
+
+      return { status: 200, body: { roster } };
     } catch (err) {
-      console.error("Roster stats error:", err);
+      console.error("[Analytics] getRosterStats failed:", err);
       return { status: 500, body: { roster: [] } };
     }
   },
-};
+  getLeaderboard: async (_, c) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const results = await db.selectFrom("user as u")
+        .innerJoin("user_profiles as p", "u.id", "p.user_id")
+        .innerJoin("user_badges as ub", "u.id", "ub.user_id")
+        .select([
+          "u.id as user_id",
+          "u.name as first_name",
+          "p.last_name",
+          "p.nickname",
+          "p.member_type",
+          (eb) => eb.fn.count("ub.id").as("badge_count")
+        ])
+        .where("p.show_on_about", "=", 1)
+        .groupBy(["u.id", "u.name", "p.last_name", "p.nickname", "p.member_type"])
+        .orderBy("badge_count", "desc")
+        .limit(50)
+        .execute();
+
+      const leaderboard = results.map(r => ({
+        user_id: String(r.user_id),
+        first_name: String(r.first_name || "ARES"),
+        last_name: r.last_name || null,
+        nickname: r.nickname || null,
+        member_type: String(r.member_type || "student"),
+        badge_count: Number(r.badge_count)
+      }));
+
+      return { status: 200, body: { leaderboard } };
+    } catch (err) {
+      console.error("[Analytics] getLeaderboard failed:", err);
+      return { status: 500, body: { error: "Failed to fetch leaderboard" } };
+    }
+  },
+  getStats: async (_, c) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const [postsCount, eventsCount, docsCount] = await Promise.all([
+        db.selectFrom("posts").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("events").select((eb) => eb.fn.count("id").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("docs").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+      ]);
+
+      const dbSettings = await getDbSettings(c);
+
+      return {
+        status: 200,
+        body: {
+          posts: Number(postsCount?.total || 0),
+          events: Number(eventsCount?.total || 0),
+          docs: Number(docsCount?.total || 0),
+          integrations: {
+            zulip: !!dbSettings["ZULIP_API_KEY"],
+            github: !!dbSettings["GITHUB_ACCESS_TOKEN"],
+            discord: !!dbSettings["DISCORD_WEBHOOK_URL"],
+            bluesky: !!dbSettings["BLUESKY_PASSWORD"],
+            slack: !!dbSettings["SLACK_WEBHOOK_URL"],
+            gcal: !!dbSettings["GCAL_PRIVATE_KEY"]
+          }
+        }
+      };
+    } catch (err) {
+      console.error("[Analytics] getStats failed:", err);
+      return { status: 500, body: { error: "Failed to fetch stats" } };
+    }
+  },
+  search: async ({ query }, c) => {
+    const db = c.get("db") as Kysely<DB>;
+    const { q } = query;
+    try {
+      const ftsQ = `"${q.replace(/"/g, '""')}"*`;
+      const [postsReq, eventsReq, docsReq] = await Promise.all([
+        sql<{ slug: string, title: string }>`SELECT slug as id, title FROM posts_fts WHERE posts_fts MATCH ${ftsQ} LIMIT 5`.execute(db),
+        sql<{ id: string, title: string }>`SELECT id, title FROM events_fts WHERE events_fts MATCH ${ftsQ} LIMIT 5`.execute(db),
+        sql<{ slug: string, title: string }>`SELECT slug as id, title FROM docs_fts WHERE docs_fts MATCH ${ftsQ} LIMIT 5`.execute(db)
+      ]);
+
+      const results = [
+        ...(postsReq.rows || []).map(r => ({ type: "blog", id: r.id, title: r.title })),
+        ...(eventsReq.rows || []).map(r => ({ type: "event", id: r.id, title: r.title })),
+        ...(docsReq.rows || []).map(r => ({ type: "doc", id: r.id, title: r.title }))
+      ];
+
+      return { status: 200, body: { results } };
+    } catch (err) {
+      console.error("[Analytics] Search failed:", err);
+      return { status: 500, body: { error: "Search failed" } };
+    }
+  }
+});
 
 // Middleware for public tracking (Turnstile)
 analyticsRouter.use("/track", turnstileMiddleware());
@@ -143,7 +257,6 @@ analyticsRouter.use("/sponsor-click", turnstileMiddleware());
 analyticsRouter.use("/admin", ensureAdmin);
 analyticsRouter.use("/admin/*", ensureAdmin);
 
-const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers);
 createHonoEndpoints(analyticsContract, analyticsTsRestRouter, analyticsRouter);
 
 export default analyticsRouter;

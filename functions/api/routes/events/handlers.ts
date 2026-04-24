@@ -193,7 +193,7 @@ export const eventHandlers = s.router(eventContract, {
         .values({
           id: genId, title, category: cat, date_start: dateStart, date_end: dateEnd || null,
           location: location || "", description: description || "", cover_image: coverImage || "",
-          gcal_event_id: gcalId || null, cf_email: user?.email || "anonymous_admin", status,
+          gcal_event_id: gcalId || null, status,
           is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
           published_at: publishedAt || null, season_id: seasonId || null
         })
@@ -342,7 +342,7 @@ export const eventHandlers = s.router(eventContract, {
         const events = await pullEventsFromGcal({ email: gcalEmail as string, privateKey: gcalKey as string, calendarId: cal.id as string });
         for (const ev of events) {
           await db.insertInto("events")
-            .values({ id: crypto.randomUUID(), title: ev.title, date_start: ev.date_start, date_end: ev.date_end || null, location: ev.location, description: ev.description, gcal_event_id: ev.gcal_event_id, cf_email: user?.email || "sync", status: 'published', category: cal.category })
+            .values({ id: crypto.randomUUID(), title: ev.title, date_start: ev.date_start, date_end: ev.date_end || null, location: ev.location, description: ev.description, gcal_event_id: ev.gcal_event_id, status: 'published', category: cal.category })
             .onConflict((oc) => oc.column("gcal_event_id").doUpdateSet({ title: ev.title, date_start: ev.date_start, date_end: ev.date_end || null, location: ev.location, description: ev.description, category: cal.category }))
             .execute();
           total++;

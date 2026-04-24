@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
@@ -10,22 +9,34 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 const s = initServer<AppEnv>();
 const badgesRouter = new Hono<AppEnv>();
 
-const badgeHandlers: any = {
+const badgesTsRestRouter = s.router(badgeContract, {
    
-  list: async (_: any, c: any) => {
+  list: async (_, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("badges")
         .selectAll()
         .orderBy("created_at", "asc")
         .execute();
-      return { status: 200, body: { badges: results as unknown[] } };
-    } catch {
+      
+      // Ensure results match the contract schema (handling null/undefined if necessary)
+      const badges = results.map(b => ({
+        id: b.id,
+        name: b.name,
+        description: b.description || "",
+        icon: b.icon || "Award",
+        color_theme: b.color_theme || "ares-gold",
+        created_at: String(b.created_at)
+      }));
+
+      return { status: 200, body: { badges } };
+    } catch (err) {
+      console.error("[Badges] List failed:", err);
       return { status: 500, body: { error: "Failed to fetch badges" } };
     }
   },
    
-  create: async ({ body }: any, c: any) => {
+  create: async ({ body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.insertInto("badges")
@@ -38,12 +49,13 @@ const badgeHandlers: any = {
         })
         .execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Badges] Create failed:", err);
       return { status: 500, body: { error: "Failed to create badge" } };
     }
   },
    
-  grant: async ({ body }: any, c: any) => {
+  grant: async ({ body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -85,12 +97,13 @@ const badgeHandlers: any = {
       })());
 
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Badges] Grant failed:", err);
       return { status: 500, body: { error: "Failed to award badge" } };
     }
   },
    
-  revoke: async ({ params }: any, c: any) => {
+  revoke: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("user_badges")
@@ -98,24 +111,26 @@ const badgeHandlers: any = {
         .where("badge_id", "=", params.badgeId)
         .execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Badges] Revoke failed:", err);
       return { status: 500, body: { error: "Failed to revoke badge" } };
     }
   },
    
-  delete: async ({ params }: any, c: any) => {
+  delete: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("badges")
         .where("id", "=", params.id)
         .execute();
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Badges] Delete failed:", err);
       return { status: 500, body: { error: "Failed to delete badge definition" } };
     }
   },
-};
-const badgesTsRestRouter = s.router(badgeContract, badgeHandlers);
+});
+
 createHonoEndpoints(badgeContract, badgesTsRestRouter, badgesRouter);
 
 // Middlewares
@@ -127,10 +142,10 @@ badgesRouter.use("/admin", rateLimitMiddleware(15, 60));
 // Public Leaderboard (not yet in contract, keeping as standard Hono for now)
 badgesRouter.get("/leaderboard", async (c) => {
   try {
-    const db = c.get("db");
+    const db = c.get("db") as Kysely<DB>;
     const results = await db.selectFrom("user_profiles as u")
       .innerJoin("user_badges as ub", "u.user_id", "ub.user_id")
-      .select(["u.user_id", "u.nickname", "u.member_type", db.fn.count("ub.id" as any).as("badge_count")])
+      .select(["u.user_id", "u.nickname", "u.member_type", (eb) => eb.fn.count("ub.id").as("badge_count")])
       .where("u.show_on_about", "=", 1)
       .groupBy("u.user_id")
       .orderBy("badge_count", "desc")
@@ -138,7 +153,8 @@ badgesRouter.get("/leaderboard", async (c) => {
       .limit(20)
       .execute();
     return c.json({ leaderboard: results });
-  } catch {
+  } catch (err) {
+    console.error("[Badges] Leaderboard failed:", err);
     return c.json({ leaderboard: [] }, 500);
   }
 });

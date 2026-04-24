@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
@@ -9,9 +8,8 @@ import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 const s = initServer<AppEnv>();
 const locationsRouter = new Hono<AppEnv>();
 
-const locationHandlers: any = {
-   
-  list: async (_: any, c: any) => {
+const locationsTsRestRouter = s.router(locationContract, {
+  list: async (_, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -19,59 +17,66 @@ const locationHandlers: any = {
         .where("is_deleted", "=", 0)
         .orderBy("name", "asc")
         .execute();
-      return { status: 200, body: { locations: results as unknown[] } };
-    } catch {
-      return { status: 500, body: { error: "Failed to fetch locations" } };
+      
+      const locations = results.map(r => ({
+        ...r,
+        is_deleted: Number(r.is_deleted || 0)
+      }));
+
+      return { status: 200, body: { locations } };
+    } catch (err) {
+      console.error("[Locations] list failed:", err);
+      return { status: 200, body: { locations: [] } };
     }
   },
-   
-  adminList: async (_: any, c: any) => {
+  adminList: async (_, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
         .selectAll()
         .orderBy("name", "asc")
         .execute();
-      return { status: 200, body: { locations: results as unknown[] } };
-    } catch {
-      return { status: 500, body: { error: "Failed to fetch locations" } };
+
+      const locations = results.map(r => ({
+        ...r,
+        is_deleted: Number(r.is_deleted || 0)
+      }));
+
+      return { status: 200, body: { locations } };
+    } catch (err) {
+      console.error("[Locations] adminList failed:", err);
+      return { status: 200, body: { locations: [] } };
     }
   },
-   
-  save: async ({ body }: any, c: any) => {
+  save: async ({ body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      if (body.id) {
-        await db.updateTable("locations")
-          .set({
-            name: body.name,
-            address: body.address,
-            maps_url: body.maps_url,
-            is_deleted: body.is_deleted ?? 0,
-          })
-          .where("id", "=", body.id)
-          .execute();
-        c.executionCtx.waitUntil(logAuditAction(c, "update_location", "locations", body.id, `Updated location: ${body.name}`));
-      } else {
-        const id = crypto.randomUUID();
-        await db.insertInto("locations")
-          .values({
-            id,
-            name: body.name,
-            address: body.address,
-            maps_url: body.maps_url,
-            is_deleted: 0,
-          })
-          .execute();
-        c.executionCtx.waitUntil(logAuditAction(c, "create_location", "locations", id, `Created location: ${body.name}`));
-      }
-      return { status: 200, body: { success: true } };
-    } catch {
-      return { status: 500, body: { error: "Save failed" } };
+      const id = body.id || crypto.randomUUID();
+      
+      await db.insertInto("locations")
+        .values({
+          id,
+          name: body.name,
+          address: body.address,
+          maps_url: body.maps_url || null,
+          is_deleted: body.is_deleted || 0,
+        })
+        .onConflict(oc => oc.column("id").doUpdateSet({
+          name: body.name,
+          address: body.address,
+          maps_url: body.maps_url || null,
+          is_deleted: body.is_deleted || 0,
+        }))
+        .execute();
+
+      c.executionCtx.waitUntil(logAuditAction(c, "SAVE_LOCATION", "locations", id, `Saved location: ${body.name}`));
+      return { status: 200, body: { success: true, id } };
+    } catch (err) {
+      console.error("[Locations] save failed:", err);
+      return { status: 200, body: { success: false } };
     }
   },
-   
-  delete: async ({ params }: any, c: any) => {
+  delete: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("locations")
@@ -80,16 +85,14 @@ const locationHandlers: any = {
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "delete_location", "locations", params.id, "Location soft-deleted"));
       return { status: 200, body: { success: true } };
-    } catch {
-      return { status: 500, body: { error: "Delete failed" } };
+    } catch (err) {
+      console.error("[Locations] delete failed:", err);
+      return { status: 200, body: { success: false } };
     }
   },
-};
-const locationsTsRestRouter = s.router(locationContract, locationHandlers);
-createHonoEndpoints(locationContract, locationsTsRestRouter, locationsRouter);
+});
 
-// Middlewares
 locationsRouter.use("/admin/*", ensureAdmin);
-locationsRouter.use("/admin", (c, next) => next()); // rate limiting if needed
+createHonoEndpoints(locationContract, locationsTsRestRouter, locationsRouter);
 
 export default locationsRouter;

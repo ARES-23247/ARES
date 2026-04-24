@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { inquiryContract } from "../../../src/schemas/contracts/inquiryContract";
@@ -12,10 +11,8 @@ import { DB } from "../../../src/schemas/database";
 const s = initServer<AppEnv>();
 const inquiriesRouter = new Hono<AppEnv>();
 
-const inquiryHandlers: any = {
-   
-  list: async ({ query }: any, c: any) => {
-    console.log("[Inquiries] List called");
+const inquiriesTsRestRouter = s.router(inquiryContract, {
+  list: async ({ query }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = c.get("sessionUser");
@@ -35,41 +32,53 @@ const inquiryHandlers: any = {
         }
       }
 
-      let q = db.selectFrom("inquiries").selectAll().orderBy("created_at", "desc").limit(limit).offset(offset);
+      let dbQuery = db.selectFrom("inquiries").selectAll().orderBy("created_at", "desc").limit(limit).offset(offset);
       
       if (filterOutreach) {
-        q = q.where("type", "in", ["outreach", "support"]);
+        // @ts-ignore
+        dbQuery = dbQuery.where("type", "in", ["outreach", "support"]);
       }
 
-      const results = await q.execute();
+      const results = await dbQuery.execute();
 
       const METADATA_WHITELIST = ['level', 'org', 'message', 'event_type', 'date', 'topic', 'position', 'subteam'];
 
-      const sanitized = results.map(r => {
-        const row = r as { name: string; email: string; metadata: string | null };
+      const inquiries = results.map(r => {
+        let name = String(r.name);
+        let email = String(r.email);
+        let metadata = r.metadata;
+
         if (maskPII) {
-          row.name = row.name.substring(0, 1) + "***";
-          row.email = "***@***.***";
-          if (row.metadata) {
+          name = name.substring(0, 1) + "***";
+          email = "***@***.***";
+          if (metadata) {
             try {
-              const meta = JSON.parse(row.metadata) as Record<string, unknown>;
+              const meta = JSON.parse(metadata) as Record<string, unknown>;
               const clean: Record<string, unknown> = {};
               for (const key of METADATA_WHITELIST) if (key in meta) clean[key] = meta[key];
-              row.metadata = JSON.stringify(clean);
+              metadata = JSON.stringify(clean);
             } catch { /* ignore */ }
           }
         }
-        return row;
+        
+        return {
+          id: String(r.id),
+          type: r.type as any,
+          name,
+          email,
+          metadata,
+          status: r.status as any,
+          created_at: String(r.created_at)
+        };
       });
 
-      return { status: 200, body: { inquiries: sanitized } };
-    } catch {
+      return { status: 200, body: { inquiries } };
+    } catch (err) {
+      console.error("[Inquiries] list failed:", err);
       return { status: 500, body: { error: "Failed to fetch inquiries" } };
     }
   },
-   
-  submit: async ({ body }: any, c: any) => {
-    // ... logic remains same but no manual auth needed for public submit ...
+  submit: async ({ body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { type, name, email, metadata } = body;
@@ -77,7 +86,7 @@ const inquiryHandlers: any = {
       const recent = await db.selectFrom("inquiries")
         .select("id")
         .where("email", "=", email)
-        .where("created_at", ">", sql`datetime('now', '-2 minutes')` as any)
+        .where("created_at", ">", sql`datetime('now', '-2 minutes')`)
         .executeTakeFirst();
 
       if (recent) return { status: 429, body: { error: "Please wait a few minutes before submitting another inquiry." } };
@@ -97,8 +106,8 @@ const inquiryHandlers: any = {
 
         if (type === "sponsor") {
           let tierStr = "Pending";
-          if (metadata && typeof (metadata as Record<string, unknown>).level === "string") {
-            tierStr = (metadata as Record<string, unknown>).level as string;
+          if (metadata && typeof metadata.level === "string") {
+            tierStr = metadata.level;
             tierStr = tierStr.replace(" Tier Sponsor", "");
           }
           await trx.insertInto("sponsors")
@@ -137,12 +146,12 @@ const inquiryHandlers: any = {
       })());
 
       return { status: 200, body: { success: true, id } };
-    } catch {
+    } catch (err) {
+      console.error("[Inquiries] submit failed:", err);
       return { status: 500, body: { error: "Submission failed" } };
     }
   },
-   
-  updateStatus: async ({ params, body }: any, c: any) => {
+  updateStatus: async ({ params, body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("inquiries")
@@ -151,24 +160,25 @@ const inquiryHandlers: any = {
         .execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "inquiry_status_change", "inquiries", params.id, `Status changed to ${body.status}`));
-      return { status: 200, body: { success: true } };
-    } catch {
+      return { status: 200, body: { success: true, status: body.status } };
+    } catch (err) {
+      console.error("[Inquiries] updateStatus failed:", err);
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-   
-  delete: async ({ params }: any, c: any) => {
+  delete: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("inquiries").where("id", "=", params.id).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "inquiry_deleted", "inquiries", params.id, "Inquiry deleted"));
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Inquiries] delete failed:", err);
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-};
-const inquiriesTsRestRouter = s.router(inquiryContract, inquiryHandlers);
+});
+
 createHonoEndpoints(inquiryContract, inquiriesTsRestRouter, inquiriesRouter);
 
 // Admin protection
@@ -187,7 +197,7 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
   if (days <= 0) return { deleted: 0 };
   const res = await db.deleteFrom("inquiries")
     .where("status", "in", ["resolved", "rejected"])
-    .where("created_at", "<", sql`datetime('now', '-' || ${days} || ' days')` as any)
+    .where("created_at", "<", sql`datetime('now', '-' || ${days} || ' days')`)
     .execute();
   return { deleted: res.length };
 }

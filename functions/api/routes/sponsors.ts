@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../src/schemas/contracts/sponsorContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
@@ -9,23 +10,30 @@ import { sendZulipAlert } from "../../utils/zulipSync";
 const s = initServer<AppEnv>();
 const sponsorsRouter = new Hono<AppEnv>();
 
-const sponsorHandlers: any = {
-  getSponsors: async (_: any, c: any) => {
+const sponsorTsRestRouter = s.router(sponsorContract, {
+  getSponsors: async (_, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("sponsors")
         .select(["id", "name", "tier", "logo_url", "website_url", "is_active"])
         .where("is_active", "=", 1)
         .orderBy(sql<number>`CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END`)
         .execute();
-      return { status: 200, body: { sponsors: results } };
-    } catch {
+
+      const sponsors = results.map(s => ({
+        ...s,
+        is_active: !!s.is_active
+      }));
+
+      return { status: 200, body: { sponsors } };
+    } catch (err) {
+      console.error("[Sponsors] getSponsors failed:", err);
       return { status: 200, body: { sponsors: [] } };
     }
   },
-  getRoi: async ({ params }: any, c: any) => {
+  getRoi: async ({ params }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const { token } = params;
       const tokens = await db.selectFrom("sponsor_tokens")
         .select("sponsor_id")
@@ -35,80 +43,119 @@ const sponsorHandlers: any = {
       if (!tokens || tokens.length === 0) return { status: 403, body: { error: "Invalid token" } };
       const sponsor_id = tokens[0].sponsor_id;
 
-      const sponsor = await db.selectFrom("sponsors")
-        .select(["id", "name", "tier", "logo_url", "website_url"])
+      const sponsorRow = await db.selectFrom("sponsors")
+        .select(["id", "name", "tier", "logo_url", "website_url", "is_active"])
         .where("id", "=", sponsor_id)
         .executeTakeFirst();
 
-      const metrics = await db.selectFrom("sponsor_metrics")
-        .select(["year_month", "impressions", "clicks"])
+      if (!sponsorRow) return { status: 403, body: { error: "Sponsor not found" } };
+
+      const metricsRow = await db.selectFrom("sponsor_metrics")
+        .select(["id", "sponsor_id", "metric_key", "metric_value", "date"])
         .where("sponsor_id", "=", sponsor_id)
-        .orderBy("year_month", "asc")
+        .orderBy("date", "asc")
         .execute();
 
-      return { status: 200, body: { sponsor: sponsor as unknown, metrics: metrics as unknown[] } };
-    } catch {
+      const sponsor = { ...sponsorRow, is_active: !!sponsorRow.is_active };
+      const metrics = metricsRow.map(m => ({
+        ...m,
+        metric_value: Number(m.metric_value)
+      }));
+
+      return { status: 200, body: { sponsor, metrics } };
+    } catch (err) {
+      console.error("[Sponsors] getRoi failed:", err);
       return { status: 500, body: { error: "Failed to fetch ROI" } };
     }
   },
-  adminList: async (_: any, c: any) => {
+  adminList: async (_, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("sponsors")
         .select(["id", "name", "tier", "logo_url", "website_url", "is_active"])
         .orderBy("created_at", "desc")
         .execute();
-      return { status: 200, body: { sponsors: results as unknown[] } };
-    } catch {
+      
+      const sponsors = results.map(s => ({
+        ...s,
+        is_active: !!s.is_active
+      }));
+
+      return { status: 200, body: { sponsors } };
+    } catch (err) {
+      console.error("[Sponsors] adminList failed:", err);
       return { status: 200, body: { sponsors: [] } };
     }
   },
-  saveSponsor: async ({ body }: any, c: any) => {
+  saveSponsor: async ({ body }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const { id, name, tier, logo_url, website_url, is_active } = body;
       const finalId = id || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
       await db.insertInto("sponsors")
-        .values({ id: finalId, name, tier, logo_url: logo_url || null, website_url: website_url || null, is_active: is_active ?? 1 })
-        .onConflict((oc: any) => oc.column('id').doUpdateSet({ name, tier, logo_url: logo_url || null, website_url: website_url || null, is_active: is_active ?? 1 }))
+        .values({ 
+          id: finalId, 
+          name, 
+          tier, 
+          logo_url: logo_url || null, 
+          website_url: website_url || null, 
+          is_active: is_active ? 1 : 0 
+        })
+        .onConflict(oc => oc.column('id').doUpdateSet({ 
+          name, 
+          tier, 
+          logo_url: logo_url || null, 
+          website_url: website_url || null, 
+          is_active: is_active ? 1 : 0 
+        }))
         .execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "SAVE_SPONSOR", "sponsors", finalId, `Saved sponsor: ${name}`));
       return { status: 200, body: { success: true, id: finalId } };
-    } catch {
+    } catch (err) {
+      console.error("[Sponsors] saveSponsor failed:", err);
       return { status: 200, body: { success: false } };
     }
   },
-  deleteSponsor: async ({ params }: any, c: any) => {
+  deleteSponsor: async ({ params }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.updateTable("sponsors").set({ is_active: 0 }).where("id", "=", params.id).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DEACTIVATE_SPONSOR", "sponsors", params.id, `Deactivated sponsor ${params.id}`));
       return { status: 200, body: { success: true } };
-    } catch {
+    } catch (err) {
+      console.error("[Sponsors] deleteSponsor failed:", err);
       return { status: 200, body: { success: false } };
     }
   },
-  getAdminTokens: async (_: any, c: any) => {
+  getAdminTokens: async (_, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("sponsor_tokens as t")
         .innerJoin("sponsors as s", "t.sponsor_id", "s.id")
-        .select(["t.token", "t.sponsor_id", "s.name as sponsor_name", "t.created_at"])
+        .select(["t.id", "t.token", "t.sponsor_id", "t.created_at", "t.last_used"])
         .orderBy("t.created_at", "desc")
         .execute();
-      return { status: 200, body: { tokens: results as unknown[] } };
-    } catch {
+      
+      const tokens = results.map(t => ({
+        ...t,
+        last_used: t.last_used || null
+      }));
+
+      return { status: 200, body: { tokens } };
+    } catch (err) {
+      console.error("[Sponsors] getAdminTokens failed:", err);
       return { status: 500, body: { tokens: [] } };
     }
   },
-  generateToken: async ({ body }: any, c: any) => {
+  generateToken: async ({ body }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const { sponsor_id } = body;
       const token = crypto.randomUUID();
-      await db.insertInto("sponsor_tokens").values({ token, sponsor_id }).execute();
+      const id = crypto.randomUUID();
+      await db.insertInto("sponsor_tokens").values({ id, token, sponsor_id }).execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "GENERATE_TOKEN", "sponsor_tokens", token, `Generated token for ${sponsor_id}`));
       
@@ -118,11 +165,21 @@ const sponsorHandlers: any = {
       })());
 
       return { status: 200, body: { success: true, token } };
-    } catch {
+    } catch (err) {
+      console.error("[Sponsors] generateToken failed:", err);
       return { status: 500, body: { error: "Failed to generate" } };
     }
   },
-};
+});
+
+createHonoEndpoints(sponsorContract, sponsorTsRestRouter, sponsorsRouter);
+
+// Protections
+sponsorsRouter.use("/admin", ensureAdmin);
+sponsorsRouter.use("/admin/*", ensureAdmin);
+sponsorsRouter.use("/admin", rateLimitMiddleware(15, 60));
+
+export default sponsorsRouter;
 
 const sponsorTsRestRouter = s.router(sponsorContract, sponsorHandlers);
 createHonoEndpoints(sponsorContract, sponsorTsRestRouter, sponsorsRouter);

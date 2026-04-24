@@ -4,7 +4,7 @@ import { z } from "zod";
 const c = initContract();
 
 export const commentSchema = z.object({
-  id: z.coerce.number(),
+  id: z.string(),
   user_id: z.string(),
   nickname: z.string().nullable(),
   avatar: z.string().nullable(),
