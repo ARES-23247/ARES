@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, Context } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { logisticsContract } from "../../../src/schemas/contracts/logisticsContract";
 import { AppEnv, ensureAdmin  } from "../middleware";
@@ -7,7 +7,8 @@ const s = initServer<AppEnv>();
 const logisticsRouter = new Hono<AppEnv>();
 
 const logisticsTsRestRouter = s.router(logisticsContract, {
-  getSummary: async (_, c) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSummary: async (_: any, c: Context<AppEnv>) => {
     const db = c.get("db");
 
     try {
