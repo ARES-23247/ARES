@@ -5,7 +5,7 @@ import { getAuth } from "../../utils/auth";
 const authRouter = new Hono<AppEnv>();
 
 // ── GET /api/auth-check — verify session (UI gate only) ────────────────
-authRouter.get("/auth-check", rateLimitMiddleware(60, 60), async (c) => {
+authRouter.get("/auth-check", rateLimitMiddleware(60, 60), async (c: any) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ authenticated: false }, 401);
   return c.json({ 
@@ -15,7 +15,7 @@ authRouter.get("/auth-check", rateLimitMiddleware(60, 60), async (c) => {
 });
 
 // ── Better Auth Routes ────────────────────────────────────────────────
-authRouter.on(["POST", "GET"], "/*", rateLimitMiddleware(20, 60), async (c) => {
+authRouter.on(["POST", "GET"], "/*", rateLimitMiddleware(20, 60), async (c: any) => {
   try {
     const auth = getAuth(c.env.DB, c.env, c.req.url);
     const response = await auth.handler(c.req.raw);

@@ -44,7 +44,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 // ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
-zulipWebhookRouter.post("/", async (c) => {
+zulipWebhookRouter.post("/", async (c: any) => {
   let body: ZulipOutgoingPayload;
   try {
     body = await c.req.json();

@@ -50,7 +50,7 @@ describe("Auth Router", () => {
 
   describe("/* handler", () => {
     it("should proxy requests to better-auth handler", async () => {
-      const mockHandler = vi.fn().mockResolvedValue(new Response("auth response", { status: 200 }));
+      const mockHandler = vi.fn().mockResolvedValue(new Response("auth response", { status: 200 as const }));
       vi.mocked(authUtils.getAuth).mockReturnValue({
         handler: mockHandler,
       } as any);

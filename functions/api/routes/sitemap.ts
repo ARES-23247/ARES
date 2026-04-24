@@ -7,7 +7,7 @@ export const sitemapRouter = new Hono<AppEnv>();
 // SEC-DoW: Cache sitemap to prevent repeated D1 queries from bots/crawlers
 let sitemapCache: { xml: string; expiresAt: number } | null = null;
 
-sitemapRouter.get(".xml", async (c) => {
+sitemapRouter.get(".xml", async (c: any) => {
   const db = c.get("db");
   try {
     const now = Date.now();

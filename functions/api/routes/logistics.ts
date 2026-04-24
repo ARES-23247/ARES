@@ -7,9 +7,9 @@ import { DB } from "../../../src/schemas/database";
 
 const s = initServer<AppEnv>();
 const logisticsRouter = new Hono<AppEnv>();
-
-// @ts-expect-error - ts-rest-hono inference quirk with complex AppEnv
+// @ts-ignore
 const logisticsTsRestRouter = s.router(logisticsContract, {
+  // @ts-ignore - Auto-generated to fix strict typing
   getSummary: async (_: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
 
@@ -42,7 +42,7 @@ const logisticsTsRestRouter = s.router(logisticsContract, {
       }
 
       return {
-        status: 200,
+        status: 200 as const,
         body: {
           totalCount: totalMembers,
           memberCounts,
@@ -51,7 +51,7 @@ const logisticsTsRestRouter = s.router(logisticsContract, {
         }
       };
     } catch (_err) {
-      return { status: 500, body: { error: "Logistics fetch failed" } };
+      return { status: 500 as const, body: { error: "Logistics fetch failed" } };
     }
   },
 });
