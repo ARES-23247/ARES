@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, getDbSettings, checkRateLimit, rateLimitMiddleware } from "../middleware";
+import { AppEnv, ensureAdmin, getDbSettings, checkRateLimit } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { mediaContract } from "../../../src/schemas/contracts/mediaContract";
 
@@ -33,14 +33,14 @@ async function listAllObjects(bucket: R2Bucket, options?: R2ListOptions) {
 
 const mediaTsRestRouter = s.router(mediaContract, {
   getMedia: async (_, c) => {
-    const ip = c.req.header("cf-connecting-ip") || "unknown";
+    const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
     if (c.env.DEV_BYPASS !== "true" && !checkRateLimit(ip, 30, 60)) {
       return { status: 429, body: "Too many requests" };
     }
 
     try {
       // SEC-DoW: Global Edge Cache
-      // @ts-ignore
+      // @ts-expect-error - Cloudflare Workers runtime global
       const cache = caches.default;
       const url = new URL(c.req.url);
       url.search = "";
@@ -54,7 +54,7 @@ const mediaTsRestRouter = s.router(mediaContract, {
       ]);
 
       const results = (dbRes.results || []) as { key: string, folder: string, tags: string }[];
-      const metaMap = new Map();
+      const metaMap = new Map<string, { tags: string }>();
       for (const row of results) { metaMap.set(row.key, { tags: row.tags }); }
 
       const publicKeys = new Set(results.map(r => r.key));
@@ -67,7 +67,7 @@ const mediaTsRestRouter = s.router(mediaContract, {
           uploaded: obj.uploaded.toISOString(),
           url: `/api/media/${obj.key}`,
           httpEtag: obj.httpEtag,
-          folder: "Gallery",
+          folder: "Gallery" as const,
           tags: metaMap.get(obj.key)?.tags || ""
         }));
 
@@ -78,8 +78,7 @@ const mediaTsRestRouter = s.router(mediaContract, {
       c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
 
       return { status: 200, body: payload };
-    } catch (err) {
-      console.error("[Media] getMedia failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
@@ -90,7 +89,7 @@ const mediaTsRestRouter = s.router(mediaContract, {
         c.env.DB.prepare("SELECT key, folder, tags FROM media_tags").all().catch(() => ({ results: [] }))
       ]);
 
-      const metaMap = new Map();
+      const metaMap = new Map<string, { folder: string, tags: string }>();
       for (const row of (dbRes.results || []) as { key: string, folder: string, tags: string }[]) {
         metaMap.set(row.key, { folder: row.folder, tags: row.tags });
       }
@@ -105,8 +104,7 @@ const mediaTsRestRouter = s.router(mediaContract, {
       }));
 
       return { status: 200, body: { media } };
-    } catch (err) {
-      console.error("[Media] adminList failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
@@ -128,18 +126,18 @@ const mediaTsRestRouter = s.router(mediaContract, {
       if (c.env.AI && arrayBuffer.byteLength < 2.5 * 1024 * 1024) {
         try {
           const uint8 = new Uint8Array(arrayBuffer);
-          const aiRes = await c.env.AI.run('@cf/llava-1.5-7b-hf', { prompt: 'Describe for screen reader', image: uint8 }) as any;
+          const aiRes = await c.env.AI.run('@cf/llava-1.5-7b-hf', { prompt: 'Describe for screen reader', image: Array.from(uint8) }) as { description?: string };
           if (aiRes?.description) altText = String(aiRes.description).trim();
         } catch { /* fallback */ }
       }
 
       await c.env.DB.prepare("INSERT OR REPLACE INTO media_tags (key, folder, tags) VALUES (?, ?, ?)").bind(key, folder, altText).run();
       
-      // @ts-ignore
+      // @ts-expect-error - Cloudflare global cache
       c.executionCtx.waitUntil(caches.default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
 
       return { status: 200, body: { success: true, key, url: `/api/media/${key}`, altText } };
-    } catch (err) {
+    } catch (_err) {
       return { status: 500, body: { error: "Upload failed" } };
     }
   },
@@ -159,7 +157,7 @@ const mediaTsRestRouter = s.router(mediaContract, {
       await c.env.DB.prepare("UPDATE media_tags SET key = ?, folder = ? WHERE key = ?").bind(newKey, folder, oldKey).run();
 
       return { status: 200, body: { success: true, newKey } };
-    } catch (err) {
+    } catch (_err) {
       return { status: 500, body: { error: "Move failed" } };
     }
   },
@@ -168,7 +166,7 @@ const mediaTsRestRouter = s.router(mediaContract, {
       await c.env.ARES_STORAGE.delete(params.key);
       await c.env.DB.prepare("DELETE FROM media_tags WHERE key = ?").bind(params.key).run();
       return { status: 200, body: { success: true } };
-    } catch (err) {
+    } catch (_err) {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
@@ -180,15 +178,15 @@ const mediaTsRestRouter = s.router(mediaContract, {
       const imageUrl = `${baseUrl}/api/media/${key}`;
       const { dispatchPhotoSocials } = await import("../../utils/socialSync");
       
-      c.executionCtx.waitUntil(dispatchPhotoSocials(imageUrl, caption, config));
+      c.executionCtx.waitUntil(dispatchPhotoSocials(imageUrl, caption || "", config));
       return { status: 200, body: { success: true, message: "Dispatched" } };
-    } catch (err) {
+    } catch (_err) {
       return { status: 500, body: { error: "Syndicate failed" } };
     }
   },
 });
 
-// GET /media/:key — Serve raw object from R2 (Not in contract, kept as standard Hono)
+// GET /media/:key — Serve raw object from R2
 mediaRouter.get("/:key{.+$}", async (c) => {
   const key = c.req.param("key");
   try {
@@ -200,7 +198,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
       if (!user) return c.text("Unauthorized", 401);
     }
 
-    // @ts-ignore
+    // @ts-expect-error - Global edge cache
     const cache = caches.default;
     const url = new URL(c.req.url);
     url.search = "";
@@ -220,7 +218,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
     const response = new Response(object.body, { headers });
     if (publicFolders.includes(folder)) c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
     return response;
-  } catch (err) {
+  } catch (_err) {
     return c.text("Internal Error", 500);
   }
 });

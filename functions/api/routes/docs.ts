@@ -516,15 +516,3 @@ docsRouter.use("/admin/*", ensureAdmin);
 docsRouter.use("/admin/save", ensureAuth);
 
 export default docsRouter;
-const docTsRestRouter = s.router(docContract, docHandlers);
-createHonoEndpoints(docContract, docTsRestRouter, docsRouter);
-
-// Apply middleware/protections
-docsRouter.use("/admin", ensureAdmin);
-docsRouter.use("/admin/*", ensureAdmin);
-
-// Special case: non-admins can submit drafts (handled inside saveDoc)
-// We use ensureAuth for /admin/save specifically to allow verified members
-docsRouter.use("/admin/save", ensureAuth);
-
-export default docsRouter;

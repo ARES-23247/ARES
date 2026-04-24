@@ -8,7 +8,7 @@ import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../mid
 const s = initServer<AppEnv>();
 const outreachRouter = new Hono<AppEnv>();
 
-// Helper to fetch volunteer events and format them as outreach logs
+// SCA-F01: Synchronize volunteer events as outreach records
 async function fetchVolunteerEvents(db: Kysely<DB>) {
   try {
     const results = await db.selectFrom("events")
@@ -28,10 +28,10 @@ async function fetchVolunteerEvents(db: Kysely<DB>) {
       hours_logged: 0,
       reach_count: 0,
       description: "Volunteer Event (Synced)",
-      season_id: r.season_id ? Number(r.season_id) : undefined,
+      season_id: r.season_id ? Number(r.season_id) : null,
       is_dynamic: true
     }));
-  } catch {
+  } catch (_err) {
     return [];
   }
 }
@@ -70,8 +70,7 @@ const outreachTsRestRouter = s.router(outreachContract, {
       );
 
       return { status: 200, body: { logs: combined } };
-    } catch (err) {
-      console.error("[Outreach] list failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
@@ -108,8 +107,7 @@ const outreachTsRestRouter = s.router(outreachContract, {
       );
 
       return { status: 200, body: { logs: combined } };
-    } catch (err) {
-      console.error("[Outreach] adminList failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
@@ -136,7 +134,7 @@ const outreachTsRestRouter = s.router(outreachContract, {
         const id = crypto.randomUUID();
         await db.insertInto("outreach_logs")
           .values({
-            id: Number(id) as any, // SQLite PK handling if needed
+            id: Number(id) as any, 
             title: body.title,
             date: body.date,
             location: body.location,
@@ -150,8 +148,7 @@ const outreachTsRestRouter = s.router(outreachContract, {
         c.executionCtx.waitUntil(logAuditAction(c, "create_outreach", "outreach_logs", id, `Created outreach: ${body.title}`));
         return { status: 200, body: { success: true, id } };
       }
-    } catch (err) {
-      console.error("[Outreach] save failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Save failed" } };
     }
   },
@@ -164,8 +161,7 @@ const outreachTsRestRouter = s.router(outreachContract, {
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "delete_outreach", "outreach_logs", params.id, "Outreach log soft-deleted"));
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Outreach] delete failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },

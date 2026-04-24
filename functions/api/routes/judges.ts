@@ -38,7 +38,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       if (!row) return { status: 403, body: { error: "Invalid or expired access code" } };
 
       return { status: 200, body: { success: true, label: row.label } };
-    } catch (err) {
+    } catch (_err) {
       return { status: 500, body: { error: "Login failed" } };
     }
   },
@@ -102,8 +102,8 @@ const judgesTsRestRouter = s.router(judgeContract, {
 
       portfolioCache.set("portfolio", { data: payload, expiresAt: now + 300000 });
       return { status: 200, body: payload };
-    } catch (err) {
-      console.error("[Judges] Portfolio failed:", err);
+    } catch (_err) {
+      console.error("[Judges] Portfolio failed:", _err);
       return { status: 500, body: { error: "Portfolio fetch failed" } };
     }
   },
@@ -122,7 +122,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       }));
 
       return { status: 200, body: { codes } };
-    } catch (err) {
+    } catch (_err) {
       return { status: 500, body: { error: "Failed to fetch codes" } };
     }
   },
@@ -144,16 +144,16 @@ const judgesTsRestRouter = s.router(judgeContract, {
 
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_JUDGE_CODE", "judge_access", id, `Created access code: ${label}`));
       return { status: 200, body: { success: true, code, id } };
-    } catch (err) {
+    } catch (_err) {
       return { status: 500, body: { error: "Create failed" } };
     }
   },
-  deleteCode: async ({ params }, c) => {
-    const db = c.get("db") as Kysely<DB>;
+  deleteCode: async ({ params }, _c) => {
+    const db = _c.get("db") as Kysely<DB>;
     try {
       await db.deleteFrom("judge_access_codes").where("id", "=", params.id).execute();
       return { status: 200, body: { success: true } };
-    } catch (err) {
+    } catch (_err) {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },

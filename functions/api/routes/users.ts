@@ -4,7 +4,6 @@ import { DB } from "../../../src/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { userContract } from "../../../src/schemas/contracts/userContract";
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
-import { decrypt } from "../../utils/crypto";
 import { upsertProfile } from "./_profileUtils";
 
 const s = initServer<AppEnv>();
@@ -24,8 +23,6 @@ const userTsRestRouter = s.router(userContract, {
         .execute();
 
       const users = results.map(u => {
-        // SEC-YPP: Mask student emails in bulk lists to prevent accidental exposure
-        // We only show the full email for verified authors/admins to reduce PII surface
         const isStudent = u.member_type === "student" || u.role === "user";
         const maskedEmail = isStudent 
           ? u.email.replace(/(.{2})(.*)(?=@)/, (_, a, b) => `${a}${"*".repeat(b.length)}`)
@@ -46,15 +43,13 @@ const userTsRestRouter = s.router(userContract, {
       });
 
       return { status: 200, body: { users } };
-    } catch (err) {
-      console.error("[Users] getUsers failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Database error" } };
     }
   },
   adminDetail: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      const secret = c.env.ENCRYPTION_SECRET;
       const row = await db.selectFrom("user as u")
         .leftJoin("user_profiles as p", "u.id", "p.user_id")
         .select([
@@ -83,8 +78,7 @@ const userTsRestRouter = s.router(userContract, {
           }
         } 
       };
-    } catch (err) {
-      console.error("[Users] adminDetail failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Database error" } };
     }
   },
@@ -107,17 +101,15 @@ const userTsRestRouter = s.router(userContract, {
       c.executionCtx.waitUntil(logAuditAction(c, "PATCH_USER", "user", params.id, `Updated user ${params.id}: role=${role}, type=${member_type}`));
 
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Users] patchUser failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Update failed" } };
     }
   },
   updateUserProfile: async ({ params, body }, c) => {
     try {
-      await upsertProfile(c as never, params.id, body);
+      await upsertProfile(c as any, params.id, body);
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Users] updateUserProfile failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Profile update failed" } };
     }
   },
@@ -137,24 +129,13 @@ const userTsRestRouter = s.router(userContract, {
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_USER", "user", id, `Deleted user ${id}`));
 
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Users] deleteUser failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
 });
 
-createHonoEndpoints(userContract, userTsRestRouter, usersRouter);
-
-// Enforce admin globally
 usersRouter.use("/*", ensureAdmin);
-
-export default usersRouter;
-
-const userTsRestRouter = s.router(userContract, userHandlers);
 createHonoEndpoints(userContract, userTsRestRouter, usersRouter);
-
-// Enforce admin globally
-usersRouter.use("/*", ensureAdmin);
 
 export default usersRouter;

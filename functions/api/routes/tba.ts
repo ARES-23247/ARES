@@ -14,8 +14,8 @@ const tbaCache = new Map<string, { data: any; expiresAt: number }>();
 
 function setTbaCache(key: string, value: { data: any; expiresAt: number }) {
   if (tbaCache.size >= MAX_TBA_CACHE) {
-    const first = tbaCache.keys().next().value;
-    if (first !== undefined) tbaCache.delete(first);
+    const firstKey = tbaCache.keys().next().value;
+    if (firstKey !== undefined) tbaCache.delete(firstKey);
   }
   tbaCache.set(key, value);
 }
@@ -54,8 +54,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       const { eventKey } = params;
       const data = await getTBA(`/event/${eventKey}/rankings`, c);
       return { status: 200, body: { rankings: (data as any)?.rankings || [] } };
-    } catch (err) {
-      console.error("[TBA] getRankings failed:", err);
+    } catch (_err) {
       return { status: 200, body: { rankings: [] } };
     }
   },
@@ -65,8 +64,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       const data = await getTBA(`/event/${eventKey}/matches/simple`, c) as any[];
       const sorted = (data || []).sort((a, b) => (a.time || 0) - (b.time || 0));
       return { status: 200, body: { matches: sorted } };
-    } catch (err) {
-      console.error("[TBA] getMatches failed:", err);
+    } catch (_err) {
       return { status: 200, body: { matches: [] } };
     }
   },

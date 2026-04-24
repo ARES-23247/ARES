@@ -28,8 +28,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       }));
 
       return { status: 200, body: { seasons } };
-    } catch (err) {
-      console.error("[Seasons] list failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Failed to fetch seasons" } };
     }
   },
@@ -50,8 +49,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       }));
 
       return { status: 200, body: { seasons } };
-    } catch (err) {
-      console.error("[Seasons] adminList failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Failed to list seasons" } };
     }
   },
@@ -78,8 +76,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
           }
         } 
       };
-    } catch (err) {
-      console.error("[Seasons] adminDetail failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Failed to fetch season" } };
     }
   },
@@ -115,8 +112,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
           outreach: outreach as any[],
         }
       };
-    } catch (err) {
-      console.error("[Seasons] getDetail failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Failed to fetch season details" } };
     }
   },
@@ -156,8 +152,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
         c.executionCtx.waitUntil(logAuditAction(c, "season_created", "seasons", body.start_year.toString(), `Season "${body.start_year}" created`));
       }
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Seasons] save failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Save failed" } };
     }
   },
@@ -171,8 +166,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "season_deleted", "seasons", params.id, `Season "${params.id}" soft-deleted`));
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Seasons] delete failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
@@ -186,8 +180,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "season_restored", "seasons", params.id, `Season "${params.id}" restored`));
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Seasons] undelete failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Restore failed" } };
     }
   },
@@ -200,18 +193,13 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "season_purged", "seasons", params.id, `Season "${params.id}" permanently deleted`));
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Seasons] purge failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
 });
 
-createHonoEndpoints(seasonsContract, seasonsTsRestRouter, seasonsRouter);
-
-// Middlewares
-seasonsRouter.use("/admin", ensureAdmin);
 seasonsRouter.use("/admin/*", ensureAdmin);
-seasonsRouter.use("/admin", rateLimitMiddleware(15, 60));
+createHonoEndpoints(seasonsContract, seasonsTsRestRouter, seasonsRouter);
 
 export default seasonsRouter;

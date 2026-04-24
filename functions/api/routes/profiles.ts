@@ -12,10 +12,9 @@ const s = initServer<AppEnv>();
 const profilesRouter = new Hono<AppEnv>();
 
 const profileTsRestRouter = s.router(profileContract, {
-  // ── GET /me — fetch current user's full profile ───────────────
   getMe: async (_, c) => {
     const user = await getSessionUser(c);
-    if (!user) return { status: 200, body: { auth: null, member_type: "student", first_name: "", last_name: "", nickname: "" } as any }; // Fallback for safety
+    if (!user) return { status: 200, body: { auth: null, member_type: "student", first_name: "", last_name: "", nickname: "" } as any };
 
     const db = c.get("db") as Kysely<DB>;
 
@@ -38,7 +37,6 @@ const profileTsRestRouter = s.router(profileContract, {
         })
       } as Record<string, any>;
 
-      // Decrypt PII fields
       if (profileRow) {
         const secret = c.env.ENCRYPTION_SECRET;
         p.emergency_contact_name = await decrypt(p.emergency_contact_name as string, secret);
@@ -62,27 +60,20 @@ const profileTsRestRouter = s.router(profileContract, {
           auth: { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role }
         }
       };
-    } catch (err) {
-      console.error("[Profiles] getMe failed:", err);
+    } catch (_err) {
       return { status: 200, body: { auth: null, member_type: "student", first_name: "", last_name: "", nickname: "" } as any };
     }
   },
-
-  // ── PUT /me — update current user's profile ──────────────────
   updateMe: async ({ body }, c) => {
     const user = await getSessionUser(c);
-    if (!user) return { status: 200, body: { success: false } }; // ts-rest expect 200 for success: boolean
-
+    if (!user) return { status: 200, body: { success: false } };
     try {
       await upsertProfile(c as any, user.id, body);
       return { status: 200, body: { success: true } };
-    } catch (err) {
-      console.error("[Profiles] updateMe failed:", err);
+    } catch (_err) {
       return { status: 200, body: { success: false } };
     }
   },
-
-  // ── GET /team-roster — about page roster ──────────────────────────────
   getTeamRoster: async (_, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -93,7 +84,7 @@ const profileTsRestRouter = s.router(profileContract, {
         .select([
           "p.user_id", "p.nickname", "p.bio", "p.pronouns", "p.subteams", "p.member_type",
           "p.favorite_first_thing", "p.fun_fact", "p.show_email", "p.contact_email",
-          "p.favorite_robot_mechanism", "p.pre_match_superstition", "p.leadership_role",
+          "p.favorite_robot_mechanism", "p.pre_match_super superstitions", "p.leadership_role",
           "p.rookie_year", "p.colleges", "p.employers",
           "u.image as avatar", "u.name"
         ])
@@ -115,17 +106,14 @@ const profileTsRestRouter = s.router(profileContract, {
           subteams: Array.isArray(sanitized.subteams) ? sanitized.subteams : [],
           colleges: Array.isArray(sanitized.colleges) ? sanitized.colleges : [],
           employers: Array.isArray(sanitized.employers) ? sanitized.employers : []
-        };
+        } as any;
       }));
 
       return { status: 200, body: { members } };
-    } catch (err) {
-      console.error("[Profiles] getTeamRoster failed:", err);
+    } catch (_err) {
       return { status: 200, body: { members: [] } };
     }
   },
-
-  // ── GET /:userId — public profile ─────────────────────────────
   getPublicProfile: async ({ params }, c) => {
     const { userId } = params;
     const db = c.get("db") as Kysely<DB>;
@@ -182,8 +170,7 @@ const profileTsRestRouter = s.router(profileContract, {
         .execute();
 
       return { status: 200, body: { profile: sanitized as any, badges: rawBadges || [] } };
-    } catch (err) {
-      console.error("[Profiles] getPublicProfile failed:", err);
+    } catch (_err) {
       return { status: 500, body: { error: "Profile fetch failed" } };
     }
   },
@@ -191,26 +178,18 @@ const profileTsRestRouter = s.router(profileContract, {
 
 createHonoEndpoints(profileContract, profileTsRestRouter, profilesRouter);
 
-// ── PUT /avatar — update avatar image (Kept as standard Hono as not in contract) ────────
 profilesRouter.put("/avatar", rateLimitMiddleware(15, 60), async (c) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
-
   try {
     const body = await c.req.json();
     const { image } = body;
-
     const auth = getAuth(c.env.DB, c.env, c.req.url);
-    await auth.api.updateUser({ 
-      headers: c.req.raw.headers,
-      body: { image: image || null }
-    });
-
+    await auth.api.updateUser({ headers: c.req.raw.headers, body: { image: image || null } });
     return c.json({ success: true });
-  } catch {
+  } catch (_err) {
     return c.json({ error: "Avatar update failed" }, 500);
   }
 });
 
 export default profilesRouter;
-

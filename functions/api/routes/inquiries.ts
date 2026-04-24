@@ -35,7 +35,7 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       let dbQuery = db.selectFrom("inquiries").selectAll().orderBy("created_at", "desc").limit(limit).offset(offset);
       
       if (filterOutreach) {
-        // @ts-ignore
+        // @ts-expect-error - Kysely type narrowing for dynamic filter
         dbQuery = dbQuery.where("type", "in", ["outreach", "support"]);
       }
 
@@ -63,11 +63,11 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
         
         return {
           id: String(r.id),
-          type: r.type as any,
+          type: r.type as "sponsor" | "student" | "mentor" | "outreach" | "support",
           name,
           email,
           metadata,
-          status: r.status as any,
+          status: r.status as "pending" | "approved" | "resolved" | "rejected",
           created_at: String(r.created_at)
         };
       });
