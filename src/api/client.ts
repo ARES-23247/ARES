@@ -16,8 +16,13 @@ export const api = initQueryClient(apiContract, {
   },
   api: async (args) => {
     const originalFetch = globalThis.fetch;
-    console.log("ts-rest fetching:", args.path);
-    const res = await originalFetch(args.path, {
+    // ts-rest appends trailing slashes for root contract paths (path: "/"),
+    // e.g. /api/events/ instead of /api/events, causing Hono 404s.
+    const normalizedPath = args.path.length > 1 && args.path.endsWith("/")
+      ? args.path.replace(/\/+$/, "")
+      : args.path;
+    console.log("ts-rest fetching:", normalizedPath);
+    const res = await originalFetch(normalizedPath, {
       method: args.method,
       headers: args.headers,
       body: args.body as any,
