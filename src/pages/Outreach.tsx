@@ -113,9 +113,7 @@ export default function Outreach() {
     <div className="flex flex-col w-full bg-ares-gray-deep min-h-screen text-marble relative overflow-hidden">
       <SEO title="Community Impact" description="Empowering Morgantown and beyond through STEM outreach. Track our service hours, community reach, and impact initiatives." />
       
-      {/* Background Ambience */}
-      <div className="absolute top-0 right-0 w-1/2 h-[600px] bg-ares-gold/5 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-1/2 h-[600px] bg-ares-cyan/5 blur-[150px] rounded-full pointer-events-none" />
+      {/* Background Ambience Removed for Axe Testing */}
 
       {/* Hero */}
       <section className="py-32 px-6 relative z-10 bg-ares-gray-deep">
