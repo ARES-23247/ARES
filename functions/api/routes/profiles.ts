@@ -39,14 +39,24 @@ const profileHandlers = {
 
       if (profileRow) {
         const secret = c.env.ENCRYPTION_SECRET;
-        p.emergency_contact_name = await decrypt(p.emergency_contact_name as string, secret);
-        p.emergency_contact_phone = await decrypt(p.emergency_contact_phone as string, secret);
-        p.phone = await decrypt(p.phone as string, secret);
-        p.contact_email = await decrypt(p.contact_email as string, secret);
-        p.parents_name = await decrypt(p.parents_name as string, secret);
-        p.parents_email = await decrypt(p.parents_email as string, secret);
-        p.students_name = await decrypt(p.students_name as string, secret);
-        p.students_email = await decrypt(p.students_email as string, secret);
+        const safeDecrypt = async (val: any) => {
+          if (!val) return null;
+          try {
+            return await decrypt(val as string, secret);
+          } catch (err) {
+            console.error("[Crypto] Decryption failed for field:", err);
+            return "[Decryption Failed]";
+          }
+        };
+
+        p.emergency_contact_name = await safeDecrypt(p.emergency_contact_name);
+        p.emergency_contact_phone = await safeDecrypt(p.emergency_contact_phone);
+        p.phone = await safeDecrypt(p.phone);
+        p.contact_email = await safeDecrypt(p.contact_email);
+        p.parents_name = await safeDecrypt(p.parents_name);
+        p.parents_email = await safeDecrypt(p.parents_email);
+        p.students_name = await safeDecrypt(p.students_name);
+        p.students_email = await safeDecrypt(p.students_email);
       }
 
       return { 

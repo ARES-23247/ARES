@@ -47,8 +47,8 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
         let metadata = r.metadata;
 
         if (maskPII) {
-          name = name.substring(0, 1) + "***";
-          email = "***@***.***";
+          name = name.substring(0, 1) + "*".repeat(name.length - 1);
+          email = email.replace(/(.{2})(.*)(?=@)/, (_, a, b) => a + "*".repeat(b.length));
           if (metadata) {
             try {
               const meta = JSON.parse(metadata) as Record<string, unknown>;

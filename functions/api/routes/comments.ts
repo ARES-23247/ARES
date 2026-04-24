@@ -67,17 +67,17 @@ const commentHandlers = {
     }
 
     try {
-      const result = await db.insertInto("comments")
+      const id = crypto.randomUUID();
+      await db.insertInto("comments")
         .values({
+          id,
           user_id: String(user.id),
           target_type: targetType,
           target_id: targetId,
           content,
           created_at: new Date().toISOString()
         } as any)
-        .executeTakeFirst();
-
-      const insertedId = result.numInsertedOrUpdatedRows ? (result as any).insertId : null;
+        .execute();
 
       const social = await getSocialConfig(c);
       const zulipStream = social.ZULIP_COMMENT_STREAM || "website-discussion";
@@ -89,8 +89,8 @@ const commentHandlers = {
           `${targetType.toUpperCase()}: ${targetId}`, 
           `**${user.name || 'ARES Member'}** commented on ${targetType} \`${targetId}\`:\n\n${content}`
         );
-        if (msgId && insertedId) {
-          await db.updateTable("comments").set({ zulip_message_id: String(msgId) }).where("id", "=", insertedId as any).execute();
+        if (msgId) {
+          await db.updateTable("comments").set({ zulip_message_id: String(msgId) }).where("id", "=", id as any).execute();
         }
       })().catch(() => {}));
 
@@ -128,7 +128,11 @@ const commentHandlers = {
     try {
       const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id).executeTakeFirst();
       if (!row) return { status: 200 as const, body: { success: false } as any };
-      if (row.user_id !== user.id && user.role !== "admin") return { status: 200 as const, body: { success: false } as any };
+      
+      const isOwner = row.user_id === user.id;
+      const isModerator = user.role === "admin" || user.member_type === "mentor" || user.member_type === "coach";
+      
+      if (!isOwner && !isModerator) return { status: 200 as const, body: { success: false } as any };
 
       await db.updateTable("comments")
         .set({ content })
@@ -157,7 +161,11 @@ const commentHandlers = {
     try {
       const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id).executeTakeFirst();
       if (!row) return { status: 200 as const, body: { success: false } as any };
-      if (row.user_id !== user.id && user.role !== "admin") return { status: 200 as const, body: { success: false } as any };
+      
+      const isOwner = row.user_id === user.id;
+      const isModerator = user.role === "admin" || user.member_type === "mentor" || user.member_type === "coach";
+      
+      if (!isOwner && !isModerator) return { status: 200 as const, body: { success: false } as any };
 
       await db.updateTable("comments")
         .set({ is_deleted: 1 })
