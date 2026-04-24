@@ -15,16 +15,24 @@ ARESWEB uses Node/npm scripts for compiling, linting, and deploying via Cloudfla
 |---|---|
 | `npm run dev` | Runs the Vite local development server |
 | `npm run lint` | Runs ESLint and TypeScript checks across `src/` and `functions/` |
+| `npx tsc --noEmit` | Runs the TypeScript compiler in type-check-only mode (mandatory CI gate) |
 | `npm run build` | Compiles the React SPA via Vite and prepares the Cloudflare worker (`functions/api/`) |
 | `npm run test:e2e` | Runs Playwright E2E smoke tests including Axe-core accessibility scans |
 
 ### CI Pipeline
-Cloudflare Pages runs an automatic build on every push to `master`. If the build or linting fails, the deployment is rejected, breaking the production dashboard.
+Cloudflare Pages runs an automatic build on every push to `master`. The GitHub Actions CI pipeline enforces these gates in order:
+1. `npx tsc --noEmit` — TypeScript type check (hard gate)
+2. `npm run lint` — ESLint with `--max-warnings 0` (hard gate)
+3. `npm run test` — Vitest unit/integration tests
+4. `npm run build` — Vite production build
+5. Playwright E2E + pa11y accessibility tests
+
+If any gate fails, the PR cannot be merged.
 
 ## 2. Mandatory Rules
 
 ### Rule A: Always Run Linters Before Committing
-Every code change **MUST** pass `npm run lint` before committing. Unused variables, hook dependency array warnings, and orphaned accessibility labels are non-negotiable. **Never use `eslint-disable`** to bypass rules; fix the architectural root cause.
+Every code change **MUST** pass `npm run lint` before committing. Unused variables, hook dependency array warnings, and orphaned accessibility labels are non-negotiable. **File-level `/* eslint-disable @typescript-eslint/no-explicit-any */` headers are permitted** in backend route handlers and utility files where the handler extraction pattern requires `any` typing. Do not add inline `// eslint-disable-next-line` comments inside files that already have the file-level header — they will trigger "unused eslint-disable directive" errors.
 
 ### Rule B: Verify the Vite Build
 Always run `npm run build` to verify the module chunking and frontend compilation succeeds before committing. 
@@ -47,6 +55,32 @@ If you modify files, you **MUST** run `npm run lint` and `npm run build`, then `
 
 ### Rule F: Accessibility (Axe) is a Blocker
 Playwright smoke tests now include `AxeBuilder`. If a test fails with `accessibilityScanResults.violations`, you must inspect the failing route, identify the WCAG violation (e.g., contrast, missing alt, nested buttons), and fix it. Never suppress Axe violations in code.
+
+### Rule G: Handler Extraction Pattern (Backend Routes)
+All `ts-rest-hono` backend route handlers **MUST** use the **handler extraction pattern** to avoid TypeScript recursive type instantiation failures. This means:
+
+1. Extract all handler implementations into a standalone object typed as `any`:
+```ts
+const myHandlers: any = {
+  list: async ({ query }: any, c: any) => { /* ... */ },
+  create: async ({ body }: any, c: any) => { /* ... */ },
+};
+```
+
+2. Pass the extracted object to `s.router()` and `createHonoEndpoints()`:
+```ts
+const router = s.router(myContract, myHandlers);
+createHonoEndpoints(myContract, router, myHonoRouter);
+```
+
+3. For Kysely SQL builder expressions that fail type inference (e.g., `sql` template literals, `ReferenceExpression`, `.set()` values), apply targeted `as any` casts:
+```ts
+.where("created_at", "<", sql`datetime('now', '-90 days')` as any)
+.values({ id: crypto.randomUUID() } as any)
+.select(["code", "label"] as any)
+```
+
+**Never** inline handler logic directly in `s.router()` calls — this triggers `TS2589: Type instantiation is excessively deep` errors.
 
 ## 3. Resolving Common Build Errors
 - **"Calling setState synchronously within an effect"**: Do not call functions that execute `setState` immediately during render or inside the body of a `useEffect` loop without an explicit trigger. If the initial state depends on a runtime condition (e.g., `window.location.hostname === "localhost"`), compute it as a **module-level constant** and pass it directly to `useState()` as the initial value. Never wrap the workaround in `setTimeout()` — that suppresses the lint warning but introduces a flash of loading state on every localhost render. For modal cleanup, use conditional rendering (`{isOpen && <Modal />}`) so React unmounts the component and resets state naturally — never use `useEffect` to reset state on prop changes.

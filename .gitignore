@@ -55,16 +55,16 @@ fix_lint.cjs
 fix_ts.cjs
 dump_schema.mjs
 dump_tables.mjs
-patch.py
-extract_content.py
-inspect_db.py
-inspect_user_table.py
+*.py
 test-bsky.ts
 test-insert.ts
 test-signin.mjs
 trigger-callback.mjs
 auth.cli.ts
 audit.cjs
+tsc_*.txt
+master_fix*.py
+fix*.py
 
 # Temp data dumps
 all_docs.json
