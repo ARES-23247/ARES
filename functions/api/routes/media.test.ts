@@ -8,8 +8,8 @@ vi.mock("../../utils/socialSync", () => ({
   dispatchPhotoSocials: vi.fn().mockResolvedValue(true)
 }));
 
-vi.mock("../../middleware", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../middleware")>();
+vi.mock("../middleware", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
     getDbSettings: vi.fn().mockResolvedValue({}),

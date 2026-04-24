@@ -46,6 +46,11 @@ export default function AssetManager() {
     },
   });
 
+  const moveMutation = useMutation({
+    mutationFn: async ({ key, newFolder }: { key: string; newFolder: string }) => adminApi.moveMedia(key, newFolder),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['media'] }),
+  });
+
   const uniqueFolders = Array.from(new Set(assets.map(a => a.folder))).filter(Boolean);
   const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter((a) => a.folder === selectedFolderFilter);
 
@@ -102,12 +107,14 @@ export default function AssetManager() {
 
           <AssetGrid 
             assets={filteredAssets} 
+            isDeleting={deleteMutation.isPending}
             onDelete={(key) => {
               if (confirm("Permanently purge this asset from R2?")) {
                 deleteMutation.mutate(key);
               }
             }} 
             onSyndicate={(key) => setSyndicateKey(key)}
+            onMove={(key, newFolder) => moveMutation.mutate({ key, newFolder })}
           />
         </>
       )}

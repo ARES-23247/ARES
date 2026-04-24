@@ -5,7 +5,7 @@ import judgesRouter from "./judges";
 const mockExecutionContext = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
-};
+} as any;
 
 describe("Judges Router", () => {
   let mockDb: any;
@@ -28,14 +28,14 @@ describe("Judges Router", () => {
     vi.clearAllMocks();
     
     // Mock the global fetch for turnstile
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ success: true }),
     }) as any;
   });
 
   describe("POST /login", () => {
     it("should return 403 on invalid turnstile", async () => {
-      global.fetch = vi.fn().mockResolvedValue({
+      globalThis.fetch = vi.fn().mockResolvedValue({
         json: () => Promise.resolve({ success: false }),
       }) as any;
 

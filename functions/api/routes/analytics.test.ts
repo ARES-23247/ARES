@@ -5,7 +5,7 @@ import analyticsRouter from "./analytics";
 const mockExecutionContext = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
-};
+} as any;
 
 describe("Analytics Router", () => {
   let mockDb: any;
@@ -27,7 +27,7 @@ describe("Analytics Router", () => {
     vi.clearAllMocks();
     
     // Mock turnstile fetch
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ success: true }),
     }) as any;
   });

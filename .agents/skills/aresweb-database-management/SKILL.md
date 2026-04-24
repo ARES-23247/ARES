@@ -127,7 +127,6 @@ Create an index when a column appears in:
 - `WHERE` clauses (especially equality checks)
 - `ORDER BY` clauses
 - `JOIN` conditions (if not already a PRIMARY KEY)
-
 ### Composite Indexes
 Use composite indexes for common filter patterns:
 ```sql
@@ -136,8 +135,24 @@ CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_events_status ON events(status, is_deleted);
 ```
 
-### Naming Convention
+---
+
+## 5. Schema Guard & Type Safety
+
+### Rule: Generate Types After Every Schema Change
+The ARES backend uses **Kysely** for type-safe database queries. Whenever you modify `schema.sql` or run a migration, you **MUST** run the type generator to synchronize the TypeScript interfaces.
+
+```bash
+npm run db:generate-types
 ```
+
+### Rule: Preferred Query Builder
+Never use raw `c.env.DB.prepare` strings for complex logic. Always use the `db` instance from Kysely. If you find a route using raw SQL, refactor it to Kysely during your next edit to ensure long-term "Championship" stability.
+
+---
+
+## 6. Deployment Procedures
+
 idx_{table}_{column}     — Single column
 idx_{table}_{col1}_{col2} — Composite (if clarity needed)
 ```
@@ -198,10 +213,22 @@ const SENSITIVE_KEYS = [
 ```
 
 ### Query Parameterization
-**Always use parameterized queries.** Never interpolate user input into SQL strings:
+**Always use parameterized queries.** Never interpolate user input into SQL strings.
+
+**Kysely (PREFERRED):** Use **Kysely** for all complex queries and mutations. It provides full TypeScript autocomplete for the `schema.sql` structure and prevents SQL injection by design.
 
 ```typescript
-// ✅ Correct
+// ✅ Kysely Example
+await db.selectFrom("posts")
+  .selectAll()
+  .where("slug", "=", slug)
+  .executeTakeFirst();
+```
+
+**D1 Raw (Fallback):** Only use `c.env.DB.prepare()` for simple, low-logic queries or where Kysely overhead is not justified.
+
+```typescript
+// ✅ Correct (Raw Fallback)
 c.env.DB.prepare("SELECT * FROM posts WHERE slug = ?").bind(slug)
 
 // ❌ SQL Injection vulnerability

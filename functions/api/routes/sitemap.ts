@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { AppEnv  } from "../middleware";
+import { siteConfig } from "../../../src/site.config";
 
 const sitemapRouter = new Hono<AppEnv>();
 

@@ -33,6 +33,7 @@ export interface EventData {
   revision_of?: string;
   published_at?: string;
   season_id?: string;
+  tba_event_key?: string;
 }
 
 export function useEventEditor(editId: string | undefined, editor: Editor | null, userRole?: string | unknown) {

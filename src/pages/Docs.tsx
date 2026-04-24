@@ -9,11 +9,12 @@ import DocsSidebar from "../components/docs/DocsSidebar";
 import DocsTableOfContents from "../components/docs/DocsTableOfContents";
 import { publicApi } from "../api/publicApi";
 import { useModal } from "../contexts/ModalContext";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDocs } from "../hooks/useDocs";
 
 export default function Docs() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { data: session } = useSession();
   const modal = useModal();
 

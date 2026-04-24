@@ -4,7 +4,7 @@ import signupsRouter from "./signups";
 const mockExecutionContext = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
-};
+} as any;
 
 let mockUser: Record<string, string> = { role: "admin", id: "u1", member_type: "mentor" };
 

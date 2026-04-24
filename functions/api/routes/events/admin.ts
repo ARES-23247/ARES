@@ -90,7 +90,7 @@ adminRouter.post("/", rateLimitMiddleware(15, 60), async (c) => {
     
     // Sync to GCal if enabled
     let gcalId: string | null = null;
-    const socialConfig = await getSocialConfig(c) as SocialConfig;
+    const socialConfig = await getSocialConfig(c) as any;
     const gcalEmail = socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"];
     const gcalKey = socialConfig["GCAL_PRIVATE_KEY"];
     
@@ -199,7 +199,7 @@ adminRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
     if (!title || !dateStart) return c.json({ error: "Missing required fields" }, 400);
     const warnings: string[] = [];
 
-    const socialConfig = await getSocialConfig(c) as SocialConfig;
+    const socialConfig = await getSocialConfig(c) as any;
     const gcalEmail = socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"];
     const gcalKey = socialConfig["GCAL_PRIVATE_KEY"];
     

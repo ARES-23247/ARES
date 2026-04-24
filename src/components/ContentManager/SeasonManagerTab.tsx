@@ -2,7 +2,7 @@ import { History } from "lucide-react";
 import DashboardEmptyState from "../dashboard/DashboardEmptyState";
 import { useQuery } from "@tanstack/react-query";
 import { useContentMutation } from "../../hooks/useContentMutation";
-import { ViewType, ClickToDeleteButton } from "./shared";
+import { ViewType, ClickToDeleteButton, ContentMutationResult } from "./shared";
 import { adminApi } from "../../api/adminApi";
 
 interface SeasonItem {
@@ -19,8 +19,8 @@ interface SeasonManagerTabProps {
   onEdit?: (id: string) => void;
   confirmId: string | null;
   setConfirmId: (id: string | null) => void;
-  restoreMutation: ReturnType<typeof useContentMutation<{type: string, id: string}>>;
-  purgeMutation: ReturnType<typeof useContentMutation<{type: string, id: string}>>;
+  restoreMutation: ContentMutationResult;
+  purgeMutation: ContentMutationResult;
 }
 
 export default function SeasonManagerTab({

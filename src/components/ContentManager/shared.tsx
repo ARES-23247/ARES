@@ -1,9 +1,9 @@
 export type ViewType = "active" | "trash" | "pending" | "internal" | "outreach" | "external" | "all";
 
 export interface ContentMutationResult {
-  mutate: (variables: { type: 'event' | 'post' | 'doc'; id: string }) => void;
+  mutate: (variables: { type: 'event' | 'post' | 'doc' | 'season'; id: string }) => void;
   isPending: boolean;
-  variables: { type: 'event' | 'post' | 'doc'; id: string } | undefined;
+  variables: { type: 'event' | 'post' | 'doc' | 'season'; id: string } | undefined;
 }
 
 export interface EventItem {

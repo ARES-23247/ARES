@@ -77,10 +77,10 @@ export default function SponsorEditor() {
     reset({
       id: s.id,
       name: s.name,
-      tier: s.tier,
+      tier: s.tier as "Titanium" | "Gold" | "Silver" | "Bronze" | "In-Kind",
       logo_url: s.logo_url || "",
       website_url: s.website_url || "",
-      is_active: s.is_active
+      is_active: s.is_active ?? 1
     });
     setIsFormOpen(true);
   };
@@ -135,7 +135,8 @@ export default function SponsorEditor() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleSubmit(onFormSubmit)}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onSubmit={handleSubmit(onFormSubmit as any)}
             className="bg-black/40 border border-white/10 ares-cut-lg p-6 space-y-4 overflow-hidden"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -143,7 +144,7 @@ export default function SponsorEditor() {
                 id="sponsor-name"
                 label="Partner Name"
                 {...register("name")}
-                error={errors.name?.message}
+                error={errors.name?.message as string}
                 placeholder="e.g. Google DeepMind"
                 focusColor="ares-red"
               />
@@ -156,13 +157,13 @@ export default function SponsorEditor() {
                 >
                   {TIERS.map(t => <option key={t.name} value={t.name} className="bg-obsidian">{t.name}</option>)}
                 </select>
-                {errors.tier && <p className="text-[10px] font-black uppercase tracking-tighter text-ares-red">{errors.tier.message}</p>}
+                {errors.tier && <p className="text-[10px] font-black uppercase tracking-tighter text-ares-red">{errors.tier.message as string}</p>}
               </div>
               <DashboardInput
                 id="sponsor-logo"
                 label="Logo URL"
                 {...register("logo_url")}
-                error={errors.logo_url?.message}
+                error={errors.logo_url?.message as string}
                 placeholder="https://..."
                 focusColor="ares-red"
               />
@@ -170,7 +171,7 @@ export default function SponsorEditor() {
                 id="sponsor-link"
                 label="Website URL"
                 {...register("website_url")}
-                error={errors.website_url?.message}
+                error={errors.website_url?.message as string}
                 placeholder="https://..."
                 focusColor="ares-red"
               />

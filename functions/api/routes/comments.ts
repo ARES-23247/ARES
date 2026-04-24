@@ -138,7 +138,7 @@ commentsRouter.put("/:id", rateLimitMiddleware(10, 60), async (c) => {
 
     if (row.zulip_message_id) {
        c.executionCtx.waitUntil(
-         updateZulipMessage(c.env, row.zulip_message_id, `**${user.name}** (edited):\n\n${content}`)
+         updateZulipMessage(c.env, String(row.zulip_message_id), `**${user.name}** (edited):\n\n${content}`)
            .catch(err => console.error("[Comments] Zulip update failed:", err))
        );
     }
@@ -168,7 +168,7 @@ commentsRouter.delete("/:id", async (c) => {
 
     if (row.zulip_message_id) {
        c.executionCtx.waitUntil(
-         deleteZulipMessage(c.env, row.zulip_message_id)
+         deleteZulipMessage(c.env, String(row.zulip_message_id))
            .catch(err => console.error("[Comments] Zulip delete failed:", err))
        );
     }

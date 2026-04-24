@@ -3,73 +3,101 @@ import { AppEnv, ensureAdmin, logAuditAction, parsePagination, rateLimitMiddlewa
 import { sendZulipAlert } from "../../utils/zulipSync";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../src/schemas/contracts/sponsorContract";
+import { sql } from "kysely";
 
 const sponsorsRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
 const sponsorTsRestRouter = s.router(sponsorContract, {
-  getSponsors: async ({ c }) => {
+  getSponsors: async ({ c }: any) => {
     try {
-      const { results } = await c.env.DB.prepare(
-        "SELECT id, name, tier, logo_url, website_url, is_active FROM sponsors WHERE is_active = 1 ORDER BY CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END"
-      ).all();
+      const db = c.get("db");
+      const results = await db.selectFrom("sponsors")
+        .select(["id", "name", "tier", "logo_url", "website_url", "is_active"])
+        .where("is_active", "=", 1)
+        .orderBy(sql<number>`CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END`)
+        .execute();
       return {
-        status: 200,
-        body: { sponsors: (results as unknown) || [] },
+        status: 200 as const,
+        body: { sponsors: results as any },
       };
     } catch (err) {
       console.error("D1 sponsors list error:", err);
-      return { status: 200, body: { sponsors: [] } };
+      return { status: 200 as const, body: { sponsors: [] } };
     }
   },
-  getAdminSponsors: async ({ c }) => {
+  getAdminSponsors: async ({ c }: any) => {
     try {
+      const db = c.get("db");
       const { limit, offset } = parsePagination(c, 50, 200);
-      const { results } = await c.env.DB.prepare("SELECT id, name, tier, logo_url, website_url, is_active FROM sponsors ORDER BY created_at DESC LIMIT ? OFFSET ?").bind(limit, offset).all();
+      const results = await db.selectFrom("sponsors")
+        .select(["id", "name", "tier", "logo_url", "website_url", "is_active"])
+        .orderBy("created_at", "desc")
+        .limit(limit)
+        .offset(offset)
+        .execute();
       return {
-        status: 200,
-        body: { sponsors: (results as unknown) || [] },
+        status: 200 as const,
+        body: { sponsors: results as any },
       };
     } catch (err) {
       console.error("D1 admin sponsors list error:", err);
-      return { status: 200, body: { sponsors: [] } };
+      return { status: 200 as const, body: { sponsors: [] } };
     }
   },
-  createSponsor: async ({ body, c }) => {
+  createSponsor: async ({ body, c }: any) => {
     try {
+      const db = c.get("db");
       const { id, name, tier, logo_url, website_url, is_active } = body;
       const finalId = id || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-      await c.env.DB.prepare(
-        "INSERT INTO sponsors (id, name, tier, logo_url, website_url, is_active) VALUES (?, ?, ?, ?, ?, ?) " +
-        "ON CONFLICT(id) DO UPDATE SET name=excluded.name, tier=excluded.tier, logo_url=excluded.logo_url, website_url=excluded.website_url, is_active=excluded.is_active"
-      ).bind(finalId, name, tier, logo_url || null, website_url || null, is_active ?? 1).run();
+      await db.insertInto("sponsors")
+        .values({
+          id: finalId,
+          name,
+          tier,
+          logo_url: logo_url || null,
+          website_url: website_url || null,
+          is_active: is_active ?? 1
+        })
+        .onConflict((oc: any) => oc
+          .column('id')
+          .doUpdateSet({
+            name: (eb: any) => eb.ref('excluded.name'),
+            tier: (eb: any) => eb.ref('excluded.tier'),
+            logo_url: (eb: any) => eb.ref('excluded.logo_url'),
+            website_url: (eb: any) => eb.ref('excluded.website_url'),
+            is_active: (eb: any) => eb.ref('excluded.is_active')
+          })
+        )
+        .execute();
 
       await logAuditAction(c, "sponsor_saved", "sponsors", finalId, `Sponsor "${name}" (${tier}) saved`);
       return {
-        status: 200,
-        body: { success: true, id: finalId },
+        status: 200 as const,
+        body: { success: true, id: finalId as any },
       };
     } catch (err) {
       console.error("D1 sponsor save error:", err);
-      return { status: 200, body: { success: false } }; // Map to internal errors if needed
+      return { status: 200 as const, body: { success: false } }; // Map to internal errors if needed
     }
   },
-  deleteSponsor: async ({ params, c }) => {
+  deleteSponsor: async ({ params, c }: any) => {
     try {
+      const db = c.get("db");
       const { id } = params;
-      await c.env.DB.prepare("UPDATE sponsors SET is_active = 0 WHERE id = ?").bind(id).run();
+      await db.updateTable("sponsors").set({ is_active: 0 }).where("id", "=", id).execute();
       await logAuditAction(c, "sponsor_deactivated", "sponsors", id, "Sponsor deactivated (soft-delete)");
       return {
-        status: 200,
+        status: 200 as const,
         body: { success: true },
       };
     } catch (err) {
       console.error("D1 sponsor delete error:", err);
-      return { status: 200, body: { success: false } };
+      return { status: 200 as const, body: { success: false } };
     }
   },
-});
+} as any);
 
 // Register ts-rest endpoints
 createHonoEndpoints(sponsorContract, sponsorTsRestRouter, sponsorsRouter);
@@ -77,10 +105,12 @@ createHonoEndpoints(sponsorContract, sponsorTsRestRouter, sponsorsRouter);
 // ── GET /sponsors/roi/:token — Public (hidden) Sponsor Dashboard ────
 sponsorsRouter.get("/roi/:token", async (c) => {
   try {
+    const db = c.get("db");
     const token = (c.req.param("token") || "");
-    const { results: tokens } = await c.env.DB.prepare(
-      "SELECT sponsor_id FROM sponsor_tokens WHERE token = ?"
-    ).bind(token).all();
+    const tokens = await db.selectFrom("sponsor_tokens")
+      .select("sponsor_id")
+      .where("token", "=", token)
+      .execute();
 
     if (!tokens || tokens.length === 0) {
       return c.json({ error: "Invalid token" }, 403);
@@ -89,18 +119,21 @@ sponsorsRouter.get("/roi/:token", async (c) => {
     const sponsor_id = tokens[0].sponsor_id;
 
     // Fetch sponsor details
-    const sponsorResult = await c.env.DB.prepare(
-      "SELECT id, name, tier, logo_url, website_url FROM sponsors WHERE id = ?"
-    ).bind(sponsor_id).all();
+    const sponsorResult = await db.selectFrom("sponsors")
+      .select(["id", "name", "tier", "logo_url", "website_url"])
+      .where("id", "=", sponsor_id)
+      .execute();
 
     // Fetch metrics
-    const metricsResult = await c.env.DB.prepare(
-      "SELECT year_month, impressions, clicks FROM sponsor_metrics WHERE sponsor_id = ? ORDER BY year_month ASC"
-    ).bind(sponsor_id).all();
+    const metricsResult = await db.selectFrom("sponsor_metrics")
+      .select(["year_month", "impressions", "clicks"])
+      .where("sponsor_id", "=", sponsor_id)
+      .orderBy("year_month", "asc")
+      .execute();
 
     return c.json({ 
-      sponsor: sponsorResult.results?.[0], 
-      metrics: metricsResult.results || [] 
+      sponsor: sponsorResult?.[0], 
+      metrics: metricsResult || [] 
     });
   } catch (err) {
     console.error("D1 sponsor ROI error:", err);
@@ -111,9 +144,12 @@ sponsorsRouter.get("/roi/:token", async (c) => {
 // ── GET /admin/tokens — Get Tokens for Admins (admin) ──────
 sponsorsRouter.get("/admin/tokens", ensureAdmin, async (c) => {
   try {
-    const { results } = await c.env.DB.prepare(
-      "SELECT t.token, t.sponsor_id, s.name as sponsor_name, t.created_at FROM sponsor_tokens t JOIN sponsors s ON t.sponsor_id = s.id ORDER BY t.created_at DESC"
-    ).all();
+    const db = c.get("db");
+    const results = await db.selectFrom("sponsor_tokens as t")
+      .innerJoin("sponsors as s", "t.sponsor_id", "s.id")
+      .select(["t.token", "t.sponsor_id", "s.name as sponsor_name", "t.created_at"])
+      .orderBy("t.created_at", "desc")
+      .execute();
     return c.json({ tokens: results || [] });
   } catch {
     return c.json({ tokens: [] }, 500);
@@ -123,18 +159,20 @@ sponsorsRouter.get("/admin/tokens", ensureAdmin, async (c) => {
 // ── POST /admin/tokens/generate — Generate Token (admin) ──────
 sponsorsRouter.post("/admin/tokens/generate", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
   try {
+    const db = c.get("db");
     const { sponsor_id } = await c.req.json();
     if (!sponsor_id) return c.json({ error: "Missing sponsor_id"}, 400);
     const token = crypto.randomUUID();
-    await c.env.DB.prepare(
-      "INSERT INTO sponsor_tokens (token, sponsor_id) VALUES (?, ?)"
-    ).bind(token, sponsor_id).run();
+    
+    await db.insertInto("sponsor_tokens")
+      .values({ token, sponsor_id })
+      .execute();
 
     await logAuditAction(c, "sponsor_token_generated", "sponsor_tokens", token, `ROI token generated for sponsor ${sponsor_id}`);
 
     c.executionCtx.waitUntil((async () => {
       try {
-        const sRes = await c.env.DB.prepare("SELECT name FROM sponsors WHERE id = ?").bind(sponsor_id).first<{name: string}>();
+        const sRes = await db.selectFrom("sponsors").select("name").where("id", "=", sponsor_id).executeTakeFirst();
         if (sRes) {
           await sendZulipAlert(
             c.env,

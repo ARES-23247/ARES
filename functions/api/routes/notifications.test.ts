@@ -6,7 +6,7 @@ import notificationsRouter from "./notifications";
 const mockExecutionContext = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
-};
+} as any;
 
 describe("Notifications Router", () => {
   let mockDb: any;

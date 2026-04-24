@@ -56,9 +56,9 @@ export default function ContentManager({
     setConfirmId,
   });
 
-  const approveMutation = useContentMutation<{ type: "event" | "post" | "doc", id: string }>({
+  const approveMutation = useContentMutation<{ type: "event" | "post" | "doc" | "season", id: string }>({
     endpoint: ({ type, id }) => {
-      const base = type === "event" ? "events" : type === "post" ? "posts" : "docs";
+      const base = type === "event" ? "events" : type === "post" ? "posts" : type === "doc" ? "docs" : "seasons";
       return `/api/admin/${base}/${id}/approve`;
     },
     method: "PATCH",
@@ -66,9 +66,9 @@ export default function ContentManager({
     clearConfirm: false,
   });
 
-  const rejectMutation = useContentMutation<{ type: "event" | "post" | "doc", id: string }>({
+  const rejectMutation = useContentMutation<{ type: "event" | "post" | "doc" | "season", id: string }>({
     endpoint: ({ type, id }) => {
-      const base = type === "event" ? "events" : type === "post" ? "posts" : "docs";
+      const base = type === "event" ? "events" : type === "post" ? "posts" : type === "doc" ? "docs" : "seasons";
       return `/api/admin/${base}/${id}/reject`;
     },
     method: "PATCH",

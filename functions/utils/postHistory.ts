@@ -182,8 +182,8 @@ export async function approvePost(c: Context<AppEnv>, slug: string) {
   if (!row) return { success: false, error: "Post not found" };
 
   if (row.revision_of) {
-    const result = await approveAndMergeRevision(c, slug, row.revision_of, row);
-    return { success: true, warnings: result.warnings };
+    await approveAndMergeRevision(c, slug, row.revision_of, row);
+    return { success: true, warnings: [] };
   }
 
   await c.env.DB.prepare("UPDATE posts SET status = 'published' WHERE slug = ?").bind(slug).run();

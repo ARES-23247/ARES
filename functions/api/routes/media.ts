@@ -211,6 +211,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
     }
 
     // SEC-DoW: Edge-cache individual public images (stripped of query params to prevent busting)
+    // @ts-expect-error — Cloudflare Workers runtime
     const cache = caches.default;
     const url = new URL(c.req.url);
     url.search = "";
@@ -245,7 +246,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
 
 // ── PUT /media/move/:key — Move object to folder (Admin) ──────────────
 adminMediaRouter.put("/move/:key{.+$}", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
-  const oldKey = c.req.param("key");
+  const oldKey = c.req.param("key") as string;
   const { folder } = await c.req.json();
   if (!folder) return c.json({ error: "Folder is required" }, 400);
 
@@ -257,7 +258,7 @@ adminMediaRouter.put("/move/:key{.+$}", ensureAdmin, rateLimitMiddleware(15, 60)
     const newKey = `${folder}/${fileName}`;
 
     await c.env.ARES_STORAGE.put(newKey, object.body, {
-      httpMetadata: { contentType: object.httpMetadata.contentType },
+      httpMetadata: { contentType: object.httpMetadata?.contentType },
     });
     await c.env.ARES_STORAGE.delete(oldKey);
 
@@ -276,7 +277,7 @@ adminMediaRouter.put("/move/:key{.+$}", ensureAdmin, rateLimitMiddleware(15, 60)
 
 // ── DELETE /media/:key — Delete object (Admin) ───────────────────────
 adminMediaRouter.delete("/:key{.+$}", ensureAdmin, async (c) => {
-  const key = c.req.param("key");
+  const key = c.req.param("key") as string;
   try {
     await c.env.ARES_STORAGE.delete(key);
     await c.env.DB.prepare("DELETE FROM media_tags WHERE key = ?").bind(key).run();

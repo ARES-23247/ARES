@@ -88,10 +88,12 @@ Several endpoints support full-text search via the `?q=` query parameter:
 ## 5. Development Standards
 
 - **Standardized Endpoints**: Use `/admin/list` for pagination lists and `/admin/save` for create/update logic.
+- **Contract-First Architecture (PREFERRED)**: Transitioning from manual routes to **ts-rest** contracts (`src/schemas/contracts/`). All new API features MUST define a shared contract to ensure end-to-end type safety between the Hono backend and React frontend.
 - **D1 Schema Synchronization (CRITICAL)**: Whenever mapping UI models to D1 databases in `INSERT` or `UPDATE` transactions, you MUST verify destructuring and sql parameter bindings strictly match the column definitions in `schema.sql`. Missing a field silently drops user data.
 - **PII Cryptography Compliance (CRITICAL)**: PII fields like phone numbers and parent emails are stored as AES-encrypted cyphertext in the database. You MUST explicitly call `decrypt()` on these fields in `GET` routes before returning them to authorized users. Never expose raw `iv:hex` strings to the frontend.
 - **Domain-First Relative Routing**: When building modular Hono routers, NEVER use absolute paths (e.g., `/api/events/list`). Always use relative paths (`/list`) and let the root `[[route]].ts` gateway mount the domain prefixes. Overlapping absolute paths will cause silent 404s.
 - **Soft-Delete Standard**: All content deletion MUST use `is_deleted = 1` (or `is_active = 0` for sponsors). Hard `DELETE FROM` is prohibited — data must remain recoverable for audit compliance.
+- **Scalability & Resiliency**: Long-running tasks (notifications, social dispatches, batch processing) MUST be wrapped in `c.executionCtx.waitUntil()` to ensure immediate Worker responses.
 - **Error Handling**: Use `c.json({ error: "Message" }, status)` for all failures. Never return raw text or unhandled exceptions.
 - **Audit Logging**: Use `logAuditAction` for all sensitive administrative changes (deletions, role changes, settings updates).
 

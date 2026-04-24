@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
 import profilesRouter from "./profiles";
 import { createMockProfile } from "../../../src/test/factories/userFactory";

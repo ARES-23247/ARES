@@ -5,7 +5,7 @@ import adminSeasonsRouter from "./admin";
 const mockExecutionContext = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
-};
+} as any;
 
 vi.mock("../../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../middleware")>();

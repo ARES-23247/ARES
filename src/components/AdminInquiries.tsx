@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, MessageSquare, Mail, CheckSquare, Clock, Search, ChevronUp, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { adminApi } from "../api/adminApi";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import { useQueryState } from "nuqs";
 import {
   useReactTable,
   getCoreRowModel,
@@ -12,6 +13,7 @@ import {
   createColumnHelper,
   SortingState,
 } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 type Inquiry = {
   id: string;
@@ -30,7 +32,8 @@ import DashboardLoadingGrid from "./dashboard/DashboardLoadingGrid";
 export default function AdminInquiries() {
   const queryClient = useQueryClient();
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [globalFilter, setGlobalFilter] = useQueryState("q", { defaultValue: "" });
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const { data: inquiries = [], isLoading, isError } = useQuery({
     queryKey: ["admin-inquiries"],
@@ -138,6 +141,15 @@ export default function AdminInquiries() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64,
+    overscan: 10,
+  });
+
   return (
     <div className="space-y-6">
       <DashboardPageHeader 
@@ -170,11 +182,11 @@ export default function AdminInquiries() {
         {isLoading ? (
           <DashboardLoadingGrid count={5} heightClass="h-12" />
         ) : (
-          <div className="overflow-x-auto">
+          <div ref={parentRef} className="overflow-x-auto max-h-[600px] overflow-y-auto relative scrollbar-thin scrollbar-thumb-white/10">
             <table className="w-full text-left border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-20 bg-ares-gray-deep/95 backdrop-blur-md shadow-md">
                 {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id} className="border-b border-white/5 bg-white/5">
+                  <tr key={headerGroup.id} className="border-b border-white/5">
                     {headerGroup.headers.map(header => (
                       <th 
                         key={header.id} 
@@ -193,16 +205,30 @@ export default function AdminInquiries() {
                   </tr>
                 ))}
               </thead>
-              <tbody className="divide-y divide-white/5">
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="hover:bg-white/5 transition-colors group">
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="px-6 py-4 text-sm text-marble/80">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+              <tbody 
+                className="relative"
+                style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+              >
+                {rowVirtualizer.getVirtualItems().map(virtualRow => {
+                  const row = rows[virtualRow.index];
+                  if (!row) return null;
+                  return (
+                    <tr 
+                      key={row.id} 
+                      className="hover:bg-white/5 transition-colors group absolute w-full flex"
+                      style={{ 
+                        height: `${virtualRow.size}px`,
+                        transform: `translateY(${virtualRow.start}px)`
+                      }}
+                    >
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id} className="px-6 py-4 text-sm text-marble/80 flex-1 flex items-center overflow-hidden">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

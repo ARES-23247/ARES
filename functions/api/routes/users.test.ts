@@ -9,7 +9,7 @@ vi.mock("../../utils/crypto", () => ({
 }));
 
 describe("Hono Backend - /users Router", () => {
-  const env = {
+  const env: any = {
     DB: {
       prepare: vi.fn().mockReturnThis(),
       bind: vi.fn().mockReturnThis(),

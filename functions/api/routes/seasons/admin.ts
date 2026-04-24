@@ -107,7 +107,7 @@ adminSeasonsRouter.delete("/:id", ensureAdmin, async (c) => {
   try {
     const id = c.req.param("id"); // This is start_year
     await c.env.DB.prepare("UPDATE seasons SET is_deleted = 1 WHERE start_year = ?").bind(id).run();
-    await logAuditAction(c, "season_deleted", "seasons", id, `Season "${id}" soft-deleted`);
+    await logAuditAction(c, "season_deleted", "seasons", id as string, `Season "${id}" soft-deleted`);
     return c.json({ success: true });
   } catch (err) {
     console.error("D1 admin seasons delete error:", err);

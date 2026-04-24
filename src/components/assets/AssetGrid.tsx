@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { UseMutationResult } from "@tanstack/react-query";
 import { useModal } from "../../contexts/ModalContext";
 
 export interface R2Asset {
@@ -13,23 +12,18 @@ export interface R2Asset {
 
 interface AssetGridProps {
   assets: R2Asset[];
-  filteredAssets: R2Asset[];
-  selectedFolderFilter: string;
-  setSelectedFolderFilter: (f: string) => void;
-  uniqueFolders: string[];
-  deleteMutation: UseMutationResult<string, Error, string, unknown>;
-  moveMutation: UseMutationResult<void, Error, { key: string; newFolder: string }, unknown>;
-  setSyndicateKey: (key: string) => void;
+  onDelete: (key: string) => void;
+  onSyndicate: (key: string) => void;
+  onMove?: (key: string, newFolder: string) => void;
+  isDeleting?: boolean;
 }
 
 export default function AssetGrid({
-  filteredAssets,
-  selectedFolderFilter,
-  setSelectedFolderFilter,
-  uniqueFolders,
-  deleteMutation,
-  moveMutation,
-  setSyndicateKey
+  assets,
+  onDelete,
+  onSyndicate,
+  onMove,
+  isDeleting
 }: AssetGridProps) {
   const modal = useModal();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -50,21 +44,8 @@ export default function AssetGrid({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 mb-4 pb-2 border-b border-white/10">
-        <button 
-          onClick={() => setSelectedFolderFilter("All")}
-          className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border transition-all ${selectedFolderFilter === "All" ? "bg-ares-gold border-ares-gold text-black" : "bg-obsidian border-white/20 text-marble/40 hover:text-white"}`}
-        >All Gallery</button>
-        {uniqueFolders.map(folder => (
-          <button 
-            key={folder}
-            onClick={() => setSelectedFolderFilter(folder)}
-            className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full border shadow-sm transition-all ${selectedFolderFilter === folder ? "bg-white border-white text-black" : "bg-black/40 border-white/20 text-marble/40 hover:text-white"}`}
-          >{folder}</button>
-        ))}
-      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto flex-1 min-h-0 pr-2 pb-4 custom-scrollbar">
-        {filteredAssets.map((asset) => (
+        {assets.map((asset) => (
         <div
           key={asset.key}
           className="group relative bg-black/40 border border-white/10 ares-cut-sm overflow-hidden hover:border-white/60 transition-colors flex flex-col"
@@ -89,13 +70,13 @@ export default function AssetGrid({
                 {confirmKey === asset.key ? (
                   <button
                     onClick={() => {
-                      deleteMutation.mutate(asset.key);
+                      onDelete(asset.key);
                       setConfirmKey(null);
                     }}
-                    disabled={deleteMutation.isPending}
+                    disabled={isDeleting}
                     className="px-3 py-1.5 bg-ares-red text-white text-xs font-bold ares-cut-sm animate-pulse flex-1 text-center"
                   >
-                    {deleteMutation.isPending ? "..." : "Confirm"}
+                    {isDeleting ? "..." : "Confirm"}
                   </button>
                 ) : (
                   <button
@@ -108,7 +89,7 @@ export default function AssetGrid({
               </div>
               <div className="flex items-center justify-center gap-2 mt-2">
                 <button
-                  onClick={() => setSyndicateKey(asset.key)}
+                  onClick={() => onSyndicate(asset.key)}
                   className="flex-1 px-3 py-2 bg-ares-red text-white text-xs font-bold ares-cut-sm hover:bg-ares-gold hover:text-black transition-all text-center shadow-lg"
                 >
                   📢 Broadcast
@@ -122,7 +103,7 @@ export default function AssetGrid({
                       submitText: "Move",
                     });
                     if (newFolder !== null && newFolder.trim() !== "") {
-                      moveMutation.mutate({ key: asset.key, newFolder: newFolder.trim() });
+                      if (onMove) onMove(asset.key, newFolder.trim());
                     }
                   }}
                   className="flex-1 px-3 py-2 bg-white/10 text-white text-xs font-bold ares-cut-sm hover:bg-ares-gold hover:text-black transition-colors text-center"

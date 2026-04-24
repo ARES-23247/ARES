@@ -33,14 +33,18 @@ const queryClient = new QueryClient({
   },
 });
 
+import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <ModalProvider>
-            <App />
-          </ModalProvider>
+          <NuqsAdapter>
+            <ModalProvider>
+              <App />
+            </ModalProvider>
+          </NuqsAdapter>
         </BrowserRouter>
       </QueryClientProvider>
     </HelmetProvider>

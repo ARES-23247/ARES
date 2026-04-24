@@ -26,7 +26,8 @@ async function getCryptoKey(secret: string, saltHex?: string): Promise<CryptoKey
   return await crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: salt,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      salt: salt as any,
       iterations: 100000,
       hash: "SHA-256",
     },
@@ -48,9 +49,11 @@ export async function encrypt(text: string, secret: string): Promise<string> {
   const encoded = new TextEncoder().encode(text);
   
   const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { name: "AES-GCM", iv: iv as any },
     key,
-    encoded
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    encoded as any
   );
   
   const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -84,9 +87,11 @@ export async function decrypt(encryptedText: string, secret: string): Promise<st
     const key = await getCryptoKey(secret, saltHex);
     
     const decrypted = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { name: "AES-GCM", iv: iv as any },
       key,
-      ciphertext
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ciphertext as any
     );
     
     return new TextDecoder().decode(decrypted);

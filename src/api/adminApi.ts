@@ -164,6 +164,12 @@ export const adminApi = {
   },
 
   // --- MEDIA / ASSETS ---
+  uploadMedia: async (file: File, folder: string = "general") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+    return uploadFile<{ success?: boolean; url?: string }>("/api/admin/media", formData);
+  },
   deleteMedia: async (key: string) => {
     return fetchJson<{ success?: boolean }>(`/api/admin/media/${key}`, {
       method: "DELETE",

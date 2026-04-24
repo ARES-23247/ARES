@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { handle } from "hono/cloudflare-pages";
 import { cors } from "hono/cors";
-import { Bindings, AppEnv, checkRateLimit, logSystemError, ensureAdmin } from "./middleware";
+import { Bindings, AppEnv, checkRateLimit, logSystemError, ensureAdmin, dbMiddleware, envMiddleware } from "./middleware";
 
 // ── Domain Routers ───────────────────────────────────────────────────
 import authRouter from "./routes/auth";
@@ -33,6 +33,9 @@ import zulipRouter from "./routes/zulip";
 import notificationsRouter from "./routes/notifications";
 
 const app = new Hono<AppEnv>();
+app.use("*", envMiddleware);
+app.use("*", dbMiddleware);
+
 const apiRouter = new Hono<AppEnv>();
 // ── Isolate-Memory Rate Limiting ─────────────────────────────────────
 app.use("*", async (c, next) => {

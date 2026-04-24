@@ -5,7 +5,7 @@ import { AppEnv, UserRole, SessionUser } from "./utils";
 // ── Localhost Dev Bypass Check ────────────────────────────────────────
 export function isDevBypassEnabled(c: Context<AppEnv>): boolean {
   // SEC-03: Only bypass auth in local dev/preview when DEV_BYPASS env var is set
-  const isDev = c.env.ENVIRONMENT === "development" || c.env.ENVIRONMENT === "preview" || c.env.ENVIRONMENT === "test" || process.env.NODE_ENV === "test";
+  const isDev = c.env.ENVIRONMENT === "development" || c.env.ENVIRONMENT === "preview" || c.env.ENVIRONMENT === "test" || ((globalThis as any).process?.env?.NODE_ENV === "test");
   if (!isDev) return false;
 
   const url = new URL(c.req.url);
@@ -17,7 +17,7 @@ export function isDevBypassEnabled(c: Context<AppEnv>): boolean {
 // ── Admin Auth Middleware ─────────────────────────────────────────────
 export const ensureAdmin = async (c: Context<AppEnv>, next: Next) => {
   if (isDevBypassEnabled(c)) {
-    c.set("sessionUser", { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin", member_type: "mentor" });
+    c.set("sessionUser", { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", nickname: "Local Dev", image: null, role: "admin", member_type: "mentor" });
     return await next();
   }
 
@@ -76,7 +76,7 @@ export const ensureAdmin = async (c: Context<AppEnv>, next: Next) => {
 // ── Authentication Middleware (Logged In Only) ──────────────────────
 export const ensureAuth = async (c: Context<AppEnv>, next: Next) => {
   if (isDevBypassEnabled(c)) {
-    c.set("sessionUser", { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin", member_type: "mentor" });
+    c.set("sessionUser", { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", nickname: "Local Dev", image: null, role: "admin", member_type: "mentor" });
     return await next();
   }
 
@@ -97,7 +97,7 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<SessionUser | 
   if (cached) return cached as SessionUser;
 
   if (isDevBypassEnabled(c)) {
-    return { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", image: null, role: "admin", member_type: "mentor" };
+    return { id: "local-dev", email: "local-dev@localhost", name: "Local Dev", nickname: "Local Dev", image: null, role: "admin", member_type: "mentor" };
   }
   try {
     const auth = getAuth(c.env.DB, c.env, c.req.url);

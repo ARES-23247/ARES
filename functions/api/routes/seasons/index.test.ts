@@ -4,7 +4,7 @@ import seasonsRouter from "./index";
 const mockExecutionContext = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
-};
+} as any;
 
 describe("Seasons Public Router", () => {
   let mockDb: Record<string, ReturnType<typeof vi.fn>>;

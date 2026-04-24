@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
 import sponsorsRouter from "./sponsors";
+import { Hono } from "hono";
 import { createMockSponsor } from "../../../src/test/factories/logisticsFactory";
 
 vi.mock("../../utils/zulipSync", () => ({
@@ -28,22 +29,48 @@ describe("Hono Backend - /sponsors Router", () => {
     DEV_BYPASS: "true",
   };
 
+  const mockDb = {
+    selectFrom: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    offset: vi.fn().mockReturnThis(),
+    innerJoin: vi.fn().mockReturnThis(),
+    insertInto: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    onConflict: vi.fn().mockReturnThis(),
+    updateTable: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+    execute: vi.fn().mockResolvedValue([]),
+    executeTakeFirst: vi.fn().mockResolvedValue(null)
+  };
+
+  const testApp = new Hono<any>();
+  testApp.use("*", async (c, next) => {
+    c.set("db", mockDb);
+    await next();
+  });
+  testApp.route("/", sponsorsRouter);
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDb.execute.mockReset();
+    mockDb.executeTakeFirst.mockReset();
   });
 
   it("GET / should list all sponsors", async () => {
     const mockSponsors = [createMockSponsor(), createMockSponsor()];
-    env.DB.all.mockResolvedValue({ results: mockSponsors });
+    mockDb.execute.mockResolvedValueOnce(mockSponsors);
     const req = new Request("http://localhost/api/sponsors", { method: "GET" });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
   it("GET /admin should list admin sponsors", async () => {
-    env.DB.all.mockResolvedValue({ results: [] });
+    mockDb.execute.mockResolvedValueOnce([]);
     const req = new Request("http://localhost/api/sponsors/admin", { method: "GET" });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
@@ -53,7 +80,7 @@ describe("Hono Backend - /sponsors Router", () => {
       body: JSON.stringify({ id: "s1", name: "Sponsor", tier: "Gold" }),
       headers: { "Content-Type": "application/json" }
     });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
@@ -63,7 +90,7 @@ describe("Hono Backend - /sponsors Router", () => {
       body: JSON.stringify({ name: "Sponsor" }),
       headers: { "Content-Type": "application/json" }
     });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(400);
   });
 
@@ -73,7 +100,7 @@ describe("Hono Backend - /sponsors Router", () => {
       body: JSON.stringify({ id: "s1", name: "Sponsor", tier: "Diamond" }),
       headers: { "Content-Type": "application/json" }
     });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(400);
   });
 
@@ -83,32 +110,32 @@ describe("Hono Backend - /sponsors Router", () => {
       body: JSON.stringify({}),
       headers: { "Content-Type": "application/json" }
     });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
   it("GET /roi/:token should get ROI", async () => {
-    env.DB.all
-      .mockResolvedValueOnce({ results: [{ sponsor_id: "s1" }] }) // token
-      .mockResolvedValueOnce({ results: [{ name: "Sponsor" }] }) // sponsor
-      .mockResolvedValueOnce({ results: [{ clicks: 5 }] }); // metrics
+    mockDb.execute
+      .mockResolvedValueOnce([{ sponsor_id: "s1" }]) // token
+      .mockResolvedValueOnce([{ name: "Sponsor" }]) // sponsor
+      .mockResolvedValueOnce([{ clicks: 5 }]); // metrics
 
     const req = new Request("http://localhost/roi/t1", { method: "GET" });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
   it("GET /roi/:token should reject invalid token", async () => {
-    env.DB.all.mockResolvedValueOnce({ results: [] });
+    mockDb.execute.mockResolvedValueOnce([]);
     const req = new Request("http://localhost/roi/t1", { method: "GET" });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(403);
   });
 
   it("GET /admin/tokens should list tokens", async () => {
-    env.DB.all.mockResolvedValueOnce({ results: [] });
+    mockDb.execute.mockResolvedValueOnce([]);
     const req = new Request("http://localhost/admin/tokens", { method: "GET" });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
@@ -118,7 +145,7 @@ describe("Hono Backend - /sponsors Router", () => {
       body: JSON.stringify({ sponsor_id: "s1" }),
       headers: { "Content-Type": "application/json" }
     });
-    const res = await sponsorsRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 });

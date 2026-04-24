@@ -1,6 +1,8 @@
 import { Context } from "hono";
 import { siteConfig } from "../../utils/site.config";
 import { parseAstToText } from "../../utils/content";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 
 // ── Cloudflare Bindings ──────────────────────────────────────────────
 export type Bindings = {
@@ -39,6 +41,7 @@ export type Bindings = {
 export type Variables = {
   sessionUser: SessionUser;
   socialConfig?: Record<string, string | undefined>;
+  db: Kysely<DB>;
 };
 
 export type AppEnv = {

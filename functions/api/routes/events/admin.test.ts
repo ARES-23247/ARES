@@ -4,7 +4,7 @@ import adminRouter from "./admin";
 const mockExecutionContext = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
-};
+} as any;
 
 vi.mock("../../middleware/auth", () => {
   return {
@@ -299,7 +299,6 @@ describe("Events Admin Router", () => {
   it("PUT /:id should catch dispatchSocials error", async () => {
     mockDb.run.mockResolvedValueOnce({ success: true });
     const { dispatchSocials } = await import("../../../utils/socialSync");
-    // @ts-expect-error mocking
     vi.mocked(dispatchSocials).mockRejectedValueOnce(new Error("Social failure"));
     
     const req = new Request("http://localhost/e1", {
@@ -314,7 +313,6 @@ describe("Events Admin Router", () => {
   it("POST /:id/repush should catch dispatchSocials error", async () => {
     mockDb.first.mockResolvedValueOnce({ title: "Event", description: "Desc", cover_image: "img" });
     const { dispatchSocials } = await import("../../../utils/socialSync");
-    // @ts-expect-error mocking
     vi.mocked(dispatchSocials).mockRejectedValueOnce(new Error("Repush failure"));
     
     const req = new Request("http://localhost/e1/repush", {
@@ -332,7 +330,6 @@ describe("Events Admin Router", () => {
     vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "1", role: "author", email: "auth@ares" });
     
     const { notifyByRole } = await import("../../../utils/notifications");
-    // @ts-expect-error mocking
     vi.mocked(notifyByRole).mockRejectedValueOnce(new Error("Notify failure"));
 
     const req = new Request("http://localhost/e1", {

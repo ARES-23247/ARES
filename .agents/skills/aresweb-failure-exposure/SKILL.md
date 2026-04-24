@@ -39,9 +39,10 @@ Every error returned to the client must also be logged on the edge using `consol
 ## 6. Execution
 Whenever you are building or refactoring API-connected components, you must verify that the error states satisfy these requirements. If you find a component with a "lazy" error state, rewrite it to include a diagnostic breakdown before finalizing your work.
 
-## 7. Banning Asynchronous Execution Hooks (waitUntil)
-Relying on Cloudflare's `c.executionCtx.waitUntil()` for crucial API mutations (e.g., social syndication or Google Calendar syncing) is strictly prohibited.
-- `waitUntil` causes background execution that cannot bubble errors back to the caller. If the worker crashes or the API fails, it happens completely *silently* relative to the user interface.
-- ❌ **BANNED**: `c.executionCtx.waitUntil( dispatchSocials(...) )`
-- ✅ **AUTHORIZED**: `try { await dispatchSocials(...); } catch(err) { return c.json({ error }, 502); }`
-- Always wait for the Promise to evaluate natively, catch the exception, and return it directly as a `502 Bad Gateway` schema so the Dashboard displays the network rejection string.
+## 7. Scalability vs. Diagnostic Visibility (waitUntil)
+To maintain immediate response times on the Cloudflare Edge, non-critical background tasks (social syndication, calendar batching, Zulip alerts) MUST be offloaded using `c.executionCtx.waitUntil()`.
+
+- **Requirement**: Any task wrapped in `waitUntil` must include its own internal error handling (`.catch()` or `try/catch`) to ensure failures are logged to the backend console even if they cannot be bubbled to the UI.
+- **Critical Path Rule**: Only use `await` for mutations that directly affect the primary database record being saved (e.g., the D1 SQL insert). If the database save succeeds, return a success response to the user and offload the "side effects" to the background.
+- ✅ **AUTHORIZED**: `c.executionCtx.waitUntil( dispatchSocials(...).catch(err => console.error(err)) )`
+- ❌ **BANNED**: Using `await` on slow external APIs (Zulip, BlueSky, Google) inside the main request lifecycle, which blocks the user interface.

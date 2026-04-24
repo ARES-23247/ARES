@@ -1,0 +1,13 @@
+import { Context, Next } from "hono";
+import { AppEnv } from "./utils";
+import { Kysely } from "kysely";
+import { D1Dialect } from "kysely-d1";
+import { DB } from "../../../src/schemas/database";
+
+export const dbMiddleware = async (c: Context<AppEnv>, next: Next) => {
+  const db = new Kysely<DB>({
+    dialect: new D1Dialect({ database: c.env.DB })
+  });
+  c.set("db", db);
+  await next();
+};

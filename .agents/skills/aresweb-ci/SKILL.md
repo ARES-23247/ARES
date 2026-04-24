@@ -16,6 +16,7 @@ ARESWEB uses Node/npm scripts for compiling, linting, and deploying via Cloudfla
 | `npm run dev` | Runs the Vite local development server |
 | `npm run lint` | Runs ESLint and TypeScript checks across `src/` and `functions/` |
 | `npm run build` | Compiles the React SPA via Vite and prepares the Cloudflare worker (`functions/api/`) |
+| `npm run test:e2e` | Runs Playwright E2E smoke tests including Axe-core accessibility scans |
 
 ### CI Pipeline
 Cloudflare Pages runs an automatic build on every push to `master`. If the build or linting fails, the deployment is rejected, breaking the production dashboard.
@@ -44,6 +45,9 @@ The description after `--` must be **3+ characters** explaining why the suppress
 ### Rule E: Always Commit Before Ending a Session
 If you modify files, you **MUST** run `npm run lint` and `npm run build`, then `git add -A && git commit && git push` before your session ends. Uncommitted local changes that break lint will block the Cloudflare CI pipeline for the next session, causing cascading failures. Never leave dirty working trees.
 
+### Rule F: Accessibility (Axe) is a Blocker
+Playwright smoke tests now include `AxeBuilder`. If a test fails with `accessibilityScanResults.violations`, you must inspect the failing route, identify the WCAG violation (e.g., contrast, missing alt, nested buttons), and fix it. Never suppress Axe violations in code.
+
 ## 3. Resolving Common Build Errors
 - **"Calling setState synchronously within an effect"**: Do not call functions that execute `setState` immediately during render or inside the body of a `useEffect` loop without an explicit trigger. If the initial state depends on a runtime condition (e.g., `window.location.hostname === "localhost"`), compute it as a **module-level constant** and pass it directly to `useState()` as the initial value. Never wrap the workaround in `setTimeout()` — that suppresses the lint warning but introduces a flash of loading state on every localhost render. For modal cleanup, use conditional rendering (`{isOpen && <Modal />}`) so React unmounts the component and resets state naturally — never use `useEffect` to reset state on prop changes.
 - **"Cannot access refs during render" (react-hooks/refs)**: Never read or write `ref.current` in the component body. Access refs only inside `useEffect`, event handlers, or callbacks. The `useRef` + render-time check pattern that works in React 18 is banned under the React 19 strict lint rules.
@@ -53,3 +57,6 @@ If you modify files, you **MUST** run `npm run lint` and `npm run build`, then `
 - **"JSX element 'label' has no corresponding control"**: Replace `for=` with `htmlFor=`, and verify the `id=` attribute matches the `<input>` element immediately adjacent. 
 - **"Cannot call impure function Date.now() during render"**: Move pure-computation randomizers or time checks into a React `useEffect` hook, or evaluate them server-side before hydration.
 - **"'ComponentName' is not defined" (react/jsx-no-undef)**: Verify the component is properly imported. If lucide-react icons report as undefined, check the installed version (`npm ls lucide-react`) — some icons were added in later versions. Always use named imports from `lucide-react`.
+- **Playwright "Timeout" or "Target Closed"**: This usually means the local `wrangler` dev server or Vite preview hasn't started yet. Ensure `start-server-and-test` is working correctly. If debugging a failing E2E test, use `npx playwright test --debug` and look for the specific DOM selector that isn't appearing.
+- **Axe "color-contrast" Failures**: These are now enforced. If a brand color (#C00000) fails on a dark background, use the "Red Badge Pattern" (white text on red background) as defined in the accessibility skill.
+
