@@ -50,15 +50,18 @@ test.describe('Static Information Pages', () => {
         `
       });
 
-      // 1. Verify correct title mapping
-      await expect(page).toHaveTitle(route.expectedTitle);
-
-      // 2. Verify exactly zero javascript console errors (omitting harmless favicons)
+      // 1. Verify exactly zero javascript console errors (omitting harmless favicons)
+      if (consoleErrors.length > 0) {
+        console.error("Console Errors:", consoleErrors);
+      }
       expect(consoleErrors).toHaveLength(0);
+
+      // 2. Verify correct title mapping
+      await expect(page).toHaveTitle(route.expectedTitle);
 
       // 3. Verify an H1 or major heading exists
       const heading = page.locator('h1').first();
-      await expect(heading).toBeAttached();
+      await expect(heading).toBeAttached({ timeout: 5000 });
 
       // 4. Accessibility Testing (WCAG 2.1 AA level strictly required via ARESWEB standards)
       const accessibilityScanResults = await new AxeBuilder({ page })

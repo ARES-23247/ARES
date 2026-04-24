@@ -27,10 +27,10 @@ interface Award {
 }
 
 export default function Seasons() {
-  const { data: seasonsRes, isLoading: isLoadingSeasons } = api.seasons.getSeasons.useQuery({
+  const { data: seasonsRes, isLoading: isLoadingSeasons } = api.seasons.list.useQuery({
     queryKey: ["public-seasons"],
   });
-  const seasons = seasonsRes?.status === 200 ? seasonsRes.body.seasons : [];
+  const seasons = (seasonsRes?.status === 200 ? seasonsRes.body.seasons : []) || [];
 
   const { data: awardsRes, isLoading: isLoadingAwards } = api.awards.getAwards.useQuery({
     queryKey: ["public-awards"],
@@ -41,7 +41,7 @@ export default function Seasons() {
 
 
   return (
-    <div className="flex flex-col w-full bg-ares-gray-deep min-h-screen text-marble relative overflow-hidden bg-ares-gray-deep">
+    <div className="flex flex-col w-full bg-ares-gray-deep min-h-screen text-marble relative overflow-hidden">
       <SEO title="Team Legacy" description="A chronicle of ARES 23247's journey through FIRST Robotics. Explore our seasonal achievements, awards, and growth." />
       
       <section className="py-32 px-6 relative z-10 text-center bg-ares-gray-deep">
@@ -81,7 +81,7 @@ export default function Seasons() {
                  <div className="w-10 h-10 border-2 border-white/10 border-t-ares-red rounded-full animate-spin" />
                </div>
              ) : seasons.length > 0 ? (
-               seasons.map((season, idx) => {
+               seasons.map((season, idx: number) => {
                  const isEven = idx % 2 === 0;
                  return (
                    <motion.div 
@@ -166,7 +166,7 @@ export default function Seasons() {
             {isLoadingAwards ? (
               [1,2,3].map(i => <div key={i} className="h-64 bg-white/5 rounded-[2.5rem] animate-pulse" />)
             ) : awards.length > 0 ? (
-              awards.map((award, idx) => (
+              awards.map((award, idx: number) => (
                 <motion.div
                   key={award.id}
                   initial={{ opacity: 0, y: 30 }}

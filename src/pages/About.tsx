@@ -28,12 +28,11 @@ const SECTION_ORDER = [
 
 
 export default function About() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: rosterRes, isLoading } = api.profiles.getTeamRoster.useQuery({
     queryKey: ["team-roster"],
   });
 
-  const members = useMemo(() => (rosterRes?.status === 200 ? rosterRes.body.members : []), [rosterRes]);
+  const members = useMemo(() => (rosterRes?.status === 200 ? rosterRes.body.members : []) || [], [rosterRes]);
 
   const grouped = useMemo(() => SECTION_ORDER.map(section => ({
     ...section,
@@ -125,7 +124,7 @@ export default function About() {
       ))}
 
       {/* Fallback if no profiles exist yet */}
-      {loading && (
+      {isLoading && (
         <section className="py-24 bg-obsidian text-marble">
           <div className="max-w-4xl mx-auto px-6 text-center">
             <div className="animate-spin w-8 h-8 border-2 border-ares-red border-t-transparent rounded-full mx-auto" />
@@ -133,7 +132,7 @@ export default function About() {
         </section>
       )}
 
-      {!loading && grouped.length === 0 && (
+      {!isLoading && grouped.length === 0 && (
         <section className="py-24 bg-obsidian text-marble">
           <div className="max-w-4xl mx-auto px-6">
             <div className="text-center mb-16">

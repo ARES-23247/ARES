@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unknown-property */
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, MeshDistortMaterial, Float, Text, MeshWobbleMaterial } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, MeshDistortMaterial, Float, MeshWobbleMaterial } from "@react-three/drei";
 import { useRef } from "react";
 import * as THREE from "three";
 
@@ -111,22 +111,7 @@ export default function RobotViewer() {
         {/* The Robot */}
         <RobotChassis />
 
-        {/* Floating Technical Specs */}
-        <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-           <Text
-            position={[-2, 1.5, 0]}
-            rotation={[0, Math.PI / 4, 0]}
-            fontSize={0.2}
-            color="white"
-            font="/fonts/LeagueSpartan-Bold.woff"
-            maxWidth={2}
-            textAlign="left"
-            anchorX="left"
-            anchorY="middle"
-          >
-            ARES_CHASSIS_MK1
-          </Text>
-        </Float>
+
       </Canvas>
     </div>
   );

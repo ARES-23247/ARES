@@ -2,7 +2,6 @@ import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard
 import { motion } from "framer-motion";
 import GitHubHeatmap from "../components/GitHubHeatmap";
 import SEO from "../components/SEO";
-import RobotViewer from "../components/RobotViewer";
 
 export default function TechStack() {
   return (
@@ -23,16 +22,15 @@ export default function TechStack() {
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-ares-gold text-center">Interactive Hardware Architecture</h2>
               <div className="h-px flex-1 bg-white/5" />
            </div>
-           <RobotViewer />
-           <p className="text-[10px] text-marble/30 text-center uppercase tracking-widest font-mono mt-4">
+           {/* <RobotViewer /> */}
+           <p className="text-[10px] text-marble/70 text-center uppercase tracking-widest font-mono mt-4">
               ARES-R3F Engine v1.0 // Real-time Hardware Twin
            </p>
         </section>
 
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-16 px-4">
-          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold font-heading mb-6 tracking-tight text-white'Built_for_the_Future.']" aria-hidden="true"></h1>
-          <h1 className="sr-only">Built for the Future.</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold font-heading mb-6 tracking-tight text-white">Built for the Future.</h1>
           <p className="text-lg md:text-xl text-marble leading-relaxed">
             ARES 23247&apos;s digital portal isn&apos;t just a website; it&apos;s a statement on <strong>Sustainability</strong>. 
             By leveraging entirely free, serverless Edge architecture, we&apos;ve brought our operating costs down to <strong>$0.00</strong>.

@@ -59,16 +59,16 @@ export default function Sponsors() {
   const { data: sponsorsRes } = api.sponsors.getSponsors.useQuery({
     queryKey: ["public-sponsors"],
   });
-  const sponsors = sponsorsRes?.status === 200 ? sponsorsRes.body.sponsors : [];
+  const sponsors = (sponsorsRes?.status === 200 ? sponsorsRes.body.sponsors : []) || [];
 
-  const grouped = sponsors.reduce((acc, s) => {
+  const grouped = sponsors.reduce((acc: Record<string, Sponsor[]>, s: Sponsor) => {
     if (!acc[s.tier]) acc[s.tier] = [];
     acc[s.tier].push(s);
     return acc;
   }, {} as Record<string, Sponsor[]>);
 
   const tiersOrdered = ["Titanium", "Gold", "Silver", "Bronze", "In-Kind"];
-  const existingTiers = Array.from(new Set(sponsors.map(s => s.tier))).filter(Boolean);
+  const existingTiers = Array.from(new Set<string>(sponsors.map((s: Sponsor) => s.tier as string))).filter(Boolean);
   const dropdownTiers = existingTiers.length > 0 ? existingTiers : tiersOrdered;
 
   const [name, setName] = useState("");
@@ -99,7 +99,7 @@ export default function Sponsors() {
         setErrorMessage((res.body as any).error || "Something went wrong");
       }
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       setSubmitStatus("error");
       setErrorMessage(err.message || "Network error");
     }
@@ -178,7 +178,7 @@ export default function Sponsors() {
                 </div>
 
                 <div className={`grid grid-cols-1 md:grid-cols-2 ${tier === 'Titanium' ? 'lg:grid-cols-2' : tier === 'Gold' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-6`}>
-                  {grouped[tier].map((s) => (
+                  {grouped[tier].map((s: Sponsor) => (
                     <motion.a
                       key={s.id}
                       href={s.website_url || "#"}
@@ -274,7 +274,7 @@ export default function Sponsors() {
               <div>
                 <label htmlFor="subject-select" className="block text-xs font-bold text-marble uppercase tracking-widest mb-1.5 ml-1">Sponsorship Level</label>
                 <div className="relative">
-                  <select id="subject-select" value={level} onChange={e => setLevel(e.target.value)} className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner appearance-none cursor-pointer" style={{ colorScheme: 'dark' }}>
+                  <select id="subject-select" value={level} onChange={e => setLevel(e.target.value)} className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red focus:ring-1 focus:ring-ares-red/20 transition-all shadow-inner appearance-none cursor-pointer [color-scheme:dark]">
                     <option className="bg-obsidian text-white">Interested in Details</option>
                     {dropdownTiers.map(t => (
                       <option key={t} className="bg-obsidian text-white">{t} Tier Sponsor</option>

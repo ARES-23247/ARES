@@ -33,9 +33,9 @@ export default function GitHubHeatmap() {
         const res = await api.github.getActivity.query();
         if (res.status === 200) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setGrid(res.body.grid as any);
-          setTotalCommits(res.body.totalCommits);
-          setRepoCount(res.body.repoCount);
+          setGrid((res.body.grid || []) as any);
+          setTotalCommits(res.body.totalCommits || 0);
+          setRepoCount(res.body.repoCount || 0);
         }
         setLoading(false);
       } catch (err) {
@@ -49,7 +49,7 @@ export default function GitHubHeatmap() {
 
   // Determine which month labels to show
   const monthLabels: { label: string; col: number }[] = [];
-  if (grid.length > 0) {
+  if (grid && grid.length > 0) {
     let lastMonth = -1;
     grid.forEach((week, i) => {
       const d = new Date(week[0].date);
