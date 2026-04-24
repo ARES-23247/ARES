@@ -116,13 +116,25 @@ export default function Events() {
                 <div className="h-px flex-1 bg-gradient-to-r from-ares-gold/50 to-transparent"></div>
               </div>
               {calendars.length > 0 ? (
-                <div className="w-full bg-black/40 border border-white/10 ares-cut-sm overflow-hidden shadow-lg">
-                  <iframe 
-                    title="Google Calendar"
-                    src={iframeSrc} 
-                    className="w-full h-[600px] md:h-[700px] border-0 invert hue-rotate-180 opacity-85 contrast-105"
-                    allowFullScreen
-                  />
+                <div className="flex flex-col gap-2">
+                  <div className="w-full bg-black/40 border border-white/10 ares-cut-sm overflow-hidden shadow-lg">
+                    <iframe 
+                      title="Google Calendar"
+                      src={iframeSrc} 
+                      className="w-full h-[600px] md:h-[700px] border-0 invert hue-rotate-180 opacity-85 contrast-105"
+                      allowFullScreen
+                    />
+                  </div>
+                  <div className="flex justify-end px-2">
+                    <a 
+                      href={iframeSrc} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-ares-cyan transition-colors"
+                    >
+                      Calendar blocked by extensions? View directly on Google →
+                    </a>
+                  </div>
                 </div>
               ) : (
                 <div className="w-full h-[600px] bg-black/40 border border-white/10 ares-cut-sm flex items-center justify-center text-marble/50">
