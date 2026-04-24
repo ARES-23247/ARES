@@ -1,165 +1,155 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, verifyTurnstile, rateLimitMiddleware, logAuditAction  } from "../middleware";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
+import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { judgeContract } from "../../../src/schemas/contracts/judgeContract";
+import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction } from "../middleware";
 
+const s = initServer<AppEnv>();
 const judgesRouter = new Hono<AppEnv>();
 
-// ── POST /judges/login — verify judge access code ─────────────────────
-judgesRouter.post("/login", async (c) => {
-  // SEC-DoW: Brute-force code guessing burns D1 reads
-  const ip = c.req.header("CF-Connecting-IP") || "unknown";
-  const { checkPersistentRateLimit } = await import("../middleware/security");
-  const allowed = await checkPersistentRateLimit(c.env.DB, `judge-login:${ip}`, 10, 60);
-  if (!allowed) {
-    return c.json({ error: "Too many attempts. Please try again later." }, 429);
-  }
-
-  try {
-    let body;
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
-    }
-    const { code, turnstileToken } = body;
-    if (!code) return c.json({ error: "Code required" }, 400);
-    if (code.length > 50) return c.json({ error: "Invalid code format" }, 400);
-
-    // SEC-DoW: Verify Turnstile challenge before D1 lookup
-    const valid = await verifyTurnstile(turnstileToken, c.env.TURNSTILE_SECRET_KEY, ip);
-    if (!valid) {
-      return c.json({ error: "Security verification failed. Please try again." }, 403);
-    }
-
-    const row = await c.env.DB.prepare(
-      "SELECT code, label, expires_at FROM judge_access_codes WHERE code = ? AND (expires_at IS NULL OR expires_at > datetime('now'))"
-    ).bind(code).first();
-
-    if (!row) return c.json({ error: "Invalid or expired access code" }, 403);
-
-    return c.json({ success: true, label: row.label });
-  } catch (err) {
-    console.error("Judge login error:", err);
-    return c.json({ error: "Login failed" }, 500);
-  }
-});
-
-// SEC-DoW: Cache heavy portfolio responses (4 parallel D1 queries per request)
 const portfolioCache = new Map<string, { data: unknown; expiresAt: number }>();
 
-// ── GET /judges/portfolio — get all portfolio content ──────────────────
-judgesRouter.get("/portfolio", async (c) => {
-  try {
-    // Verify access code from header
-    const code = c.req.header("X-Judge-Code");
-    if (!code) return c.json({ error: "Access code required" }, 401);
-
-    // SEC-DoW: Rate-limit code validation attempts
+const judgesTsRestRouter = s.router(judgeContract, {
+  login: async ({ body, headers: _headers }: any, c: any) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const { checkPersistentRateLimit } = await import("../middleware/security");
-    const allowed = await checkPersistentRateLimit(c.env.DB, `judge-portfolio:${ip}`, 20, 60);
-    if (!allowed) {
-      return c.json({ error: "Too many requests" }, 429);
-    }
+    const db = c.get("db") as Kysely<DB>;
 
-    const valid = await c.env.DB.prepare(
-      "SELECT code FROM judge_access_codes WHERE code = ? AND (expires_at IS NULL OR expires_at > datetime('now'))"
-    ).bind(code).first();
-    if (!valid) return c.json({ error: "Invalid or expired access code" }, 403);
+    const allowed = await checkPersistentRateLimit(db, `judge-login:${ip}`, 10, 60);
+    if (!allowed) return { status: 429, body: { error: "Too many attempts. Please try again later." } };
 
-    // Check cache (5 minute TTL — portfolio content doesn't change mid-tournament)
-    const now = Date.now();
-    const cached = portfolioCache.get("portfolio");
-    if (cached && cached.expiresAt > now) {
-      return c.json(cached.data);
-    }
-
-    // Fetch portfolio & executive summary docs
-    const { results: portfolioDocs } = await c.env.DB.prepare(
-      "SELECT slug, title, category, description, content FROM docs WHERE is_deleted = 0 AND status = 'published' AND (is_portfolio = 1 OR is_executive_summary = 1) ORDER BY is_executive_summary DESC, category, sort_order"
-    ).all();
-
-    // Fetch outreach data
-    const { results: outreach } = await c.env.DB.prepare(
-      "SELECT id, title, date, location, COALESCE(students_count, 0) as students_count, COALESCE(hours, 0) as hours_logged, COALESCE(people_reached, 0) as reach_count, impact_summary as description FROM outreach_logs ORDER BY date DESC"
-    ).all();
-
-    // Fetch awards
-    const { results: awards } = await c.env.DB.prepare(
-      "SELECT id, title, date as year, event_name, icon_type as image_url, description FROM awards ORDER BY date DESC"
-    ).all();
-
-    // Fetch sponsors
-    const { results: sponsors } = await c.env.DB.prepare(
-      "SELECT id, name, tier, logo_url, website_url FROM sponsors WHERE is_active = 1 ORDER BY CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END"
-    ).all();
-
-    const payload = {
-      portfolioDocs: portfolioDocs || [],
-      outreach: outreach || [],
-      awards: awards || [],
-      sponsors: sponsors || [],
-    };
-
-    // Cache the heavy payload for 5 minutes
-    portfolioCache.set("portfolio", { data: payload, expiresAt: now + 300000 });
-
-    return c.json(payload);
-  } catch (err) {
-    console.error("Portfolio fetch error:", err);
-    return c.json({ error: "Portfolio fetch failed" }, 500);
-  }
-});
-
-// ── GET /admin/judges/codes — list all access codes (admin) ────────────
-judgesRouter.get("/admin/codes", ensureAdmin, async (c) => {
-  try {
-    const { results } = await c.env.DB.prepare(
-      "SELECT id, code, label, created_at, expires_at FROM judge_access_codes ORDER BY created_at DESC"
-    ).all();
-    return c.json({ codes: results || [] });
-  } catch (err) {
-    console.error("D1 judge codes list error:", err);
-    return c.json({ codes: [] }, 500);
-  }
-});
-
-// ── POST /admin/judges/codes — create a new access code (admin) ───────
-judgesRouter.post("/admin/codes", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
-  try {
-    let json;
     try {
-      json = await c.req.json();
+      const { code, turnstileToken } = body;
+      if (!code) return { status: 400, body: { error: "Code required" } };
+      if (code.length > 50) return { status: 400, body: { error: "Invalid code format" } };
+
+      const validToken = await verifyTurnstile(turnstileToken, c.env.TURNSTILE_SECRET_KEY, ip);
+      if (!validToken) return { status: 403, body: { error: "Security verification failed. Please try again." } };
+
+      const row = await db.selectFrom("judge_access_codes")
+        .select(["code", "label", "expires_at"])
+        .where("code", "=", code)
+        .where((eb) => eb.or([
+          eb("expires_at", "is", null),
+          eb("expires_at", ">", new Date().toISOString())
+        ]))
+        .executeTakeFirst();
+
+      if (!row) return { status: 403, body: { error: "Invalid or expired access code" } };
+
+      return { status: 200, body: { success: true, label: row.label } };
     } catch {
-      return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+      return { status: 500, body: { error: "Login failed" } };
     }
-    const { label, expiresAt } = json;
-    const code = (crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')).slice(0, 12).toUpperCase();
-    const id = crypto.randomUUID();
+  },
+  portfolio: async ({ headers }: any, c: any) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const code = headers["x-judge-code"];
+      if (!code) return { status: 401, body: { error: "Access code required" } };
 
-    await c.env.DB.prepare(
-        "INSERT INTO judge_access_codes (id, code, label, expires_at) VALUES (?, ?, ?, ?)"
-      ).bind(id, code, label || "Judge Access", expiresAt || null).run();
+      const ip = c.req.header("CF-Connecting-IP") || "unknown";
+      const { checkPersistentRateLimit } = await import("../middleware/security");
+      const allowed = await checkPersistentRateLimit(db, `judge-portfolio:${ip}`, 20, 60);
+      if (!allowed) return { status: 429, body: { error: "Too many requests" } };
 
-    // SEC-Z10: Log action
-    c.executionCtx.waitUntil(logAuditAction(c, "CREATE_JUDGE_CODE", "judge_access", id, `Created access code: ${label}`));
+      const valid = await db.selectFrom("judge_access_codes")
+        .select("code")
+        .where("code", "=", code)
+        .where((eb) => eb.or([
+          eb("expires_at", "is", null),
+          eb("expires_at", ">", new Date().toISOString())
+        ]))
+        .executeTakeFirst();
+      if (!valid) return { status: 403, body: { error: "Invalid or expired access code" } };
 
-    return c.json({ success: true, code, id });
-  } catch (err) {
-    console.error("D1 judge code create error:", err);
-    return c.json({ error: "Create failed" }, 500);
-  }
+      const now = Date.now();
+      const cached = portfolioCache.get("portfolio");
+      if (cached && cached.expiresAt > now) return { status: 200, body: cached.data };
+
+      const [portfolioDocs, outreach, awards, sponsors] = await Promise.all([
+        db.selectFrom("docs")
+          .select(["slug", "title", "category", "description", "content"])
+          .where("is_deleted", "=", 0)
+          .where("status", "=", "published")
+          .where((eb) => eb.or([eb("is_portfolio", "=", 1), eb("is_executive_summary", "=", 1)]))
+          .orderBy("is_executive_summary", "desc")
+          .orderBy("category")
+          .orderBy("sort_order")
+          .execute(),
+        db.selectFrom("outreach_logs")
+          .select(["id", "title", "date", "location", "students_count", "hours as hours_logged", "people_reached as reach_count", "impact_summary as description"])
+          .where("is_deleted", "=", 0)
+          .orderBy("date", "desc")
+          .execute(),
+        db.selectFrom("awards")
+          .select(["id", "title", "date as year", "event_name", "icon_type as image_url", "description"])
+          .where("is_deleted", "=", 0)
+          .orderBy("date", "desc")
+          .execute(),
+        db.selectFrom("sponsors")
+          .select(["id", "name", "tier", "logo_url", "website_url"])
+          .where("is_active", "=", 1)
+          .execute()
+      ]);
+
+      const payload = {
+        portfolioDocs: portfolioDocs || [],
+        outreach: outreach || [],
+        awards: awards || [],
+        sponsors: sponsors || [],
+      };
+
+      portfolioCache.set("portfolio", { data: payload, expiresAt: now + 300000 });
+      return { status: 200, body: payload };
+    } catch {
+      return { status: 500, body: { error: "Portfolio fetch failed" } };
+    }
+  },
+  listCodes: async (_: any, c: any) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const results = await db.selectFrom("judge_access_codes")
+        .select(["id", "code", "label", "created_at", "expires_at"])
+        .orderBy("created_at", "desc")
+        .execute();
+      return { status: 200, body: { codes: results || [] } };
+    } catch {
+      return { status: 500, body: { error: "Failed to fetch codes" } };
+    }
+  },
+  createCode: async ({ body }: any, c: any) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const { label, expiresAt } = body;
+      const code = (crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')).slice(0, 12).toUpperCase();
+      const id = crypto.randomUUID();
+
+      await db.insertInto("judge_access_codes")
+        .values({ id, code, label: label || "Judge Access", expires_at: expiresAt || null })
+        .execute();
+
+      c.executionCtx.waitUntil(logAuditAction(c, "CREATE_JUDGE_CODE", "judge_access", id, `Created access code: ${label}`));
+      return { status: 200, body: { success: true, code, id } };
+    } catch {
+      return { status: 500, body: { error: "Create failed" } };
+    }
+  },
+  deleteCode: async ({ params }: any, c: any) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      await db.deleteFrom("judge_access_codes").where("id", "=", params.id).execute();
+      return { status: 200, body: { success: true } };
+    } catch {
+      return { status: 500, body: { error: "Delete failed" } };
+    }
+  },
 });
 
-// ── DELETE /admin/judges/codes/:id — delete an access code (admin) ────
-judgesRouter.delete("/admin/codes/:id", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
-  try {
-    const id = (c.req.param("id") || "");
-    await c.env.DB.prepare("DELETE FROM judge_access_codes WHERE id = ?").bind(id).run();
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 judge code delete error:", err);
-    return c.json({ error: "Delete failed" }, 500);
-  }
-});
+createHonoEndpoints(judgeContract, judgesTsRestRouter, judgesRouter);
+
+// Admin protection for admin paths
+judgesRouter.use("/admin/*", ensureAdmin);
 
 export default judgesRouter;

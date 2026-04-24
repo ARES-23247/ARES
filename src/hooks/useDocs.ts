@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 import { trackPageView } from "../utils/analytics";
 
 export interface DocRecord {
@@ -50,34 +49,27 @@ export function useDocs(slug: string | undefined) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [feedbackToken, setFeedbackToken] = useState("");
 
-  const { data: allDocs = [] } = useQuery<DocRecord[]>({
+  const { data: allDocsRes } = api.docs.getDocs.useQuery({
     queryKey: ["docs-list"],
-    queryFn: async () => {
-      const { docs } = await publicApi.get<{ docs?: DocRecord[] }>("/api/docs");
-      return docs ?? [];
-    },
   });
+  const allDocs = useMemo(() => allDocsRes?.status === 200 ? allDocsRes.body.docs : [], [allDocsRes]);
 
-  const ObjectQuery = useQuery<{doc: DocRecord, contributors: Contributor[]}>({
+  const ObjectQuery = api.docs.getDoc.useQuery({
     queryKey: ["doc", slug],
-    queryFn: async () => {
-      return publicApi.get<{doc: DocRecord, contributors: Contributor[]}>(`/api/docs/${slug}`);
-    },
+    params: { slug: slug || "" },
     enabled: !!slug,
   });
 
-  const currentDoc = ObjectQuery.data?.doc;
-  const contributors = ObjectQuery.data?.contributors || [];
+  const currentDoc = ObjectQuery.data?.status === 200 ? ObjectQuery.data.body.doc : undefined;
+  const contributors = ObjectQuery.data?.status === 200 ? ObjectQuery.data.body.contributors : [];
   const docLoading = ObjectQuery.isLoading;
 
-  const { data: searchResults = [] } = useQuery<SearchResult[]>({
+  const { data: searchRes } = api.docs.searchDocs.useQuery({
     queryKey: ["docs-search", searchQuery],
-    queryFn: async () => {
-      const { results } = await publicApi.get<{ results?: SearchResult[] }>(`/api/docs/search?q=${encodeURIComponent(searchQuery)}`);
-      return results ?? [];
-    },
+    query: { q: searchQuery },
     enabled: searchQuery.length >= 2,
   });
+  const searchResults = searchRes?.status === 200 ? searchRes.body.results : [];
 
   const groupedDocs = useMemo(() => {
     const groups: Record<string, DocRecord[]> = {};

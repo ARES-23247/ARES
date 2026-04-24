@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Database, Download } from "lucide-react";
-import { adminApi } from "../../api/adminApi";
+import { fetchBlob } from "../../api/client";
 
 export function DataBackupCard() {
   const [isExporting, setIsExporting] = useState(false);
@@ -10,7 +10,7 @@ export function DataBackupCard() {
     setIsExporting(true);
     setErrorMsg("");
     try {
-      const blob = await adminApi.downloadFile("/api/admin/backup");
+      const blob = await fetchBlob("/api/admin/backup");
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

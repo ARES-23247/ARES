@@ -1,57 +1,64 @@
 import { Hono } from "hono";
-import { AppEnv, getSessionUser  } from "../middleware";
+import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { logisticsContract } from "../../src/schemas/contracts/logisticsContract";
+import { AppEnv, ensureAdmin  } from "../middleware";
 
+const s = initServer<AppEnv>();
 const logisticsRouter = new Hono<AppEnv>();
 
-// ── GET /summary — aggregated logistics for event planning ──
-logisticsRouter.get("/summary", async (c) => {
-  const user = await getSessionUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
+const logisticsTsRestRouter = s.router(logisticsContract, {
+  getSummary: async (_, c) => {
+    const db = c.get("db");
 
-  // Only admin/parent/coach/mentor can see logistics
-  // Note: member_type is stored in user_profiles, which we fetch for the session in _shared.ts
-  const isManagement = user.role === "admin" || ["parent", "coach", "mentor"].includes(user.member_type || "");
-  if (!isManagement) return c.json({ error: "Forbidden" }, 403);
+    try {
+      const results = await db.selectFrom("user_profiles as p")
+        .innerJoin("user as u", "p.user_id", "u.id")
+        .select(["p.dietary_restrictions", "p.tshirt_size", "p.member_type", "u.name"])
+        .where("u.role", "!=", "unverified")
+        .execute();
 
-  try {
-    const { results } = await c.env.DB.prepare(
-      `SELECT p.dietary_restrictions, p.tshirt_size, p.member_type, u.name
-       FROM user_profiles p
-       JOIN user u ON p.user_id = u.id
-       WHERE u.role NOT IN ('unverified')`
-    ).all();
+      const summary: Record<string, number> = {};
+      const tshirtSummary: Record<string, number> = {};
+      const memberCounts: Record<string, number> = {};
+      const totalMembers = results.length;
 
-    const summary: Record<string, number> = {};
-    const tshirtSummary: Record<string, number> = {};
-    const memberCounts: Record<string, number> = {};
-    const totalMembers = results.length;
+      for (const r of results) {
+        const mt = r.member_type || "student";
+        memberCounts[mt] = (memberCounts[mt] || 0) + 1;
 
-    for (const r of results as { dietary_restrictions?: string; tshirt_size?: string; member_type?: string; name?: string }[]) {
-      const mt = r.member_type || "student";
-      memberCounts[mt] = (memberCounts[mt] || 0) + 1;
+        if (r.tshirt_size) {
+          tshirtSummary[r.tshirt_size] = (tshirtSummary[r.tshirt_size] || 0) + 1;
+        }
 
-      if (r.tshirt_size) {
-        tshirtSummary[r.tshirt_size] = (tshirtSummary[r.tshirt_size] || 0) + 1;
+        try {
+          const restrictions = JSON.parse(r.dietary_restrictions || "[]") as string[];
+          for (const dr of restrictions) {
+            summary[dr] = (summary[dr] || 0) + 1;
+          }
+        } catch { /* ignore */ }
       }
 
-      try {
-        const restrictions = JSON.parse(r.dietary_restrictions || "[]") as string[];
-        for (const dr of restrictions) {
-          summary[dr] = (summary[dr] || 0) + 1;
+      return {
+        status: 200,
+        body: {
+          totalCount: totalMembers,
+          memberCounts,
+          dietary: summary,
+          tshirts: tshirtSummary,
         }
-      } catch { /* ignore */ }
+      };
+    } catch (err) {
+      console.error("D1 logistics summary error:", err);
+      return { status: 500, body: { error: "Logistics fetch failed" } };
     }
-
-    return c.json({
-      totalCount: totalMembers,
-      memberCounts,
-      dietary: summary,
-      tshirts: tshirtSummary,
-    });
-  } catch (err) {
-    console.error("D1 logistics summary error:", err);
-    return c.json({ error: "Logistics fetch failed" }, 500);
-  }
+  },
 });
 
+// Hardening: Enforce ensureAdmin for all routes
+logisticsRouter.use("/admin", ensureAdmin);
+logisticsRouter.use("/admin/*", ensureAdmin);
+
+createHonoEndpoints(logisticsContract, logisticsTsRestRouter, logisticsRouter);
+
 export default logisticsRouter;
+

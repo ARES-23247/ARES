@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useMemo } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw } from "lucide-react";
@@ -20,7 +20,6 @@ const SponsorEditor = lazy(() => import("@/components/SponsorEditor"));
 const OutreachTracker = lazy(() => import("@/components/OutreachTracker"));
 const AwardEditor = lazy(() => import("@/components/AwardEditor"));
 const MemberImpactOverview = lazy(() => import("@/components/MemberImpactOverview"));
-const BadgeManager = lazy(() => import("@/components/BadgeManager"));
 const LocationsManager = lazy(() => import("@/components/LocationsManager"));
 const AdminInquiries = lazy(() => import("@/components/AdminInquiries"));
 const DashboardHome = lazy(() => import("@/components/DashboardHome"));
@@ -61,6 +60,35 @@ export default function DashboardRoutes({
 
   const { isAdmin, canSeeInquiries, canSeeLogistics } = permissions;
 
+  const routes = useMemo(() => (
+    <Routes location={location}>
+      <Route index element={<DashboardHome />} />
+      <Route path="profile" element={<ProfileEditor />} />
+      <Route path="blog/:editSlug?" element={<BlogEditor userRole={session?.user?.role} />} />
+      <Route path="event/:editId?" element={<EventEditor userRole={session?.user?.role} />} />
+      <Route path="docs/:editSlug?" element={<DocsEditor userRole={session?.user?.role} />} />
+      <Route path="manage_blog" element={<ContentManager mode="blog" pendingCount={notifications.pendingPostsCount} onEditPost={(slug) => navigate(`/dashboard/blog/${slug}`)} />} />
+      <Route path="manage_event" element={<ContentManager mode="event" pendingCount={notifications.pendingEventsCount} onEditEvent={(id) => navigate(`/dashboard/event/${id}`)} />} />
+      <Route path="manage_docs" element={<ContentManager mode="docs" pendingCount={notifications.pendingDocsCount} onEditDoc={(slug) => navigate(`/dashboard/docs/${slug}`)} />} />
+      <Route path="manage_seasons" element={<ContentManager mode="seasons" onEditSeason={(id) => navigate(`/dashboard/seasons/${id}`)} />} />
+      <Route path="seasons/:editId?" element={<SeasonEditor />} />
+      <Route path="assets" element={<AssetManager />} />
+      <Route path="integrations" element={isAdmin ? <IntegrationsManager /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="users" element={isAdmin ? <AdminUsers /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="inquiries" element={canSeeInquiries ? <AdminInquiries /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="impact_roster" element={isAdmin ? <MemberImpactOverview /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="badges" element={isAdmin ? <ContentManager mode="badges" /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="logistics" element={canSeeLogistics ? <DietarySummary /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="analytics" element={<AnalyticsDashboard />} />
+      <Route path="sponsors" element={<SponsorEditor />} />
+      <Route path="sponsor_tokens" element={isAdmin ? <SponsorTokensManager /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="outreach" element={<OutreachTracker />} />
+      <Route path="legacy" element={<AwardEditor />} />
+      <Route path="locations" element={<LocationsManager />} />
+      <Route path="command_center" element={isAdmin ? <CommandCenter /> : <div className="text-center py-20">Access Denied</div>} />
+    </Routes>
+  ), [location, session?.user?.role, notifications, navigate, isAdmin, canSeeInquiries, canSeeLogistics]);
+
   return (
     <div className="flex-1 w-full relative overflow-hidden flex flex-col">
       <AnimatePresence mode="wait">
@@ -73,59 +101,7 @@ export default function DashboardRoutes({
           className="w-full h-full overflow-y-auto"
         >
           <Suspense fallback={<TabLoader />}>
-            <Routes>
-              <Route index element={<DashboardHome />} />
-              <Route path="profile" element={<ProfileEditor />} />
-              <Route path="blog/:editSlug?" element={<BlogEditor userRole={session?.user?.role} />} />
-              <Route path="event/:editId?" element={<EventEditor userRole={session?.user?.role} />} />
-              <Route path="docs/:editSlug?" element={<DocsEditor userRole={session?.user?.role} />} />
-              <Route path="manage_blog" element={<ContentManager mode="blog" pendingCount={notifications.pendingPostsCount} onEditPost={(slug) => navigate(`/dashboard/blog/${slug}`)} />} />
-              <Route path="manage_event" element={<ContentManager mode="event" pendingCount={notifications.pendingEventsCount} onEditEvent={(id) => navigate(`/dashboard/event/${id}`)} />} />
-              <Route path="manage_docs" element={<ContentManager mode="docs" pendingCount={notifications.pendingDocsCount} onEditDoc={(slug) => navigate(`/dashboard/docs/${slug}`)} />} />
-              <Route path="manage_seasons" element={<ContentManager mode="seasons" onEditSeason={(id) => navigate(`/dashboard/seasons/${id}`)} />} />
-              <Route path="seasons/:editId?" element={<SeasonEditor />} />
-              <Route path="assets" element={<AssetManager />} />
-              <Route path="integrations" element={isAdmin ? <IntegrationsManager /> : <div className="text-center py-20">Access Denied</div>} />
-              <Route path="users" element={isAdmin ? <AdminUsers /> : <div className="text-center py-20">Access Denied</div>} />
-              <Route
-                path="inquiries"
-                element={canSeeInquiries ? <AdminInquiries /> : <div className="text-center py-20">Access Denied</div>}
-              />
-              <Route path="impact_roster" element={isAdmin ? <MemberImpactOverview /> : <div className="text-center py-20">Access Denied</div>} />
-              <Route
-                path="badges"
-                element={isAdmin ? <BadgeManager /> : <div className="text-center py-20">Access Denied</div>}
-              />
-              <Route
-                path="logistics"
-                element={canSeeLogistics ? <DietarySummary /> : <div className="text-center py-20">Access Denied</div>}
-              />
-              <Route
-                path="analytics"
-                element={<AnalyticsDashboard />}
-              />
-              <Route
-                path="sponsors"
-                element={<SponsorEditor />}
-              />
-              <Route
-                path="sponsor_tokens"
-                element={isAdmin ? <SponsorTokensManager /> : <div className="text-center py-20">Access Denied</div>}
-              />
-              <Route
-                path="outreach"
-                element={<OutreachTracker />}
-              />
-              <Route
-                path="legacy"
-                element={<AwardEditor />}
-              />
-              <Route
-                path="locations"
-                element={<LocationsManager />}
-              />
-              <Route path="command_center" element={isAdmin ? <CommandCenter /> : <div className="text-center py-20">Access Denied</div>} />
-            </Routes>
+            {routes}
           </Suspense>
         </motion.div>
       </AnimatePresence>

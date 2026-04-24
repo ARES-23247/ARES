@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ErrorBoundary from "./components/ErrorBoundary";
 import CommandPalette from "./components/CommandPalette";
+import MobileQuickActions from "./components/MobileQuickActions";
 
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -61,6 +62,7 @@ export default function App() {
       <Toaster theme="dark" position="bottom-right" />
       <ScrollToTop />
       <CommandPalette />
+      <MobileQuickActions />
       <Navbar />
       <main id="main-content" role="main" className="flex-1 flex flex-col pt-16">
         <AnimatePresence mode="wait">

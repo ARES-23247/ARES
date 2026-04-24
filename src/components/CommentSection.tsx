@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Send, Trash2, RefreshCw, Pencil, Check, X } from "lucide-react";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 import { commentSchema } from "../schemas/commentSchema";
 
 interface Comment {
@@ -32,11 +32,14 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
   const [editContent, setEditContent] = useState("");
 
   const fetchComments = useCallback(() => {
-    publicApi.get<{ comments: Comment[]; authenticated: boolean; role: string | null }>(`/api/comments/${targetType}/${targetId}`)
-      .then((data) => {
-        setComments(data.comments || []);
-        setIsAuthenticated(data.authenticated);
-        setUserRole(data.role);
+    api.comments.list.query({ params: { targetType, targetId } })
+      .then((res) => {
+        if (res.status === 200) {
+          const data = res.body;
+          setComments(data.comments || []);
+          setIsAuthenticated(data.authenticated);
+          setUserRole(data.role);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -50,7 +53,10 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
     try {
       const payloadResult = commentSchema.safeParse({ content: newComment });
       if (!payloadResult.success) throw new Error(payloadResult.error.issues[0].message);
-      await publicApi.submitComment(targetType, targetId, payloadResult.data);
+      await api.comments.submit.mutation({ 
+        params: { targetType, targetId },
+        body: payloadResult.data 
+      });
       setNewComment("");
       fetchComments();
     } catch (e) {
@@ -61,7 +67,7 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
   };
 
   const deleteComment = async (id: number) => {
-    await publicApi.deleteComment(id.toString());
+    await api.comments.delete.mutation({ params: { id: id.toString() }, body: {} });
     fetchComments();
   };
 
@@ -70,7 +76,10 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
     try {
       const payloadResult = commentSchema.safeParse({ content: editContent });
       if (!payloadResult.success) throw new Error(payloadResult.error.issues[0].message);
-      await publicApi.updateComment(id.toString(), payloadResult.data);
+      await api.comments.update.mutation({ 
+        params: { id: id.toString() },
+        body: payloadResult.data 
+      });
       setEditingId(null);
       fetchComments();
     } catch(e) {

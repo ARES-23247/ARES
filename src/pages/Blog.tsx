@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import SEO from "../components/SEO";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface PostRecord {
   slug: string;
@@ -18,13 +18,10 @@ interface PostRecord {
 }
 
 export default function Blog() {
-  const { data: posts = [], isLoading } = useQuery<PostRecord[]>({
+  const { data: postsRes, isLoading } = api.posts.getPosts.useQuery({
     queryKey: ["posts"],
-    queryFn: async () => {
-      const data = await publicApi.get<{ posts?: PostRecord[] }>("/api/posts");
-      return data.posts ?? [];
-    },
   });
+  const posts = (postsRes?.body as any)?.posts || [];
 
   return (
     <motion.div 

@@ -1,5 +1,6 @@
 import { Context, Next } from "hono";
 import { AppEnv } from "./utils";
+import { Kysely } from "kysely";
 
 // ── Rate Limiting (In-Memory Worker V8 Isolate) ────────────────────────
 const MAX_RATE_LIMIT_CACHE = 500;
@@ -37,23 +38,35 @@ export function checkRateLimit(ip: string, limit = 100, windowSeconds = 60): boo
 
 // ── Write-Endpoint Rate Limiting (Persistent D1) ────────────────────────────
 
-export async function checkPersistentRateLimit(db: D1Database, ip: string, limit: number, windowSeconds: number): Promise<boolean> {
+import { DB } from "../../../src/schemas/database";
+
+export async function checkPersistentRateLimit(db: Kysely<DB>, ip: string, limit: number, windowSeconds: number): Promise<boolean> {
   const now = Math.floor(Date.now() / 1000);
   
   // Cleanup old records occasionally to avoid table bloat
   if (Math.random() < 0.05) {
-    db.prepare("DELETE FROM rate_limits WHERE expires_at < ?").bind(now).run().catch(console.error);
+    db.deleteFrom("rate_limits").where("expires_at", "<", now).execute().catch(console.error);
   }
 
   try {
-    const row = await db.prepare("SELECT count, expires_at FROM rate_limits WHERE ip = ?").bind(ip).first<{ count: number, expires_at: number }>();
+    const row = await db.selectFrom("rate_limits")
+      .select(["count", "expires_at"])
+      .where("ip", "=", ip)
+      .executeTakeFirst();
+
     if (!row || row.expires_at < now) {
-      await db.prepare("INSERT OR REPLACE INTO rate_limits (ip, count, expires_at) VALUES (?, 1, ?)").bind(ip, now + windowSeconds).run();
+      await db.insertInto("rate_limits")
+        .values({ ip, count: 1, expires_at: now + windowSeconds })
+        .onConflict(oc => oc.column("ip").doUpdateSet({ count: 1, expires_at: now + windowSeconds }))
+        .execute();
       return true;
     }
     if (row.count >= limit) return false;
     
-    await db.prepare("UPDATE rate_limits SET count = count + 1 WHERE ip = ?").bind(ip).run();
+    await db.updateTable("rate_limits")
+      .set({ count: row.count + 1 })
+      .where("ip", "=", ip)
+      .execute();
     return true;
   } catch (err) {
     console.error("[RateLimit] Persistent check failed:", err);
@@ -122,7 +135,8 @@ export const persistentRateLimitMiddleware = (limit = 15, windowSeconds = 60) =>
       return await next();
     }
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
-    const allowed = await checkPersistentRateLimit(c.env.DB, ip, limit, windowSeconds);
+    const db = c.get("db");
+    const allowed = await checkPersistentRateLimit(db, ip, limit, windowSeconds);
     if (!allowed) {
       return c.json({ error: "Too many requests. Please try again later." }, 429);
     }

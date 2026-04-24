@@ -32,11 +32,13 @@ You are the **Lead Code Reviewer for Team ARES 23247**. When asked to audit a fi
 ### 5. Code Efficiency ⚡
 - **Query Optimization:** Can N+1 D1 queries be mitigated with `JOIN` or `c.env.DB.batch()`?
 - **Render Cycles:** Use `react-hook-form` for complex editors. Modularize imports (e.g., from `date-fns`). Use `@tanstack/react-virtual` for any list exceeding 100 items to prevent DOM bloat.
-- **State Management:** Use `nuqs` for URL-synced UI state (search/filter) to enable shareable deep links and improve refresh resilience.
+- **State Management:** Use **Zustand** (`useUIStore`) for global UI state instead of render-heavy Contexts. Use `nuqs` for URL-synced UI state (search/filter) to enable shareable deep links.
 
 ### 6. Refactoring Needs ♻️
-- **Impact Visualization:** Transition from custom HTML charts to **Tremor** (`@tremor/react`) for championship-grade analytics (Sponsor ROI, Impact Tracking).
-- **Onboarding:** Use **driver.js** for guided portal tours instead of custom modal sequences.
+- **Impact Visualization:** Transition from custom HTML charts to **Tremor** (`@tremor/react`) for championship-grade analytics.
+- **Onboarding:** Use **driver.js** for guided portal tours.
+- **Robotics Visualization:** Use **@react-three/fiber** for 3D robot/field hardware twins and **@xyflow/react** (React Flow) for interactive autonomous logic diagrams.
+- **Mobile UX:** Use **Vaul** for bottom drawers in mobile views to replace complex modals.
 - **Component Bloat:** Break down massive files into custom hooks (e.g., `useDocs`, `useOutreach`).
 - **DRY Violations:** Use shared `apiClient.ts` or `ts-rest` contracts.
 

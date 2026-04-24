@@ -1,143 +1,142 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, rateLimitMiddleware  } from "../middleware";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
+import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { userContract } from "../../../src/schemas/contracts/userContract";
+import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
+import { decrypt } from "../../utils/crypto";
 import { upsertProfile } from "./_profileUtils";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
 
+const s = initServer<AppEnv>();
 const usersRouter = new Hono<AppEnv>();
 
-// All routes here are admin-only
+const userTsRestRouter = s.router(userContract, {
+  getUsers: async ({ query: _ }, c) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const results = await db.selectFrom("user as u")
+        .leftJoin("user_profiles as p", "u.id", "p.user_id")
+        .select([
+          "u.id", "u.name", "u.email", "u.emailVerified", "u.image", "u.role", "u.createdAt", "u.updatedAt",
+          "p.nickname", "p.member_type"
+        ])
+        .orderBy("u.createdAt", "desc")
+        .execute();
+
+      const users = results.map(u => ({
+        ...u,
+        emailVerified: !!u.emailVerified,
+        createdAt: Number(u.createdAt),
+        updatedAt: Number(u.updatedAt)
+      }));
+
+      return { status: 200, body: { users } };
+    } catch {
+      return { status: 500, body: { error: "Database error" } };
+    }
+  },
+  adminDetail: async ({ params }, c) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const secret = c.env.ENCRYPTION_SECRET;
+      const row = await db.selectFrom("user as u")
+        .leftJoin("user_profiles as p", "u.id", "p.user_id")
+        .select([
+          "u.id", "u.name", "u.email", "u.emailVerified", "u.image", "u.role", "u.createdAt", "u.updatedAt",
+          "p.first_name", "p.last_name", "p.nickname", "p.phone", "p.contact_email",
+          "p.show_email", "p.show_phone", "p.pronouns", "p.grade_year", "p.subteams",
+          "p.member_type", "p.bio", "p.favorite_food", "p.dietary_restrictions",
+          "p.favorite_first_thing", "p.fun_fact", "p.colleges", "p.employers",
+          "p.show_on_about", "p.favorite_robot_mechanism", "p.pre_match_superstition",
+          "p.leadership_role", "p.rookie_year", "p.tshirt_size",
+          "p.emergency_contact_name", "p.emergency_contact_phone",
+          "p.parents_name", "p.parents_email", "p.students_name", "p.students_email",
+          "p.updated_at"
+        ])
+        .where("u.id", "=", params.id)
+        .executeTakeFirst();
+
+      if (!row) return { status: 404, body: { error: "User not found" } };
+
+      const p = { ...row } as Record<string, unknown>;
+      p.emergency_contact_name = await decrypt(p.emergency_contact_name as string, secret);
+      p.emergency_contact_phone = await decrypt(p.emergency_contact_phone as string, secret);
+      p.phone = await decrypt(p.phone as string, secret);
+      p.contact_email = await decrypt(p.contact_email as string, secret);
+      p.parents_name = await decrypt(p.parents_name as string, secret);
+      p.parents_email = await decrypt(p.parents_email as string, secret);
+      p.students_name = await decrypt(p.students_name as string, secret);
+      p.students_email = await decrypt(p.students_email as string, secret);
+
+      const user = {
+        ...p,
+        emailVerified: !!p.emailVerified,
+        createdAt: Number(p.createdAt),
+        updatedAt: Number(p.updatedAt),
+        image: p.image || p.avatar || null
+      };
+
+      return { status: 200, body: { user: user as never } };
+    } catch {
+      return { status: 500, body: { error: "Database error" } };
+    }
+  },
+  patchUser: async ({ params, body }, c) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const { role, member_type } = body;
+
+      if (role) {
+        await db.updateTable("user").set({ role }).where("id", "=", params.id).execute();
+        await db.deleteFrom("session").where("userId", "=", params.id).execute();
+      }
+      if (member_type) {
+        await db.insertInto("user_profiles")
+          .values({ user_id: params.id, member_type })
+          .onConflict(oc => oc.column("user_id").doUpdateSet({ member_type }))
+          .execute();
+      }
+
+      c.executionCtx.waitUntil(logAuditAction(c, "PATCH_USER", "user", params.id, `Updated user ${params.id}: role=${role}, type=${member_type}`));
+
+      return { status: 200, body: { success: true } };
+    } catch {
+      return { status: 500, body: { error: "Update failed" } };
+    }
+  },
+  updateUserProfile: async ({ params, body }, c) => {
+    try {
+      await upsertProfile(c as never, params.id, body);
+      return { status: 200, body: { success: true } };
+    } catch {
+      return { status: 500, body: { error: "Profile update failed" } };
+    }
+  },
+  deleteUser: async ({ params }, c) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const id = params.id;
+      
+      await db.deleteFrom("comments").where("user_id", "=", id).execute();
+      await db.deleteFrom("event_signups").where("user_id", "=", id).execute();
+      await db.deleteFrom("user_badges").where("user_id", "=", id).execute();
+      await db.deleteFrom("user_profiles").where("user_id", "=", id).execute();
+      await db.deleteFrom("session").where("userId", "=", id).execute();
+      await db.deleteFrom("account").where("userId", "=", id).execute();
+      await db.deleteFrom("user").where("id", "=", id).execute();
+
+      c.executionCtx.waitUntil(logAuditAction(c, "DELETE_USER", "user", id, `Deleted user ${id}`));
+
+      return { status: 200, body: { success: true } };
+    } catch {
+      return { status: 500, body: { error: "Delete failed" } };
+    }
+  },
+});
+
+createHonoEndpoints(userContract, userTsRestRouter, usersRouter);
+
+// Enforce admin globally
 usersRouter.use("/*", ensureAdmin);
-
-// ── GET / — list all users ────────────────────
-usersRouter.get("/", async (c) => {
-  try {
-    const { results } = await c.env.DB.prepare(
-      `SELECT u.id, u.name, u.image, u.role, u.createdAt,
-              p.nickname, p.member_type
-       FROM user u
-       LEFT JOIN user_profiles p ON u.id = p.user_id
-       ORDER BY u.createdAt DESC`
-    ).all();
-    return c.json({ users: results || [] });
-  } catch (err) {
-    console.error("D1 admin users error:", err);
-    return c.json({ users: [] }, 500);
-  }
-});
-
-// ── PATCH /:id — update user role or type ────
-const patchUserSchema = z.object({
-  role: z.enum(["admin", "author", "user", "unverified"]).optional(),
-  member_type: z.enum(["student", "coach", "mentor", "parent", "alumni"]).optional()
-});
-
-usersRouter.patch("/:id", rateLimitMiddleware(15, 60), zValidator("json", patchUserSchema), async (c) => {
-  try {
-    const id = (c.req.param("id") || "");
-    const { role, member_type } = c.req.valid("json");
-    const batch = [];
-
-    if (role) {
-      batch.push(c.env.DB.prepare("UPDATE user SET role = ? WHERE id = ?").bind(role, id));
-      // SES-02: Evict sessions on role change to prevent privilege persistence
-      batch.push(c.env.DB.prepare("DELETE FROM session WHERE userId = ?").bind(id));
-    }
-    if (member_type) {
-      batch.push(c.env.DB.prepare(
-        "INSERT INTO user_profiles (user_id, member_type) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET member_type = excluded.member_type"
-      ).bind(id, member_type));
-    }
-
-    if (batch.length > 0) {
-      await c.env.DB.batch(batch);
-    }
-
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 admin user patch error:", err);
-    return c.json({ error: "User update failed" }, 500);
-  }
-});
-
-// ── GET /:id — admin detail view ─────────────
-usersRouter.get("/:id", async (c) => {
-  try {
-    const userId = (c.req.param("id") || "");
-    const profile = await c.env.DB.prepare(
-      `SELECT u.id, u.name, u.email, u.image as avatar, u.role, u.createdAt, u.updatedAt,
-              p.first_name, p.last_name, p.nickname, p.phone, p.contact_email,
-              p.show_email, p.show_phone, p.pronouns, p.grade_year, p.subteams,
-              p.member_type, p.bio, p.favorite_food, p.dietary_restrictions,
-              p.favorite_first_thing, p.fun_fact, p.colleges, p.employers,
-              p.show_on_about, p.favorite_robot_mechanism, p.pre_match_superstition,
-              p.leadership_role, p.rookie_year, p.tshirt_size,
-              p.emergency_contact_name, p.emergency_contact_phone,
-              p.parents_name, p.parents_email, p.students_name, p.students_email,
-              p.updated_at
-       FROM user u
-       LEFT JOIN user_profiles p ON u.id = p.user_id
-       WHERE u.id = ?`
-    ).bind(userId).first<Record<string, unknown>>();
-
-    if (!profile) return c.json({ error: "User not found" }, 404);
-    
-    const { decrypt } = await import("../../utils/crypto");
-    const secret = c.env.ENCRYPTION_SECRET;
-    
-    const p = { ...profile };
-    p.emergency_contact_name = await decrypt(p.emergency_contact_name as string, secret);
-    p.emergency_contact_phone = await decrypt(p.emergency_contact_phone as string, secret);
-    p.phone = await decrypt(p.phone as string, secret);
-    p.contact_email = await decrypt(p.contact_email as string, secret);
-    p.parents_name = await decrypt(p.parents_name as string, secret);
-    p.parents_email = await decrypt(p.parents_email as string, secret);
-    p.students_name = await decrypt(p.students_name as string, secret);
-    p.students_email = await decrypt(p.students_email as string, secret);
-
-    return c.json({ user: p });
-  } catch (err) {
-    console.error("D1 admin user detail error:", err);
-    return c.json({ error: "Database error" }, 500);
-  }
-});
-
-// ── PUT /:id — admin profile override ──────────
-usersRouter.put("/:id", rateLimitMiddleware(15, 60), async (c) => {
-  try {
-    const userId = (c.req.param("id") || "");
-    const body = await c.req.json();
-
-    await upsertProfile(c, userId, body);
-
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 admin user profile update error:", err);
-    return c.json({ error: "Profile update failed" }, 500);
-  }
-});
-
-// ── DELETE /:id — delete user ────────────────
-usersRouter.delete("/:id", async (c) => {
-  try {
-    const id = (c.req.param("id") || "");
-    
-    // Cascade delete all related user data
-    await c.env.DB.batch([
-      c.env.DB.prepare("DELETE FROM comments WHERE user_id = ?").bind(id),
-      c.env.DB.prepare("DELETE FROM event_signups WHERE user_id = ?").bind(id),
-      c.env.DB.prepare("DELETE FROM user_badges WHERE user_id = ?").bind(id),
-      c.env.DB.prepare("DELETE FROM user_profiles WHERE user_id = ?").bind(id),
-      c.env.DB.prepare("DELETE FROM session WHERE userId = ?").bind(id),
-      c.env.DB.prepare("DELETE FROM account WHERE userId = ?").bind(id),
-      c.env.DB.prepare("DELETE FROM user WHERE id = ?").bind(id),
-    ]);
-    
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 admin user delete error:", err);
-    return c.json({ error: "User delete failed" }, 500);
-  }
-});
 
 export default usersRouter;

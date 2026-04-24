@@ -1,99 +1,84 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, logAuditAction, MAX_INPUT_LENGTHS } from "../middleware";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
+import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
+import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { awardContract } from "../../../src/schemas/contracts/awardContract";
 
 const awardsRouter = new Hono<AppEnv>();
+const s = initServer<AppEnv>();
 
-// --- GET / --- list all awards ----------
-awardsRouter.get("/", async (c) => {
-  try {
-    const { limit, offset } = parsePagination(c, 50, 100);
-    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(awards)").all();
-    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
-
-    const selectCols = ["id", "title", "date as year", "event_name", "description", "icon_type as image_url"];
-    if (hasSeasonCol) selectCols.push("season_id");
-
-    const { results } = await c.env.DB.prepare(
-      `SELECT ${selectCols.join(", ")} FROM awards WHERE is_deleted = 0 ORDER BY date DESC, title ASC LIMIT ? OFFSET ?`
-    ).bind(limit, offset).all();
-    return c.json({ awards: results || [] });
-  } catch (err) {
-    console.error("D1 awards list error:", err);
-    return c.json({ error: "Failed to fetch awards", details: (err as Error).message }, 500);
-  }
-});
-
-// --- POST / --- create or update an award ----------
-const awardSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(1).max(MAX_INPUT_LENGTHS.name),
-  year: z.union([z.number(), z.string()]),
-  event_name: z.string().max(MAX_INPUT_LENGTHS.name).optional(),
-  description: z.string().max(MAX_INPUT_LENGTHS.generic).optional(),
-  image_url: z.string().optional(),
-  season_id: z.string().optional()
-});
-
-awardsRouter.post("/", ensureAdmin, zValidator("json", awardSchema), async (c) => {
-  try {
-    const { id, title, year, event_name, description, image_url, season_id } = c.req.valid("json");
-
-    let exists = false;
-    if (id) {
-      const row = await c.env.DB.prepare("SELECT id FROM awards WHERE id = ?").bind(id).first();
-      if (row) exists = true;
+const awardTsRestRouter = s.router(awardContract, {
+  getAwards: async ({ query }: any, c: any) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const { limit = 50, offset = 0 } = query;
+      const results = await db.selectFrom("awards")
+        .select(["id", "title", "date as year", "event_name", "description", "icon_type as image_url", "season_id"])
+        .where("is_deleted", "=", 0)
+        .orderBy("date", "desc")
+        .orderBy("title", "asc")
+        .limit(limit)
+        .offset(offset)
+        .execute();
+      return { status: 200, body: { awards: results as unknown[] } };
+    } catch {
+      return { status: 200, body: { awards: [] } };
     }
+  },
+  saveAward: async ({ body }: any, c: any) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const { id, title, year, event_name, description, image_url, season_id } = body;
 
-    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(awards)").all();
-    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
+      let finalId = id;
+      let exists = false;
+      if (id) {
+        const row = await db.selectFrom("awards").select("id").where("id", "=", id).executeTakeFirst();
+        if (row) exists = true;
+      } else {
+        finalId = crypto.randomUUID();
+      }
 
-    if (exists) {
-      // Update existing
-      if (hasSeasonCol) {
-        await c.env.DB.prepare(
-          "UPDATE awards SET title = ?, date = ?, event_name = ?, description = ?, icon_type = ?, season_id = ? WHERE id = ?"
-        ).bind(title, String(year), event_name || "", description || null, image_url || "trophy", season_id || null, id).run();
-      } else {
-        await c.env.DB.prepare(
-          "UPDATE awards SET title = ?, date = ?, event_name = ?, description = ?, icon_type = ? WHERE id = ?"
-        ).bind(title, String(year), event_name || "", description || null, image_url || "trophy", id).run();
+      const values = {
+        title,
+        date: String(year),
+        event_name: event_name || "",
+        description: description || null,
+        icon_type: image_url || "trophy",
+        season_id: season_id || null,
+        is_deleted: 0
+      } as const;
+
+      if (exists && finalId) {
+        await db.updateTable("awards").set(values).where("id", "=", finalId).execute();
+        c.executionCtx.waitUntil(logAuditAction(c, "award_updated", "awards", finalId, `Award "${title}" (${year}) updated`));
+      } else if (finalId) {
+        await db.insertInto("awards").values({ ...values, id: finalId }).execute();
+        c.executionCtx.waitUntil(logAuditAction(c, "award_created", "awards", finalId, `Award "${title}" (${year}) created`));
       }
-      await logAuditAction(c, "award_updated", "awards", id as string, `Award "${title}" (${year}) updated`);
-    } else {
-      // Insert new
-      const newId = id || crypto.randomUUID();
-      if (hasSeasonCol) {
-        await c.env.DB.prepare(
-          "INSERT INTO awards (id, title, date, event_name, description, icon_type, season_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
-        ).bind(newId, title, String(year), event_name || "", description || null, image_url || "trophy", season_id || null).run();
-      } else {
-        await c.env.DB.prepare(
-          "INSERT INTO awards (id, title, date, event_name, description, icon_type) VALUES (?, ?, ?, ?, ?, ?)"
-        ).bind(newId, title, String(year), event_name || "", description || null, image_url || "trophy").run();
-      }
-      await logAuditAction(c, "award_created", "awards", newId, `Award "${title}" (${year}) created`);
+
+      return { status: 200, body: { success: true } };
+    } catch {
+      return { status: 200, body: { success: false } };
     }
-
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 awards save error:", err);
-    return c.json({ error: "Save failed" }, 500);
-  }
+  },
+  deleteAward: async ({ params }: any, c: any) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      await db.updateTable("awards").set({ is_deleted: 1 }).where("id", "=", params.id).execute();
+      c.executionCtx.waitUntil(logAuditAction(c, "award_deleted", "awards", params.id, "Award soft-deleted"));
+      return { status: 200, body: { success: true } };
+    } catch {
+      return { status: 200, body: { success: false } };
+    }
+  },
 });
 
-// --- DELETE /:id --- soft-delete an award ----------
-awardsRouter.delete("/:id", ensureAdmin, async (c) => {
-  try {
-    const id = c.req.param("id") || "";
-    await c.env.DB.prepare("UPDATE awards SET is_deleted = 1 WHERE id = ?").bind(id).run();
-    await logAuditAction(c, "award_deleted", "awards", id, "Award soft-deleted");
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 awards delete error:", err);
-    return c.json({ error: "Delete failed" }, 500);
-  }
-});
+createHonoEndpoints(awardContract, awardTsRestRouter, awardsRouter);
+
+// Protections
+awardsRouter.use("/admin", ensureAdmin);
+awardsRouter.use("/admin/*", ensureAdmin);
 
 export default awardsRouter;

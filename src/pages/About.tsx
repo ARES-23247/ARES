@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import SEO from "../components/SEO";
 import { GreekMeander } from "../components/GreekMeander";
 import { MemberSection } from "../components/MemberSection";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface TeamMember {
   user_id: string;
@@ -28,19 +28,16 @@ const SECTION_ORDER = [
 
 
 export default function About() {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rosterRes, isLoading } = api.profiles.getTeamRoster.useQuery({
+    queryKey: ["team-roster"],
+  });
 
-  useEffect(() => {
-    publicApi.get<{ members: TeamMember[] }>("/api/profile/team-roster")
-      .then((data) => { setMembers(data.members || []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+  const members = useMemo(() => (rosterRes?.status === 200 ? rosterRes.body.members : []), [rosterRes]);
 
-  const grouped = SECTION_ORDER.map(section => ({
+  const grouped = useMemo(() => SECTION_ORDER.map(section => ({
     ...section,
-    items: members.filter(m => m.member_type === section.type),
-  })).filter(section => section.items.length > 0);
+    items: members.filter((m: TeamMember) => m.member_type === section.type),
+  })).filter(section => section.items.length > 0), [members]);
 
   return (
     <div className="flex flex-col w-full">

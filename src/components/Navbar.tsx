@@ -6,11 +6,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 
 import { GreekMeander } from "./GreekMeander";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 import { useDashboardSession } from "../hooks/useDashboardSession";
 import { useDashboardNotifications } from "../hooks/useDashboardNotifications";
+import { useUIStore } from "../store/uiStore";
 
 export default function Navbar() {
+  const { setSidebarOpen } = useUIStore();
   const [open, setOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -37,39 +39,25 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const { data: notifData } = useQuery({
+  const { data: notifRes } = api.notifications.getNotifications.useQuery({
     queryKey: ["notifications"],
-    queryFn: async () => {
-      try {
-        const res = await adminApi.get<{ notifications: { id: string; title: string; message: string; is_read: boolean; link?: string }[] }>("/api/notifications");
-        return res || { notifications: [] };
-      } catch {
-        return { notifications: [] };
-      }
-    },
     enabled: !!isSignedIn,
     refetchInterval: 30000 // Poll every 30s
   });
 
-  const markAllRead = useMutation({
-    mutationFn: async () => {
-      await adminApi.request("/api/notifications/read-all", { method: "PUT" });
-    },
+  const markAllRead = api.notifications.markAllAsRead.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
   });
 
-  const markRead = useMutation({
-    mutationFn: async (id: string) => {
-      await adminApi.request(`/api/notifications/${id}/read`, { method: "PUT" });
-    },
+  const markRead = api.notifications.markAsRead.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
   });
 
-  const rawNotifications = notifData?.notifications || [];
+  const rawNotifications = (notifRes?.body as any)?.notifications || [];
   
   // Combine db notifications with pending inquiries and pending posts
   const notifications = [
@@ -256,7 +244,13 @@ export default function Navbar() {
 
 
         <button 
-          onClick={() => setOpen(!open)} 
+          onClick={() => {
+            if (window.innerWidth < 768) {
+              setSidebarOpen(true);
+            } else {
+              setOpen(!open);
+            }
+          }} 
           className="md:hidden text-ares-gold w-10 h-10 flex flex-col justify-center items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded transition-colors group"
           aria-label={open ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={open}

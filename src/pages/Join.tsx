@@ -4,7 +4,7 @@ import { Rocket, Wrench, Code, PenTool, CheckCircle, GraduationCap } from "lucid
 import SEO from "../components/SEO";
 import { GreekMeander } from "../components/GreekMeander";
 import Turnstile from "../components/Turnstile";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 import { inquirySchema } from "../schemas/inquirySchema";
 
 export default function Join() {
@@ -22,9 +22,24 @@ export default function Join() {
   const [errorMessage, setErrorMessage] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
 
+  const submitMutation = api.inquiries.submit.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200 || res.status === 207) {
+        setSubmitStatus("success");
+        setName(""); setEmail(""); setPhone(""); setSchool(""); setGrade(""); setOccupation(""); setInterests([]); setAdditional("");
+      } else {
+        setSubmitStatus("error");
+        setErrorMessage((res.body as any).error || "Something went wrong");
+      }
+    },
+    onError: (err) => {
+      setSubmitStatus("error");
+      setErrorMessage(err.message || "Network error");
+    }
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setSubmitStatus("idle");
     try {
       const metadata = role === "student" 
@@ -36,14 +51,10 @@ export default function Join() {
         throw new Error(payloadResult.error.issues[0].message);
       }
 
-      await publicApi.submitInquiry(payloadResult.data);
-      setSubmitStatus("success");
-      setName(""); setEmail(""); setPhone(""); setSchool(""); setGrade(""); setOccupation(""); setInterests([]); setAdditional("");
+      submitMutation.mutate({ body: payloadResult.data as any });
     } catch (err) {
       setSubmitStatus("error");
       setErrorMessage(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

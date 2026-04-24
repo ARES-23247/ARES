@@ -97,7 +97,13 @@ Several endpoints support full-text search via the `?q=` query parameter:
 - **Error Handling**: Use `c.json({ error: "Message" }, status)` for all failures. Never return raw text or unhandled exceptions.
 - **Audit Logging**: Use `logAuditAction` for all sensitive administrative changes (deletions, role changes, settings updates).
 
-## 6. Integration Hooks
+## 6. Global State Management (Zustand)
+
+- **UI State**: Use **Zustand** (`src/store/uiStore.ts`) for global UI toggles, active season tracking, and theme preferences. This replaces prop-drilling and high-re-render Context providers.
+- **Store Access**: Prefer specific selectors `const isOpen = useUIStore(s => s.isOpen)` over destructuring the entire store to optimize React render cycles.
+- **Persistence**: Any state that should survive a refresh (e.g., Active Season) must be synchronized with `localStorage` or `c.env.DB` settings via the store's action logic.
+
+## 7. Integration Hooks
 
 - **Zulip**: All content updates (posts, inquiries, signups) should trigger `sendZulipAlert` to the appropriate stream. The `sendZulipMessage` utility accepts either full `Bindings` or minimal `ZulipCredentials`.
 - **GitHub**: High-priority inquiries (Status: Sponsor/Join) should be escalated via `createProjectItem`.

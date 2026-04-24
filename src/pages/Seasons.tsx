@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Trophy, History, MapPin, Cpu, ExternalLink } from "lucide-react";
 import SEO from "../components/SEO";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface Season {
   id: string;
@@ -24,21 +24,15 @@ interface Award {
 }
 
 export default function Seasons() {
-  const { data: seasons = [], isLoading: isLoadingSeasons } = useQuery<Season[]>({
+  const { data: seasonsRes, isLoading: isLoadingSeasons } = api.seasons.getSeasons.useQuery({
     queryKey: ["public-seasons"],
-    queryFn: async () => {
-      const d = await publicApi.get<{ seasons?: Season[] }>("/api/seasons");
-      return d.seasons || [];
-    }
   });
+  const seasons = seasonsRes?.status === 200 ? seasonsRes.body.seasons : [];
 
-  const { data: awards = [], isLoading: isLoadingAwards } = useQuery<Award[]>({
+  const { data: awardsRes, isLoading: isLoadingAwards } = api.awards.getAwards.useQuery({
     queryKey: ["public-awards"],
-    queryFn: async () => {
-      const d = await publicApi.get<{ awards?: Award[] }>("/api/awards");
-      return d.awards || [];
-    }
   });
+  const awards = (awardsRes?.body as any)?.awards || [];
 
 
 

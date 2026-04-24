@@ -19,5 +19,7 @@ You are the Lead Automation Architect. As an autonomous agent, you have the capa
 ## 3. Context Maintenance 🧠
 - **Subagent Session Resumption:** When breaking up a long UI testing workflow into multiple iterative steps, you MUST pass the `ReusedSubagentId` from the previous step to the newly spawned subagent. This ensures the subagent retains its session, cookies, and page state without blindly logging in or re-navigating from scratch.
 
-## 4. Failure Circuit Breakers ⚡
-- **The Browser Outage Rule:** If the subagent returns a hard failure indicating the open_browser_url tool failed or context was lost, you must halt immediately and explicitly ask the USER how to proceed, as this signals an environment issue outside your capability to self-heal.
+## 5. Domain-Specialized Subagents 🤖
+- **Parallel Auditing:** When performing large-scale audits (e.g., "Audit the entire codebase"), you MUST use **Strategic Orchestration**. Split the audit target into isolated domains (Backend, Frontend, Infrastructure) and use `generalist` subagents in parallel to evaluate each against the 12 Pillars.
+- **Task Matching:** Delegate repetitive batch tasks (headers, lint fixes) or speculative research to subagents to keep the main agent context lean and fast.
+- **Concurrency Safety:** NEVER run multiple subagents in a single turn if they mutate the same files or database resources. Ensure task independence before parallel invocation.

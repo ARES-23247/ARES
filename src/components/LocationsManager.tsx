@@ -1,8 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, MapPin, Plus, Trash2, Edit3, CheckCircle, Navigation } from "lucide-react";
-import { adminApi } from "../api/adminApi";
+import { useQueryClient } from "@tanstack/react-query";
+import { Search, MapPin, Plus, Trash2, Edit3, CheckCircle, Navigation, XCircle } from "lucide-react";
+import { api } from "../api/client";
+import { toast } from "sonner";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { locationSchema } from "../schemas/contracts/locationContract";
+import { z } from "zod";
 
 interface LocationRow {
   id: string;
@@ -18,59 +23,58 @@ export default function LocationsManager() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Form State
-  const [form, setForm] = useState({ name: "", address: "", maps_url: "" });
-  const [addressQuery, setAddressQuery] = useState("");
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<z.infer<typeof locationSchema>>({
+    resolver: zodResolver(locationSchema),
+    defaultValues: {
+      name: "",
+      address: "",
+      maps_url: "",
+      is_deleted: 0
+    }
+  });
+
+  const addressQuery = useWatch({ control, name: "address" });
+  const mapsUrl = useWatch({ control, name: "maps_url" });
+
   const [suggestions, setSuggestions] = useState<{ display_name: string }[]>([]);
   const [isSearchingOSM, setIsSearchingOSM] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const { data: locations = [], isLoading, isError } = useQuery<LocationRow[]>({
-    queryKey: ["admin_locations"],
-    queryFn: async () => {
-      const d = await adminApi.get<{ locations: LocationRow[] }>("/api/admin/locations");
-      return d.locations;
+  const { data: locationsData, isLoading, isError } = api.locations.adminList.useQuery({
+    queryKey: ["admin_locations"]
+  });
+
+  const locations = useMemo(() => (locationsData?.body as any)?.locations || [], [locationsData]);
+
+  const saveMutation = api.locations.save.useMutation({
+    onSuccess: (res: any) => {
+      if (res.status === 200) {
+        toast.success("Venue record synchronized.");
+        queryClient.invalidateQueries({ queryKey: ["admin_locations"] });
+        queryClient.invalidateQueries({ queryKey: ["locations"] });
+        resetForm();
+      } else {
+        setErrorMsg("Failed to save venue");
+      }
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.message || "Network error.");
     }
   });
 
-  const saveMut = useMutation({
-    mutationFn: async (payload: Partial<LocationRow> & { id?: string }) => {
-      setErrorMsg("");
-      const res = payload.id
-        // @ts-expect-error - partial payload matches schema
-        ? await adminApi.updateLocation(payload.id, payload)
-        // @ts-expect-error - partial payload matches schema
-        : await adminApi.createLocation(payload);
-        
-      if (!res.success) throw new Error("Failed to save venue");
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin_locations"] });
-      queryClient.invalidateQueries({ queryKey: ["locations"] });
-      resetForm();
-    },
-    onError: (err) => {
-      setErrorMsg(err instanceof Error ? err.message : "Network error — could not reach the API.");
+  const deleteMutation = api.locations.delete.useMutation({
+    onSuccess: (res: any) => {
+      if (res.status === 200) {
+        toast.success("Venue deactivated.");
+        queryClient.invalidateQueries({ queryKey: ["admin_locations"] });
+      }
     }
-  });
-
-  const deleteMut = useMutation({
-    mutationFn: async (id: string) => adminApi.deleteLocation(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_locations"] })
-  });
-  
-  const restoreMut = useMutation({
-    mutationFn: async (l: LocationRow) => {
-       return adminApi.updateLocation(l.id, { ...l, is_deleted: 0 });
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_locations"] })
   });
 
   // Debounced OSM Geocoding
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (addressQuery.length < 4) {
+      if (!addressQuery || addressQuery.length < 4) {
         setSuggestions([]);
         return;
       }
@@ -91,8 +95,7 @@ export default function LocationsManager() {
   const resetForm = () => {
     setIsAdding(false);
     setEditingId(null);
-    setForm({ name: "", address: "", maps_url: "" });
-    setAddressQuery("");
+    reset({ name: "", address: "", maps_url: "", is_deleted: 0 });
     setSuggestions([]);
     setErrorMsg("");
   };
@@ -100,22 +103,20 @@ export default function LocationsManager() {
   const handleEdit = (l: LocationRow) => {
     setEditingId(l.id);
     setIsAdding(true);
-    setForm({ name: l.name, address: l.address, maps_url: l.maps_url || "" });
-    setAddressQuery(l.address);
-  };
-
-  const submitForm = () => {
-    if (!form.name || !form.address) return;
-    saveMut.mutate({
-      id: editingId || undefined,
-      name: form.name,
-      address: form.address,
-      maps_url: form.maps_url,
-      is_deleted: 0
+    reset({
+      id: l.id,
+      name: l.name,
+      address: l.address,
+      maps_url: l.maps_url || "",
+      is_deleted: l.is_deleted
     });
   };
 
-  const filtered = locations.filter(l => l.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const onFormSubmit = (data: z.infer<typeof locationSchema>) => {
+    saveMutation.mutate({ body: { ...data, id: editingId || undefined } });
+  };
+
+  const filtered = useMemo(() => locations.filter((l: any) => l.name.toLowerCase().includes(searchTerm.toLowerCase())), [locations, searchTerm]);
 
   return (
     <div className="w-full flex flex-col items-center h-full p-4 md:p-8 overflow-y-auto">
@@ -157,7 +158,7 @@ export default function LocationsManager() {
 
             {isLoading ? <div className="text-center p-8 text-marble/50 animate-pulse">Loading venues...</div> : (
               <div className="flex flex-col gap-3">
-                {filtered.map(l => (
+                {filtered.map((l: any) => (
                   <div key={l.id} className={`p-4 border ares-cut-sm flex items-center justify-between ${l.is_deleted ? 'border-ares-danger/20 bg-ares-danger/5 opacity-50' : 'border-white/10 bg-obsidian/50 hover:bg-white/5'}`}>
                     <div>
                       <h4 className={`font-bold ${l.is_deleted ? 'text-ares-red/60 line-through' : 'text-white'}`}>{l.name}</h4>
@@ -167,11 +168,11 @@ export default function LocationsManager() {
                     </div>
                     <div className="flex items-center gap-2">
                       {l.is_deleted ? (
-                        <button onClick={() => restoreMut.mutate(l)} className="p-2 text-marble/90 hover:text-ares-cyan transition-colors bg-obsidian ares-cut-sm">RESTORE</button>
+                        <button onClick={() => saveMutation.mutate({ body: { ...l, is_deleted: 0 } })} className="p-2 text-marble/90 hover:text-ares-cyan transition-colors bg-obsidian ares-cut-sm">RESTORE</button>
                       ) : (
                         <>
-                          <button onClick={() => handleEdit(l)} className="p-2 text-marble/90 hover:text-ares-cyan transition-colors bg-obsidian ares-cut-sm"><Edit3 size={16} /></button>
-                          <button onClick={() => deleteMut.mutate(l.id)} className="p-2 text-marble/90 hover:text-ares-red transition-colors bg-obsidian ares-cut-sm"><Trash2 size={16} /></button>
+                          <button onClick={() => handleEdit(l)} title="Edit venue" className="p-2 text-marble/90 hover:text-ares-cyan transition-colors bg-obsidian ares-cut-sm"><Edit3 size={16} /></button>
+                          <button onClick={() => deleteMutation.mutate({ params: { id: l.id }, body: {} })} title="Delete venue" className="p-2 text-marble/90 hover:text-ares-red transition-colors bg-obsidian ares-cut-sm"><Trash2 size={16} /></button>
                         </>
                       )}
                     </div>
@@ -182,7 +183,7 @@ export default function LocationsManager() {
             )}
           </>
         ) : (
-          <div className="bg-obsidian border border-white/10 p-6 ares-cut-sm">
+          <form onSubmit={handleSubmit(onFormSubmit)} className="bg-obsidian border border-white/10 p-6 ares-cut-sm">
             <h3 className="text-white font-bold mb-6 font-heading tracking-widest">{editingId ? 'Edit Venue' : 'Register New Venue'}</h3>
             
             <div className="flex flex-col gap-4">
@@ -191,10 +192,10 @@ export default function LocationsManager() {
                 <input 
                   id="venue_name"
                   type="text" 
-                  value={form.name}
-                  onChange={(e) => setForm({...form, name: e.target.value})}
+                  {...register("name")}
                   className="w-full bg-obsidian border border-white/10 rounded p-3 text-white focus:border-ares-cyan outline-none"
                 />
+                {errors.name && <p className="text-[10px] font-black uppercase text-ares-red mt-1">{errors.name.message}</p>}
               </div>
 
               <div className="relative">
@@ -203,24 +204,25 @@ export default function LocationsManager() {
                   <input 
                     id="venue_address"
                     type="text" 
-                    value={addressQuery}
-                    onChange={(e) => setAddressQuery(e.target.value)}
+                    {...register("address")}
                     className="w-full bg-obsidian border border-white/10 rounded p-3 text-white focus:border-ares-cyan outline-none"
                     placeholder="Start typing an address..."
                   />
                   {isSearchingOSM && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-marble/50 text-xs">...</div>}
                 </div>
+                {errors.address && <p className="text-[10px] font-black uppercase text-ares-red mt-1">{errors.address.message}</p>}
 
-                {suggestions.length > 0 && addressQuery !== form.address && (
-                  <div className="absolute z-20 w-full mt-1 bg-white/10 border border-white/10 ares-cut-sm shadow-xl overflow-hidden">
+                {suggestions.length > 0 && (
+                  <div className="absolute z-20 w-full mt-1 bg-black border border-white/10 ares-cut-sm shadow-xl overflow-hidden">
                     {suggestions.map((s, i) => (
                       <button
                         key={i}
+                        type="button"
                         className="w-full text-left p-3 hover:bg-ares-cyan hover:text-black border-b border-white/10 text-sm text-marble transition-colors last:border-0"
                         onClick={() => {
-                          setAddressQuery(s.display_name);
+                          setValue("address", s.display_name);
                           const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.display_name)}`;
-                          setForm({...form, address: s.display_name, maps_url: mapsLink});
+                          setValue("maps_url", mapsLink);
                           setSuggestions([]);
                         }}
                       >
@@ -232,7 +234,7 @@ export default function LocationsManager() {
               </div>
 
               <div>
-                <label htmlFor="maps_url" className="text-xs uppercase tracking-widest text-marble/90 font-bold mb-2 block flex items-center justify-between">
+                <label htmlFor="maps_url" className="text-xs uppercase tracking-widest text-marble/90 font-bold mb-2 flex items-center justify-between">
                   <span>Google Maps URL</span>
                   <span className="text-marble/40 text-xs lowercase tracking-normal bg-obsidian border border-white/10 px-2 py-0.5 rounded">Auto-generated</span>
                 </label>
@@ -240,12 +242,12 @@ export default function LocationsManager() {
                   <input 
                     id="maps_url"
                     type="text" 
-                    value={form.maps_url}
+                    {...register("maps_url")}
                     readOnly
                     className="flex-1 bg-obsidian/50 border border-white/5 rounded p-3 text-marble/50 outline-none cursor-not-allowed text-sm font-mono"
                   />
-                  {form.maps_url && (
-                    <a href={form.maps_url} target="_blank" rel="noreferrer" className="bg-white/10 flex items-center justify-center px-4 rounded hover:bg-white/20 text-marble/90">
+                  {mapsUrl && (
+                    <a href={mapsUrl} target="_blank" rel="noreferrer" title="Open in Google Maps" className="bg-white/10 flex items-center justify-center px-4 rounded hover:bg-white/20 text-marble/90">
                       <Navigation size={18} />
                     </a>
                   )}
@@ -260,21 +262,22 @@ export default function LocationsManager() {
 
               <div className="flex gap-3 justify-end mt-4 pt-4 border-t border-white/10">
                 <button 
+                  type="button"
                   onClick={resetForm}
                   className="px-4 py-2 text-marble/90 hover:text-white font-bold text-sm tracking-widest uppercase"
                 >
                   Cancel
                 </button>
                 <button 
-                  onClick={submitForm}
-                  disabled={saveMut.isPending || !form.name || !form.address}
+                  type="submit"
+                  disabled={saveMutation.isPending}
                   className="bg-ares-cyan text-black px-6 py-2 rounded font-bold text-sm tracking-widest uppercase shadow hover:bg-white disabled:opacity-50 flex items-center gap-2 transition-all"
                 >
-                  {saveMut.isPending ? 'Saving...' : <><CheckCircle size={16}/> Save Venue</>}
+                  {saveMutation.isPending ? 'Saving...' : <><CheckCircle size={16}/> Save Venue</>}
                 </button>
               </div>
             </div>
-          </div>
+          </form>
         )}
       </div>
     </div>

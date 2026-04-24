@@ -7,7 +7,8 @@ import Turnstile from "../components/Turnstile";
 import DocsMarkdownRenderer from "../components/docs/DocsMarkdownRenderer";
 import DocsSidebar from "../components/docs/DocsSidebar";
 import DocsTableOfContents from "../components/docs/DocsTableOfContents";
-import { publicApi } from "../api/publicApi";
+import AutonomousLogicDiagram from "../components/docs/AutonomousLogicDiagram";
+import { api } from "../api/client";
 import { useModal } from "../contexts/ModalContext";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDocs } from "../hooks/useDocs";
@@ -158,6 +159,21 @@ export default function Docs() {
               <div className="ares-docs-content">
                 <DocsMarkdownRenderer content={currentDoc.content || ""} />
 
+                {/* Pilot Visualizer for Robotics Logic */}
+                {currentDoc.slug === "autonomous-mapping" && (
+                   <div className="mt-12 space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-white/5" />
+                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-ares-gold">Interactive Logic Visualization</h3>
+                        <div className="h-px flex-1 bg-white/5" />
+                      </div>
+                      <AutonomousLogicDiagram />
+                      <p className="text-[10px] text-marble/30 text-center uppercase tracking-widest font-mono">
+                        ARES-FLOW Engine v1.0 // Node-based State Machine Visualization
+                      </p>
+                   </div>
+                )}
+
                 <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(() => {
                     const currentIndex = allDocs.findIndex(d => d.slug === (slug || (allDocs.length > 0 ? allDocs[0].slug : "")));
@@ -244,7 +260,10 @@ export default function Docs() {
                   <div className="flex flex-wrap gap-4">
                     <button 
                       onClick={async () => {
-                        await publicApi.submitDocsFeedback(slug!, true, feedbackToken);
+                        await api.docs.submitFeedback.mutation({
+                          params: { slug: slug! },
+                          body: { isHelpful: true, turnstileToken: feedbackToken }
+                        });
                         toast.success('Thanks for your feedback!');
                       }}
                       className="flex items-center gap-2 px-6 py-2.5 ares-cut-sm bg-ares-cyan/10 border border-ares-cyan/30 text-ares-cyan font-bold hover:bg-ares-cyan hover:text-black transition-all"
@@ -259,7 +278,10 @@ export default function Docs() {
                           submitText: "Submit",
                         });
                         if (comment !== null) {
-                          await publicApi.submitDocsFeedback(slug!, false, feedbackToken, comment || "");
+                          await api.docs.submitFeedback.mutation({
+                            params: { slug: slug! },
+                            body: { isHelpful: false, turnstileToken: feedbackToken, comment: comment || "" }
+                          });
                           toast.success('Thank you! We will use your feedback to improve this page.');
                         }
                       }}

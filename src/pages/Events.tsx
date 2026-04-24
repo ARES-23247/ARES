@@ -3,30 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { isAfter, subDays, addDays, parseISO } from "date-fns";
 import { motion } from "framer-motion";
 import SEO from "../components/SEO";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 import { EventCard, EventItem } from "../components/events/EventCard";
 import CompetitionBanner from "../components/CompetitionBanner";
 
 export default function Events() {
-  const { data: events = [], isLoading } = useQuery<EventItem[]>({
+  const { data: eventsRes, isLoading } = api.events.getEvents.useQuery({
     queryKey: ["events"],
-    queryFn: async () => {
-      const res = await publicApi.get<{ events?: EventItem[] }>("/api/events");
-      return res.events ?? [];
-    },
   });
+  const events = (eventsRes?.body as any)?.events || [];
 
-  const { data: calendarData = null } = useQuery({
+  const { data: calendarRes } = api.events.getCalendarConfig.useQuery({
     queryKey: ["calendar_config"],
-    queryFn: async () => {
-      try {
-        return await publicApi.get<{ calendarIdInternal?: string, calendarIdOutreach?: string, calendarIdExternal?: string }>("/api/events/calendar");
-      } catch {
-        return {};
-      }
-    },
   });
+  const calendarData = calendarRes?.status === 200 ? calendarRes.body : null;
 
   // EFF-N01: Memoize calendar configuration mapping
   const calendars = useMemo(() => {

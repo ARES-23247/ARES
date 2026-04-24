@@ -5,7 +5,7 @@
 
 export type AnalyticsCategory = 'blog' | 'doc' | 'event' | 'system';
 
-import { publicApi } from '../api/publicApi';
+import { api } from '../api/client';
 
 export async function trackPageView(path: string, category: AnalyticsCategory) {
   try {
@@ -13,10 +13,12 @@ export async function trackPageView(path: string, category: AnalyticsCategory) {
     // If you want to disable local tracking, uncomment the following line:
     // if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return;
 
-    await publicApi.trackAnalytics('track', {
-      path,
-      category,
-      referrer: document.referrer,
+    await api.analytics.trackPageView.mutation({
+      body: {
+        path,
+        category,
+        referrer: document.referrer,
+      }
     });
   } catch (err) {
     // Silent fail to avoid disrupting user experience

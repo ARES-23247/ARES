@@ -1,9 +1,9 @@
 import { siteConfig } from "./site.config";
+import { graphql } from "@octokit/graphql";
+import { z } from "zod";
 
 /**
  * GitHub Projects v2 — GraphQL Client Utility
- * Provides CRUD operations against the GitHub Projects v2 API
- * for the ${siteConfig.urls.githubOrg} organization project board.
  */
 
 interface GitHubProjectsConfig {
@@ -12,36 +12,51 @@ interface GitHubProjectsConfig {
   org: string;
 }
 
-interface GQLResponse<T> {
-  data?: T;
-  errors?: { message: string }[];
-}
+// ── Validation Schemas ───────────────────────────────────────────────
+
+const ContentNodeSchema = z.object({
+  title: z.string().optional(),
+  body: z.string().optional(),
+  url: z.string().optional(),
+}).nullable();
+
+const FieldValueNodeSchema = z.object({
+  name: z.string().optional(),
+  text: z.string().optional(),
+  field: z.object({ name: z.string().optional() }).optional(),
+  users: z.object({ nodes: z.array(z.object({ login: z.string() })) }).optional(),
+});
+
+const ProjectItemNodeSchema = z.object({
+  id: z.string(),
+  type: z.enum(["DRAFT_ISSUE", "ISSUE", "PULL_REQUEST"]),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  content: ContentNodeSchema,
+  fieldValues: z.object({ nodes: z.array(FieldValueNodeSchema) }),
+});
+
+const ProjectBoardSchema = z.object({
+  node: z.object({
+    title: z.string(),
+    shortDescription: z.string().optional().nullable(),
+    items: z.object({
+      totalCount: z.number(),
+      nodes: z.array(ProjectItemNodeSchema),
+    }),
+  }),
+});
 
 // ── Core GraphQL executor ────────────────────────────────────────────
 async function gql<T>(config: GitHubProjectsConfig, query: string, variables: Record<string, unknown> = {}): Promise<T> {
-  const res = await fetch("https://api.github.com/graphql", { signal: AbortSignal.timeout(10000),
-    method: "POST",
+  const graphqlWithAuth = graphql.defaults({
     headers: {
-      "Authorization": `Bearer ${config.pat}`,
-      "Content-Type": "application/json",
-      "User-Agent": `${siteConfig.team.name}-Cloudflare-Worker`,
+      authorization: `token ${config.pat}`,
+      "user-agent": `${siteConfig.team.name}-Cloudflare-Worker`,
     },
-    body: JSON.stringify({ query, variables }),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`GitHub GraphQL HTTP ${res.status}: ${text}`);
-  }
-
-  const json = await res.json() as GQLResponse<T>;
-  if (json.errors && json.errors.length > 0) {
-    throw new Error(`GitHub GraphQL Error: ${json.errors.map(e => e.message).join(", ")}`);
-  }
-  if (!json.data) {
-    throw new Error("GitHub GraphQL returned no data");
-  }
-  return json.data;
+  return await graphqlWithAuth(query, variables) as T;
 }
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -114,37 +129,8 @@ export async function fetchProjectBoard(config: GitHubProjectsConfig): Promise<P
     }
   `;
 
-  interface ContentNode {
-    title?: string;
-    body?: string;
-    url?: string;
-  }
-
-  interface FieldValueNode {
-    name?: string;
-    text?: string;
-    field?: { name?: string };
-    users?: { nodes: { login: string }[] };
-  }
-
-  interface ItemNode {
-    id: string;
-    type: string;
-    createdAt: string;
-    updatedAt: string;
-    content: ContentNode | null;
-    fieldValues: { nodes: FieldValueNode[] };
-  }
-
-  interface ProjectData {
-    node: {
-      title: string;
-      shortDescription: string;
-      items: { totalCount: number; nodes: ItemNode[] };
-    };
-  }
-
-  const data = await gql<ProjectData>(config, query, { projectId: config.projectId });
+  const rawData = await gql<unknown>(config, query, { projectId: config.projectId });
+  const data = ProjectBoardSchema.parse(rawData);
   const project = data.node;
 
   const items: ProjectItem[] = project.items.nodes.map((item) => {
@@ -164,18 +150,18 @@ export async function fetchProjectBoard(config: GitHubProjectsConfig): Promise<P
       id: item.id,
       title: item.content?.title || "Untitled",
       body: item.content?.body || undefined,
-      url: (item.content as ContentNode)?.url || undefined,
+      url: item.content?.url || undefined,
       status,
       assignees,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
-      type: item.type as ProjectItem["type"],
+      type: item.type,
     };
   });
 
   return {
     title: project.title,
-    shortDescription: project.shortDescription,
+    shortDescription: project.shortDescription || "",
     items,
     totalCount: project.items.totalCount,
   };

@@ -244,11 +244,14 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
 
 function RevealBlock({ summary, children }: { summary: string, children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const contentId = `reveal-content-${summary.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
   return (
     <div className="my-6 ares-cut-sm border border-white/10 bg-black/20 overflow-hidden shadow-lg transition-all hover:border-ares-gold/30">
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={contentId}
         className="w-full flex items-center justify-between px-6 py-4 text-left group transition-colors hover:bg-white/5"
       >
         <div className="flex items-center gap-3">
@@ -271,6 +274,8 @@ function RevealBlock({ summary, children }: { summary: string, children: ReactNo
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            id={contentId}
+            role="region"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

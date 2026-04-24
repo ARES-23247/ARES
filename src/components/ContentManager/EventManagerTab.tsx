@@ -2,12 +2,9 @@ import { format } from "date-fns";
 import { Radio, Calendar } from "lucide-react";
 import DashboardEmptyState from "../dashboard/DashboardEmptyState";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { useContentMutation } from "../../hooks/useContentMutation";
-import { EventItem, ViewType, ClickToDeleteButton, ContentMutationResult } from "./shared";
-import { adminApi } from "../../api/adminApi";
-
-
+import { EventItem, ViewType, ClickToDeleteButton } from "./shared";
+import { api } from "../../api/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EventManagerTabProps {
   view: ViewType;
@@ -16,13 +13,7 @@ interface EventManagerTabProps {
   setConfirmId: (id: string | null) => void;
   broadcastData: { isOpen: boolean, id: string };
   setBroadcastData: (data: { isOpen: boolean, type: "blog" | "event", id: string, title: string }) => void;
-  approveMutation: ContentMutationResult;
-  rejectMutation: ContentMutationResult;
-  restoreMutation: ContentMutationResult;
-  purgeMutation: ContentMutationResult;
 }
-
-
 
 export default function EventManagerTab({
   view,
@@ -31,60 +22,81 @@ export default function EventManagerTab({
   setConfirmId,
   broadcastData,
   setBroadcastData,
-  approveMutation,
-  rejectMutation,
-  restoreMutation,
-  purgeMutation
 }: EventManagerTabProps) {
-  // Removed local category filter state since it is now controlled by the parent view
+  const queryClient = useQueryClient();
 
-  const { data: eventsResult, isLoading, isError } = useQuery<{ events: EventItem[], lastSyncedAt: string | null }>({
+  const { data, isLoading, isError } = api.events.adminList.useQuery({
     queryKey: ["admin_events"],
-    queryFn: async () => {
-      const data = await adminApi.get<{ events?: EventItem[], lastSyncedAt?: string | null }>("/api/admin/events");
-      return { 
-        events: data.events ?? [], 
-        lastSyncedAt: data.lastSyncedAt ?? null 
-      };
-    },
   });
 
-  const events = eventsResult?.events ?? [];
-  const lastSyncedAt = eventsResult?.lastSyncedAt;
+  const events = data?.status === 200 ? (data.body.events as unknown as EventItem[]) : [];
+  const lastSyncedAt = data?.status === 200 ? data.body.lastSyncedAt : null;
 
-  const deleteEventMutation = useContentMutation<string>({
-    endpoint: (id) => `/api/admin/events/${id}`,
-    invalidateKeys: ["admin_events", "admin_events_notifications", "events"],
-    setConfirmId,
+  const deleteMutation = api.events.deleteEvent.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      setConfirmId(null);
+      toast.success("Event deleted");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Delete failed");
+    }
   });
 
-  const syncGcalMutation = useContentMutation<void>({
-    endpoint: () => `/api/admin/events/sync`,
-    method: "POST",
-    invalidateKeys: ["admin_events", "admin_events_notifications", "events"],
-    clearConfirm: false,
-    onSuccess: (data: unknown) => {
-      const res = data as { synced: number; newEvents: number; updatedEvents: number; lastSyncedAt: string };
-      toast.success(`Sync Complete! Fetched ${res.synced} events. (${res.newEvents} new, ${res.updatedEvents} updated)`);
+  const syncGcalMutation = api.events.syncEvents.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200 && res.body.success) {
+        queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+        toast.success(`Sync Complete! Fetched ${res.body.count || 0} events.`);
+      } else {
+        toast.error("Sync failed");
+      }
     },
+    onError: (err) => {
+      toast.error(err.message || "Sync failed");
+    }
+  });
+
+  const localApproveMutation = api.events.approveEvent.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      toast.success("Event approved");
+    }
+  });
+
+  const localRejectMutation = api.events.rejectEvent.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      toast.success("Event rejected");
+    }
+  });
+
+  const localRestoreMutation = api.events.undeleteEvent.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      toast.success("Event restored");
+    }
+  });
+
+  const localPurgeMutation = api.events.purgeEvent.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+      toast.success("Event purged");
+    }
   });
 
   if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-ares-red rounded-full animate-spin"></div></div>;
-  if (eventsResult === undefined) return <div className="h-32 flex flex-col items-center justify-center text-ares-red gap-2"><p className="font-bold">FAILED TO LOAD EVENTS</p><p className="text-xs text-marble/40">Check console for details or ensure database is up to date.</p></div>;
-
 
   const lifecycleFiltered = events.filter(e => {
     const isDeleted = Number(e.is_deleted) === 1;
     if (view === 'trash') return isDeleted;
     if (view === 'pending') return !isDeleted && (e.status === 'pending' || e.status === 'rejected' || e.status === 'draft');
-    if (view === 'all') return !isDeleted; // Show all non-deleted events in 'all' view
+    if (view === 'all') return !isDeleted;
     return !isDeleted && e.status !== 'pending' && e.status !== 'rejected' && e.status !== 'draft';
   });
 
   const filtered = (view === 'active' || view === 'all') ? lifecycleFiltered :
                    (view === 'internal' || view === 'outreach' || view === 'external') ? lifecycleFiltered.filter(e => e.category === view) : lifecycleFiltered;
-
-  // We no longer display category counts, since the tabs are now top-level.
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -101,7 +113,7 @@ export default function EventManagerTab({
         </div>
         {view !== 'trash' && view !== 'pending' && (
           <button 
-            onClick={() => syncGcalMutation.mutate(undefined as unknown as void)}
+            onClick={() => syncGcalMutation.mutate({ body: {} })}
             disabled={syncGcalMutation.isPending}
             className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
           >
@@ -116,7 +128,6 @@ export default function EventManagerTab({
       </div>
 
       <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
-
         {filtered.length === 0 ? (
           <DashboardEmptyState
             className="text-marble/50 text-xs italic py-8 text-center border border-dashed border-white/5 ares-cut-sm"
@@ -153,15 +164,15 @@ export default function EventManagerTab({
                     {view === 'pending' ? (
                       <>
                       <button
-                        onClick={() => approveMutation.mutate({ type: 'event', id: event.id })}
-                        disabled={approveMutation.isPending}
+                        onClick={() => localApproveMutation.mutate({ params: { id: event.id }, body: {} })}
+                        disabled={localApproveMutation.isPending}
                         className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan/40 border border-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         APPROVE
                       </button>
                       <button
-                        onClick={() => rejectMutation.mutate({ type: 'event', id: event.id })}
-                        disabled={rejectMutation.isPending}
+                        onClick={() => localRejectMutation.mutate({ params: { id: event.id }, body: {} })}
+                        disabled={localRejectMutation.isPending}
                         className="text-xs font-bold text-ares-gold hover:text-white bg-ares-gold/10 hover:bg-ares-gold/40 border border-ares-gold/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         REJECT
@@ -178,8 +189,9 @@ export default function EventManagerTab({
                     )}
                     <ClickToDeleteButton 
                       id={event.id} 
-                      onDelete={() => deleteEventMutation.mutate(event.id)} 
-                      isDeleting={deleteEventMutation.isPending && deleteEventMutation.variables === event.id} 
+                      onDelete={() => deleteMutation.mutate({ params: { id: event.id }, body: {} })} 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      isDeleting={deleteMutation.isPending && (deleteMutation.variables as any)?.params?.id === event.id} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}
                     />
@@ -187,16 +199,18 @@ export default function EventManagerTab({
                 ) : (
                   <>
                     <button
-                      onClick={() => restoreMutation.mutate({ type: 'event', id: event.id })}
-                      disabled={restoreMutation.isPending}
+                      onClick={() => localRestoreMutation.mutate({ params: { id: event.id }, body: {} })}
+                      disabled={localRestoreMutation.isPending}
                       className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors"
                     >
-                      {restoreMutation.isPending && restoreMutation.variables?.id === event.id ? "RESTORING..." : "RESTORE"}
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {(localRestoreMutation.isPending && (localRestoreMutation.variables as any)?.params?.id === event.id) ? "RESTORING..." : "RESTORE"}
                     </button>
                     <ClickToDeleteButton 
                       id={`purge-${event.id}`} 
-                      onDelete={() => purgeMutation.mutate({ type: 'event', id: event.id })} 
-                      isDeleting={purgeMutation.isPending && purgeMutation.variables?.id === event.id} 
+                      onDelete={() => localPurgeMutation.mutate({ params: { id: event.id }, body: {} })} 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      isDeleting={localPurgeMutation.isPending && (localPurgeMutation.variables as any)?.params?.id === event.id} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}
                     />

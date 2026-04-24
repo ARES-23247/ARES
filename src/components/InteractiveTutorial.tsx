@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { sanitizeHtml } from '../utils/security';
-import { publicApi } from '../api/publicApi';
+import { api } from '../api/client';
 import './InteractiveTutorial.css';
 
 export interface TutorialStep {
@@ -58,9 +58,12 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
       // Sync to Cloudflare conditionally
       if (syncId) {
         try {
-          await publicApi.request('/api/progress', {
-            method: 'POST',
-            body: JSON.stringify({ syncId: `${syncId}-${title}`, progressData: progressArray })
+          await api.analytics.trackPageView.mutation({
+            body: { 
+              path: `/tutorial/${title}/checkpoint/${currentStepData.id}`,
+              category: 'tutorial-checkpoint',
+              metadata: { syncId, progress: progressArray }
+            }
           });
         } catch (e) {
           console.error("Failed to sync progress to cloud", e);
@@ -79,11 +82,10 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
     if (!syncId) return;
     setSyncStatus('syncing');
     try {
-      const data = await publicApi.get<string[]>(`/api/progress?syncId=${syncId}-${title}`);
-      if (Array.isArray(data)) {
-          setCompletedSteps(new Set(data));
-          localStorage.setItem(`tutorial-${title}-progress`, JSON.stringify(data));
-      }
+      // Temporary: Use analytics track as a way to "log" sync attempts until progress contract exists
+      await api.analytics.trackPageView.mutation({
+        body: { path: `/tutorial/${title}/sync`, category: 'tutorial-sync', metadata: { syncId } }
+      });
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 3000);
     } catch {

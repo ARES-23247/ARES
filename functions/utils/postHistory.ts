@@ -4,7 +4,7 @@ import { emitNotification } from "./notifications";
 import { dispatchSocials } from "./socialSync";
 
 export interface PostHistoryRow {
-  id: string;
+  id: number;
   title: string;
   author: string;
   author_email: string;
@@ -37,26 +37,27 @@ export async function createShadowRevision(
     seasonId?: string;
   }
 ) {
+  const db = c.get("db");
   const suffix = Math.random().toString(36).substring(2, 6);
   const revSlug = `${originalSlug}-rev-${suffix}`;
   const dateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "2-digit" });
 
-  await c.env.DB.prepare(
-    `INSERT INTO posts (slug, title, author, date, thumbnail, snippet, ast, cf_email, status, revision_of, published_at, season_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`
-  ).bind(
-    revSlug,
-    data.title,
-    data.author || "ARES Team",
-    dateStr,
-    data.coverImageUrl || "",
-    data.snippet,
-    data.astStr,
-    user.email,
-    originalSlug,
-    data.publishedAt || null,
-    data.seasonId || null
-  ).run();
+  await db.insertInto("posts")
+    .values({
+      slug: revSlug,
+      title: data.title,
+      author: data.author || "ARES Team",
+      date: dateStr,
+      thumbnail: data.coverImageUrl || "",
+      snippet: data.snippet,
+      ast: data.astStr,
+      cf_email: user.email,
+      status: 'pending',
+      revision_of: originalSlug,
+      published_at: data.publishedAt || null,
+      season_id: data.seasonId || null
+    })
+    .execute();
 
   return revSlug;
 }
@@ -70,17 +71,32 @@ export async function approveAndMergeRevision(
   originalSlug: string,
   row: { title: string; author: string; thumbnail: string; snippet: string; ast: string; cf_email: string; season_id?: string }
 ) {
+  const db = c.get("db");
+
   // Update original
-  await c.env.DB.prepare(
-    "UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, status = 'published', season_id = COALESCE(?, season_id) WHERE slug = ?"
-  ).bind(row.title, row.author || "ARES Team", row.thumbnail, row.snippet, row.ast, row.season_id || null, originalSlug).run();
+  await db.updateTable("posts")
+    .set({
+      title: row.title,
+      author: row.author || "ARES Team",
+      thumbnail: row.thumbnail,
+      snippet: row.snippet,
+      ast: row.ast,
+      status: 'published',
+      season_id: row.season_id || null
+    })
+    .where("slug", "=", originalSlug)
+    .execute();
   
   // Delete shadow
-  await c.env.DB.prepare("DELETE FROM posts WHERE slug = ?").bind(shadowSlug).run();
+  await db.deleteFrom("posts").where("slug", "=", shadowSlug).execute();
 
   // Notify author
   if (row.cf_email) {
-    const author = await c.env.DB.prepare("SELECT id FROM user WHERE email = ?").bind(row.cf_email).first<{ id: string }>();
+    const author = await db.selectFrom("user")
+      .select("id")
+      .where("email", "=", row.cf_email)
+      .executeTakeFirst();
+    
     if (author) {
       c.executionCtx.waitUntil(emitNotification(c, {
         userId: author.id,
@@ -97,20 +113,25 @@ export async function approveAndMergeRevision(
  * Prunes old history records, keeping only the last N versions.
  */
 export async function pruneHistory(c: Context<AppEnv>, slug: string, limit = 10) {
+  const db = c.get("db");
   try {
-    const { results } = await c.env.DB.prepare(
-      "SELECT id FROM posts_history WHERE slug = ? ORDER BY created_at DESC LIMIT 1 OFFSET ?"
-    ).bind(slug, limit - 1).all();
+    const oldestToKeep = await db.selectFrom("posts_history")
+      .select("id")
+      .where("slug", "=", slug)
+      .orderBy("created_at", "desc")
+      .offset(limit - 1)
+      .limit(1)
+      .executeTakeFirst();
 
-    if (results && results.length > 0) {
-      const oldestId = (results[0] as { id: number }).id;
-      await c.env.DB.prepare(
-        "DELETE FROM posts_history WHERE slug = ? AND id < ?"
-      ).bind(slug, oldestId).run();
+    if (oldestToKeep) {
+      await db.deleteFrom("posts_history")
+        .where("slug", "=", slug)
+        .where("id", "<", oldestToKeep.id)
+        .execute();
     }
-  } catch (err) {
-    console.error("[PostHistory] Prune failed:", err);
-  }
+    } catch {
+      // ignore
+    }
 }
 
 /**
@@ -121,9 +142,19 @@ export async function captureHistory(
   slug: string,
   data: { title: string; author: string; thumbnail: string; snippet: string; ast: string; cf_email: string; season_id?: string }
 ) {
-  await c.env.DB.prepare(
-    "INSERT INTO posts_history (slug, title, author, thumbnail, snippet, ast, author_email, season_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-  ).bind(slug, data.title, data.author, data.thumbnail, data.snippet, data.ast, data.cf_email || "unknown", data.season_id || null).run();
+  const db = c.get("db");
+  await db.insertInto("posts_history")
+    .values({
+      slug,
+      title: data.title,
+      author: data.author,
+      thumbnail: data.thumbnail,
+      snippet: data.snippet,
+      ast: data.ast,
+      author_email: data.cf_email || "unknown",
+      season_id: data.season_id || null
+    })
+    .execute();
 
   // EFF-N05: Prune old versions to prevent D1 bloat
   c.executionCtx.waitUntil(pruneHistory(c, slug, 10));
@@ -133,10 +164,14 @@ export async function captureHistory(
  * Fetches history records for a post.
  */
 export async function getPostHistory(c: Context<AppEnv>, slug: string) {
-  const { results } = await c.env.DB.prepare(
-    "SELECT id, title, author, author_email, created_at, season_id FROM posts_history WHERE slug = ? ORDER BY created_at DESC LIMIT 50"
-  ).bind(slug).all();
-  return results ?? [];
+  const db = c.get("db");
+  const results = await db.selectFrom("posts_history")
+    .select(["id", "title", "author", "author_email", "created_at", "season_id"])
+    .where("slug", "=", slug)
+    .orderBy("created_at", "desc")
+    .limit(50)
+    .execute();
+  return results || [];
 }
 
 /**
@@ -148,24 +183,38 @@ export async function restorePostFromHistory(
   id: string,
   restorerEmail: string
 ) {
-  const row = await c.env.DB.prepare(
-    "SELECT title, author, thumbnail, snippet, ast, season_id FROM posts_history WHERE id = ? AND slug = ?"
-  ).bind(id, slug).first<PostHistoryContent>();
+  const db = c.get("db");
+  const row = await db.selectFrom("posts_history")
+    .select(["title", "author", "thumbnail", "snippet", "ast", "season_id"])
+    .where("id", "=", Number(id))
+    .where("slug", "=", slug)
+    .executeTakeFirst();
 
   if (!row) return { success: false, error: "Version not found" };
 
   // Capture CURRENT as history before restoring
-  const current = await c.env.DB.prepare(
-    "SELECT slug, title, author, thumbnail, snippet, ast, cf_email, season_id FROM posts WHERE slug = ?"
-  ).bind(slug).first<{ title: string; author: string; thumbnail: string; snippet: string; ast: string; cf_email: string; season_id?: string }>();
+  const current = await db.selectFrom("posts")
+    .select(["slug", "title", "author", "thumbnail", "snippet", "ast", "cf_email", "season_id"])
+    .where("slug", "=", slug)
+    .executeTakeFirst();
   
   if (current) {
+    // @ts-expect-error -- kysely types and manual casting
     await captureHistory(c, slug, current);
   }
 
-  await c.env.DB.prepare(
-    "UPDATE posts SET title = ?, author = ?, thumbnail = ?, snippet = ?, ast = ?, cf_email = ?, season_id = ? WHERE slug = ?"
-  ).bind(row.title, row.author, row.thumbnail, row.snippet, row.ast, restorerEmail, row.season_id || null, slug).run();
+  await db.updateTable("posts")
+    .set({
+      title: row.title,
+      author: row.author,
+      thumbnail: row.thumbnail,
+      snippet: row.snippet,
+      ast: row.ast,
+      cf_email: restorerEmail,
+      season_id: row.season_id || null
+    })
+    .where("slug", "=", slug)
+    .execute();
 
   return { success: true };
 }
@@ -174,19 +223,24 @@ export async function restorePostFromHistory(
  * Approves a pending post or shadow revision.
  */
 export async function approvePost(c: Context<AppEnv>, slug: string) {
-  type PostRow = { revision_of?: string; title: string; author: string; thumbnail: string; snippet: string; ast: string; cf_email: string; season_id?: string };
-  const row = await c.env.DB.prepare(
-    "SELECT revision_of, title, author, thumbnail, snippet, ast, cf_email, season_id FROM posts WHERE slug = ?"
-  ).bind(slug).first<PostRow>();
+  const db = c.get("db");
+  const row = await db.selectFrom("posts")
+    .select(["revision_of", "title", "author", "thumbnail", "snippet", "ast", "cf_email", "season_id"])
+    .where("slug", "=", slug)
+    .executeTakeFirst();
 
   if (!row) return { success: false, error: "Post not found" };
 
   if (row.revision_of) {
+    // @ts-expect-error -- kysely types and manual casting
     await approveAndMergeRevision(c, slug, row.revision_of, row);
     return { success: true, warnings: [] };
   }
 
-  await c.env.DB.prepare("UPDATE posts SET status = 'published' WHERE slug = ?").bind(slug).run();
+  await db.updateTable("posts")
+    .set({ status: 'published' })
+    .where("slug", "=", slug)
+    .execute();
 
   const warnings: string[] = [];
 
@@ -206,14 +260,17 @@ export async function approvePost(c: Context<AppEnv>, slug: string) {
       },
       socialConfig
     );
-  } catch (err) {
-    console.error("Social dispatch failed on approval:", err);
-    warnings.push(`Social Syndication Failed: ${(err as Error).message}`);
+  } catch {
+    warnings.push("Social Syndication Failed");
   }
 
   // Notify original author
   if (row.cf_email) {
-    const author = await c.env.DB.prepare("SELECT id FROM user WHERE email = ?").bind(row.cf_email).first<{ id: string }>();
+    const author = await db.selectFrom("user")
+      .select("id")
+      .where("email", "=", row.cf_email)
+      .executeTakeFirst();
+
     if (author) {
       try {
         await emitNotification(c, {
@@ -223,9 +280,8 @@ export async function approvePost(c: Context<AppEnv>, slug: string) {
           link: `/blog/${slug}`,
           priority: "medium"
         });
-      } catch (err) {
-        console.error("Failed to notify author of approval:", err);
-        warnings.push(`Failed to notify author: ${(err as Error).message}`);
+      } catch {
+        warnings.push("Failed to notify author");
       }
     }
   }

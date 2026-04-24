@@ -2,6 +2,7 @@ import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard
 import { motion } from "framer-motion";
 import GitHubHeatmap from "../components/GitHubHeatmap";
 import SEO from "../components/SEO";
+import RobotViewer from "../components/RobotViewer";
 
 export default function TechStack() {
   return (
@@ -14,7 +15,20 @@ export default function TechStack() {
     >
       <SEO title="Tech Stack" description="Explore the zero-cost, serverless architecture powering ARES 23247." />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 overflow-x-hidden">
-        
+
+        {/* 3D Hardware Visualization */}
+        <section className="mb-24">
+           <div className="flex items-center gap-4 mb-8">
+              <div className="h-px flex-1 bg-white/5" />
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-ares-gold text-center">Interactive Hardware Architecture</h2>
+              <div className="h-px flex-1 bg-white/5" />
+           </div>
+           <RobotViewer />
+           <p className="text-[10px] text-marble/30 text-center uppercase tracking-widest font-mono mt-4">
+              ARES-R3F Engine v1.0 // Real-time Hardware Twin
+           </p>
+        </section>
+
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-16 px-4">
           <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold font-heading mb-6 tracking-tight text-white'Built_for_the_Future.']" aria-hidden="true"></h1>

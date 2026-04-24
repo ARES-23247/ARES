@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { compressImage } from "../utils/imageProcessor";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 
 export function useImageUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -14,10 +14,16 @@ export function useImageUpload() {
       const { blob: compressedBlob, ext } = await compressImage(file);
       const formData = new FormData();
       formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ext));
-      const data = await adminApi.uploadFile<{ url?: string, error?: string, altText?: string }>("/api/admin/upload", formData);
       
-      if (!data.url) throw new Error(data.error || "Upload failed");
-      return { url: data.url, altText: data.altText };
+      const res = await api.media.upload.mutation({
+        body: formData
+      });
+      
+      if (res.status === 200) {
+        return { url: res.body.url, altText: res.body.altText };
+      } else {
+        throw new Error((res.body as any).error || "Upload failed");
+      }
     } catch (err) {
       const msg = String(err);
       setErrorMsg(msg);

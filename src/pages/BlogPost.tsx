@@ -9,7 +9,7 @@ import { Edit2 } from "lucide-react";
 
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import CommentSection from "../components/CommentSection";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface PostRow {
   slug: string;
@@ -29,20 +29,14 @@ export default function BlogPost() {
   const userRole = (session?.user as Record<string, unknown>)?.role || "user";
   const isEditor = userRole === "admin" || userRole === "author";
 
-  const { data: post, isLoading, isError } = useQuery<PostRow>({
+  const { data: postRes, isLoading, isError } = api.posts.getPost.useQuery({
     queryKey: ["post", slug],
-    queryFn: async () => {
-      try {
-        const data = await publicApi.get<{ post: PostRow }>(`/api/posts/${slug}`);
-        if (!data || !data.post) throw new Error("Not found");
-        return data.post;
-      } catch {
-        throw new Error("Not found");
-      }
-    },
+    params: { slug: slug || "" },
     enabled: !!slug,
-    retry: false, // Don't retry 404s
+    retry: false,
   });
+
+  const post = postRes?.status === 200 ? postRes.body.post : null;
 
   useEffect(() => {
     if (post && slug) {

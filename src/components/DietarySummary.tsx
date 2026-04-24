@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Utensils, Shirt, RefreshCw, AlertCircle, Users } from "lucide-react";
 import { motion } from "framer-motion";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 
 interface LogisticsData {
   dietary: Record<string, number>;
@@ -18,9 +18,15 @@ export default function DietarySummary() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    adminApi.get<LogisticsData>("/api/logistics/summary")
-      .then((d) => {
-        setData(d);
+    api.logistics.getSummary.query()
+      .then((res) => {
+        if (res.status === 200) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setData(res.body as any);
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setError((res.body as any)?.error || "Failed to load logistics summary");
+        }
         setLoading(false);
       })
       .catch((err) => {

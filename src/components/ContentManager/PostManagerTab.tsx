@@ -2,11 +2,11 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Radio, FileText } from "lucide-react";
 import DashboardEmptyState from "../dashboard/DashboardEmptyState";
-import { useQuery } from "@tanstack/react-query";
-import { useContentMutation } from "../../hooks/useContentMutation";
-import { PostItem, ViewType, ClickToDeleteButton, contentFilter, ContentMutationResult } from "./shared";
+import { PostItem, ViewType, ClickToDeleteButton, contentFilter } from "./shared";
 import RevisionManager from "../RevisionManager";
-import { adminApi } from "../../api/adminApi";
+import { api } from "../../api/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PostManagerTabProps {
   view: ViewType;
@@ -15,10 +15,6 @@ interface PostManagerTabProps {
   setConfirmId: (id: string | null) => void;
   broadcastData: { isOpen: boolean, id: string };
   setBroadcastData: (data: { isOpen: boolean, type: "blog" | "event", id: string, title: string }) => void;
-  approveMutation: ContentMutationResult;
-  rejectMutation: ContentMutationResult;
-  restoreMutation: ContentMutationResult;
-  purgeMutation: ContentMutationResult;
 }
 
 export default function PostManagerTab({
@@ -28,28 +24,56 @@ export default function PostManagerTab({
   setConfirmId,
   broadcastData,
   setBroadcastData,
-  approveMutation,
-  rejectMutation,
-  restoreMutation,
-  purgeMutation
 }: PostManagerTabProps) {
+  const queryClient = useQueryClient();
   const [historyTarget, setHistoryTarget] = useState<{ slug: string, title: string } | null>(null);
-  const { data: posts = [], isLoading, isError } = useQuery<PostItem[]>({
+  
+  const { data, isLoading, isError } = api.posts.getAdminPosts.useQuery({
     queryKey: ["posts"],
-    queryFn: async () => {
-      const data = await adminApi.get<{ posts?: PostItem[] }>("/api/admin/posts/list");
-      return data.posts ?? [];
-    },
   });
 
-  const deletePostMutation = useContentMutation<string>({
-    endpoint: (slug) => `/api/admin/posts/${slug}`,
-    invalidateKeys: ["posts"],
-    setConfirmId,
+  const posts = data?.status === 200 ? (data.body.posts as unknown as PostItem[]) : [];
+
+  const deleteMutation = api.posts.deletePost.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      setConfirmId(null);
+      toast.success("Post deleted");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Delete failed");
+    }
+  });
+
+  const localApproveMutation = api.posts.approvePost.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("Post approved");
+    }
+  });
+
+  const localRejectMutation = api.posts.rejectPost.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("Post rejected");
+    }
+  });
+
+  const localRestoreMutation = api.posts.undeletePost.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("Post restored");
+    }
+  });
+
+  const localPurgeMutation = api.posts.purgePost.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("Post purged");
+    }
   });
 
   if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-ares-red rounded-full animate-spin"></div></div>;
-
 
   const filtered = posts.filter(contentFilter(view));
 
@@ -111,15 +135,15 @@ export default function PostManagerTab({
                     {view === 'pending' ? (
                       <>
                       <button
-                        onClick={() => approveMutation.mutate({ type: 'post', id: post.slug })}
-                        disabled={approveMutation.isPending}
+                        onClick={() => localApproveMutation.mutate({ params: { slug: post.slug }, body: {} })}
+                        disabled={localApproveMutation.isPending}
                         className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan/40 border border-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         APPROVE
                       </button>
                       <button
-                        onClick={() => rejectMutation.mutate({ type: 'post', id: post.slug })}
-                        disabled={rejectMutation.isPending}
+                        onClick={() => localRejectMutation.mutate({ params: { slug: post.slug }, body: {} })}
+                        disabled={localRejectMutation.isPending}
                         className="text-xs font-bold text-ares-red hover:text-white bg-ares-red/10 hover:bg-ares-red/40 border border-ares-red/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         REJECT
@@ -136,8 +160,9 @@ export default function PostManagerTab({
                     )}
                     <ClickToDeleteButton 
                       id={post.slug} 
-                      onDelete={() => deletePostMutation.mutate(post.slug)} 
-                      isDeleting={deletePostMutation.isPending && deletePostMutation.variables === post.slug} 
+                      onDelete={() => deleteMutation.mutate({ params: { slug: post.slug }, body: {} })} 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      isDeleting={deleteMutation.isPending && (deleteMutation.variables as any)?.params?.slug === post.slug} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}
                     />
@@ -145,16 +170,18 @@ export default function PostManagerTab({
                 ) : (
                   <>
                     <button
-                      onClick={() => restoreMutation.mutate({ type: 'post', id: post.slug })}
-                      disabled={restoreMutation.isPending}
+                      onClick={() => localRestoreMutation.mutate({ params: { slug: post.slug }, body: {} })}
+                      disabled={localRestoreMutation.isPending}
                       className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors"
                     >
-                     {restoreMutation.isPending && restoreMutation.variables?.id === post.slug ? "RESTORING..." : "RESTORE"}
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                     {(localRestoreMutation.isPending && (localRestoreMutation.variables as any)?.params?.slug === post.slug) ? "RESTORING..." : "RESTORE"}
                     </button>
                     <ClickToDeleteButton 
                       id={`purge-${post.slug}`} 
-                      onDelete={() => purgeMutation.mutate({ type: 'post', id: post.slug })} 
-                      isDeleting={purgeMutation.isPending && purgeMutation.variables?.id === post.slug} 
+                      onDelete={() => localPurgeMutation.mutate({ params: { slug: post.slug }, body: {} })} 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      isDeleting={localPurgeMutation.isPending && (localPurgeMutation.variables as any)?.params?.slug === post.slug} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}
                     />

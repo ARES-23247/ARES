@@ -7,22 +7,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Globe, ShieldCheck, Award, Zap, Gem, CheckCircle2, XCircle, Edit2, Package } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 
 import { useModal } from "../contexts/ModalContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { sponsorSchema, SponsorPayload } from "../schemas/sponsorSchema";
 
-import { apiContractClient } from "../api/apiContractClient";
-
-interface Sponsor {
-  id: string;
-  name: string;
-  tier: string;
-  logo_url: string | null;
-  website_url: string | null;
-  is_active: number;
-}
+import { api } from "../api/client";
 
 const TIERS = [
   { name: "Titanium", icon: <Gem className="text-ares-cyan" />, color: "text-ares-cyan", border: "border-ares-cyan/30" },
@@ -46,24 +38,37 @@ export default function SponsorEditor() {
     }
   });
 
-  const { data: sponsorData, isLoading, isError } = apiContractClient.getAdminSponsors.useQuery({
+  const { data, isLoading, isError } = api.sponsors.adminList.useQuery({
     queryKey: ["admin-sponsors"],
   });
-  const sponsors = (sponsorData?.body?.sponsors || []) as Sponsor[];
+  const sponsors = data?.status === 200 ? data.body.sponsors : [];
 
-  const saveMutation = apiContractClient.createSponsor.useMutation({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
-      setIsFormOpen(false);
-      setEditingId(null);
-      reset();
+  const saveMutation = api.sponsors.saveSponsor.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200 && res.body.success) {
+        queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
+        setIsFormOpen(false);
+        setEditingId(null);
+        reset();
+
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#C00000', '#FFB81C', '#CD7F32']
+        });
+        
+        toast.success("Partner synchronization successful.");
+      } else {
+        toast.error("Sync failed");
+      }
     },
     onError: (err: Error) => {
       toast.error(`[Failure Exposure] Sponsor sync failed: \n${err.message}`);
     }
   });
 
-  const deleteMutation = apiContractClient.deleteSponsor.useMutation({
+  const deleteMutation = api.sponsors.deleteSponsor.useMutation({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] })
   });
 
@@ -72,12 +77,12 @@ export default function SponsorEditor() {
     saveMutation.mutate({ body: { ...data, id: finalId } });
   };
 
-  const handleEdit = (s: Sponsor) => {
+  const handleEdit = (s: { id: string; name: string; tier: string; logo_url?: string | null; website_url?: string | null; is_active?: number }) => {
     setEditingId(s.id);
     reset({
       id: s.id,
       name: s.name,
-      tier: s.tier as "Titanium" | "Gold" | "Silver" | "Bronze" | "In-Kind",
+      tier: s.tier as any,
       logo_url: s.logo_url || "",
       website_url: s.website_url || "",
       is_active: s.is_active ?? 1
@@ -85,7 +90,7 @@ export default function SponsorEditor() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (s: Sponsor) => {
+  const handleDelete = async (s: { id: string; name: string }) => {
     const confirmed = await modal.confirm({
       title: "Delete Partner",
       description: `Are you sure you want to permanently remove ${s.name} from the ARES registry?`,
@@ -135,7 +140,6 @@ export default function SponsorEditor() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onSubmit={handleSubmit(onFormSubmit as any)}
             className="bg-black/40 border border-white/10 ares-cut-lg p-6 space-y-4 overflow-hidden"
           >
@@ -188,7 +192,7 @@ export default function SponsorEditor() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
            <DashboardLoadingGrid count={3} heightClass="h-32" gridClass="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" />
-        ) : sponsors.map((s) => (
+        ) : (sponsors as { id: string; name: string; tier: string; logo_url?: string | null; website_url?: string | null }[]).map((s) => (
           <div key={s.id} className="bg-black/40 border border-white/5 ares-cut-lg p-6 relative group transition-all hover:border-white/20">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2">
@@ -219,7 +223,7 @@ export default function SponsorEditor() {
             
             <div className="flex items-center gap-3 mt-4">
               {s.website_url && (
-                <a href={s.website_url} target="_blank" rel="noreferrer" className="text-marble/40 hover:text-ares-gold transition-colors">
+                <a href={s.website_url} target="_blank" rel="noreferrer" title={`Visit ${s.name} website`} className="text-marble/40 hover:text-ares-gold transition-colors">
                   <Globe size={16} />
                 </a>
               )}

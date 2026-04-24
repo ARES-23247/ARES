@@ -21,7 +21,7 @@ export function getValidatedEnv(runtimeEnv: Record<string, unknown>) {
     clientPrefix: "PUBLIC_",
     client: {},
     runtimeEnv: runtimeEnv as Record<string, string | number | boolean | undefined>,
-    skipValidation: !!runtimeEnv.SKIP_ENV_VALIDATION || ((globalThis as any).process?.env?.NODE_ENV === "test"),
+    skipValidation: !!runtimeEnv.SKIP_ENV_VALIDATION || ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV === "test"),
     emptyStringAsUndefined: true,
   });
 }

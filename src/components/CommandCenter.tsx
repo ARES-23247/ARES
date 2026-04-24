@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { RefreshCw, Radio } from "lucide-react";
 import TeamAvailability from "./TeamAvailability";
-import { ProjectBoard, IntegrationHealth } from "./command/types";
 import IntegrationHealthMonitor from "./command/IntegrationHealthMonitor";
 import ProjectBoardKanban from "./command/ProjectBoardKanban";
 import PlatformQuickStats from "./command/PlatformQuickStats";
 import CommandQuickActions from "./command/CommandQuickActions";
 import ZulipBotCommands from "./command/ZulipBotCommands";
-import { adminApi } from "../api/adminApi";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "../api/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 // -- Command Center Component -----------------------------------------
 export default function CommandCenter() {
@@ -18,50 +17,29 @@ export default function CommandCenter() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // -- Queries --------------------------------------------------------
-  const { data: board, isLoading: isBoardLoading, isError: isBoardError } = useQuery<ProjectBoard | null>({
+  const { data: boardRes, isLoading: isBoardLoading, isError: isBoardError } = api.github.getBoard.useQuery({
     queryKey: ["command-board"],
-    queryFn: async () => {
-      const data = await adminApi.get<{ success: boolean; board: ProjectBoard }>("/api/github/projects");
-      return data.success ? data.board : null;
-    },
     refetchInterval: 60000,
   });
+  const board = boardRes?.status === 200 ? boardRes.body.board : null;
 
-  const { data: health = [], isLoading: isHealthLoading, isError: isHealthError } = useQuery<IntegrationHealth[]>({
-    queryKey: ["command-health"],
-    queryFn: async () => {
-      const data = await adminApi.get<{ success: boolean; settings: Record<string, string> }>("/api/admin/settings");
-      if (data.success && data.settings) {
-        const cfg = data.settings;
-        return [
-          { name: "Zulip Chat", key: "zulip", icon: <img src="/icons/zulip.svg" alt="Zulip" className="w-8 h-8 mx-auto" />, configured: !!(cfg.ZULIP_BOT_EMAIL && cfg.ZULIP_API_KEY) },
-          { name: "GitHub Projects", key: "github", icon: <img src="/icons/github.svg" alt="GitHub" className="w-8 h-8 mx-auto" />, configured: !!(cfg.GITHUB_PAT && cfg.GITHUB_PROJECT_ID) },
-          { name: "Discord", key: "discord", icon: <img src="/icons/discord.svg" alt="Discord" className="w-8 h-8 mx-auto" />, configured: !!cfg.DISCORD_WEBHOOK_URL },
-          { name: "Bluesky", key: "bluesky", icon: <img src="/icons/bluesky.svg" alt="Bluesky" className="w-8 h-8 mx-auto" />, configured: !!(cfg.BLUESKY_HANDLE && cfg.BLUESKY_APP_PASSWORD) },
-          { name: "Slack", key: "slack", icon: <img src="/icons/slack.svg" alt="Slack" className="w-8 h-8 mx-auto" style={{ filter: "invert(100%)" }} />, configured: !!cfg.SLACK_WEBHOOK_URL },
-          { name: "Google Calendar", key: "gcal", icon: <img src="/icons/gcal.svg" alt="Google Calendar" className="w-8 h-8 mx-auto" />, configured: !!(cfg.GCAL_SERVICE_ACCOUNT_EMAIL && cfg.GCAL_PRIVATE_KEY) },
-        ];
-      }
-      return [];
-    },
-    refetchInterval: 120000,
-  });
-
-  const { data: stats = { posts: 0, events: 0, docs: 0 }, isLoading: isStatsLoading, isError: isStatsError } = useQuery({
+  const { data: analyticsData, isLoading: isStatsLoading, isError: isStatsError } = api.analytics.getStats.useQuery({
     queryKey: ["command-stats"],
-    queryFn: async () => {
-      const data = await adminApi.get<{ posts: number; events: number; docs: number }>("/api/admin/settings/stats");
-      return {
-        posts: data.posts || 0,
-        events: data.events || 0,
-        docs: data.docs || 0,
-      };
-    },
     refetchInterval: 300000,
   });
 
-  const isLoading = isBoardLoading || isHealthLoading || isStatsLoading;
-  const isError = isBoardError || isHealthError || isStatsError;
+  const stats = analyticsData?.status === 200 ? analyticsData.body : { posts: 0, events: 0, docs: 0 };
+  const health = analyticsData?.status === 200 ? [
+    { name: "Zulip Chat", key: "zulip", icon: <img src="/icons/zulip.svg" alt="Zulip" className="w-8 h-8 mx-auto" />, configured: analyticsData.body.integrations.zulip },
+    { name: "GitHub Projects", key: "github", icon: <img src="/icons/github.svg" alt="GitHub" className="w-8 h-8 mx-auto" />, configured: analyticsData.body.integrations.github },
+    { name: "Discord", key: "discord", icon: <img src="/icons/discord.svg" alt="Discord" className="w-8 h-8 mx-auto" />, configured: analyticsData.body.integrations.discord },
+    { name: "Bluesky", key: "bluesky", icon: <img src="/icons/bluesky.svg" alt="Bluesky" className="w-8 h-8 mx-auto" />, configured: analyticsData.body.integrations.bluesky },
+    { name: "Slack", key: "slack", icon: <img src="/icons/slack.svg" alt="Slack" className="w-8 h-8 mx-auto grayscale invert" />, configured: analyticsData.body.integrations.slack },
+    { name: "Google Calendar", key: "gcal", icon: <img src="/icons/gcal.svg" alt="Google Calendar" className="w-8 h-8 mx-auto" />, configured: analyticsData.body.integrations.gcal },
+  ] : [];
+
+  const isLoading = isBoardLoading || isStatsLoading;
+  const isError = isBoardError || isStatsError;
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["command-board"] });
@@ -74,8 +52,10 @@ export default function CommandCenter() {
     if (!newTaskTitle.trim()) return;
     setIsCreating(true);
     try {
-      const data = await adminApi.request<{ success: boolean }>("/api/github/projects/items", { method: "POST", body: JSON.stringify({ title: newTaskTitle.trim() }) });
-      if (data.success) {
+      const res = await api.github.createItem.mutation({
+        body: { title: newTaskTitle.trim() }
+      });
+      if (res.status === 200 && res.body.success) {
         setNewTaskTitle("");
         setShowCreateForm(false);
         queryClient.invalidateQueries({ queryKey: ["command-board"] });
@@ -110,6 +90,7 @@ export default function CommandCenter() {
           <button
             onClick={handleRefresh}
             disabled={isLoading}
+            title="Refresh dashboard data"
             className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm text-marble/40 hover:text-white transition-all disabled:opacity-30"
           >
             <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />

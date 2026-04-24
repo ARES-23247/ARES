@@ -1,6 +1,7 @@
 import { Hono, Context } from "hono";
 import { AppEnv, logAuditAction } from "./utils";
 import { ensureAdmin } from "./auth";
+import { sql } from "kysely";
 
 // ── Generic Content Management Factory ────────────────────────────────
 
@@ -41,13 +42,11 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
     }
 
     if (!handled) {
-      const { success } = await c.env.DB.prepare(
-        `UPDATE ${tableName} SET status = 'published' WHERE ${idColumn} = ?`
-      ).bind(id).run();
-      if (!success) return c.json({ error: "Failed to approve" }, 500);
+      const db = c.get("db");
+      await sql`UPDATE ${sql.table(tableName)} SET status = 'published' WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
     }
 
-    await logAuditAction(c, `APPROVE_${tableName.toUpperCase()}`, tableName, id);
+    c.executionCtx.waitUntil(logAuditAction(c, `APPROVE_${tableName.toUpperCase()}`, tableName, id));
     if (warnings.length > 0) {
       return c.json({ success: true, warning: warnings.join(" | ") }, 207);
     }
@@ -63,13 +62,11 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
     if (hooks?.onReject) handled = (await hooks.onReject(c, id, body.reason)) === true;
 
     if (!handled) {
-      const { success } = await c.env.DB.prepare(
-        `UPDATE ${tableName} SET status = 'rejected' WHERE ${idColumn} = ?`
-      ).bind(id).run();
-      if (!success) return c.json({ error: "Failed to reject" }, 500);
+      const db = c.get("db");
+      await sql`UPDATE ${sql.table(tableName)} SET status = 'rejected' WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
     }
 
-    await logAuditAction(c, `REJECT_${tableName.toUpperCase()}`, tableName, id);
+    c.executionCtx.waitUntil(logAuditAction(c, `REJECT_${tableName.toUpperCase()}`, tableName, id));
     return c.json({ success: true });
   });
 
@@ -81,13 +78,11 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
     if (hooks?.onRestore) handled = (await hooks.onRestore(c, id)) === true;
 
     if (!handled) {
-      const { success } = await c.env.DB.prepare(
-        `UPDATE ${tableName} SET is_deleted = 0, status = 'draft' WHERE ${idColumn} = ?`
-      ).bind(id).run();
-      if (!success) return c.json({ error: "Failed to restore" }, 500);
+      const db = c.get("db");
+      await sql`UPDATE ${sql.table(tableName)} SET is_deleted = 0, status = 'draft' WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
     }
 
-    await logAuditAction(c, `RESTORE_${tableName.toUpperCase()}`, tableName, id);
+    c.executionCtx.waitUntil(logAuditAction(c, `RESTORE_${tableName.toUpperCase()}`, tableName, id));
     return c.json({ success: true });
   });
 
@@ -100,13 +95,11 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
       if (hooks?.onDelete) handled = (await hooks.onDelete(c, id, "trashed")) === true;
 
       if (!handled) {
-        const { success } = await c.env.DB.prepare(
-          `UPDATE ${tableName} SET is_deleted = 1 WHERE ${idColumn} = ?`
-        ).bind(id).run();
-        if (!success) return c.json({ error: "Operation failed" }, 500);
+        const db = c.get("db");
+        await sql`UPDATE ${sql.table(tableName)} SET is_deleted = 1 WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
       }
       
-      await logAuditAction(c, `DELETE_${tableName.toUpperCase()}`, tableName, id);
+      c.executionCtx.waitUntil(logAuditAction(c, `DELETE_${tableName.toUpperCase()}`, tableName, id));
       return c.json({ success: true, action: "trashed" });
     } catch (err) {
       console.error(`[Lifecycle] Soft delete error for ${tableName}:`, err);
@@ -123,13 +116,11 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
       if (hooks?.onDelete) handled = (await hooks.onDelete(c, id, "purged")) === true;
 
       if (!handled) {
-        const { success } = await c.env.DB.prepare(
-          `DELETE FROM ${tableName} WHERE ${idColumn} = ?`
-        ).bind(id).run();
-        if (!success) return c.json({ error: "Operation failed" }, 500);
+        const db = c.get("db");
+        await sql`DELETE FROM ${sql.table(tableName)} WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
       }
       
-      await logAuditAction(c, `PURGE_${tableName.toUpperCase()}`, tableName, id);
+      c.executionCtx.waitUntil(logAuditAction(c, `PURGE_${tableName.toUpperCase()}`, tableName, id));
       return c.json({ success: true, action: "purged" });
     } catch (err) {
       console.error(`[Lifecycle] Purge error for ${tableName}:`, err);

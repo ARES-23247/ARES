@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS posts (
     revision_of TEXT,
     published_at TEXT,
     is_portfolio INTEGER DEFAULT 0,
-    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL
+    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_posts_season ON posts(season_id);
 CREATE INDEX IF NOT EXISTS idx_posts_date ON posts(date);
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS posts_history (
     ast TEXT NOT NULL,
     author_email TEXT,
     created_at TEXT DEFAULT (datetime('now')),
-    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL
+    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_posts_history_slug ON posts_history(slug);
 CREATE INDEX IF NOT EXISTS idx_posts_history_season ON posts_history(season_id);
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS events (
     is_volunteer INTEGER DEFAULT 0,
     revision_of TEXT,
     published_at TEXT,
-    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL
+    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_events_season ON events(season_id);
 
@@ -320,7 +320,7 @@ CREATE TABLE IF NOT EXISTS awards (
     description TEXT,
     icon_type TEXT DEFAULT 'trophy',
     is_deleted INTEGER DEFAULT 0,
-    season_id TEXT REFERENCES seasons(id) ON DELETE SET NULL,
+    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL,
     created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_awards_season ON awards(season_id);
@@ -341,7 +341,7 @@ CREATE TABLE IF NOT EXISTS outreach_logs (
     impact_summary TEXT,
     cf_email TEXT,
     is_deleted INTEGER DEFAULT 0,
-    season_id TEXT,
+    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL,
     created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_outreach_season ON outreach_logs(season_id);
@@ -544,4 +544,11 @@ CREATE INDEX IF NOT EXISTS idx_docs_status_deleted ON docs(status, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_user_badges_badge ON user_badges(badge_id);
 CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
 CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_session_userId ON session(userId);
+CREATE INDEX IF NOT EXISTS idx_account_userId ON account(userId);
+CREATE INDEX IF NOT EXISTS idx_posts_author ON posts(author);
+CREATE INDEX IF NOT EXISTS idx_posts_cf_email ON posts(cf_email);
+CREATE INDEX IF NOT EXISTS idx_events_cf_email ON events(cf_email);
+CREATE INDEX IF NOT EXISTS idx_comments_is_deleted ON comments(is_deleted);
+CREATE INDEX IF NOT EXISTS idx_audit_log_resource ON audit_log(resource_type, resource_id);
 

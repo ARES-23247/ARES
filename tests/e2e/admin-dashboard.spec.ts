@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Admin Dashboard', () => {
   // Mock the authentication session for the entire suite
@@ -69,5 +70,12 @@ test.describe('Admin Dashboard', () => {
     // Verify admin hubs are accessible
     await expect(page.getByText(/User Roles/i)).toBeVisible();
     await expect(page.getByText(/System Integrations/i)).toBeVisible();
+
+    // ── Accessibility Audit ───────────────────────────────────────────
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    
+    expect(accessibilityScanResults.violations).toEqual([]);
   });
 });

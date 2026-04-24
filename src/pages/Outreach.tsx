@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Target, Clock, ArrowRight, Activity, MapPin, Heart, X, CheckCircle } from "lucide-react";
 import SEO from "../components/SEO";
 import Turnstile from "../components/Turnstile";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 import { inquirySchema } from "../schemas/inquirySchema";
 
 interface OutreachLog {
@@ -76,9 +76,14 @@ export default function Outreach() {
         throw new Error(payloadResult.error.issues[0].message);
       }
 
-      await publicApi.submitInquiry(payloadResult.data);
-      setSubmitStatus("success");
-      setName(""); setEmail(""); setPhone(""); setOrganization(""); setDescription("");
+      const res = await api.inquiries.submit.mutation({ body: payloadResult.data as any });
+      if (res.status === 200 || res.status === 207) {
+        setSubmitStatus("success");
+        setName(""); setEmail(""); setPhone(""); setOrganization(""); setDescription("");
+      } else {
+        setSubmitStatus("error");
+        setErrorMessage((res.body as any).error || "Something went wrong.");
+      }
     } catch (err) {
       setSubmitStatus("error");
       setErrorMessage(err instanceof Error ? err.message : "Something went wrong.");
@@ -87,13 +92,10 @@ export default function Outreach() {
     }
   };
 
-  const { data: logs = [], isLoading } = useQuery<OutreachLog[]>({
+  const { data: logsRes, isLoading } = api.outreach.adminList.useQuery({
     queryKey: ["public-outreach"],
-    queryFn: async () => {
-      const d = await publicApi.get<{ logs?: OutreachLog[] }>("/api/outreach");
-      return d.logs || [];
-    }
   });
+  const logs = (logsRes?.body as any)?.logs || [];
 
   const totals = logs.reduce((acc, l) => ({
     hours: acc.hours + (l.hours_logged || 0),

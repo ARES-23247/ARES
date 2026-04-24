@@ -1,26 +1,15 @@
 import { History } from "lucide-react";
 import DashboardEmptyState from "../dashboard/DashboardEmptyState";
-import { useQuery } from "@tanstack/react-query";
-import { useContentMutation } from "../../hooks/useContentMutation";
-import { ViewType, ClickToDeleteButton, ContentMutationResult } from "./shared";
-import { adminApi } from "../../api/adminApi";
-
-interface SeasonItem {
-  start_year: number;
-  end_year: number;
-  challenge_name: string;
-  robot_name?: string;
-  status: string;
-  is_deleted: number;
-}
+import { useQueryClient } from "@tanstack/react-query";
+import { ViewType, ClickToDeleteButton } from "./shared";
+import { api } from "../../api/client";
+import { toast } from "sonner";
 
 interface SeasonManagerTabProps {
   view: ViewType;
   onEdit?: (id: string) => void;
   confirmId: string | null;
   setConfirmId: (id: string | null) => void;
-  restoreMutation: ContentMutationResult;
-  purgeMutation: ContentMutationResult;
 }
 
 export default function SeasonManagerTab({
@@ -28,30 +17,39 @@ export default function SeasonManagerTab({
   onEdit,
   confirmId,
   setConfirmId,
-  restoreMutation,
-  purgeMutation
 }: SeasonManagerTabProps) {
-  const { data: seasonsResult, isLoading, isError } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError } = api.seasons.adminList.useQuery({
     queryKey: ["admin-seasons"],
-    queryFn: async () => {
-      const data = await adminApi.get<{ seasons?: SeasonItem[] }>("/api/admin/seasons");
-      return {
-        seasons: data.seasons ?? []
-      };
-    },
   });
 
-  const seasons = seasonsResult?.seasons ?? [];
+  const seasons = data?.status === 200 ? data.body.seasons : [];
 
-  const deleteSeasonMutation = useContentMutation<string>({
-    endpoint: (id) => `/api/admin/seasons/${id}`,
-    invalidateKeys: ["admin-seasons", "seasons"],
-    setConfirmId,
+  const deleteMutation = api.seasons.delete.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-seasons"] });
+      setConfirmId(null);
+      toast.success("Season deleted");
+    }
+  });
+
+  const restoreMutation = api.seasons.undelete.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-seasons"] });
+      toast.success("Season restored");
+    }
+  });
+
+  const purgeMutation = api.seasons.purge.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-seasons"] });
+      setConfirmId(null);
+      toast.success("Season purged");
+    }
   });
 
   if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-ares-gold rounded-full animate-spin"></div></div>;
-
-
 
   const filtered = seasons.filter(s => {
     const isDeleted = Number(s.is_deleted) === 1;
@@ -110,8 +108,9 @@ export default function SeasonManagerTab({
                       </button>
                       <ClickToDeleteButton 
                         id={seasonId} 
-                        onDelete={() => deleteSeasonMutation.mutate(seasonId)} 
-                        isDeleting={deleteSeasonMutation.isPending && deleteSeasonMutation.variables === seasonId} 
+                        onDelete={() => deleteMutation.mutate({ params: { id: seasonId }, body: null })} 
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        isDeleting={deleteMutation.isPending && (deleteMutation.variables as any)?.params?.id === seasonId} 
                         confirmId={confirmId}
                         setConfirmId={setConfirmId}
                       />
@@ -119,16 +118,18 @@ export default function SeasonManagerTab({
                   ) : (
                     <>
                       <button
-                        onClick={() => restoreMutation.mutate({ type: 'season', id: seasonId })}
+                        onClick={() => restoreMutation.mutate({ params: { id: seasonId }, body: null })}
                         disabled={restoreMutation.isPending}
                         className="text-xs font-bold text-ares-gold bg-ares-gold/10 hover:bg-ares-gold/20 px-3 py-1 ares-cut-sm transition-colors"
                       >
-                        {restoreMutation.isPending && restoreMutation.variables?.id === seasonId ? "RESTORING..." : "RESTORE"}
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        {(restoreMutation.isPending && (restoreMutation.variables as any)?.params?.id === seasonId) ? "RESTORING..." : "RESTORE"}
                       </button>
                       <ClickToDeleteButton 
                         id={`purge-${seasonId}`} 
-                        onDelete={() => purgeMutation.mutate({ type: 'season', id: seasonId })} 
-                        isDeleting={purgeMutation.isPending && purgeMutation.variables?.id === seasonId} 
+                        onDelete={() => purgeMutation.mutate({ params: { id: seasonId }, body: null })} 
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        isDeleting={purgeMutation.isPending && (purgeMutation.variables as any)?.params?.id === seasonId} 
                         confirmId={confirmId}
                         setConfirmId={setConfirmId}
                       />

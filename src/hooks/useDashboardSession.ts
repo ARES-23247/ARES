@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 export interface DashboardSession {
   authenticated: boolean;
@@ -39,15 +39,10 @@ export function useDashboardSession() {
 
   useEffect(() => {
     let isMounted = true;
-    publicApi.get<{
-      auth: Record<string, unknown>;
-      member_type: string;
-      first_name: string;
-      last_name: string;
-      nickname: string;
-    }>("/api/profile/me")
-      .then((data) => {
-        if (!isMounted) return;
+    api.profiles.getMe.query()
+      .then((res) => {
+        if (!isMounted || res.status !== 200) return;
+        const data = res.body;
         setSession({
           authenticated: true,
           user: {

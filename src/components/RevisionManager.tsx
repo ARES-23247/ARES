@@ -1,8 +1,8 @@
 import { format } from "date-fns";
 import { History, RotateCcw, X, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface Revision {
   id: number;
@@ -24,32 +24,50 @@ interface RevisionManagerProps {
 export default function RevisionManager({ isOpen, onClose, type, slug, displayTitle }: RevisionManagerProps) {
   const queryClient = useQueryClient();
 
-  const { data: revisions = [], isLoading, isError } = useQuery<Revision[]>({
-    queryKey: ["history", type, slug],
-    queryFn: async () => {
-      const base = type === "doc" ? "docs" : "posts";
-      const data = await adminApi.get<{ history?: Revision[] }>(`/api/admin/${base}/${slug}/history`);
-      return data.history ?? [];
-    },
-    enabled: isOpen && !!slug,
-  });
-
-  const restoreMutation = useMutation({
-    mutationFn: async (revisionId: number) => {
-      const base = type === "doc" ? "docs" : "posts";
-      return await adminApi.request(`/api/admin/${base}/${slug}/history/${revisionId}/restore`, {
-        method: "PATCH",
+  const historyQuery = type === "post" 
+    ? api.posts.getHistory.useQuery({
+        params: { slug },
+        queryKey: ["history", "post", slug],
+        enabled: isOpen && !!slug && type === "post"
+      })
+    : api.docs.getHistory.useQuery({
+        params: { slug },
+        queryKey: ["history", "doc", slug],
+        enabled: isOpen && !!slug && type === "doc"
       });
-    },
+
+  const postRestoreMutation = api.posts.restoreHistory.useMutation({
     onSuccess: () => {
-      toast.success("Successfully restored to this version!");
-      queryClient.invalidateQueries({ queryKey: [type === "doc" ? "docs" : "posts"] });
+      toast.success("Post restored successfully");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
       onClose();
     },
-    onError: (err: unknown) => {
-      toast.error(`Error: ${(err as Error).message || String(err)}`);
-    }
+    onError: (err) => toast.error(err.message || "Post restoration failed")
   });
+
+  const docRestoreMutation = api.docs.restoreHistory.useMutation({
+    onSuccess: () => {
+      toast.success("Doc restored successfully");
+      queryClient.invalidateQueries({ queryKey: ["docs"] });
+      onClose();
+    },
+    onError: (err) => toast.error(err.message || "Doc restoration failed")
+  });
+
+  const isLoading = historyQuery.isLoading;
+  const isError = historyQuery.isError;
+  const revisions = historyQuery.data?.status === 200 ? (historyQuery.data.body as { history: Revision[] }).history : [];
+
+  const restoreRevision = (id: number) => {
+    if (type === "post") {
+      postRestoreMutation.mutate({ params: { slug, id: id.toString() }, body: {} });
+    } else {
+      docRestoreMutation.mutate({ params: { slug, id: id.toString() }, body: {} });
+    }
+  };
+
+  const isRestoring = postRestoreMutation.isPending || docRestoreMutation.isPending;
+  const restoringId = (postRestoreMutation.variables as any)?.params?.id || (docRestoreMutation.variables as any)?.params?.id;
 
   if (!isOpen) return null;
 
@@ -66,7 +84,7 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
               <p className="text-white/60 text-xs">Viewing legacy versions for <span className="text-white font-mono italic">&quot;{displayTitle}&quot;</span></p>
             </div>
           </div>
-          <button onClick={onClose} className="text-white/60 hover:text-white transition-colors p-2 bg-white/5 border border-white/10 ares-cut-sm">
+          <button onClick={onClose} title="Close history" className="text-white/60 hover:text-white transition-colors p-2 bg-white/5 border border-white/10 ares-cut-sm">
             <X size={20} />
           </button>
         </div>
@@ -106,14 +124,14 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
                   <button
                     onClick={() => {
                         if (confirm(`Are you sure you want to restore "${displayTitle}" to the version from ${format(new Date(rev.created_at), 'PPP')}? Current unsaved changes might be lost if you haven't saved.`)) {
-                           restoreMutation.mutate(rev.id);
+                           restoreRevision(rev.id);
                         }
                     }}
-                    disabled={restoreMutation.isPending}
+                    disabled={isRestoring}
                     className="flex items-center gap-2 text-xs font-bold text-ares-gold bg-ares-gold/10 hover:bg-ares-gold/20 border border-ares-gold/20 px-4 py-2 ares-cut-sm transition-all"
                   >
-                    <RotateCcw size={14} className={restoreMutation.isPending && restoreMutation.variables === rev.id ? "animate-spin" : ""} />
-                    {restoreMutation.isPending && restoreMutation.variables === rev.id ? "RESTORING..." : "RESTORE"}
+                    <RotateCcw size={14} className={isRestoring && restoringId === rev.id.toString() ? "animate-spin" : ""} />
+                    {isRestoring && restoringId === rev.id.toString() ? "RESTORING..." : "RESTORE"}
                   </button>
                 </div>
               ))}

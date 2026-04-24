@@ -6,7 +6,7 @@ import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import CommentSection from "../components/CommentSection";
 import EventSignups from "../components/EventSignups";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface EventRow {
   id: string;
@@ -32,19 +32,14 @@ export default function EventDetail() {
   const userRole = (session?.user as Record<string, unknown>)?.role || "user";
   const isEditor = userRole === "admin" || userRole === "author";
 
-  const { data: event, isLoading, isError } = useQuery<EventRow>({    queryKey: ["event", id],
-    queryFn: async () => {
-      try {
-        const data = await publicApi.get<{ event: EventRow }>(`/api/events/${id}`);
-        if (!data || !data.event) throw new Error("Event Record Erased or Unfound.");
-        return data.event;
-      } catch {
-        throw new Error("Event Record Erased or Unfound.");
-      }
-    },
+  const { data: eventRes, isLoading, isError } = api.events.getEvent.useQuery({
+    queryKey: ["event", id],
+    params: { id: id || "" },
     enabled: !!id,
-    retry: false, // Don't retry 404s
+    retry: false,
   });
+
+  const event = eventRes?.status === 200 ? eventRes.body.event : null;
 
   if (isLoading) return <div className="w-full min-h-[50vh] flex items-center justify-center text-ares-gold animate-pulse font-heading tracking-widest">Consulting the Oracle...</div>;
   if (isError || !event) return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white font-mono text-center">Event Record Erased or Unfound.</div>;

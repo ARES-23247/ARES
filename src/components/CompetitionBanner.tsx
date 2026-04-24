@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Trophy, Activity, Clock, Zap, ExternalLink } from "lucide-react";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface CompetitionBannerProps {
   eventKey: string;
@@ -24,28 +23,19 @@ interface TBAMatch {
 
 export default function CompetitionBanner({ eventKey, teamKey = "frc23247" }: CompetitionBannerProps) {
   // Fetch Rankings
-  const { data: rankingsData } = useQuery<{ rankings?: TBARanking[] } | null>({
+  const { data: rankingsRes } = api.tba.getRankings.useQuery({
     queryKey: ["tba-rankings", eventKey],
-    queryFn: async () => {
-      try {
-        return await publicApi.get<{ rankings?: TBARanking[] }>(`/api/tba/rankings/${eventKey}`);
-      } catch {
-        return null;
-      }
-    }
+    params: { eventKey }
   });
 
   // Fetch Matches
-  const { data: matchesData } = useQuery<{ matches?: TBAMatch[] } | null>({
+  const { data: matchesRes } = api.tba.getMatches.useQuery({
     queryKey: ["tba-matches", eventKey],
-    queryFn: async () => {
-      try {
-        return await publicApi.get<{ matches?: TBAMatch[] }>(`/api/tba/matches/${eventKey}`);
-      } catch {
-        return null;
-      }
-    }
+    params: { eventKey }
   });
+
+  const rankingsData = rankingsRes?.status === 200 ? rankingsRes.body : null;
+  const matchesData = matchesRes?.status === 200 ? matchesRes.body : null;
 
   const myRanking = rankingsData?.rankings?.find((r: TBARanking) => r.team_key === teamKey);
   const nextMatch = matchesData?.matches?.find((m: TBAMatch) => 

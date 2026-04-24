@@ -5,86 +5,111 @@ import { encrypt } from "../../utils/crypto";
 export async function upsertProfile(
   c: Context<AppEnv>,
   userId: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>
 ) {
   const secret = c.env.ENCRYPTION_SECRET;
   const sessionUser = await getSessionUser(c);
+  const db = c.get("db") as Kysely<DB>;
   
   // SEC-F09: Prevent self-escalation of member_type
-  // Fetch existing member_type to preserve it unless requester is admin
-  let memberType = data.member_type || "student";
+  let memberType = (data.member_type as string) || "student";
   
-  const existing = await c.env.DB.prepare("SELECT member_type FROM user_profiles WHERE user_id = ?").bind(userId).first<{ member_type: string }>();
+  const existing = await db.selectFrom("user_profiles")
+    .select("member_type")
+    .where("user_id", "=", userId)
+    .executeTakeFirst();
   
   const isTargetingSelf = sessionUser?.id === userId;
   const isAdmin = sessionUser?.role === "admin" || sessionUser?.member_type === "coach" || sessionUser?.member_type === "mentor";
 
-  // If user is editing their own profile and isn't an admin, they CANNOT change their member_type
   if (isTargetingSelf && !isAdmin && existing) {
-    memberType = existing.member_type;
+    memberType = existing.member_type || "student";
   } else if (!isAdmin && !existing) {
-    // New profiles for non-admins default to student
     memberType = "student";
   }
 
-  const encryptedName = await encrypt(data.emergency_contact_name || "", secret);
-  const encryptedPhone = await encrypt(data.emergency_contact_phone || "", secret);
-  const encryptedUserPhone = await encrypt(data.phone || "", secret);
-  const encryptedContactEmail = await encrypt(data.contact_email || "", secret);
-  const encryptedParentsName = await encrypt(data.parents_name || "", secret);
-  const encryptedParentsEmail = await encrypt(data.parents_email || "", secret);
-  const encryptedStudentsName = await encrypt(data.students_name || "", secret);
-  const encryptedStudentsEmail = await encrypt(data.students_email || "", secret);
+  const encryptedName = await encrypt((data.emergency_contact_name as string) || "", secret);
+  const encryptedPhone = await encrypt((data.emergency_contact_phone as string) || "", secret);
+  const encryptedUserPhone = await encrypt((data.phone as string) || "", secret);
+  const encryptedContactEmail = await encrypt((data.contact_email as string) || "", secret);
+  const encryptedParentsName = await encrypt((data.parents_name as string) || "", secret);
+  const encryptedParentsEmail = await encrypt((data.parents_email as string) || "", secret);
+  const encryptedStudentsName = await encrypt((data.students_name as string) || "", secret);
+  const encryptedStudentsEmail = await encrypt((data.students_email as string) || "", secret);
 
-  let subteamsStr = data.subteams || "[]";
+  let subteamsStr = (data.subteams as string) || "[]";
   if (Array.isArray(data.subteams)) subteamsStr = JSON.stringify(data.subteams);
   
-  let dietaryStr = data.dietary_restrictions || "[]";
+  let dietaryStr = (data.dietary_restrictions as string) || "[]";
   if (Array.isArray(data.dietary_restrictions)) dietaryStr = JSON.stringify(data.dietary_restrictions);
 
-  await c.env.DB.prepare(
-    `INSERT INTO user_profiles (
-      user_id, nickname, first_name, last_name, pronouns, phone, contact_email,
-      bio, subteams, dietary_restrictions,
-      show_on_about, show_email, show_phone,
-      member_type, grade_year, colleges, employers,
-      favorite_first_thing, fun_fact,
-      favorite_robot_mechanism, pre_match_superstition,
-      leadership_role, rookie_year, tshirt_size, emergency_contact_name, emergency_contact_phone,
-      parents_name, parents_email, students_name, students_email, favorite_food
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET
-      nickname=excluded.nickname, first_name=excluded.first_name, last_name=excluded.last_name,
-      pronouns=excluded.pronouns, phone=excluded.phone, contact_email=excluded.contact_email,
-      bio=excluded.bio, subteams=excluded.subteams, dietary_restrictions=excluded.dietary_restrictions,
-      show_on_about=excluded.show_on_about, show_email=excluded.show_email, show_phone=excluded.show_phone,
-      member_type=excluded.member_type, grade_year=excluded.grade_year, colleges=excluded.colleges,
-      employers=excluded.employers, favorite_first_thing=excluded.favorite_first_thing,
-      fun_fact=excluded.fun_fact,
-      favorite_robot_mechanism=excluded.favorite_robot_mechanism,
-      pre_match_superstition=excluded.pre_match_superstition,
-      leadership_role=excluded.leadership_role, rookie_year=excluded.rookie_year,
-      tshirt_size=excluded.tshirt_size,
-      emergency_contact_name=excluded.emergency_contact_name,
-      emergency_contact_phone=excluded.emergency_contact_phone,
-      parents_name=excluded.parents_name,
-      parents_email=excluded.parents_email,
-      students_name=excluded.students_name,
-      students_email=excluded.students_email,
-      favorite_food=excluded.favorite_food`
-  ).bind(
-    userId,
-    data.nickname || "", data.first_name || "", data.last_name || "", data.pronouns || "",
-    encryptedUserPhone, encryptedContactEmail,
-    data.bio || "", subteamsStr, dietaryStr,
-    data.show_on_about ? 1 : 0, data.show_email ? 1 : 0, data.show_phone ? 1 : 0,
-    memberType, data.grade_year || "", data.colleges || "", data.employers || "",
-    data.favorite_first_thing || "", data.fun_fact || "",
-    data.favorite_robot_mechanism || "", data.pre_match_superstition || "",
-    data.leadership_role || "", data.rookie_year || "",
-    data.tshirt_size || "", encryptedName, encryptedPhone,
-    encryptedParentsName, encryptedParentsEmail, encryptedStudentsName, encryptedStudentsEmail,
-    data.favorite_food || ""
-  ).run();
+  const values: any = {
+    user_id: userId,
+    nickname: (data.nickname as string) || "",
+    first_name: (data.first_name as string) || "",
+    last_name: (data.last_name as string) || "",
+    pronouns: (data.pronouns as string) || "",
+    phone: encryptedUserPhone,
+    contact_email: encryptedContactEmail,
+    bio: (data.bio as string) || "",
+    subteams: subteamsStr,
+    dietary_restrictions: dietaryStr,
+    show_on_about: data.show_on_about ? 1 : 0,
+    show_email: data.show_email ? 1 : 0,
+    show_phone: data.show_phone ? 1 : 0,
+    member_type: memberType,
+    grade_year: (data.grade_year as string) || "",
+    colleges: (data.colleges as string) || "[]",
+    employers: (data.employers as string) || "[]",
+    favorite_first_thing: (data.favorite_first_thing as string) || "",
+    fun_fact: (data.fun_fact as string) || "",
+    favorite_robot_mechanism: (data.favorite_robot_mechanism as string) || "",
+    pre_match_superstition: (data.pre_match_superstition as string) || "",
+    leadership_role: (data.leadership_role as string) || "",
+    rookie_year: (data.rookie_year as string) || "",
+    tshirt_size: (data.tshirt_size as string) || "",
+    emergency_contact_name: encryptedName,
+    emergency_contact_phone: encryptedPhone,
+    parents_name: encryptedParentsName,
+    parents_email: encryptedParentsEmail,
+    students_name: encryptedStudentsName,
+    students_email: encryptedStudentsEmail,
+    favorite_food: (data.favorite_food as string) || ""
+  };
+
+  await db.insertInto("user_profiles")
+    .values(values)
+    .onConflict(oc => oc.column("user_id").doUpdateSet({
+      nickname: values.nickname,
+      first_name: values.first_name,
+      last_name: values.last_name,
+      pronouns: values.pronouns,
+      phone: values.phone,
+      contact_email: values.contact_email,
+      bio: values.bio,
+      subteams: values.subteams,
+      dietary_restrictions: values.dietary_restrictions,
+      show_on_about: values.show_on_about,
+      show_email: values.show_email,
+      show_phone: values.show_phone,
+      member_type: values.member_type,
+      grade_year: values.grade_year,
+      colleges: values.colleges,
+      employers: values.employers,
+      favorite_first_thing: values.favorite_first_thing,
+      fun_fact: values.fun_fact,
+      favorite_robot_mechanism: values.favorite_robot_mechanism,
+      pre_match_superstition: values.pre_match_superstition,
+      leadership_role: values.leadership_role,
+      rookie_year: values.rookie_year,
+      tshirt_size: values.tshirt_size,
+      emergency_contact_name: values.emergency_contact_name,
+      emergency_contact_phone: values.emergency_contact_phone,
+      parents_name: values.parents_name,
+      parents_email: values.parents_email,
+      students_name: values.students_name,
+      students_email: values.students_email,
+      favorite_food: values.favorite_food
+    }))
+    .execute();
 }

@@ -42,7 +42,7 @@ describe("useEntityFetch", () => {
 
     await waitFor(() => expect(result.current.isPending).toBe(false));
     expect(result.current.data).toBeNull();
-    // adminApi.ts extracts 'error' key if present
+    // fetchJson extracts 'error' key if present
     expect(result.current.error).toContain("Custom Server Error");
   });
 

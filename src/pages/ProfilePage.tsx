@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { GraduationCap, Briefcase, ArrowLeft, Shield, ShieldAlert } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { BrandLogo } from "../components/BrandLogo";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface ProfilePublic {
   first_name?: string;
@@ -52,10 +52,11 @@ export default function ProfilePage() {
   useEffect(() => {
     let cancelled = false;
 
-    publicApi.get<{ profile: ProfilePublic, badges?: BadgeDef[] }>(`/api/profile/${userId}`)
-      .then((data) => { 
-        if (cancelled) return;
-        setProfile(data.profile); 
+    api.profiles.adminDetail.query({ params: { id: userId || "" } })
+      .then((res) => { 
+        if (cancelled || res.status !== 200) return;
+        const data = res.body;
+        setProfile(data.profile as any); 
         setBadges(data.badges || []);
         setError(null);
         setLoading(false); 

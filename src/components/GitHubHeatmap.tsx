@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { siteConfig } from "../site.config";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface DayCell {
   date: string;
@@ -30,11 +30,13 @@ export default function GitHubHeatmap() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const data = await publicApi.get<{ grid: DayCell[][], totalCommits: number, repoCount: number }>("/api/github/activity");
-        
-        setGrid(data.grid);
-        setTotalCommits(data.totalCommits);
-        setRepoCount(data.repoCount);
+        const res = await api.github.getActivity.query();
+        if (res.status === 200) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setGrid(res.body.grid as any);
+          setTotalCommits(res.body.totalCommits);
+          setRepoCount(res.body.repoCount);
+        }
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load activity");
@@ -102,16 +104,21 @@ export default function GitHubHeatmap() {
       <div className="overflow-x-auto pb-2">
         <div className="min-w-[720px]">
           {/* Month labels */}
-          <div className="flex ml-8 mb-1 text-xs text-marble/90 font-bold uppercase tracking-wider">
-            {monthLabels.map((m) => (
-              <div
-                key={`${m.label}-${m.col}`}
-                className="absolute"
-                style={{ marginLeft: `${m.col * 14 + 32}px` }}
-              >
-                {m.label}
-              </div>
-            ))}
+          <div className="flex ml-9 mb-1 text-xs text-marble/90 font-bold uppercase tracking-wider h-4">
+            {grid.map((week, i) => {
+              const d = new Date(week[0].date);
+              const month = d.getMonth();
+              const isFirstWeek = i === 0 || new Date(grid[i - 1][0].date).getMonth() !== month;
+              return (
+                <div key={i} className="w-[12px] mr-[2px] relative flex-shrink-0">
+                  {isFirstWeek && (
+                    <div className="absolute left-0 top-0 whitespace-nowrap">
+                      {MONTHS[month]}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className="relative mt-4">
             <div className="flex gap-[2px]">
@@ -120,8 +127,7 @@ export default function GitHubHeatmap() {
                 {DAYS.map((day, i) => (
                   <div
                     key={day}
-                    className="h-[12px] flex items-center text-[9px] text-marble/90 font-bold uppercase"
-                    style={{ visibility: i % 2 === 1 ? "visible" : "hidden" }}
+                    className={`h-[12px] flex items-center text-[9px] text-marble/90 font-bold uppercase ${i % 2 === 1 ? "visible" : "invisible"}`}
                   >
                     {day}
                   </div>

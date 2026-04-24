@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, turnstileMiddleware, rateLimitMiddleware } from "../middleware";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
@@ -11,34 +13,40 @@ commentsRouter.get("/:targetType/:targetId", async (c) => {
   const targetType = (c.req.param("targetType") || "");
   const targetId = (c.req.param("targetId") || "");
   const user = await getSessionUser(c);
+  const db = c.get("db") as Kysely<DB>;
 
   try {
-    const { results } = await c.env.DB.prepare(
-      `SELECT c.*, p.nickname, u.image as avatar FROM comments c
-       JOIN user_profiles p ON c.user_id = p.user_id
-       JOIN user u ON c.user_id = u.id
-       WHERE c.target_type = ? AND c.target_id = ? AND c.is_deleted = 0
-       ORDER BY c.created_at ASC`
-    ).bind(targetType, targetId).all();
+    const results = await db.selectFrom("comments as c")
+      .innerJoin("user_profiles as p", "c.user_id", "p.user_id")
+      .innerJoin("user as u", "c.user_id", "u.id")
+      .selectAll("c")
+      .select(["p.nickname", "u.image as avatar"])
+      .where("c.target_type", "=", targetType)
+      .where("c.target_id", "=", targetId)
+      .where("c.is_deleted", "=", 0)
+      .orderBy("c.created_at", "asc")
+      .execute();
 
-    const mapped = (results || []).map((r: Record<string, unknown>) => ({
-      id: r.id,
-      content: r.content,
-      created_at: r.created_at,
-      updated_at: r.updated_at,
-      user_id: r.user_id,
-      nickname: r.nickname || "ARES Member",
-      avatar: r.avatar,
-      is_own: user ? user.id === r.user_id : false,
-    }));
+    const mapped = (results || []).map((r) => {
+      const row = r as Record<string, unknown>;
+      return {
+        id: row.id as string,
+        content: row.content as string,
+        created_at: row.created_at as string,
+        updated_at: row.updated_at as string,
+        user_id: row.user_id as string,
+        nickname: (row.nickname as string) || "ARES Member",
+        avatar: row.avatar as string | undefined,
+        is_own: user ? user.id === row.user_id : false,
+      };
+    });
 
     return c.json({ 
       comments: mapped,
       authenticated: !!user,
       can_comment: user && user.role !== "unverified"
     });
-  } catch (err) {
-    console.error("D1 comments read error:", err);
+  } catch {
     return c.json({ comments: [] }, 500);
   }
 });
@@ -52,11 +60,13 @@ commentsRouter.post("/:targetType/:targetId", rateLimitMiddleware(10, 60), turns
 
   const targetType = (c.req.param("targetType") || "");
   const targetId = (c.req.param("targetId") || "");
-  let body;
+  const db = c.get("db") as Kysely<DB>;
+
+  let body: { content?: string };
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    return c.json({ error: "Invalid request payload" }, 400);
   }
   const content = (body.content || "").trim();
 
@@ -65,15 +75,21 @@ commentsRouter.post("/:targetType/:targetId", rateLimitMiddleware(10, 60), turns
 
   try {
     const id = crypto.randomUUID();
-    await c.env.DB.prepare(
-      "INSERT INTO comments (id, user_id, target_type, target_id, content) VALUES (?, ?, ?, ?, ?)"
-    ).bind(id, user.id, targetType, targetId, content).run();
+    await db.insertInto("comments")
+      .values({
+        id: id as any,
+        user_id: user.id,
+        target_type: targetType,
+        target_id: targetId,
+        content,
+        created_at: new Date().toISOString()
+      })
+      .execute();
 
     // ── Sync to Zulip ──
     const social = await getSocialConfig(c);
     const zulipStream = social.ZULIP_COMMENT_STREAM || "website-discussion";
     
-    // Background Zulip sync
     c.executionCtx.waitUntil((async () => {
        const msgId = await sendZulipMessage(
          c.env, 
@@ -81,17 +97,16 @@ commentsRouter.post("/:targetType/:targetId", rateLimitMiddleware(10, 60), turns
          `${targetType.toUpperCase()}: ${targetId}`, 
          `**${user.nickname || 'ARES Member'}** commented on ${targetType} \`${targetId}\`:\n\n${content}`
        );
-       if (msgId) {
-         await c.env.DB.prepare("UPDATE comments SET zulip_message_id = ? WHERE id = ?").bind(msgId, id).run();
-       }
-    })().catch(err => console.error("[Comments] Zulip sync error:", err)));
+        if (msgId) {
+          await db.updateTable("comments").set({ zulip_message_id: Number(msgId) }).where("id", "=", id as any).execute();
+        }
+    })().catch(() => {}));
 
     // ── Notifications ──
-    // If it's a blog post, notify authors (unless they are the commenter)
     if (targetType === 'post') {
-       const row = await c.env.DB.prepare("SELECT cf_email FROM posts WHERE slug = ?").bind(targetId).first<{cf_email: string}>();
+       const row = await db.selectFrom("posts").select("cf_email").where("slug", "=", targetId).executeTakeFirst();
        if (row?.cf_email && row.cf_email !== user.email) {
-          const author = await c.env.DB.prepare("SELECT id FROM user WHERE email = ?").bind(row.cf_email).first<{id: string}>();
+          const author = await db.selectFrom("user").select("id").where("email", "=", row.cf_email).executeTakeFirst();
           if (author) {
             c.executionCtx.waitUntil(emitNotification(c, {
                userId: author.id,
@@ -105,8 +120,7 @@ commentsRouter.post("/:targetType/:targetId", rateLimitMiddleware(10, 60), turns
     }
 
     return c.json({ success: true, id });
-  } catch (err) {
-    console.error("D1 comment create error:", err);
+  } catch {
     return c.json({ error: "Comment creation failed" }, 500);
   }
 });
@@ -117,35 +131,37 @@ commentsRouter.put("/:id", rateLimitMiddleware(10, 60), async (c) => {
   if (!user || user.role === "unverified") return c.json({ error: "Forbidden" }, 403);
 
   const id = (c.req.param("id") || "");
-  let body;
+  const db = c.get("db") as Kysely<DB>;
+
+  let body: { content?: string };
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "Invalid request payload (malformed JSON or FormData)" }, 400);
+    return c.json({ error: "Invalid request payload" }, 400);
   }
   const content = (body.content || "").trim();
 
   if (!content) return c.json({ error: "Comment content cannot be empty" }, 400);
 
   try {
-    const row = await c.env.DB.prepare("SELECT user_id, zulip_message_id FROM comments WHERE id = ?").bind(id).first<{user_id: string, zulip_message_id: number}>();
+    const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id as any).executeTakeFirst();
     if (!row) return c.json({ error: "Comment not found" }, 404);
     if (row.user_id !== user.id && user.role !== "admin") return c.json({ error: "Forbidden" }, 403);
 
-    await c.env.DB.prepare(
-      "UPDATE comments SET content = ?, updated_at = datetime('now') WHERE id = ?"
-    ).bind(content, id).run();
+    await db.updateTable("comments")
+      .set({ content, updated_at: new Date().toISOString() })
+      .where("id", "=", id as any)
+      .execute();
 
     if (row.zulip_message_id) {
        c.executionCtx.waitUntil(
          updateZulipMessage(c.env, String(row.zulip_message_id), `**${user.name}** (edited):\n\n${content}`)
-           .catch(err => console.error("[Comments] Zulip update failed:", err))
+           .catch(() => {})
        );
     }
 
     return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 comment update error:", err);
+  } catch {
     return c.json({ error: "Update failed" }, 500);
   }
 });
@@ -156,26 +172,27 @@ commentsRouter.delete("/:id", async (c) => {
   if (!user || user.role === "unverified") return c.json({ error: "Forbidden" }, 403);
 
   const id = (c.req.param("id") || "");
+  const db = c.get("db") as Kysely<DB>;
 
   try {
-    const row = await c.env.DB.prepare("SELECT user_id, zulip_message_id FROM comments WHERE id = ?").bind(id).first<{user_id: string, zulip_message_id: number}>();
+    const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id as any).executeTakeFirst();
     if (!row) return c.json({ error: "Comment not found" }, 404);
     if (row.user_id !== user.id && user.role !== "admin") return c.json({ error: "Forbidden" }, 403);
 
-    await c.env.DB.prepare(
-      "UPDATE comments SET is_deleted = 1 WHERE id = ?"
-    ).bind(id).run();
+    await db.updateTable("comments")
+      .set({ is_deleted: 1 })
+      .where("id", "=", id as any)
+      .execute();
 
     if (row.zulip_message_id) {
        c.executionCtx.waitUntil(
          deleteZulipMessage(c.env, String(row.zulip_message_id))
-           .catch(err => console.error("[Comments] Zulip delete failed:", err))
+           .catch(() => {})
        );
     }
 
     return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 comment delete error:", err);
+  } catch {
     return c.json({ error: "Delete failed" }, 500);
   }
 });

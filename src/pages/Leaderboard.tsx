@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Trophy, Award, Medal, Crown, Star, ArrowLeft } from "lucide-react";
 import SEO from "../components/SEO";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface LeaderboardUser {
   user_id: string;
@@ -15,25 +15,13 @@ interface LeaderboardUser {
 }
 
 export default function Leaderboard() {
-  const [leaders, setLeaders] = useState<LeaderboardUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: leaderboardRes, isLoading } = api.analytics.getLeaderboard.useQuery({
+    queryKey: ["leaderboard"],
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    publicApi.get<{ leaderboard: LeaderboardUser[] }>("/api/leaderboard")
-      .then(d => {
-        if (!cancelled && d.leaderboard) {
-          setLeaders(d.leaderboard);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
+  const leaders = useMemo(() => (leaderboardRes?.status === 200 ? leaderboardRes.body.leaderboard : []) as LeaderboardUser[], [leaderboardRes]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-obsidian flex items-center justify-center">
         <div className="animate-spin w-12 h-12 border-4 border-ares-gold border-t-transparent rounded-full" />
@@ -74,7 +62,7 @@ export default function Leaderboard() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4"
           >
-            Team <span aria-hidden="true" className="text-white'Leaderboard']"></span>
+            Team <span aria-hidden="true" className="text-ares-gold">Leaderboard</span>
             <span className="sr-only">Leaderboard</span>
           </motion.h1>
           <motion.p 

@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShieldAlert, TrendingUp, Users, MousePointerClick, Calendar, ArrowLeft, Trophy } from "lucide-react";
 import SEO from "../components/SEO";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface SponsorMetrics {
   year_month: string;
@@ -31,10 +31,10 @@ export default function SponsorROI() {
   useEffect(() => {
     let cancelled = false;
 
-    publicApi.get<SponsorROI>(`/api/sponsors/roi/${tokenId}`)
-      .then((d) => {
-        if (!cancelled) {
-          setData(d);
+    api.sponsors.getROI.query({ params: { tokenId: tokenId || "" } })
+      .then((res) => {
+        if (!cancelled && res.status === 200) {
+          setData(res.body as any);
           setLoading(false);
         }
       })

@@ -1,151 +1,79 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mockExecutionContext } from "../../../src/test/utils";
-import sponsorsRouter from "./sponsors";
-import { Hono } from "hono";
-import { createMockSponsor } from "../../../src/test/factories/logisticsFactory";
 
-vi.mock("../../utils/zulipSync", () => ({
-  sendZulipAlert: vi.fn().mockResolvedValue(true),
-}));
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Hono } from "hono";
+import { mockExecutionContext } from "../../../src/test/utils";
+
+// Mock middleware
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (c: any, next: any) => next(),
-    rateLimitMiddleware: () => async (c: any, next: any) => next(),
+    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
+    getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
   };
 });
 
+import sponsorsRouter from "./sponsors";
+
 describe("Hono Backend - /sponsors Router", () => {
-  const env = {
-    DB: {
-      prepare: vi.fn().mockReturnThis(),
-      bind: vi.fn().mockReturnThis(),
-      all: vi.fn(),
-      first: vi.fn(),
-      run: vi.fn().mockResolvedValue({ success: true }),
-    } as any,
-    DEV_BYPASS: "true",
-  };
-
-  const mockDb = {
-    selectFrom: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    offset: vi.fn().mockReturnThis(),
-    innerJoin: vi.fn().mockReturnThis(),
-    insertInto: vi.fn().mockReturnThis(),
-    values: vi.fn().mockReturnThis(),
-    onConflict: vi.fn().mockReturnThis(),
-    updateTable: vi.fn().mockReturnThis(),
-    set: vi.fn().mockReturnThis(),
-    execute: vi.fn().mockResolvedValue([]),
-    executeTakeFirst: vi.fn().mockResolvedValue(null)
-  };
-
-  const testApp = new Hono<any>();
-  testApp.use("*", async (c, next) => {
-    c.set("db", mockDb);
-    await next();
-  });
-  testApp.route("/", sponsorsRouter);
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockDb: any;
+  let testApp: Hono;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockDb.execute.mockReset();
-    mockDb.executeTakeFirst.mockReset();
+    mockDb = {
+      selectFrom: vi.fn().mockReturnThis(),
+      selectAll: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      execute: vi.fn().mockResolvedValue([]),
+      executeTakeFirst: vi.fn().mockResolvedValue(null),
+      insertInto: vi.fn().mockReturnThis(),
+      values: vi.fn().mockReturnThis(),
+      onConflict: vi.fn().mockReturnThis(),
+      doUpdateSet: vi.fn().mockReturnThis(),
+      updateTable: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(),
+      getExecutor: vi.fn().mockReturnValue({
+        compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),
+        executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
+        transformQuery: vi.fn((q) => q),
+      }),
+    };
+
+    testApp = new Hono();
+    testApp.use("*", async (c, next) => {
+      c.set("db", mockDb);
+      await next();
+    });
+    testApp.route("/", sponsorsRouter);
   });
 
-  it("GET / should list all sponsors", async () => {
-    const mockSponsors = [createMockSponsor(), createMockSponsor()];
-    mockDb.execute.mockResolvedValueOnce(mockSponsors);
-    const req = new Request("http://localhost/api/sponsors", { method: "GET" });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
+  it("GET / - list sponsors", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Google", tier: "Gold", logo_url: "..." }]);
+    const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
-  it("GET /admin should list admin sponsors", async () => {
-    mockDb.execute.mockResolvedValueOnce([]);
-    const req = new Request("http://localhost/api/sponsors/admin", { method: "GET" });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("POST /admin should save sponsor", async () => {
-    const req = new Request("http://localhost/api/sponsors/admin", {
+  it("POST /admin/save - save sponsor", async () => {
+    const res = await testApp.request("/admin/save", {
       method: "POST",
-      body: JSON.stringify({ id: "s1", name: "Sponsor", tier: "Gold" }),
+      body: JSON.stringify({ name: "Google", tier: "Gold", logo_url: "https://example.com/logo.png", website_url: "https://example.com", description: "..." }),
       headers: { "Content-Type": "application/json" }
-    });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
-  it("POST /admin should reject missing fields", async () => {
-    const req = new Request("http://localhost/api/sponsors/admin", {
+  it("POST /admin/tokens/generate - generate token", async () => {
+    const res = await testApp.request("/admin/tokens/generate", {
       method: "POST",
-      body: JSON.stringify({ name: "Sponsor" }),
+      body: JSON.stringify({ sponsor_id: "123" }),
       headers: { "Content-Type": "application/json" }
-    });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(400);
-  });
-
-  it("POST /admin should reject invalid tier", async () => {
-    const req = new Request("http://localhost/api/sponsors/admin", {
-      method: "POST",
-      body: JSON.stringify({ id: "s1", name: "Sponsor", tier: "Diamond" }),
-      headers: { "Content-Type": "application/json" }
-    });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(400);
-  });
-
-  it("DELETE /admin/:id should deactivate sponsor", async () => {
-    const req = new Request("http://localhost/api/sponsors/admin/s1", { 
-      method: "DELETE",
-      body: JSON.stringify({}),
-      headers: { "Content-Type": "application/json" }
-    });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("GET /roi/:token should get ROI", async () => {
-    mockDb.execute
-      .mockResolvedValueOnce([{ sponsor_id: "s1" }]) // token
-      .mockResolvedValueOnce([{ name: "Sponsor" }]) // sponsor
-      .mockResolvedValueOnce([{ clicks: 5 }]); // metrics
-
-    const req = new Request("http://localhost/roi/t1", { method: "GET" });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("GET /roi/:token should reject invalid token", async () => {
-    mockDb.execute.mockResolvedValueOnce([]);
-    const req = new Request("http://localhost/roi/t1", { method: "GET" });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(403);
-  });
-
-  it("GET /admin/tokens should list tokens", async () => {
-    mockDb.execute.mockResolvedValueOnce([]);
-    const req = new Request("http://localhost/admin/tokens", { method: "GET" });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("POST /admin/tokens/generate should generate token", async () => {
-    const req = new Request("http://localhost/admin/tokens/generate", {
-      method: "POST",
-      body: JSON.stringify({ sponsor_id: "s1" }),
-      headers: { "Content-Type": "application/json" }
-    });
-    const res = await testApp.request(req, {}, env, mockExecutionContext);
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 });

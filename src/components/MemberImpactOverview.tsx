@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Search, Clock, Users, Activity } from "lucide-react";
 import { useState } from "react";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 
 interface RosterMember {
   user_id: string;
@@ -19,17 +19,10 @@ import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 export default function MemberImpactOverview() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: roster = [], isLoading, isError } = useQuery<RosterMember[]>({
+  const { data: rosterRes, isLoading, isError } = api.analytics.getRosterStats.useQuery({
     queryKey: ["admin-roster-stats"],
-    queryFn: async () => {
-      try {
-        const d = await adminApi.get<{ roster: RosterMember[] }>("/api/admin/analytics/roster-stats");
-        return d.roster || [];
-      } catch {
-        return [];
-      }
-    }
   });
+  const roster = (rosterRes?.body as any)?.roster || [];
 
   if (isLoading) {
     return (

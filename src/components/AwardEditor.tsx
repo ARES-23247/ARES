@@ -3,12 +3,27 @@ import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
 import DashboardLoadingGrid from "./dashboard/DashboardLoadingGrid";
 import { DashboardInput, DashboardTextarea, DashboardSubmitButton } from "./dashboard/DashboardFormInputs";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Trophy, Star, Calendar, MapPin, XCircle, Save } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 import SeasonPicker from "./SeasonPicker";
+
+const awardFormSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
+  year: z.coerce.number().min(2000).max(2100),
+  event_name: z.string().optional().nullable(),
+  image_url: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  season_id: z.string().optional().nullable(),
+});
+
+type AwardFormValues = z.infer<typeof awardFormSchema>;
 
 interface Award {
   id: string;
@@ -21,55 +36,44 @@ interface Award {
 }
 
 export default function AwardEditor() {
-  const queryCenter = useQueryClient();
+  const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
-  const [formData, setFormData] = useState<Partial<Award>>({
-    id: "",
-    title: "",
-    year: new Date().getFullYear(),
-    event_name: "",
-    image_url: "",
-    description: "",
-    season_id: ""
+
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<AwardFormValues>({
+    resolver: zodResolver(awardFormSchema),
+    defaultValues: {
+      year: new Date().getFullYear(),
+      title: "",
+      event_name: "",
+      image_url: "",
+      description: "",
+      season_id: ""
+    }
   });
 
-  const { data: awards = [], isLoading, isError } = useQuery<Award[]>({
+  const seasonId = useWatch({ control, name: "season_id" });
+
+  const { data: awardsData, isLoading, isError } = api.awards.getAwards.useQuery({
     queryKey: ["admin-awards"],
-    queryFn: async () => {
-      const d = await adminApi.get<{ awards: Award[] }>("/api/admin/awards");
-      return d.awards || [];
-    }
   });
+  const awards = (awardsData?.body?.awards || []) as Award[];
 
-  const saveMutation = useMutation({
-    mutationFn: async (award: Partial<Award>) => {
-      await adminApi.request("/api/admin/awards", {
-        method: "POST",
-        body: JSON.stringify(award)
-      });
-    },
+  const saveMutation = api.awards.saveAward.useMutation({
     onSuccess: () => {
-      queryCenter.invalidateQueries({ queryKey: ["admin-awards"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-awards"] });
       setIsAdding(false);
-      setFormData({ 
-        id: "", title: "", year: new Date().getFullYear(), 
-        event_name: "", image_url: "", description: "" 
-      });
+      reset();
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await adminApi.request(`/api/admin/awards/${id}`, { method: "DELETE" });
-    },
-    onSuccess: () => queryCenter.invalidateQueries({ queryKey: ["admin-awards"] })
+  const deleteMutation = api.awards.deleteAward.useMutation({
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-awards"] })
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title || !formData.year) return;
-    const finalId = formData.id || `${formData.year}-${formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-    saveMutation.mutate({ ...formData, id: finalId });
+  const onFormSubmit = (data: AwardFormValues) => {
+    const finalId = data.id || `${data.year}-${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    saveMutation.mutate({ body: { ...data, id: finalId } as any });
   };
 
   return (
@@ -81,7 +85,14 @@ export default function AwardEditor() {
         italicTitle={true}
         action={
           <button
-            onClick={() => setIsAdding(!isAdding)}
+            onClick={() => {
+              if (isAdding) {
+                setIsAdding(false);
+                reset();
+              } else {
+                setIsAdding(true);
+              }
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-ares-red text-white font-bold ares-cut-sm hover:bg-ares-danger transition-colors shadow-lg shadow-ares-red/20"
           >
             {isAdding ? <XCircle size={18} /> : <Plus size={18} />}
@@ -103,43 +114,39 @@ export default function AwardEditor() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onFormSubmit)}
             className="bg-obsidian border border-ares-gold/30 ares-cut-lg p-8 space-y-6 shadow-2xl"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <DashboardInput
                 id="award-title"
                 label="Award Title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                {...register("title")}
+                error={errors.title?.message}
                 placeholder="e.g. Excellence in Engineering"
                 focusColor="ares-gold"
                 fullWidth
-                required
               />
               <DashboardInput
                 id="award-year"
                 type="number"
                 label="Year"
-                value={formData.year}
-                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                {...register("year")}
+                error={errors.year?.message}
                 focusColor="ares-gold"
-                required
               />
               <DashboardInput
                 id="award-eventName"
                 label="Event Name"
-                value={formData.event_name || ""}
-                onChange={(e) => setFormData({ ...formData, event_name: e.target.value })}
+                {...register("event_name")}
                 placeholder="e.g. West Virginia State Championship"
                 focusColor="ares-gold"
               />
-              <SeasonPicker value={formData.season_id} onChange={(val) => setFormData({ ...formData, season_id: val })} />
+              <SeasonPicker value={seasonId || ""} onChange={(val) => setValue("season_id", val)} />
               <DashboardInput
                 id="award-image"
                 label="Image URL (Optional)"
-                value={formData.image_url || ""}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                {...register("image_url")}
                 placeholder="https://..."
                 focusColor="ares-gold"
                 fullWidth
@@ -147,8 +154,7 @@ export default function AwardEditor() {
               <DashboardTextarea
                 id="award-desc"
                 label="Description"
-                value={formData.description || ""}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                {...register("description")}
                 placeholder="Tell the story of how we won..."
                 focusColor="ares-gold"
                 fullWidth
@@ -195,7 +201,7 @@ export default function AwardEditor() {
             </div>
 
             <button
-              onClick={() => { if(confirm("Purge this achievement from history?")) deleteMutation.mutate(award.id); }}
+              onClick={() => { if(confirm("Purge this achievement from history?")) deleteMutation.mutate({ params: { id: award.id }, body: {} }); }}
               className="absolute top-4 right-4 p-3 text-ares-gray hover:text-ares-red transition-colors bg-white/5 ares-cut opacity-0 group-hover:opacity-100"
             >
               <Trash2 size={18} />

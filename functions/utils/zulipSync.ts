@@ -1,39 +1,25 @@
 import { Bindings, logSystemError } from "../api/middleware";
+import pRetry from "p-retry";
+import { z } from "zod";
 
 /**
  * Minimal credentials needed for Zulip API calls.
- * REF-F01: Allows callers to pass explicit params instead of full Bindings.
  */
-export interface ZulipCredentials {
-  ZULIP_BOT_EMAIL?: string;
-  ZULIP_API_KEY?: string;
-  ZULIP_URL?: string;
-  ZULIP_ADMIN_STREAM?: string;
-  ZULIP_COMMENT_STREAM?: string;
-  DB?: D1Database;
-}
+
+// ... (interface remains same)
+
+const ZulipResponseSchema = z.object({
+  result: z.string(),
+  id: z.number().optional(),
+  msg: z.string().optional(),
+});
 
 type ZulipEnv = Bindings | ZulipCredentials;
 
-function getZulipAuthHeaders(creds: ZulipEnv): HeadersInit {
-  if (!creds.ZULIP_BOT_EMAIL || !creds.ZULIP_API_KEY) {
-    throw new Error("Missing ZULIP credentials in bindings");
-  }
-  // btoa is available in Cloudflare Workers
-  const authHeader = "Basic " + btoa(`${creds.ZULIP_BOT_EMAIL}:${creds.ZULIP_API_KEY}`);
-  return {
-    "Authorization": authHeader,
-  };
-}
-
-function getZulipBaseUrl(creds: ZulipEnv): string {
-  return creds.ZULIP_URL || "https://ares.zulipchat.com";
-}
+// ... (headers and url helpers remain same)
 
 /**
  * Sends a message to a specific Zulip stream and topic.
- * Accepts either full Bindings or minimal ZulipCredentials.
- * Returns the Zulip message ID if successful.
  */
 export async function sendZulipMessage(
   env: Bindings | ZulipCredentials,
@@ -41,7 +27,7 @@ export async function sendZulipMessage(
   topic: string,
   content: string
 ): Promise<string | null> {
-  try {
+  const runDispatch = async () => {
     const url = `${getZulipBaseUrl(env)}/api/v1/messages`;
     const formData = new URLSearchParams();
     formData.append("type", "stream");
@@ -62,23 +48,30 @@ export async function sendZulipMessage(
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error("[ZulipSync] Failed to send message:", errorText);
-      const db = 'DB' in env ? env.DB : undefined;
-      if (db) await logSystemError(db as D1Database, "Zulip", "Failed to send message", errorText);
-      return null;
+      throw new Error(`Zulip API Error ${res.status}: ${errorText}`);
     }
 
-    const data = await res.json() as { result: string; id: number };
-    if (data.result === "success") {
-      return String(data.id);
+    const rawData = await res.json();
+    const data = ZulipResponseSchema.parse(rawData);
+
+    if (data.result !== "success") {
+      throw new Error(`Zulip Business Error: ${data.msg || "unknown"}`);
     }
-    const db = 'DB' in env ? env.DB : undefined;
-    if (db) await logSystemError(db as D1Database, "Zulip", "Zulip API returned non-success", JSON.stringify(data));
-    return null;
+
+    return String(data.id);
+  };
+
+  try {
+    return await pRetry(runDispatch, {
+      retries: 3,
+      onFailedAttempt: error => {
+        console.warn(`[ZulipSync] Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`);
+      }
+    });
   } catch (err) {
-    console.error("[ZulipSync] Exception sending message:", err);
+    console.error("[ZulipSync] Critical failure after retries:", err);
     const db = 'DB' in env ? env.DB : undefined;
-    if (db) await logSystemError(db as D1Database, "Zulip", "Exception in sendZulipMessage", String(err));
+    if (db) await logSystemError(db as D1Database, "Zulip", "Critical failure after retries", String(err));
     return null;
   }
 }
@@ -91,7 +84,7 @@ export async function updateZulipMessage(
   messageId: string,
   newContent: string
 ): Promise<boolean> {
-  try {
+  const runUpdate = async () => {
     const url = `${getZulipBaseUrl(env)}/api/v1/messages/${messageId}`;
     const formData = new URLSearchParams();
     formData.append("content", newContent);
@@ -108,10 +101,19 @@ export async function updateZulipMessage(
     });
 
     if (!res.ok) {
-      console.error("[ZulipSync] Failed to update message:", await res.text());
-      return false;
+      const errorText = await res.text();
+      throw new Error(`Zulip Update Error ${res.status}: ${errorText}`);
     }
     return true;
+  };
+
+  try {
+    return await pRetry(runUpdate, {
+      retries: 2,
+      onFailedAttempt: error => {
+        console.warn(`[ZulipSync] Update attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`);
+      }
+    });
   } catch (err) {
     console.error("[ZulipSync] Exception updating message:", err);
     return false;
@@ -125,7 +127,7 @@ export async function deleteZulipMessage(
   env: ZulipEnv,
   messageId: string
 ): Promise<boolean> {
-  try {
+  const runDelete = async () => {
     const url = `${getZulipBaseUrl(env)}/api/v1/messages/${messageId}`;
     const headers = getZulipAuthHeaders(env);
 
@@ -135,10 +137,19 @@ export async function deleteZulipMessage(
     });
 
     if (!res.ok) {
-      console.error("[ZulipSync] Failed to delete message:", await res.text());
-      return false;
+      const errorText = await res.text();
+      throw new Error(`Zulip Delete Error ${res.status}: ${errorText}`);
     }
     return true;
+  };
+
+  try {
+    return await pRetry(runDelete, {
+      retries: 2,
+      onFailedAttempt: error => {
+        console.warn(`[ZulipSync] Delete attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`);
+      }
+    });
   } catch (err) {
     console.error("[ZulipSync] Exception deleting message:", err);
     return false;

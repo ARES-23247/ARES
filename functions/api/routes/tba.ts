@@ -23,8 +23,13 @@ async function getTBA(path: string, c: Context<AppEnv>) {
     return cached.data;
   }
 
-  const { results: settingsRows } = await c.env.DB.prepare("SELECT value FROM settings WHERE key = 'TBA_API_KEY'").all();
-  const apiKey = (settingsRows[0] as { value: string })?.value;
+  const db = c.get("db");
+  const settingsRow = await db.selectFrom("settings")
+    .select("value")
+    .where("key", "=", "TBA_API_KEY")
+    .executeTakeFirst();
+  
+  const apiKey = settingsRow?.value;
   if (!apiKey) throw new Error("TBA_API_KEY not configured");
 
   // EFF-N01: Implement fetch timeout
@@ -79,3 +84,4 @@ tbaRouter.get("/team/:teamKey/events/:year", async (c) => {
 });
 
 export default tbaRouter;
+

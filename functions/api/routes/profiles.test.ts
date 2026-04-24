@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import profilesRouter from "./profiles";
 import { createMockProfile } from "../../../src/test/factories/userFactory";
@@ -19,29 +20,64 @@ vi.mock("../../utils/auth", () => ({
 }));
 
 describe("Hono Backend - /profiles Router", () => {
-  const env = {
-    DB: {
-      prepare: vi.fn().mockReturnThis(),
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn(),
-      all: vi.fn(),
-      run: vi.fn(),
-    } as any,
-    DEV_BYPASS: "true",
-    ENCRYPTION_SECRET: "test-secret",
-  };
+  let mockDb: any;
+  let testApp: Hono<any>;
+  let env: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockDb = {
+      selectFrom: vi.fn().mockReturnThis(),
+      innerJoin: vi.fn().mockReturnThis(),
+      leftJoin: vi.fn().mockReturnThis(),
+      selectAll: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      execute: vi.fn().mockResolvedValue([]),
+      executeTakeFirst: vi.fn().mockResolvedValue(null),
+      insertInto: vi.fn().mockReturnThis(),
+      onConflict: vi.fn().mockReturnThis(),
+      doUpdateSet: vi.fn().mockReturnThis(),
+      updateTable: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      values: vi.fn().mockReturnThis(),
+      run: vi.fn().mockResolvedValue({ success: true }),
+      getExecutor: vi.fn().mockReturnValue({
+        compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),
+        executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
+        transformQuery: vi.fn((q) => q),
+      }),
+    };
+
+    env = {
+      DB: {
+        prepare: vi.fn().mockReturnThis(),
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn(),
+        all: vi.fn(),
+        run: vi.fn(),
+      } as any,
+      DEV_BYPASS: "true",
+      ENCRYPTION_SECRET: "test-secret",
+    };
+
+    testApp = new Hono();
+    testApp.use("*", async (c, next) => {
+      c.set("db", mockDb);
+      c.set("sessionUser", { id: "local-dev", email: "admin@test.com", role: "admin", name: "Local Dev" });
+      await next();
+    });
+    testApp.route("/", profilesRouter);
   });
 
   it("should return /me profile for authenticated user", async () => {
     const mockProfile = createMockProfile({ user_id: "local-dev", nickname: "Local Dev" });
-    env.DB.first.mockResolvedValueOnce(mockProfile); // first for profile
-    env.DB.all.mockResolvedValueOnce({ results: [] }); // all for badges
+    mockDb.executeTakeFirst.mockResolvedValueOnce(mockProfile); // profile
+    mockDb.execute.mockResolvedValueOnce([]); // badges
 
-    const req = new Request("http://localhost/me", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/me", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -50,11 +86,10 @@ describe("Hono Backend - /profiles Router", () => {
   });
 
   it("should handle /me fetch errors gracefully", async () => {
-    env.DB.first.mockRejectedValueOnce(new Error("DB error"));
+    mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("DB error"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const req = new Request("http://localhost/me", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/me", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: "Profile fetch failed" });
@@ -63,29 +98,28 @@ describe("Hono Backend - /profiles Router", () => {
   });
 
   it("should update /me profile", async () => {
-    env.DB.run.mockResolvedValue({ success: true });
+    mockDb.run.mockResolvedValue({ success: true });
 
-    const req = new Request("http://localhost/me", {
+    const res = await testApp.request("/me", {
       method: "PUT",
       body: JSON.stringify({ nickname: "New Nick" }),
       headers: { "Content-Type": "application/json" },
-    });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: true });
   });
 
   it("should return 500 on /me update error", async () => {
-    env.DB.run.mockRejectedValueOnce(new Error("DB error"));
+    // Note: upsertProfile also uses c.get("db") which points to mockDb
+    mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("DB error"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const req = new Request("http://localhost/me", {
+    const res = await testApp.request("/me", {
       method: "PUT",
       body: JSON.stringify({ nickname: "New Nick" }),
       headers: { "Content-Type": "application/json" },
-    });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    }, env, mockExecutionContext);
 
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: "Profile update failed" });
@@ -93,12 +127,11 @@ describe("Hono Backend - /profiles Router", () => {
   });
 
   it("should update /avatar", async () => {
-    const req = new Request("http://localhost/avatar", {
+    const res = await testApp.request("/avatar", {
       method: "PUT",
       body: JSON.stringify({ image: "https://example.com/avatar.png" }),
       headers: { "Content-Type": "application/json" },
-    });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: true });
@@ -111,12 +144,11 @@ describe("Hono Backend - /profiles Router", () => {
     });
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const req = new Request("http://localhost/avatar", {
+    const res = await testApp.request("/avatar", {
       method: "PUT",
       body: JSON.stringify({ image: "https://example.com/avatar.png" }),
       headers: { "Content-Type": "application/json" },
-    });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    }, env, mockExecutionContext);
 
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: "Avatar update failed" });
@@ -128,10 +160,9 @@ describe("Hono Backend - /profiles Router", () => {
       { user_id: "1", nickname: "Member 1", member_type: "student", show_on_about: 1 },
       { user_id: "2", nickname: "Member 2", member_type: "mentor", show_on_about: 1, contact_email: "encrypted" },
     ];
-    env.DB.all.mockResolvedValue({ results: mockRoster });
+    mockDb.execute.mockResolvedValueOnce(mockRoster);
 
-    const req = new Request("http://localhost/team-roster", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -143,10 +174,9 @@ describe("Hono Backend - /profiles Router", () => {
     const mockRoster = [
       { user_id: "2", nickname: "Member 2", member_type: "mentor", show_on_about: 1, contact_email: "encrypted" },
     ];
-    env.DB.all.mockResolvedValue({ results: mockRoster });
+    mockDb.getExecutor().executeQuery.mockResolvedValueOnce({ rows: mockRoster });
 
-    const req = new Request("http://localhost/team-roster?q=search", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/team-roster?q=search", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -155,13 +185,12 @@ describe("Hono Backend - /profiles Router", () => {
   });
 
   it("should return 500 on team roster fetch error", async () => {
-    env.DB.all.mockRejectedValueOnce(new Error("DB error"));
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const req = new Request("http://localhost/team-roster", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
 
-    expect(res.status).toBe(200); // Wait, profiles.ts catch block returns { members: [] } (which is 200)
+    expect(res.status).toBe(200); 
     const body = await res.json() as any;
     expect(body.members).toHaveLength(0);
     consoleSpy.mockRestore();
@@ -174,11 +203,10 @@ describe("Hono Backend - /profiles Router", () => {
       show_on_about: 1, 
       member_type: "student" 
     };
-    env.DB.first.mockResolvedValueOnce(mockProfile); // first for profile
-    env.DB.all.mockResolvedValueOnce({ results: [] }); // all for badges
+    mockDb.executeTakeFirst.mockResolvedValueOnce(mockProfile); // profile
+    mockDb.execute.mockResolvedValueOnce([]); // badges
 
-    const req = new Request("http://localhost/user-123", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/user-123", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -186,10 +214,9 @@ describe("Hono Backend - /profiles Router", () => {
   });
 
   it("should return 404 for non-existent profile", async () => {
-    env.DB.first.mockResolvedValue(null);
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null);
 
-    const req = new Request("http://localhost/ghost", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/ghost", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(404);
   });
@@ -201,10 +228,9 @@ describe("Hono Backend - /profiles Router", () => {
       show_on_about: 0, 
       member_type: "student" 
     };
-    env.DB.first.mockResolvedValue(mockProfile);
+    mockDb.executeTakeFirst.mockResolvedValueOnce(mockProfile);
 
-    const req = new Request("http://localhost/user-123", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/user-123", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(403);
   });
@@ -223,14 +249,12 @@ describe("Hono Backend - /profiles Router", () => {
       tshirt_size: "L"
     };
 
-    // first() is called twice: once for profile, once for sensitive
-    env.DB.first
-      .mockResolvedValueOnce(mockProfile)
-      .mockResolvedValueOnce(sensitiveData);
-    env.DB.all.mockResolvedValueOnce({ results: [] }); // all for badges
+    mockDb.executeTakeFirst
+      .mockResolvedValueOnce(mockProfile) // profile
+      .mockResolvedValueOnce(sensitiveData); // sensitive
+    mockDb.execute.mockResolvedValueOnce([]); // badges
 
-    const req = new Request("http://localhost/local-dev", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/local-dev", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -239,11 +263,10 @@ describe("Hono Backend - /profiles Router", () => {
   });
 
   it("should handle public profile fetch error", async () => {
-    env.DB.first.mockRejectedValueOnce(new Error("DB error"));
+    mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("DB error"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const req = new Request("http://localhost/user-123", { method: "GET" });
-    const res = await profilesRouter.request(req, {}, env, mockExecutionContext);
+    const res = await testApp.request("/user-123", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: "Profile fetch failed" });

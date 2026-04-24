@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Clock, Zap, Circle, UserMinus } from "lucide-react";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 
 interface PresenceData {
   status: "active" | "idle" | "offline";
@@ -24,12 +24,12 @@ export default function TeamAvailability() {
 
   const fetchPresence = async () => {
     try {
-      const data = await adminApi.get<{ success: boolean; presence: ZulipPresences; error?: string }>("/api/zulip/presence");
-      if (data && data.success) {
-        setPresences(data.presence);
+      const res = await api.zulip.getPresence.query();
+      if (res.status === 200 && res.body.success) {
+        setPresences(res.body.presence);
         setError(null);
       } else {
-        setError(data?.error || "Failed to fetch presence data");
+        setError((res.body as any)?.error || "Failed to fetch presence data");
       }
     } catch (err) {
       setError((err as Error).message);

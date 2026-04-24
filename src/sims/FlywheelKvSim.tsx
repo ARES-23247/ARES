@@ -1,12 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useControls, button } from 'leva';
 
 export default function FlywheelKvSim() {
   const wCanvasRef = useRef<HTMLCanvasElement>(null);
   const fwGCanvasRef = useRef<HTMLCanvasElement>(null);
   
-  const [kV, setKv] = useState(0.12);
-  const [kP, setKp] = useState(0.08);
-  const [fwSet, setFwSet] = useState(80);
+  const [{ kV, kP, fwSet }, set] = useControls(() => ({
+    'Flywheel Physics': {
+      kV: { value: 0.12, min: 0, max: 0.3, step: 0.01, label: 'kV (Feedforward)' },
+      kP: { value: 0.08, min: 0, max: 0.5, step: 0.01, label: 'kP (Proportional)' },
+      fwSet: { value: 80, min: 0, max: 150, step: 5, label: 'Setpoint (rad/s)' },
+    },
+    'Interactions': {
+      'Inject Ball': button(() => shoot()),
+      'Reset Simulation': button(() => {
+        set({ kV: 0.12, kP: 0.08, fwSet: 80 });
+        velRef.current = 0;
+      })
+    }
+  }));
 
   const stateRef = useRef({ kV, kP, fwSet });
   useEffect(() => { stateRef.current = { kV, kP, fwSet }; }, [kV, kP, fwSet]);
@@ -127,40 +139,32 @@ export default function FlywheelKvSim() {
   }, []);
 
   return (
-    <div style={{ backgroundColor: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', color: '#e8e8e8', marginTop: '20px' }}>
-      <div style={{ padding: '15px', borderBottom: '1px solid #2a2a2a', display: 'flex', gap: '20px', background: '#111', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <div style={{ flex: 1, minWidth: '150px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: '#ccc', marginBottom: '5px' }}>
-                <span>kV (Velocity FF)</span><span>{kV.toFixed(2)}</span>
-            </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="0.3" step="0.01" value={kV} onChange={e => setKv(parseFloat(e.target.value))} style={{ width: '100%' }} />
+    <div className="bg-obsidian border border-white/10 rounded-2xl overflow-hidden flex flex-col color-marble mt-6 ares-cut-lg">
+      <div className="p-4 border-b border-white/5 flex gap-4 bg-black/40 backdrop-blur-md items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-marble/60">Live Telemetry System</span>
         </div>
-        <div style={{ flex: 1, minWidth: '150px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: '#ccc', marginBottom: '5px' }}>
-                <span>kP (Proportional)</span><span>{kP.toFixed(2)}</span>
-            </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="0.5" step="0.01" value={kP} onChange={e => setKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
-        </div>
-        <div style={{ flex: 1, minWidth: '150px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: '#ccc', marginBottom: '5px' }}>
-                <span>Setpoint (rad/s)</span><span>{fwSet}</span>
-            </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="150" step="5" value={fwSet} onChange={e => setFwSet(parseInt(e.target.value))} style={{ width: '100%' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button 
-                onClick={shoot} 
-                style={{ background: '#B32416', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
-                INJECT BALL
-            </button>
+        <div className="flex gap-4 text-[10px] font-mono text-ares-gold/80">
+          <span>KV: {kV.toFixed(2)}</span>
+          <span>KP: {kP.toFixed(2)}</span>
+          <span>SET: {fwSet}</span>
         </div>
       </div>
-      <div style={{ display: 'flex', padding: '20px', gap: '20px', alignItems: 'center' }}>
-        <div>
-          <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={wCanvasRef} width="120" height="120" style={{ background: '#1a1a1a', borderRadius: '50%' }} />
+      <div className="flex flex-col md:flex-row p-6 gap-6 items-center">
+        <div className="shrink-0">
+          <canvas role="img" aria-label="Flywheel Visualization" ref={wCanvasRef} width="120" height="120" className="bg-black/40 rounded-full border border-white/5 shadow-2xl" />
         </div>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={fwGCanvasRef} width="600" height="220" style={{ display: 'block', width: '100%', background: '#1a1a1a', borderRadius: '4px' }} />
+        <div className="flex-1 w-full relative">
+          <canvas role="img" aria-label="Velocity Graph" ref={fwGCanvasRef} width="600" height="220" className="block w-full bg-black/40 rounded-xl border border-white/5" />
+          <div className="absolute top-4 right-4 flex flex-col gap-1">
+             <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-tighter text-ares-cyan">
+                <div className="w-2 h-0.5 bg-ares-cyan" /> Target
+             </div>
+             <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-tighter text-ares-red">
+                <div className="w-2 h-0.5 bg-ares-red" /> Velocity
+             </div>
+          </div>
         </div>
       </div>
     </div>

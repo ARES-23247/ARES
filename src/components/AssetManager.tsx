@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { FolderOpen } from "lucide-react";
-import { adminApi } from "../api/adminApi";
 import AssetUploader from "./assets/AssetUploader";
-import AssetGrid, { R2Asset } from "./assets/AssetGrid";
+import AssetGrid from "./assets/AssetGrid";
 import AssetSyndicateModal from "./assets/AssetSyndicateModal";
+import { api } from "../api/client";
+import { toast } from "sonner";
 
 export default function AssetManager() {
   const queryClient = useQueryClient();
@@ -12,47 +13,73 @@ export default function AssetManager() {
   const [syndicateCaption, setSyndicateCaption] = useState("");
   const [selectedFolderFilter, setSelectedFolderFilter] = useState<string>("All");
 
-  const { data, isLoading, isError } = useQuery<{ media: (R2Asset & { folder: string; tags: string; })[] }>({
+  const { data: mediaResponse, isLoading, isError } = api.media.adminList.useQuery({
     queryKey: ['media'],
-    queryFn: async () => {
-      const data = await adminApi.get<{ media: (R2Asset & { folder: string; tags: string; })[] }>("/api/admin/media");
-      return data;
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const assets = (mediaResponse?.body as any)?.media ?? [];
+
+  const deleteMutation = api.media.delete.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media'] });
+      toast.success("Asset deleted");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Delete failed");
     }
   });
 
-  const assets = data?.media ?? [];
-
-  const deleteMutation = useMutation({
-    mutationFn: async (key: string) => adminApi.deleteMedia(key),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['media'] }),
-  });
-
-  const uploadMutation = useMutation({
-    mutationFn: async (files: File[]) => {
-      for (const file of files) {
-        await adminApi.uploadMedia(file, selectedFolderFilter === "All" ? "general" : selectedFolderFilter);
-      }
+  const uploadMutation = api.media.upload.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media'] });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['media'] }),
+    onError: (err: Error) => {
+      toast.error(err.message || "Upload failed");
+    }
   });
 
-  const syndicateMutation = useMutation({
-    mutationFn: async ({ key, caption }: { key: string; caption: string }) => 
-      adminApi.syndicateMedia(key, caption),
+  const bulkUpload = async (files: File[]) => {
+    let successCount = 0;
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", selectedFolderFilter === "All" ? "Library" : selectedFolderFilter);
+      
+      try {
+        await uploadMutation.mutateAsync({ body: formData as any });
+        successCount++;
+      } catch (err) {
+        console.error("Upload error for file", file.name, err);
+      }
+    }
+    if (successCount > 0) toast.success(`Uploaded ${successCount} assets`);
+  };
+
+  const syndicateMutation = api.media.syndicate.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media'] });
       setSyndicateKey(null);
       setSyndicateCaption("");
+      toast.success("Syndicated!");
     },
+    onError: (err: Error) => {
+      toast.error(err.message || "Syndication failed");
+    }
   });
 
-  const moveMutation = useMutation({
-    mutationFn: async ({ key, newFolder }: { key: string; newFolder: string }) => adminApi.moveMedia(key, newFolder),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['media'] }),
+  const moveMutation = api.media.move.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media'] });
+      toast.success("Asset moved");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Move failed");
+    }
   });
 
-  const uniqueFolders = Array.from(new Set(assets.map(a => a.folder))).filter(Boolean);
-  const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter((a) => a.folder === selectedFolderFilter);
+  const uniqueFolders = Array.from(new Set(assets.map((a: any) => a.folder))).filter(Boolean) as string[];
+  const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter((a: any) => a.folder === selectedFolderFilter);
 
   return (
     <div className="flex-1 w-full flex flex-col min-h-0">
@@ -67,7 +94,8 @@ export default function AssetManager() {
           <AssetUploader 
             activeFolder={selectedFolderFilter === "All" ? "" : selectedFolderFilter}
             setActiveFolder={setSelectedFolderFilter}
-            uploadMutation={uploadMutation}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            uploadMutation={{ ...uploadMutation, mutate: bulkUpload } as any}
             uploadProgress={null}
           />
         </div>
@@ -106,15 +134,16 @@ export default function AssetManager() {
           </div>
 
           <AssetGrid 
-            assets={filteredAssets} 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            assets={filteredAssets as any} 
             isDeleting={deleteMutation.isPending}
             onDelete={(key) => {
               if (confirm("Permanently purge this asset from R2?")) {
-                deleteMutation.mutate(key);
+                deleteMutation.mutate({ params: { key }, body: {} } as any);
               }
             }} 
             onSyndicate={(key) => setSyndicateKey(key)}
-            onMove={(key, newFolder) => moveMutation.mutate({ key, newFolder })}
+            onMove={(key, newFolder) => moveMutation.mutate({ params: { key }, body: { folder: newFolder } } as any)}
           />
         </>
       )}
@@ -124,7 +153,8 @@ export default function AssetManager() {
         setSyndicateKey={setSyndicateKey}
         syndicateCaption={syndicateCaption}
         setSyndicateCaption={setSyndicateCaption}
-        syndicateMutation={syndicateMutation}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        syndicateMutation={syndicateMutation as any}
       />
     </div>
   );

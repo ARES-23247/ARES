@@ -1,113 +1,145 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, parsePagination, logAuditAction, rateLimitMiddleware  } from "../middleware";
+import { Kysely, sql } from "kysely";
+import { DB } from "../../../src/schemas/database";
+import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { outreachContract } from "../../../src/schemas/contracts/outreachContract";
+import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 
+const s = initServer<AppEnv>();
 const outreachRouter = new Hono<AppEnv>();
 
-// EFF-02: Shared volunteer event query
-async function fetchVolunteerEvents(db: D1Database) {
+// Helper to fetch volunteer events and format them as outreach logs
+async function fetchVolunteerEvents(db: Kysely<DB>) {
   try {
-    const { results } = await db.prepare(
-      "SELECT id, title, date_start as date, location, 'volunteer' as type, season_id FROM events WHERE is_volunteer = 1 AND is_deleted = 0 AND status = 'published' ORDER BY date_start DESC"
-    ).all();
-    return (results || []) as Record<string, unknown>[];
-  } catch (err) {
-    console.error("D1 volunteer fetch error:", err);
+    const results = await db.selectFrom("events")
+      .select(["id", "title", "date_start as date", "location", "season_id"])
+      .where("is_volunteer", "=", 1)
+      .where("is_deleted", "=", 0)
+      .where("status", "=", "published")
+      .orderBy("date_start", "desc")
+      .execute();
+    
+    return results.map((r) => ({
+      ...r,
+      students_count: 0,
+      hours_logged: 0,
+      reach_count: 0,
+      description: "Volunteer Event (Synced)",
+      is_dynamic: true
+    }));
+  } catch {
     return [];
   }
 }
 
-function mergeAndSort(logs: Record<string, unknown>[], volunteerEvents: Record<string, unknown>[]) {
-  return [...logs, ...volunteerEvents].sort(
-    (a, b) => new Date(String(b.date)).getTime() - new Date(String(a.date)).getTime()
-  );
-}
+const outreachTsRestRouter = s.router(outreachContract, {
+  list: async ({}: any, c: any) => {
+    try {
+      const db = c.get("db");
+      const logs = await db.selectFrom("outreach_logs")
+        .select([
+          "id", "title", "date", "location", 
+          "hours as hours_logged", "people_reached as reach_count", 
+          "students_count", "impact_summary as description", "season_id"
+        ])
+        .where("is_deleted", "=", 0)
+        .orderBy("date", "desc")
+        .execute();
+      
+      const volunteerEvents = await fetchVolunteerEvents(db);
+      const combined = [...logs, ...volunteerEvents].sort(
+        (a, b) => new Date((b as { date: string }).date).getTime() - new Date((a as { date: string }).date).getTime()
+      );
 
-// ── GET / ── list all outreach logs ──────────
-outreachRouter.get("/", async (c) => {
-  try {
-    const { limit, offset } = parsePagination(c, 50, 200);
-    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(outreach_logs)").all();
-    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
-
-    const selectCols = [
-      "id", "title", "date", "location", "COALESCE(hours, 0) as hours_logged", 
-      "COALESCE(people_reached, 0) as reach_count", "COALESCE(students_count, 0) as students_count", 
-      "impact_summary as description"
-    ];
-    if (hasSeasonCol) selectCols.push("season_id");
-
-    const { results: logs } = await c.env.DB.prepare(
-      `SELECT ${selectCols.join(", ")} FROM outreach_logs WHERE is_deleted = 0 ORDER BY date DESC LIMIT ? OFFSET ?`
-    ).bind(limit, offset).all();
-    
-    const volunteerEvents = await fetchVolunteerEvents(c.env.DB);
-    return c.json({ logs: mergeAndSort((logs || []) as Record<string, unknown>[], volunteerEvents) });
-  } catch (err) {
-    console.error("D1 outreach list error:", err);
-    return c.json({ error: "Failed to fetch outreach logs", details: (err as Error).message }, 500);
-  }
-});
-
-// ── POST / ── create or update an outreach log ───────────
-outreachRouter.post("/", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
-  try {
-    const body = await c.req.json();
-    const { id, title, date, location, hours_logged, reach_count, students_count, description, season_id } = body;
-
-    if (!title || !date) {
-      return c.json({ error: "Missing required fields" }, 400);
+      return { status: 200, body: { logs: combined as unknown[] } };
+    } catch {
+      return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
+  },
+  adminList: async ({}: any, c: any) => {
+    try {
+      const db = c.get("db");
+      const logs = await db.selectFrom("outreach_logs")
+        .select([
+          "id", "title", "date", "location", 
+          "hours as hours_logged", "people_reached as reach_count", 
+          "students_count", "impact_summary as description", "season_id"
+        ])
+        .where("is_deleted", "=", 0)
+        .orderBy("date", "desc")
+        .execute();
+      
+      const volunteerEvents = await fetchVolunteerEvents(db);
+      const combined = [...logs, ...volunteerEvents].sort(
+        (a, b) => new Date((b as { date: string }).date).getTime() - new Date((a as { date: string }).date).getTime()
+      );
 
-    let exists = false;
-    if (id) {
-      const row = await c.env.DB.prepare("SELECT id FROM outreach_logs WHERE id = ?").bind(id).first();
-      if (row) exists = true;
+      return { status: 200, body: { logs: combined as unknown[] } };
+    } catch {
+      return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
-
-    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(outreach_logs)").all();
-    const hasSeasonCol = (tableInfo.results as { name: string }[]).some(col => col.name === 'season_id');
-
-    if (exists) {
-      if (hasSeasonCol) {
-        await c.env.DB.prepare(
-          "UPDATE outreach_logs SET title = ?, date = ?, location = ?, hours = ?, people_reached = ?, students_count = ?, impact_summary = ?, season_id = ? WHERE id = ?"
-        ).bind(title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, season_id || null, id).run();
+  },
+  save: async ({ body }: { body: any }, c: any) => {
+    try {
+      const db = c.get("db");
+      if (body.id) {
+        await db.updateTable("outreach_logs")
+          .set({
+            title: body.title,
+            date: body.date,
+            location: body.location,
+            hours: body.hours_logged,
+            people_reached: body.reach_count,
+            students_count: body.students_count,
+            impact_summary: body.description,
+            season_id: body.season_id,
+          })
+          .where("id", "=", body.id)
+          .execute();
+        c.executionCtx.waitUntil(logAuditAction(c, "update_outreach", "outreach_logs", body.id, `Updated outreach: ${body.title}`));
       } else {
-        await c.env.DB.prepare(
-          "UPDATE outreach_logs SET title = ?, date = ?, location = ?, hours = ?, people_reached = ?, students_count = ?, impact_summary = ?, outreach_logs.impact_summary = ? WHERE id = ?"
-        ).bind(title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, id).run();
+        const id = crypto.randomUUID();
+        await db.insertInto("outreach_logs")
+          .values({
+            id,
+            title: body.title,
+            date: body.date,
+            location: body.location,
+            hours: body.hours_logged,
+            people_reached: body.reach_count,
+            students_count: body.students_count,
+            impact_summary: body.description,
+            season_id: body.season_id,
+          })
+          .execute();
+        c.executionCtx.waitUntil(logAuditAction(c, "create_outreach", "outreach_logs", id, `Created outreach: ${body.title}`));
       }
-    } else {
-      const newId = id || crypto.randomUUID();
-      if (hasSeasonCol) {
-        await c.env.DB.prepare(
-          "INSERT INTO outreach_logs (id, title, date, location, hours, people_reached, students_count, impact_summary, season_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        ).bind(newId, title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null, season_id || null).run();
-      } else {
-        await c.env.DB.prepare(
-          "INSERT INTO outreach_logs (id, title, date, location, hours, people_reached, students_count, impact_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        ).bind(newId, title, date, location || null, hours_logged || 0, reach_count || 0, students_count || 0, description || null).run();
-      }
+      return { status: 200, body: { success: true } };
+    } catch {
+      return { status: 500, body: { error: "Save failed" } };
     }
-
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 outreach save error:", err);
-    return c.json({ error: "Save failed" }, 500);
-  }
+  },
+  delete: async ({ params }: { params: any }, c: any) => {
+    try {
+      const db = c.get("db");
+      await db.updateTable("outreach_logs")
+        .set({ is_deleted: 1 })
+        .where("id", "=", params.id)
+        .execute();
+      c.executionCtx.waitUntil(logAuditAction(c, "delete_outreach", "outreach_logs", params.id, "Outreach log soft-deleted"));
+      return { status: 200, body: { success: true } };
+    } catch {
+      return { status: 500, body: { error: "Delete failed" } };
+    }
+  },
 });
 
-// ── DELETE /:id ── soft-delete an outreach log ────────────────
-outreachRouter.delete("/:id", ensureAdmin, async (c) => {
-  try {
-    const id = (c.req.param("id") || "");
-    await c.env.DB.prepare("UPDATE outreach_logs SET is_deleted = 1 WHERE id = ?").bind(id).run();
-    await logAuditAction(c, "outreach_deleted", "outreach_logs", id, "Outreach log soft-deleted");
-    return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 outreach delete error:", err);
-    return c.json({ error: "Delete failed" }, 500);
-  }
-});
+createHonoEndpoints(outreachContract, outreachTsRestRouter, outreachRouter);
+
+// Middlewares
+// Protections
+outreachRouter.use("/admin", ensureAdmin);
+outreachRouter.use("/admin/*", ensureAdmin);
+outreachRouter.use("/admin", rateLimitMiddleware(15, 60));
 
 export default outreachRouter;

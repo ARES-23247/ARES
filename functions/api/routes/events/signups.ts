@@ -7,31 +7,23 @@ const signupsRouter = new Hono<AppEnv>();
 signupsRouter.get("/:id/signups", async (c) => {
   const eventId = (c.req.param("id") || "");
   const user = await getSessionUser(c);
+  const db = c.get("db");
 
   try {
     const isVerified = user && user.role !== "unverified";
-    const isManagement = user && (user.role === "admin" || ["coach", "mentor"].includes(user.member_type));
+    const isManagement = user && (user.role === "admin" || ["coach", "mentor"].includes(user.member_type || ""));
 
-    const { results } = await c.env.DB.prepare(
-      `SELECT s.*, p.nickname, u.image as avatar FROM event_signups s
-       JOIN user_profiles p ON s.user_id = p.user_id
-       JOIN user u ON s.user_id = u.id
-       WHERE s.event_id = ? AND u.role NOT IN ('unverified') ORDER BY s.created_at ASC`
-    ).bind(eventId).all();
+    const results = await db.selectFrom("event_signups as s")
+      .innerJoin("user_profiles as p", "s.user_id", "p.user_id")
+      .innerJoin("user as u", "s.user_id", "u.id")
+      .select(["s.id", "s.user_id", "s.bringing", "s.notes", "s.attended", "s.prep_hours", "s.created_at", "p.nickname", "u.image as avatar"])
+      .where("s.event_id", "=", eventId)
+      .where("u.role", "!=", "unverified")
+      .orderBy("s.created_at", "asc")
+      .execute();
 
-    interface SignupRecord {
-      user_id: string;
-      nickname?: string;
-      attended?: number | boolean;
-      prep_hours?: number | string;
-      notes?: string;
-    }
-
-    const signups = isVerified ? (results || []).map((r: unknown) => {
-      const rec = r as SignupRecord;
+    const signups = isVerified ? (results || []).map((rec: Record<string, unknown>) => {
       const isOwn = user ? rec.user_id === user.id : false;
-      
-      // PII-S02: Redact notes for non-admin users, unless it's their own signup
       return {
         ...rec,
         nickname: rec.nickname || "ARES Member",
@@ -45,14 +37,15 @@ signupsRouter.get("/:id/signups", async (c) => {
     const dietarySummary: Record<string, number> = {};
     const teamDietarySummary: Record<string, number> = {};
     if (isVerified) {
-      const { results: profiles } = await c.env.DB.prepare(
-        `SELECT p.dietary_restrictions FROM event_signups s
-         JOIN user_profiles p ON s.user_id = p.user_id
-         JOIN user u ON s.user_id = u.id
-         WHERE s.event_id = ? AND u.role NOT IN ('unverified')`
-      ).bind(eventId).all();
+      const profiles = await db.selectFrom("event_signups as s")
+        .innerJoin("user_profiles as p", "s.user_id", "p.user_id")
+        .innerJoin("user as u", "s.user_id", "u.id")
+        .select("p.dietary_restrictions")
+        .where("s.event_id", "=", eventId)
+        .where("u.role", "!=", "unverified")
+        .execute();
 
-      for (const p of (profiles || []) as Array<{ dietary_restrictions?: string }>) {
+      for (const p of profiles) {
         try {
           const restrictions = JSON.parse(p.dietary_restrictions || "[]") as string[];
           for (const r of restrictions) {
@@ -61,13 +54,13 @@ signupsRouter.get("/:id/signups", async (c) => {
         } catch { /* ignore */ }
       }
       
-      const { results: allProfiles } = await c.env.DB.prepare(
-        `SELECT p.dietary_restrictions FROM user_profiles p
-         JOIN user u ON p.user_id = u.id
-         WHERE u.role NOT IN ('unverified')`
-      ).all();
+      const allProfiles = await db.selectFrom("user_profiles as p")
+        .innerJoin("user as u", "p.user_id", "u.id")
+        .select("p.dietary_restrictions")
+        .where("u.role", "!=", "unverified")
+        .execute();
 
-      for (const p of (allProfiles || []) as Array<{ dietary_restrictions?: string }>) {
+      for (const p of allProfiles) {
         try {
           const restrictions = JSON.parse(p.dietary_restrictions || "[]") as string[];
           for (const r of restrictions) {
@@ -86,30 +79,38 @@ signupsRouter.get("/:id/signups", async (c) => {
       member_type: user?.member_type || null,
       can_manage: isManagement,
     });
-  } catch (err: unknown) {
-    console.error("[Signups GET]", err);
-    return c.json({ error: "Failed to fetch signups: " + ((err as Error)?.message || String(err)) }, 500);
+  } catch {
+    return c.json({ error: "Failed to fetch signups" }, 500);
   }
 });
 
 signupsRouter.post("/:id/signups", turnstileMiddleware(), async (c) => {
   const user = await getSessionUser(c);
-  if (!user || user.role === "unverified") {
-    return c.json({ error: "Forbidden: Your account is pending team verification." }, 403);
-  }
+  if (!user || user.role === "unverified") return c.json({ error: "Forbidden" }, 403);
   const eventId = (c.req.param("id") || "");
-  const body = await c.req.json().catch(() => null);
-  if (!body) return c.json({ error: "Invalid JSON" }, 400);
+  const db = c.get("db");
 
-  const { bringing, notes, prep_hours } = body as { bringing: string; notes: string; prep_hours?: number };
   try {
-    await c.env.DB.prepare(
-      `INSERT INTO event_signups (event_id, user_id, bringing, notes, prep_hours) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(event_id, user_id) DO UPDATE SET bringing=excluded.bringing, notes=excluded.notes, prep_hours=excluded.prep_hours`
-    ).bind(eventId, user.id, bringing || "", notes || "", prep_hours || 0).run();
+    const body = await c.req.json();
+    const { bringing, notes, prep_hours } = body;
+    await db.insertInto("event_signups")
+      .values({
+        id: crypto.randomUUID(),
+        event_id: eventId,
+        user_id: user.id,
+        bringing: bringing || "",
+        notes: notes || "",
+        prep_hours: prep_hours || 0,
+        created_at: new Date().toISOString()
+      })
+      .onConflict(oc => oc.columns(["event_id", "user_id"]).doUpdateSet({
+        bringing: bringing || "",
+        notes: notes || "",
+        prep_hours: prep_hours || 0
+      }))
+      .execute();
     return c.json({ success: true });
-  } catch (err) {
-    console.error("[Signups POST]", err);
+  } catch {
     return c.json({ error: "Database error" }, 500);
   }
 });
@@ -118,11 +119,14 @@ signupsRouter.delete("/:id/signups/me", async (c) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
   const eventId = (c.req.param("id") || "");
+  const db = c.get("db");
   try {
-    await c.env.DB.prepare("DELETE FROM event_signups WHERE event_id = ? AND user_id = ?").bind(eventId, user.id).run();
+    await db.deleteFrom("event_signups")
+      .where("event_id", "=", eventId)
+      .where("user_id", "=", user.id)
+      .execute();
     return c.json({ success: true });
-  } catch (err) {
-    console.error("[Signups DELETE me]", err);
+  } catch {
     return c.json({ error: "Database error" }, 500);
   }
 });
@@ -131,44 +135,45 @@ signupsRouter.patch("/:id/signups/me/attendance", async (c) => {
   const eventId = (c.req.param("id") || "");
   const user = await getSessionUser(c);
   if (!user || user.role === "unverified") return c.json({ error: "Unauthorized" }, 401);
+  const db = c.get("db");
 
   try {
-    const body = await c.req.json().catch(() => null);
-    if (!body || body.attended === undefined) return c.json({ error: "Missing 'attended' field" }, 400);
+    const body = await c.req.json();
     const attended = body.attended ? 1 : 0;
     
-    await c.env.DB.prepare(
-      `INSERT INTO event_signups (event_id, user_id, attended) VALUES (?, ?, ?)
-       ON CONFLICT(event_id, user_id) DO UPDATE SET attended = ?`
-    ).bind(eventId, user.id, attended, attended).run();
+    await db.insertInto("event_signups")
+      .values({ id: crypto.randomUUID(), event_id: eventId, user_id: user.id, attended })
+      .onConflict(oc => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended }))
+      .execute();
     return c.json({ success: true });
-  } catch (err) {
-    console.error("[Attendance Self PATCH]", err);
+  } catch {
     return c.json({ error: "Failed to update attendance" }, 500);
   }
 });
 
 signupsRouter.patch("/:id/signups/:userId/attendance", async (c) => {
+  const eventId = (c.req.param("id") || "");
+  const userId = (c.req.param("userId") || "");
+  const user = await getSessionUser(c);
+  const db = c.get("db");
+
+  if (user?.role !== "admin" && !["coach", "mentor"].includes(user?.member_type || "")) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
   try {
-    const eventId = (c.req.param("id") || "");
-    const userId = (c.req.param("userId") || "");
-    const user = await getSessionUser(c);
-    if (user?.role !== "admin" && !["coach", "mentor"].includes(user?.member_type || "")) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-    const body = await c.req.json().catch(() => null);
-    if (!body || body.attended === undefined) return c.json({ error: "Missing 'attended' field" }, 400);
+    const body = await c.req.json();
     const attended = body.attended ? 1 : 0;
     
-    await c.env.DB.prepare(
-      `INSERT INTO event_signups (event_id, user_id, attended) VALUES (?, ?, ?)
-       ON CONFLICT(event_id, user_id) DO UPDATE SET attended = ?`
-    ).bind(eventId, userId, attended, attended).run();
+    await db.insertInto("event_signups")
+      .values({ id: crypto.randomUUID(), event_id: eventId, user_id: userId, attended })
+      .onConflict(oc => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended }))
+      .execute();
     return c.json({ success: true });
-  } catch (err) {
-    console.error("[Attendance Leader PATCH]", err);
+  } catch {
     return c.json({ error: "Failed to update attendance" }, 500);
   }
 });
 
 export default signupsRouter;
+

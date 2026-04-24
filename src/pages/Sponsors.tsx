@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Gem, Award, ShieldCheck, Zap, ExternalLink, Heart, Package } from "lucide-react";
 import SEO from "../components/SEO";
 import Turnstile from "../components/Turnstile";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 import { inquirySchema } from "../schemas/inquirySchema";
 
 interface Sponsor {
@@ -55,13 +55,10 @@ const TIER_STYLING: Record<string, { icon: React.ReactNode; glass: string; borde
 };
 
 export default function Sponsors() {
-  const { data: sponsors = [] } = useQuery<Sponsor[]>({
+  const { data: sponsorsRes } = api.sponsors.getSponsors.useQuery({
     queryKey: ["public-sponsors"],
-    queryFn: async () => {
-      const d = await publicApi.get<{ sponsors?: Sponsor[] }>("/api/sponsors");
-      return d.sponsors || [];
-    }
   });
+  const sponsors = sponsorsRes?.status === 200 ? sponsorsRes.body.sponsors : [];
 
   const grouped = sponsors.reduce((acc, s) => {
     if (!acc[s.tier]) acc[s.tier] = [];
@@ -84,35 +81,46 @@ export default function Sponsors() {
   const [turnstileToken, setTurnstileToken] = useState("");
 
   const trackSponsorClick = (sponsorId: string) => {
-    publicApi.trackAnalytics("sponsor-click", { sponsor_id: sponsorId }).catch(() => {});
+    api.analytics.trackPageView.mutation({
+      body: { path: "/sponsors", category: "sponsor-click", metadata: { sponsor_id: sponsorId } }
+    }).catch(() => {});
   };
+
+  const submitMutation = api.inquiries.submit.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200 || res.status === 207) {
+        setSubmitStatus("success");
+        setName(""); setEmail(""); setPhone(""); setLevel("Interested in Details"); setMessage("");
+      } else {
+        setSubmitStatus("error");
+        setErrorMessage((res.body as any).error || "Something went wrong");
+      }
+    },
+    onError: (err) => {
+      setSubmitStatus("error");
+      setErrorMessage(err.message || "Network error");
+    }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setSubmitStatus("idle");
-    try {
-      const payloadResult = inquirySchema.safeParse({
-        type: "sponsor",
-        name,
-        email,
-        metadata: { level, message, phone: phone || undefined },
-        turnstileToken,
-      });
+    
+    const payloadResult = inquirySchema.safeParse({
+      type: "sponsor",
+      name,
+      email,
+      metadata: { level, message, phone: phone || undefined },
+      turnstileToken,
+    });
 
-      if (!payloadResult.success) {
-        throw new Error(payloadResult.error.issues[0].message);
-      }
-
-      await publicApi.submitInquiry(payloadResult.data);
-      setSubmitStatus("success");
-      setName(""); setEmail(""); setPhone(""); setLevel("Interested in Details"); setMessage("");
-    } catch (err) {
+    if (!payloadResult.success) {
       setSubmitStatus("error");
-      setErrorMessage(err instanceof Error ? err.message : "Something went wrong. Please try again or email us directly.");
-    } finally {
-      setIsSubmitting(false);
+      setErrorMessage(payloadResult.error.issues[0].message);
+      return;
     }
+
+    submitMutation.mutate({ body: payloadResult.data as any });
   };
 
   return (

@@ -1,7 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Trash2, MessageSquare, Mail, CheckSquare, Clock, Search, ChevronUp, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
-import { adminApi } from "../api/adminApi";
 import { useState, useMemo, useRef } from "react";
 import { useQueryState } from "nuqs";
 import {
@@ -14,20 +13,22 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { api } from "../api/client";
 
 type Inquiry = {
   id: string;
   type: string;
   name: string;
   email: string;
-  metadata: string;
-  status: string;
+  metadata: string | null;
+  status: "pending" | "approved" | "resolved" | "rejected";
   created_at: string;
 };
 
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
 import DashboardLoadingGrid from "./dashboard/DashboardLoadingGrid";
+import { toast } from "sonner";
 
 export default function AdminInquiries() {
   const queryClient = useQueryClient();
@@ -35,26 +36,33 @@ export default function AdminInquiries() {
   const [globalFilter, setGlobalFilter] = useQueryState("q", { defaultValue: "" });
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const { data: inquiries = [], isLoading, isError } = useQuery({
+  const { data: inquiriesData, isLoading, isError } = api.inquiries.list.useQuery({
     queryKey: ["admin-inquiries"],
-    queryFn: async () => {
-      const d = await adminApi.get<{ inquiries?: Inquiry[] }>("/api/inquiries");
-      return d.inquiries || [];
+    query: { limit: 200, offset: 0 }
+  });
+
+  const inquiries = useMemo(() => inquiriesData?.body?.inquiries || [], [inquiriesData]);
+
+  const updateStatusMutation = api.inquiries.updateStatus.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200) {
+        toast.success("Inquiry status updated.");
+        queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] });
+      } else {
+        toast.error("Failed to update status.");
+      }
     }
   });
 
-  const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      await adminApi.updateInquiryStatus(id, status);
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] })
-  });
-
-  const deleteInquiry = useMutation({
-    mutationFn: async (id: string) => {
-      await adminApi.deleteInquiry(id);
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] })
+  const deleteInquiryMutation = api.inquiries.delete.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200) {
+        toast.success("Inquiry deleted.");
+        queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] });
+      } else {
+        toast.error("Failed to delete inquiry.");
+      }
+    }
   });
 
   const columnHelper = createColumnHelper<Inquiry>();
@@ -101,30 +109,33 @@ export default function AdminInquiries() {
       cell: info => (
         <div className="flex items-center gap-2">
           {info.row.original.status === 'pending' ? (
-            <button onClick={() => updateStatus.mutate({ id: info.row.original.id, status: 'resolved' })} 
+            <button onClick={() => updateStatusMutation.mutate({ params: { id: info.row.original.id }, body: { status: 'resolved' } })} 
               className="p-2 bg-white/5 hover:bg-ares-cyan/20 text-marble/40 hover:text-ares-cyan transition-all ares-cut-xs" 
               title="Mark Resolved"
+              aria-label="Mark inquiry as resolved"
             >
               <CheckSquare size={14} />
             </button>
           ) : (
-            <button onClick={() => updateStatus.mutate({ id: info.row.original.id, status: 'pending' })} 
+            <button onClick={() => updateStatusMutation.mutate({ params: { id: info.row.original.id }, body: { status: 'pending' } })} 
               className="p-2 bg-white/5 hover:bg-ares-gold/20 text-marble/40 hover:text-ares-gold transition-all ares-cut-xs" 
               title="Mark Pending"
+              aria-label="Mark inquiry as pending"
             >
               <Clock size={14} />
             </button>
           )}
-          <button onClick={() => { if(confirm("Delete inquiry?")) deleteInquiry.mutate(info.row.original.id); }} 
+          <button onClick={() => { if(confirm("Delete inquiry?")) deleteInquiryMutation.mutate({ params: { id: info.row.original.id }, body: null }); }} 
             className="p-2 bg-white/5 hover:bg-ares-red/20 text-marble/40 hover:text-ares-red transition-all ares-cut-xs" 
             title="Delete"
+            aria-label="Delete inquiry"
           >
             <Trash2 size={14} />
           </button>
         </div>
       ),
     }),
-  ], [updateStatus, deleteInquiry, columnHelper]);
+  ], [updateStatusMutation, deleteInquiryMutation, columnHelper]);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -206,8 +217,7 @@ export default function AdminInquiries() {
                 ))}
               </thead>
               <tbody 
-                className="relative"
-                style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+                className="relative min-h-[400px]"
               >
                 {rowVirtualizer.getVirtualItems().map(virtualRow => {
                   const row = rows[virtualRow.index];

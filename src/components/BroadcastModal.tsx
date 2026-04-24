@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, Send, CheckCircle2, AlertCircle } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 import { useAdminSettings } from "../hooks/useAdminSettings";
 
 interface BroadcastModalProps {
@@ -21,7 +21,6 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
     availableSocials.forEach(p => result[p] = toggleOverrides[p] !== undefined ? toggleOverrides[p] : true);
     return result;
   }, [availableSocials, toggleOverrides]);
-  const [isPending, setIsPending] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -36,32 +35,46 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
     return () => clearTimeout(timer);
   }, [isOpen]);
 
-  const handleBroadcast = async () => {
-    setIsPending(true);
-    setErrorMsg("");
-    
-    try {
-      const url = type === "blog" 
-        ? `/api/admin/posts/${id}/repush` 
-        : `/api/admin/events/${id}/repush`;
-        
-      const data = await adminApi.request<{ success: boolean, error?: string }>(url, {
-        method: "POST",
-        body: JSON.stringify({ socials: selectedsocials }),
-      });
-      
-      if (data.success) {
+  const postRepushMutation = api.posts.repushSocials.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200 && res.body.success) {
         setStatus("success");
         setTimeout(onClose, 2000);
       } else {
         setStatus("error");
-        setErrorMsg(data.error || "Broadcast failed");
+        setErrorMsg("Broadcast failed");
       }
-    } catch {
+    },
+    onError: (err) => {
       setStatus("error");
-      setErrorMsg("Network error — broadcast failed");
-    } finally {
-      setIsPending(false);
+      setErrorMsg(err.message || "Broadcast failed");
+    }
+  });
+
+  const eventRepushMutation = api.events.repushSocials.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200 && res.body.success) {
+        setStatus("success");
+        setTimeout(onClose, 2000);
+      } else {
+        setStatus("error");
+        setErrorMsg("Broadcast failed");
+      }
+    },
+    onError: (err) => {
+      setStatus("error");
+      setErrorMsg(err.message || "Broadcast failed");
+    }
+  });
+
+  const isPending = postRepushMutation.isPending || eventRepushMutation.isPending;
+
+  const handleBroadcast = async () => {
+    setErrorMsg("");
+    if (type === "blog") {
+      postRepushMutation.mutate({ params: { slug: id }, body: { socials: selectedsocials } });
+    } else {
+      eventRepushMutation.mutate({ params: { id }, body: { socials: selectedsocials } });
     }
   };
 
@@ -69,7 +82,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] bg-obsidian border border-white/10 w-full max-w-md w-[calc(100%-2rem)] ares-cut overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 focus:outline-none">
+        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] bg-obsidian border border-white/10 max-w-md w-[calc(100%-2rem)] ares-cut overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 focus:outline-none">
           <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5">
             <div className="flex items-center gap-2">
               <div className={`p-1.5 ares-cut-sm ${type === 'blog' ? 'bg-ares-red text-white' : 'bg-ares-gold text-black'}`}>

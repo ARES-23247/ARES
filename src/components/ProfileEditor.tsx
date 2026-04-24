@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 import { Save, RefreshCw, Shield } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { IdentityForm } from "./profile/IdentityForm";
 import { RoleForm } from "./profile/RoleForm";
 import { ContactForm } from "./profile/ContactForm";
 import { LogisticsForm } from "./profile/LogisticsForm";
 import { SecuritySettings } from "./profile/SecuritySettings";
 import { ProfileData } from "./profile/types";
+import { useForm, useWatch } from "react-hook-form";
 
 
 const DEFAULT_PROFILE: ProfileData = {
@@ -38,78 +39,64 @@ const safeJSONParse = <T,>(val: unknown, fallback: T): T => {
 
 export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: string }) {
   const queryClient = useQueryClient();
-  const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const fetchUrl = adminEditUserId ? `/api/admin/users/${adminEditUserId}` : "/api/profile/me";
-  const saveUrl = adminEditUserId ? `/api/admin/users/${adminEditUserId}` : "/api/profile/me";
-
-  const { isLoading, isError } = useQuery({
-    queryKey: ["profile", adminEditUserId || "me"],
-    queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = await adminApi.get<any>(fetchUrl);
-      const data = adminEditUserId ? res.user : res;
-      if (data) {
-        setProfile({
-          ...DEFAULT_PROFILE,
-          ...data,
-          email: data.auth?.email || data.email || "",
-          first_name: data.first_name || "",
-          last_name: data.last_name || "",
-          subteams: safeJSONParse(data.subteams, []),
-          dietary_restrictions: safeJSONParse(data.dietary_restrictions, []),
-          colleges: safeJSONParse(data.colleges, []),
-          employers: safeJSONParse(data.employers, []),
-          contact_email: data.contact_email || "",
-          show_email: Boolean(data.show_email),
-          show_phone: Boolean(data.show_phone),
-          show_on_about: data.show_on_about !== undefined ? Boolean(data.show_on_about) : true,
-          favorite_robot_mechanism: data.favorite_robot_mechanism || "",
-          pre_match_superstition: data.pre_match_superstition || "",
-          leadership_role: data.leadership_role || "",
-          rookie_year: data.rookie_year || "",
-          tshirt_size: data.tshirt_size || "",
-          emergency_contact_name: data.emergency_contact_name || "",
-          emergency_contact_phone: data.emergency_contact_phone || "",
-          parents_name: data.parents_name || "",
-          parents_email: data.parents_email || "",
-          students_name: data.students_name || "",
-          students_email: data.students_email || "",
-        });
-      }
-      return data;
-    }
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<ProfileData>({
+    defaultValues: DEFAULT_PROFILE
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (payload: ProfileData) => {
-      const formatted = {
-        ...payload,
-        subteams: JSON.stringify(payload.subteams),
-        dietary_restrictions: JSON.stringify(payload.dietary_restrictions),
-        colleges: JSON.stringify(payload.colleges),
-        employers: JSON.stringify(payload.employers),
-        show_email: payload.show_email ? 1 : 0,
-        show_phone: payload.show_phone ? 1 : 0,
-        show_on_about: payload.show_on_about ? 1 : 0,
-      };
-      return adminApi.request(saveUrl, {
-        method: "PUT",
-        body: JSON.stringify(formatted),
+  const profileValues = useWatch({ control });
+
+  const { isLoading, isError } = api.profiles.getMe.useQuery({
+    queryKey: ["profile", adminEditUserId || "me"],
+    // Logic for admin fetch would go here if we had an adminContract for users
+  });
+
+  useEffect(() => {
+    // If it's a "me" fetch
+    if (!adminEditUserId && (api.profiles.getMe as any).data?.body) {
+      const data = (api.profiles.getMe as any).data.body;
+      reset({
+        ...DEFAULT_PROFILE,
+        ...data.profile,
+        email: data.user?.email || "",
+        subteams: safeJSONParse(data.profile?.subteams, []),
+        dietary_restrictions: safeJSONParse(data.profile?.dietary_restrictions, []),
+        colleges: safeJSONParse(data.profile?.colleges, []),
+        employers: safeJSONParse(data.profile?.employers, []),
+        show_email: Boolean(data.profile?.show_email),
+        show_phone: Boolean(data.profile?.show_phone),
+        show_on_about: data.profile?.show_on_about !== undefined ? Boolean(data.profile.show_on_about) : true,
       });
-    },
+    }
+  }, [adminEditUserId, reset]);
+
+  const saveMutation = api.profiles.updateMe.useMutation({
     onSuccess: () => {
       setMessage({ type: "success", text: "Profile saved!" });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["admin_users"] });
     },
-    onError: (err: Error) => {
+    onError: (err: any) => {
       setMessage({ type: "error", text: err.message || "Failed to save profile." });
     }
   });
 
-  const isMinor = profile.member_type === "student";
+  const onFormSubmit = (data: ProfileData) => {
+    const formatted = {
+      ...data,
+      subteams: JSON.stringify(data.subteams),
+      dietary_restrictions: JSON.stringify(data.dietary_restrictions),
+      colleges: JSON.stringify(data.colleges),
+      employers: JSON.stringify(data.employers),
+      show_email: data.show_email ? 1 : 0,
+      show_phone: data.show_phone ? 1 : 0,
+      show_on_about: data.show_on_about ? 1 : 0,
+    };
+    saveMutation.mutate({ body: formatted });
+  };
+
+  const isMinor = profileValues.member_type === "student";
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20"><RefreshCw className="animate-spin text-ares-red" size={32} /></div>;
@@ -118,6 +105,12 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
   const inputClass = "w-full bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white placeholder-marble/40 focus:outline-none focus:border-ares-red transition-colors";
   const labelClass = "text-xs font-bold text-marble/90 uppercase tracking-wider mb-1.5 block";
   const sectionClass = "bg-obsidian/50 border border-white/10 ares-cut p-6 space-y-4";
+
+  // Manual setter helper for legacy sub-forms
+  const setProfile = (updater: any) => {
+    const next = typeof updater === "function" ? updater(profileValues) : updater;
+    reset(next);
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto space-y-6 pb-8">
@@ -138,24 +131,26 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
         </div>
       )}
 
-      <IdentityForm profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
-      <RoleForm profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
-      <ContactForm profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
-      <SecuritySettings profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
-      <LogisticsForm profile={profile} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+        <IdentityForm profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <RoleForm profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <ContactForm profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <SecuritySettings profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <LogisticsForm profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
 
-      {/* Save */}
-      {message && (
-        <div className={`p-4 ares-cut-sm text-sm font-bold ${message.type === "success" ? "bg-ares-cyan/10 border border-ares-cyan/20 text-ares-cyan" : "bg-ares-red text-white shadow-lg shadow-ares-red/20"}`}>
-          {message.text}
-        </div>
-      )}
-      <button onClick={() => saveMutation.mutate(profile)} disabled={saveMutation.isPending}
-        className="w-full flex items-center justify-center gap-2 py-4 font-bold bg-gradient-to-r from-ares-red to-ares-bronze hover:from-ares-bronze hover:to-ares-red text-white ares-cut shadow-[0_0_30px_rgba(192,0,0,0.3)] transition-all disabled:opacity-50"
-      >
-        {saveMutation.isPending ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
-        {saveMutation.isPending ? "Saving..." : "Save Profile"}
-      </button>
+        {/* Save */}
+        {message && (
+          <div className={`p-4 ares-cut-sm text-sm font-bold ${message.type === "success" ? "bg-ares-cyan/10 border border-ares-cyan/20 text-ares-cyan" : "bg-ares-red text-white shadow-lg shadow-ares-red/20"}`}>
+            {message.text}
+          </div>
+        )}
+        <button type="submit" disabled={saveMutation.isPending}
+          className="w-full flex items-center justify-center gap-2 py-4 font-bold bg-gradient-to-r from-ares-red to-ares-bronze hover:from-ares-bronze hover:to-ares-red text-white ares-cut shadow-[0_0_30px_rgba(192,0,0,0.3)] transition-all disabled:opacity-50"
+        >
+          {saveMutation.isPending ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
+          {saveMutation.isPending ? "Saving..." : "Save Profile"}
+        </button>
+      </form>
     </motion.div>
   );
 }

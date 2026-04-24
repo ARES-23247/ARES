@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ShieldCheck, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import DocsMarkdownRenderer from "../components/docs/DocsMarkdownRenderer";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface PortfolioData {
   portfolioDocs: Array<{
@@ -45,13 +45,14 @@ export default function PrintPortfolio() {
 
     const fetchPortfolio = async () => {
       try {
-        const data = await publicApi.get<PortfolioData>("/api/judges/portfolio", {
-          headers: { "X-Judge-Code": code }
+        const res = await api.judges.getPortfolio.query({
+          headers: { "Authorization": `Bearer ${code}` }
         });
-        
-        // Wait, the API returns portfolioDocs, but let's check what we destructured
-        setPortfolio(data);
-        
+
+        if (res.status === 200) {
+          setPortfolio(res.body as any);
+        }
+
         // Wait for rendering to complete before triggering print dialog
         setTimeout(() => {
           setReadyToPrint(true);

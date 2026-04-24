@@ -4,3 +4,4 @@ export * from "./lifecycle";
 export * from "./utils";
 export * from "./db";
 export * from "./env";
+export * from "../../utils/notifications";

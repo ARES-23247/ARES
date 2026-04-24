@@ -1,7 +1,7 @@
 import SEO from "../components/SEO";
 import LazyImage from "../components/LazyImage";
 import { useQuery } from "@tanstack/react-query";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 
 interface R2MediaResponse {
   media: {
@@ -15,12 +15,11 @@ interface R2MediaResponse {
 }
 
 export default function Gallery() {
-  const { data, isLoading, isError } = useQuery<R2MediaResponse>({
+  const { data: mediaRes, isLoading, isError } = api.media.getMedia.useQuery({
     queryKey: ["media"],
-    queryFn: async () => {
-      return publicApi.get<R2MediaResponse>("/api/media");
-    }
   });
+
+  const data = mediaRes?.status === 200 ? mediaRes.body : null;
 
   // Filter only images and reverse to show newest first
   const photos = data?.media

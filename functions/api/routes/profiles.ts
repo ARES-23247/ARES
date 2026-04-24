@@ -3,6 +3,7 @@ import { AppEnv, getSessionUser, sanitizeProfileForPublic, rateLimitMiddleware }
 import { getAuth } from "../../utils/auth";
 import { decrypt } from "../../utils/crypto";
 import { upsertProfile } from "./_profileUtils";
+import { sql } from "kysely";
 
 
 const profilesRouter = new Hono<AppEnv>();
@@ -12,29 +13,35 @@ profilesRouter.get("/me", async (c) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
 
-  try {
-    const profile = await c.env.DB.prepare(
-      "SELECT p.user_id, p.first_name, p.last_name, p.nickname, p.phone, p.contact_email, p.show_email, p.show_phone, p.pronouns, p.grade_year, p.subteams, p.member_type, p.bio, p.favorite_food, p.dietary_restrictions, p.favorite_first_thing, p.fun_fact, p.colleges, p.employers, p.show_on_about, p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role, p.rookie_year, p.tshirt_size, p.emergency_contact_name, p.emergency_contact_phone, p.parents_name, p.parents_email, p.students_name, p.students_email, u.image as avatar, p.updated_at FROM user_profiles p JOIN user u ON p.user_id = u.id WHERE p.user_id = ?"
-    ).bind(user.id).first<Record<string, unknown>>();
+  const db = c.get("db");
 
-    const { results: rawBadges } = await c.env.DB.prepare(
-      `SELECT b.* FROM badges b
-       JOIN user_badges ub ON b.id = ub.badge_id
-       WHERE ub.user_id = ?
-       ORDER BY ub.awarded_at DESC`
-    ).bind(user.id).all();
+  try {
+    const profile = await db.selectFrom("user_profiles as p")
+      .innerJoin("user as u", "p.user_id", "u.id")
+      .selectAll("p")
+      .select("u.image as avatar")
+      .where("p.user_id", "=", user.id)
+      .executeTakeFirst();
+
+    const rawBadges = await db.selectFrom("badges as b")
+      .innerJoin("user_badges as ub", "b.id", "ub.badge_id")
+      .selectAll("b")
+      .where("ub.user_id", "=", user.id)
+      .orderBy("ub.awarded_at", "desc")
+      .execute();
 
     // Decrypt PII fields
     if (profile) {
       const secret = c.env.ENCRYPTION_SECRET;
-      profile.emergency_contact_name = await decrypt(profile.emergency_contact_name as string, secret);
-      profile.emergency_contact_phone = await decrypt(profile.emergency_contact_phone as string, secret);
-      profile.phone = await decrypt(profile.phone as string, secret);
-      profile.contact_email = await decrypt(profile.contact_email as string, secret);
-      profile.parents_name = await decrypt(profile.parents_name as string, secret);
-      profile.parents_email = await decrypt(profile.parents_email as string, secret);
-      profile.students_name = await decrypt(profile.students_name as string, secret);
-      profile.students_email = await decrypt(profile.students_email as string, secret);
+      const p = profile as Record<string, unknown>;
+      p.emergency_contact_name = await decrypt(p.emergency_contact_name as string, secret);
+      p.emergency_contact_phone = await decrypt(p.emergency_contact_phone as string, secret);
+      p.phone = await decrypt(p.phone as string, secret);
+      p.contact_email = await decrypt(p.contact_email as string, secret);
+      p.parents_name = await decrypt(p.parents_name as string, secret);
+      p.parents_email = await decrypt(p.parents_email as string, secret);
+      p.students_name = await decrypt(p.students_name as string, secret);
+      p.students_email = await decrypt(p.students_email as string, secret);
     }
 
 
@@ -48,8 +55,7 @@ profilesRouter.get("/me", async (c) => {
       badges: rawBadges || [],
       auth: { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role },
     });
-  } catch (err) {
-    console.error("D1 profile/me read error:", err);
+  } catch {
     return c.json({ error: "Profile fetch failed" }, 500);
   }
 });
@@ -63,8 +69,7 @@ profilesRouter.put("/me", rateLimitMiddleware(15, 60), async (c) => {
     const body = await c.req.json();
     await upsertProfile(c, user.id, body);
     return c.json({ success: true });
-  } catch (err) {
-    console.error("D1 profile/me write error:", err);
+  } catch {
     return c.json({ error: "Profile update failed" }, 500);
   }
 });
@@ -85,73 +90,70 @@ profilesRouter.put("/avatar", rateLimitMiddleware(15, 60), async (c) => {
     });
 
     return c.json({ success: true });
-  } catch (err) {
-    console.error("Avatar update error:", err);
+  } catch {
     return c.json({ error: "Avatar update failed" }, 500);
   }
 });
 
 // ── GET /team-roster — about page roster ──────────────────────────────
 profilesRouter.get("/team-roster", rateLimitMiddleware(10, 60), async (c) => {
+  const db = c.get("db");
   try {
     const q = c.req.query("q") || "";
     
-    // SEC-F14: Youth Data Protection - Students NEVER show contact info in public roster
-    const selectFields = `p.user_id, p.nickname, p.bio, p.pronouns, p.subteams, p.member_type,
-                p.favorite_first_thing, p.fun_fact, 
-                CASE WHEN p.member_type IN ('mentor', 'coach') THEN p.show_email ELSE 0 END as show_email,
-                CASE WHEN p.member_type IN ('mentor', 'coach') THEN p.contact_email ELSE NULL END as contact_email,
-                p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role,
-                p.rookie_year, p.colleges, p.employers,
-                u.image as avatar, u.name`;
+    const query = db.selectFrom("user_profiles as p")
+      .innerJoin("user as u", "p.user_id", "u.id")
+      .where("p.show_on_about", "=", 1)
+      .where("u.role", "!=", "unverified");
 
     if (q) {
-      // FTS5 Search Route
-      const { results } = await c.env.DB.prepare(
-        `SELECT ${selectFields}
+      // Fallback for FTS5 which Kysely doesn't handle natively well without raw
+      const db = c.get("db");
+      const results = await sql<Record<string, unknown>>`
+        SELECT p.user_id, p.nickname, p.bio, p.pronouns, p.subteams, p.member_type,
+                p.favorite_first_thing, p.fun_fact, p.show_email, p.contact_email,
+                p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role,
+                p.rookie_year, p.colleges, p.employers,
+                u.image as avatar, u.name
          FROM user_profiles_fts f
          JOIN user_profiles p ON f.user_id = p.user_id
          JOIN user u ON p.user_id = u.id
-         WHERE p.show_on_about = 1 AND u.role NOT IN ('unverified') AND f.user_profiles_fts MATCH ?
-         ORDER BY f.rank`
-      ).bind(q).all();
-
-      const sanitized = await Promise.all((results || []).map(async (r: Record<string, unknown>) => {
-        const memberType = String(r.member_type || "student");
-        const secret = c.env.ENCRYPTION_SECRET;
-        
-        // Decrypt contact email for mentors/coaches if it's there
-        if (r.contact_email && (memberType === "mentor" || memberType === "coach")) {
-          r.contact_email = await decrypt(r.contact_email as string, secret);
+         WHERE p.show_on_about = 1 AND u.role NOT IN ('unverified') AND f.user_profiles_fts MATCH ${`"${q.replace(/"/g, '""')}"*`} 
+         ORDER BY f.rank
+      `.execute(db);
+      
+      const sanitized = await Promise.all((results.rows || []).map(async (r) => {
+        const row = r as Record<string, unknown>;
+        const memberType = String(row.member_type || "student");
+        if (row.contact_email && (memberType === "mentor" || memberType === "coach")) {
+          row.contact_email = await decrypt(row.contact_email as string, c.env.ENCRYPTION_SECRET);
         }
-
-        return sanitizeProfileForPublic(r, memberType);
+        return sanitizeProfileForPublic(row, memberType);
       }));
-
       return c.json({ members: sanitized });
     }
 
-    const { results } = await c.env.DB.prepare(
-      `SELECT ${selectFields}
-       FROM user_profiles p
-       JOIN user u ON p.user_id = u.id
-       WHERE p.show_on_about = 1 AND u.role NOT IN ('unverified')`
-    ).all();
+    const results = await query
+      .select([
+        "p.user_id", "p.nickname", "p.bio", "p.pronouns", "p.subteams", "p.member_type",
+        "p.favorite_first_thing", "p.fun_fact", "p.show_email", "p.contact_email",
+        "p.favorite_robot_mechanism", "p.pre_match_superstition", "p.leadership_role",
+        "p.rookie_year", "p.colleges", "p.employers",
+        "u.image as avatar", "u.name"
+      ])
+      .execute();
 
-    const sanitized = await Promise.all((results || []).map(async (r: Record<string, unknown>) => {
-      const memberType = String(r.member_type || "student");
-      const secret = c.env.ENCRYPTION_SECRET;
-
-      if (r.contact_email && (memberType === "mentor" || memberType === "coach")) {
-        r.contact_email = await decrypt(r.contact_email as string, secret);
+    const sanitized = await Promise.all((results || []).map(async (r) => {
+      const row = r as Record<string, unknown>;
+      const memberType = String(row.member_type || "student");
+      if (row.contact_email && (memberType === "mentor" || memberType === "coach")) {
+        row.contact_email = await decrypt(row.contact_email as string, c.env.ENCRYPTION_SECRET);
       }
-
-      return sanitizeProfileForPublic(r, memberType);
+      return sanitizeProfileForPublic(row, memberType);
     }));
 
     return c.json({ members: sanitized });
-  } catch (err) {
-    console.error("D1 team roster error:", err);
+  } catch {
     return c.json({ members: [] });
   }
 });
@@ -159,43 +161,36 @@ profilesRouter.get("/team-roster", rateLimitMiddleware(10, 60), async (c) => {
 // ── GET /:userId — public profile ─────────────────────────────
 profilesRouter.get("/:userId", async (c) => {
   const userId = (c.req.param("userId") || "");
+  const db = c.get("db");
   try {
-    const profile = await c.env.DB.prepare(
-      `SELECT p.user_id, p.nickname, p.bio, p.pronouns, p.subteams, p.member_type,
-              p.favorite_first_thing, p.fun_fact, p.show_email, p.contact_email,
-              p.show_phone, p.phone, p.show_on_about,
-              p.favorite_robot_mechanism, p.pre_match_superstition, p.leadership_role,
-              p.rookie_year, p.colleges, p.employers, p.grade_year,
-              u.image as avatar, u.name
-       FROM user_profiles p 
-       LEFT JOIN user u ON p.user_id = u.id 
-       WHERE p.user_id = ?`
-    ).bind(userId).first<Record<string, unknown>>();
+    const profile = await db.selectFrom("user_profiles as p")
+      .leftJoin("user as u", "p.user_id", "u.id")
+      .select([
+        "p.user_id", "p.nickname", "p.bio", "p.pronouns", "p.subteams", "p.member_type",
+        "p.favorite_first_thing", "p.fun_fact", "p.show_email", "p.contact_email",
+        "p.show_phone", "p.phone", "p.show_on_about",
+        "p.favorite_robot_mechanism", "p.pre_match_superstition", "p.leadership_role",
+        "p.rookie_year", "p.colleges", "p.employers", "p.grade_year",
+        "u.image as avatar", "u.name"
+      ])
+      .where("p.user_id", "=", userId)
+      .executeTakeFirst();
 
-    if (!profile) {
-      console.warn(`[Profile API] 404 - User ID ${userId} not found in user_profiles table.`);
-      return c.json({ error: "Profile not found" }, 404);
-    }
-
-    if (Number(profile.show_on_about || 0) !== 1) {
-      console.info(`[Profile API] 403 - User ID ${userId} exists but has show_on_about=0.`);
-      return c.json({ error: "This profile is private." }, 403);
-    }
+    if (!profile) return c.json({ error: "Profile not found" }, 404);
+    if (Number(profile.show_on_about || 0) !== 1) return c.json({ error: "This profile is private." }, 403);
 
     const memberType = String(profile.member_type || "student");
-    const sanitized = sanitizeProfileForPublic(profile as Record<string, unknown>, memberType) as Record<string, unknown>;
+    const sanitized = sanitizeProfileForPublic(profile as unknown as Record<string, unknown>, memberType) as Record<string, unknown>;
 
-    // If requester is an admin/leader or the user themselves, decrypt and append internal records
     const requester = await getSessionUser(c);
     const isAdmin = requester?.role === "admin" || requester?.role === "author" || requester?.member_type === "coach" || requester?.member_type === "mentor";
     const isSelf = requester?.id === userId;
 
     if (isAdmin || isSelf) {
-      // PII-F03: Only fetch sensitive PII fields when authorized — avoids unnecessary D1 reads + decryption
-      const sensitive = await c.env.DB.prepare(
-        `SELECT emergency_contact_name, emergency_contact_phone, dietary_restrictions, tshirt_size, phone, contact_email, parents_name, parents_email, students_name, students_email
-         FROM user_profiles WHERE user_id = ?`
-      ).bind(userId).first<Record<string, unknown>>();
+      const sensitive = await db.selectFrom("user_profiles")
+        .select(["emergency_contact_name", "emergency_contact_phone", "dietary_restrictions", "tshirt_size", "phone", "contact_email", "parents_name", "parents_email", "students_name", "students_email"])
+        .where("user_id", "=", userId)
+        .executeTakeFirst();
 
       if (sensitive) {
         const secret = c.env.ENCRYPTION_SECRET;
@@ -203,8 +198,6 @@ profilesRouter.get("/:userId", async (c) => {
         sanitized.emergency_contact_phone = await decrypt(sensitive.emergency_contact_phone as string, secret);
         sanitized.dietary_restrictions = sensitive.dietary_restrictions;
         sanitized.tshirt_size = sensitive.tshirt_size;
-        
-        // Put back the decrypted contact/PII fields (sanitizeProfileForPublic removes them when they are encrypted)
         sanitized.phone = await decrypt(sensitive.phone as string, secret);
         sanitized.contact_email = await decrypt(sensitive.contact_email as string, secret);
         sanitized.parents_name = await decrypt(sensitive.parents_name as string, secret);
@@ -214,18 +207,18 @@ profilesRouter.get("/:userId", async (c) => {
       }
     }
 
-    const { results: rawBadges } = await c.env.DB.prepare(
-      `SELECT b.* FROM badges b
-       JOIN user_badges ub ON b.id = ub.badge_id
-       WHERE ub.user_id = ?
-       ORDER BY ub.awarded_at DESC`
-    ).bind(userId).all();
+    const rawBadges = await db.selectFrom("badges as b")
+      .innerJoin("user_badges as ub", "b.id", "ub.badge_id")
+      .selectAll("b")
+      .where("ub.user_id", "=", userId)
+      .orderBy("ub.awarded_at", "desc")
+      .execute();
 
     return c.json({ profile: sanitized, badges: rawBadges || [] });
-  } catch (err) {
-    console.error("D1 public profile error:", err);
+  } catch {
     return c.json({ error: "Profile fetch failed" }, 500);
   }
 });
 
 export default profilesRouter;
+

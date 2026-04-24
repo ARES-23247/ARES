@@ -40,7 +40,7 @@ export type Bindings = {
 
 export type Variables = {
   sessionUser: SessionUser;
-  socialConfig?: Record<string, string | undefined>;
+  socialConfig?: SocialConfig;
   db: Kysely<DB>;
 };
 
@@ -73,6 +73,36 @@ export interface SessionUser {
   member_type: string;
 }
 
+export type SocialConfig = {
+  DISCORD_WEBHOOK_URL?: string;
+  MAKE_WEBHOOK_URL?: string;
+  BLUESKY_HANDLE?: string;
+  BLUESKY_APP_PASSWORD?: string;
+  SLACK_WEBHOOK_URL?: string;
+  TEAMS_WEBHOOK_URL?: string;
+  GCHAT_WEBHOOK_URL?: string;
+  FACEBOOK_PAGE_ID?: string;
+  FACEBOOK_ACCESS_TOKEN?: string;
+  TWITTER_API_KEY?: string;
+  TWITTER_API_SECRET?: string;
+  TWITTER_ACCESS_TOKEN?: string;
+  TWITTER_ACCESS_SECRET?: string;
+  INSTAGRAM_ACCOUNT_ID?: string;
+  INSTAGRAM_ACCESS_TOKEN?: string;
+  CALENDAR_ID?: string;
+  GCAL_SERVICE_ACCOUNT_EMAIL?: string;
+  GCAL_PRIVATE_KEY?: string;
+  ZULIP_BOT_EMAIL?: string;
+  ZULIP_API_KEY?: string;
+  ZULIP_URL?: string;
+  ZULIP_ADMIN_STREAM?: string;
+  ZULIP_COMMENT_STREAM?: string;
+  GITHUB_PAT?: string;
+  GITHUB_PROJECT_ID?: string;
+  GITHUB_ORG?: string;
+  GITHUB_WEBHOOK_SECRET?: string;
+};
+
 // ── Input Validation Helpers ─────────────────────────────────────────
 export const MAX_INPUT_LENGTHS = {
   title: 500,
@@ -95,6 +125,19 @@ export function validateLength(value: string | undefined | null, maxLength: numb
   return null;
 }
 
+// ── PII Scrubbing for Logs ───────────────────────────────────────────
+function scrubPii(text: string | null): string | null {
+  if (!text) return null;
+  // Mask emails: ares@example.com -> a***@example.com
+  let scrubbed = text.replace(/([a-zA-Z0-9._%+-])[a-zA-Z0-9._%+-]*@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '$1***@$2');
+  // Mask phone numbers (basic): +1-555-555-5555 -> +1-555-***-****
+  // eslint-disable-next-line security/detect-unsafe-regex
+  scrubbed = scrubbed.replace(/(\+?\d{1,2}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, (match) => {
+     return match.slice(0, -8) + '***-****';
+  });
+  return scrubbed;
+}
+
 // ── Audit Logging ────────────────────────────────────────────
 export async function logAuditAction(
   c: Context<AppEnv>,
@@ -103,61 +146,49 @@ export async function logAuditAction(
   resource_id: string | null,
   details?: string
 ): Promise<void> {
+  const db = c.get("db");
   try {
     const sessionUser = c.get("sessionUser") as SessionUser | undefined;
     const actor = sessionUser?.email || "unknown";
     
-    // Schema resilience for audit_log
-    const tableInfo = await c.env.DB.prepare("PRAGMA table_info(audit_log)").all();
-    const cols = (tableInfo.results as { name: string }[]).map(col => col.name);
-    const hasResourceType = cols.includes('resource_type');
-    const hasResourceId = cols.includes('resource_id');
-
     const id = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `log-${Date.now()}`;
     
-    if (hasResourceType && hasResourceId) {
-      await c.env.DB.prepare(
-        `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-      ).bind(id, actor, action, resource_type, resource_id || null, details || null).run();
-    } else {
-      // Fallback for legacy schema
-      await c.env.DB.prepare(
-        `INSERT INTO audit_log (id, actor, action, details, created_at)
-         VALUES (?, ?, ?, ?, datetime('now'))`
-      ).bind(id, actor, action, `${resource_type}:${resource_id || ''} | ${details || ''}`).run();
-    }
+    await db.insertInto("audit_log")
+      .values({
+        id,
+        actor,
+        action,
+        resource_type,
+        resource_id: resource_id || null,
+        details: scrubPii(details || null),
+        created_at: new Date().toISOString()
+      })
+      .execute();
   } catch (err) {
     console.error("[AuditLog] Failed to record action:", action, err);
   }
 }
 
 export async function logSystemError(
-  db: D1Database,
+  db: Kysely<DB>,
   service: string,
   error: string,
   details?: string
 ): Promise<void> {
   try {
-    // Schema resilience for audit_log
-    const tableInfo = await db.prepare("PRAGMA table_info(audit_log)").all();
-    const cols = (tableInfo.results as { name: string }[]).map(col => col.name);
-    const hasResourceType = cols.includes('resource_type');
-    const hasResourceId = cols.includes('resource_id');
-
     const id = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `err-${Date.now()}`;
     
-    if (hasResourceType && hasResourceId) {
-      await db.prepare(
-        `INSERT INTO audit_log (id, actor, action, resource_type, resource_id, details, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-      ).bind(id, "system", "INTEGRATION_FAILURE", service, null, JSON.stringify({ error, details, timestamp: new Date().toISOString() })).run();
-    } else {
-      await db.prepare(
-        `INSERT INTO audit_log (id, actor, action, details, created_at)
-         VALUES (?, ?, ?, ?, datetime('now'))`
-      ).bind(id, "system", `INTEGRATION_FAILURE:${service}`, JSON.stringify({ error, details, timestamp: new Date().toISOString() })).run();
-    }
+    await db.insertInto("audit_log")
+      .values({
+        id,
+        actor: "system",
+        action: "INTEGRATION_FAILURE",
+        resource_type: service,
+        resource_id: null,
+        details: JSON.stringify({ error, details, timestamp: new Date().toISOString() }),
+        created_at: new Date().toISOString()
+      })
+      .execute();
   } catch (err) {
     console.error("[AuditLog] Failed to log system error:", err);
   }
@@ -183,11 +214,15 @@ export async function getDbSettings(c: Context<AppEnv>): Promise<Record<string, 
     'ENCRYPTION_SECRET', 'BETTER_AUTH_SECRET', 'BETTER_AUTH_URL',
     'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_DATABASE_ID', 'R2_ACCESS_KEY', 'R2_SECRET_KEY'
   ];
-  const placeholders = keys.map(() => '?').join(',');
-  const { results: settingsRows } = await c.env.DB.prepare(`SELECT key, value FROM settings WHERE key IN (${placeholders})`).bind(...keys).all();
+  
+  const db = c.get("db");
+  const results = await db.selectFrom("settings")
+    .select(["key", "value"])
+    .where("key", "in", keys)
+    .execute();
   const settings: Record<string, string> = {};
-  if (settingsRows) {
-    for (const row of settingsRows as { key: string, value: string }[]) {
+  for (const row of results) {
+    if (row.key) {
       settings[row.key] = row.value;
     }
   }
@@ -195,7 +230,7 @@ export async function getDbSettings(c: Context<AppEnv>): Promise<Record<string, 
 }
 
 // ── Social Config Helper ─────────────────────────────────────────────
-export async function getSocialConfig(c: Context<AppEnv>): Promise<Record<string, string | undefined>> {
+export async function getSocialConfig(c: Context<AppEnv>): Promise<SocialConfig> {
   const cached = c.get("socialConfig");
   if (cached) return cached;
 

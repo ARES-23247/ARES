@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { adminApi } from "../api/adminApi";
+import { fetchJson } from "../api/client";
 
 export function useEntityFetch<T>(endpoint: string | null, onSuccess?: (data: T) => void) {
   const [data, setData] = useState<T | null>(null);
@@ -16,7 +16,7 @@ export function useEntityFetch<T>(endpoint: string | null, onSuccess?: (data: T)
       setIsPending(true);
       setError("");
       try {
-        const json = await adminApi.get<T>(endpoint);
+        const json = await fetchJson<T>(endpoint);
         setData(json);
         if (onSuccess) onSuccess(json);
       } catch (err) {

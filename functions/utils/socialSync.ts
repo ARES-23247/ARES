@@ -10,6 +10,7 @@ import { dispatchBluesky } from './social/bluesky';
 import { dispatchTwitterPhoto } from './social/twitter';
 import { dispatchFacebook, dispatchMetaPhoto } from './social/meta';
 import { logSystemError } from '../api/middleware';
+import pRetry from 'p-retry';
 
 export interface SocialConfig {
   DISCORD_WEBHOOK_URL?: string;
@@ -60,17 +61,26 @@ export async function dispatchSocials(
     return socialsFilter[key] === true;
   };
 
+  const wrapRetry = (fn: () => Promise<unknown>, name: string) => {
+    return pRetry(fn, {
+      retries: 2,
+      onFailedAttempt: error => {
+        console.warn(`[SocialSync:${name}] Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`);
+      }
+    });
+  };
+
   // 1. Webhooks & Integrated Services
-  if (isEnabled('discord')) promises.push(dispatchDiscord(payload, config));
-  if (isEnabled('slack')) promises.push(dispatchSlack(payload, config));
-  if (isEnabled('teams')) promises.push(dispatchTeams(payload, config));
-  if (isEnabled('gchat')) promises.push(dispatchGChat(payload, config));
-  if (isEnabled('make')) promises.push(dispatchMake(payload, config));
+  if (isEnabled('discord')) promises.push(wrapRetry(() => dispatchDiscord(payload, config), 'Discord'));
+  if (isEnabled('slack')) promises.push(wrapRetry(() => dispatchSlack(payload, config), 'Slack'));
+  if (isEnabled('teams')) promises.push(wrapRetry(() => dispatchTeams(payload, config), 'Teams'));
+  if (isEnabled('gchat')) promises.push(wrapRetry(() => dispatchGChat(payload, config), 'GChat'));
+  if (isEnabled('make')) promises.push(wrapRetry(() => dispatchMake(payload, config), 'Make'));
 
   // 2. Zulip Announcements Channel
   if (config.ZULIP_BOT_EMAIL && config.ZULIP_API_KEY && isEnabled('zulip')) {
     promises.push(
-      sendZulipMessage(
+      wrapRetry(() => sendZulipMessage(
         {
           ZULIP_BOT_EMAIL: config.ZULIP_BOT_EMAIL,
           ZULIP_API_KEY: config.ZULIP_API_KEY,
@@ -80,13 +90,13 @@ export async function dispatchSocials(
         "announcements",
         "Website Updates",
         `🚀 **${payload.title}**\n\n${payload.snippet}\n\n[🔗 Read more](${payload.url})`
-      )
+      ), 'Zulip')
     );
   }
 
   // 3. Social Platforms
-  if (isEnabled('facebook')) promises.push(dispatchFacebook(payload, config));
-  if (isEnabled('bluesky')) promises.push(dispatchBluesky(payload, config));
+  if (isEnabled('facebook')) promises.push(wrapRetry(() => dispatchFacebook(payload, config), 'Facebook'));
+  if (isEnabled('bluesky')) promises.push(wrapRetry(() => dispatchBluesky(payload, config), 'Bluesky'));
 
   const results = await Promise.allSettled(promises);
   const failures: string[] = [];
@@ -110,17 +120,26 @@ export async function dispatchSocials(
 export async function dispatchPhotoSocials(imageUrl: string, caption: string, config: SocialConfig) {
   const promises: Promise<unknown>[] = [];
 
+  const wrapRetry = (fn: () => Promise<unknown>, name: string) => {
+    return pRetry(fn, {
+      retries: 2,
+      onFailedAttempt: error => {
+        console.warn(`[PhotoSocialSync:${name}] Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`);
+      }
+    });
+  };
+
   // 1. Meta (Instagram & Facebook)
-  promises.push(dispatchMetaPhoto(imageUrl, caption, config));
+  promises.push(wrapRetry(() => dispatchMetaPhoto(imageUrl, caption, config), 'MetaPhoto'));
 
   // 2. Twitter (X)
-  promises.push(dispatchTwitterPhoto(imageUrl, caption, config).catch(() => {}));
+  promises.push(wrapRetry(() => dispatchTwitterPhoto(imageUrl, caption, config), 'TwitterPhoto').catch(() => {}));
 
   // 3. Webhooks
-  promises.push(dispatchDiscordPhoto(imageUrl, caption, config));
-  promises.push(dispatchSlackPhoto(imageUrl, caption, config));
-  promises.push(dispatchTeamsPhoto(imageUrl, caption, config));
-  promises.push(dispatchGChatPhoto(imageUrl, caption, config));
+  promises.push(wrapRetry(() => dispatchDiscordPhoto(imageUrl, caption, config), 'DiscordPhoto'));
+  promises.push(wrapRetry(() => dispatchSlackPhoto(imageUrl, caption, config), 'SlackPhoto'));
+  promises.push(wrapRetry(() => dispatchTeamsPhoto(imageUrl, caption, config), 'TeamsPhoto'));
+  promises.push(wrapRetry(() => dispatchGChatPhoto(imageUrl, caption, config), 'GChatPhoto'));
 
   await Promise.allSettled(promises);
 }

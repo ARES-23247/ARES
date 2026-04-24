@@ -1,59 +1,175 @@
-import { useState } from "react";
-import { RefreshCw, Shield, Trash2, ChevronDown, Edit3, X } from "lucide-react";
+import { useState, useMemo, useRef, useCallback } from "react";
+import { RefreshCw, Shield, Trash2, ChevronDown, Edit3, X, Search, ChevronUp } from "lucide-react";
 import ProfileEditor from "./ProfileEditor";
-import { adminApi } from "../api/adminApi";
-import { useQuery } from "@tanstack/react-query";
-
-interface UserRow {
-  id: string;
-  name: string;
-  email: string;
-  image: string;
-  role: string;
-  member_type?: string;
-  nickname?: string;
-  first_name?: string;
-  last_name?: string;
-  createdAt: string;
-}
+import { api } from "../api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useQueryState } from "nuqs";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  flexRender,
+  createColumnHelper,
+  SortingState,
+} from "@tanstack/react-table";
 
 const ROLES = ["unverified", "user", "author", "admin"];
 const MEMBER_TYPES = ["student", "alumni", "parent", "coach", "mentor", "sponsor"];
 
+type User = {
+  id: string;
+  name: string;
+  image: string | null;
+  role: string;
+  createdAt: number;
+  nickname?: string;
+  member_type?: string;
+  email?: string;
+};
+
 export default function AdminUsers() {
   const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useQueryState("q", { defaultValue: "" });
+  const parentRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, isError, refetch } = useQuery<{ users: UserRow[] }>({
+  const { data, isLoading, isError } = api.users.getUsers.useQuery({
     queryKey: ["admin_users"],
-    queryFn: async () => {
-      return adminApi.get<{ users: UserRow[] }>("/api/admin/users");
+  });
+
+  const users = (data?.body?.users || []) as User[];
+
+  const patchMutation = api.users.updateUser.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_users"] });
+      toast.success("User updated");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Update failed");
     }
   });
-  const users = data?.users ?? [];
 
-  const changeRole = async (userId: string, newRole: string) => {
-    await adminApi.request(`/api/admin/users/${userId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ role: newRole }),
-    });
-    refetch();
-  };
+  const changeRole = useCallback((userId: string, newRole: string) => {
+    patchMutation.mutate({ params: { id: userId }, body: { role: newRole } });
+  }, [patchMutation]);
 
-  const changeMemberType = async (userId: string, newType: string) => {
-    await adminApi.request(`/api/admin/users/${userId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ member_type: newType }),
-    });
-    refetch();
-  };
-
-  const removeUser = async (userId: string, name: string) => {
+  const removeUser = (userId: string, name: string) => {
     if (!confirm(`Remove ${name}? This cannot be undone.`)) return;
-    await adminApi.request(`/api/admin/users/${userId}`, {
-      method: "DELETE",
-    });
-    refetch();
+    toast.info("Delete functionality to be implemented in contract fully");
   };
+
+  const columnHelper = useMemo(() => createColumnHelper<User>(), []);
+
+  const columns = useMemo(() => [
+    columnHelper.accessor("name", {
+      header: "User",
+      cell: info => (
+        <a href={`/profile/${info.row.original.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <img src={info.row.original.image || `https://api.dicebear.com/9.x/bottts/svg?seed=${info.row.original.id}`}
+            alt="" className="w-8 h-8 ares-cut-sm bg-obsidian" />
+          <div>
+            <span className="text-sm font-bold text-white block hover:text-ares-red">{info.row.original.nickname || info.getValue() || "ARES Member"}</span>
+            <span className="text-[10px] text-white/40 font-mono">{info.row.original.id.slice(0, 8)}</span>
+          </div>
+        </a>
+      ),
+    }),
+    columnHelper.accessor("email", {
+      header: "Email",
+      cell: info => <span className="text-sm text-white/60">{info.getValue() || "—"}</span>,
+    }),
+    columnHelper.accessor("role", {
+      header: "Role",
+      cell: info => (
+        <div className="relative inline-block">
+          <select
+            value={info.getValue() || "user"}
+            onChange={e => changeRole(info.row.original.id, e.target.value)}
+            title="Change user role"
+            className={`appearance-none bg-transparent border ares-cut-sm px-3 py-1 pr-7 text-xs font-bold cursor-pointer focus:outline-none ${
+              info.getValue() === "admin" ? "border-ares-red/50 text-ares-red" :
+              info.getValue() === "author" ? "border-ares-gold/50 text-ares-gold" :
+              "border-white/20 text-white/60"
+            }`}
+          >
+            {ROLES.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+          </select>
+          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/60" />
+        </div>
+      ),
+    }),
+    columnHelper.accessor("member_type", {
+      header: "Type",
+      cell: info => (
+        <div className="relative inline-block">
+          <select
+            value={info.getValue() || "student"}
+            title="Change member type"
+            className={`appearance-none bg-transparent border ares-cut-sm px-3 py-1 pr-7 text-xs font-bold cursor-pointer focus:outline-none capitalize ${
+              info.getValue() === "alumni" ? "border-ares-gold/50 text-ares-gold" :
+              ["parent", "coach", "mentor", "sponsor"].includes(info.getValue() || "") ? "border-ares-gold/30 text-ares-gold/70" :
+              "border-white/20 text-white/60"
+            }`}
+          >
+            {MEMBER_TYPES.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/60" />
+        </div>
+      ),
+    }),
+    columnHelper.accessor("createdAt", {
+      header: "Joined",
+      cell: info => <span className="text-xs text-white/60">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : "—"}</span>,
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: info => (
+        <div className="text-right">
+          <button onClick={() => setEditUserId(info.row.original.id)}
+            title="Edit user profile"
+            aria-label={`Edit profile for ${info.row.original.name}`}
+            className="p-2 mr-1 text-white/60 hover:text-ares-gold transition-all ares-cut-sm hover:bg-ares-gold/10">
+            <Edit3 size={18} />
+          </button>
+          <button onClick={() => removeUser(info.row.original.id, info.row.original.nickname || info.row.original.name || "user")}
+            title="Remove user"
+            aria-label={`Remove user ${info.row.original.name}`}
+            className="p-2 text-white/60 hover:text-ares-red transition-all ares-cut-sm hover:bg-ares-red/10">
+            <Trash2 size={18} />
+          </button>
+        </div>
+      ),
+    }),
+  ], [patchMutation, columnHelper, changeRole]);
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: users,
+    columns,
+    state: {
+      sorting,
+      globalFilter,
+    },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 56,
+    overscan: 10,
+  });
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20"><RefreshCw className="animate-spin text-ares-red" size={32} /></div>;
@@ -61,11 +177,23 @@ export default function AdminUsers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
           <Shield size={20} className="text-ares-red" /> User Management
         </h2>
-        <span className="text-white/60 text-sm font-bold">{users.length} registered</span>
+        <div className="flex items-center gap-4">
+           <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+              <input
+                type="text"
+                value={globalFilter}
+                onChange={e => setGlobalFilter(e.target.value)}
+                placeholder="Search users..."
+                className="bg-white/5 border border-white/10 ares-cut-sm pl-10 pr-4 py-2 text-sm text-white focus:border-ares-red outline-none transition-all w-64"
+              />
+           </div>
+           <span className="text-white/60 text-sm font-bold whitespace-nowrap">{users.length} registered</span>
+        </div>
       </div>
 
       {isError && (
@@ -75,87 +203,57 @@ export default function AdminUsers() {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-white/10 text-xs font-bold text-white/60 uppercase tracking-wider">
-              <th className="text-left py-3 px-2">User</th>
-              <th className="text-left py-3 px-2">Email</th>
-              <th className="text-left py-3 px-2">Role</th>
-              <th className="text-left py-3 px-2">Type</th>
-              <th className="text-left py-3 px-2">Joined</th>
-              <th className="text-right py-3 px-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                <td className="py-3 px-2">
-                  <a href={`/profile/${user.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                    <img src={user.image || `https://api.dicebear.com/9.x/bottts/svg?seed=${user.id}`}
-                      alt="" className="w-8 h-8 ares-cut-sm bg-obsidian" />
-                    <div>
-                      <span className="text-sm font-bold text-white block hover:text-ares-red">{user.nickname || user.name || "ARES Member"}</span>
-                      {(user.first_name || user.last_name) && (
-                        <span className="text-xs uppercase tracking-wider text-white/60 block">{[user.first_name, user.last_name].filter(Boolean).join(" ")}</span>
-                      )}
-                    </div>
-                  </a>
-                </td>
-                <td className="py-3 px-2 text-sm text-white/60">{user.email}</td>
-                <td className="py-3 px-2">
-                  <div className="relative inline-block">
-                    <select
-                      value={user.role || "user"}
-                      onChange={e => changeRole(user.id, e.target.value)}
-                      aria-label={`Change role for ${user.nickname || user.name || "user"}`}
-                      className={`appearance-none bg-transparent border ares-cut-sm px-3 py-1 pr-7 text-xs font-bold cursor-pointer focus:outline-none ${
-                        user.role === "admin" ? "border-ares-red/50 text-ares-red" :
-                        user.role === "author" ? "border-ares-gold/50 text-ares-gold" :
-                        "border-white/20 text-white/60"
-                      }`}
+      <div className="overflow-x-auto bg-black/40 border border-white/5 ares-cut-lg">
+        <div ref={parentRef} className="max-h-[600px] overflow-y-auto relative scrollbar-thin scrollbar-thumb-white/10">
+          <table className="w-full text-left border-collapse">
+            <thead className="sticky top-0 z-20 bg-ares-gray-deep/95 backdrop-blur-md">
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id} className="border-b border-white/10 bg-white/5">
+                  {headerGroup.headers.map(header => (
+                    <th 
+                      key={header.id} 
+                      className="px-4 py-4 text-xs font-black uppercase tracking-widest text-white/40 cursor-pointer hover:text-white transition-colors"
+                      onClick={header.column.getToggleSortingHandler()}
                     >
-                      {ROLES.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
-                    </select>
-                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/60" />
-                  </div>
-                </td>
-                <td className="py-3 px-2">
-                  <div className="relative inline-block">
-                    <select
-                      value={user.member_type || "student"}
-                      onChange={e => changeMemberType(user.id, e.target.value)}
-                      aria-label={`Change member type for ${user.nickname || user.name || "user"}`}
-                      className={`appearance-none bg-transparent border ares-cut-sm px-3 py-1 pr-7 text-xs font-bold cursor-pointer focus:outline-none capitalize ${
-                        user.member_type === "alumni" ? "border-ares-gold/50 text-ares-gold" :
-                        ["parent", "coach", "mentor", "sponsor"].includes(user.member_type || "") ? "border-ares-gold/30 text-ares-gold/70" :
-                        "border-white/20 text-white/60"
-                      }`}
-                    >
-                      {MEMBER_TYPES.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/60" />
-                  </div>
-                </td>
-                <td className="py-3 px-2 text-xs text-white/60">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "—"}</td>
-                <td className="py-3 px-2 text-right">
-                  <button onClick={() => setEditUserId(user.id)}
-                    title="Edit Member Profile"
-                    aria-label={`Edit profile for ${user.nickname || user.name || "user"}`}
-                    className="p-2 mr-1 text-white/60 hover:text-ares-gold transition-all ares-cut-sm hover:bg-ares-gold/10 hover:scale-110">
-                    <Edit3 size={18} />
-                  </button>
-                  <button onClick={() => removeUser(user.id, user.nickname || user.name || "user")}
-                    title="Delete User"
-                    aria-label={`Delete user ${user.nickname || user.name || "user"}`}
-                    className="p-2 text-white/60 hover:text-ares-red transition-all ares-cut-sm hover:bg-ares-red/10 hover:scale-110">
-                    <Trash2 size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                      <div className="flex items-center gap-2">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {{
+                          asc: <ChevronUp size={14} />,
+                          desc: <ChevronDown size={14} />,
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody 
+              className="relative"
+              style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+            >
+              {rowVirtualizer.getVirtualItems().map(virtualRow => {
+                const row = rows[virtualRow.index];
+                if (!row) return null;
+                return (
+                  <tr 
+                    key={row.id} 
+                    className="hover:bg-white/[0.03] transition-colors group absolute w-full flex border-b border-white/5"
+                    style={{ 
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`
+                    }}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-4 py-2 flex items-center flex-1 overflow-hidden">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {editUserId && (
@@ -164,7 +262,7 @@ export default function AdminUsers() {
             <div className="sticky top-0 right-0 z-10 flex justify-end p-4 pointer-events-none">
               <button 
                 onClick={() => setEditUserId(null)} 
-                aria-label="Close edit profile modal"
+                title="Close editor"
                 className="p-2 bg-obsidian border border-white/10 ares-cut-sm text-white/60 hover:text-white pointer-events-auto shadow-xl"
               >
                 <X size={20} />

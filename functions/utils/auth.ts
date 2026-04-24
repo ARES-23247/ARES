@@ -116,9 +116,18 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
                 create: {
                     after: async (session) => {
                         try {
-                            const currentUser = await db.prepare("SELECT role FROM user WHERE id = ?").bind(session.userId).first<{role: string}>();
+                            const currentUser = await kyselyDb.selectFrom("user")
+                                .select("role")
+                                .where("id", "=", session.userId)
+                                .executeTakeFirst();
+
                             if (currentUser && currentUser.role !== "admin") {
-                                const account = await db.prepare("SELECT accessToken FROM account WHERE userId = ? AND providerId = 'github'").bind(session.userId).first<{accessToken: string}>();
+                                const account = await kyselyDb.selectFrom("account")
+                                    .select("accessToken")
+                                    .where("userId", "=", session.userId)
+                                    .where("providerId", "=", "github")
+                                    .executeTakeFirst();
+
                                 if (account && account.accessToken) {
                                     const res = await fetch("https://api.github.com/user/memberships/orgs/ARES-23247", { signal: AbortSignal.timeout(5000),
                                         headers: {
@@ -134,12 +143,18 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
                                                 if (env.ENVIRONMENT !== "production") {
                                                   console.log(`[GitHub Auth] Verified ${session.userId} as ${siteConfig.urls.githubOrg} Org Owner. Promoting to Admin.`);
                                                 }
-                                                await db.prepare("UPDATE user SET role = 'admin' WHERE id = ?").bind(session.userId).run();
+                                                await kyselyDb.updateTable("user")
+                                                    .set({ role: 'admin' })
+                                                    .where("id", "=", session.userId)
+                                                    .execute();
                                             } else {
                                                 if (env.ENVIRONMENT !== "production") {
                                                   console.log(`[GitHub Auth] Verified ${session.userId} as ${siteConfig.urls.githubOrg} Org Member. Promoting to Author.`);
                                                 }
-                                                await db.prepare("UPDATE user SET role = 'author' WHERE id = ?").bind(session.userId).run();
+                                                await kyselyDb.updateTable("user")
+                                                    .set({ role: 'author' })
+                                                    .where("id", "=", session.userId)
+                                                    .execute();
                                             }
                                         }
                                     } else {
@@ -159,9 +174,10 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
                         // SEC-01: Bootstrap admin from env var, not hardcoded email
                         const initialAdmin = env.INITIAL_ADMIN_EMAIL as string | undefined;
                         if (initialAdmin && user.email === initialAdmin) {
-                            await db.prepare("UPDATE user SET role = 'admin' WHERE email = ?")
-                                .bind(user.email)
-                                .run();
+                            await kyselyDb.updateTable("user")
+                                .set({ role: 'admin' })
+                                .where("email", "=", user.email)
+                                .execute();
                         }
                     },
                 },

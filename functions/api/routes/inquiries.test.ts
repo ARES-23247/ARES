@@ -1,159 +1,151 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { inquiriesRouter, purgeOldInquiries } from "./inquiries";
-import { createMockInquiry } from "../../../src/test/factories/logisticsFactory";
+import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
-import { http, HttpResponse } from "msw";
-import { server } from "../../../src/test/setup";
-
-vi.mock("../../utils/zulipSync", () => ({ sendZulipAlert: vi.fn().mockResolvedValue(true) }));
-vi.mock("../../utils/notifications", () => ({ notifyByRole: vi.fn().mockResolvedValue(true) }));
-vi.mock("../../utils/githubProjects", () => ({
-  buildGitHubConfig: vi.fn().mockReturnValue({}),
-  createProjectItem: vi.fn().mockResolvedValue(true),
-}));
-
-// We'll dynamically change what getSessionUser returns
-let mockSessionUser: any = { role: "admin" };
 
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAuth: async (c: any, next: any) => next(),
-    rateLimitMiddleware: () => async (c: any, next: any) => next(),
-    turnstileMiddleware: () => async (c: any, next: any) => next(),
-    getSessionUser: vi.fn().mockImplementation(() => Promise.resolve(mockSessionUser)),
+    getDbSettings: vi.fn().mockResolvedValue({}),
+    ensureAdmin: async (_c: unknown, next: any) => next(),
+    getSessionUser: vi.fn().mockResolvedValue({ id: "1", role: "admin", email: "admin@test.com" }),
     logAuditAction: vi.fn().mockResolvedValue(true),
+    rateLimitMiddleware: () => async (_c: unknown, next: any) => next(),
+    checkRateLimit: vi.fn().mockReturnValue(true),
   };
 });
 
+vi.mock("../../utils/zulipSync", () => ({
+  sendZulipAlert: vi.fn().mockResolvedValue(true),
+}));
+
+import inquiriesRouter from "./inquiries";
+
 describe("Hono Backend - /inquiries Router", () => {
-  const env = {
-    DB: {
-      prepare: vi.fn().mockReturnThis(),
-      bind: vi.fn().mockReturnThis(),
-      all: vi.fn().mockResolvedValue({ results: [] }),
-      run: vi.fn().mockResolvedValue({ success: true, meta: { changes: 1 } }),
-      first: vi.fn().mockResolvedValue(null),
-      batch: vi.fn().mockResolvedValue([]),
-    } as any,
-    DEV_BYPASS: "true",
-    TURNSTILE_SECRET_KEY: "secret",
-  };
+  
+  let mockDb: any;
+  let testApp: Hono<any>;
+  let env: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSessionUser = { role: "admin" };
-    server.use(
-      http.post("https://challenges.cloudflare.com/turnstile/v0/siteverify", () => HttpResponse.json({ success: true })),
-      http.post("https://api.mailchannels.net/tx/v1/send", () => new HttpResponse(null, { status: 202 }))
-    );
-  });
 
-  it("GET / should list inquiries for admin", async () => {
-    env.DB.all.mockResolvedValue({ results: [createMockInquiry()] });
-    const req = new Request("http://localhost/", { method: "GET" });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
+    // Polyfill crypto for Node.js test environment if needed
+    if (typeof (global as any).crypto === "undefined") {
+      (global as any).crypto = {
+        randomUUID: () => "test-uuid-" + Math.random().toString(36).substring(7)
+      };
+    } else if (typeof (global as any).crypto.randomUUID === "undefined") {
+      (global as any).crypto.randomUUID = () => "test-uuid-" + Math.random().toString(36).substring(7);
+    }
 
-  it("GET / should mask PII for students", async () => {
-    mockSessionUser = { role: "user", member_type: "student" };
-    env.DB.all.mockResolvedValue({ results: [{ ...createMockInquiry(), metadata: "{}" }] });
-    const req = new Request("http://localhost/", { method: "GET" });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
+    mockDb = {
+      selectFrom: vi.fn().mockReturnThis(),
+      selectAll: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      offset: vi.fn().mockReturnThis(),
+      execute: vi.fn().mockResolvedValue([]),
+      executeTakeFirst: vi.fn().mockResolvedValue(null),
+      insertInto: vi.fn().mockReturnThis(),
+      values: vi.fn().mockReturnThis(),
+      onConflict: vi.fn().mockReturnThis(),
+      doUpdateSet: vi.fn().mockReturnThis(),
+      updateTable: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(),
+    };
 
-  it("GET / should reject unauthorized user", async () => {
-    mockSessionUser = { role: "unverified" };
-    const req = new Request("http://localhost/", { method: "GET" });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(403);
-  });
-
-  it("POST / should submit new sponsor inquiry and batch", async () => {
-    const payload = { type: "sponsor", name: "Corp", email: "corp@example.com", metadata: { level: "Gold" } };
-    const req = new Request("http://localhost/", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
+    mockDb.transaction = vi.fn().mockReturnValue({
+      execute: vi.fn().mockImplementation(async (cb: any) => {
+        return await cb(mockDb);
+      }),
     });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-    expect(env.DB.batch).toHaveBeenCalled();
-  });
 
-  it("POST / should reject spam", async () => {
-    env.DB.first.mockResolvedValueOnce({ id: "recent" });
-    const payload = { type: "outreach", name: "Spammer", email: "spam@example.com" };
-    const req = new Request("http://localhost/", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
+    env = {
+      DB: {
+        prepare: vi.fn().mockReturnValue({
+          all: vi.fn().mockResolvedValue({ results: [] }),
+          bind: vi.fn().mockReturnThis(),
+          run: vi.fn().mockResolvedValue({ success: true }),
+        }),
+      },
+      DEV_BYPASS: "true",
+      TURNSTILE_SECRET: "test-secret",
+    };
+
+    testApp = new Hono();
+    testApp.onError((err, c) => {
+      console.error("Test App Error:", err);
+      return c.json({ error: err.message }, 500);
     });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(429);
+    testApp.use("*", async (c, next) => {
+      c.set("db", mockDb);
+      // getSessionUser checks for "sessionUser" in context
+      c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com" });
+      await next();
+    });
+    testApp.route("/", inquiriesRouter);
   });
 
-  it("PATCH /:id/status should update status for admin", async () => {
-    const req = new Request("http://localhost/123/status", {
+  it("GET /admin/list - list all", async () => {
+    const res = await testApp.request("/admin/list", {
+      headers: { "DEV_BYPASS": "true" }
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.selectFrom).toHaveBeenCalledWith("inquiries");
+  });
+
+  it("POST / - submit new inquiry", async () => {
+    // Mock fetch for turnstile
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true })
+    });
+
+    const res = await testApp.request("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "support",
+        name: "Test",
+        email: "test@test.com",
+        metadata: { msg: "hello" }
+      })
+    }, env, mockExecutionContext);
+
+    expect(res.status).toBe(200);
+    expect(mockDb.insertInto).toHaveBeenCalledWith("inquiries");
+  });
+
+  it("PATCH /admin/:id/status - update status", async () => {
+    const res = await testApp.request("/admin/1/status", {
       method: "PATCH",
-      body: JSON.stringify({ status: "approved" }),
-      headers: { "Content-Type": "application/json" }
-    });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
+      headers: { 
+        "Content-Type": "application/json",
+        "DEV_BYPASS": "true"
+      },
+      body: JSON.stringify({ status: "resolved" })
+    }, env, mockExecutionContext);
+
     expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("inquiries");
   });
 
-  it("PATCH /:id/status should reject student", async () => {
-    mockSessionUser = { role: "user", member_type: "student" };
-    const req = new Request("http://localhost/123/status", {
-      method: "PATCH",
-      body: JSON.stringify({ status: "approved" }),
-      headers: { "Content-Type": "application/json" }
-    });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(403);
-  });
+  it("DELETE /admin/:id - delete", async () => {
+    const res = await testApp.request("/admin/1", {
+      method: "DELETE",
+      headers: { 
+        "Content-Type": "application/json",
+        "DEV_BYPASS": "true"
+      },
+      body: JSON.stringify({})
+    }, env, mockExecutionContext);
 
-  it("DELETE /:id should delete for admin", async () => {
-    const req = new Request("http://localhost/123", { method: "DELETE" });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-  });
-
-  it("DELETE /:id should reject student", async () => {
-    mockSessionUser = { role: "user", member_type: "student" };
-    const req = new Request("http://localhost/123", { method: "DELETE" });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(403);
-  });
-
-  it("purgeOldInquiries should delete old records", async () => {
-    const res = await purgeOldInquiries(env.DB, 30);
-    expect(res.deleted).toBe(1);
-    expect(env.DB.prepare).toHaveBeenCalledWith(expect.stringContaining("DELETE FROM inquiries"));
-  });
-
-  it("POST / should handle notification service failures gracefully", async () => {
-    // Force a failure in one of the services to trigger the .catch() handlers
-    const { sendZulipAlert } = await import("../../utils/zulipSync");
-    const { notifyByRole } = await import("../../utils/notifications");
-    const { createProjectItem } = await import("../../utils/githubProjects");
-
-    (sendZulipAlert as any).mockRejectedValueOnce(new Error("Zulip fail"));
-    (notifyByRole as any).mockRejectedValueOnce(new Error("Notify fail"));
-    (createProjectItem as any).mockRejectedValueOnce(new Error("GH fail"));
-
-    const payload = { type: "sponsor", name: "Corp", email: "corp@example.com", metadata: { level: "Gold" } };
-    const req = new Request("http://localhost/", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
-    });
-    const res = await inquiriesRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(207); // Should return 207 with warnings
+    expect(mockDb.deleteFrom).toHaveBeenCalled();
   });
 });

@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import { useEntityFetch } from "../hooks/useEntityFetch";
-import { docSchema } from "../schemas/docSchema";
-import { adminApi } from "../api/adminApi";
+import { docSchema, DocPayload } from "../schemas/docSchema";
+import { api } from "../api/client";
 import { useModal } from "../contexts/ModalContext";
 import EditorFooter from "./editor/EditorFooter";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface DocData {
   slug: string;
@@ -25,105 +27,80 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const modal = useModal();
-  const [isPending, setIsPending] = useState(false);
-
-  // Fields
-  const [slug, setSlug] = useState("");
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("Getting Started");
-  const [sortOrder, setSortOrder] = useState<number>(10);
-  const [description, setDescription] = useState("");
-  const [isPortfolio, setIsPortfolio] = useState(false);
-  const [isExecutiveSummary, setIsExecutiveSummary] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const editor = useRichEditor({ placeholder: "<p>Start writing documentation here...</p>" });
 
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<DocPayload>({
+    resolver: zodResolver(docSchema),
+    defaultValues: {
+      slug: "",
+      title: "",
+      category: "Getting Started",
+      sortOrder: 10,
+      description: "",
+      isPortfolio: false,
+      isExecutiveSummary: false,
+      isDraft: false,
+      content: "{}"
+    }
+  });
+
+  const formValues = useWatch({ control });
+
   // Custom Hooks
-  const { error: fetchError } = useEntityFetch<{ doc?: DocData }>(
+  useEntityFetch<{ doc?: DocData }>(
     editSlug ? `/api/admin/docs/${editSlug}/detail` : null,
     (data) => {
       if (data?.doc) {
         const doc = data.doc;
-        setSlug(doc.slug || "");
-        setTitle(doc.title || "");
-        setCategory(doc.category || "Getting Started");
-        setSortOrder(doc.sort_order || 10);
-        setDescription(doc.description || "");
-        setIsPortfolio(!!doc.is_portfolio);
-        setIsExecutiveSummary(!!doc.is_executive_summary);
+        reset({
+          slug: doc.slug || "",
+          title: doc.title || "",
+          category: doc.category || "Getting Started",
+          sortOrder: doc.sort_order || 10,
+          description: doc.description || "",
+          isPortfolio: !!doc.is_portfolio,
+          isExecutiveSummary: !!doc.is_executive_summary,
+          content: doc.content || "{}"
+        });
         
-        const loadedContent = doc.content || "";
-        if (editor) {
+        if (editor && doc.content) {
           try {
-            const parsed = JSON.parse(loadedContent);
-            editor.commands.setContent(parsed);
+            editor.commands.setContent(JSON.parse(doc.content));
           } catch {
-            // Not JSON, assume HTML or legacy Markdown (fallback)
-            editor.commands.setContent(loadedContent);
+            editor.commands.setContent(doc.content);
           }
         }
       }
     }
   );
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (fetchError) setErrorMsg("Failed to load document data.");
-  }, [fetchError]);
-
-  const handlePublish = async (isDraft: boolean = false) => {
-    if (!editor) return;
-    if (!slug || !title || !category) {
-      setErrorMsg("Slug, title, and category are required.");
-      return;
-    }
-
-    setIsPending(true);
-    setErrorMsg("");
-
-    const jsonAST = JSON.stringify(editor.getJSON());
-
-    try {
-      const payloadResult = docSchema.safeParse({
-        slug,
-        title,
-        category,
-        sortOrder,
-        description: description || undefined,
-        content: jsonAST,
-        isPortfolio,
-        isExecutiveSummary,
-        isDraft
-      });
-
-      if (!payloadResult.success) {
-        setErrorMsg(payloadResult.error.issues[0].message);
-        setIsPending(false);
-        return;
-      }
-
-      const data = editSlug
-        ? await adminApi.updateDoc(payloadResult.data)
-        : await adminApi.createDoc(payloadResult.data);
-
-      if (data.success) {
+  const saveMutation = api.docs.saveDoc.useMutation({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess: (res: any) => {
+      if (res.status === 200) {
         queryClient.invalidateQueries({ queryKey: ["docs"] });
         queryClient.invalidateQueries({ queryKey: ["admin_docs"] });
-        
-        if (isDraft || userRole === "author") {
+        if (formValues.isDraft || userRole === "author") {
           navigate("/dashboard");
         } else {
-          navigate(`/docs/${data.slug}`);
+          navigate(`/docs/${res.body.slug}`);
         }
       } else {
-        setErrorMsg(data.error || "Failed to publish");
+        setErrorMsg(res.body.error || "Failed to publish");
       }
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Network error — could not reach the API.");
-    } finally {
-      setIsPending(false);
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      setErrorMsg(err.message || "Network error");
     }
+  });
+
+  const onFormSubmit = (data: DocPayload, isDraft = false) => {
+    if (!editor) return;
+    const content = JSON.stringify(editor.getJSON());
+    saveMutation.mutate({ body: { ...data, content, isDraft } });
   };
 
   const handleDelete = async () => {
@@ -136,18 +113,13 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
     });
     if (!confirmed) return;
 
-    setIsPending(true);
-    setErrorMsg("");
     try {
-      await adminApi.deleteDoc(editSlug);
+      await api.docs.deleteDoc.mutate({ params: { slug: editSlug }, body: {} });
       queryClient.invalidateQueries({ queryKey: ["docs"] });
       queryClient.invalidateQueries({ queryKey: ["admin_docs"] });
-      
       navigate("/dashboard/manage_docs");
     } catch {
-      setErrorMsg("Failed to delete the document. Please try again.");
-    } finally {
-      setIsPending(false);
+      setErrorMsg("Failed to delete the document.");
     }
   };
 
@@ -166,35 +138,31 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
         <div className="col-span-1 lg:col-span-2">
           <label htmlFor="doc-title" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Title</label>
           <input
-            id="doc-title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            id="doc-title" type="text"
+            {...register("title")}
             className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 ares-cut-sm focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
             placeholder="e.g. Swerve Kinematics"
           />
+          {errors.title && <p className="text-[10px] font-black uppercase text-ares-red mt-1">{errors.title.message}</p>}
         </div>
         
         <div className="col-span-1 lg:col-span-1">
-          <label htmlFor="doc-slug" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Slug (The text at the end of the URL, e.g., aresfirst.org/docs/SLUG)</label>
+          <label htmlFor="doc-slug" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Slug</label>
           <input
-            id="doc-slug"
-            type="text"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
+            id="doc-slug" type="text"
+            {...register("slug")}
             disabled={!!editSlug}
             className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 ares-cut-sm focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="e.g. swerve-kinematics"
           />
+          {errors.slug && <p className="text-[10px] font-black uppercase text-ares-red mt-1">{errors.slug.message}</p>}
         </div>
 
         <div className="col-span-1 lg:col-span-1">
           <label htmlFor="doc-category" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Category</label>
           <input
-            id="doc-category"
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            id="doc-category" type="text"
+            {...register("category")}
             className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 ares-cut-sm focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
             placeholder="e.g. Tutorials"
           />
@@ -203,10 +171,8 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
         <div className="col-span-1 lg:col-span-1">
           <label htmlFor="doc-sort" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Sort Order</label>
           <input
-            id="doc-sort"
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)}
+            id="doc-sort" type="number"
+            {...register("sortOrder", { valueAsNumber: true })}
             className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 ares-cut-sm focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
           />
         </div>
@@ -215,10 +181,8 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
       <div>
         <label htmlFor="doc-description" className="block text-xs font-bold text-ares-gold uppercase tracking-wider mb-2">Description / Summary</label>
         <input
-          id="doc-description"
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          id="doc-description" type="text"
+          {...register("description")}
           className="w-full bg-black/50 border border-white/10 text-white px-4 py-3 ares-cut-sm focus:outline-none focus:ring-2 focus:ring-ares-cyan transition-colors"
           placeholder="Brief summary of what this document covers..."
         />
@@ -227,10 +191,8 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 ares-cut-sm bg-obsidian/50 border border-white/5">
         <div className="flex items-center gap-3 cursor-pointer group">
           <input 
-            id="isPortfolioToggle"
-            type="checkbox" 
-            checked={isPortfolio} 
-            onChange={(e) => setIsPortfolio(e.target.checked)} 
+            id="isPortfolioToggle" type="checkbox" 
+            {...register("isPortfolio")} 
             className="w-5 h-5 rounded border-white/10 bg-black text-ares-cyan focus:ring-ares-cyan"
           />
           <div>
@@ -241,10 +203,8 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
         
         <div className="flex items-center gap-3 cursor-pointer group">
           <input 
-            id="isExecSummaryToggle"
-            type="checkbox" 
-            checked={isExecutiveSummary} 
-            onChange={(e) => setIsExecutiveSummary(e.target.checked)} 
+            id="isExecSummaryToggle" type="checkbox" 
+            {...register("isExecutiveSummary")} 
             className="w-5 h-5 rounded border-white/10 bg-black text-ares-gold focus:ring-ares-gold"
           />
           <div>
@@ -256,7 +216,7 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
 
       {/* ===== Unified Rich Editor ===== */}
       <div className="flex-1 flex flex-col relative min-h-[500px]">
-        {editor && <RichEditorToolbar editor={editor} documentTitle={title} />}
+        {editor && <RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} />}
       </div>
 
       <div className="mt-4 pt-6">
@@ -272,11 +232,11 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
         )}
         <EditorFooter 
           errorMsg={errorMsg}
-          isPending={isPending}
+          isPending={saveMutation.isPending}
           isEditing={!!editSlug}
           onDelete={handleDelete}
-          onSaveDraft={() => handlePublish(true)}
-          onPublish={() => handlePublish(false)}
+          onSaveDraft={handleSubmit((d) => onFormSubmit(d, true))}
+          onPublish={handleSubmit((d) => onFormSubmit(d, false))}
           deleteText="DELETE DOC"
           updateText="UPDATE DOC"
           publishText={userRole === "author" ? "SUBMIT FOR REVIEW" : "PUBLISH DOC"}

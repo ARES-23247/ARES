@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { X, ImagePlus } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 
 export type R2Asset = {
   key: string;
@@ -25,15 +24,13 @@ export default function AssetPickerModal({
 }) {
   const [selectedFolderFilter, setSelectedFolderFilter] = useState<string>("All");
 
-  const { data: mediaResponse, isLoading } = useQuery<{ media: R2Asset[] }>({
+  const { data: mediaResponse, isLoading } = api.media.adminList.useQuery({
     queryKey: ["assets"],
-    queryFn: async () => {
-      return adminApi.get<{ media: R2Asset[] }>("/api/admin/media");
-    },
     enabled: isOpen,
   });
 
-  const assets = mediaResponse?.media ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const assets = (mediaResponse?.body as any)?.media ?? [];
   const uniqueFolders = Array.from(new Set(assets.map(a => a.folder))).filter(Boolean);
   const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter(a => a.folder === selectedFolderFilter);
 

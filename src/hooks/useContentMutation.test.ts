@@ -113,7 +113,7 @@ describe("useContentMutation", () => {
     result.current.mutate("123");
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    // adminApi.request usually parses the status text if body is not JSON
+    // fetchJson extracts 'error' key or status text if present
     // but if it's completely empty or similar, it might fall back.
   });
 });

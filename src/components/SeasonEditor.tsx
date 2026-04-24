@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -7,24 +7,9 @@ import RichEditorToolbar from "./editor/RichEditorToolbar";
 import AssetPickerModal from "./AssetPickerModal";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { useImageUpload } from "../hooks/useImageUpload";
-import { useEntityFetch } from "../hooks/useEntityFetch";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 import CoverAssetPicker from "./editor/CoverAssetPicker";
 import EditorFooter from "./editor/EditorFooter";
-
-interface SeasonData {
-  start_year: number;
-  end_year: number;
-  challenge_name: string;
-  robot_name?: string;
-  robot_image?: string;
-  robot_description?: string;
-  robot_cad_url?: string;
-  summary?: string;
-  album_url?: string;
-  album_cover?: string;
-  status: "published" | "draft";
-}
 
 export default function SeasonEditor() {
   const { editId } = useParams<{ editId?: string }>();
@@ -51,29 +36,49 @@ export default function SeasonEditor() {
 
   const editor = useRichEditor({ placeholder: "<p>Describe the robot's design, mechanisms, and season highlights...</p>" });
 
-  useEntityFetch<{ season?: SeasonData }>(
-    editId ? `/api/admin/seasons/${editId}` : null,
-    (data) => {
-      if (data?.season) {
-        setStartYear(data.season.start_year);
-        setEndYear(data.season.end_year);
-        setChallengeName(data.season.challenge_name);
-        setRobotName(data.season.robot_name || "");
-        setRobotImageUrl(data.season.robot_image || DEFAULT_COVER_IMAGE);
-        setCadUrl(data.season.robot_cad_url || "");
-        setSummary(data.season.summary || "");
-        setAlbumUrl(data.season.album_url || "");
-        setAlbumCoverUrl(data.season.album_cover || "");
-        if (editor && data.season.robot_description) {
-          try {
-            editor.commands.setContent(JSON.parse(data.season.robot_description));
-          } catch (e) {
-            console.error("Failed to parse existing AST", e);
-          }
+  const { data: detailData } = api.seasons.adminDetail.useQuery({
+    queryKey: ["admin-season-detail", editId],
+    params: { id: editId || "" },
+  }, { enabled: !!editId });
+
+  useEffect(() => {
+    if (detailData?.status === 200 && detailData.body.season) {
+      const s = detailData.body.season;
+      setStartYear(s.start_year);
+      setEndYear(s.end_year);
+      setChallengeName(s.challenge_name);
+      setRobotName(s.robot_name || "");
+      setRobotImageUrl(s.robot_image || DEFAULT_COVER_IMAGE);
+      setCadUrl(s.robot_cad_url || "");
+      setSummary(s.summary || "");
+      setAlbumUrl(s.album_url || "");
+      setAlbumCoverUrl(s.album_cover || "");
+      if (editor && s.robot_description) {
+        try {
+          editor.commands.setContent(JSON.parse(s.robot_description));
+        } catch (e) {
+          console.error("Failed to parse existing AST", e);
         }
       }
     }
-  );
+  }, [detailData, editor]);
+
+  const saveMutation = api.seasons.save.useMutation({
+    onSuccess: (res) => {
+      if (res.status === 200 && res.body.success) {
+        toast.success(`Season ${startYear}-${endYear} saved successfully.`);
+        queryClient.invalidateQueries({ queryKey: ["admin-seasons"] });
+        queryClient.invalidateQueries({ queryKey: ["seasons"] });
+        navigate("/dashboard/manage_seasons");
+      } else {
+        setErrorMsg("Save failed");
+      }
+    },
+    onError: (err) => {
+      setErrorMsg(err.message || "Failed to save season.");
+    },
+    onSettled: () => setIsPending(false)
+  });
 
   const handleSave = async (isDraft: boolean = false) => {
     if (!startYear || !challengeName) {
@@ -84,37 +89,23 @@ export default function SeasonEditor() {
     setIsPending(true);
     setErrorMsg("");
 
-    try {
-      const robot_description = editor ? JSON.stringify(editor.getJSON()) : null;
-      
-      const payload = {
-        start_year: Number(startYear),
-        end_year: Number(endYear),
-        challenge_name: challengeName,
-        robot_name: robotName,
-        robot_image: robotImageUrl === DEFAULT_COVER_IMAGE ? null : robotImageUrl,
-        robot_description,
-        robot_cad_url: cadUrl,
-        summary,
-        album_url: albumUrl,
-        album_cover: albumCoverUrl,
-        status: isDraft ? "draft" : "published"
-      };
+    const robot_description = editor ? JSON.stringify(editor.getJSON()) : null;
+    
+    const payload = {
+      start_year: Number(startYear),
+      end_year: Number(endYear),
+      challenge_name: challengeName,
+      robot_name: robotName,
+      robot_image: robotImageUrl === DEFAULT_COVER_IMAGE ? null : robotImageUrl,
+      robot_description,
+      robot_cad_url: cadUrl,
+      summary,
+      album_url: albumUrl,
+      album_cover: albumCoverUrl,
+      status: (isDraft ? "draft" : "published") as "draft" | "published"
+    };
 
-      await adminApi.request("/api/admin/seasons", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-
-      toast.success(`Season ${startYear}-${endYear} saved successfully.`);
-      queryClient.invalidateQueries({ queryKey: ["admin-seasons"] });
-      queryClient.invalidateQueries({ queryKey: ["seasons"] });
-      navigate("/dashboard/manage_seasons");
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Failed to save season.");
-    } finally {
-      setIsPending(false);
-    }
+    saveMutation.mutate({ body: payload });
   };
 
   if (!editor) return <div className="text-marble animate-pulse font-mono tracking-widest text-sm">Booting Legacy Systems...</div>;
@@ -274,7 +265,7 @@ export default function SeasonEditor() {
         errorMsg={errorMsg}
         isPending={isPending}
         isEditing={!!editId}
-        onDelete={() => {}} // Handle delete if needed
+        onDelete={() => {}} 
         onSaveDraft={() => handleSave(true)}
         onPublish={() => handleSave(false)}
         updateText="UPDATE LEGACY"

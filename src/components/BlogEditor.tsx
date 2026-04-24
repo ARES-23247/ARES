@@ -9,12 +9,14 @@ import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { useAdminSettings } from "../hooks/useAdminSettings";
 import { useImageUpload } from "../hooks/useImageUpload";
 import { useEntityFetch } from "../hooks/useEntityFetch";
-import { postSchema } from "../schemas/postSchema";
-import { adminApi } from "../api/adminApi";
+import { postSchema, PostPayload } from "../schemas/postSchema";
+import { api } from "../api/client";
 import { useModal } from "../contexts/ModalContext";
 import CoverAssetPicker from "./editor/CoverAssetPicker";
 import SocialSyndicationGrid from "./editor/SocialSyndicationGrid";
 import EditorFooter from "./editor/EditorFooter";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import SeasonPicker from "./SeasonPicker";
 
@@ -28,24 +30,36 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
   const { availableSocials } = useAdminSettings();
   const { uploadFile, isUploading: isUploadingCover, errorMsg: uploadError, setErrorMsg: setUploadError } = useImageUpload();
 
-  // Local State
-  const [isPending, setIsPending] = useState(false);
-  const [title, setTitle] = useState("");
-  const [publishedAt, setPublishedAt] = useState("");
-  const [seasonId, setSeasonId] = useState("");
-  const [coverImageUrl, setCoverImageUrl] = useState(DEFAULT_COVER_IMAGE);
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<PostPayload>({
+    resolver: zodResolver(postSchema),
+    defaultValues: {
+      title: "",
+      coverImageUrl: DEFAULT_COVER_IMAGE,
+      ast: {},
+      socials: {
+        discord: true,
+        bluesky: true,
+        slack: false,
+        teams: false,
+        gchat: false,
+        facebook: false,
+        twitter: false,
+        instagram: false
+      },
+      isDraft: false,
+      publishedAt: "",
+      seasonId: ""
+    }
+  });
+
+  const title = useWatch({ control, name: "title" });
+  const coverImageUrl = useWatch({ control, name: "coverImageUrl" });
+  const socials = useWatch({ control, name: "socials" }) || {};
+  const seasonId = useWatch({ control, name: "seasonId" });
+
+  // Local State for visual UI toggles
   const [errorMsg, setErrorMsg] = useState("");
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
-  const [socials, setSocials] = useState<Record<string, boolean>>({
-    discord: true,
-    bluesky: true,
-    slack: false,
-    teams: false,
-    gchat: false,
-    facebook: false,
-    twitter: false,
-    instagram: false
-  });
 
   const editor = useRichEditor({ placeholder: "<p>Start drafting your robotics article here. Tell us about your journey to Einstein...</p>" });
 
@@ -53,10 +67,15 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
     editSlug ? `/api/admin/posts/${editSlug}/detail` : null,
     (data) => {
       if (data?.post) {
-        setTitle(data.post.title || "");
-        setPublishedAt(data.post.published_at || "");
-        setSeasonId(data.post.season_id || "");
-        if (data.post.thumbnail) setCoverImageUrl(data.post.thumbnail);
+        reset({
+          title: data.post.title || "",
+          publishedAt: data.post.published_at || "",
+          seasonId: data.post.season_id || "",
+          coverImageUrl: data.post.thumbnail || DEFAULT_COVER_IMAGE,
+          ast: data.post.ast ? JSON.parse(data.post.ast) : {},
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          socials: (socials as any) || {}
+        });
         if (editor && data.post.ast) {
           try {
             editor.commands.setContent(JSON.parse(data.post.ast));
@@ -70,75 +89,39 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
 
   // Sync upload errors to local error state
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (uploadError) setErrorMsg(uploadError);
-  }, [uploadError]);
+  }, [uploadError, setErrorMsg]);
 
-  const handlePublish = async (isDraft: boolean = false) => {
-    if (!title || !editor) {
-      setErrorMsg("Title and content are required.");
-      return;
-    }
-
-    setIsPending(true);
-    setErrorMsg("");
-
-    try {
-      const ast = editor.getJSON();
-      
-      const payloadResult = postSchema.safeParse({
-        title,
-        coverImageUrl: coverImageUrl === DEFAULT_COVER_IMAGE ? "" : coverImageUrl,
-        ast,
-        socials,
-        isDraft,
-        publishedAt: publishedAt || undefined,
-        seasonId: seasonId || undefined,
-      });
-
-      if (!payloadResult.success) {
-        setErrorMsg(payloadResult.error.issues[0].message);
-        setIsPending(false);
-        return;
-      }
-
-      const data = editSlug 
-        ? await adminApi.updatePost(editSlug, payloadResult.data)
-        : await adminApi.createPost(payloadResult.data);
-
-      if (data.success) {
+  const saveMutation = api.posts.savePost.useMutation({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess: (data: any) => {
+      if (data.status === 200 || data.status === 207) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
-        setTimeout(() => queryClient.invalidateQueries({ queryKey: ["posts"] }), 1500);
-        setTimeout(() => queryClient.invalidateQueries({ queryKey: ["posts"] }), 3000);
         queryClient.invalidateQueries({ queryKey: ["admin_posts"] });
         
-        if (data.warning) {
-          toast.info("Post saved successfully, but social syndication had issues:\n\n" + data.warning);
+        if (data.body.warning) {
+          toast.info("Post saved successfully, but social syndication had issues:\n\n" + data.body.warning);
         }
 
-        if (isDraft || userRole === "author") {
+        if (data.body.isDraft || userRole === "author") {
           navigate("/dashboard");
         } else {
-          navigate(`/blog/${data.slug}`);
+          navigate(`/blog/${data.body.slug}`);
         }
       } else {
-        setErrorMsg(data.error || "Failed to publish");
+        setErrorMsg(data.body.error || "Failed to publish");
       }
-    } catch (e) {
-      console.error("[BlogEditor] Publication failed:", e);
-      if (e instanceof Error) {
-        // If it's a TypeError and the message is "Failed to fetch", it's usually a network/CORS error
-        if (e.name === "TypeError" && e.message.includes("fetch")) {
-          setErrorMsg("Network error — could not reach the API. Please check your connection or try again.");
-        } else {
-          setErrorMsg(e.message);
-        }
-      } else {
-        setErrorMsg("An unexpected non-standard error occurred. Check console for details.");
-      }
-    } finally {
-      setIsPending(false);
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      setErrorMsg(err.message || "Publication failed");
     }
+  });
+
+  const onFormSubmit = (data: PostPayload, isDraft = false) => {
+    if (!editor) return;
+    const ast = editor.getJSON();
+    saveMutation.mutate({ body: { ...data, ast, isDraft, coverImageUrl: data.coverImageUrl === DEFAULT_COVER_IMAGE ? "" : data.coverImageUrl } });
   };
 
   const handleDelete = async () => {
@@ -151,15 +134,11 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
     });
     if (!confirmed) return;
 
-    setIsPending(true);
-    setErrorMsg("");
     try {
-      await adminApi.deletePost(editSlug);
+      await api.posts.deletePost.mutate({ params: { slug: editSlug }, body: {} });
       navigate("/dashboard");
     } catch {
       setErrorMsg("Failed to delete the post. Please try again.");
-    } finally {
-      setIsPending(false);
     }
   };
 
@@ -184,23 +163,23 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
           <input
             id="post-title"
             type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            {...register("title")}
             className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all shadow-inner lg:text-lg"
             placeholder='e.g. Our Road to State'
           />
+          {errors.title && <p className="text-[10px] font-black uppercase text-ares-red mt-1">{errors.title.message}</p>}
         </div>
         <div className="flex-1">
           <CoverAssetPicker 
-            coverImage={coverImageUrl}
+            coverImage={coverImageUrl || DEFAULT_COVER_IMAGE}
             isUploading={isUploadingCover}
             onLibraryClick={() => setIsCoverPickerOpen(true)}
-            onUrlChange={setCoverImageUrl}
+            onUrlChange={(url) => setValue("coverImageUrl", url)}
             onFileChange={async (file) => {
               try {
                 setUploadError("");
                 const { url } = await uploadFile(file);
-                setCoverImageUrl(url);
+                setValue("coverImageUrl", url);
               } catch {
                 // handled by hook
               }
@@ -214,12 +193,12 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
           <label htmlFor="post-published-at" className="block text-xs font-bold text-marble/40 uppercase tracking-wider mb-2">Schedule Publish Time</label>
           <input
             id="post-published-at" type="datetime-local"
-            value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)}
+            {...register("publishedAt")}
             className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
           />
         </div>
         <div className="flex-1 md:max-w-xs">
-          <SeasonPicker value={seasonId} onChange={setSeasonId} />
+          <SeasonPicker value={seasonId || ""} onChange={(val) => setValue("seasonId", val)} />
         </div>
       </div>
 
@@ -233,18 +212,18 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         isOpen={isCoverPickerOpen}
         onClose={() => setIsCoverPickerOpen(false)}
         onSelect={(url) => {
-          setCoverImageUrl(url);
+          setValue("coverImageUrl", url);
           setIsCoverPickerOpen(false);
         }}
       />
 
       <EditorFooter 
-        errorMsg={errorMsg}
-        isPending={isPending}
+        errorMsg={errorMsg || errors.ast?.message || ""}
+        isPending={saveMutation.isPending}
         isEditing={!!editSlug}
         onDelete={handleDelete}
-        onSaveDraft={() => handlePublish(true)}
-        onPublish={() => handlePublish(false)}
+        onSaveDraft={handleSubmit((d) => onFormSubmit(d, true))}
+        onPublish={handleSubmit((d) => onFormSubmit(d, false))}
         deleteText="DELETE"
         updateText="UPDATE ENTRY"
         publishText={userRole === "author" ? "SUBMIT FOR REVIEW" : "PUBLISH ENTRY"}
@@ -254,7 +233,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
           <SocialSyndicationGrid 
             availableSocials={availableSocials}
             socials={socials}
-            onChange={(platform, val) => setSocials(prev => ({ ...prev, [platform]: val }))}
+            onChange={(platform, val) => setValue(`socials.${platform}`, val)}
             isEdit={!!editSlug}
           />
         }

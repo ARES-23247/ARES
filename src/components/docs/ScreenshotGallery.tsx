@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { publicApi } from "../../api/publicApi";
+import { api } from "../../api/client";
 
 interface R2MediaResponse {
   media: {
@@ -14,17 +14,11 @@ interface R2MediaResponse {
 }
 
 export default function ScreenshotGallery() {
-  const { data, isLoading } = useQuery<R2MediaResponse>({
+  const { data: mediaRes, isLoading } = api.media.getMedia.useQuery({
     queryKey: ["media"],
-    queryFn: async () => {
-      try {
-        const data = await publicApi.get<R2MediaResponse>("/api/media");
-        return data;
-      } catch {
-        throw new Error("Failed to fetch media");
-      }
-    }
   });
+
+  const data = mediaRes?.status === 200 ? mediaRes.body : null;
 
   const [index, setIndex] = useState(0);
 

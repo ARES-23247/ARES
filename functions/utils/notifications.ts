@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AppEnv } from "../api/middleware";
+import { AppEnv } from "../api/middleware/utils";
 
 
 /**
@@ -23,18 +23,21 @@ export async function emitNotification(
     priority?: "low" | "medium" | "high";
   }
 ) {
+  const db = c.get("db");
   try {
     // 1. Database Persistence
-    await c.env.DB.prepare(
-      "INSERT INTO notifications (id, user_id, title, message, link, priority) VALUES (?, ?, ?, ?, ?, ?)"
-    ).bind(
-      (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `test-uuid-${Date.now()}`,
-      userId,
-      title,
-      message,
-      link || null,
-      priority
-    ).run();
+    const id = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `notif-${Date.now()}`;
+    
+    await db.insertInto("notifications")
+      .values({
+        id,
+        user_id: userId,
+        title,
+        message,
+        link: link || null,
+        priority
+      })
+      .execute();
 
     // 2. External Broadcasting (Optional)
     if (external) {
@@ -42,7 +45,7 @@ export async function emitNotification(
          // Log for now, implement Zulip call when needed
          if (c.env.ENVIRONMENT !== "production") {
            console.log(`[Notification] Broadcasting external notification for ${userId}: ${title}`);
-         }         // Further integration with Zulip client logic goes here
+         }
       }
     }
   } catch (err) {
@@ -69,61 +72,63 @@ export async function notifyByRole(
 ) {
   if (audiences.length === 0) return;
 
+  const db = c.get("db");
+
   try {
     const includeAdmin = audiences.includes("admin");
     const profileTypes = audiences.filter(a => a !== "admin");
 
-    const queries = [];
-    if (includeAdmin) {
-      // Admins are already verified since their role is 'admin'
-      queries.push(`SELECT id FROM user WHERE role = 'admin'`);
-    }
-    
-    if (profileTypes.length > 0) {
-      const placeholders = profileTypes.map(() => '?').join(', ');
-      // Join against user_profiles to check member_type, and ensure user is verified
-      queries.push(`
-        SELECT u.id 
-        FROM user u
-        JOIN user_profiles p ON u.id = p.user_id
-        WHERE u.role != 'unverified' AND p.member_type IN (${placeholders})
-      `);
+    let query = db.selectFrom("user as u")
+      .select("u.id");
+
+    if (includeAdmin && profileTypes.length > 0) {
+      query = query.where((eb) => eb.or([
+        eb("u.role", "=", "admin"),
+        eb.and([
+          eb("u.role", "!=", "unverified"),
+          eb.exists(
+            db.selectFrom("user_profiles as p")
+              .select("p.user_id")
+              .whereRef("p.user_id", "=", "u.id")
+              .where("p.member_type", "in", profileTypes)
+          )
+        ])
+      ]));
+    } else if (includeAdmin) {
+      query = query.where("u.role", "=", "admin");
+    } else {
+      query = query
+        .innerJoin("user_profiles as p", "u.id", "p.user_id")
+        .where("u.role", "!=", "unverified")
+        .where("p.member_type", "in", profileTypes);
     }
 
-    const unionQuery = queries.join(' UNION ');
-    const stmt = c.env.DB.prepare(unionQuery);
-    const boundStmt = profileTypes.length > 0 ? stmt.bind(...profileTypes) : stmt;
-
-    const { results } = await boundStmt.all();
+    const results = await query.execute();
 
     if (!results || results.length === 0) return;
 
-    // PERF: Batch all notification inserts to prevent connection pool exhaustion
-    // D1 has a 100 statement limit per batch call. Chunk them.
+    // PERF: Batch all notification inserts
     const MAX_BATCH_SIZE = 100;
     for (let i = 0; i < results.length; i += MAX_BATCH_SIZE) {
       const chunk = results.slice(i, i + MAX_BATCH_SIZE);
-      const batch = chunk.map((row: Record<string, unknown>) => {
-        return c.env.DB.prepare(
-          "INSERT INTO notifications (id, user_id, title, message, link, priority) VALUES (?, ?, ?, ?, ?, ?)"
-        ).bind(
-          (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `test-uuid-${Date.now()}`,
-          row.id as string,
-          payload.title,
-          payload.message,
-          payload.link || null,
-          payload.priority || "low"
-        );
-      });
       
+      const values = chunk.map(row => ({
+        id: (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : `notif-${Math.random()}`,
+        user_id: row.id,
+        title: payload.title,
+        message: payload.message,
+        link: payload.link || null,
+        priority: payload.priority || "low"
+      }));
+
       try {
-        await c.env.DB.batch(batch);
+        await db.insertInto("notifications").values(values).execute();
       } catch (chunkErr) {
         console.error(`[Notification] Batch chunk starting at index ${i} failed:`, chunkErr);
       }
     }
 
-    // External broadcasting (Sequential background dispatch)
+    // External broadcasting
     if (payload.external && c.env.ZULIP_BOT_EMAIL && c.env.ZULIP_API_KEY) {
        console.log(`[Notification] Batch external broadcast dispatched for ${results.length} users.`);
     }
@@ -134,7 +139,6 @@ export async function notifyByRole(
 
 /**
  * Broadcast a notification to all users with the 'admin' role.
- * Kept for backward compatibility.
  */
 export async function notifyAdmins(
   c: Context<AppEnv>,
@@ -148,5 +152,6 @@ export async function notifyAdmins(
 ) {
   return notifyByRole(c, ["admin"], payload);
 }
+
 
 

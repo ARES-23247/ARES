@@ -1,29 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
-import { BarChart3, TrendingUp, Users, Clock, ExternalLink } from "lucide-react";
+import { BarChart3, TrendingUp, Clock, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
-import { adminApi } from "../api/adminApi";
-
-interface AnalyticsSummary {
-  topPages: { path: string; category: string; views: number }[];
-  recentViews: { path: string; category: string; user_agent: string; referrer: string; timestamp: string }[];
-  totals: { category: string; total: number }[];
-}
+import { api } from "../api/client";
+import { BarList, Card, Title, Text, DonutChart, Flex } from "@tremor/react";
 
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
-import DashboardMetricsGrid from "./dashboard/DashboardMetricsGrid";
 
 export default function AnalyticsDashboard() {
-  const { data, isLoading, isError } = useQuery<AnalyticsSummary>({
+  const { data: analyticsData, isLoading, isError } = api.analytics.getSummary.useQuery({
     queryKey: ["analytics-summary"],
-    queryFn: async () => {
-      try {
-        const data = await adminApi.get<AnalyticsSummary>("/api/admin/analytics/summary");
-        return data;
-      } catch {
-        throw new Error("Failed to fetch analytics");
-      }
-    }
   });
+
+  const data = analyticsData?.body;
 
   if (isLoading) {
     return (
@@ -37,13 +24,6 @@ export default function AnalyticsDashboard() {
     );
   }
 
-  const categoryIcons: Record<string, React.ReactNode> = {
-    doc: <BarChart3 className="text-ares-cyan" size={20} />,
-    blog: <TrendingUp className="text-ares-gold" size={20} />,
-    event: <Users className="text-ares-red" size={20} />,
-    system: <Clock className="text-marble/90" size={20} />,
-  };
-
   return (
     <div className="space-y-8">
       <DashboardPageHeader 
@@ -51,49 +31,47 @@ export default function AnalyticsDashboard() {
         subtitle="Real-time visibility into platform traffic and content performance."
         icon={<BarChart3 className="text-ares-cyan" />}
       />
+
       {isError && (
         <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
           TELEMETRY FAULT: Failed to synchronize engagement metrics.
         </div>
       )}
+
       {/* Overview Stats */}
-      <DashboardMetricsGrid 
-        metrics={data?.totals.map(t => ({
-          label: `${t.category} Views`,
-          value: t.total.toLocaleString(),
-          icon: categoryIcons[t.category] || <BarChart3 size={16} />
-        })) || []}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         <Card className="bg-black/40 border-white/5 ares-cut-lg">
+            <Flex alignItems="start">
+              <div className="truncate">
+                <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Traffic Distribution</Text>
+                <Title className="text-white text-3xl font-black">{data?.totals.reduce((acc, t) => acc + t.total, 0).toLocaleString()}</Title>
+              </div>
+              <BarChart3 className="text-ares-cyan" size={24} />
+            </Flex>
+            <DonutChart
+              className="mt-6 h-40"
+              data={data?.totals || []}
+              category="total"
+              index="category"
+              colors={["cyan", "amber", "red", "slate"]}
+              showAnimation={true}
+            />
+         </Card>
+         
+         <Card className="md:col-span-2 bg-black/40 border-white/5 ares-cut-lg">
+            <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px] mb-4">Top Performing Endpoints</Text>
+            <BarList
+              data={data?.topPages.map(p => ({ name: p.path, value: p.views })) || []}
+              className="mt-2"
+              color="amber"
+            />
+         </Card>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Top Pages */}
-        <div className="bg-black/40 border border-white/5 ares-cut-lg p-6 flex flex-col">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            <TrendingUp size={20} className="text-ares-gold" />
-            Most Popular Content
-          </h3>
-          <div className="space-y-3">
-            {data?.topPages.map((page, idx) => (
-              <div key={page.path} className="flex items-center justify-between group">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-xs font-mono text-marble/40 w-4">0{idx + 1}</span>
-                  <div className="flex flex-col truncate">
-                    <Link to={page.path} className="text-sm text-marble hover:text-ares-gold transition-colors truncate flex items-center gap-1">
-                      {page.path}
-                      <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                    <span className="text-xs uppercase text-marble/40 font-bold tracking-tighter">{page.category}</span>
-                  </div>
-                </div>
-                <div className="text-sm font-black text-white bg-white/5 px-2 py-1 ares-cut-sm">{page.views}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Live Interaction Feed */}
-        <div className="bg-black/40 border border-white/5 ares-cut-lg p-6 flex flex-col">
+        {/* Recent Activity */}
+        <Card className="bg-black/40 border-white/5 ares-cut-lg p-6">
           <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
             <Clock size={20} className="text-ares-cyan" />
             Real-time Feed
@@ -118,7 +96,32 @@ export default function AnalyticsDashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
+
+        {/* Detailed List */}
+        <Card className="bg-black/40 border-white/5 ares-cut-lg p-6">
+           <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <TrendingUp size={20} className="text-ares-gold" />
+            Impact Breakdown
+          </h3>
+          <div className="space-y-3">
+            {data?.topPages.map((page, idx) => (
+              <div key={page.path} className="flex items-center justify-between group">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <span className="text-xs font-mono text-marble/40 w-4">0{idx + 1}</span>
+                  <div className="flex flex-col truncate">
+                    <Link to={page.path} className="text-sm text-marble hover:text-ares-gold transition-colors truncate flex items-center gap-1">
+                      {page.path}
+                      <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                    <span className="text-xs uppercase text-marble/40 font-bold tracking-tighter">{page.category}</span>
+                  </div>
+                </div>
+                <div className="text-sm font-black text-white bg-white/5 px-2 py-1 ares-cut-sm">{page.views}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useSession } from "../utils/auth-client";
 import { Activity, Target, MessageSquare, BookOpen, User, HelpCircle } from "lucide-react";
 import TeamAvailability from "./TeamAvailability";
 import PlatformQuickStats from "./command/PlatformQuickStats";
-import { adminApi } from "../api/adminApi";
+import { api } from "../api/client";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
@@ -20,14 +20,17 @@ export default function DashboardHome() {
     // We only fetch stats if the user isn't unverified, just to give them some data
     if (canSeeInquiries) {
       Promise.allSettled([
-        adminApi.get<{ posts?: unknown[] }>("/api/admin/posts"),
-        adminApi.get<{ events?: unknown[] }>("/api/admin/events"),
-        adminApi.get<{ docs?: unknown[] }>("/api/admin/docs"),
+        api.posts.getAdminPosts.query({ query: { limit: 1 } }),
+        api.events.getAdminEvents.query({ query: { limit: 1 } }),
+        api.docs.getAdminDocs.query({ query: { limit: 1 } }),
       ]).then(([postsRes, eventsRes, docsRes]) => {
         let p = 0, e = 0, d = 0;
-        if (postsRes.status === "fulfilled" && postsRes.value.posts) p = postsRes.value.posts.length;
-        if (eventsRes.status === "fulfilled" && eventsRes.value.events) e = eventsRes.value.events.length;
-        if (docsRes.status === "fulfilled" && docsRes.value.docs) d = docsRes.value.docs.length;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (postsRes.status === "fulfilled" && postsRes.value.status === 200) p = (postsRes.value.body as any).posts?.length || 0;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (eventsRes.status === "fulfilled" && eventsRes.value.status === 200) e = (eventsRes.value.body as any).events?.length || 0;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (docsRes.status === "fulfilled" && docsRes.value.status === 200) d = (docsRes.value.body as any).docs?.length || 0;
         setStats({ posts: p, events: e, docs: d });
       }).catch(() => {});
     }

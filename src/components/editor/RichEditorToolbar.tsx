@@ -13,7 +13,7 @@ import mammoth from "mammoth";
 import { compressImage } from "../../utils/imageProcessor";
 import AssetPickerModal from "../AssetPickerModal";
 import SimPickerModal from "../SimPickerModal";
-import { adminApi } from "../../api/adminApi";
+import { api, uploadFile } from "../../api/client";
 import { useModal } from "../../contexts/ModalContext";
 
 /* ---------- Props ---------- */
@@ -24,11 +24,11 @@ export interface RichEditorToolbarProps {
 }
 
 /* ---------- Helper: file upload ---------- */
-const uploadFile = async (file: File): Promise<{url: string, altText?: string}> => {
+const internalUpload = async (file: File): Promise<{url: string, altText?: string}> => {
   const { blob: compressedBlob, ext } = await compressImage(file);
   const formData = new FormData();
   formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ext));
-  const data = await adminApi.uploadFile<{ url?: string, error?: string, altText?: string }>("/api/admin/upload", formData);
+  const data = await uploadFile<{ url?: string, error?: string, altText?: string }>("/api/admin/upload", formData);
   if (!data.url) throw new Error(data.error || "Upload failed");
   return { url: data.url, altText: data.altText };
 };

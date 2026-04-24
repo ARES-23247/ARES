@@ -1,7 +1,12 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, getDbSettings, logAuditAction, validateLength, MAX_INPUT_LENGTHS, rateLimitMiddleware  } from "../middleware";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
+import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings  } from "../middleware";
+import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { settingsContract } from "../../../src/schemas/contracts/settingsContract";
 
 const settingsRouter = new Hono<AppEnv>();
+const s = initServer<AppEnv>();
 
 // SEC-03: Infrastructure secrets that must never be returned in plaintext
 const SENSITIVE_KEYS = new Set([
@@ -18,75 +23,72 @@ function maskSecret(value: string): string {
   return '••••••••' + value.slice(-4);
 }
 
-// ── GET /admin/settings — get all integrations settings ───────────────
-settingsRouter.get("/", ensureAdmin, async (c) => {
-  try {
-    const settings = await getDbSettings(c);
-    // Mask sensitive values for defense-in-depth
-    const masked: Record<string, string> = {};
-    for (const [key, value] of Object.entries(settings)) {
-      masked[key] = SENSITIVE_KEYS.has(key) ? maskSecret(value) : value;
+const settingsTsRestRouter = s.router(settingsContract, {
+  getSettings: async (_: any, c: any) => {
+    try {
+      const settings = await getDbSettings(c);
+      const masked: Record<string, string> = {};
+      for (const [key, value] of Object.entries(settings)) {
+        masked[key] = SENSITIVE_KEYS.has(key) ? maskSecret(value) : value;
+      }
+      return { status: 200, body: { success: true, settings: masked } };
+    } catch {
+      return { status: 500, body: { success: false, settings: {} } };
     }
-    return c.json({ success: true, settings: masked });
-  } catch (err) {
-    console.error("D1 settings read error:", err);
-    return c.json({ success: false, settings: {} }, 500);
-  }
-});
-
-// ── POST /admin/settings — upsert settings key-value pairs ────────────
-settingsRouter.post("/", ensureAdmin, rateLimitMiddleware(15, 60), async (c) => {
-  try {
-    const body = await c.req.json();
-    const entries = Object.entries(body) as [string, string][];
-    
-    for (const [key, value] of entries) {
-      // SEC-01: Length validation for all keys
-      const error = validateLength(value, MAX_INPUT_LENGTHS.generic, key);
-      if (error) return c.json({ error }, 400);
-
-      await c.env.DB.prepare(
-        "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value"
-      ).bind(key, value).run();
+  },
+  updateSettings: async ({ body }: any, c: any) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const entries = Object.entries(body) as [string, string][];
+      for (const [key, value] of entries) {
+        const error = validateLength(value, MAX_INPUT_LENGTHS.generic, key);
+        if (error) return { status: 400, body: { success: false, updated: 0 } };
+        await db.insertInto("settings")
+          .values({ key, value, updated_at: new Date().toISOString() })
+          .onConflict(oc => oc.column("key").doUpdateSet({ value, updated_at: new Date().toISOString() }))
+          .execute();
+      }
+      c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, `Updated ${entries.length} integration keys.`));
+      return { status: 200, body: { success: true, updated: entries.length } };
+    } catch {
+      return { status: 500, body: { success: false, updated: 0 } };
     }
-    
-    await logAuditAction(c, "updated_settings", "system_settings", null, `Updated ${entries.length} integration keys.`);
-    return c.json({ success: true, updated: entries.length });
-  } catch (err) {
-    console.error("D1 settings write error:", err);
-    return c.json({ error: "Settings save failed" }, 500);
+  },
+  getStats: async (_: any, c: any) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const [posts, events, docs, inquiries, users] = await Promise.all([
+        db.selectFrom("posts").select(db.fn.count("slug").as("count")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("events").select(db.fn.count("id").as("count")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("docs").select(db.fn.count("slug").as("count")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("inquiries").select(db.fn.count("id").as("count")).where("status", "=", "pending").executeTakeFirst(),
+        db.selectFrom("user").select(db.fn.count("id").as("count")).executeTakeFirst(),
+      ]);
+      return {
+        status: 200,
+        body: {
+          posts: Number(posts?.count || 0),
+          events: Number(events?.count || 0),
+          docs: Number(docs?.count || 0),
+          inquiries: Number(inquiries?.count || 0),
+          users: Number(users?.count || 0),
+        }
+      };
+    } catch {
+      return { status: 200, body: { posts: 0, events: 0, docs: 0, inquiries: 0, users: 0 } };
+    }
   }
 });
 
-// ── GET /admin/stats — Fast counting for Dashboard ────────────────────
-settingsRouter.get("/stats", ensureAdmin, async (c) => {
-  try {
-    const [posts, events, docs, inquiries, users] = await c.env.DB.batch([
-      c.env.DB.prepare("SELECT COUNT(*) as count FROM posts WHERE is_deleted = 0"),
-      c.env.DB.prepare("SELECT COUNT(*) as count FROM events WHERE is_deleted = 0"),
-      c.env.DB.prepare("SELECT COUNT(*) as count FROM docs WHERE is_deleted = 0"),
-      c.env.DB.prepare("SELECT COUNT(*) as count FROM inquiries WHERE status = 'pending'"),
-      c.env.DB.prepare("SELECT COUNT(*) as count FROM user"),
-    ]);
+createHonoEndpoints(settingsContract, settingsTsRestRouter, settingsRouter);
 
-    return c.json({
-      posts: (posts.results?.[0] as { count: number })?.count || 0,
-      events: (events.results?.[0] as { count: number })?.count || 0,
-      docs: (docs.results?.[0] as { count: number })?.count || 0,
-      inquiries: (inquiries.results?.[0] as { count: number })?.count || 0,
-      users: (users.results?.[0] as { count: number })?.count || 0,
-    });
-  } catch (err) {
-    console.error("D1 stats error:", err);
-    return c.json({ posts: 0, events: 0, docs: 0, inquiries: 0, users: 0 });
-  }
-});
+// Admin protection
+settingsRouter.use("/*", ensureAdmin);
 
-// ── GET /admin/backup — Export database as JSON ───────────────
-settingsRouter.get("/admin/backup", ensureAdmin, async (c) => {
+// Backup route remains manual as it's a file export
+settingsRouter.get("/admin/backup", async (c) => {
+  const db = c.get("db");
   try {
-    // SEC-02: Whitelist known safe table names.
-    // PII-S01: CRITICAL - Explicitly exclude "settings" from full export to prevent secret leak.
     const SAFE_TABLES = [
       "posts", "events", "docs", "docs_history", "docs_feedback",
       "media_tags", "user_profiles", "event_signups",
@@ -96,33 +98,46 @@ settingsRouter.get("/admin/backup", ensureAdmin, async (c) => {
       "page_analytics", "audit_log"
     ];
     
-    // SEC-F02: Explicit column selections per table to prevent accidental PII/secret transit.
-    // Tables without a mapping use SELECT * (safe because they contain no secrets).
-    const TABLE_COLUMNS: Record<string, string> = {
-      user_profiles: "user_id, nickname, pronouns, subteams, member_type, bio, favorite_first_thing, fun_fact, show_on_about, favorite_robot_mechanism, pre_match_superstition, leadership_role, rookie_year, avatar, updated_at",
-      inquiries: "id, type, SUBSTR(name, 1, 1) || '***' as name, '***@***.***' as email, status, created_at",
-      audit_log: "id, action, resource_type, resource_id, actor, created_at" // PII-S02: Exclude 'details' from full backup to prevent PII leak
+    const TABLE_COLUMNS: Record<string, string[]> = {
+      user_profiles: ["user_id", "nickname", "pronouns", "subteams", "member_type", "bio", "favorite_first_thing", "fun_fact", "show_on_about", "favorite_robot_mechanism", "pre_match_superstition", "leadership_role", "rookie_year", "updated_at"],
+      inquiries: ["id", "type", "name", "email", "status", "created_at"],
+      audit_log: ["id", "action", "resource_type", "resource_id", "actor", "created_at"]
     };
     
-    const backup: Record<string, Record<string, unknown>[]> = {};
+    const backup: Record<string, unknown[]> = {};
     for (const tableName of SAFE_TABLES) {
       try {
-        const cols = TABLE_COLUMNS[tableName] || "*";
-        // SEC-SQL: Use literal table names from our hardcoded SAFE_TABLES whitelist.
-        const { results } = await c.env.DB.prepare(`SELECT ${cols} FROM "${tableName}"`).all();
-        backup[tableName] = results;
-      } catch {
-        // Table may not exist yet — skip silently
-      }
+        const cols = TABLE_COLUMNS[tableName];
+        // @ts-expect-error -- Dynamic table name
+        let q = db.selectFrom(tableName);
+        if (cols) {
+          // @ts-expect-error -- Dynamic column names
+          q = q.select(cols);
+        } else {
+          q = q.selectAll();
+        }
+        backup[tableName] = await q.execute() as unknown[];
+        
+        if (tableName === "inquiries") {
+          backup[tableName] = (backup[tableName] || []).map((r) => {
+            const row = r as Record<string, unknown>;
+            return {
+              ...row,
+              name: row.name ? String(row.name).substring(0, 1) + "***" : "***",
+              email: "***@***.***"
+            };
+          });
+        }
+      } catch { /* skip */ }
     }
     
-    await logAuditAction(c, "database_export", "system", null, "Exported full D1 database backup as JSON.");
-    
+    c.executionCtx.waitUntil(logAuditAction(c, "database_export", "system", null, "Exported full D1 database backup as JSON."));
     return c.json({ success: true, timestamp: new Date().toISOString(), backup });
-  } catch (err) {
-    console.error("D1 backup error:", err);
-    return c.json({ success: false, error: "Backup generation failed" }, 500);
+  } catch {
+    return c.json({ success: false, error: "Backup failed" }, 500);
   }
 });
 
 export default settingsRouter;
+
+

@@ -8,8 +8,8 @@ const sitemapRouter = new Hono<AppEnv>();
 let sitemapCache: { xml: string; expiresAt: number } | null = null;
 
 sitemapRouter.get(".xml", async (c) => {
+  const db = c.get("db");
   try {
-    // Serve from cache if available (15 minute TTL — content changes are infrequent)
     const now = Date.now();
     if (sitemapCache && sitemapCache.expiresAt > now) {
       return c.text(sitemapCache.xml, 200, {
@@ -22,8 +22,16 @@ sitemapRouter.get(".xml", async (c) => {
     
     // Fetch published docs and posts
     const [docs, posts] = await Promise.all([
-      c.env.DB.prepare("SELECT slug FROM docs WHERE is_deleted = 0 AND status = 'published'").all<{slug: string}>(),
-      c.env.DB.prepare("SELECT slug FROM posts WHERE is_deleted = 0 AND status = 'published'").all<{slug: string}>()
+      db.selectFrom("docs")
+        .select("slug")
+        .where("is_deleted", "=", 0)
+        .where("status", "=", "published")
+        .execute(),
+      db.selectFrom("posts")
+        .select("slug")
+        .where("is_deleted", "=", 0)
+        .where("status", "=", "published")
+        .execute()
     ]);
 
     const staticRoutes = [
@@ -45,19 +53,18 @@ sitemapRouter.get(".xml", async (c) => {
     }
 
     // Docs
-    for (const doc of (docs.results || [])) {
+    for (const doc of docs) {
       xml += `  <url><loc>${baseUrl}/docs/${doc.slug}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n`;
     }
 
     // Posts
-    for (const post of (posts.results || [])) {
+    for (const post of posts) {
       xml += `  <url><loc>${baseUrl}/blog/${post.slug}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>\n`;
     }
 
     xml += `</urlset>`;
 
-    // Cache the generated sitemap
-    sitemapCache = { xml, expiresAt: now + 900000 }; // 15 minutes
+    sitemapCache = { xml, expiresAt: now + 900000 };
 
     return c.text(xml, 200, {
       "Content-Type": "application/xml",
@@ -70,3 +77,4 @@ sitemapRouter.get(".xml", async (c) => {
 });
 
 export default sitemapRouter;
+

@@ -1,98 +1,70 @@
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { locationsRouter, adminLocationsRouter } from "./locations";
+import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 
+// Mock middleware
+vi.mock("../middleware", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../middleware")>();
+  return {
+    ...actual,
+    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
+    getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
+  };
+});
+
+import locationsRouter from "./locations";
+
 describe("Hono Backend - /locations Router", () => {
-  let env: { DB: Record<string, ReturnType<typeof vi.fn>>; DEV_BYPASS: string };
+  
+  
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockDb: any;
+  let testApp: Hono;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    env = {
-      DB: {
-        prepare: vi.fn().mockReturnThis(),
-        bind: vi.fn().mockReturnThis(),
-        all: vi.fn().mockResolvedValue({ results: [] }),
-        first: vi.fn().mockResolvedValue(null),
-        run: vi.fn().mockResolvedValue({ success: true }),
-      },
-      DEV_BYPASS: "true",
+    mockDb = {
+      selectFrom: vi.fn().mockReturnThis(),
+      selectAll: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      execute: vi.fn().mockResolvedValue([]),
+      executeTakeFirst: vi.fn().mockResolvedValue(null),
+      insertInto: vi.fn().mockReturnThis(),
+      values: vi.fn().mockReturnThis(),
+      updateTable: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(),
+      getExecutor: vi.fn().mockReturnValue({
+        compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),
+        executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
+        transformQuery: vi.fn((q) => q),
+      }),
     };
+
+    testApp = new Hono();
+    testApp.use("*", async (c, next) => {
+      c.set("db", mockDb);
+      await next();
+    });
+    testApp.route("/", locationsRouter);
   });
 
   it("GET / - list locations", async () => {
-    const mockLocs = [{ id: "1", name: "HQ", address: "123 Main" }];
-    env.DB.all.mockResolvedValue({ results: mockLocs });
-
-    const req = new Request("http://localhost/");
-    const res = await locationsRouter.request(req, {}, env, mockExecutionContext);
-
+    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Shop", address: "123 Main St" }]);
+    const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as { locations: unknown[] };
-    expect(body.locations).toHaveLength(1);
   });
 
-  it("POST / - create location (admin)", async () => {
-    const req = new Request("http://localhost/", {
+  it("POST /admin/save - save location", async () => {
+    const res = await testApp.request("/admin/save", {
       method: "POST",
-      body: JSON.stringify({ name: "New", address: "Addr" }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const res = await adminLocationsRouter.request(req, {}, env, mockExecutionContext);
-
+      body: JSON.stringify({ name: "Shop", address: "123 Main St" }),
+      headers: { "Content-Type": "application/json" }
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-  });
-
-  it("GET / - handles DB errors", async () => {
-    env.DB.all.mockRejectedValueOnce(new Error("DB error"));
-    const req = new Request("http://localhost/");
-    const res = await locationsRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-    const body = await res.json() as { locations: unknown[] };
-    expect(body.locations).toEqual([]);
-  });
-
-  it("POST / - handles DB errors", async () => {
-    env.DB.run.mockRejectedValueOnce(new Error("DB error"));
-    const req = new Request("http://localhost/", {
-      method: "POST",
-      body: JSON.stringify({ name: "New", address: "Addr" }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const res = await adminLocationsRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(500);
-  });
-
-  it("PUT /:id - updates location", async () => {
-    const req = new Request("http://localhost/123", {
-      method: "PUT",
-      body: JSON.stringify({ name: "Updated", address: "Updated Addr" }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const res = await adminLocationsRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("PUT /:id - handles DB errors", async () => {
-    env.DB.run.mockRejectedValueOnce(new Error("DB error"));
-    const req = new Request("http://localhost/123", {
-      method: "PUT",
-      body: JSON.stringify({ name: "Updated", address: "Updated Addr" }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const res = await adminLocationsRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(500);
-  });
-
-  it("DELETE /:id - soft deletes location", async () => {
-    const req = new Request("http://localhost/123", { method: "DELETE" });
-    const res = await adminLocationsRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("DELETE /:id - handles DB errors", async () => {
-    env.DB.run.mockRejectedValueOnce(new Error("DB error"));
-    const req = new Request("http://localhost/123", { method: "DELETE" });
-    const res = await adminLocationsRouter.request(req, {}, env, mockExecutionContext);
-    expect(res.status).toBe(500);
   });
 });

@@ -4,8 +4,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, FileText, Calendar, ShieldCheck, HelpCircle, Terminal, Home, ArrowRight } from "lucide-react";
 import { authClient } from "../utils/auth-client";
 import { sanitizeHtml } from "../utils/security";
-import { publicApi } from "../api/publicApi";
+import { api } from "../api/client";
 import { Command } from "cmdk";
+import { useUIStore } from "../store/uiStore";
 
 interface SearchResult {
   id: string; // Add id for cmdk value tracking
@@ -18,7 +19,7 @@ interface SearchResult {
 }
 
 export default function CommandPalette() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isCommandPaletteOpen: isOpen, setCommandPaletteOpen: setIsOpen } = useUIStore();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -56,7 +57,7 @@ export default function CommandPalette() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("open-command-palette", handleCustomOpen);
     };
-  }, [isOpen]);
+  }, [isOpen, setIsOpen]);
 
   // Restore focus when palette closes
   useEffect(() => {
@@ -101,8 +102,13 @@ export default function CommandPalette() {
     const fetchSearch = async () => {
       setIsSearching(true);
       try {
-        const data = await publicApi.get<{ results: Array<{ type: string; id: string; title: string; matched_text?: string }> }>(`/api/search?q=${encodeURIComponent(query)}`);
-        
+        const res = await api.analytics.search.query({
+          query: { q: query }
+        });
+
+        if (res.status !== 200) throw new Error("Search failed");
+        const data = res.body;
+
         const searchResults: SearchResult[] = (data.results || []).map(r => {
           let icon = <FileText size={16} />;
           let url = "";
