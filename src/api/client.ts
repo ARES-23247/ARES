@@ -4,7 +4,7 @@ import { apiContract } from "../schemas/contracts";
 export { fetchBlob, uploadFile, fetchJson } from "../utils/apiClient";
 
 export const api = initQueryClient(apiContract, {
-  baseUrl: "",
+  baseUrl: "/api",
   baseHeaders: {
     "Content-Type": "application/json",
   },
