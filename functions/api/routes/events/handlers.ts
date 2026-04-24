@@ -31,18 +31,29 @@ export const eventHandlers = {
         return { status: 200 as const, body: { events } as any };
       }
 
-      const results = await db.selectFrom("events")
-        .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
-        .where("is_deleted", "=", 0)
-        .where("status", "=", "published")
-        .where((eb) => eb.or([
-          eb("published_at", "is", null),
-          eb("published_at", "<=", new Date().toISOString())
-        ]))
-        .orderBy("date_start", "desc")
-        .limit(Number(limit) || 50)
-        .offset(Number(offset) || 0)
-        .execute();
+      let results;
+      try {
+        results = await db.selectFrom("events")
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
+          .where("is_deleted", "=", 0)
+          .where("status", "=", "published")
+          .where((eb) => eb.or([
+            eb("published_at", "is", null),
+            eb("published_at", "<=", new Date().toISOString())
+          ]))
+          .orderBy("date_start", "desc")
+          .limit(Number(limit) || 50)
+          .offset(Number(offset) || 0)
+          .execute();
+      } catch (e) {
+        results = await db.selectFrom("events")
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
+          .where("is_deleted", "=", 0)
+          .orderBy("date_start", "desc")
+          .limit(Number(limit) || 50)
+          .offset(Number(offset) || 0)
+          .execute() as any[];
+      }
 
       const events = results.map(e => ({
         ...e,
@@ -108,12 +119,22 @@ export const eventHandlers = {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit = 100, offset = 0 } = query;
-      const results = await db.selectFrom("events")
-        .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
-        .orderBy("date_start", "desc")
-        .limit(Number(limit) || 100)
-        .offset(Number(offset) || 0)
-        .execute();
+      let results;
+      try {
+        results = await db.selectFrom("events")
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
+          .orderBy("date_start", "desc")
+          .limit(Number(limit) || 100)
+          .offset(Number(offset) || 0)
+          .execute();
+      } catch (e) {
+        results = await db.selectFrom("events")
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
+          .orderBy("date_start", "desc")
+          .limit(Number(limit) || 100)
+          .offset(Number(offset) || 0)
+          .execute() as any[];
+      }
       
       const lastSyncRow = await db.selectFrom("settings").select("value").where("key", "=", "LAST_CALENDAR_SYNC").executeTakeFirst();
       
@@ -132,10 +153,18 @@ export const eventHandlers = {
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      const row = await db.selectFrom("events")
-        .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
-        .where("id", "=", id)
-        .executeTakeFirst();
+      let row;
+      try {
+        row = await db.selectFrom("events")
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
+          .where("id", "=", id)
+          .executeTakeFirst();
+      } catch (e) {
+        row = await db.selectFrom("events")
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
+          .where("id", "=", id)
+          .executeTakeFirst() as any;
+      }
 
       if (!row) return { status: 404 as const, body: { error: "Event not found" } as any };
 

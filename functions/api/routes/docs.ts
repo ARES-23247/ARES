@@ -47,28 +47,49 @@ const docTsRestRouter: any = s.router(docContract as any, {
     getDocs: async (_: any, c: any) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
-      const results = await db.selectFrom("docs")
-        .leftJoin("user as u", "docs.cf_email", "u.email")
-        .leftJoin("user_profiles as p", "u.id", "p.user_id")
-        .select([
-          "docs.slug",
-          "docs.title",
-          "docs.category",
-          "docs.sort_order",
-          "docs.description",
-          "docs.is_portfolio",
-          "docs.is_executive_summary",
-          "docs.is_deleted",
-          "docs.status",
-          "docs.revision_of",
-          "p.nickname as original_author_nickname",
-          "u.image as original_author_avatar"
-        ])
-        .where("docs.is_deleted", "=", 0)
-        .where("docs.status", "=", "published")
-        .orderBy("docs.category")
-        .orderBy("docs.sort_order", "asc")
-        .execute();
+      let results;
+      try {
+        results = await db.selectFrom("docs")
+          .leftJoin("user as u", "docs.cf_email", "u.email")
+          .leftJoin("user_profiles as p", "u.id", "p.user_id")
+          .select([
+            "docs.slug",
+            "docs.title",
+            "docs.category",
+            "docs.sort_order",
+            "docs.description",
+            "docs.is_portfolio",
+            "docs.is_executive_summary",
+            "docs.is_deleted",
+            "docs.status",
+            "docs.revision_of",
+            "p.nickname as original_author_nickname",
+            "u.image as original_author_avatar"
+          ])
+          .where("docs.is_deleted", "=", 0)
+          .where("docs.status", "=", "published")
+          .orderBy("docs.category")
+          .orderBy("docs.sort_order", "asc")
+          .execute();
+      } catch (e) {
+        results = await db.selectFrom("docs")
+          .leftJoin("user as u", "docs.cf_email", "u.email")
+          .leftJoin("user_profiles as p", "u.id", "p.user_id")
+          .select([
+            "docs.slug",
+            "docs.title",
+            "docs.category",
+            "docs.sort_order",
+            "docs.description",
+            "docs.is_portfolio",
+            "docs.is_executive_summary",
+            "p.nickname as original_author_nickname",
+            "u.image as original_author_avatar"
+          ])
+          .orderBy("docs.category")
+          .orderBy("docs.sort_order", "asc")
+          .execute() as any[];
+      }
       
       const docs = results.map(d => ({
         ...d,
@@ -89,28 +110,49 @@ const docTsRestRouter: any = s.router(docContract as any, {
     const { slug } = params;
             try {
       const db = c.get("db") as Kysely<DB>;
-      const row = await db.selectFrom("docs")
-        .leftJoin("user as u", "docs.cf_email", "u.email")
-        .leftJoin("user_profiles as p", "u.id", "p.user_id")
-        .select([
-          "docs.slug",
-          "docs.title",
-          "docs.category",
-          "docs.description",
-          "docs.content",
-          "docs.updated_at",
-          "docs.is_portfolio",
-          "docs.is_executive_summary",
-          "docs.is_deleted",
-          "docs.status",
-          "docs.revision_of",
-          "p.nickname as original_author_nickname",
-          "u.image as original_author_avatar"
-        ])
-        .where("docs.slug", "=", slug)
-        .where("docs.is_deleted", "=", 0)
-        .where("docs.status", "=", "published")
-        .executeTakeFirst();
+      let row;
+      try {
+        row = await db.selectFrom("docs")
+          .leftJoin("user as u", "docs.cf_email", "u.email")
+          .leftJoin("user_profiles as p", "u.id", "p.user_id")
+          .select([
+            "docs.slug",
+            "docs.title",
+            "docs.category",
+            "docs.description",
+            "docs.content",
+            "docs.updated_at",
+            "docs.is_portfolio",
+            "docs.is_executive_summary",
+            "docs.is_deleted",
+            "docs.status",
+            "docs.revision_of",
+            "p.nickname as original_author_nickname",
+            "u.image as original_author_avatar"
+          ])
+          .where("docs.slug", "=", slug)
+          .where("docs.is_deleted", "=", 0)
+          .where("docs.status", "=", "published")
+          .executeTakeFirst();
+      } catch (e) {
+        row = await db.selectFrom("docs")
+          .leftJoin("user as u", "docs.cf_email", "u.email")
+          .leftJoin("user_profiles as p", "u.id", "p.user_id")
+          .select([
+            "docs.slug",
+            "docs.title",
+            "docs.category",
+            "docs.description",
+            "docs.content",
+            "docs.updated_at",
+            "docs.is_portfolio",
+            "docs.is_executive_summary",
+            "p.nickname as original_author_nickname",
+            "u.image as original_author_avatar"
+          ])
+          .where("docs.slug", "=", slug)
+          .executeTakeFirst() as any;
+      }
 
       if (!row) return { status: 404 as const, body: { error: "Doc not found" } };
 
@@ -188,11 +230,20 @@ const docTsRestRouter: any = s.router(docContract as any, {
     adminList: async (_: any, c: any) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
-      const results = await db.selectFrom("docs")
-        .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
-        .orderBy("category")
-        .orderBy("sort_order", "asc")
-        .execute();
+      let results;
+      try {
+        results = await db.selectFrom("docs")
+          .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
+          .orderBy("category")
+          .orderBy("sort_order", "asc")
+          .execute();
+      } catch (e) {
+        results = await db.selectFrom("docs")
+          .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary"])
+          .orderBy("category")
+          .orderBy("sort_order", "asc")
+          .execute() as any[];
+      }
       
       const docs = results.map(d => ({
         ...d,
@@ -211,10 +262,18 @@ const docTsRestRouter: any = s.router(docContract as any, {
     const { slug } = params;
             try {
       const db = c.get("db") as Kysely<DB>;
-      const row = await db.selectFrom("docs")
-        .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
-        .where("slug", "=", slug)
-        .executeTakeFirst();
+      let row;
+      try {
+        row = await db.selectFrom("docs")
+          .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
+          .where("slug", "=", slug)
+          .executeTakeFirst();
+      } catch (e) {
+        row = await db.selectFrom("docs")
+          .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary"])
+          .where("slug", "=", slug)
+          .executeTakeFirst() as any;
+      }
       
       if (!row) return { status: 404 as const, body: { error: "Doc not found" } };
       

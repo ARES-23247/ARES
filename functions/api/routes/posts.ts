@@ -158,12 +158,22 @@ const postHandlers = {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = query;
-      const results = await db.selectFrom("posts")
-        .select(["slug", "title", "date", "snippet", "thumbnail", "cf_email", "is_deleted", "status", "revision_of", "published_at", "season_id", "author"])
-        .orderBy("date", "desc")
-        .limit(Number(limit) || 50)
-        .offset(Number(offset) || 0)
-        .execute();
+      let results;
+      try {
+        results = await db.selectFrom("posts")
+          .select(["slug", "title", "date", "snippet", "thumbnail", "cf_email", "is_deleted", "status", "revision_of", "published_at", "season_id", "author"])
+          .orderBy("date", "desc")
+          .limit(Number(limit) || 50)
+          .offset(Number(offset) || 0)
+          .execute();
+      } catch (e) {
+        results = await db.selectFrom("posts")
+          .select(["slug", "title", "date", "snippet", "thumbnail", "cf_email", "is_deleted", "author"])
+          .orderBy("date", "desc")
+          .limit(Number(limit) || 50)
+          .offset(Number(offset) || 0)
+          .execute() as any[];
+      }
       
       const posts = results.map(p => ({
         ...p,
@@ -180,10 +190,18 @@ const postHandlers = {
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      const row = await db.selectFrom("posts")
-        .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "status", "revision_of", "published_at", "season_id", "author"])
-        .where("slug", "=", slug)
-        .executeTakeFirst();
+      let row;
+      try {
+        row = await db.selectFrom("posts")
+          .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "status", "revision_of", "published_at", "season_id", "author"])
+          .where("slug", "=", slug)
+          .executeTakeFirst();
+      } catch (e) {
+        row = await db.selectFrom("posts")
+          .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "author"])
+          .where("slug", "=", slug)
+          .executeTakeFirst() as any;
+      }
 
       if (!row) return { status: 404 as const, body: { error: "Post not found" } as any };
       
