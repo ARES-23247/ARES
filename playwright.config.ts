@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const WRANGLER_COMMAND = 'cross-env CLOUDFLARE_API_TOKEN=dummy DEV_BYPASS=true ENVIRONMENT=test npx wrangler pages dev --env-file .env.test';
+const WRANGLER_COMMAND = 'cross-env CLOUDFLARE_API_TOKEN=dummy DEV_BYPASS=true ENVIRONMENT=test npx wrangler pages dev dist --env-file .env.test';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   webServer: process.env.CI 
     ? {
-        command: `${WRANGLER_COMMAND} dist`,
+        command: WRANGLER_COMMAND,
         url: 'http://localhost:8788',
         reuseExistingServer: false,
         timeout: 120 * 1000,
