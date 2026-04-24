@@ -12,7 +12,7 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
   trackPageView: async ({ body }: { body: any }, c: any) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     if (!checkRateLimit(`track:${ip}`, 20, 600)) {
-      return { status: 429, body: { success: false, error: "Rate limit exceeded" } };
+      return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } };
     }
 
     const db = c.get("db") as Kysely<DB>;
@@ -30,15 +30,15 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
         })
         .execute();
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (_err) {
-      return { status: 500, body: { success: false } };
+      return { status: 500 as const, body: { success: false } };
     }
   },
   trackSponsorClick: async ({ body }: { body: any }, c: any) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     if (!checkRateLimit(`click:${ip}`, 10, 600)) {
-      return { status: 429, body: { success: false, error: "Rate limit exceeded" } };
+      return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } };
     }
 
     const db = c.get("db") as Kysely<DB>;
@@ -59,9 +59,9 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
         }))
         .execute();
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (_err) {
-      return { status: 500, body: { success: false } };
+      return { status: 500 as const, body: { success: false } };
     }
   },
   getSummary: async (_: any, c: any) => {
@@ -104,9 +104,9 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
         total: Number(t.total)
       }));
 
-      return { status: 200, body: { topPages, recentViews, totals } };
+      return { status: 200 as const, body: { topPages, recentViews, totals } };
     } catch (_err) {
-      return { status: 500, body: { topPages: [], recentViews: [], totals: [] } };
+      return { status: 500 as const, body: { topPages: [], recentViews: [], totals: [] } };
     }
   },
   getRosterStats: async (_: any, c: any) => {
@@ -127,8 +127,7 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
           (eb) => eb.fn.coalesce(eb.fn.sum(eb.case().when("s.attended", "=", 1).then("s.prep_hours").else(0).end()), sql`0`).as("manual_prep_hours"),
           (eb) => eb.fn.coalesce(
             eb.fn.sum(eb.case()
-              .when("s.attended", "=", 1)
-              .and("e.is_volunteer", "=", 1)
+              .when(eb.and([eb("s.attended", "=", 1), eb("e.is_volunteer", "=", 1)]))
               .then(sql`(strftime('%s', e.date_end) - strftime('%s', e.date_start)) / 3600.0`)
               .else(0)
               .end()
@@ -148,9 +147,9 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
         event_volunteer_hours: Number(r.event_volunteer_hours || 0)
       }));
 
-      return { status: 200, body: { roster } };
+      return { status: 200 as const, body: { roster } };
     } catch (_err) {
-      return { status: 500, body: { roster: [] } };
+      return { status: 500 as const, body: { roster: [] } };
     }
   },
   getLeaderboard: async (_: any, c: any) => {
@@ -182,9 +181,9 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
         badge_count: Number(r.badge_count)
       }));
 
-      return { status: 200, body: { leaderboard } };
+      return { status: 200 as const, body: { leaderboard } };
     } catch (_err) {
-      return { status: 500, body: { error: "Failed to fetch leaderboard" } };
+      return { status: 500 as const, body: { error: "Failed to fetch leaderboard" } };
     }
   },
   getStats: async (_: any, c: any) => {
@@ -197,7 +196,7 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
       const dbSettings = await getDbSettings(c);
 
       return {
-        status: 200,
+        status: 200 as const,
         body: {
           posts: Number(postsCount?.total || 0),
           events: Number(eventsCount?.total || 0),
@@ -213,7 +212,7 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
         }
       };
     } catch (_err) {
-      return { status: 500, body: { error: "Failed to fetch stats" } };
+      return { status: 500 as const, body: { error: "Failed to fetch stats" } };
     }
   },
   search: async ({ query }: { query: any }, c: any) => {
@@ -233,9 +232,9 @@ const analyticsTsRestRouter = s.router(analyticsContract, {
         ...(docsReq.rows || []).map(r => ({ type: "doc", id: r.id, title: r.title }))
       ];
 
-      return { status: 200, body: { results: results as any[] } };
+      return { status: 200 as const, body: { results: results as any[] } };
     } catch (_err) {
-      return { status: 500, body: { error: "Search failed" } };
+      return { status: 500 as const, body: { error: "Search failed" } };
     }
   }
 });
