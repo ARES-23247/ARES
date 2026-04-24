@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
@@ -10,8 +11,8 @@ import { upsertProfile } from "./_profileUtils";
 const s = initServer<AppEnv>();
 const usersRouter = new Hono<AppEnv>();
 
-const userTsRestRouter = s.router(userContract, {
-  getUsers: async ({ query: _ }, c) => {
+const userHandlers: any = {
+  getUsers: async ({ query: _ }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("user as u")
@@ -35,7 +36,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500, body: { error: "Database error" } };
     }
   },
-  adminDetail: async ({ params }, c) => {
+  adminDetail: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const secret = c.env.ENCRYPTION_SECRET;
@@ -81,7 +82,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500, body: { error: "Database error" } };
     }
   },
-  patchUser: async ({ params, body }, c) => {
+  patchUser: async ({ params, body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { role, member_type } = body;
@@ -93,7 +94,7 @@ const userTsRestRouter = s.router(userContract, {
       if (member_type) {
         await db.insertInto("user_profiles")
           .values({ user_id: params.id, member_type })
-          .onConflict(oc => oc.column("user_id").doUpdateSet({ member_type }))
+          .onConflict((oc: any) => oc.column("user_id").doUpdateSet({ member_type }))
           .execute();
       }
 
@@ -104,7 +105,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-  updateUserProfile: async ({ params, body }, c) => {
+  updateUserProfile: async ({ params, body }: any, c: any) => {
     try {
       await upsertProfile(c as never, params.id, body);
       return { status: 200, body: { success: true } };
@@ -112,7 +113,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500, body: { error: "Profile update failed" } };
     }
   },
-  deleteUser: async ({ params }, c) => {
+  deleteUser: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = params.id;
@@ -132,8 +133,9 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-});
+};
 
+const userTsRestRouter = s.router(userContract, userHandlers);
 createHonoEndpoints(userContract, userTsRestRouter, usersRouter);
 
 // Enforce admin globally

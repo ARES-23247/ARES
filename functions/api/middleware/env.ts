@@ -28,11 +28,20 @@ export function getValidatedEnv(runtimeEnv: Record<string, unknown>) {
 
 export const envMiddleware = async (c: Context<AppEnv>, next: Next) => {
   try {
-    getValidatedEnv(c.env as unknown as Record<string, unknown>);
+    const env = getValidatedEnv(c.env as unknown as Record<string, unknown>);
+    // SEC-D02: Attach validated env to context for type-safe access
+    c.set("env", env as unknown as AppEnv["Bindings"]);
   } catch (err) {
     console.error("Environment Validation Error:", err);
-    // In strict environments, we might want to return a 500 here, 
-    // but we'll log it instead so we don't accidentally bring down the site.
+    
+    // In production, missing secrets are a fatal configuration error.
+    // We block execution to prevent undefined behavior or security bypasses.
+    if (c.env?.ENVIRONMENT === "production") {
+      return c.json({ 
+        error: "Configuration Error", 
+        message: "The server is missing required environment variables." 
+      }, 500);
+    }
   }
   await next();
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import SEO from "../components/SEO";
 import LazyImage from "../components/LazyImage";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -25,7 +26,7 @@ export default function Gallery() {
 
   // Filter only images and reverse to show newest first
   const photos = data?.media
-    ?.filter(m => m.httpMetadata?.contentType?.startsWith("image/"))
+    ?.filter((m: any) => m.httpMetadata?.contentType?.startsWith("image/"))
     ?.reverse() || [];
 
   return (
@@ -54,7 +55,7 @@ export default function Gallery() {
         <div className="text-marble/50 italic text-center py-12 font-medium">No photos found in the ARES gallery.</div>
       ) : (
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-          {photos.map((photo, index) => {
+          {photos.map((photo: any, index: any) => {
             // Assign varying aspect ratios for masonry visualization
             const aspects = ["aspect-video", "aspect-[3/4]", "aspect-[4/5]", "aspect-square"];
             const assignedAspect = aspects[index % aspects.length];

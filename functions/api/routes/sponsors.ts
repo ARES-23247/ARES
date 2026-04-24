@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../src/schemas/contracts/sponsorContract";
@@ -8,8 +9,8 @@ import { sendZulipAlert } from "../../utils/zulipSync";
 const s = initServer<AppEnv>();
 const sponsorsRouter = new Hono<AppEnv>();
 
-const sponsorTsRestRouter = s.router(sponsorContract, {
-  getSponsors: async (_, c) => {
+const sponsorHandlers: any = {
+  getSponsors: async (_: any, c: any) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -22,7 +23,7 @@ const sponsorTsRestRouter = s.router(sponsorContract, {
       return { status: 200, body: { sponsors: [] } };
     }
   },
-  getRoi: async ({ params }, c) => {
+  getRoi: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db");
       const { token } = params;
@@ -50,7 +51,7 @@ const sponsorTsRestRouter = s.router(sponsorContract, {
       return { status: 500, body: { error: "Failed to fetch ROI" } };
     }
   },
-  adminList: async (_, c) => {
+  adminList: async (_: any, c: any) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -62,7 +63,7 @@ const sponsorTsRestRouter = s.router(sponsorContract, {
       return { status: 200, body: { sponsors: [] } };
     }
   },
-  saveSponsor: async ({ body }, c) => {
+  saveSponsor: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db");
       const { id, name, tier, logo_url, website_url, is_active } = body;
@@ -70,7 +71,7 @@ const sponsorTsRestRouter = s.router(sponsorContract, {
 
       await db.insertInto("sponsors")
         .values({ id: finalId, name, tier, logo_url: logo_url || null, website_url: website_url || null, is_active: is_active ?? 1 })
-        .onConflict(oc => oc.column('id').doUpdateSet({ name, tier, logo_url: logo_url || null, website_url: website_url || null, is_active: is_active ?? 1 }))
+        .onConflict((oc: any) => oc.column('id').doUpdateSet({ name, tier, logo_url: logo_url || null, website_url: website_url || null, is_active: is_active ?? 1 }))
         .execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "SAVE_SPONSOR", "sponsors", finalId, `Saved sponsor: ${name}`));
@@ -79,7 +80,7 @@ const sponsorTsRestRouter = s.router(sponsorContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  deleteSponsor: async ({ params }, c) => {
+  deleteSponsor: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db");
       await db.updateTable("sponsors").set({ is_active: 0 }).where("id", "=", params.id).execute();
@@ -89,7 +90,7 @@ const sponsorTsRestRouter = s.router(sponsorContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  getAdminTokens: async (_, c) => {
+  getAdminTokens: async (_: any, c: any) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsor_tokens as t")
@@ -102,7 +103,7 @@ const sponsorTsRestRouter = s.router(sponsorContract, {
       return { status: 500, body: { tokens: [] } };
     }
   },
-  generateToken: async ({ body }, c) => {
+  generateToken: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db");
       const { sponsor_id } = body;
@@ -121,8 +122,9 @@ const sponsorTsRestRouter = s.router(sponsorContract, {
       return { status: 500, body: { error: "Failed to generate" } };
     }
   },
-});
+};
 
+const sponsorTsRestRouter = s.router(sponsorContract, sponsorHandlers);
 createHonoEndpoints(sponsorContract, sponsorTsRestRouter, sponsorsRouter);
 
 // Protections

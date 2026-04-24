@@ -10,6 +10,7 @@ import EditorFooter from "./editor/EditorFooter";
 import SeasonPicker from "./SeasonPicker";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { eventSchema, EventPayload } from "../schemas/eventSchema";
 import { api } from "../api/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,7 +20,7 @@ import { useModal } from "../contexts/ModalContext";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { useEntityFetch } from "../hooks/useEntityFetch";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export interface LocationRow {
   id: string;
@@ -42,7 +43,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
   const [warningMsg] = useState("");
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<EventPayload>({
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<z.input<typeof eventSchema>>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: "",
@@ -73,26 +74,21 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
   const formValues = useWatch({ control });
   const socials = formValues.socials || {};
 
-  useQuery<LocationRow[]>({
+  const { data: locations = [] } = useQuery<LocationRow[]>({
     queryKey: ["locations"],
     queryFn: async () => {
       try {
-        await api.events.getEvents.query({ query: { limit: 100 } });
-        // This is a hack because our getEvents returns events, but we need locations
-        // In a real scenario, we'd have a locationContract
-        return []; 
+        const res = await fetch("/api/locations");
+        if (res.ok) {
+          const data = (await res.json()) as { locations?: LocationRow[] };
+          return data.locations || [];
+        }
+        return [];
       } catch {
         return [];
       }
     }
   });
-
-  // Fetch locations manually for now as we don't have a contract yet
-  useEffect(() => {
-    fetch("/api/locations").then(res => res.json()).then(() => {
-      // We handle this via raw fetch for now as it's a "Should Fix"
-    });
-  }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useEntityFetch<{ event?: any }>(
@@ -264,7 +260,11 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
               className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none pr-10"
             >
               <option value="">-- Select a Venue --</option>
-              {/* Note: locations mapping skipped for brevity in this refactor step, assumes existing pattern or manual entry */}
+              {locations.map(loc => (
+                <option key={loc.id} value={loc.name}>
+                  {loc.name} ({loc.address})
+                </option>
+              ))}
               <option value="CUSTOM">--- Manual Entry / New Venue ---</option>
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/60 group-hover:text-ares-red transition-colors">
@@ -342,8 +342,8 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
           isPending={saveMutation.isPending}
           isEditing={!!editId}
           onDelete={handleDelete}
-          onSaveDraft={handleSubmit((d) => onFormSubmit(d, true))}
-          onPublish={handleSubmit((d) => onFormSubmit(d, false))}
+          onSaveDraft={handleSubmit((d) => onFormSubmit(d as EventPayload, true))}
+          onPublish={handleSubmit((d) => onFormSubmit(d as EventPayload, false))}
           deleteText="DELETE"
           updateText="UPDATE EVENT"
           publishText={userRole === "author" ? "SUBMIT FOR REVIEW" : "PUBLISH EVENT"}

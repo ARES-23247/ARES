@@ -140,8 +140,10 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
           const blob = new Blob([buffer], { type: element.contentType });
           const imageFile = new File([blob], `imported_image_${Date.now()}.${element.contentType.split('/')[1]}`, { type: element.contentType });
           try {
-            const { url } = await uploadFile(imageFile);
-            return { src: url };
+            const formData = new FormData();
+            formData.append('file', imageFile);
+            const data = await uploadFile<{ url?: string }>('/api/admin/upload', formData);
+            return { src: data.url || '' };
           } catch (err) {
             console.error("Failed to upload imported image", err);
             return { src: "" };

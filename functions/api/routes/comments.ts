@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
@@ -77,7 +78,7 @@ commentsRouter.post("/:targetType/:targetId", rateLimitMiddleware(10, 60), turns
     const id = crypto.randomUUID();
     await db.insertInto("comments")
       .values({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         id: id as any,
         user_id: user.id,
         target_type: targetType,
@@ -99,8 +100,8 @@ commentsRouter.post("/:targetType/:targetId", rateLimitMiddleware(10, 60), turns
          `**${user.nickname || 'ARES Member'}** commented on ${targetType} \`${targetId}\`:\n\n${content}`
        );
         if (msgId) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await db.updateTable("comments").set({ zulip_message_id: Number(msgId) }).where("id", "=", id as any).execute();
+           
+          await db.updateTable("comments").set({ zulip_message_id: Number(msgId) } as any).where("id", "=", id as any).execute();
         }
     })().catch(() => {}));
 
@@ -111,7 +112,7 @@ commentsRouter.post("/:targetType/:targetId", rateLimitMiddleware(10, 60), turns
           const author = await db.selectFrom("user").select("id").where("email", "=", row.cf_email).executeTakeFirst();
           if (author) {
             c.executionCtx.waitUntil(emitNotification(c, {
-               userId: author.id,
+               userId: author.id as string,
                title: "New Comment",
                message: `${user.nickname || 'Someone'} commented on your post "${targetId}"`,
                link: `/blog/${targetId}`,
@@ -146,14 +147,14 @@ commentsRouter.put("/:id", rateLimitMiddleware(10, 60), async (c) => {
   if (!content) return c.json({ error: "Comment content cannot be empty" }, 400);
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id as any).executeTakeFirst();
     if (!row) return c.json({ error: "Comment not found" }, 404);
-    if (row.user_id !== user.id && user.role !== "admin") return c.json({ error: "Forbidden" }, 403);
+    if ((row.user_id as string) !== user.id && user.role !== "admin") return c.json({ error: "Forbidden" }, 403);
 
     await db.updateTable("comments")
-      .set({ content, updated_at: new Date().toISOString() })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .set({ content, updated_at: new Date().toISOString() } as any)
+       
       .where("id", "=", id as any)
       .execute();
 
@@ -179,14 +180,14 @@ commentsRouter.delete("/:id", async (c) => {
   const db = c.get("db") as Kysely<DB>;
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id as any).executeTakeFirst();
     if (!row) return c.json({ error: "Comment not found" }, 404);
     if (row.user_id !== user.id && user.role !== "admin") return c.json({ error: "Forbidden" }, 403);
 
     await db.updateTable("comments")
       .set({ is_deleted: 1 })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .where("id", "=", id as any)
       .execute();
 

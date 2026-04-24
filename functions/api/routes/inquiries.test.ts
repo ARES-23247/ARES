@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+declare const global: typeof globalThis;
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
@@ -77,12 +78,12 @@ describe("Hono Backend - /inquiries Router", () => {
       TURNSTILE_SECRET: "test-secret",
     };
 
-    testApp = new Hono();
-    testApp.onError((err, c) => {
+    testApp = new Hono<any>();
+    testApp.onError((err, c: any) => {
       console.error("Test App Error:", err);
       return c.json({ error: err.message }, 500);
     });
-    testApp.use("*", async (c, next) => {
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       // getSessionUser checks for "sessionUser" in context
       c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com" });

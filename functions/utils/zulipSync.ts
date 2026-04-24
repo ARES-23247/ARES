@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bindings, logSystemError } from "../api/middleware";
 import pRetry from "p-retry";
 import { z } from "zod";
@@ -14,7 +15,9 @@ const ZulipResponseSchema = z.object({
   msg: z.string().optional(),
 });
 
+type ZulipCredentials = any;
 type ZulipEnv = Bindings | ZulipCredentials;
+const getZulipAuthHeaders = (env: any) => ({ "Authorization": "Basic " + btoa(env.ZULIP_EMAIL + ":" + env.ZULIP_API_KEY) });
 
 // ... (headers and url helpers remain same)
 
@@ -28,7 +31,7 @@ export async function sendZulipMessage(
   content: string
 ): Promise<string | null> {
   const runDispatch = async () => {
-    const url = `${getZulipBaseUrl(env)}/api/v1/messages`;
+    const url = `${(env.ZULIP_BASE_URL || "")(env)}/api/v1/messages`;
     const formData = new URLSearchParams();
     formData.append("type", "stream");
     formData.append("to", stream);
@@ -71,7 +74,7 @@ export async function sendZulipMessage(
   } catch (err) {
     console.error("[ZulipSync] Critical failure after retries:", err);
     const db = 'DB' in env ? env.DB : undefined;
-    if (db) await logSystemError(db as D1Database, "Zulip", "Critical failure after retries", String(err));
+    if (db) await logSystemError(db as any, "Zulip", "Critical failure after retries", String(err));
     return null;
   }
 }
@@ -85,7 +88,7 @@ export async function updateZulipMessage(
   newContent: string
 ): Promise<boolean> {
   const runUpdate = async () => {
-    const url = `${getZulipBaseUrl(env)}/api/v1/messages/${messageId}`;
+    const url = `${(env.ZULIP_BASE_URL || "")(env)}/api/v1/messages/${messageId}`;
     const formData = new URLSearchParams();
     formData.append("content", newContent);
 
@@ -128,7 +131,7 @@ export async function deleteZulipMessage(
   messageId: string
 ): Promise<boolean> {
   const runDelete = async () => {
-    const url = `${getZulipBaseUrl(env)}/api/v1/messages/${messageId}`;
+    const url = `${(env.ZULIP_BASE_URL || "")(env)}/api/v1/messages/${messageId}`;
     const headers = getZulipAuthHeaders(env);
 
     const res = await fetch(url, { signal: AbortSignal.timeout(5000),

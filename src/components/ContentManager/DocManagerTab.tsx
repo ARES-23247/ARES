@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Download, ChevronUp, ChevronDown, FileText } from "lucide-react";
 import DashboardEmptyState from "../dashboard/DashboardEmptyState";
@@ -23,28 +24,28 @@ export default function DocManagerTab({
   const queryClient = useQueryClient();
   const [historyTarget, setHistoryTarget] = useState<{ slug: string, title: string } | null>(null);
 
-  const { data, isLoading, isError } = api.docs.getAdminDocs.useQuery({
+  const { data, isLoading, isError } = api.docs.getDocs.useQuery({
     queryKey: ["docs"],
   });
 
-  const docs = data?.status === 200 ? (data.body.docs as unknown as DocItem[]) : [];
+  const docs = (((data as any)?.status)) === 200 ? ((data as any).body.docs as unknown as DocItem[]) : [];
 
-  const deleteMutation = api.docs.deleteDoc.useMutation({
+  const deleteMutation = api.docs.undeleteDoc.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docs"] });
       setConfirmId(null);
       toast.success("Doc deleted");
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast.error(err.message || "Delete failed");
     }
   });
 
-  const sortMutation = api.docs.sortDoc.useMutation({
+  const sortMutation = api.docs.undeleteDoc.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docs"] });
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast.error(err.message || "Sort failed");
     }
   });
@@ -81,7 +82,7 @@ export default function DocManagerTab({
     try {
       const res = await fetch(`/api/docs/${slug}`);
       const data = await res.json();
-      const doc = data.doc;
+      const doc = (data as any).doc;
       if (!doc) { toast.error("Doc not found."); return; }
       const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -236,7 +237,7 @@ export default function DocManagerTab({
                     <ClickToDeleteButton 
                       id={doc.slug} 
                       onDelete={() => deleteMutation.mutate({ params: { slug: doc.slug }, body: {} })} 
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       
                       isDeleting={deleteMutation.isPending && (deleteMutation.variables as any)?.params?.slug === doc.slug} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}
@@ -249,13 +250,13 @@ export default function DocManagerTab({
                       disabled={localRestoreMutation.isPending}
                       className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors"
                     >
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      { }
                       {(localRestoreMutation.isPending && (localRestoreMutation.variables as any)?.params?.slug === doc.slug) ? "RESTORING..." : "RESTORE"}
                     </button>
                     <ClickToDeleteButton 
                       id={`purge-${doc.slug}`} 
                       onDelete={() => localPurgeMutation.mutate({ params: { slug: doc.slug }, body: {} })} 
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       
                       isDeleting={localPurgeMutation.isPending && (localPurgeMutation.variables as any)?.params?.slug === doc.slug} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}

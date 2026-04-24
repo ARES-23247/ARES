@@ -43,7 +43,7 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
     if (!handled) {
       const db = c.get("db");
-      await sql`UPDATE ${sql.table(tableName)} SET status = 'published' WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
+      await sql`UPDATE ${sql.table(tableName)} SET status = 'published' WHERE ${sql.raw(idColumn)} = ${id}`.execute(db);
     }
 
     c.executionCtx.waitUntil(logAuditAction(c, `APPROVE_${tableName.toUpperCase()}`, tableName, id));
@@ -63,7 +63,7 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
     if (!handled) {
       const db = c.get("db");
-      await sql`UPDATE ${sql.table(tableName)} SET status = 'rejected' WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
+      await sql`UPDATE ${sql.table(tableName)} SET status = 'rejected' WHERE ${sql.raw(idColumn)} = ${id}`.execute(db);
     }
 
     c.executionCtx.waitUntil(logAuditAction(c, `REJECT_${tableName.toUpperCase()}`, tableName, id));
@@ -79,7 +79,7 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
     if (!handled) {
       const db = c.get("db");
-      await sql`UPDATE ${sql.table(tableName)} SET is_deleted = 0, status = 'draft' WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
+      await sql`UPDATE ${sql.table(tableName)} SET is_deleted = 0, status = 'draft' WHERE ${sql.raw(idColumn)} = ${id}`.execute(db);
     }
 
     c.executionCtx.waitUntil(logAuditAction(c, `RESTORE_${tableName.toUpperCase()}`, tableName, id));
@@ -96,7 +96,7 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
       if (!handled) {
         const db = c.get("db");
-        await sql`UPDATE ${sql.table(tableName)} SET is_deleted = 1 WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
+        await sql`UPDATE ${sql.table(tableName)} SET is_deleted = 1 WHERE ${sql.raw(idColumn)} = ${id}`.execute(db);
       }
       
       c.executionCtx.waitUntil(logAuditAction(c, `DELETE_${tableName.toUpperCase()}`, tableName, id));
@@ -117,7 +117,7 @@ export function createContentLifecycleRouter(tableName: string, hooks?: ContentL
 
       if (!handled) {
         const db = c.get("db");
-        await sql`DELETE FROM ${sql.table(tableName)} WHERE ${sql.column(idColumn)} = ${id}`.execute(db);
+        await sql`DELETE FROM ${sql.table(tableName)} WHERE ${sql.raw(idColumn)} = ${id}`.execute(db);
       }
       
       c.executionCtx.waitUntil(logAuditAction(c, `PURGE_${tableName.toUpperCase()}`, tableName, id));

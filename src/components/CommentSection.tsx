@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Send, Trash2, RefreshCw, Pencil, Check, X } from "lucide-react";
 import { api } from "../api/client";
@@ -33,7 +34,7 @@ export default function CommentSection({ targetType, targetId, isAdmin }: Commen
 
   const fetchComments = useCallback(() => {
     api.comments.list.query({ params: { targetType, targetId } })
-      .then((res) => {
+      .then((res: any) => {
         if (res.status === 200) {
           const data = res.body;
           setComments(data.comments || []);

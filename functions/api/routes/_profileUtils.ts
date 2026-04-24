@@ -1,11 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Context } from "hono";
+import { Kysely } from "kysely";
+import { DB } from "../../../src/schemas/database";
 import { AppEnv, getSessionUser } from "../middleware";
 import { encrypt } from "../../utils/crypto";
 
 export async function upsertProfile(
   c: Context<AppEnv>,
   userId: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   data: Record<string, any>
 ) {
   const secret = c.env.ENCRYPTION_SECRET;
@@ -44,7 +47,7 @@ export async function upsertProfile(
   let dietaryStr = (data.dietary_restrictions as string) || "[]";
   if (Array.isArray(data.dietary_restrictions)) dietaryStr = JSON.stringify(data.dietary_restrictions);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const values: any = {
     user_id: userId,
     nickname: (data.nickname as string) || "",
@@ -81,7 +84,7 @@ export async function upsertProfile(
 
   await db.insertInto("user_profiles")
     .values(values)
-    .onConflict(oc => oc.column("user_id").doUpdateSet({
+    .onConflict((oc: any) => oc.column("user_id").doUpdateSet({
       nickname: values.nickname,
       first_name: values.first_name,
       last_name: values.last_name,

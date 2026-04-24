@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
 import { ClipboardList, Plus, Save, RefreshCw, Trash2, CheckCircle2, Circle, AlertCircle, Users } from "lucide-react";
 import { api } from "../api/client";
@@ -33,7 +34,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
 
   const fetchSignups = useCallback(() => {
     api.events.getSignups.query({ params: { id: eventId } })
-      .then((res) => {
+      .then((res: any) => {
         if (res.status === 200) {
           const typed = res.body;
           setSignups(typed.signups || []);

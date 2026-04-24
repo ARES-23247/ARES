@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { inquiryContract } from "../../../src/schemas/contracts/inquiryContract";
@@ -11,8 +12,8 @@ import { DB } from "../../../src/schemas/database";
 const s = initServer<AppEnv>();
 const inquiriesRouter = new Hono<AppEnv>();
 
-const inquiriesTsRestRouter = s.router(inquiryContract, {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const inquiryHandlers: any = {
+   
   list: async ({ query }: any, c: any) => {
     console.log("[Inquiries] List called");
     try {
@@ -66,7 +67,7 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       return { status: 500, body: { error: "Failed to fetch inquiries" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   submit: async ({ body }: any, c: any) => {
     // ... logic remains same but no manual auth needed for public submit ...
     try {
@@ -76,7 +77,7 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       const recent = await db.selectFrom("inquiries")
         .select("id")
         .where("email", "=", email)
-        .where("created_at", ">", sql`datetime('now', '-2 minutes')`)
+        .where("created_at", ">", sql`datetime('now', '-2 minutes')` as any)
         .executeTakeFirst();
 
       if (recent) return { status: 429, body: { error: "Please wait a few minutes before submitting another inquiry." } };
@@ -140,7 +141,7 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       return { status: 500, body: { error: "Submission failed" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   updateStatus: async ({ params, body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -155,7 +156,7 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   delete: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -166,8 +167,8 @@ const inquiriesTsRestRouter = s.router(inquiryContract, {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-});
-
+};
+const inquiriesTsRestRouter = s.router(inquiryContract, inquiryHandlers);
 createHonoEndpoints(inquiryContract, inquiriesTsRestRouter, inquiriesRouter);
 
 // Admin protection
@@ -186,7 +187,7 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
   if (days <= 0) return { deleted: 0 };
   const res = await db.deleteFrom("inquiries")
     .where("status", "in", ["resolved", "rejected"])
-    .where("created_at", "<", sql`datetime('now', '-' || ${days} || ' days')`)
+    .where("created_at", "<", sql`datetime('now', '-' || ${days} || ' days')` as any)
     .execute();
   return { deleted: res.length };
 }

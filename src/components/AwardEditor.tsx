@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
@@ -23,7 +24,7 @@ const awardFormSchema = z.object({
   season_id: z.string().optional().nullable(),
 });
 
-type AwardFormValues = z.infer<typeof awardFormSchema>;
+
 
 interface Award {
   id: string;
@@ -39,7 +40,7 @@ export default function AwardEditor() {
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<AwardFormValues>({
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<any>({
     resolver: zodResolver(awardFormSchema),
     defaultValues: {
       year: new Date().getFullYear(),
@@ -70,9 +71,9 @@ export default function AwardEditor() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-awards"] })
   });
 
-  const onFormSubmit = (data: AwardFormValues) => {
+  const onFormSubmit = (data: any) => {
     const finalId = data.id || `${data.year}-${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     saveMutation.mutate({ body: { ...data, id: finalId } as any });
   };
 
@@ -122,7 +123,7 @@ export default function AwardEditor() {
                 id="award-title"
                 label="Award Title"
                 {...register("title")}
-                error={errors.title?.message}
+                error={(errors.title?.message as string)}
                 placeholder="e.g. Excellence in Engineering"
                 focusColor="ares-gold"
                 fullWidth
@@ -132,7 +133,7 @@ export default function AwardEditor() {
                 type="number"
                 label="Year"
                 {...register("year")}
-                error={errors.year?.message}
+                error={(errors.year?.message as string)}
                 focusColor="ares-gold"
               />
               <DashboardInput

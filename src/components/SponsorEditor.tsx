@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
@@ -44,7 +45,7 @@ export default function SponsorEditor() {
   const sponsors = data?.status === 200 ? data.body.sponsors : [];
 
   const saveMutation = api.sponsors.saveSponsor.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200 && res.body.success) {
         queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
         setIsFormOpen(false);
@@ -82,7 +83,7 @@ export default function SponsorEditor() {
     reset({
       id: s.id,
       name: s.name,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       tier: s.tier as any,
       logo_url: s.logo_url || "",
       website_url: s.website_url || "",
@@ -141,7 +142,7 @@ export default function SponsorEditor() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             onSubmit={handleSubmit(onFormSubmit as any)}
             className="bg-black/40 border border-white/10 ares-cut-lg p-6 space-y-4 overflow-hidden"
           >

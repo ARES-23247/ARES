@@ -38,7 +38,7 @@ test.describe('Interactive Systems & Workflows', () => {
 
     // Intercept the API submission so we don't pollute the database,
     // and instead force a success response.
-    await page.route('/api/inquiries', async route => {
+    await page.route(url => url.pathname.includes('/inquiries'), async route => {
       // Small artificial delay to ensure "Sending..." state is visible if quickly checked
       await new Promise(resolve => setTimeout(resolve, 300));
       await route.fulfill({
@@ -71,6 +71,12 @@ test.describe('Interactive Systems & Workflows', () => {
     
     // Verify success message rendered! (Checks Join.tsx UI state)
     const successAlert = page.getByText(/Application submitted successfully/i);
-    await expect(successAlert).toBeVisible();
+    try {
+      await expect(successAlert).toBeVisible({ timeout: 5000 });
+    } catch (e) {
+      const errorMsg = await page.locator('.text-ares-red').allTextContents();
+      console.error("Form submission failed with errors on page:", errorMsg);
+      throw e;
+    }
   });
 });

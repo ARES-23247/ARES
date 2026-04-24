@@ -17,14 +17,16 @@ export default function Join() {
   const [occupation, setOccupation] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [additional, setAdditional] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
 
   const submitMutation = api.inquiries.submit.useMutation({
-    onSuccess: (res) => {
+    onMutate: () => setIsSubmitting(true),
+    onSettled: () => setIsSubmitting(false),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess: (res: any) => {
       if (res.status === 200 || res.status === 207) {
         setSubmitStatus("success");
         setName(""); setEmail(""); setPhone(""); setSchool(""); setGrade(""); setOccupation(""); setInterests([]); setAdditional("");
@@ -34,9 +36,10 @@ export default function Join() {
         setErrorMessage((res.body as any).error || "Something went wrong");
       }
     },
-    onError: (err) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
       setSubmitStatus("error");
-      setErrorMessage(err.message || "Network error");
+      setErrorMessage(err.message || JSON.stringify(err) || "Network error");
     }
   });
 

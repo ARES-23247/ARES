@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { siteConfig } from "../site.config";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -89,13 +90,13 @@ export default function Sponsors() {
   };
 
   const submitMutation = api.inquiries.submit.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200 || res.status === 207) {
         setSubmitStatus("success");
         setName(""); setEmail(""); setPhone(""); setLevel("Interested in Details"); setMessage("");
       } else {
         setSubmitStatus("error");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         setErrorMessage((res.body as any).error || "Something went wrong");
       }
     },
@@ -123,7 +124,7 @@ export default function Sponsors() {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     submitMutation.mutate({ body: payloadResult.data as any });
   };
 

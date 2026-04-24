@@ -10,7 +10,7 @@ const mockExecutionContext = {
 
 describe("Analytics Router", () => {
   let mockDb: any;
-  let testApp: Hono;
+  let testApp: Hono<any>;
   let env: any;
 
   beforeEach(() => {
@@ -48,8 +48,8 @@ describe("Analytics Router", () => {
     };
     vi.clearAllMocks();
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("user", { id: "1", role: "admin" });
       await next();

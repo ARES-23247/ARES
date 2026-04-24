@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Context, Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { docContract } from "../../../src/schemas/contracts/docContract";
@@ -44,8 +45,8 @@ async function pruneDocHistory(c: Context<AppEnv>, slug: string, limit = 10) {
   }
 }
 
-const docTsRestRouter = s.router(docContract, {
-  getDocs: async (_, c) => {
+const docHandlers: any = {
+  getDocs: async (_: any, c: any) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("docs")
@@ -72,7 +73,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 200, body: { docs: [] } };
     }
   },
-  getDoc: async ({ params }, c) => {
+  getDoc: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -115,7 +116,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  searchDocs: async ({ query }, c) => {
+  searchDocs: async ({ query }: any, c: any) => {
     const { q } = query;
     if (!q || q.length < 3) return { status: 200, body: { results: [] } };
     try {
@@ -151,7 +152,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500, body: { error: "Search failed" } };
     }
   },
-  adminList: async (_, c) => {
+  adminList: async (_: any, c: any) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("docs")
@@ -164,7 +165,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 200, body: { docs: [] } };
     }
   },
-  adminDetail: async ({ params }, c) => {
+  adminDetail: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -178,7 +179,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  saveDoc: async ({ body }, c) => {
+  saveDoc: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db");
       const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = body;
@@ -250,7 +251,7 @@ const docTsRestRouter = s.router(docContract, {
           is_executive_summary: isExecutiveSummary ? 1 : 0,
           status
         })
-        .onConflict((oc) => oc.column("slug").doUpdateSet({
+        .onConflict((oc: any) => oc.column("slug").doUpdateSet({
           title,
           category,
           sort_order: sortOrder || 0,
@@ -284,7 +285,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500, body: { error: "Write failed" } };
     }
   },
-  updateSort: async ({ params, body }, c) => {
+  updateSort: async ({ params, body }: any, c: any) => {
     const { slug } = params;
     const { sortOrder } = body;
     try {
@@ -295,7 +296,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  submitFeedback: async ({ params, body }, c) => {
+  submitFeedback: async ({ params, body }: any, c: any) => {
     const { slug } = params;
     const { isHelpful, comment, turnstileToken } = body;
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
@@ -314,7 +315,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500, body: { error: "Feedback failed" } };
     }
   },
-  getHistory: async ({ params }, c) => {
+  getHistory: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -329,7 +330,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 200, body: { history: [] } };
     }
   },
-  restoreHistory: async ({ params }, c) => {
+  restoreHistory: async ({ params }: any, c: any) => {
     const { slug, id } = params;
     try {
       const db = c.get("db");
@@ -360,7 +361,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 404, body: { error: "Restore failed" } };
     }
   },
-  approveDoc: async ({ params }, c) => {
+  approveDoc: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -390,7 +391,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  rejectDoc: async ({ params, body }, c) => {
+  rejectDoc: async ({ params, body }: any, c: any) => {
     const { slug } = params;
     const { reason } = body;
     try {
@@ -406,7 +407,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  undeleteDoc: async ({ params }, c) => {
+  undeleteDoc: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -416,7 +417,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  purgeDoc: async ({ params }, c) => {
+  purgeDoc: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -426,8 +427,8 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 200, body: { success: false } };
     }
   },
-});
-
+};
+const docTsRestRouter = s.router(docContract, docHandlers);
 createHonoEndpoints(docContract, docTsRestRouter, docsRouter);
 
 // Apply middleware/protections

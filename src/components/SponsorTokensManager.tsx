@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Plus, FileKey2, ExternalLink, RefreshCw } from "lucide-react";
 import { api } from "../api/client";
@@ -18,7 +19,7 @@ export default function SponsorTokensManager() {
   });
 
   const generateMutation = api.sponsors.generateToken.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200 && res.body.success) {
         queryClient.invalidateQueries({ queryKey: ["admin_sponsor_tokens"] });
         setSelectedSponsor("");
@@ -27,7 +28,7 @@ export default function SponsorTokensManager() {
         toast.error("Generation failed");
       }
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast.error(err.message || "Generation failed");
     }
   });
@@ -73,7 +74,7 @@ export default function SponsorTokensManager() {
             title="Select a sponsor to generate a magic link for"
           >
             <option value="" disabled>Select a Sponsor</option>
-            {sponsors.map(s => (
+            {sponsors.map((s: any) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>

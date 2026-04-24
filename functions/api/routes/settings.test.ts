@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
@@ -16,9 +17,9 @@ vi.mock("../middleware", async (importOriginal) => {
 describe("Hono Backend - /settings Router", () => {
   
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let mockDb: any;
-  let testApp: Hono;
+  let testApp: Hono<any>;
   let env: Record<string, unknown>;
 
   beforeEach(() => {
@@ -48,8 +49,8 @@ describe("Hono Backend - /settings Router", () => {
       DEV_BYPASS: "true",
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("user", { id: "1", email: "admin@test.com", role: "admin" });
       await next();
@@ -60,7 +61,7 @@ describe("Hono Backend - /settings Router", () => {
   it("GET / - list settings (masked)", async () => {
     const res = await testApp.request("/admin/settings", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = await res.json() as any;
     expect(body.settings.site_name).toBe("ARES");
     expect(body.settings.BETTER_AUTH_SECRET).toContain("••••");
   });
@@ -81,14 +82,14 @@ describe("Hono Backend - /settings Router", () => {
     mockDb.executeTakeFirst.mockResolvedValue({ count: 10 });
     const res = await testApp.request("/admin/stats", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = await res.json() as any;
     expect(body.posts).toBe(10);
   });
 
   it("GET /admin/backup - database export", async () => {
     const res = await testApp.request("/admin/backup", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(body.backup).toBeDefined();
   });

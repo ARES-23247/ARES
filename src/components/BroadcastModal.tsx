@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useMemo } from "react";
 import { X, Send, CheckCircle2, AlertCircle } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -36,7 +37,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
   }, [isOpen]);
 
   const postRepushMutation = api.posts.repushSocials.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200 && res.body.success) {
         setStatus("success");
         setTimeout(onClose, 2000);
@@ -45,14 +46,14 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
         setErrorMsg("Broadcast failed");
       }
     },
-    onError: (err) => {
+    onError: (err: any) => {
       setStatus("error");
       setErrorMsg(err.message || "Broadcast failed");
     }
   });
 
-  const eventRepushMutation = api.events.repushSocials.useMutation({
-    onSuccess: (res) => {
+  const eventRepushMutation = (api.events as any).repushEvent.useMutation({
+    onSuccess: (res: any) => {
       if (res.status === 200 && res.body.success) {
         setStatus("success");
         setTimeout(onClose, 2000);
@@ -61,7 +62,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
         setErrorMsg("Broadcast failed");
       }
     },
-    onError: (err) => {
+    onError: (err: any) => {
       setStatus("error");
       setErrorMsg(err.message || "Broadcast failed");
     }

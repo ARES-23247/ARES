@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -25,21 +26,22 @@ interface SponsorROI {
 export default function SponsorROI() {
   const { tokenId } = useParams();
   const [data, setData] = useState<SponsorROI | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
 
-    api.sponsors.getROI.query({ params: { tokenId: tokenId || "" } })
-      .then((res) => {
+    api.sponsors.getRoi.query({ params: { tokenId: tokenId || "" } })
+      .then((res: any) => {
         if (!cancelled && res.status === 200) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           setData(res.body as any);
           setLoading(false);
         }
       })
-      .catch((err) => {
+      .catch((err: any) => {
         if (!cancelled) {
           setError(err.message);
           setLoading(false);
@@ -78,7 +80,6 @@ export default function SponsorROI() {
   
   const totalImpressions = metrics.reduce((acc, m) => acc + m.impressions, 0);
   const totalClicks = metrics.reduce((acc, m) => acc + m.clicks, 0);
-
   return (
     <div className="min-h-screen bg-obsidian text-marble py-24 relative overflow-hidden">
       <SEO title={`${sponsor.name} Impact Report`} description="ARES 23247 Partner Return on Investment Dashboard" />

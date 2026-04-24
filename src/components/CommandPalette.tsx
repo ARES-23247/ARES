@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -33,12 +34,10 @@ export default function CommandPalette() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        setIsOpen((open) => {
-          if (!open) {
-            lastActiveElement.current = document.activeElement as HTMLElement;
-          }
-          return !open;
-        });
+        if (!isOpen) {
+          lastActiveElement.current = document.activeElement as HTMLElement;
+        }
+        setIsOpen(!isOpen);
       }
       if (e.key === "Escape" && isOpen) {
         setIsOpen(false);
@@ -102,14 +101,14 @@ export default function CommandPalette() {
     const fetchSearch = async () => {
       setIsSearching(true);
       try {
-        const res = await api.analytics.search.query({
+        const res = await (api.analytics.search as any).query({
           query: { q: query }
         });
 
         if (res.status !== 200) throw new Error("Search failed");
         const data = res.body;
 
-        const searchResults: SearchResult[] = (data.results || []).map(r => {
+        const searchResults: SearchResult[] = (data.results || []).map((r: any) => {
           let icon = <FileText size={16} />;
           let url = "";
           if (r.type === "blog") {

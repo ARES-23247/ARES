@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Utensils, Shirt, RefreshCw, AlertCircle, Users } from "lucide-react";
 import { motion } from "framer-motion";
@@ -19,17 +20,17 @@ export default function DietarySummary() {
 
   useEffect(() => {
     api.logistics.getSummary.query()
-      .then((res) => {
+      .then((res: any) => {
         if (res.status === 200) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           setData(res.body as any);
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           setError((res.body as any)?.error || "Failed to load logistics summary");
         }
         setLoading(false);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error("Logistics fetch error:", err);
         setError(err.message || "Failed to load logistics summary");
         setLoading(false);

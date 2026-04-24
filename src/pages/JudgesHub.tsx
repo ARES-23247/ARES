@@ -37,7 +37,7 @@ export default function JudgesHub() {
 
   const fetchPortfolio = useCallback(async (code: string) => {
     try {
-      const res = await api.judges.getPortfolio.query({
+      const res = await api.judges.portfolio.query({
         headers: { "Authorization": `Bearer ${code}` }
       });
       if (res.status === 200) {

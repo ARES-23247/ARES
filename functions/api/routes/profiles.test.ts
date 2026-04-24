@@ -63,8 +63,8 @@ describe("Hono Backend - /profiles Router", () => {
       ENCRYPTION_SECRET: "test-secret",
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("sessionUser", { id: "local-dev", email: "admin@test.com", role: "admin", name: "Local Dev" });
       await next();

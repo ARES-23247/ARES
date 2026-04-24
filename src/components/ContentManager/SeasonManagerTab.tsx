@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { History } from "lucide-react";
 import DashboardEmptyState from "../dashboard/DashboardEmptyState";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,7 +52,7 @@ export default function SeasonManagerTab({
 
   if (isLoading) return <div className="h-32 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white/10 border-t-ares-gold rounded-full animate-spin"></div></div>;
 
-  const filtered = seasons.filter(s => {
+  const filtered = seasons.filter((s: any) => {
     const isDeleted = Number(s.is_deleted) === 1;
     if (view === 'trash') return isDeleted;
     if (view === 'pending') return !isDeleted && s.status === 'draft';
@@ -83,7 +84,7 @@ export default function SeasonManagerTab({
             message={`No ${view} seasons found.`}
           />
         ) : (
-          filtered.map((season) => {
+          filtered.map((season: any) => {
             const seasonId = season.start_year.toString();
             return (
               <div key={seasonId} className={`bg-black/40 border ${Number(season.is_deleted) === 1 ? 'border-ares-red/30 bg-ares-red/[0.02]' : 'border-white/10'} ares-cut-sm p-4 flex flex-col justify-between gap-4 hover:border-ares-gold/20 transition-colors`}>
@@ -109,7 +110,7 @@ export default function SeasonManagerTab({
                       <ClickToDeleteButton 
                         id={seasonId} 
                         onDelete={() => deleteMutation.mutate({ params: { id: seasonId }, body: null })} 
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                         
                         isDeleting={deleteMutation.isPending && (deleteMutation.variables as any)?.params?.id === seasonId} 
                         confirmId={confirmId}
                         setConfirmId={setConfirmId}
@@ -122,13 +123,13 @@ export default function SeasonManagerTab({
                         disabled={restoreMutation.isPending}
                         className="text-xs font-bold text-ares-gold bg-ares-gold/10 hover:bg-ares-gold/20 px-3 py-1 ares-cut-sm transition-colors"
                       >
-                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        { }
                         {(restoreMutation.isPending && (restoreMutation.variables as any)?.params?.id === seasonId) ? "RESTORING..." : "RESTORE"}
                       </button>
                       <ClickToDeleteButton 
                         id={`purge-${seasonId}`} 
                         onDelete={() => purgeMutation.mutate({ params: { id: seasonId }, body: null })} 
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                         
                         isDeleting={purgeMutation.isPending && (purgeMutation.variables as any)?.params?.id === seasonId} 
                         confirmId={confirmId}
                         setConfirmId={setConfirmId}

@@ -120,4 +120,18 @@ export const profileContract = c.router({
     },
     summary: "Get public team roster",
   },
+  getPublicProfile: {
+    method: "GET",
+    path: "/:userId",
+    responses: {
+      200: z.object({
+        profile: z.any(),
+        badges: z.array(z.any()),
+      }),
+      403: z.object({ error: z.string() }),
+      404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Get public user profile",
+  },
 });

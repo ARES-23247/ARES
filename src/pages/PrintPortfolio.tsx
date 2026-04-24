@@ -45,7 +45,7 @@ export default function PrintPortfolio() {
 
     const fetchPortfolio = async () => {
       try {
-        const res = await api.judges.getPortfolio.query({
+        const res = await api.judges.portfolio.query({
           headers: { "Authorization": `Bearer ${code}` }
         });
 

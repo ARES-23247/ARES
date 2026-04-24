@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BarChart3, TrendingUp, Clock, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
@@ -45,7 +46,7 @@ export default function AnalyticsDashboard() {
             <Flex alignItems="start">
               <div className="truncate">
                 <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Traffic Distribution</Text>
-                <Title className="text-white text-3xl font-black">{data?.totals.reduce((acc, t) => acc + t.total, 0).toLocaleString()}</Title>
+                <Title className="text-white text-3xl font-black">{data?.totals.reduce((acc: any, t: any) => acc + t.total, 0).toLocaleString()}</Title>
               </div>
               <BarChart3 className="text-ares-cyan" size={24} />
             </Flex>
@@ -62,7 +63,7 @@ export default function AnalyticsDashboard() {
          <Card className="md:col-span-2 bg-black/40 border-white/5 ares-cut-lg">
             <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px] mb-4">Top Performing Endpoints</Text>
             <BarList
-              data={data?.topPages.map(p => ({ name: p.path, value: p.views })) || []}
+              data={data?.topPages.map((p: any) => ({ name: p.path, value: p.views })) || []}
               className="mt-2"
               color="amber"
             />
@@ -77,7 +78,7 @@ export default function AnalyticsDashboard() {
             Real-time Feed
           </h3>
           <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {data?.recentViews.map((view, idx) => (
+            {data?.recentViews.map((view: any, idx: any) => (
               <div key={idx} className="flex flex-col gap-1 border-l border-white/5 pl-4 py-1 relative">
                 <div className="absolute left-[-4px] top-2 w-2 h-2 rounded-full bg-ares-red shadow-[0_0_8px_rgba(192,0,0,0.5)]" />
                 <div className="flex justify-between items-start">
@@ -105,7 +106,7 @@ export default function AnalyticsDashboard() {
             Impact Breakdown
           </h3>
           <div className="space-y-3">
-            {data?.topPages.map((page, idx) => (
+            {data?.topPages.map((page: any, idx: any) => (
               <div key={page.path} className="flex items-center justify-between group">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <span className="text-xs font-mono text-marble/40 w-4">0{idx + 1}</span>

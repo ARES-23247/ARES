@@ -43,7 +43,7 @@ export default function AdminUsers() {
 
   const users = (data?.body?.users || []) as User[];
 
-  const patchMutation = api.users.updateUser.useMutation({
+  const patchMutation = api.users.patchUser.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin_users"] });
       toast.success("User updated");

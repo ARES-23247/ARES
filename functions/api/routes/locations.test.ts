@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
@@ -19,9 +20,9 @@ describe("Hono Backend - /locations Router", () => {
   
   
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let mockDb: any;
-  let testApp: Hono;
+  let testApp: Hono<any>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -45,8 +46,8 @@ describe("Hono Backend - /locations Router", () => {
       }),
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       await next();
     });

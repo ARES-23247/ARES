@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { api } from "../api/client";
 
@@ -40,7 +41,7 @@ export function useDashboardSession() {
   useEffect(() => {
     let isMounted = true;
     api.profiles.getMe.query()
-      .then((res) => {
+      .then((res: any) => {
         if (!isMounted) return;
         if (res.status !== 200) {
           setSession(null);

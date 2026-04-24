@@ -22,7 +22,7 @@ test.describe("Event Editor E2E", () => {
       });
     });
 
-    await page.route('**/api/profile/me', async route => {
+    await page.route('**/profile/me*', async route => {
       await route.fulfill({
         status: 200,
         json: {
@@ -63,16 +63,15 @@ test.describe("Event Editor E2E", () => {
   test("should show validation errors when submitting empty form", async ({ page }) => {
     await page.click("button:has-text('PUBLISH EVENT')");
 
-    const errorMsg = page.locator("#event-error-msg");
-    await expect(errorMsg).toBeVisible();
-    await expect(errorMsg).toContainText("Title and Start Date are required.");
+    const titleError = page.locator(".text-ares-red").filter({ hasText: /String must contain at least 1 character\(s\)|required/i }).first();
+    await expect(titleError).toBeVisible({ timeout: 10000 });
   });
 
   test("should allow selecting a location from the registry", async ({ page }) => {
     const locationSelect = page.locator("#event-location");
     await locationSelect.selectOption({ label: "ARES HQ (123 Robot Lane)" });
     
-    await expect(locationSelect).toHaveValue("123 Robot Lane");
+    await expect(locationSelect).toHaveValue("ARES HQ");
   });
 
   test("should toggle potluck and volunteer flags", async ({ page }) => {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { sendZulipMessage } from './zulipSync';
 import { 
   dispatchDiscord, dispatchDiscordPhoto, 
@@ -49,7 +50,7 @@ export interface PostPayload {
  * Fails gracefully on any single provider so others still execute.
  */
 export async function dispatchSocials(
-  db: D1Database,
+  db: any,
   payload: PostPayload, 
   config: SocialConfig, 
   socialsFilter: Record<string, boolean> | null = null

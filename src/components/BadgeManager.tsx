@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Award, Plus, UserPlus, Check, X } from "lucide-react";
@@ -25,12 +26,12 @@ export default function BadgeManager() {
     queryKey: ["admin_badges"]
   });
 
-  const { data: usersData, isError: isUsersError } = api.users.adminList.useQuery({
+  const { data: usersData, isError: isUsersError } = api.users.getUsers.useQuery({
     queryKey: ["admin_users_list"]
   });
 
   const createBadgeMutation = api.badges.create.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200) {
         toast.success("Badge definition created.");
         queryClient.invalidateQueries({ queryKey: ["admin_badges"] });
@@ -45,7 +46,7 @@ export default function BadgeManager() {
   });
 
   const awardBadgeMutation = api.badges.grant.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200) {
         toast.success("Badge awarded successfully!");
         setSelectedUser("");
@@ -60,7 +61,7 @@ export default function BadgeManager() {
   });
 
   const deleteBadgeMutation = api.badges.delete.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200) {
         toast.success("Badge definition deleted.");
         queryClient.invalidateQueries({ queryKey: ["admin_badges"] });
@@ -76,7 +77,7 @@ export default function BadgeManager() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const revokeBadgeMutation = api.badges.revoke.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200) {
         toast.success("Badge revoked successfully.");
         queryClient.invalidateQueries({ queryKey: ["admin_badges"] });
@@ -163,13 +164,13 @@ export default function BadgeManager() {
           ) : badges.length === 0 ? (
             <p className="text-white/60 text-sm">No badges defined yet.</p>
           ) : (
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             badges.map((b: any) => {
-              const IconComp = (LucideIcons as unknown as Record<string, React.ElementType>)[b.icon] || LucideIcons.Award;
+              const IconComp = ((LucideIcons as any)[b.icon] || LucideIcons.Award) as any;
               return (
                 <div key={b.id} className="bg-ares-gray-dark/50 border border-white/10 ares-cut-sm p-4 flex items-start gap-4">
                   <div className={`p-3 ares-cut-sm bg-obsidian/50 flex-shrink-0 text-${b.color_theme.replace("text-", "")}`}>
-                    <IconComp size={24} />
+                    <IconComp size={24 as any} />
                   </div>
                   <div className="flex-1">
                     <h4 className="text-white font-bold">{b.name}</h4>
@@ -202,7 +203,7 @@ export default function BadgeManager() {
             <label htmlFor="grant-user" className="text-xs font-bold text-white/60 uppercase tracking-widest pl-1">Target Member</label>
             <select id="grant-user" value={selectedUser} onChange={e => setSelectedUser(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red mt-1">
               <option value="">-- Select Member --</option>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              { }
               {users.map((u: any) => (
                 <option key={u.id} value={u.id}>{u.name || u.nickname} ({u.email})</option>
               ))}
@@ -212,7 +213,7 @@ export default function BadgeManager() {
             <label htmlFor="grant-badge" className="text-xs font-bold text-white/60 uppercase tracking-widest pl-1">Select Badge</label>
             <select id="grant-badge" value={selectedBadge} onChange={e => setSelectedBadge(e.target.value)} className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-red mt-1">
               <option value="">-- Select Badge --</option>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              { }
               {badges.map((b: any) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}

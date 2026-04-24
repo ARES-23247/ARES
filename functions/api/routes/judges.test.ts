@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
@@ -17,9 +18,9 @@ vi.mock("../middleware", async (importOriginal) => {
 describe("Hono Backend - /judges Router", () => {
   
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let mockDb: any;
-  let testApp: Hono;
+  let testApp: Hono<any>;
   let env: Record<string, unknown>;
 
   beforeEach(() => {
@@ -56,8 +57,8 @@ describe("Hono Backend - /judges Router", () => {
       TURNSTILE_SECRET_KEY: "secret",
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("user", { id: "1", email: "admin@test.com", role: "admin" });
       await next();
@@ -78,7 +79,7 @@ describe("Hono Backend - /judges Router", () => {
     }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = await res.json() as any;
     expect(body.success).toBe(true);
   });
 

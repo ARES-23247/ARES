@@ -215,7 +215,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
       />
 
       <EditorFooter 
-        errorMsg={errorMsg || uploadError || errors.ast?.message || ""}
+        errorMsg={errorMsg || uploadError || (errors.ast?.message as unknown as string) || ""}
         isPending={saveMutation.isPending}
         isEditing={!!editSlug}
         onDelete={handleDelete}

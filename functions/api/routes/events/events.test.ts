@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../../src/test/utils";
@@ -18,9 +19,9 @@ vi.mock("../../middleware", async (importOriginal) => {
 describe("Hono Backend - Events Router", () => {
   
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let mockDb: any;
-  let testApp: Hono;
+  let testApp: Hono<any>;
   let env: Record<string, unknown>;
 
   beforeEach(() => {
@@ -53,8 +54,8 @@ describe("Hono Backend - Events Router", () => {
       DEV_BYPASS: "true",
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("user", { id: "1", email: "admin@test.com", role: "admin", member_type: "mentor" });
       await next();

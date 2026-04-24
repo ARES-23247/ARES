@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { seasonContract as seasonsContract } from "../../../src/schemas/contracts/seasonContract";
@@ -6,8 +7,8 @@ import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../mid
 const s = initServer<AppEnv>();
 const seasonsRouter = new Hono<AppEnv>();
 
-const seasonsTsRestRouter = s.router(seasonsContract, {
-  list: async (_, c) => {
+const seasonsHandlers: any = {
+  list: async (_: any, c: any) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("seasons")
@@ -21,7 +22,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       return { status: 500, body: { error: "Failed to fetch seasons" } };
     }
   },
-  adminList: async (_, c) => {
+  adminList: async (_: any, c: any) => {
     const db = c.get("db");
     try {
       const seasons = await db.selectFrom("seasons")
@@ -33,7 +34,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       return { status: 500, body: { error: "Failed to list seasons" } };
     }
   },
-  adminDetail: async ({ params }: { params: { id: string } }, c) => {
+  adminDetail: async ({ params }: any, c: any) => {
     const db = c.get("db");
     try {
       const season = await db.selectFrom("seasons")
@@ -46,7 +47,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       return { status: 500, body: { error: "Failed to fetch season" } };
     }
   },
-  getDetail: async ({ params }: { params: { year: string } }, c) => {
+  getDetail: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db");
       const year = parseInt(params.year);
@@ -76,7 +77,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       return { status: 500, body: { error: "Failed to fetch season details" } };
     }
   },
-  save: async ({ body }: { body: unknown }, c) => {
+  save: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db");
       const existing = await db.selectFrom("seasons")
@@ -125,7 +126,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       return { status: 500, body: { error: "Save failed" } };
     }
   },
-  delete: async ({ params }: { params: { id: string } }, c) => {
+  delete: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db");
       const year = parseInt(params.id);
@@ -139,7 +140,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undelete: async ({ params }: { params: { id: string } }, c) => {
+  undelete: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db");
       const year = parseInt(params.id);
@@ -153,7 +154,7 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       return { status: 500, body: { error: "Restore failed" } };
     }
   },
-  purge: async ({ params }: { params: { id: string } }, c) => {
+  purge: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db");
       const year = parseInt(params.id);
@@ -166,8 +167,8 @@ const seasonsTsRestRouter = s.router(seasonsContract, {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-});
-
+};
+const seasonsTsRestRouter = s.router(seasonsContract, seasonsHandlers);
 createHonoEndpoints(seasonsContract, seasonsTsRestRouter, seasonsRouter);
 
 // Middlewares

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { sql, Kysely } from "kysely";
@@ -21,8 +22,8 @@ import {
 const s = initServer<AppEnv>();
 const postsRouter = new Hono<AppEnv>();
 
-const postTsRestRouter = s.router(postContract, {
-  getPosts: async ({ query }, c) => {
+const postHandlers: any = {
+  getPosts: async ({ query }: any, c: any) => {
     try {
       const db = c.get("db");
       const { limit = 10, offset = 0, q } = query;
@@ -30,7 +31,7 @@ const postTsRestRouter = s.router(postContract, {
       const baseQuery = db.selectFrom("posts")
         .where("is_deleted", "=", 0)
         .where("status", "=", "published")
-        .where((eb) => eb.or([
+        .where((eb: any) => eb.or([
           eb("published_at", "is", null),
           eb("published_at", "<=", new Date().toISOString())
         ]));
@@ -74,7 +75,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { posts: [] } };
     }
   },
-  getPost: async ({ params }, c) => {
+  getPost: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -94,7 +95,7 @@ const postTsRestRouter = s.router(postContract, {
         .where("posts.slug", "=", slug)
         .where("posts.is_deleted", "=", 0)
         .where("posts.status", "=", "published")
-        .where((eb) => eb.or([
+        .where((eb: any) => eb.or([
           eb("published_at", "is", null),
           eb("published_at", "<=", new Date().toISOString())
         ]))
@@ -106,7 +107,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  getAdminPosts: async ({ query }, c) => {
+  getAdminPosts: async ({ query }: any, c: any) => {
     try {
       const db = c.get("db");
       const { limit = 50, offset = 0 } = query;
@@ -121,7 +122,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { posts: [] } };
     }
   },
-  getAdminPost: async ({ params }, c) => {
+  getAdminPost: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -136,7 +137,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  savePost: async ({ body }, c) => {
+  savePost: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db");
       const titleError = validateLength(body.title, MAX_INPUT_LENGTHS.title, "Title");
@@ -237,7 +238,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: (err as Error)?.message || "Database write failed" } };
     }
   },
-  updatePost: async ({ params, body }, c) => {
+  updatePost: async ({ params, body }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -278,7 +279,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async ({ params }, c) => {
+  deletePost: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -289,7 +290,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  undeletePost: async ({ params }, c) => {
+  undeletePost: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -300,7 +301,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  purgePost: async ({ params }, c) => {
+  purgePost: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const db = c.get("db");
@@ -311,7 +312,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { success: false } };
     }
   },
-  approvePost: async ({ params }, c) => {
+  approvePost: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const result = await approvePost(c, slug);
@@ -321,7 +322,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 404, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async ({ params, body }, c) => {
+  rejectPost: async ({ params, body }: any, c: any) => {
     const { slug } = params;
     const { reason } = body;
     try {
@@ -348,7 +349,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 404, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async ({ params }, c) => {
+  getPostHistory: async ({ params }: any, c: any) => {
     const { slug } = params;
     try {
       const history = await getPostHistory(c, slug);
@@ -357,14 +358,14 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { history: [] } };
     }
   },
-  restorePostHistory: async ({ params }, c) => {
+  restorePostHistory: async ({ params }: any, c: any) => {
     const { slug, id } = params;
     const user = await getSessionUser(c);
     const result = await restorePostFromHistory(c, slug, id, user?.email || "anonymous_admin");
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async ({ params, body }, c) => {
+  repushSocials: async ({ params, body }: any, c: any) => {
     const { slug } = params;
     const { socials } = body;
     try {
@@ -389,8 +390,8 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 502, body: { error: (err as Error).message } };
     }
   },
-});
-
+};
+const postTsRestRouter = s.router(postContract, postHandlers);
 createHonoEndpoints(postContract, postTsRestRouter, postsRouter);
 
 // Apply middleware/protections

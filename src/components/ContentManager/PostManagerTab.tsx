@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { format } from "date-fns";
 import { Radio, FileText } from "lucide-react";
@@ -40,7 +41,7 @@ export default function PostManagerTab({
       setConfirmId(null);
       toast.success("Post deleted");
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast.error(err.message || "Delete failed");
     }
   });
@@ -161,7 +162,7 @@ export default function PostManagerTab({
                     <ClickToDeleteButton 
                       id={post.slug} 
                       onDelete={() => deleteMutation.mutate({ params: { slug: post.slug }, body: {} })} 
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       
                       isDeleting={deleteMutation.isPending && (deleteMutation.variables as any)?.params?.slug === post.slug} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}
@@ -174,13 +175,13 @@ export default function PostManagerTab({
                       disabled={localRestoreMutation.isPending}
                       className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors"
                     >
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      { }
                      {(localRestoreMutation.isPending && (localRestoreMutation.variables as any)?.params?.slug === post.slug) ? "RESTORING..." : "RESTORE"}
                     </button>
                     <ClickToDeleteButton 
                       id={`purge-${post.slug}`} 
                       onDelete={() => localPurgeMutation.mutate({ params: { slug: post.slug }, body: {} })} 
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       
                       isDeleting={localPurgeMutation.isPending && (localPurgeMutation.variables as any)?.params?.slug === post.slug} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}

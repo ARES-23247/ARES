@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2, MessageSquare, Mail, CheckSquare, Clock, Search, ChevronUp, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
@@ -44,7 +45,7 @@ export default function AdminInquiries() {
   const inquiries = useMemo(() => inquiriesData?.body?.inquiries || [], [inquiriesData]);
 
   const updateStatusMutation = api.inquiries.updateStatus.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200) {
         toast.success("Inquiry status updated.");
         queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] });
@@ -55,7 +56,7 @@ export default function AdminInquiries() {
   });
 
   const deleteInquiryMutation = api.inquiries.delete.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200) {
         toast.success("Inquiry deleted.");
         queryClient.invalidateQueries({ queryKey: ["admin-inquiries"] });

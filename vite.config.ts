@@ -118,7 +118,8 @@ export default defineConfig({
           router: ["react-router-dom"],
           motion: ["framer-motion"],
           icons: ["lucide-react"],
-          media: ["heic2any"]
+          media: ["heic2any"],
+          threejs: ["three", "@react-three/fiber", "@react-three/drei"]
         },
       },
     },

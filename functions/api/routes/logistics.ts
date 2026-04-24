@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono, Context } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { logisticsContract } from "../../../src/schemas/contracts/logisticsContract";
@@ -6,8 +7,8 @@ import { AppEnv, ensureAdmin  } from "../middleware";
 const s = initServer<AppEnv>();
 const logisticsRouter = new Hono<AppEnv>();
 
-const logisticsTsRestRouter = s.router(logisticsContract, {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const logisticsHandlers: any = {
+   
   getSummary: async (_: any, c: Context<AppEnv>) => {
     const db = c.get("db");
 
@@ -53,12 +54,13 @@ const logisticsTsRestRouter = s.router(logisticsContract, {
       return { status: 500 as const, body: { error: "Logistics fetch failed" } };
     }
   },
-});
+};
 
 // Hardening: Enforce ensureAdmin for all routes
 logisticsRouter.use("/admin", ensureAdmin);
 logisticsRouter.use("/admin/*", ensureAdmin);
 
+const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers);
 createHonoEndpoints(logisticsContract, logisticsTsRestRouter, logisticsRouter);
 
 export default logisticsRouter;

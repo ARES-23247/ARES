@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
@@ -18,9 +19,9 @@ import awardsRouter from "./awards";
 describe("Hono Backend - /awards Router", () => {
   
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let mockDb: any;
-  let testApp: Hono;
+  let testApp: Hono<any>;
 
   beforeEach(() => {
     mockDb = {
@@ -43,8 +44,8 @@ describe("Hono Backend - /awards Router", () => {
       }),
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       await next();
     });
@@ -58,7 +59,7 @@ describe("Hono Backend - /awards Router", () => {
 
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await res.json() as any;
     expect(body.awards).toBeDefined();
   });
 

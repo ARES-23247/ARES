@@ -2,7 +2,8 @@ import { Suspense, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, History,
-  User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert
+  User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert,
+  type LucideIcon
 } from "lucide-react";
 import { signOut } from "../../utils/auth-client";
 import { DashboardSession, DashboardPermissions } from "../../hooks/useDashboardSession";
@@ -20,7 +21,7 @@ const NavButton = ({
   pendingCount = 0
 }: {
   tab: string;
-  icon?: React.ElementType;
+  icon?: LucideIcon;
   label: string;
   disabled?: boolean;
   sub?: boolean;
@@ -114,6 +115,7 @@ export default function DashboardSidebar({
         <button
           onClick={() => setIsSidebarOpen(true)}
           className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm text-marble transition-colors"
+          aria-label="Open sidebar"
         >
           <Menu size={20} />
         </button>
@@ -138,7 +140,7 @@ export default function DashboardSidebar({
         <div className="p-6 border-b border-white/5 shrink-0 flex flex-col gap-4">
           <div className="flex items-center justify-between md:hidden pb-2 mb-2 border-b border-white/5">
             <span className="text-xs font-black text-marble/40 uppercase tracking-widest">Navigation Menu</span>
-            <button className="text-marble/50 p-1 bg-white/5 ares-cut-sm hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+            <button className="text-marble/50 p-1 bg-white/5 ares-cut-sm hover:text-white" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">
               <X size={16} />
             </button>
           </div>
@@ -177,7 +179,7 @@ export default function DashboardSidebar({
         {/* Scrollable Navigation */}
         <div className="flex-1 overflow-y-auto py-6 space-y-8 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           <div>
-            <h4 className="text-xs uppercase font-black tracking-widest text-marble/30 mb-2 px-6">Personal</h4>
+            <h4 className="text-xs uppercase font-black tracking-widest text-marble/60 mb-2 px-6">Personal</h4>
             <div className="space-y-1 px-3">
               <NavButton tab="" icon={LayoutDashboard} label="Dashboard Home" currentPath={location.pathname} />
               <NavButton tab="profile" icon={User} label="My Profile" currentPath={location.pathname} />
@@ -200,10 +202,10 @@ export default function DashboardSidebar({
 
           {isAuthorized && (
             <div>
-              <h4 className="text-xs uppercase font-black tracking-widest text-marble/30 mb-2 px-6">Content Hub</h4>
+              <h4 className="text-xs uppercase font-black tracking-widest text-marble/60 mb-2 px-6">Content Hub</h4>
               <div className="space-y-1 px-3">
-                <div className="flex items-center gap-3 px-4 py-2 mt-1 mb-1 text-[11px] font-black uppercase tracking-wider text-marble/40">
-                  <Folders size={14} className="text-marble/30" /> Database Manager
+                <div className="flex items-center gap-3 px-4 py-2 mt-1 mb-1 text-[11px] font-black uppercase tracking-wider text-marble/70">
+                  <Folders size={14} className="text-marble/50" /> Database Manager
                 </div>
                 <NavButton tab="manage_blog" label="1. Blogs / News" sub={true} currentPath={location.pathname} pendingCount={pendingPostsCount} />
                 <NavButton tab="manage_event" label="2. Calendar Events" sub={true} currentPath={location.pathname} pendingCount={pendingEventsCount} />
@@ -218,7 +220,7 @@ export default function DashboardSidebar({
 
           {isAuthorized && (
             <div>
-              <h4 className="text-xs uppercase font-black tracking-widest text-marble/30 mb-2 px-6">Operations</h4>
+              <h4 className="text-xs uppercase font-black tracking-widest text-marble/60 mb-2 px-6">Operations</h4>
               <div className="space-y-1 px-3">
                 {canSeeInquiries && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" currentPath={location.pathname} pendingCount={pendingInquiriesCount} />}
                 <NavButton tab="outreach" icon={Target} label="Outreach Tracker" currentPath={location.pathname} />
@@ -251,7 +253,7 @@ export default function DashboardSidebar({
               await signOut();
               window.location.href = '/';
             }}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-ares-danger/10 hover:bg-ares-danger/20 text-ares-danger border border-ares-danger/20 hover:border-ares-danger/40 ares-cut transition-all text-xs font-black uppercase tracking-wider"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-ares-danger/10 hover:bg-ares-danger/20 text-red-400 border border-ares-danger/20 hover:border-ares-danger/40 ares-cut transition-all text-xs font-black uppercase tracking-wider"
           >
             <LogOut size={16} /> Sign Out
           </button>

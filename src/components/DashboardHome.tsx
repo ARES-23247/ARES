@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSession } from "../utils/auth-client";
 import { Activity, Target, MessageSquare, BookOpen, User, HelpCircle } from "lucide-react";
@@ -10,32 +9,31 @@ import "driver.js/dist/driver.css";
 
 export default function DashboardHome() {
   const { data: session } = useSession();
-  const [stats, setStats] = useState<Record<string, number>>({});
   
   // @ts-expect-error - BetterAuth session typing
   const role = session?.user?.role || "unverified";
   const canSeeInquiries = role !== "unverified";
 
-  useEffect(() => {
-    // We only fetch stats if the user isn't unverified, just to give them some data
-    if (canSeeInquiries) {
-      Promise.allSettled([
-        api.posts.getAdminPosts.query({ query: { limit: 1 } }),
-        api.events.getAdminEvents.query({ query: { limit: 1 } }),
-        api.docs.getAdminDocs.query({ query: { limit: 1 } }),
-      ]).then(([postsRes, eventsRes, docsRes]) => {
-        let p = 0, e = 0, d = 0;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (postsRes.status === "fulfilled" && postsRes.value.status === 200) p = (postsRes.value.body as any).posts?.length || 0;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (eventsRes.status === "fulfilled" && eventsRes.value.status === 200) e = (eventsRes.value.body as any).events?.length || 0;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (docsRes.status === "fulfilled" && docsRes.value.status === 200) d = (docsRes.value.body as any).docs?.length || 0;
-        setStats({ posts: p, events: e, docs: d });
-      }).catch(() => {});
-    }
-  }, [canSeeInquiries]);
+  const { data: postsRes } = api.posts.getAdminPosts.useQuery({
+    query: { limit: 1 }
+  }, { enabled: canSeeInquiries });
 
+  const { data: eventsRes } = api.events.getAdminEvents.useQuery({
+    query: { limit: 1 }
+  }, { enabled: canSeeInquiries });
+
+  const { data: docsRes } = api.docs.adminList.useQuery({
+    query: { limit: 1 }
+  }, { enabled: canSeeInquiries });
+
+  const stats = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    posts: postsRes?.status === 200 ? (postsRes.body as any).posts?.length || 0 : 0,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    events: eventsRes?.status === 200 ? (eventsRes.body as any).events?.length || 0 : 0,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    docs: docsRes?.status === 200 ? (docsRes.body as any).docs?.length || 0 : 0,
+  };
    
   // @ts-expect-error - BetterAuth session typing
   const firstName = session?.user?.first_name || session?.user?.name || "ARES Member";

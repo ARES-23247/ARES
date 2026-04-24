@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
@@ -23,8 +24,8 @@ function maskSecret(value: string): string {
   return '••••••••' + value.slice(-4);
 }
 
-const settingsTsRestRouter = s.router(settingsContract, {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const settingsHandlers: any = {
+   
   getSettings: async (_: any, c: any) => {
     try {
       const settings = await getDbSettings(c);
@@ -37,7 +38,7 @@ const settingsTsRestRouter = s.router(settingsContract, {
       return { status: 500, body: { success: false, settings: {} } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   updateSettings: async ({ body }: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -47,7 +48,7 @@ const settingsTsRestRouter = s.router(settingsContract, {
         if (error) return { status: 400, body: { success: false, updated: 0 } };
         await db.insertInto("settings")
           .values({ key, value, updated_at: new Date().toISOString() })
-          .onConflict(oc => oc.column("key").doUpdateSet({ value, updated_at: new Date().toISOString() }))
+          .onConflict((oc: any) => oc.column("key").doUpdateSet({ value, updated_at: new Date().toISOString() }))
           .execute();
       }
       c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, `Updated ${entries.length} integration keys.`));
@@ -56,7 +57,7 @@ const settingsTsRestRouter = s.router(settingsContract, {
       return { status: 500, body: { success: false, updated: 0 } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   getStats: async (_: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -81,7 +82,9 @@ const settingsTsRestRouter = s.router(settingsContract, {
       return { status: 200, body: { posts: 0, events: 0, docs: 0, inquiries: 0, users: 0 } };
     }
   }
-});
+};
+
+const settingsTsRestRouter = s.router(settingsContract, settingsHandlers);
 
 createHonoEndpoints(settingsContract, settingsTsRestRouter, settingsRouter);
 
@@ -112,9 +115,8 @@ settingsRouter.get("/admin/backup", async (c) => {
       try {
         const cols = TABLE_COLUMNS[tableName];
         // @ts-expect-error -- Dynamic table name
-        let q = db.selectFrom(tableName);
+        let q: any = db.selectFrom(tableName);
         if (cols) {
-          // @ts-expect-error -- Dynamic column names
           q = q.select(cols);
         } else {
           q = q.selectAll();

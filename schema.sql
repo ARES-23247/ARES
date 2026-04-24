@@ -394,6 +394,7 @@ CREATE TABLE IF NOT EXISTS page_analytics (
 );
 CREATE INDEX IF NOT EXISTS idx_page_analytics_path ON page_analytics(path);
 CREATE INDEX IF NOT EXISTS idx_page_analytics_timestamp ON page_analytics(timestamp);
+CREATE INDEX IF NOT EXISTS idx_analytics_path_time ON page_analytics(path, timestamp);
 
 
 -- ── Media ────────────────────────────────────────────────────────────────

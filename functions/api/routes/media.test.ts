@@ -86,8 +86,8 @@ describe("Hono Backend - /media Router", () => {
       ENVIRONMENT: "test",
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com" });
       await next();

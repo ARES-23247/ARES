@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { notificationContract } from "../../../src/schemas/contracts/notificationContract";
@@ -6,8 +7,8 @@ import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware } from "../midd
 const s = initServer<AppEnv>();
 const notificationsRouter = new Hono<AppEnv>();
 
-const notificationTsRestRouter = s.router(notificationContract, {
-  getNotifications: async (_, c) => {
+const notificationHandlers: any = {
+  getNotifications: async (_: any, c: any) => {
     try {
       const db = c.get("db");
       const user = await getSessionUser(c);
@@ -25,7 +26,7 @@ const notificationTsRestRouter = s.router(notificationContract, {
       return { status: 500, body: { notifications: [] } };
     }
   },
-  markAsRead: async ({ params }, c) => {
+  markAsRead: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db");
       const user = await getSessionUser(c);
@@ -42,7 +43,7 @@ const notificationTsRestRouter = s.router(notificationContract, {
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-  markAllAsRead: async (_, c) => {
+  markAllAsRead: async (_: any, c: any) => {
     try {
       const db = c.get("db");
       const user = await getSessionUser(c);
@@ -58,8 +59,8 @@ const notificationTsRestRouter = s.router(notificationContract, {
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-});
-
+};
+const notificationTsRestRouter = s.router(notificationContract, notificationHandlers);
 createHonoEndpoints(notificationContract, notificationTsRestRouter, notificationsRouter);
 
 // Middlewares

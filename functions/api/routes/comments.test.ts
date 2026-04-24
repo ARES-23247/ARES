@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
@@ -31,9 +32,9 @@ import commentsRouter from "./comments";
 describe("Hono Backend - /comments Router", () => {
   
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let mockDb: any;
-  let testApp: Hono;
+  let testApp: Hono<any>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -57,8 +58,8 @@ describe("Hono Backend - /comments Router", () => {
       }),
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       await next();
     });
@@ -73,7 +74,7 @@ describe("Hono Backend - /comments Router", () => {
 
     const res = await testApp.request("/post/my-post", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = await res.json() as any;
     expect(body.comments).toHaveLength(1);
   });
 

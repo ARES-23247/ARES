@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
@@ -38,9 +39,9 @@ vi.mock("../../../functions/utils/postHistory", () => ({
 
 describe("Hono Backend - /posts Router", () => {
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let mockDb: any;
-  let testApp: Hono;
+  let testApp: Hono<any>;
   const env = { 
     DB: {
       prepare: vi.fn().mockReturnThis(),
@@ -80,8 +81,8 @@ describe("Hono Backend - /posts Router", () => {
       }),
     };
 
-    testApp = new Hono();
-    testApp.use("*", async (c, next) => {
+    testApp = new Hono<any>();
+    testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("user", { id: "1", email: "admin@test.com", role: "admin" });
       await next();
@@ -95,7 +96,7 @@ describe("Hono Backend - /posts Router", () => {
 
     const res = await testApp.request("/", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = await res.json() as any;
     expect(body.posts).toHaveLength(2);
   });
 
@@ -105,7 +106,7 @@ describe("Hono Backend - /posts Router", () => {
 
     const res = await testApp.request("/test-post", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, unknown>;
+    const body = await res.json() as any;
     expect(body.post).toBeDefined();
     expect((body.post as { slug: string }).slug).toBe("test-post");
   });

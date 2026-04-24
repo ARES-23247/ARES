@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
@@ -10,8 +11,8 @@ const judgesRouter = new Hono<AppEnv>();
 
 const portfolioCache = new Map<string, { data: unknown; expiresAt: number }>();
 
-const judgesTsRestRouter = s.router(judgeContract, {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const judgeHandlers: any = {
+   
   login: async ({ body, headers: _headers }: any, c: any) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const { checkPersistentRateLimit } = await import("../middleware/security");
@@ -29,9 +30,9 @@ const judgesTsRestRouter = s.router(judgeContract, {
       if (!validToken) return { status: 403, body: { error: "Security verification failed. Please try again." } };
 
       const row = await db.selectFrom("judge_access_codes")
-        .select(["code", "label", "expires_at"])
+        .select(["code", "label", "expires_at"] as any)
         .where("code", "=", code)
-        .where((eb) => eb.or([
+        .where((eb: any) => eb.or([
           eb("expires_at", "is", null),
           eb("expires_at", ">", new Date().toISOString())
         ]))
@@ -39,12 +40,12 @@ const judgesTsRestRouter = s.router(judgeContract, {
 
       if (!row) return { status: 403, body: { error: "Invalid or expired access code" } };
 
-      return { status: 200, body: { success: true, label: row.label } };
+      return { status: 200, body: { success: true, label: (row as any).label } };
     } catch {
       return { status: 500, body: { error: "Login failed" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   portfolio: async ({ headers }: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -59,7 +60,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       const valid = await db.selectFrom("judge_access_codes")
         .select("code")
         .where("code", "=", code)
-        .where((eb) => eb.or([
+        .where((eb: any) => eb.or([
           eb("expires_at", "is", null),
           eb("expires_at", ">", new Date().toISOString())
         ]))
@@ -75,7 +76,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
           .select(["slug", "title", "category", "description", "content"])
           .where("is_deleted", "=", 0)
           .where("status", "=", "published")
-          .where((eb) => eb.or([eb("is_portfolio", "=", 1), eb("is_executive_summary", "=", 1)]))
+          .where((eb: any) => eb.or([eb("is_portfolio", "=", 1), eb("is_executive_summary", "=", 1)]))
           .orderBy("is_executive_summary", "desc")
           .orderBy("category")
           .orderBy("sort_order")
@@ -109,12 +110,12 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500, body: { error: "Portfolio fetch failed" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   listCodes: async (_: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("judge_access_codes")
-        .select(["id", "code", "label", "created_at", "expires_at"])
+        .select(["id", "code", "label", "created_at", "expires_at"] as any)
         .orderBy("created_at", "desc")
         .execute();
       return { status: 200, body: { codes: results || [] } };
@@ -122,7 +123,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500, body: { error: "Failed to fetch codes" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   createCode: async ({ body }: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -131,7 +132,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       const id = crypto.randomUUID();
 
       await db.insertInto("judge_access_codes")
-        .values({ id, code, label: label || "Judge Access", expires_at: expiresAt || null })
+        .values({ id, code, label: label || "Judge Access", expires_at: expiresAt || null } as any)
         .execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_JUDGE_CODE", "judge_access", id, `Created access code: ${label}`));
@@ -140,7 +141,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500, body: { error: "Create failed" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   deleteCode: async ({ params }: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
@@ -150,8 +151,8 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-});
-
+};
+const judgesTsRestRouter = s.router(judgeContract, judgeHandlers);
 createHonoEndpoints(judgeContract, judgesTsRestRouter, judgesRouter);
 
 // Admin protection for admin paths

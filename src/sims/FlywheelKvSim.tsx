@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useControls, button } from 'leva';
+import { useControls, button, folder } from 'leva';
 
 export default function FlywheelKvSim() {
   const wCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -15,18 +15,18 @@ export default function FlywheelKvSim() {
   const setRef = useRef<any>(null);
 
   const [{ kV, kP, fwSet }, set] = useControls(() => ({
-    'Flywheel Physics': {
+    'Flywheel Physics': folder({
       kV: { value: 0.12, min: 0, max: 0.3, step: 0.01, label: 'kV (Feedforward)' },
       kP: { value: 0.08, min: 0, max: 0.5, step: 0.01, label: 'kP (Proportional)' },
       fwSet: { value: 80, min: 0, max: 150, step: 5, label: 'Setpoint (rad/s)' },
-    },
-    'Interactions': {
+    }),
+    'Interactions': folder({
       'Inject Ball': button(() => shoot()),
       'Reset Simulation': button(() => {
         setRef.current?.({ kV: 0.12, kP: 0.08, fwSet: 80 });
         velRef.current = 0;
       })
-    }
+    })
   }));
 
   useEffect(() => { setRef.current = set; }, [set]);

@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
+import { Kysely } from "kysely";
 import { handle } from "hono/cloudflare-pages";
 import { cors } from "hono/cors";
 import { Bindings, AppEnv, checkRateLimit, logSystemError, ensureAdmin, dbMiddleware, envMiddleware, parsePagination } from "./middleware";
 import { sql } from "kysely";
-import { DB } from "../src/schemas/database";
+import { DB } from "../../src/schemas/database";
 
 // ── Domain Routers ───────────────────────────────────────────────────
 import authRouter from "./routes/auth";
@@ -63,7 +65,7 @@ app.use("*", async (c, next) => {
 
 // ── CORS ─────
 apiRouter.use("*", cors({
-  origin: (origin, c) => {
+  origin: (origin, c: any) => {
     if (!origin) return origin;
     const requestOrigin = new URL(c.req.url).origin;
     if (origin === requestOrigin) return origin;
@@ -129,7 +131,7 @@ apiRouter.get("/admin/audit-log", ensureAdmin, async (c) => {
   return c.json({ logs: results || [] });
 });
 
-app.onError(async (err, c) => {
+app.onError(async (err, c: any) => {
   console.error("Global API Error:", err);
   const db = c.get("db") as Kysely<DB>;
   if (c.env?.DB) await logSystemError(db, "GlobalErrorHandler", err.message || "Unknown error", err.stack);
@@ -147,7 +149,7 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
   const { Kysely } = await import("kysely");
   const db = new Kysely<DB>({ dialect: new D1Dialect({ database: env.DB }) });
   await purgeOldInquiries(db, 30);
-  await db.deleteFrom("audit_log").where("created_at", "<", sql`datetime('now', '-90 days')`).execute();
+  await db.deleteFrom("audit_log").where("created_at", "<", sql`datetime('now', '-90 days')` as any).execute();
 };
 
 export default app;

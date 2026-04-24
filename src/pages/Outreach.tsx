@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -78,14 +79,14 @@ export default function Outreach() {
         throw new Error(payloadResult.error.issues[0].message);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const res = await api.inquiries.submit.mutation({ body: payloadResult.data as any });
       if (res.status === 200 || res.status === 207) {
         setSubmitStatus("success");
         setName(""); setEmail(""); setPhone(""); setOrganization(""); setDescription("");
       } else {
         setSubmitStatus("error");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         setErrorMessage((res.body as any).error || "Something went wrong.");
       }
     } catch (err) {
@@ -99,10 +100,10 @@ export default function Outreach() {
   const { data: logsRes, isLoading } = api.outreach.adminList.useQuery({
     queryKey: ["public-outreach"],
   });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const logs = (logsRes?.body as any)?.logs || [];
 
-  const totals = logs.reduce((acc, l) => ({
+  const totals = logs.reduce((acc: any, l: any) => ({
     hours: acc.hours + (l.hours_logged || 0),
     reach: acc.reach + (l.reach_count || 0),
     events: acc.events + 1
@@ -153,7 +154,7 @@ export default function Outreach() {
               { label: "Community Reach", val: totals.reach.toLocaleString(), icon: <div className="w-16 h-16 ares-cut bg-ares-red flex items-center justify-center shadow-lg"><Target className="text-white" size={32} /></div>, desc: "Estimated lives touched by ARES demos and events." },
               { label: "Service Hours", val: totals.hours.toLocaleString(), icon: <div className="w-16 h-16 ares-cut bg-ares-gold flex items-center justify-center shadow-lg"><Clock className="text-black" size={32} /></div>, desc: "Total student hours dedicated to community STEM engagement." },
               { label: "Impact Events", val: totals.events, icon: <div className="w-16 h-16 ares-cut bg-ares-cyan flex items-center justify-center shadow-lg"><Heart className="text-black" size={32} /></div>, desc: "Unique workshops, demos, and volunteer sessions completed." },
-            ].map((stat, idx) => (
+            ].map((stat: any, idx: any) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, x: -20 }}
@@ -216,8 +217,8 @@ export default function Outreach() {
 
           <div className="space-y-6">
             {isLoading ? (
-              [1,2,3].map(i => <div key={i} className="h-48 bg-white/5 ares-cut-lg animate-pulse" />)
-            ) : logs.map((log) => (
+              [1,2,3].map((i: any) => <div key={i} className="h-48 bg-white/5 ares-cut-lg animate-pulse" />)
+            ) : logs.map((log: any) => (
               <motion.div 
                 key={log.id} 
                 initial={{ opacity: 0, y: 20 }}

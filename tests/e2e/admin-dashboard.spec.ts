@@ -30,12 +30,14 @@ test.describe('Admin Dashboard', () => {
       });
     });
 
-    await page.route('**/api/profile/me', async route => {
+    await page.route('**/profile/me', async route => {
       await route.fulfill({
         status: 200,
         json: {
           user_id: "admin-user",
           nickname: "Admin User",
+          first_name: "Admin",
+          last_name: "User",
           member_type: "mentor",
           auth: {
             id: "admin-user",
@@ -58,6 +60,7 @@ test.describe('Admin Dashboard', () => {
   });
 
   test('Admin dashboard loads and displays authorized management hubs', async ({ page }) => {
+
     await page.goto('/dashboard');
     
     // Ensure dashboard title is visible
@@ -66,7 +69,6 @@ test.describe('Admin Dashboard', () => {
     // Verify user profile section rendered the mocked user
     await page.screenshot({ path: 'admin-dashboard.png', fullPage: true });
     await expect(page.getByText('Admin User', { exact: true }).first()).toBeVisible();
-    
     // Verify admin hubs are accessible
     await expect(page.getByText(/User Roles/i)).toBeVisible();
     await expect(page.getByText(/System Integrations/i)).toBeVisible();
@@ -76,6 +78,7 @@ test.describe('Admin Dashboard', () => {
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
     
+
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 });

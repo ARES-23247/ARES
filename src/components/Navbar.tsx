@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { Search, LayoutDashboard, LogIn, Bell, Check, Heart } from "lucide-react";
@@ -58,13 +59,13 @@ export default function Navbar() {
     }
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const rawNotifications = (notifRes?.body as any)?.notifications || [];
   
   // Combine db notifications with pending inquiries and pending posts
   const notifications = [
     ...rawNotifications,
-    ...pendingInquiries.map(i => ({
+    ...pendingInquiries.map((i: any) => ({
       id: `inquiry-${i.id}`,
       title: `New ${i.type === 'support' ? 'Support' : i.type === 'outreach' ? 'Outreach' : i.type === 'sponsor' ? 'Sponsor' : 'Inquiry'} Request`,
       message: `From ${i.name}`,
@@ -72,7 +73,7 @@ export default function Navbar() {
       link: '/dashboard/inquiries',
       is_inquiry: true
     })),
-    ...pendingPosts.map(p => ({
+    ...pendingPosts.map((p: any) => ({
       id: `post-${p.slug}`,
       title: `New Pending Post`,
       message: `"${p.title}" by ${p.author_nickname || 'Student'}`,
@@ -80,7 +81,7 @@ export default function Navbar() {
       link: '/dashboard/manage_blog',
       is_inquiry: true // Treat as action item (cannot be marked read)
     })),
-    ...pendingEvents.map(e => ({
+    ...pendingEvents.map((e: any) => ({
       id: `event-${e.id}`,
       title: `New Pending Event`,
       message: `"${e.title}"`,
@@ -88,7 +89,7 @@ export default function Navbar() {
       link: '/dashboard/manage_event',
       is_inquiry: true
     })),
-    ...pendingDocs.map(d => ({
+    ...pendingDocs.map((d: any) => ({
       id: `doc-${d.slug}`,
       title: `New Pending Doc`,
       message: `"${d.title}"`,
@@ -98,7 +99,7 @@ export default function Navbar() {
     }))
   ];
   
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = notifications.filter((n: any) => !n.is_read).length;
 
   return (
     <nav role="navigation" aria-label="Main Navigation" className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 pt-4 pb-4 transition-all duration-500 overflow-visible rounded-b-2xl border-t-4 border-ares-bronze">
@@ -184,7 +185,7 @@ export default function Navbar() {
                         No notifications yet.
                       </li>
                     ) : (
-                      notifications.map((n) => (
+                      notifications.map((n: any) => (
                         <li key={n.id}>
                           <div 
                             role="button"
@@ -193,14 +194,14 @@ export default function Navbar() {
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                // @ts-expect-error custom flag
+
                                 if (!n.is_read && !n.is_inquiry) markRead.mutate(n.id);
                                 if (n.link) navigate(n.link);
                                 setShowNotifs(false);
                               }
                             }}
                             onClick={() => {
-                              // @ts-expect-error custom flag
+                              
                               if (!n.is_read && !n.is_inquiry) markRead.mutate(n.id);
                               if (n.link) navigate(n.link);
                               setShowNotifs(false);

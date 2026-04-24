@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Context } from "hono";
 import { AppEnv, SessionUser, getSocialConfig } from "../api/middleware";
 import { emitNotification } from "./notifications";
@@ -54,8 +55,8 @@ export async function createShadowRevision(
       cf_email: user.email,
       status: 'pending',
       revision_of: originalSlug,
-      published_at: data.publishedAt || null,
-      season_id: data.seasonId || null
+      published_at: data.publishedAt || "" as any,
+      season_id: data.seasonId || "" as any
     })
     .execute();
 
@@ -76,13 +77,13 @@ export async function approveAndMergeRevision(
   // Update original
   await db.updateTable("posts")
     .set({
-      title: row.title,
+      title: row.title as string,
       author: row.author || "ARES Team",
       thumbnail: row.thumbnail,
       snippet: row.snippet,
       ast: row.ast,
       status: 'published',
-      season_id: row.season_id || null
+      season_id: row.season_id || "" as any
     })
     .where("slug", "=", originalSlug)
     .execute();
@@ -99,7 +100,7 @@ export async function approveAndMergeRevision(
     
     if (author) {
       c.executionCtx.waitUntil(emitNotification(c, {
-        userId: author.id,
+        userId: author.id as string,
         title: "Post Merged",
         message: `Your changes to "${row.title}" have been approved and published.`,
         link: `/blog/${originalSlug}`,
@@ -152,7 +153,7 @@ export async function captureHistory(
       snippet: data.snippet,
       ast: data.ast,
       author_email: data.cf_email || "unknown",
-      season_id: data.season_id || null
+      season_id: data.season_id || "" as any
     })
     .execute();
 
@@ -205,13 +206,13 @@ export async function restorePostFromHistory(
 
   await db.updateTable("posts")
     .set({
-      title: row.title,
+      title: row.title as string,
       author: row.author,
       thumbnail: row.thumbnail,
       snippet: row.snippet,
       ast: row.ast,
       cf_email: restorerEmail,
-      season_id: row.season_id || null
+      season_id: row.season_id || "" as any
     })
     .where("slug", "=", slug)
     .execute();
@@ -252,10 +253,10 @@ export async function approvePost(c: Context<AppEnv>, slug: string) {
     await dispatchSocials(
       c.env.DB,
       {
-        title: row.title,
+        title: row.title as string,
         url: `${baseUrl}/blog/${slug}`,
-        snippet: row.snippet || "Read the latest engineering update from ARES 23247!",
-        coverImageUrl: row.thumbnail || "/gallery_1.png",
+        snippet: (row.snippet || "Read the latest engineering update from ARES 23247!") as string,
+        coverImageUrl: (row.thumbnail || "/gallery_1.png") as string,
         baseUrl: baseUrl
       },
       socialConfig
@@ -274,7 +275,7 @@ export async function approvePost(c: Context<AppEnv>, slug: string) {
     if (author) {
       try {
         await emitNotification(c, {
-          userId: author.id,
+          userId: author.id as string,
           title: "Post Approved",
           message: `Your post "${row.title}" has been published.`,
           link: `/blog/${slug}`,

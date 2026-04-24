@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { AppEnv, getSessionUser, turnstileMiddleware  } from "../../middleware";
 
@@ -102,8 +103,8 @@ signupsRouter.post("/:id/signups", turnstileMiddleware(), async (c) => {
         notes: notes || "",
         prep_hours: prep_hours || 0,
         created_at: new Date().toISOString()
-      })
-      .onConflict(oc => oc.columns(["event_id", "user_id"]).doUpdateSet({
+      } as any)
+      .onConflict((oc: any) => oc.columns(["event_id", "user_id"]).doUpdateSet({
         bringing: bringing || "",
         notes: notes || "",
         prep_hours: prep_hours || 0
@@ -142,8 +143,8 @@ signupsRouter.patch("/:id/signups/me/attendance", async (c) => {
     const attended = body.attended ? 1 : 0;
     
     await db.insertInto("event_signups")
-      .values({ id: crypto.randomUUID(), event_id: eventId, user_id: user.id, attended })
-      .onConflict(oc => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended }))
+      .values({ id: crypto.randomUUID(), event_id: eventId, user_id: user.id, attended } as any)
+      .onConflict((oc: any) => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended }))
       .execute();
     return c.json({ success: true });
   } catch {
@@ -166,8 +167,8 @@ signupsRouter.patch("/:id/signups/:userId/attendance", async (c) => {
     const attended = body.attended ? 1 : 0;
     
     await db.insertInto("event_signups")
-      .values({ id: crypto.randomUUID(), event_id: eventId, user_id: userId, attended })
-      .onConflict(oc => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended }))
+      .values({ id: crypto.randomUUID(), event_id: eventId, user_id: userId, attended } as any)
+      .onConflict((oc: any) => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended }))
       .execute();
     return c.json({ success: true });
   } catch {

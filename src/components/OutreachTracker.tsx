@@ -39,7 +39,8 @@ export default function OutreachTracker() {
   const [isAdding, setIsAdding] = useState(false);
 
   const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<OutreachFormValues>({
-    resolver: zodResolver(outreachFormSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(outreachFormSchema) as any,
     defaultValues: {
       title: "",
       date: new Date().toISOString().split('T')[0],

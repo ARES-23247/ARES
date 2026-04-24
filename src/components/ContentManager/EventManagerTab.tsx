@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from "date-fns";
 import { Radio, Calendar } from "lucide-react";
 import DashboardEmptyState from "../dashboard/DashboardEmptyState";
@@ -25,12 +26,12 @@ export default function EventManagerTab({
 }: EventManagerTabProps) {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError } = api.events.adminList.useQuery({
-    queryKey: ["admin_events"],
+  const { data: eventsData, isLoading, isError } = api.events.getAdminEvents.useQuery({
+    query: { limit: 100, offset: 0 }
   });
 
-  const events = data?.status === 200 ? (data.body.events as unknown as EventItem[]) : [];
-  const lastSyncedAt = data?.status === 200 ? data.body.lastSyncedAt : null;
+  const events = eventsData?.status === 200 ? (eventsData.body.events as unknown as EventItem[]) : [];
+  const lastSyncedAt = eventsData?.status === 200 ? eventsData.body.lastSyncedAt : null;
 
   const deleteMutation = api.events.deleteEvent.useMutation({
     onSuccess: () => {
@@ -38,13 +39,13 @@ export default function EventManagerTab({
       setConfirmId(null);
       toast.success("Event deleted");
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast.error(err.message || "Delete failed");
     }
   });
 
   const syncGcalMutation = api.events.syncEvents.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.status === 200 && res.body.success) {
         queryClient.invalidateQueries({ queryKey: ["admin_events"] });
         toast.success(`Sync Complete! Fetched ${res.body.count || 0} events.`);
@@ -52,7 +53,7 @@ export default function EventManagerTab({
         toast.error("Sync failed");
       }
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast.error(err.message || "Sync failed");
     }
   });
@@ -190,7 +191,7 @@ export default function EventManagerTab({
                     <ClickToDeleteButton 
                       id={event.id} 
                       onDelete={() => deleteMutation.mutate({ params: { id: event.id }, body: {} })} 
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       
                       isDeleting={deleteMutation.isPending && (deleteMutation.variables as any)?.params?.id === event.id} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}
@@ -203,13 +204,13 @@ export default function EventManagerTab({
                       disabled={localRestoreMutation.isPending}
                       className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors"
                     >
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      { }
                       {(localRestoreMutation.isPending && (localRestoreMutation.variables as any)?.params?.id === event.id) ? "RESTORING..." : "RESTORE"}
                     </button>
                     <ClickToDeleteButton 
                       id={`purge-${event.id}`} 
                       onDelete={() => localPurgeMutation.mutate({ params: { id: event.id }, body: {} })} 
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                       
                       isDeleting={localPurgeMutation.isPending && (localPurgeMutation.variables as any)?.params?.id === event.id} 
                       confirmId={confirmId}
                       setConfirmId={setConfirmId}

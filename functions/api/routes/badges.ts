@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
@@ -9,8 +10,8 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 const s = initServer<AppEnv>();
 const badgesRouter = new Hono<AppEnv>();
 
-const badgesTsRestRouter = s.router(badgeContract, {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const badgeHandlers: any = {
+   
   list: async (_: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -23,7 +24,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to fetch badges" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   create: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -41,7 +42,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to create badge" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   grant: async ({ body }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -88,7 +89,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to award badge" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   revoke: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -101,7 +102,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to revoke badge" } };
     }
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   delete: async ({ params }: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -113,8 +114,8 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500, body: { error: "Failed to delete badge definition" } };
     }
   },
-});
-
+};
+const badgesTsRestRouter = s.router(badgeContract, badgeHandlers);
 createHonoEndpoints(badgeContract, badgesTsRestRouter, badgesRouter);
 
 // Middlewares
@@ -129,7 +130,7 @@ badgesRouter.get("/leaderboard", async (c) => {
     const db = c.get("db");
     const results = await db.selectFrom("user_profiles as u")
       .innerJoin("user_badges as ub", "u.user_id", "ub.user_id")
-      .select(["u.user_id", "u.nickname", "u.member_type", db.fn.count("ub.id").as("badge_count")])
+      .select(["u.user_id", "u.nickname", "u.member_type", db.fn.count("ub.id" as any).as("badge_count")])
       .where("u.show_on_about", "=", 1)
       .groupBy("u.user_id")
       .orderBy("badge_count", "desc")

@@ -19,7 +19,7 @@ export default function Leaderboard() {
     queryKey: ["leaderboard"],
   });
 
-  const leaders = useMemo(() => (leaderboardRes?.status === 200 ? leaderboardRes.body.leaderboard : []) as LeaderboardUser[], [leaderboardRes]);
+  const leaders = useMemo(() => (leaderboardRes?.status === 200 ? (leaderboardRes.body.leaderboard || []) : []) as LeaderboardUser[], [leaderboardRes]);
 
   if (isLoading) {
     return (

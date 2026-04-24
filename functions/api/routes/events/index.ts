@@ -1,3 +1,4 @@
+ 
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { eventContract } from "../../../../src/schemas/contracts/eventContract";
