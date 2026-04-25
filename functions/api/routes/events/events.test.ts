@@ -83,6 +83,7 @@ describe("Hono Backend - Events Router", () => {
   });
 
   it("POST /admin/save - create event", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null); // bypass duplicate check
     const res = await testApp.request("/admin/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

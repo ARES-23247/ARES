@@ -58,6 +58,7 @@ describe("Analytics Router", () => {
     
     // Mock turnstile fetch
     globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve({ success: true }),
     }) as any;
   });
