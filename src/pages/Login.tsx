@@ -2,6 +2,7 @@ import { useState } from "react";
 import { signIn } from "@/utils/auth-client";
 import { Key, LogIn, AlertCircle, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
+import SEO from "@/components/SEO";
 
 export default function Login() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-ares-black p-6 relative overflow-hidden">
+      <SEO title="Login" description="Authenticate to access the ARES 23247 Team Portal." />
       {/* Background Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-ares-red/10 blur-[120px] rounded-full animate-pulse" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-ares-gold/10 blur-[120px] rounded-full" />

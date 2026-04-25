@@ -101,7 +101,7 @@ export default function SwerveSim() {
 
       // Chassis
       ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
-      ctx.strokeStyle = 'var(--ares-red)'; // MARS Red
+      ctx.strokeStyle = 'var(--ares-red)'; // ARES Red
       ctx.lineWidth = 2;
       ctx.fillRect(-rbW/2, -rbH/2, rbW, rbH);
       ctx.strokeRect(-rbW/2, -rbH/2, rbW, rbH);

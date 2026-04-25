@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
 
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-24">
+      <SEO title="404 - Not Found" description="The requested page could not be found on the ARES 23247 Team Portal." />
       <div className="max-w-lg text-center">
         <div className="relative mb-8">
           <h1 className="text-[8rem] sm:text-[10rem] font-black text-white">

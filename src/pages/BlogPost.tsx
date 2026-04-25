@@ -11,6 +11,8 @@ import { Edit2 } from "lucide-react";
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import CommentSection from "../components/CommentSection";
 import { api } from "../api/client";
+import SEO from "../components/SEO";
+import { extractTextFromAst } from "../utils/content";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface PostRow {
@@ -59,6 +61,12 @@ export default function BlogPost() {
       exit={{ opacity: 0 }}
       className="w-full min-h-screen bg-obsidian text-marble"
     >
+      <SEO 
+        title={post.title} 
+        description={extractTextFromAst(parsedAst).slice(0, 160) + "..."} 
+        image={post.thumbnail}
+        type="article"
+      />
       {/* ─── STANDALONE BLOG HERO ─── */}
       <section className="relative w-full h-[50vh] min-h-[400px] flex items-center overflow-hidden bg-obsidian border-b-4 border-ares-cyan">
         <img src={post.thumbnail || "/api/media/1776551060548-favicon.webp"} alt={post.title} className={`absolute inset-0 w-full h-full opacity-60 mix-blend-luminosity ${post.thumbnail ? 'object-cover' : 'object-contain p-16 bg-black/80'}`} />

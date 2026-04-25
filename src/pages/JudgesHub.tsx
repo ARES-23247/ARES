@@ -4,6 +4,7 @@ import { ShieldCheck, BookOpen, Trophy, Users, ArrowRight, Lock, AlertCircle, Fi
 import { format } from "date-fns";
 import Turnstile from "../components/Turnstile";
 import { api } from "../api/client";
+import SEO from "../components/SEO";
 
 interface PortfolioData {
   docs: Array<{
@@ -95,6 +96,7 @@ export default function JudgesHub() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-ares-black flex items-center justify-center p-6 relative overflow-hidden">
+        <SEO title="Judges Hub" description="Secure rapid-review portal for Team ARES 23247 competition judges." />
         {/* Background Effects */}
         <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-ares-cyan/10 blur-[150px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-ares-red/5 blur-[120px] rounded-full" />

@@ -6,6 +6,7 @@ import { GraduationCap, Briefcase, ArrowLeft, Shield, ShieldAlert } from "lucide
 import * as LucideIcons from "lucide-react";
 import { BrandLogo } from "../components/BrandLogo";
 import { api } from "../api/client";
+import SEO from "../components/SEO";
 
 interface ProfilePublic {
   first_name?: string;
@@ -106,6 +107,11 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-obsidian">
+      <SEO 
+        title={profile.nickname ? `${profile.nickname}'s Profile` : "Team Member Profile"} 
+        description={profile.bio || `View ${profile.nickname}'s robotics journey and achievements at ARES 23247.`}
+        image={profile.avatar}
+      />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <div className="flex justify-between items-center mb-8 print:hidden">
           <Link to="/about" className="inline-flex items-center gap-2 text-marble hover:text-white text-sm font-bold transition-colors">

@@ -8,6 +8,8 @@ import CommentSection from "../components/CommentSection";
 import EventSignups from "../components/EventSignups";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { api } from "../api/client";
+import SEO from "../components/SEO";
+import { extractTextFromAst } from "../utils/content";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface EventRow {
@@ -83,6 +85,12 @@ export default function EventDetail() {
       exit={{ opacity: 0 }}
       className="w-full min-h-screen bg-obsidian text-marble"
     >
+      <SEO 
+        title={event.title} 
+        description={parsedAst ? extractTextFromAst(parsedAst).slice(0, 160) + "..." : event.description.slice(0, 160) + "..."} 
+        image={event.cover_image || undefined}
+        type="event"
+      />
       {/* ─── STANDALONE EVENT HERO ─── */}
       <section className="relative w-full h-[50vh] min-h-[400px] flex items-center overflow-hidden bg-obsidian border-b-4 border-ares-bronze">
         <GreekMeander variant="thick" opacity="opacity-60" className="absolute bottom-[-1px] left-0 z-10" />

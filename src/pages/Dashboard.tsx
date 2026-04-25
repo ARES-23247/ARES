@@ -6,6 +6,7 @@ import { useDashboardNotifications } from "../hooks/useDashboardNotifications";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar";
 import DashboardRoutes from "../components/dashboard/DashboardRoutes";
 import { api } from "../api/client";
+import SEO from "../components/SEO";
 
 export default function Dashboard() {
   const { session, isPending, permissions } = useDashboardSession();
@@ -65,6 +66,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-obsidian text-white font-sans overflow-hidden font-medium selection:bg-ares-red/30">
+      <SEO title="Command Center" description="ARES 23247 Administrative Dashboard and Team Portal." />
       <DashboardSidebar session={session} permissions={permissions} notifications={notifications} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">

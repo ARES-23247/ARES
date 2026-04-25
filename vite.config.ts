@@ -36,7 +36,7 @@ export default defineConfig({
         name: 'ARES 23247 Web Portal',
         short_name: 'ARES',
         description: 'FIRST Tech Challenge Team 23247 - Appalachian Robotics & Engineering Society.',
-        theme_color: '#dc2626',
+        theme_color: '#C00000',
         background_color: '#09090b',
         display: 'standalone',
         icons: [
@@ -61,7 +61,7 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api\//, /\/[^/]+\.[^/]+$/],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/ares23247\.com\/api\/.*/i,
+            urlPattern: /^https:\/\/aresfirst\.org\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'ares-api-cache',
@@ -111,17 +111,81 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          editor: ["@tiptap/react", "@tiptap/starter-kit"],
-          router: ["react-router-dom"],
-          motion: ["framer-motion"],
-          icons: ["lucide-react"],
-          media: ["heic2any"],
-          threejs: ["three", "@react-three/fiber", "@react-three/drei"],
-          syntax: ["react-syntax-highlighter"],
-          tremor: ["@tremor/react"],
-          flow: ["@xyflow/react"],
-          mammoth: ["mammoth"]
+        manualChunks(id) {
+          // ── Vendor isolation: route node_modules by package path ──
+
+          // Editor: Tiptap + ProseMirror core (the biggest offender)
+          if (id.includes("node_modules/@tiptap/") || id.includes("node_modules/prosemirror-") || id.includes("node_modules/@tiptap/pm")) {
+            return "editor";
+          }
+
+          // Code highlighting & math rendering (used inside editor)
+          if (id.includes("node_modules/highlight.js") || id.includes("node_modules/lowlight") || id.includes("node_modules/katex")) {
+            return "syntax-highlight";
+          }
+          if (id.includes("node_modules/react-syntax-highlighter")) {
+            return "syntax";
+          }
+
+          // Icons: lucide-react ships 1500+ icon components
+          if (id.includes("node_modules/lucide-react")) {
+            return "icons";
+          }
+
+          // Media processing: heic2any is 1.3MB alone
+          if (id.includes("node_modules/heic2any")) {
+            return "media";
+          }
+
+          // Document import
+          if (id.includes("node_modules/mammoth")) {
+            return "mammoth";
+          }
+
+          // 3D visualization
+          if (id.includes("node_modules/three") || id.includes("node_modules/@react-three/")) {
+            return "threejs";
+          }
+
+          // Flow diagrams
+          if (id.includes("node_modules/@xyflow/")) {
+            return "flow";
+          }
+
+          // Analytics charts
+          if (id.includes("node_modules/@tremor/")) {
+            return "tremor";
+          }
+
+          // Animation
+          if (id.includes("node_modules/framer-motion")) {
+            return "motion";
+          }
+
+          // Router
+          if (id.includes("node_modules/react-router")) {
+            return "router";
+          }
+
+          // UI primitives (Radix, Headless UI, dnd-kit)
+          if (id.includes("node_modules/@radix-ui/") || id.includes("node_modules/@headlessui/") || id.includes("node_modules/@dnd-kit/")) {
+            return "ui-primitives";
+          }
+
+          // DOMPurify + markdown rendering
+          if (id.includes("node_modules/dompurify") || id.includes("node_modules/react-markdown") || id.includes("node_modules/remark-") || id.includes("node_modules/rehype-")) {
+            return "markdown";
+          }
+
+          // React core (shared across all chunks)
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+            return "react-vendor";
+          }
+
+          // TanStack query + table (shared data layer)
+          if (id.includes("node_modules/@tanstack/")) {
+            return "tanstack";
+          }
         },
       },
     },

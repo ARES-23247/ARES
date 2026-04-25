@@ -2,6 +2,7 @@ import { useState } from "react";
 import { siteConfig } from "../site.config";
 import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function BugReport() {
   const [title, setTitle] = useState("");
@@ -28,6 +29,7 @@ export default function BugReport() {
 
   return (
     <div className="flex flex-col w-full">
+      <SEO title="Bug Report" description="Help us squish bugs in the ARES 23247 web infrastructure by drafting a GitHub Issue." />
       <section className="py-24 bg-obsidian text-marble min-h-[85vh]">
         <div className="max-w-4xl mx-auto px-6">
           <div className="mb-12">

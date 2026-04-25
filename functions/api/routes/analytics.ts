@@ -191,11 +191,12 @@ const analyticsHandlers = {
   getStats: async (_: any, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
-      const postsCount = await db.selectFrom("posts").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst();
-      const eventsCount = await db.selectFrom("events").select((eb) => eb.fn.count("id").as("total")).where("is_deleted", "=", 0).executeTakeFirst();
-      const docsCount = await db.selectFrom("docs").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst();
-
-      const dbSettings = await getDbSettings(c);
+      const [postsCount, eventsCount, docsCount, dbSettings] = await Promise.all([
+        db.selectFrom("posts").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("events").select((eb) => eb.fn.count("id").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("docs").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        getDbSettings(c)
+      ]);
 
       return {
         status: 200 as const,
