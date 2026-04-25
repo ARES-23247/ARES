@@ -4,6 +4,7 @@ import { z } from "zod";
 const c = initContract();
 
 export const seasonSchema = z.object({
+  original_year: z.number().optional(),
   start_year: z.number(),
   end_year: z.number(),
   challenge_name: z.string(),

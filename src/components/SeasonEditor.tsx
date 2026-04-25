@@ -94,6 +94,7 @@ export default function SeasonEditor() {
     const robot_description = editor ? JSON.stringify(editor.getJSON()) : null;
     
     const payload = {
+      original_year: editId ? Number(editId) : undefined,
       start_year: Number(startYear),
       end_year: Number(startYear) + 1,
       challenge_name: challengeName,
@@ -133,7 +134,6 @@ export default function SeasonEditor() {
                 type="number"
                 value={startYear}
                 onChange={(e) => setStartYear(parseInt(e.target.value))}
-                disabled={!!editId}
                 className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:ring-1 focus:ring-ares-gold transition-all"
                 placeholder='2025'
               />

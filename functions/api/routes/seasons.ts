@@ -118,9 +118,18 @@ const seasonsTsRestRouter: any = s.router(seasonsContract as any, {
     save: async ({ body }: { body: any }, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
+      const targetYear = body.original_year || body.start_year;
+
+      if (body.original_year && body.original_year !== body.start_year) {
+        const collision = await db.selectFrom("seasons").select("start_year").where("start_year", "=", body.start_year).executeTakeFirst();
+        if (collision) {
+          return { status: 400 as const, body: { error: `Season ${body.start_year} already exists.` } };
+        }
+      }
+
       const existing = await db.selectFrom("seasons")
         .select("start_year")
-        .where("start_year", "=", body.start_year)
+        .where("start_year", "=", targetYear)
         .executeTakeFirst();
 
       const values = {
@@ -141,9 +150,21 @@ const seasonsTsRestRouter: any = s.router(seasonsContract as any, {
       if (existing) {
         await db.updateTable("seasons")
           .set(values)
-          .where("start_year", "=", body.start_year)
+          .where("start_year", "=", targetYear)
           .execute();
-        c.executionCtx.waitUntil(logAuditAction(c, "season_updated", "seasons", body.start_year.toString(), `Season "${body.start_year}" updated`));
+
+        if (body.original_year && body.original_year !== body.start_year) {
+          const oldId = targetYear.toString();
+          const newId = body.start_year.toString();
+          await db.updateTable("events").set({ season_id: newId }).where("season_id", "=", oldId).execute();
+          await db.updateTable("posts").set({ season_id: newId }).where("season_id", "=", oldId).execute();
+          await db.updateTable("awards").set({ season_id: newId }).where("season_id", "=", oldId).execute();
+          await db.updateTable("outreach_logs").set({ season_id: newId }).where("season_id", "=", oldId).execute();
+          
+          c.executionCtx.waitUntil(logAuditAction(c, "season_year_updated", "seasons", body.start_year.toString(), `Season ID changed from ${targetYear} to ${body.start_year}`));
+        } else {
+          c.executionCtx.waitUntil(logAuditAction(c, "season_updated", "seasons", body.start_year.toString(), `Season "${body.start_year}" updated`));
+        }
       } else {
         await db.insertInto("seasons")
           .values({ ...values, is_deleted: 0 })
