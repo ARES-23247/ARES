@@ -41,12 +41,11 @@ export default function Blog() {
           transition={{ delay: 0.1 }}
           className="mb-12"
         >
-          <h3 className="text-ares-gold font-bold uppercase tracking-widest text-sm mb-2">Engineering & Outreach</h3>
-          <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tighter shadow-sm">
-            Team <span aria-hidden="true" className="text-ares-red before:content-['Blog']"></span>
-            <span className="sr-only">Blog</span>
+          <h3 className="text-ares-gold font-bold uppercase tracking-widest text-sm mb-4">Engineering & Outreach</h3>
+          <h1 className="text-6xl md:text-8xl font-black text-white mb-8 tracking-tighter italic">
+            Team <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block text-white">Blog</span>.
           </h1>
-          <p className="text-white/60 mt-4 max-w-2xl text-balance">
+          <p className="text-marble text-lg font-medium mt-4 max-w-2xl text-balance">
             Read deep dives into our codebase, mechanical design process, and reflections on our outreach events.
           </p>
         </motion.div>
