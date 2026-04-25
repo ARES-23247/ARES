@@ -7,12 +7,12 @@ import { api } from "../api/client";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Season {
-  id: string;
+  start_year: number;
+  end_year: number;
   challenge_name: string;
   robot_name: string | null;
   robot_image: string | null;
   summary: string | null;
-  start_date: string | null;
   robot_cad_url: string | null;
 }
 
@@ -84,7 +84,7 @@ export default function Seasons() {
                  const isEven = idx % 2 === 0;
                  return (
                    <motion.div 
-                     key={season.id}
+                     key={season.start_year}
                      initial={{ opacity: 0, x: isEven ? -50 : 50 }}
                      whileInView={{ opacity: 1, x: 0 }}
                      className="relative pl-8 md:pl-0"
@@ -95,15 +95,17 @@ export default function Seasons() {
                         <div className={`md:w-1/2 ${isEven ? 'md:text-right' : 'md:text-left'}`}>
                            <div className={`mb-3 flex ${isEven ? 'md:justify-end' : 'md:justify-start'}`}>
                              <span className="bg-ares-red text-white text-xs font-black uppercase tracking-widest px-3 py-1 ares-cut-sm shadow-md">
-                               {season.id}
+                               {season.start_year}-{season.end_year}
                              </span>
                            </div>
                            <h3 className="text-4xl md:text-5xl font-black text-white italic tracking-tighter mb-4 uppercase leading-none">
                              {season.challenge_name}
                            </h3>
-                           <p className="text-marble text-lg leading-relaxed mb-6 font-medium">
-                             {season.summary}
-                           </p>
+                           {season.summary && (
+                             <p className="text-marble text-lg leading-relaxed mb-6 font-medium">
+                               {season.summary}
+                             </p>
+                           )}
                            
                            {season.robot_name && (
                              <div className={`flex items-center gap-3 mb-6 p-4 bg-white/5 border border-white/10 ares-cut-sm ${isEven ? 'md:justify-end' : 'md:justify-start'}`}>
