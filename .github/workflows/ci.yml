@@ -1,6 +1,9 @@
 name: CI Testing
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
     branches:
       - master
@@ -52,10 +55,11 @@ jobs:
         env:
           PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "run_e2e=${{ inputs.run_e2e }}" >> $GITHUB_OUTPUT
-          elif [[ "$PR_TITLE" == *"[skip e2e]"* ]] || [[ "$PR_TITLE" == *"[hotfix]"* ]] || [[ "$PR_LABELS" == *"hotfix"* ]] || [[ "$PR_LABELS" == *"skip-e2e"* ]]; then
+          elif [[ "$PR_TITLE" == *"[skip e2e]"* ]] || [[ "$PR_TITLE" == *"[hotfix]"* ]] || [[ "$PR_LABELS" == *"hotfix"* ]] || [[ "$PR_LABELS" == *"skip-e2e"* ]] || [[ "$COMMIT_MSG" == *"[skip e2e]"* ]] || [[ "$COMMIT_MSG" == *"[hotfix]"* ]]; then
             echo "run_e2e=false" >> $GITHUB_OUTPUT
             echo "⏩ Skipping E2E and Pa11y tests for hotfix/fast-path."
           else
