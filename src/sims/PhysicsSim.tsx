@@ -250,15 +250,15 @@ export default function PhysicsSim() {
   }, []);
 
   return (
-    <div className="simulator-container" style={{ background: 'var(--obsidian)', border: '1px solid var(--ares-gray)', borderRadius: '12px', padding: '20px', margin: '40px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+    <div className="simulator-container bg-obsidian border border-ares-gray ares-cut p-5 my-10">
+      <div className="flex justify-between items-center mb-5">
         <div>
-          <h3 style={{ margin: 0, color: 'var(--marble)', fontFamily: '"Orbitron", sans-serif' }}>Interactive Collision Sandbox</h3>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--ares-gray)' }}>Drag the blue robot chassis to collide with the Fuel Balls. Hit them into the glowing goal on the left!</p>
+          <h3 className="m-0 text-marble font-black tracking-tighter uppercase text-xl">Interactive Collision Sandbox</h3>
+          <p className="m-0 text-sm text-ares-gray">Drag the blue robot chassis to collide with the Fuel Balls. Hit them into the glowing goal on the left!</p>
         </div>
         <button 
           onClick={initWorld}
-          style={{ background: 'var(--ares-cyan)', color: 'var(--obsidian)', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700 }}
+          className="bg-ares-cyan text-obsidian border-none px-4 py-2 ares-cut-sm cursor-pointer font-bold uppercase tracking-widest text-xs"
         >
           RESET WORLD
         </button>
@@ -268,10 +268,10 @@ export default function PhysicsSim() {
         ref={canvasRef}
         width={800} 
         height={400} 
-        style={{ width: '100%', maxWidth: '800px', aspectRatio: '2/1', height: 'auto', display: 'block', margin: '0 auto', background: 'var(--obsidian)', borderRadius: '8px', border: '1px solid var(--ares-gray)', cursor: 'grab', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}
+        className="w-full max-w-[800px] aspect-[2/1] h-auto block mx-auto bg-obsidian ares-cut border border-ares-gray cursor-grab shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"
       />
       
-      <div style={{ marginTop: '15px', padding: '10px', background: 'rgba(0,0,0,0.5)', borderRadius: '6px', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem', color: logMsg.color }}>
+      <div className="mt-4 p-2.5 bg-black/50 ares-cut-sm font-mono text-sm" style={{ color: logMsg.color }}>
         {logMsg.text}
       </div>
     </div>

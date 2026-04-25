@@ -160,6 +160,8 @@ export function SecuritySettings({ inputClass, labelClass, sectionClass }: Profi
                 <div className="flex items-center gap-2 bg-obsidian border border-white/10 p-2 ares-cut-sm">
                   <code className="text-ares-gold text-xs font-mono flex-1 truncate">{twoFactorData.secret}</code>
                   <button 
+                    title="Copy secret"
+                    aria-label="Copy secret"
                     onClick={() => {
                         navigator.clipboard.writeText(twoFactorData.secret);
                         setSuccess("Secret copied!");

@@ -200,6 +200,8 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
         <div className="mt-1 flex-shrink-0">
           <input 
             type="checkbox" 
+            aria-label="Task checkbox"
+            title="Task checkbox"
             checked={node.attrs?.checked as boolean} 
             readOnly 
             className="w-4 h-4 rounded appearance-none border border-white/20 bg-ares-black checked:bg-ares-cyan checked:border-ares-cyan relative after:content-[''] after:hidden checked:after:block after:absolute after:left-[4px] after:top-[1px] after:w-[6px] after:h-[10px] after:border-solid after:border-obsidian after:border-r-[2px] after:border-b-[2px] after:rotate-45 transition-colors cursor-default" 
@@ -253,6 +255,7 @@ function RevealBlock({ summary, children }: { summary: string, children: ReactNo
     <div className="my-6 ares-cut-sm border border-white/10 bg-black/20 overflow-hidden shadow-lg transition-all hover:border-ares-gold/30">
       <button
         onClick={() => setIsOpen(!isOpen)}
+        /* eslint-disable-next-line jsx-a11y/aria-proptypes, react/no-unknown-property */
         aria-expanded={isOpen}
         aria-controls={contentId}
         className="w-full flex items-center justify-between px-6 py-4 text-left group transition-colors hover:bg-white/5"

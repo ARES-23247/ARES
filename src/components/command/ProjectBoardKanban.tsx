@@ -83,6 +83,8 @@ export default function ProjectBoardKanban({
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
+            title="Create new task"
+            aria-label="Create new task"
             className="p-2 bg-ares-cyan/10 hover:bg-ares-cyan/20 border border-ares-cyan/30 text-ares-cyan ares-cut-sm transition-all"
           >
             <Plus size={16} />
