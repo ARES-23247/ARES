@@ -169,13 +169,13 @@ export default function PerformanceDashboard({ className = '' }: PerformanceDash
           <svg viewBox={`0 0 ${loopTimeData.length} 200`} className="timeline-svg">
             {/* Grid lines */}
             {[0, 5, 10, 15, 20].map(y => (
-              <line key={y} x1="0" y1={y} x2={loopTimeData.length} y2={y} stroke="#333" strokeWidth="1" />
+              <line key={y} x1="0" y1={y} x2={loopTimeData.length} y2={y} stroke="var(--ares-gray)" strokeWidth="1" />
             ))}
 
             {/* Timeline bars */}
             {loopTimeData.map((point, index) => {
               const height = Math.min(point.value * 2, 150); // Scale: 1ms = 2px height
-              const color = point.value < 5 ? '#4CAF50' : point.value < 10 ? '#FFC107' : '#F44336';
+              const color = point.value < 5 ? 'var(--ares-success)' : point.value < 10 ? 'var(--ares-gold)' : 'var(--ares-red)';
 
               return (
                 <rect
@@ -194,22 +194,22 @@ export default function PerformanceDashboard({ className = '' }: PerformanceDash
             })}
 
             {/* 10ms threshold line */}
-            <line x1="0" y1={160} x2={loopTimeData.length} y2={160} stroke="#FF5722" strokeWidth="2" strokeDasharray="5,5" opacity="0.5"/>
-            <text x={loopTimeData.length - 50} y={155} fill="#FF5722" fontSize="10">10ms threshold</text>
+            <line x1="0" y1={160} x2={loopTimeData.length} y2={160} stroke="var(--ares-red)" strokeWidth="2" strokeDasharray="5,5" opacity="0.5"/>
+            <text x={loopTimeData.length - 50} y={155} fill="var(--ares-red)" fontSize="10">10ms threshold</text>
           </svg>
 
           {/* Interactive tooltip area */}
           <div className="timeline-legend">
             <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: '#4CAF50' }}></span>
+              <span className="legend-color" style={{ backgroundColor: 'var(--ares-success)' }}></span>
               <span className="legend-label">Good (&lt;5ms)</span>
             </div>
             <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: '#FFC107' }}></span>
+              <span className="legend-color" style={{ backgroundColor: 'var(--ares-gold)' }}></span>
               <span className="legend-label">Warning (5-10ms)</span>
             </div>
             <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: '#F44336' }}></span>
+              <span className="legend-color" style={{ backgroundColor: 'var(--ares-red)' }}></span>
               <span className="legend-label">Critical (&gt;10ms)</span>
             </div>
           </div>

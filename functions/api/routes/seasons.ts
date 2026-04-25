@@ -87,10 +87,10 @@ const seasonsTsRestRouter: any = s.router(seasonsContract as any, {
 
       const [seasonRow, awards, events, posts, outreach] = await Promise.all([
         db.selectFrom("seasons").select(["start_year", "end_year", "challenge_name", "robot_name", "robot_image", "robot_description", "robot_cad_url", "summary", "album_url", "album_cover", "status", "is_deleted"]).where("start_year", "=", year).executeTakeFirst(),
-        db.selectFrom("awards").select(["id", "title", "award_name", "event_name", "date", "season_id", "is_deleted"]).where("season_id", "=", Number(year) as any).execute(),
+        db.selectFrom("awards").select(["id", "title", "event_name", "date", "season_id", "is_deleted"]).where("season_id", "=", Number(year) as any).execute(),
         db.selectFrom("events").select(["id", "title", "category", "date_start", "date_end", "location", "cover_image", "status", "is_deleted", "season_id"]).where("season_id", "=", Number(year) as any).where("is_deleted", "=", 0).execute(),
-        db.selectFrom("posts").select(["slug", "title", "excerpt", "cover_image", "status", "is_deleted", "season_id", "created_at"]).where("season_id", "=", Number(year) as any).where("is_deleted", "=", 0).execute(),
-        db.selectFrom("outreach_logs").select(["id", "event_name", "date", "location", "hours_logged", "students_count", "reach_count", "description", "season_id", "is_deleted"]).where("season_id", "=", Number(year) as any).execute(),
+        db.selectFrom("posts").select(["slug", "title", "snippet", "thumbnail", "status", "is_deleted", "season_id", "date"]).where("season_id", "=", Number(year) as any).where("is_deleted", "=", 0).execute(),
+        db.selectFrom("outreach_logs").select(["id", "title", "date", "location", "hours", "students_count", "people_reached", "impact_summary", "season_id", "is_deleted"]).where("season_id", "=", Number(year) as any).execute(),
       ]);
 
       if (!seasonRow) return { status: 404 as const, body: { error: "Season not found" } };

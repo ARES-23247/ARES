@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { betterAuth } from "better-auth";
 import { genericOAuth } from "better-auth/plugins";
 import { kyselyAdapter } from "@better-auth/kysely-adapter";
@@ -7,6 +6,7 @@ import { D1Dialect } from "kysely-d1";
 import { siteConfig } from "./site.config";
 
 export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl?: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Kysely requires generic DB type; better-auth's adapter expects any
     const kyselyDb = new Kysely<any>({
         dialect: new D1Dialect({
             database: db,
@@ -51,6 +51,7 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
                             image: "avatar_url"
                         }
                      
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- genericOAuth config type is untyped
                     } as any
                 ] : []
             }),

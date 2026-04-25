@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { handle } from "hono/cloudflare-pages";
@@ -74,6 +73,7 @@ apiRouter.use("*", csrf({
 
 // ── CORS ─────
 apiRouter.use("*", cors({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono CORS origin callback context is untyped
   origin: (origin, c: any) => {
     if (!origin) return origin;
     const requestOrigin = new URL(c.req.url).origin;
@@ -158,6 +158,7 @@ apiRouter.get("/admin/audit-log", ensureAdmin, async (c) => {
   return c.json({ logs: results || [] });
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono error handler context requires any for env access
 app.onError(async (err, c: any) => {
   console.error("Global API Error:", err);
   const db = c.get("db") as Kysely<DB>;
@@ -182,6 +183,7 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
   await db.deleteFrom("audit_log")
     .where("id", "in", (eb) => eb.selectFrom("audit_log")
       .select("id")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- sql template literal type mismatch with Kysely
       .where("created_at", "<", sql`datetime('now', '-90 days')` as any)
       .limit(100)
     )

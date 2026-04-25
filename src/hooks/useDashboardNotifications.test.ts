@@ -4,6 +4,7 @@ import { renderWithProviders } from "../test/utils";
 import { useDashboardNotifications } from "./useDashboardNotifications";
 import { server } from "../test/mocks/server";
 import { http, HttpResponse } from "msw";
+import { waitFor } from "@testing-library/react";
 
 describe("useDashboardNotifications Hook", () => {
   beforeEach(() => {
@@ -20,7 +21,6 @@ describe("useDashboardNotifications Hook", () => {
       canSeeInquiries: true 
     };
 
-    // Setup MSW handlers for the unified action items endpoint
     server.use(
       http.get(/\/api\/notifications\/action-items/, () => {
         return HttpResponse.json({ 
@@ -34,11 +34,7 @@ describe("useDashboardNotifications Hook", () => {
 
     const { result } = renderWithProviders(() => useDashboardNotifications(mockSession, mockPermissions));
     
-    // We need to wait for the state updates. 
-    // Since this hook doesn't use React Query, but raw fetch + useEffect/useState, 
-    // we use Vitest's waitFor or just a small delay if needed, but renderWithProviders uses Testing Library's renderHook.
-    
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(result.current.pendingInquiriesCount).toBe(1);
       expect(result.current.pendingPostsCount).toBe(1);
     });
@@ -67,7 +63,7 @@ describe("useDashboardNotifications Hook", () => {
 
     const { result } = renderWithProviders(() => useDashboardNotifications(mockSession, mockPermissions));
     
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(result.current.pendingInquiriesCount).toBe(1);
     });
   });
@@ -109,7 +105,7 @@ describe("useDashboardNotifications Hook", () => {
 
     const { result } = renderWithProviders(() => useDashboardNotifications(mockSession, mockPermissions));
     
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(result.current.pendingDocsCount).toBe(0);
     });
   });
@@ -129,7 +125,7 @@ describe("useDashboardNotifications Hook", () => {
 
     const { result } = renderWithProviders(() => useDashboardNotifications(mockSession, mockPermissions));
     
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(result.current.pendingInquiriesCount).toBe(1);
       expect(result.current.pendingPostsCount).toBe(1);
       expect(result.current.pendingEventsCount).toBe(1);
@@ -152,7 +148,7 @@ describe("useDashboardNotifications Hook", () => {
 
     const { result } = renderWithProviders(() => useDashboardNotifications(mockSession, mockPermissions));
     
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(result.current.pendingInquiriesCount).toBe(0);
       expect(result.current.pendingPostsCount).toBe(0);
       expect(result.current.pendingEventsCount).toBe(0);

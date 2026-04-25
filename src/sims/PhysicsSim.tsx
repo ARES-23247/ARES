@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function PhysicsSim() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [logMsg, setLogMsg] = useState<{ text: string, color: string }>({ text: "Physics Engine Active: 0 collisions.", color: "#aaa" });
-
+  const [logMsg, setLogMsg] = useState<{ text: string, color: string }>({ text: "Physics Engine Active: 0 collisions.", color: "var(--ares-gray)" });
   const isDraggingRef = useRef(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const robotRef = useRef({ x: 370, y: 170, w: 60, h: 60 });
@@ -26,7 +25,7 @@ export default function PhysicsSim() {
     ballsRef.current = newBalls;
     robotRef.current = { x: 370, y: 170, w: 60, h: 60 };
     lastRobotPosRef.current = { x: 370, y: 170 };
-    setLogMsg({ text: "Physics Engine Active: 0 collisions.", color: "#aaa" });
+    setLogMsg({ text: "Physics Engine Active: 0 collisions.", color: "var(--ares-gray)" });
   };
 
   useEffect(() => {
@@ -45,6 +44,12 @@ export default function PhysicsSim() {
     const render = () => {
         const robot = robotRef.current;
         const balls = ballsRef.current;
+
+        const aresRed = getComputedStyle(document.documentElement).getPropertyValue('--ares-red').trim() || '#C00000';
+        const aresCyan = getComputedStyle(document.documentElement).getPropertyValue('--ares-cyan').trim() || '#00E5FF';
+        const aresGold = getComputedStyle(document.documentElement).getPropertyValue('--ares-gold').trim() || '#FFB81C';
+        const obsidian = getComputedStyle(document.documentElement).getPropertyValue('--obsidian').trim() || '#1A1A1A';
+        const marble = getComputedStyle(document.documentElement).getPropertyValue('--marble').trim() || '#F9F9F9';
 
         // Resolve physics step
         const robotVx = robot.x - lastRobotPosRef.current.x;
@@ -125,25 +130,25 @@ export default function PhysicsSim() {
         }
 
         if (collisionTriggered && document.hasFocus() && isDraggingRef.current) {
-            setLogMsg({ text: localLogMsg, color: "#ff4d4d" });
+            setLogMsg({ text: localLogMsg, color: aresRed });
         } else if (!isDraggingRef.current && localLogMsg === "Dyn4j Simulation Tracking...") {
-            setLogMsg({ text: localLogMsg, color: "#00d0ff" });
+            setLogMsg({ text: localLogMsg, color: aresCyan });
         }
 
         // Draw Frame
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = "#111";
+        ctx.strokeStyle = obsidian;
         ctx.lineWidth = 1;
         for (let i = 0; i < canvas.width; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
         for (let i = 0; i < canvas.height; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
         
         // Goal
-        ctx.fillStyle = "rgba(41, 182, 246, 0.3)";
+        ctx.fillStyle = `${aresCyan}44`;
         ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
         ctx.save();
-        ctx.shadowColor = "#00d0ff";
+        ctx.shadowColor = aresCyan;
         ctx.shadowBlur = 15;
-        ctx.strokeStyle = "#00d0ff";
+        ctx.strokeStyle = aresCyan;
         ctx.lineWidth = 3;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -152,13 +157,13 @@ export default function PhysicsSim() {
         ctx.stroke();
         ctx.restore();
         
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = marble;
         ctx.font = "bold 16px 'Orbitron', sans-serif";
         ctx.save();
         ctx.translate(goal.x + 15, goal.y + goal.h / 2);
         ctx.rotate(-Math.PI / 2);
         ctx.textAlign = "center";
-        ctx.shadowColor = "#00d0ff";
+        ctx.shadowColor = aresCyan;
         ctx.shadowBlur = 10;
         ctx.fillText("GOAL", 0, 0);
         ctx.restore();
@@ -166,11 +171,11 @@ export default function PhysicsSim() {
         // Scorecard
         ctx.save();
         ctx.fillStyle = "rgba(10, 10, 10, 0.9)";
-        ctx.strokeStyle = "#00d0ff";
+        ctx.strokeStyle = aresCyan;
         ctx.lineWidth = 2;
         ctx.fillRect(canvas.width - 150, 15, 130, 45);
         ctx.strokeRect(canvas.width - 150, 15, 130, 45);
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = marble;
         ctx.font = "bold 20px 'Orbitron', sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(`SCORE: ${scoreRef.current}`, canvas.width - 85, 45);
@@ -179,25 +184,25 @@ export default function PhysicsSim() {
         // Balls
         balls.forEach(b => {
             const grad = ctx.createRadialGradient(b.x, b.y, b.radius * 0.5, b.x, b.y, b.radius * 1.5);
-            grad.addColorStop(0, '#ff9800');
-            grad.addColorStop(1, 'rgba(255, 152, 0, 0)');
+            grad.addColorStop(0, aresGold);
+            grad.addColorStop(1, `${aresGold}00`);
             ctx.fillStyle = grad;
             ctx.beginPath(); ctx.arc(b.x, b.y, b.radius * 1.5, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = "#ffb300";
+            ctx.fillStyle = aresGold;
             ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = "#e65100"; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = "#fff";
+            ctx.strokeStyle = aresGold; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = marble;
             ctx.font = "10px sans-serif";
             ctx.fillText("FB", b.x - 6, b.y + 3);
         });
         
         // Robot
-        ctx.fillStyle = "rgba(41, 182, 246, 0.2)";
+        ctx.fillStyle = `${aresCyan}33`;
         ctx.fillRect(robot.x, robot.y, robot.w, robot.h);
-        ctx.strokeStyle = "#00d0ff";
+        ctx.strokeStyle = aresCyan;
         ctx.lineWidth = 2;
         ctx.strokeRect(robot.x, robot.y, robot.w, robot.h);
-        ctx.fillStyle = "white";
+        ctx.fillStyle = marble;
         ctx.font = "bold 12px 'Orbitron', sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("CHASSIS", robot.x + robot.w / 2, robot.y + robot.h / 2 + 4);
@@ -245,15 +250,15 @@ export default function PhysicsSim() {
   }, []);
 
   return (
-    <div className="simulator-container" style={{ background: '#111', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '12px', padding: '20px', margin: '40px 0' }}>
+    <div className="simulator-container" style={{ background: 'var(--obsidian)', border: '1px solid var(--ares-gray)', borderRadius: '12px', padding: '20px', margin: '40px 0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h3 style={{ margin: 0, color: 'white', fontFamily: '"Orbitron", sans-serif' }}>Interactive Collision Sandbox</h3>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--ifm-color-emphasis-600)' }}>Drag the blue robot chassis to collide with the Fuel Balls. Hit them into the glowing goal on the left!</p>
+          <h3 style={{ margin: 0, color: 'var(--marble)', fontFamily: '"Orbitron", sans-serif' }}>Interactive Collision Sandbox</h3>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--ares-gray)' }}>Drag the blue robot chassis to collide with the Fuel Balls. Hit them into the glowing goal on the left!</p>
         </div>
         <button 
           onClick={initWorld}
-          style={{ background: '#00d0ff', color: '#000', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700 }}
+          style={{ background: 'var(--ares-cyan)', color: 'var(--obsidian)', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700 }}
         >
           RESET WORLD
         </button>
@@ -263,7 +268,7 @@ export default function PhysicsSim() {
         ref={canvasRef}
         width={800} 
         height={400} 
-        style={{ width: '100%', maxWidth: '800px', aspectRatio: '2/1', height: 'auto', display: 'block', margin: '0 auto', background: '#050505', borderRadius: '8px', border: '1px solid #333', cursor: 'grab', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}
+        style={{ width: '100%', maxWidth: '800px', aspectRatio: '2/1', height: 'auto', display: 'block', margin: '0 auto', background: 'var(--obsidian)', borderRadius: '8px', border: '1px solid var(--ares-gray)', cursor: 'grab', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}
       />
       
       <div style={{ marginTop: '15px', padding: '10px', background: 'rgba(0,0,0,0.5)', borderRadius: '6px', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.85rem', color: logMsg.color }}>
