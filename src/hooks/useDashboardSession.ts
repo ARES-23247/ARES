@@ -32,12 +32,6 @@ export function useDashboardSession() {
   const [session, setSession] = useState<DashboardSession | null>(null);
   const [isPending, setIsPending] = useState(true);
 
-  // Compute localhost bypass — SEC-F01: Harden to only allow in explicit DEV mode
-  const isLocalDev =
-    import.meta.env.DEV &&
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-
   useEffect(() => {
     let isMounted = true;
     api.profiles.getMe.query()
@@ -75,9 +69,9 @@ export function useDashboardSession() {
 
   const role = session?.user?.role || "unverified";
   const memberType = session?.user?.member_type || "student";
-  const isAdmin = role === "admin" || isLocalDev;
+  const isAdmin = role === "admin";
   const isAuthorized = isAdmin || role === "author" || memberType === "coach" || memberType === "mentor";
-  const isUnverified = role === "unverified" && !isLocalDev;
+  const isUnverified = role === "unverified";
   const canSeeInquiries = !isUnverified;
   const canSeeLogistics = isAdmin || ["parent", "coach", "mentor"].includes(memberType);
 
@@ -91,5 +85,5 @@ export function useDashboardSession() {
     canSeeLogistics,
   };
 
-  return { session, isPending, permissions, isLocalDev };
+  return { session, isPending, permissions };
 }

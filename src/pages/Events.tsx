@@ -12,9 +12,11 @@ import CompetitionBanner from "../components/CompetitionBanner";
 export default function Events() {
   const { data: eventsRes, isLoading } = api.events.getEvents.useQuery(["events"], {});
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawBody = (eventsRes as any)?.body;
-  const events = eventsRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.events) ? rawBody.events : [])) as unknown as EventItem[] : [];
+  const events = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawBody = (eventsRes as any)?.body;
+    return eventsRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.events) ? rawBody.events : [])) as unknown as EventItem[] : [];
+  }, [eventsRes]);
 
   const { data: calendarRes } = api.events.getCalendarSettings.useQuery(["calendar_config"], {});
   const calendarData = calendarRes?.status === 200 ? calendarRes.body : null;

@@ -123,8 +123,8 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
 
       {/* Youth Protection Banner for Students */}
       {isMinor && (
-        <div className="flex items-start gap-3 p-4 bg-ares-cyan/10 border border-ares-cyan/20 ares-cut">
-          <Shield className="text-ares-cyan flex-shrink-0 mt-0.5" size={20} />
+        <div className="flex items-start gap-3 p-4 bg-ares-gold/10 border border-ares-gold/20 ares-cut">
+          <Shield className="text-ares-gold flex-shrink-0 mt-0.5" size={20} />
           <p className="text-sm text-marble">
             <strong>FIRST Youth Protection:</strong> Your contact information (email, phone) is protected and never shown publicly. Only your nickname and avatar are visible to others.
           </p>

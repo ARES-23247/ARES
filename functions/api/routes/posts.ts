@@ -166,7 +166,7 @@ const postHandlers = {
           .limit(Number(limit) || 50)
           .offset(Number(offset) || 0)
           .execute();
-      } catch (e) {
+      } catch (_e) {
         results = await db.selectFrom("posts")
           .select(["slug", "title", "date", "snippet", "thumbnail", "cf_email", "is_deleted", "author"])
           .orderBy("date", "desc")
@@ -196,7 +196,7 @@ const postHandlers = {
           .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "status", "revision_of", "published_at", "season_id", "author"])
           .where("slug", "=", slug)
           .executeTakeFirst();
-      } catch (e) {
+      } catch (_e) {
         row = await db.selectFrom("posts")
           .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "author"])
           .where("slug", "=", slug)

@@ -84,6 +84,12 @@ jobs:
         if: steps.check_e2e.outputs.run_e2e == 'true' && steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
+      - name: Setup D1 Database for E2E
+        if: steps.check_e2e.outputs.run_e2e == 'true'
+        run: |
+          npm run db:setup:local
+          npx wrangler d1 migrations apply ares-db --local
+
       - name: E2E Tests (Playwright)
         if: steps.check_e2e.outputs.run_e2e == 'true'
         run: npm run test:e2e

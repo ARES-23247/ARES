@@ -92,7 +92,7 @@ export const eventHandlers = {
       const user = await getSessionUser(c);
 
       const row = await db.selectFrom("events")
-        .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
+        .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes"])
         .where("id", "=", id)
         .where("is_deleted", "=", 0)
         .where("status", "=", "published")
@@ -106,7 +106,8 @@ export const eventHandlers = {
           event: {
             ...row,
             season_id: row.season_id ? Number(row.season_id) : null,
-            is_deleted: Number(row.is_deleted || 0)
+            is_deleted: Number(row.is_deleted || 0),
+            meeting_notes: (user && user.role !== "unverified") ? row.meeting_notes : null
           },
           is_editor: user?.role === "admin"
         } as any
@@ -122,7 +123,7 @@ export const eventHandlers = {
       let results;
       try {
         results = await db.selectFrom("events")
-          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes"])
           .orderBy("date_start", "desc")
           .limit(Number(limit) || 100)
           .offset(Number(offset) || 0)
@@ -156,7 +157,7 @@ export const eventHandlers = {
       let row;
       try {
         row = await db.selectFrom("events")
-          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes"])
           .where("id", "=", id)
           .executeTakeFirst();
       } catch (_e) {
@@ -185,7 +186,7 @@ export const eventHandlers = {
   saveEvent: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft, publishedAt, seasonId } = body;
+      const { title, category, dateStart, dateEnd, location, description, coverImage, socials, isPotluck, isVolunteer, isDraft, publishedAt, seasonId, meetingNotes } = body;
       const cat = category || 'internal';
       const genId = crypto.randomUUID();
       
@@ -202,7 +203,7 @@ export const eventHandlers = {
           location: location || "", description: description || "", cover_image: coverImage || "",
           gcal_event_id: null, cf_email: user?.email || "anonymous_admin", status,
           is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
-          published_at: publishedAt || null, season_id: seasonId || null
+          published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null
         })
         .execute();
 
@@ -239,7 +240,7 @@ export const eventHandlers = {
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, isPotluck, isVolunteer, isDraft, publishedAt, seasonId } = body;
+      const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, isPotluck, isVolunteer, isDraft, publishedAt, seasonId, meetingNotes } = body;
       const cat = category || 'internal';
       
       const user = await getSessionUser(c);
@@ -253,7 +254,7 @@ export const eventHandlers = {
             location: location || "", description: description || "", cover_image: coverImage || "",
             tba_event_key: tbaEventKey || null, status: 'pending',
             is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
-            revision_of: id, published_at: publishedAt || null, season_id: seasonId || null
+            revision_of: id, published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null
           })
           .execute();
         return { status: 200 as const, body: { success: true, id: revId } as any };
@@ -265,7 +266,7 @@ export const eventHandlers = {
           location: location || "", description: description || "", cover_image: coverImage || "",
           tba_event_key: tbaEventKey || null, status,
           is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
-          published_at: publishedAt || null, season_id: seasonId || null
+          published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null
         })
         .where("id", "=", id)
         .execute();
@@ -292,7 +293,7 @@ export const eventHandlers = {
       const row = await db.selectFrom("events").selectAll().where("id", "=", id).executeTakeFirst();
       if (row && row.revision_of) {
         await db.updateTable("events")
-          .set({ title: row.title, date_start: row.date_start, date_end: row.date_end, location: row.location, description: row.description, cover_image: row.cover_image, tba_event_key: row.tba_event_key, status: 'published', is_potluck: row.is_potluck, is_volunteer: row.is_volunteer, season_id: row.season_id })
+          .set({ title: row.title, date_start: row.date_start, date_end: row.date_end, location: row.location, description: row.description, cover_image: row.cover_image, tba_event_key: row.tba_event_key, status: 'published', is_potluck: row.is_potluck, is_volunteer: row.is_volunteer, season_id: row.season_id, meeting_notes: row.meeting_notes })
           .where("id", "=", row.revision_of)
           .execute();
         await db.deleteFrom("events").where("id", "=", id).execute();

@@ -51,9 +51,7 @@ export function useDocs(slug: string | undefined) {
 
   const { data: allDocsRes } = api.docs.getDocs.useQuery(["docs-list"], {});
   const allDocs = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawBody = (allDocsRes as any)?.body;
-    return allDocsRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.docs) ? rawBody.docs : [])) : [];
+    return allDocsRes?.status === 200 ? allDocsRes.body.docs : [];
   }, [allDocsRes]);
 
   const ObjectQuery = api.docs.getDoc.useQuery(
@@ -62,10 +60,8 @@ export function useDocs(slug: string | undefined) {
     { enabled: !!slug }
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawDocBody = (ObjectQuery.data as any)?.body;
-  const currentDoc = ObjectQuery.data?.status === 200 ? (rawDocBody?.doc) : undefined;
-  const contributors = ObjectQuery.data?.status === 200 ? (Array.isArray(rawDocBody) ? rawDocBody : (Array.isArray(rawDocBody?.contributors) ? rawDocBody.contributors : [])) : [];
+  const currentDoc = ObjectQuery.data?.status === 200 ? ObjectQuery.data.body.doc : undefined;
+  const contributors = ObjectQuery.data?.status === 200 ? ObjectQuery.data.body.contributors : [];
   const docLoading = ObjectQuery.isLoading;
 
   const { data: searchRes } = api.docs.searchDocs.useQuery(
@@ -73,9 +69,7 @@ export function useDocs(slug: string | undefined) {
     { query: { q: searchQuery } },
     { enabled: searchQuery.length >= 2 }
   );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawSearchBody = (searchRes as any)?.body;
-  const searchResults = searchRes?.status === 200 ? (Array.isArray(rawSearchBody) ? rawSearchBody : (Array.isArray(rawSearchBody?.results) ? rawSearchBody.results : [])) : [];
+  const searchResults = searchRes?.status === 200 ? searchRes.body.results : [];
 
   const groupedDocs = useMemo(() => {
     const groups: Record<string, DocRecord[]> = {};

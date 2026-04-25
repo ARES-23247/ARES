@@ -16,6 +16,7 @@ export const eventResponseSchema = z.object({
   category: z.string(),
   is_deleted: z.number().optional(),
   season_id: z.coerce.number().nullable(),
+  meeting_notes: z.string().nullable().optional(),
 });
 
 export const eventSignupSchema = z.object({

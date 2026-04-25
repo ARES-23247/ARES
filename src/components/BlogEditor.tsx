@@ -94,6 +94,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         }
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postRes, reset, editor]); // Correct dependencies
 
 
@@ -151,6 +152,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
   });
 
   const deleteMutation = api.posts.deletePost.useMutation({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSuccess: (data: any) => {
       if (data.status === 200) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });

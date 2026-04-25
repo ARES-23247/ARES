@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS events (
     is_volunteer INTEGER DEFAULT 0,
     revision_of TEXT,
     published_at TEXT,
+    meeting_notes TEXT,
     season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_events_season ON events(season_id);

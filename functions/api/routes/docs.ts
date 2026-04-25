@@ -71,7 +71,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           .orderBy("docs.category")
           .orderBy("docs.sort_order", "asc")
           .execute();
-      } catch (e) {
+      } catch (_e) {
         results = await db.selectFrom("docs")
           .leftJoin("user as u", "docs.cf_email", "u.email")
           .leftJoin("user_profiles as p", "u.id", "p.user_id")
@@ -134,7 +134,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           .where("docs.is_deleted", "=", 0)
           .where("docs.status", "=", "published")
           .executeTakeFirst();
-      } catch (e) {
+      } catch (_e) {
         row = await db.selectFrom("docs")
           .leftJoin("user as u", "docs.cf_email", "u.email")
           .leftJoin("user_profiles as p", "u.id", "p.user_id")
@@ -237,7 +237,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           .orderBy("category")
           .orderBy("sort_order", "asc")
           .execute();
-      } catch (e) {
+      } catch (_e) {
         results = await db.selectFrom("docs")
           .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary"])
           .orderBy("category")
@@ -268,7 +268,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
           .where("slug", "=", slug)
           .executeTakeFirst();
-      } catch (e) {
+      } catch (_e) {
         row = await db.selectFrom("docs")
           .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary"])
           .where("slug", "=", slug)

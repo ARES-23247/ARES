@@ -170,6 +170,7 @@ export interface Events {
   is_potluck: Generated<number | null>;
   is_volunteer: Generated<number | null>;
   location: string | null;
+  meeting_notes: string | null;
   published_at: string | null;
   revision_of: string | null;
   season_id: string | null;

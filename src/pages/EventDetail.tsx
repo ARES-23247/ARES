@@ -20,6 +20,7 @@ interface EventRow {
   cover_image: string | null;
   is_potluck: number | null;
   is_volunteer: number | null;
+  meeting_notes?: string | null;
 }
 
 import { Calendar, Edit2 } from "lucide-react";
@@ -61,6 +62,16 @@ export default function EventDetail() {
     if (!parsedAst || parsedAst.type !== "doc") parsedAst = null;
   } catch {
     parsedAst = null;
+  }
+
+  let parsedNotesAst: ASTNode | null = null;
+  if (event.meeting_notes) {
+    try {
+      parsedNotesAst = JSON.parse(event.meeting_notes);
+      if (!parsedNotesAst || parsedNotesAst.type !== "doc") parsedNotesAst = null;
+    } catch {
+      parsedNotesAst = null;
+    }
   }
 
   const startDate = new Date(event.date_start);
@@ -147,6 +158,21 @@ export default function EventDetail() {
             <TiptapRenderer node={parsedAst} />
           ) : (
             <p className="whitespace-pre-wrap text-xl leading-relaxed">{event.description}</p>
+          )}
+
+          {event.meeting_notes && (
+            <div className="mt-12 bg-ares-red/10 border border-ares-red/30 ares-cut-sm p-8">
+              <h2 className="text-2xl font-bold text-ares-red flex items-center gap-2 mb-6 border-b border-ares-red/20 pb-4 !mt-0">
+                <span>🔒 Private Meeting Notes</span>
+              </h2>
+              <div className="prose prose-invert lg:prose-lg max-w-none prose-headings:text-ares-gold prose-a:text-ares-gold">
+                {parsedNotesAst ? (
+                  <TiptapRenderer node={parsedNotesAst} />
+                ) : (
+                  <p className="whitespace-pre-wrap">{event.meeting_notes}</p>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Sign-Up Sheet & Comments (auth-gated) */}

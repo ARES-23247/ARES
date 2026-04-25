@@ -33,6 +33,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
   const queryClient = useQueryClient();
   const modal = useModal();
   const editor = useRichEditor({ placeholder: "<p>Describe your upcoming event or write a full recap here...</p>" });
+  const notesEditor = useRichEditor({ placeholder: "<p>Add private meeting notes here (visible to verified members only)...</p>" });
   
   const { availableSocials } = useAdminSettings();
   const { uploadFile, isUploading, setErrorMsg: setUploadError } = useImageUpload();
@@ -56,6 +57,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
       isVolunteer: false,
       publishedAt: "",
       seasonId: "",
+      meetingNotes: "",
       socials: {
         discord: true,
         bluesky: true,
@@ -128,9 +130,16 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
           editor.commands.setContent(`<p>${event.description}</p>`);
         }
       }
+      if (notesEditor && event.meeting_notes) {
+        try {
+          notesEditor.commands.setContent(JSON.parse(event.meeting_notes));
+        } catch {
+          notesEditor.commands.setContent(`<p>${event.meeting_notes}</p>`);
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventRes, reset, editor]);
+  }, [eventRes, reset, editor, notesEditor]);
 
 
   const saveMutation = api.events.saveEvent.useMutation({
@@ -192,7 +201,8 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
 
   const onFormSubmit = (data: EventPayload, isDraft = false) => {
     const finalDescription = editor ? JSON.stringify(editor.getJSON()) : data.description;
-    const payload = { ...data, description: finalDescription, isDraft };
+    const finalNotes = notesEditor && !notesEditor.isEmpty ? JSON.stringify(notesEditor.getJSON()) : data.meetingNotes;
+    const payload = { ...data, description: finalDescription, meetingNotes: finalNotes, isDraft };
     if (editId) {
       updateMutation.mutate({ params: { id: editId }, body: payload });
     } else {
@@ -369,7 +379,13 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         {editor && <RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} />}
       </div>
 
-
+      <div className="mt-4">
+        <label htmlFor="event-notes-editor" className="block text-xs font-bold text-ares-red uppercase tracking-wider mb-2 flex items-center gap-2">
+          <span>🔒 Private Meeting Notes</span>
+          <span className="text-white/60 font-normal normal-case">(verified members only)</span>
+        </label>
+        {notesEditor && <RichEditorToolbar editor={notesEditor} documentTitle={(formValues.title || "") + " Notes"} />}
+      </div>
 
       <div className="mt-6 flex flex-col gap-4">
         {errorMsg && (

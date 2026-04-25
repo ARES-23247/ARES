@@ -22,7 +22,6 @@ Thumbs.db
 # Build / lint / test artifacts
 *.log
 *.txt
-*.json
 build_log.txt
 build_output.log
 server.log

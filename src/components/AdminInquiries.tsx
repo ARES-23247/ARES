@@ -101,7 +101,7 @@ export default function AdminInquiries() {
       header: "Status",
       cell: info => (
         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-          info.getValue() === 'pending' ? 'bg-ares-gold/20 text-ares-gold border border-ares-gold/30' : 'bg-ares-cyan/20 text-ares-cyan border border-ares-cyan/30'
+          info.getValue() === 'pending' ? 'bg-ares-gold/20 text-ares-gold border border-ares-gold/30' : 'bg-ares-bronze/20 text-ares-bronze border border-ares-bronze/30'
         }`}>
           {info.getValue()}
         </span>

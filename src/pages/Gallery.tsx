@@ -46,7 +46,7 @@ export default function Gallery() {
           <div className="w-12 h-12 border-4 border-white/10 border-t-ares-red rounded-full animate-spin"></div>
         </div>
       ) : isError ? (
-        <div className="text-white bg-red-900/40 border border-red-500/50 ares-cut-sm p-4 font-bold text-center">
+        <div className="text-white bg-ares-red/40 border border-ares-red/50 ares-cut-sm p-4 font-bold text-center">
           Failed to load gallery images. Please try again later.
         </div>
       ) : photos.length === 0 ? (

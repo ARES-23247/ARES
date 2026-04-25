@@ -1,7 +1,7 @@
 import { User } from "lucide-react";
 import { ProfileSubComponentProps } from "./types";
 
-export function IdentityForm({ profile, setProfile, inputClass, labelClass, sectionClass }: ProfileSubComponentProps) {
+export function IdentityForm({ profile, setProfile, isMinor, inputClass, labelClass, sectionClass }: ProfileSubComponentProps) {
   return (
     <div className={sectionClass}>
       <h3 className="text-sm font-black uppercase tracking-wider text-ares-red flex items-center gap-2"><User size={16} /> Identity</h3>
@@ -23,10 +23,12 @@ export function IdentityForm({ profile, setProfile, inputClass, labelClass, sect
           <input id="pe-pronouns" className={inputClass} placeholder="e.g. he/him, she/her, they/them" value={profile.pronouns} onChange={e => setProfile({...profile, pronouns: e.target.value})} />
         </div>
       </div>
-      <div>
-        <label htmlFor="pe-email" className={labelClass}>Email Address</label>
-        <input id="pe-email" className={`${inputClass} opacity-50 cursor-not-allowed`} value={profile.email || ""} disabled placeholder="Synced from your login" title="Email is synced from your login account automatically." />
-      </div>
+      {!isMinor && (
+        <div>
+          <label htmlFor="pe-email" className={labelClass}>Email Address</label>
+          <input id="pe-email" className={`${inputClass} opacity-50 cursor-not-allowed`} value={profile.email || ""} disabled placeholder="Synced from your login" title="Email is synced from your login account automatically." />
+        </div>
+      )}
       <div>
         <label htmlFor="pe-bio" className={labelClass}>Bio</label>
         <textarea id="pe-bio" className={`${inputClass} min-h-[80px] resize-none`} placeholder="Tell us about yourself (keep it PII-free!)" value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} />

@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { GreekMeander } from "./GreekMeander";
 import { api } from "../api/client";
 import { useDashboardSession } from "../hooks/useDashboardSession";
-import { useDashboardNotifications } from "../hooks/useDashboardNotifications";
+import { useMergedNotifications } from "../hooks/useMergedNotifications";
 import { useUIStore } from "../store/uiStore";
 
 export default function Navbar() {
@@ -25,7 +25,7 @@ export default function Navbar() {
    
   // Unused permissions omitted to satisfy ESLint
   
-  const { pendingInquiries, pendingPosts, pendingEvents, pendingDocs } = useDashboardNotifications(session, permissions);
+  const { notifications, unreadCount } = useMergedNotifications(session, permissions);
   
   const [showNotifs, setShowNotifs] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -41,11 +41,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const { data: notifRes } = api.notifications.getNotifications.useQuery(["notifications"], {}, {
-    enabled: !!isSignedIn,
-    refetchInterval: 30000 // Poll every 30s
-  });
-
   const markAllRead = api.notifications.markAllAsRead.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -57,56 +52,6 @@ export default function Navbar() {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
   });
-
-   
-  const rawNotifications = (notifRes?.body as any)?.notifications || [];
-  
-  // Filter out redundant DB notifications that duplicate our synthetic sticky action items
-  const filteredRawNotifications = rawNotifications.filter((n: any) => {
-    const t = n.title || "";
-    return !(t.includes("Inquiry") && t.startsWith("New ")) &&
-           !(t === "📝 Pending Blog Post") &&
-           !(t === "📝 Pending Document" || t === "📝 Doc Revision Pending");
-  });
-  
-  // Combine db notifications with pending inquiries and pending posts
-  const notifications = [
-    ...filteredRawNotifications,
-    ...pendingInquiries.map((i: any) => ({
-      id: `inquiry-${i.id}`,
-      title: `New ${i.type === 'support' ? 'Support' : i.type === 'outreach' ? 'Outreach' : i.type === 'sponsor' ? 'Sponsor' : 'Inquiry'} Request`,
-      message: `From ${i.name}`,
-      is_read: false,
-      link: '/dashboard/inquiries',
-      is_inquiry: true
-    })),
-    ...pendingPosts.map((p: any) => ({
-      id: `post-${p.slug}`,
-      title: `New Pending Post`,
-      message: `"${p.title}" by ${p.author_nickname || 'Student'}`,
-      is_read: false,
-      link: '/dashboard/manage_blog',
-      is_inquiry: true // Treat as action item (cannot be marked read)
-    })),
-    ...pendingEvents.map((e: any) => ({
-      id: `event-${e.id}`,
-      title: `New Pending Event`,
-      message: `"${e.title}"`,
-      is_read: false,
-      link: '/dashboard/manage_event',
-      is_inquiry: true
-    })),
-    ...pendingDocs.map((d: any) => ({
-      id: `doc-${d.slug}`,
-      title: `New Pending Doc`,
-      message: `"${d.title}"`,
-      is_read: false,
-      link: '/dashboard/manage_docs',
-      is_inquiry: true
-    }))
-  ];
-  
-  const unreadCount = notifications.filter((n: any) => !n.is_read).length;
 
   return (
     <nav role="navigation" aria-label="Main Navigation" className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 pt-4 pb-4 transition-all duration-500 overflow-visible rounded-b-2xl border-t-4 border-ares-bronze">

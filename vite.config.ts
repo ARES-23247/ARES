@@ -14,12 +14,6 @@ export default defineConfig({
       provider: "v8",
       include: ['src/utils/**', 'src/hooks/**', 'functions/api/routes/**'],
       exclude: [
-        'functions/api/routes/github.ts',
-        'functions/api/routes/githubWebhook.ts',
-        'functions/api/routes/tba.ts',
-        'functions/api/routes/events/sync.ts',
-        'functions/api/routes/zulip.ts',
-        'functions/api/routes/zulipWebhook.ts',
         'functions/api/routes/sitemap.ts',
         'functions/api/routes/logistics.ts',
         '**/*.test.ts'

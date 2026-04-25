@@ -12,7 +12,7 @@ export function useDashboardNotifications(
     { query: {} }, 
     {
       enabled: !!(session && permissions.canSeeInquiries),
-      refetchInterval: 30000,
+      refetchInterval: 60000,
     }
   );
 
@@ -21,7 +21,7 @@ export function useDashboardNotifications(
     { query: {} }, 
     {
       enabled: !!(session && permissions.isAuthorized),
-      refetchInterval: 30000,
+      refetchInterval: 60000,
     }
   );
 
@@ -30,7 +30,7 @@ export function useDashboardNotifications(
     { query: {} }, 
     {
       enabled: !!(session && permissions.isAuthorized),
-      refetchInterval: 30000,
+      refetchInterval: 60000,
     }
   );
 
@@ -39,18 +39,14 @@ export function useDashboardNotifications(
     { query: {} }, 
     {
       enabled: !!(session && permissions.isAuthorized),
-      refetchInterval: 30000,
+      refetchInterval: 60000,
     }
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const inquiriesData = (inquiriesRes?.body as any)?.inquiries || [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const postsData = (postsRes?.body as any)?.posts || [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const eventsData = (eventsRes?.body as any)?.events || [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const docsData = (docsRes?.body as any)?.docs || [];
+  const inquiriesData = inquiriesRes?.status === 200 ? inquiriesRes.body.inquiries : [];
+  const postsData = postsRes?.status === 200 ? postsRes.body.posts : [];
+  const eventsData = eventsRes?.status === 200 ? eventsRes.body.events : [];
+  const docsData = docsRes?.status === 200 ? docsRes.body.docs : [];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pendingInquiries = inquiriesData?.filter((i: any) => i.status === "pending") || [];

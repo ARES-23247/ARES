@@ -27,6 +27,7 @@ export function MemberCard({ member }: { member: TeamMember }) {
           <img
             src={member.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${member.user_id}`}
             alt=""
+            aria-hidden="true"
             className="w-full h-full object-contain"
           />
         </div>
