@@ -7,16 +7,16 @@ const c = initContract();
 export const postResponseSchema = z.object({
   slug: z.string(),
   title: z.string(),
-  date: z.string().nullable(),
-  snippet: z.string().nullable(),
-  thumbnail: z.string().nullable(),
-  status: z.string(),
-  author: z.string().nullable(),
-  author_nickname: z.string().nullable().optional(),
-  published_at: z.string().nullable(),
-  season_id: z.coerce.number().nullable(),
-  is_deleted: z.number().optional(),
-  is_portfolio: z.number().optional(),
+  date: z.string().nullish(),
+  snippet: z.string().nullish(),
+  thumbnail: z.string().nullish(),
+  status: z.string().nullish(),
+  author: z.string().nullish(),
+  author_nickname: z.string().nullish(),
+  published_at: z.string().nullish(),
+  season_id: z.coerce.number().nullish(),
+  is_deleted: z.number().nullish(),
+  is_portfolio: z.number().nullish(),
 });
 
 export const postDetailSchema = postResponseSchema.extend({

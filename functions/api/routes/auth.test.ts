@@ -71,7 +71,7 @@ describe("Auth Router", () => {
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const req = new Request("http://localhost/error");
-      const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "development" } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "development", DEV_BYPASS: "true" } as any, mockExecutionContext);
 
       expect(res.status).toBe(500);
       const body = await res.json() as any;
@@ -89,7 +89,7 @@ describe("Auth Router", () => {
   
         const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
         const req = new Request("http://localhost/error");
-        const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "production" } as any, mockExecutionContext);
+        const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "production", DEV_BYPASS: "true" } as any, mockExecutionContext);
   
         expect(res.status).toBe(500);
         const body = await res.json() as any;
@@ -106,7 +106,7 @@ describe("Auth Router", () => {
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const req = new Request("http://localhost/error");
-      const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "development" } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "development", DEV_BYPASS: "true" } as any, mockExecutionContext);
 
       expect(res.status).toBe(500);
       const body = await res.json() as any;

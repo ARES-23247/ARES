@@ -21,7 +21,14 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: any 
   const { data: boardRes, isLoading: isBoardLoading, isError: isBoardError } = api.github.getBoard.useQuery(["command-board"], {}, {
     refetchInterval: 60000,
   });
-  const board = boardRes?.status === 200 ? boardRes.body.board : null;
+  // The github API returns { success: true, board: any[] }
+  const boardArray = boardRes?.status === 200 && Array.isArray(boardRes.body.board) ? boardRes.body.board : null;
+  const board = boardArray ? {
+    title: "Project Board",
+    shortDescription: "GitHub Projects",
+    items: boardArray,
+    totalCount: boardArray.length
+  } : null;
 
   // Using prefetched stats from parent to avoid waterfall
   const stats = prefetchedStats || { posts: 0, events: 0, docs: 0, integrations: {} };
