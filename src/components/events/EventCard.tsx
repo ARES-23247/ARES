@@ -69,8 +69,8 @@ export const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean
           {plainDescription}
         </p>
         
-        <div className="mt-6 flex items-center justify-between relative z-10">
-          <div className="text-ares-gold uppercase tracking-widest text-xs font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform w-fit pointer-events-none">
+        <div className="mt-6 flex items-center justify-between relative z-10 pointer-events-none">
+          <div className="text-ares-gold uppercase tracking-widest text-xs font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform w-fit">
             {isPast ? "Read Recap" : "View Details"} <span className="text-lg leading-none">&rarr;</span>
           </div>
           
@@ -81,7 +81,7 @@ export const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean
                 e.stopPropagation();
                 downloadICS(event);
               }}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-ares-gold/10 hover:bg-ares-gold text-ares-gold hover:text-black border border-ares-gold/30 hover:border-ares-gold transition-all relative z-20"
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-ares-gold/10 hover:bg-ares-gold text-ares-gold hover:text-black border border-ares-gold/30 hover:border-ares-gold transition-all relative z-20 pointer-events-auto"
               aria-label={`Add ${event.title} to calendar`}
             >
               <Calendar size={12} aria-hidden="true" /> Add to Calendar
