@@ -91,7 +91,7 @@ export const profileContract = c.router({
         first_name: z.string(),
         last_name: z.string(),
         nickname: z.string(),
-      }),
+      }).passthrough(),
     },
     summary: "Get current user profile",
   },
