@@ -113,11 +113,11 @@ const profileHandlers = {
     const db = c.get("db") as Kysely<DB>;
     try {
       // SEC-F04: Only show verified users or those who have explicitly opted in via profile.
-      // We allow 'user', 'admin', 'author'. We only exclude 'unverified' IF they haven't been vetted.
-      // However, if show_on_about is 1, we assume a level of vetting has occurred or is desired.
+      // We allow 'user', 'admin', 'author'. We MUST exclude 'unverified' even if show_on_about is 1.
       const results = await db.selectFrom("user_profiles as p")
         .innerJoin("user as u", "p.user_id", "u.id")
         .where("p.show_on_about", "=", 1)
+        .where("u.role", "!=", "unverified")
         .select([
           "p.user_id", "p.nickname", "p.bio", "p.pronouns", "p.subteams", "p.member_type",
           "p.favorite_first_thing", "p.fun_fact", "p.show_email", "p.contact_email",
