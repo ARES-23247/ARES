@@ -7,6 +7,7 @@ import { notifyByRole, NotifyAudience } from "../../utils/notifications";
 import { buildGitHubConfig, createProjectItem } from "../../utils/githubProjects";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
+import { encrypt, decrypt } from "../../utils/crypto";
 
 const s = initServer<AppEnv>();
 export const inquiriesRouter = new Hono<AppEnv>();
@@ -21,6 +22,7 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
 
       const limit = query.limit || 50;
       const offset = query.offset || 0;
+      const secret = c.env.ENCRYPTION_SECRET;
 
       let maskPII = false;
       let filterOutreach = false;
@@ -43,9 +45,9 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
 
       const METADATA_WHITELIST = ['level', 'org', 'message', 'event_type', 'date', 'topic', 'position', 'subteam'];
 
-      const inquiries = results.map(r => {
-        let name = String(r.name);
-        let email = String(r.email);
+      const inquiries = await Promise.all(results.map(async (r) => {
+        let name = await decrypt(String(r.name), secret);
+        let email = await decrypt(String(r.email), secret);
         let metadata = r.metadata;
 
         if (maskPII) {
@@ -70,10 +72,11 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
           status: r.status as "pending" | "approved" | "resolved" | "rejected",
           created_at: String(r.created_at)
         };
-      });
+      }));
 
       return { status: 200 as const, body: { inquiries: inquiries as any[] } };
-    } catch {
+    } catch (e) {
+      console.error("INQUIRY LIST ERROR", e);
       return { status: 500 as const, body: { error: "Failed to fetch inquiries" } };
     }
   },
@@ -81,23 +84,21 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { type, name, email, metadata } = body;
+      const secret = c.env.ENCRYPTION_SECRET;
 
-      const recent = await db.selectFrom("inquiries")
-        .select("id")
-        .where("email", "=", email)
-                .where("created_at", ">", sql<string>`datetime('now', '-2 minutes')`)
-        .executeTakeFirst();
-
-      if (recent) return { status: 429 as const, body: { error: "Please wait a few minutes before submitting another inquiry." } };
+      // EFF: Remove exact email check as encryption is now non-deterministic.
+      // The persistentRateLimitMiddleware already handles IP-based limiting.
 
       const id = crypto.randomUUID();
+      const encryptedName = await encrypt(name, secret);
+      const encryptedEmail = await encrypt(email, secret);
       
       await db.insertInto("inquiries")
         .values({
           id,
           type,
-          name,
-          email,
+          name: encryptedName,
+          email: encryptedEmail,
           metadata: metadata ? JSON.stringify(metadata) : null,
         })
         .execute();

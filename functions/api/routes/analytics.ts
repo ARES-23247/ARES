@@ -223,9 +223,9 @@ const analyticsHandlers = {
     try {
       const ftsQ = `"${q.replace(/"/g, '""')}"*`;
       const [postsReq, eventsReq, docsReq] = await Promise.all([
-        sql<{ id: string, title: string }>`SELECT slug as id, title FROM posts_fts WHERE posts_fts MATCH ${ftsQ} LIMIT 5`.execute(db),
-        sql<{ id: string, title: string }>`SELECT id, title FROM events_fts WHERE events_fts MATCH ${ftsQ} LIMIT 5`.execute(db),
-        sql<{ id: string, title: string }>`SELECT slug as id, title FROM docs_fts WHERE docs_fts MATCH ${ftsQ} LIMIT 5`.execute(db)
+        sql<{ id: string, title: string }>`SELECT f.slug as id, f.title FROM posts_fts f JOIN posts p ON f.slug = p.slug WHERE p.is_deleted = 0 AND p.status = 'published' AND f.posts_fts MATCH ${ftsQ} LIMIT 5`.execute(db),
+        sql<{ id: string, title: string }>`SELECT f.id, f.title FROM events_fts f JOIN events e ON f.id = e.id WHERE e.is_deleted = 0 AND e.status = 'published' AND f.events_fts MATCH ${ftsQ} LIMIT 5`.execute(db),
+        sql<{ id: string, title: string }>`SELECT f.slug as id, f.title FROM docs_fts f JOIN docs d ON f.slug = d.slug WHERE d.status = 'published' AND d.is_deleted = 0 AND f.docs_fts MATCH ${ftsQ} LIMIT 5`.execute(db)
       ]);
 
       const results = [
@@ -245,6 +245,7 @@ const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as a
 
 analyticsRouter.use("/track", turnstileMiddleware());
 analyticsRouter.use("/sponsor-click", turnstileMiddleware());
+analyticsRouter.use("/search", rateLimitMiddleware(100, 60));
 analyticsRouter.use("/admin", ensureAdmin);
 analyticsRouter.use("/admin/*", ensureAdmin);
 

@@ -68,4 +68,34 @@ export const notificationContract = c.router({
     },
     summary: "Mark all notifications as read",
   },
+  getPendingCounts: {
+    method: "GET",
+    path: "/pending-counts",
+    responses: {
+      200: z.object({
+        inquiries: z.number(),
+        posts: z.number(),
+        events: z.number(),
+        docs: z.number(),
+      }),
+      401: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Get counts of pending items for dashboard badges",
+  },
+  getDashboardActionItems: {
+    method: "GET",
+    path: "/action-items",
+    responses: {
+      200: z.object({
+        inquiries: z.array(z.any()),
+        posts: z.array(z.any()),
+        events: z.array(z.any()),
+        docs: z.array(z.any()),
+      }),
+      401: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Get detailed action items (pending requests) in a single batch",
+  },
 });

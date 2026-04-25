@@ -71,6 +71,75 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } as any };
     }
   },
+  getPendingCounts: async (_: any, c: Context<AppEnv>) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const user = await getSessionUser(c);
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+
+      // Optimized single-roundtrip query for all counts
+      const [inquiries, posts, events, docs] = await Promise.all([
+        db.selectFrom("inquiries").select(db.fn.count("id").as("count")).where("status", "=", "pending").executeTakeFirst(),
+        db.selectFrom("posts").select(db.fn.count("id").as("count")).where("status", "=", "pending").where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("events").select(db.fn.count("id").as("count")).where("status", "=", "pending").where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("docs").select(db.fn.count("id").as("count")).where("status", "=", "pending").where("is_deleted", "=", 0).executeTakeFirst(),
+      ]);
+
+      return {
+        status: 200 as const,
+        body: {
+          inquiries: Number(inquiries?.count || 0),
+          posts: Number(posts?.count || 0),
+          events: Number(events?.count || 0),
+          docs: Number(docs?.count || 0),
+        }
+      };
+    } catch {
+      return { status: 500 as const, body: { error: "Count failed" } as any };
+    }
+  },
+  getDashboardActionItems: async (_: any, c: Context<AppEnv>) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const user = await getSessionUser(c);
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+
+      // Batch fetch all detailed pending items
+      const [inquiries, posts, events, docs] = await Promise.all([
+        db.selectFrom("inquiries")
+          .select(["id", "name", "email", "type", "status", "created_at"])
+          .where("status", "=", "pending")
+          .execute(),
+        db.selectFrom("posts")
+          .select(["id", "title", "slug", "status", "is_deleted"])
+          .where("status", "=", "pending")
+          .where("is_deleted", "=", 0)
+          .execute(),
+        db.selectFrom("events")
+          .select(["id", "title", "status", "is_deleted"])
+          .where("status", "=", "pending")
+          .where("is_deleted", "=", 0)
+          .execute(),
+        db.selectFrom("docs")
+          .select(["id", "title", "slug", "status", "is_deleted"])
+          .where("status", "=", "pending")
+          .where("is_deleted", "=", 0)
+          .execute(),
+      ]);
+
+      return {
+        status: 200 as const,
+        body: {
+          inquiries: inquiries as any[],
+          posts: posts as any[],
+          events: events as any[],
+          docs: docs as any[],
+        }
+      };
+    } catch {
+      return { status: 500 as const, body: { error: "Action items fetch failed" } as any };
+    }
+  },
 };
 
 const notificationTsRestRouter = s.router(notificationContract, notificationHandlers as any);

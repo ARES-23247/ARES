@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+ 
 import { api } from "../api/client";
 
 export interface DashboardSession {
@@ -29,43 +28,26 @@ export interface DashboardPermissions {
 }
 
 export function useDashboardSession() {
-  const [session, setSession] = useState<DashboardSession | null>(null);
-  const [isPending, setIsPending] = useState(true);
+  const { data: res, isLoading: isPending } = api.profiles.getMe.useQuery(
+    ["dashboard", "session"],
+    { query: {} },
+    {
+      staleTime: 1000 * 60 * 5, // 5 minutes cache
+      retry: false,
+    }
+  );
 
-  useEffect(() => {
-    let isMounted = true;
-    api.profiles.getMe.query()
-      .then((res: any) => {
-        if (!isMounted) return;
-        if (res.status !== 200) {
-          setSession(null);
-          setIsPending(false);
-          return;
-        }
-        const data = res.body;
-        setSession({
-          authenticated: true,
-          user: {
-            ...data.auth,
-            member_type: data.member_type,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            nickname: data.nickname,
-            role: (data.auth.role as string) || "unverified",
-          },
-        } as DashboardSession);
-        setIsPending(false);
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setSession(null);
-        setIsPending(false);
-      });
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const session: DashboardSession | null = res?.status === 200 ? {
+    authenticated: true,
+    user: {
+      ...res.body.auth,
+      member_type: res.body.member_type,
+      first_name: res.body.first_name,
+      last_name: res.body.last_name,
+      nickname: res.body.nickname,
+      role: (res.body.auth.role as string) || "unverified",
+    },
+  } : null;
 
   const role = session?.user?.role || "unverified";
   const memberType = session?.user?.member_type || "student";

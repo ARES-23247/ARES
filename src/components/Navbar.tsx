@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { Search, LayoutDashboard, LogIn, Bell, Check, Heart } from "lucide-react";
@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { GreekMeander } from "./GreekMeander";
 import { api } from "../api/client";
 import { useDashboardSession } from "../hooks/useDashboardSession";
-import { useMergedNotifications } from "../hooks/useMergedNotifications";
+import { useMergedNotifications, MergedNotification } from "../hooks/useMergedNotifications";
 import { useUIStore } from "../store/uiStore";
 
 export default function Navbar() {
@@ -137,7 +137,7 @@ export default function Navbar() {
                         No notifications yet.
                       </li>
                     ) : (
-                      notifications.map((n: any) => (
+                      notifications.map((n: MergedNotification) => (
                         <li key={n.id}>
                           <div 
                             role="button"

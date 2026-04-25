@@ -49,12 +49,7 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-// ── 2. Env & DB setup ────
-app.use("*", envMiddleware);
-app.use("*", dbMiddleware);
-
-const apiRouter = new Hono<AppEnv>();
-// ── Isolate-Memory Rate Limiting ─────────────────────────────────────
+// ── 2. Isolate-Memory Rate Limiting (Fast reject) ────────────────────
 app.use("*", async (c, next) => {
   const ip = c.req.header("CF-Connecting-IP") || "unknown";
   if (ip !== "unknown" && !c.req.path.startsWith("/assets")) {
@@ -64,6 +59,12 @@ app.use("*", async (c, next) => {
   }
   await next();
 });
+
+// ── 3. Env & DB setup ────
+app.use("*", envMiddleware);
+app.use("*", dbMiddleware);
+
+const apiRouter = new Hono<AppEnv>();
 
 
 // ── CORS ─────
@@ -113,7 +114,7 @@ apiRouter.route("/webhooks/github", githubWebhookRouter);
 apiRouter.route("/webhooks/zulip", zulipWebhookRouter);
 
 // ── Global Search ───
-apiRouter.get("/search", async (c) => {
+apiRouter.get("/search", rateLimitMiddleware(50, 60), async (c) => {
   const q = c.req.query("q") || "";
   if (q.length < 3) return c.json({ results: [] });
   const ftsQ = `"${q.replace(/"/g, '""')}"*`;

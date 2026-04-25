@@ -1,6 +1,6 @@
 import { Context, Next } from "hono";
 import { AppEnv } from "./utils";
-import { Kysely } from "kysely";
+import { Kysely, sql } from "kysely";
 
 // ── Rate Limiting (In-Memory Worker V8 Isolate) ────────────────────────
 const MAX_RATE_LIMIT_CACHE = 500;
@@ -64,7 +64,7 @@ export async function checkPersistentRateLimit(db: Kysely<DB>, ip: string, limit
     if (row.count >= limit) return false;
     
     await db.updateTable("rate_limits")
-      .set({ count: row.count + 1 })
+      .set({ count: sql`count + 1` })
       .where("ip", "=", ip)
       .execute();
     return true;

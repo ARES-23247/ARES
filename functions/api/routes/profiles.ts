@@ -197,7 +197,7 @@ const profileHandlers = {
       const sanitized = sanitizeProfileForPublic(profileRow, memberType) as Record<string, unknown>;
 
       const requester = await getSessionUser(c);
-      const isAdmin = requester?.role === "admin" || requester?.role === "author" || requester?.member_type === "coach" || requester?.member_type === "mentor";
+      const isAdmin = requester?.role === "admin" || requester?.member_type === "coach" || requester?.member_type === "mentor";
       const isSelf = requester?.id === userId;
 
       if (isAdmin || isSelf) {
@@ -237,6 +237,9 @@ const profileHandlers = {
 
 const profileTsRestRouter = s.router(profileContract, profileHandlers as any);
 createHonoEndpoints(profileContract, profileTsRestRouter, profilesRouter);
+
+profilesRouter.use("/team-roster", rateLimitMiddleware(100, 60));
+profilesRouter.use("/:userId", rateLimitMiddleware(100, 60));
 
 profilesRouter.use("/update-me", persistentRateLimitMiddleware(10, 60));
 profilesRouter.put("/avatar", persistentRateLimitMiddleware(15, 60), async (c: any) => {

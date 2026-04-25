@@ -1,4 +1,4 @@
-import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard, MessageSquare, Workflow, CheckCircle, Eye, ShieldCheck, Activity } from "lucide-react";
+import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard, MessageSquare, Workflow, CheckCircle, Eye, ShieldCheck, Activity, Rocket, Paintbrush } from "lucide-react";
 import { motion } from "framer-motion";
 import GitHubHeatmap from "../components/GitHubHeatmap";
 import SEO from "../components/SEO";
@@ -128,6 +128,39 @@ export default function TechStack() {
               For our team communications, we proudly use <strong>Zulip</strong>. Their generous donation of Zulip Cloud Standard provides our students and mentors with an organized, thread-based workspace that keeps our engineering and outreach discussions seamlessly coordinated.
             </p>
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Sponsored</div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
+            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
+              <Rocket size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Hono Edge Framework</h3>
+            <p className="text-marble leading-relaxed mb-4 flex-1">
+              We replaced legacy Express.js backends with <strong>Hono</strong>. It is an ultra-fast, lightweight web framework built natively for Edge computing. It allows us to process API requests with zero cold starts globally.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Open Source</div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
+            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
+              <ShieldCheck size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Kysely Type-Safe SQL</h3>
+            <p className="text-marble leading-relaxed mb-4 flex-1">
+              Our Cloudflare D1 interactions are protected by <strong>Kysely</strong>. This query builder enforces strict end-to-end type safety, preventing SQL injection vulnerabilities and catching schema errors at compilation time.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Open Source</div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
+            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6">
+              <Paintbrush size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Tailwind & Framer Motion</h3>
+            <p className="text-marble leading-relaxed mb-4 flex-1">
+              Our bespoke UI is sculpted with <strong>Tailwind CSS</strong> utilizing a custom &quot;ares-cut&quot; design system, while <strong>Framer Motion</strong> powers the dynamic, physics-based micro-interactions that make the site feel alive.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Open Source</div>
           </div>
         </div>
 

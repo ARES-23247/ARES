@@ -82,7 +82,12 @@ export const postContract = c.router({
       200: z.object({
         post: postDetailSchema,
         is_editor: z.boolean(),
-        author: z.any().optional(),
+        author: z.object({
+          id: z.string(),
+          name: z.string().nullable(),
+          image: z.string().nullable(),
+          role: z.string(),
+        }).optional(),
       }),
       404: z.object({ error: z.string() }),
     },
