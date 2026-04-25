@@ -90,33 +90,31 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
 
       const id = crypto.randomUUID();
       
-      await db.transaction().execute(async (trx) => {
-        await trx.insertInto("inquiries")
+      await db.insertInto("inquiries")
+        .values({
+          id,
+          type,
+          name,
+          email,
+          metadata: metadata ? JSON.stringify(metadata) : null,
+        })
+        .execute();
+
+      if (type === "sponsor") {
+        let tierStr = "Pending";
+        if (metadata && typeof (metadata as any).level === "string") {
+          tierStr = (metadata as any).level;
+          tierStr = tierStr.replace(" Tier Sponsor", "");
+        }
+        await db.insertInto("sponsors")
           .values({
             id,
-            type,
             name,
-            email,
-            metadata: metadata ? JSON.stringify(metadata) : null,
+            tier: tierStr as any,
+            is_active: 0,
           })
           .execute();
-
-        if (type === "sponsor") {
-          let tierStr = "Pending";
-          if (metadata && typeof (metadata as any).level === "string") {
-            tierStr = (metadata as any).level;
-            tierStr = tierStr.replace(" Tier Sponsor", "");
-          }
-          await trx.insertInto("sponsors")
-            .values({
-              id,
-              name,
-              tier: tierStr as any,
-              is_active: 0,
-            })
-            .execute();
-        }
-      });
+      }
 
       const baseUrl = new URL(c.req.url).origin;
 
@@ -142,7 +140,8 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
       })());
 
       return { status: 200 as const, body: { success: true, id } };
-    } catch {
+    } catch (e) {
+      console.error("INQUIRY SUBMISSION ERROR", e);
       return { status: 500 as const, body: { error: "Submission failed" } };
     }
   },

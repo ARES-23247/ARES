@@ -21,7 +21,11 @@ function isValidImage(buffer: ArrayBuffer): boolean {
 }
 
 // SCA-F01: Recursive R2 Listing Helper
-async function listAllObjects(bucket: R2Bucket, options?: R2ListOptions) {
+async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOptions) {
+  if (!bucket) {
+    console.warn("[media.ts] R2Bucket not bound! Returning empty list.");
+    return { objects: [] };
+  }
   let result = await bucket.list(options);
   const objects = [...result.objects];
   while (result.truncated) {
@@ -117,7 +121,11 @@ const mediaTsRestRouter: any = s.router(mediaContract as any, {
       if (!isValidImage(arrayBuffer)) return { status: 400 as const, body: { error: "Invalid file type." } };
 
       const key = folder ? `${folder}/${file.name}` : file.name;
-      await c.env.ARES_STORAGE.put(key, arrayBuffer, { httpMetadata: { contentType: file.type } });
+      if (c.env.ARES_STORAGE) {
+        await c.env.ARES_STORAGE.put(key, arrayBuffer, { httpMetadata: { contentType: file.type } });
+      } else {
+        console.warn("[media.ts] R2Bucket not bound! Skipping physical upload.");
+      }
 
       let altText = "ARES 23247 Team Media Image";
       if (c.env.AI && arrayBuffer.byteLength < 2.5 * 1024 * 1024) {
@@ -143,25 +151,33 @@ const mediaTsRestRouter: any = s.router(mediaContract as any, {
     const oldKey = params.key;
     const { folder } = body;
     try {
-      const object = await c.env.ARES_STORAGE.get(oldKey);
-      if (!object) return { status: 404 as const, body: { error: "Source not found" } };
+      if (c.env.ARES_STORAGE) {
+        const object = await c.env.ARES_STORAGE.get(oldKey);
+        if (!object) return { status: 404 as const, body: { error: "Source not found" } };
 
-      const fileName = oldKey.split("/").pop();
-      const newKey = `${folder}/${fileName}`;
+        const fileName = oldKey.split("/").pop();
+        const newKey = `${folder}/${fileName}`;
 
-      await c.env.ARES_STORAGE.put(newKey, object.body, { httpMetadata: { contentType: object.httpMetadata?.contentType } });
-      await c.env.ARES_STORAGE.delete(oldKey);
-
-      await c.env.DB.prepare("UPDATE media_tags SET key = ?, folder = ? WHERE key = ?").bind(newKey, folder, oldKey).run();
-
-      return { status: 200 as const, body: { success: true, newKey } };
+        await c.env.ARES_STORAGE.put(newKey, object.body, { httpMetadata: { contentType: object.httpMetadata?.contentType } });
+        await c.env.ARES_STORAGE.delete(oldKey);
+        
+        await c.env.DB.prepare("UPDATE media_tags SET key = ?, folder = ? WHERE key = ?").bind(newKey, folder, oldKey).run();
+        return { status: 200 as const, body: { success: true, newKey } };
+      } else {
+        const fileName = oldKey.split("/").pop();
+        const newKey = `${folder}/${fileName}`;
+        await c.env.DB.prepare("UPDATE media_tags SET key = ?, folder = ? WHERE key = ?").bind(newKey, folder, oldKey).run();
+        return { status: 200 as const, body: { success: true, newKey } };
+      }
     } catch {
       return { status: 500 as const, body: { error: "Move failed" } };
     }
   },
     delete: async ({ params }: { params: any }, c: any) => {
     try {
-      await c.env.ARES_STORAGE.delete(params.key);
+      if (c.env.ARES_STORAGE) {
+        await c.env.ARES_STORAGE.delete(params.key);
+      }
       await c.env.DB.prepare("DELETE FROM media_tags WHERE key = ?").bind(params.key).run();
       return { status: 200 as const, body: { success: true } };
     } catch {
@@ -184,7 +200,15 @@ const mediaTsRestRouter: any = s.router(mediaContract as any, {
   },
 } as any);
 
-// GET /media/:key — Serve raw object from R2
+// Note: raw object route is now mounted AFTER ts-rest endpoints
+
+// Protections
+mediaRouter.use("/admin/*", ensureAdmin);
+mediaRouter.use("/admin", ensureAdmin);
+
+createHonoEndpoints(mediaContract, mediaTsRestRouter, mediaRouter);
+
+// GET /media/:key — Serve raw object from R2 (Must be after createHonoEndpoints to avoid catching /admin)
 mediaRouter.get("/:key{.+$}", async (c: any) => {
   const key = c.req.param("key");
   try {
@@ -202,6 +226,8 @@ mediaRouter.get("/:key{.+$}", async (c: any) => {
     const cached = await cache.match(cacheKey);
     if (cached && publicFolders.includes(folder)) return cached;
 
+    if (!c.env.ARES_STORAGE) return c.text("R2 Not Bound", 404);
+    
     const object = await c.env.ARES_STORAGE.get(key);
     if (!object) return c.text("Not Found", 404);
 
@@ -218,11 +244,5 @@ mediaRouter.get("/:key{.+$}", async (c: any) => {
     return c.text("Internal Error", 500);
   }
 });
-
-// Protections
-mediaRouter.use("/admin/*", ensureAdmin);
-mediaRouter.use("/admin", ensureAdmin);
-
-createHonoEndpoints(mediaContract, mediaTsRestRouter, mediaRouter);
 
 export default mediaRouter;
