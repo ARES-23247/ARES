@@ -12,6 +12,14 @@ Technical failures (network errors, API rejections, database crashes) must **NEV
 
 When an operation fails, you must capture the most granular data possible and present it in a secondary diagnostic layer.
 
+### 1a. The "No Fake Success" Rule
+A particularly dangerous variant of silent failure is **catch blocks that return HTTP 200 with empty data** (e.g., `catch { return { status: 200, body: { docs: [] } } }`). This makes the frontend believe the request succeeded with zero results, when in reality the database query or upstream call crashed. The developer sees an empty list with no error indicator, making the root cause nearly impossible to find.
+
+- ❌ **BANNED**: `catch { return { status: 200 as const, body: { items: [] } }; }`
+- ✅ **AUTHORIZED**: `catch (e) { console.error("HANDLER_NAME ERROR", e); return { status: 500 as const, body: { error: "Failed to fetch items" } }; }`
+
+All `catch` blocks in API route handlers MUST log the error with `console.error` AND return a non-2xx status code so that the frontend's `isError` flags activate properly.
+
 ## 2. Mandatory HTTP Status Exposure
 All `fetch` calls or API mutations in the Dashboard must verify the `response.ok` status. If a request fails, the UI must display the numeric HTTP status code and the status text.
 
