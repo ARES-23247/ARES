@@ -55,6 +55,10 @@ export default function AdminUsers() {
     patchMutation.mutate({ params: { id: userId }, body: { role: newRole } });
   }, [patchMutation]);
 
+  const changeMemberType = useCallback((userId: string, newType: string) => {
+    patchMutation.mutate({ params: { id: userId }, body: { member_type: newType } });
+  }, [patchMutation]);
+
   const removeUser = (userId: string, name: string) => {
     if (!confirm(`Remove ${name}? This cannot be undone.`)) return;
     toast.info("Delete functionality to be implemented in contract fully");
@@ -114,6 +118,7 @@ export default function AdminUsers() {
         <div className="relative inline-block">
           <select
             value={info.getValue() || "student"}
+            onChange={e => changeMemberType(info.row.original.id, e.target.value)}
             title="Change member type"
             className={`appearance-none bg-transparent border ares-cut-sm px-3 py-1 pr-7 text-xs font-bold cursor-pointer focus:outline-none capitalize ${
               info.getValue() === "alumni" ? "border-ares-gold/50 text-ares-gold" :
@@ -152,7 +157,7 @@ export default function AdminUsers() {
       ),
     }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [patchMutation, columnHelper, changeRole]);
+  ], [patchMutation, columnHelper, changeRole, changeMemberType]);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
