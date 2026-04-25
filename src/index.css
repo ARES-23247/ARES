@@ -140,9 +140,24 @@ h1, h2, h3, h4, .font-heading {
   @apply bg-transparent p-0 text-inherit;
 }
 
+/* --- NATIVE FORM FIXES FOR DARK MODE --- */
+input, textarea, select {
+  color-scheme: dark;
+}
+
 /* Fix native select option background in dark mode wrappers */
 select option {
   @apply bg-obsidian text-white;
+}
+
+/* Fix WebKit Autofill background turning white in dark mode */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* --- NATIVE PDF PORTFOLIO EXPORTS --- */
