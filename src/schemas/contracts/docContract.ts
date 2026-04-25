@@ -67,7 +67,7 @@ export const docContract = c.router({
   },
   adminList: {
     method: "GET",
-    path: "/admin",
+    path: "/admin/list",
     responses: {
       200: z.object({
         docs: z.array(docResponseSchema),
