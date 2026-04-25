@@ -1,8 +1,8 @@
 .performance-dashboard {
   width: 100%;
   min-height: 600px;
-  background-color: #0a0a0a;
-  border: 1px solid #2a2a2a;
+  background-color: var(--obsidian);
+  border: 1px solid var(--ares-gray-dark);
   border-radius: 8px;
   overflow: hidden;
   display: flex;
@@ -12,8 +12,8 @@
 
 .dashboard-header {
   padding: 20px;
-  border-bottom: 1px solid #2a2a2a;
-  background: #111;
+  border-bottom: 1px solid var(--ares-gray-dark);
+  background: var(--ares-gray-deep);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -22,7 +22,7 @@
 }
 
 .dashboard-header h2 {
-  color: #fff;
+  color: var(--marble);
   margin: 0;
   font-family: 'Orbitron', sans-serif;
   font-size: 24px;
@@ -50,8 +50,8 @@
 .upload-button {
   display: inline-block;
   padding: 10px 20px;
-  background: #B32416;
-  color: #fff;
+  background: var(--ares-red);
+  color: var(--marble);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -62,22 +62,22 @@
 }
 
 .upload-button:hover {
-  background: #d42e1e;
+  background: var(--ares-red-dark);
 }
 
 .upload-button:disabled {
-  background: #444;
+  background: var(--ares-gray);
   cursor: not-allowed;
 }
 
 .error-message {
   margin: 15px 20px;
   padding: 12px;
-  background: rgba(244, 67, 54, 0.1);
-  border: 1px solid #f44336;
-  border-left: 4px solid #f44336;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--ares-danger);
+  border-left: 4px solid var(--ares-danger);
   border-radius: 4px;
-  color: #f44336;
+  color: var(--ares-danger);
   font-size: 14px;
 }
 
@@ -85,15 +85,15 @@
   display: flex;
   gap: 2px;
   padding: 0 20px;
-  background: #111;
-  border-bottom: 1px solid #2a2a2a;
+  background: var(--ares-gray-deep);
+  border-bottom: 1px solid var(--ares-gray-dark);
 }
 
 .tab {
   padding: 12px 20px;
   background: transparent;
   border: none;
-  color: #aaa;
+  color: var(--ares-muted);
   cursor: pointer;
   font-family: 'Orbitron', sans-serif;
   font-size: 14px;
@@ -102,13 +102,13 @@
 }
 
 .tab:hover {
-  color: #fff;
-  border-bottom-color: #444;
+  color: var(--marble);
+  border-bottom-color: var(--ares-gray);
 }
 
 .tab.active {
-  color: #fff;
-  border-bottom-color: #B32416;
+  color: var(--marble);
+  border-bottom-color: var(--ares-red);
 }
 
 .dashboard-content {
@@ -125,7 +125,7 @@
   justify-content: center;
   min-height: 400px;
   text-align: center;
-  color: #888;
+  color: var(--ares-muted);
 }
 
 .upload-icon {
@@ -135,7 +135,7 @@
 }
 
 .upload-prompt h3 {
-  color: #fff;
+  color: var(--marble);
   font-family: 'Orbitron', sans-serif;
   margin-bottom: 10px;
 }
@@ -153,8 +153,8 @@
 }
 
 .feature {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--obsidian);
+  border: 1px solid var(--ares-gray-dark);
   padding: 8px 16px;
   border-radius: 4px;
   font-size: 14px;
@@ -165,7 +165,7 @@
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  color: #888;
+  color: var(--ares-muted);
   font-size: 16px;
 }
 
@@ -173,7 +173,7 @@
 .dashboard-bottlenecks h3,
 .dashboard-timeline h3,
 .dashboard-details h3 {
-  color: #fff;
+  color: var(--marble);
   font-family: 'Orbitron', sans-serif;
   margin-bottom: 20px;
   font-size: 18px;
@@ -187,15 +187,15 @@
 }
 
 .metric-card {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--obsidian);
+  border: 1px solid var(--ares-gray-dark);
   border-radius: 8px;
   padding: 20px;
   text-align: center;
 }
 
 .metric-title {
-  color: #888;
+  color: var(--ares-muted);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -203,7 +203,7 @@
 }
 
 .metric-value {
-  color: #fff;
+  color: var(--marble);
   font-size: 32px;
   font-weight: bold;
   font-family: 'Orbitron', sans-serif;
@@ -211,13 +211,13 @@
 }
 
 .metric-subtitle {
-  color: #666;
+  color: var(--ares-gray);
   font-size: 12px;
   margin-bottom: 15px;
 }
 
 .metric-range {
-  color: #888;
+  color: var(--ares-muted);
   font-size: 13px;
   margin-bottom: 15px;
   font-family: monospace;
@@ -231,21 +231,21 @@
 }
 
 .metric-indicator.good {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
-  border: 1px solid #4CAF50;
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--ares-success);
+  border: 1px solid var(--ares-success);
 }
 
 .metric-indicator.warning {
-  background: rgba(255, 193, 7, 0.2);
-  color: #FFC107;
-  border: 1px solid #FFC107;
+  background: rgba(255, 184, 28, 0.2);
+  color: var(--ares-gold);
+  border: 1px solid var(--ares-gold);
 }
 
 .metric-indicator.critical {
-  background: rgba(244, 67, 54, 0.2);
-  color: #F44336;
-  border: 1px solid #F44336;
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--ares-danger);
+  border: 1px solid var(--ares-danger);
 }
 
 .bottleneck-list {
@@ -255,22 +255,22 @@
 }
 
 .bottleneck-card {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--obsidian);
+  border: 1px solid var(--ares-gray-dark);
   border-radius: 8px;
   padding: 20px;
 }
 
 .bottleneck-card.severity-high {
-  border-left: 4px solid #F44336;
+  border-left: 4px solid var(--ares-danger);
 }
 
 .bottleneck-card.severity-medium {
-  border-left: 4px solid #FFC107;
+  border-left: 4px solid var(--ares-gold);
 }
 
 .bottleneck-card.severity-low {
-  border-left: 4px solid #4CAF50;
+  border-left: 4px solid var(--ares-success);
 }
 
 .bottleneck-header {
@@ -286,14 +286,14 @@
 }
 
 .bottleneck-category {
-  color: #fff;
+  color: var(--marble);
   font-size: 16px;
   font-weight: bold;
   font-family: 'Orbitron', sans-serif;
 }
 
 .bottleneck-metric {
-  color: #888;
+  color: var(--ares-muted);
   font-size: 14px;
   margin-bottom: 15px;
 }
@@ -310,21 +310,21 @@
 }
 
 .stat-label {
-  color: #666;
+  color: var(--ares-gray);
   font-size: 11px;
   text-transform: uppercase;
   margin-bottom: 5px;
 }
 
 .stat-value {
-  color: #fff;
+  color: var(--marble);
   font-family: monospace;
   font-size: 14px;
 }
 
 .timeline-chart {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: var(--obsidian);
+  border: 1px solid var(--ares-gray-dark);
   border-radius: 8px;
   padding: 20px;
 }
@@ -334,7 +334,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  color: #fff;
+  color: var(--marble);
   font-size: 14px;
 }
 
@@ -363,7 +363,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #888;
+  color: var(--ares-muted);
 }
 
 .legend-color {
@@ -383,19 +383,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #1a1a1a;
+  background: var(--obsidian);
   padding: 12px 16px;
   border-radius: 4px;
   font-size: 14px;
 }
 
 .detail-label {
-  color: #888;
+  color: var(--ares-muted);
   font-weight: 500;
 }
 
 .detail-value {
-  color: #fff;
+  color: var(--marble);
   font-family: monospace;
 }
 
@@ -404,14 +404,14 @@
 }
 
 .detailed-metrics h4 {
-  color: #fff;
+  color: var(--marble);
   font-family: 'Orbitron', sans-serif;
   margin-bottom: 15px;
 }
 
 .metrics-table {
   overflow-x: auto;
-  background: #1a1a1a;
+  background: var(--obsidian);
   border-radius: 8px;
 }
 
@@ -424,30 +424,30 @@
 .metrics-table td {
   padding: 12px 16px;
   text-align: left;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--ares-gray-dark);
 }
 
 .metrics-table th {
-  background: #222;
-  color: #fff;
+  background: var(--ares-gray-dark);
+  color: var(--marble);
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
 }
 
 .metrics-table td {
-  color: #ccc;
+  color: var(--ares-muted);
   font-size: 13px;
 }
 
 .metrics-table tr:hover {
-  background: #252525;
+  background: var(--ares-gray-dark);
 }
 
 .dashboard-footer {
   padding: 20px;
-  border-top: 1px solid #2a2a2a;
-  background: #111;
+  border-top: 1px solid var(--ares-gray-dark);
+  background: var(--ares-gray-deep);
 }
 
 .recommendations {
@@ -457,7 +457,7 @@
 }
 
 .recommendations strong {
-  color: #fff;
+  color: var(--marble);
   margin-bottom: 10px;
 }
 
@@ -469,19 +469,19 @@
 }
 
 .recommendation.critical {
-  background: rgba(244, 67, 54, 0.1);
-  border-left: 3px solid #F44336;
-  color: #f44336;
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid var(--ares-danger);
+  color: var(--ares-danger);
 }
 
 .recommendation.warning {
-  background: rgba(255, 193, 7, 0.1);
-  border-left: 3px solid #FFC107;
-  color: #FFC107;
+  background: rgba(255, 184, 28, 0.1);
+  border-left: 3px solid var(--ares-gold);
+  color: var(--ares-gold);
 }
 
 .recommendation.good {
-  background: rgba(76, 175, 80, 0.1);
-  border-left: 3px solid #4CAF50;
-  color: #4CAF50;
+  background: rgba(34, 197, 94, 0.1);
+  border-left: 3px solid var(--ares-success);
+  color: var(--ares-success);
 }

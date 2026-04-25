@@ -12,7 +12,7 @@ import SeasonPicker from "./SeasonPicker";
 import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { outreachSchema } from "../schemas/contracts/outreachContract";
+import { outreachSchema } from "@shared/schemas/contracts/outreachContract";
 import { z } from "zod";
 
 const outreachFormSchema = outreachSchema.omit({ id: true }).extend({

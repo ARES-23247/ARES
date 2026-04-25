@@ -98,7 +98,7 @@ export default function PrintPortfolio() {
     <div className="print-layout bg-white text-black min-h-screen">
       {/* ── COVER PAGE ─────────────────────────────────────────────────── */}
       <div className="print-cover flex flex-col items-center justify-center h-screen border-[12px] border-ares-red p-12 text-center page-break-after">
-        <div className="w-32 h-32 mb-8 bg-black rounded-lg flex items-center justify-center p-4">
+        <div className="w-32 h-32 mb-8 bg-black ares-cut-sm flex items-center justify-center p-4">
            {/* Fallback to text logo for print reliability */}
            <ShieldCheck size={80} className="text-ares-red" />
         </div>
@@ -164,13 +164,13 @@ export default function PrintPortfolio() {
           </div>
           
           <div className="grid grid-cols-2 gap-6 mb-10">
-            <div className="bg-black/5 p-6 rounded-lg text-center border border-black/10">
+            <div className="bg-black/5 p-6 ares-cut-sm text-center border border-black/10">
                <div className="text-4xl font-black text-black">
                  {portfolio.outreach.reduce((acc, curr) => acc + (curr.hours_logged || 0), 0)}
                </div>
                <div className="text-sm font-bold uppercase tracking-widest text-black/50 mt-2">Total Outreach Hours</div>
             </div>
-            <div className="bg-black/5 p-6 rounded-lg text-center border border-black/10">
+            <div className="bg-black/5 p-6 ares-cut-sm text-center border border-black/10">
                <div className="text-4xl font-black text-ares-gold">
                  {portfolio.outreach.reduce((acc, curr) => acc + ((curr.hours_logged || 0) * 5), 0).toLocaleString()}
                </div>

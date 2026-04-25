@@ -8,7 +8,7 @@ import { Gem, Award, ShieldCheck, Zap, ExternalLink, Heart, Package } from "luci
 import SEO from "../components/SEO";
 import Turnstile from "../components/Turnstile";
 import { api } from "../api/client";
-import { inquirySchema } from "../schemas/inquirySchema";
+import { inquirySchema } from "@shared/schemas/inquirySchema";
 
 interface Sponsor {
   id: string;

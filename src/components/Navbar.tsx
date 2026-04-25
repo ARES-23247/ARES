@@ -79,7 +79,7 @@ export default function Navbar() {
           <Link to="/outreach" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Outreach</Link>
           <Link to="/events" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Events</Link>
           <Link to="/blog" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
-          <Link to="/docs" className="hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-xl group border border-white/5 bg-white/5">
+          <Link to="/docs" aria-label="ARES Documentation Library" className="hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-xl group border border-white/5 bg-white/5">
             <span className="bg-ares-red px-3 py-1.5 text-xs font-heading font-black uppercase text-white tracking-[0.15em] border-r border-white/10 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.2)]">ARES</span>
             <span className="text-white px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-[0.2em] group-hover:bg-white/10 transition-colors">LIB</span>
           </Link>

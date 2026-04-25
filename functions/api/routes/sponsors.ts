@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { sql } from "kysely";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { sponsorContract } from "../../../src/schemas/contracts/sponsorContract";
+import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 

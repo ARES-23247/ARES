@@ -6,7 +6,7 @@ import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import { Bindings, AppEnv, checkRateLimit, rateLimitMiddleware, logSystemError, ensureAdmin, dbMiddleware, envMiddleware, parsePagination } from "./middleware";
 import { sql } from "kysely";
-import { DB } from "../../src/schemas/database";
+import { DB } from "../../shared/schemas/database";
 
 // ── Domain Routers ───────────────────────────────────────────────────
 import authRouter from "./routes/auth";
@@ -37,18 +37,6 @@ import zulipRouter from "./routes/zulip";
 import notificationsRouter from "./routes/notifications";
 
 const app = new Hono<AppEnv>();
-
-// ── 1. Logger (Top of stack for maximum visibility) ────
-app.use("*", async (c, next) => {
-  if (c.env?.ENVIRONMENT !== "production") {
-    const logUrl = new URL(c.req.url);
-    for (const key of [...logUrl.searchParams.keys()]) {
-      if (/token|secret|key|auth|session/i.test(key)) logUrl.searchParams.set(key, "***");
-    }
-    console.log(`[${c.req.method}] ${logUrl.pathname}${logUrl.search}`);
-  }
-  await next();
-});
 
 // ── 2. Isolate-Memory Rate Limiting (Fast reject) ────────────────────
 app.use("*", async (c, next) => {

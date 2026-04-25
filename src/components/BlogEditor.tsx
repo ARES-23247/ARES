@@ -8,7 +8,7 @@ import AssetPickerModal from "./AssetPickerModal";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { useAdminSettings } from "../hooks/useAdminSettings";
 import { useImageUpload } from "../hooks/useImageUpload";
-import { postSchema, PostPayload } from "../schemas/postSchema";
+import { postSchema, PostPayload } from "@shared/schemas/postSchema";
 import { api } from "../api/client";
 import { useModal } from "../contexts/ModalContext";
 import CoverAssetPicker from "./editor/CoverAssetPicker";

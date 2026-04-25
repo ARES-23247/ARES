@@ -5,7 +5,7 @@ import SEO from "../components/SEO";
 import { GreekMeander } from "../components/GreekMeander";
 import Turnstile from "../components/Turnstile";
 import { api } from "../api/client";
-import { inquirySchema } from "../schemas/inquirySchema";
+import { inquirySchema } from "@shared/schemas/inquirySchema";
 
 export default function Join() {
   const [role, setRole] = useState<"student" | "mentor">("student");

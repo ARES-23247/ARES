@@ -1,10 +1,10 @@
  
 import { Hono, Context } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings  } from "../middleware";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { settingsContract } from "../../../src/schemas/contracts/settingsContract";
+import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
 
 export const settingsRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();

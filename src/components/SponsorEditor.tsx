@@ -13,7 +13,7 @@ import confetti from "canvas-confetti";
 import { useModal } from "../contexts/ModalContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sponsorSchema, SponsorPayload } from "../schemas/sponsorSchema";
+import { sponsorSchema, SponsorPayload } from "@shared/schemas/sponsorSchema";
 
 import { api } from "../api/client";
 

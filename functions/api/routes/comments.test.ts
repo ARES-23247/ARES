@@ -72,7 +72,6 @@ describe("Hono Backend - /comments Router", () => {
     ];
     mockDb.execute.mockResolvedValueOnce(mockComments);
 
-    console.log(testApp.routes.map(r => r.path));
     const res = await testApp.request("/post/my-post", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as any;

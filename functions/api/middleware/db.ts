@@ -2,7 +2,7 @@ import { Context, Next } from "hono";
 import { AppEnv } from "./utils";
 import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 
 let cachedDb: Kysely<DB> | null = null;
 

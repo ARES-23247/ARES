@@ -8,7 +8,7 @@ import { api } from "../api/client";
 import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { locationSchema } from "../schemas/contracts/locationContract";
+import { locationSchema } from "@shared/schemas/contracts/locationContract";
 import { z } from "zod";
 
 interface LocationRow {

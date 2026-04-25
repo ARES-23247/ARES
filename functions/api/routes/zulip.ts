@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { AppEnv, ensureAdmin, getSocialConfig } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
-import { zulipContract } from "../../../src/schemas/contracts/zulipContract";
+import { zulipContract } from "../../../shared/schemas/contracts/zulipContract";
 
 const s = initServer<AppEnv>();
 export const zulipRouter = new Hono<AppEnv>();
@@ -9,7 +9,7 @@ export const zulipRouter = new Hono<AppEnv>();
 import { Context } from "hono";
 
 import { z } from "zod";
-import { zulipPresenceSchema } from "../../../src/schemas/contracts/zulipContract";
+import { zulipPresenceSchema } from "../../../shared/schemas/contracts/zulipContract";
 
 const zulipHandlers = {
   getPresence: async (_: any, c: Context<AppEnv>) => {

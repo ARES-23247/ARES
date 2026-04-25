@@ -78,12 +78,12 @@ export default function SOTMSimulator() {
     for(let i=0; i<canvas.width; i+=SCALE) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
     for(let i=0; i<canvas.height; i+=SCALE) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
 
-    ctx.fillStyle = "#B32416";
+    ctx.fillStyle = "var(--ares-red)";
     ctx.beginPath(); ctx.arc(HUB.x, HUB.y, 15, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = "white"; ctx.stroke();
     ctx.fillStyle = "white"; ctx.fillText("TARGET GOAL", HUB.x - 45, HUB.y - 25);
 
-    ctx.fillStyle = "#CD7F32";
+    ctx.fillStyle = "var(--ares-bronze)";
     ctx.save();
     ctx.translate(robotPos.x, robotPos.y);
     ctx.rotate(botHeading * Math.PI / 180);
@@ -122,9 +122,9 @@ export default function SOTMSimulator() {
             ctx.beginPath(); ctx.arc(aimX, aimY, 5, 0, Math.PI*2); ctx.fill();
             ctx.fillText("VIRTUAL TARGET", aimX + 10, aimY + 5);
 
-            drawArrow(robotPos.x, robotPos.y, robotPos.x + vRobotX * SCALE, robotPos.y + vRobotY * SCALE, "#4169E1");
-            drawArrow(robotPos.x, robotPos.y, HUB.x, HUB.y, "#B32416", 3);
-            drawArrow(robotPos.x, robotPos.y, aimX, aimY, "#CD7F32");
+            drawArrow(robotPos.x, robotPos.y, robotPos.x + vRobotX * SCALE, robotPos.y + vRobotY * SCALE, "var(--ares-cyan)");
+            drawArrow(robotPos.x, robotPos.y, HUB.x, HUB.y, "var(--ares-red)", 3);
+            drawArrow(robotPos.x, robotPos.y, aimX, aimY, "var(--ares-bronze)");
             
             logs.push("TOF: " + tof.toFixed(3) + "s");
             logs.push("Aim: " + ((Math.atan2(aimY - robotPos.y, aimX - robotPos.x) * 180 / Math.PI) + 90).toFixed(1) + "°");

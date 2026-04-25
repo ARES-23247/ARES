@@ -52,28 +52,28 @@ export default function SwerveSimulator() {
         const mX = CENTER.x + mod.x;
         const mY = CENTER.y + mod.y;
         
-        ctx.fillStyle = "#1A1A1A";
+        ctx.fillStyle = "var(--obsidian)";
         ctx.fillRect(mX - 10, mY - 10, 20, 20);
         ctx.strokeStyle = "rgba(255,255,255,0.2)";
         ctx.strokeRect(mX - 10, mY - 10, 20, 20);
 
         const tVecX = transX * SCALE;
         const tVecY = transY * SCALE;
-        drawArrow(mX, mY, mX + tVecX, mY + tVecY, "#00E5FF", 1, 5);
+        drawArrow(mX, mY, mX + tVecX, mY + tVecY, "var(--ares-cyan)", 1, 5);
 
         const rVecX = -mod.y * rotVel * (SCALE/50);
         const rVecY = mod.x * rotVel * (SCALE/50);
-        drawArrow(mX, mY, mX + rVecX, mY + rVecY, "#C00000", 1, 5);
+        drawArrow(mX, mY, mX + rVecX, mY + rVecY, "var(--ares-red)", 1, 5);
 
         const resX = tVecX + rVecX;
         const resY = tVecY + rVecY;
-        drawArrow(mX, mY, mX + resX, mY + resY, "#CD7F32", 3, 10);
+        drawArrow(mX, mY, mX + resX, mY + resY, "var(--ares-bronze)", 3, 10);
     });
 
     ctx.font = "12px Inter";
-    ctx.fillStyle = "#00E5FF"; ctx.fillText("Translation Component", 20, 340);
-    ctx.fillStyle = "#C00000"; ctx.fillText("Rotation Component", 20, 360);
-    ctx.fillStyle = "#CD7F32"; ctx.fillText("Final Module State", 20, 380);
+    ctx.fillStyle = "var(--ares-cyan)"; ctx.fillText("Translation Component", 20, 340);
+    ctx.fillStyle = "var(--ares-red)"; ctx.fillText("Rotation Component", 20, 360);
+    ctx.fillStyle = "var(--ares-bronze)"; ctx.fillText("Final Module State", 20, 380);
   }, [transX, transY, rotVel]);
 
   useEffect(() => {

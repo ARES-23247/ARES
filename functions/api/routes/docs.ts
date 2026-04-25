@@ -1,11 +1,11 @@
 import { Context, Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { docContract } from "../../../src/schemas/contracts/docContract";
+import { docContract } from "../../../shared/schemas/contracts/docContract";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkRateLimit, verifyTurnstile, emitNotification, notifyByRole } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { sql, Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 
 const s = initServer<AppEnv>();
 export const docsRouter = new Hono<AppEnv>();
@@ -448,7 +448,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
             try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("docs_history")
-        .selectAll()
+        .select(["id", "slug", "title", "category", "description", "author_email", "created_at"])
         .where("slug", "=", slug)
         .orderBy("created_at", "desc")
         .limit(50)

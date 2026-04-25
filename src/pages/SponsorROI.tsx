@@ -136,7 +136,7 @@ export default function SponsorROI() {
               <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-110 group-hover:rotate-12 group-hover:-translate-y-2 group-hover:translate-x-2">
                 <kpi.icon size={80} className={kpi.color} />
               </div>
-              <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center mb-6 relative z-10`}>
+              <div className={`w-10 h-10 ares-cut-sm ${kpi.bg} flex items-center justify-center mb-6 relative z-10`}>
                 <kpi.icon size={20} className={kpi.color} />
               </div>
               <p className="text-ares-gray text-xs font-bold uppercase tracking-widest mb-2 relative z-10">{kpi.label}</p>
@@ -187,7 +187,7 @@ export default function SponsorROI() {
                         <td className="py-4 text-right text-ares-gray">{actualImpressions.toLocaleString()}</td>
                         <td className="py-4 text-right text-white font-bold">{m.clicks.toLocaleString()}</td>
                         <td className="py-4 text-right">
-                          <span className={`px-2 py-1 rounded-md text-xs bg-white/5 border border-white/10 ${parseFloat(rate) > 2 ? 'text-ares-gold' : 'text-ares-gray'}`}>
+                          <span className={`px-2 py-1 ares-cut-sm text-xs bg-white/5 border border-white/10 ${parseFloat(rate) > 2 ? 'text-ares-gold' : 'text-ares-gray'}`}>
                             {rate}%
                           </span>
                         </td>

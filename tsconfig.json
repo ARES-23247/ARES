@@ -14,10 +14,11 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./shared/*"]
     },
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src", "functions"],
+  "include": ["src", "functions", "shared"],
   "exclude": ["node_modules", "dist"]
 }

@@ -44,9 +44,6 @@ export async function emitNotification(
     if (external) {
       if (c.env.ZULIP_BOT_EMAIL && c.env.ZULIP_API_KEY) {
          // Log for now, implement Zulip call when needed
-         if (c.env.ENVIRONMENT !== "production") {
-           console.log(`[Notification] Broadcasting external notification for ${userId}: ${title}`);
-         }
       }
     }
   } catch (err) {
@@ -131,7 +128,7 @@ export async function notifyByRole(
 
     // External broadcasting
     if (payload.external && c.env.ZULIP_BOT_EMAIL && c.env.ZULIP_API_KEY) {
-       console.log(`[Notification] Batch external broadcast dispatched for ${results.length} users.`);
+       // Batch external broadcast dispatched
     }
   } catch (err) {
     console.error("[Notification] notifyByRole failed:", err);

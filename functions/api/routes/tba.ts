@@ -1,9 +1,9 @@
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { Hono, Context } from "hono";
 import { AppEnv  } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
-import { tbaContract } from "../../../src/schemas/contracts/tbaContract";
+import { tbaContract } from "../../../shared/schemas/contracts/tbaContract";
 
 const s = initServer<AppEnv>();
 export const tbaRouter = new Hono<AppEnv>();

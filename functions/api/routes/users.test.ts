@@ -65,9 +65,6 @@ describe("Hono Backend - /users Router", () => {
 
   it("GET /admin/list - list users", async () => {
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
-    if (res.status !== 200) {
-      console.log(res.status, await res.text());
-    }
     expect(res.status).toBe(200);
     expect(mockDb.selectFrom).toHaveBeenCalledWith("user as u");
   });

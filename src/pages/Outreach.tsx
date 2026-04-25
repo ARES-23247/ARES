@@ -7,7 +7,7 @@ import { Target, Clock, ArrowRight, Activity, MapPin, Heart, X, CheckCircle } fr
 import SEO from "../components/SEO";
 import Turnstile from "../components/Turnstile";
 import { api } from "../api/client";
-import { inquirySchema } from "../schemas/inquirySchema";
+import { inquirySchema } from "@shared/schemas/inquirySchema";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface OutreachLog {

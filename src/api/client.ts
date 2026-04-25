@@ -1,5 +1,5 @@
 import { initQueryClient } from "@ts-rest/react-query";
-import { apiContract } from "../schemas/contracts";
+import { apiContract } from "@shared/schemas/contracts";
 
 export { fetchBlob, uploadFile, fetchJson } from "../utils/apiClient";
 

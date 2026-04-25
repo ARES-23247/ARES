@@ -1,4 +1,4 @@
-import { apiContract } from "./schemas/contracts";
+import { apiContract } from "@shared/schemas/contracts";
 
 console.log("Inquiries list URL:");
 console.log(apiContract.inquiries.list.path);

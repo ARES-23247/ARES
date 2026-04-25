@@ -4,9 +4,9 @@ import { getAuth } from "../../utils/auth";
 import { decrypt } from "../../utils/crypto";
 import { upsertProfile } from "./_profileUtils";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
-import { profileContract } from "../../../src/schemas/contracts/userContract";
+import { profileContract } from "../../../shared/schemas/contracts/userContract";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 
 const s = initServer<AppEnv>();
 export const profilesRouter = new Hono<AppEnv>();

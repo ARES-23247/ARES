@@ -53,7 +53,7 @@ export default function Leaderboard() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-20 h-20 mx-auto bg-ares-gold/10 border border-ares-gold/20 flex items-center justify-center rounded-2xl mb-6 backdrop-blur-sm"
+            className="w-20 h-20 mx-auto bg-ares-gold/10 border border-ares-gold/20 flex items-center justify-center ares-cut mb-6 backdrop-blur-sm"
           >
             <Trophy size={40} className="text-ares-gold drop-shadow-[0_0_15px_rgba(255,191,0,0.5)]" />
           </motion.div>

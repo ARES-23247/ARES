@@ -3,7 +3,7 @@ import { pushEventToGcal, pullEventsFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials } from "../../../utils/socialSync";
 import { sendZulipMessage } from "../../../utils/zulipSync";
 import { sql, Kysely } from "kysely";
-import { DB } from "../../../../src/schemas/database";
+import { DB } from "../../../../shared/schemas/database";
 import { Context } from "hono";
 
 export const eventHandlers = {
@@ -312,7 +312,7 @@ export const eventHandlers = {
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      const row = await db.selectFrom("events").selectAll().where("id", "=", id).executeTakeFirst();
+      const row = await db.selectFrom("events").select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "tba_event_key", "status", "is_potluck", "is_volunteer", "season_id", "meeting_notes", "revision_of"]).where("id", "=", id).executeTakeFirst();
       if (row && row.revision_of) {
         await db.updateTable("events")
           .set({ title: row.title, date_start: row.date_start, date_end: row.date_end, location: row.location, description: row.description, cover_image: row.cover_image, tba_event_key: row.tba_event_key, status: 'published', is_potluck: row.is_potluck, is_volunteer: row.is_volunteer, season_id: row.season_id, meeting_notes: row.meeting_notes })
@@ -501,7 +501,7 @@ export const eventHandlers = {
     const user = await getSessionUser(c);
     if (user?.role !== "admin" && user?.role !== "author") return { status: 401 as const, body: { error: "Unauthorized" } as any };
     const db = c.get("db") as Kysely<DB>;
-    const event = await db.selectFrom("events").selectAll().where("id", "=", params.id).executeTakeFirst();
+    const event = await db.selectFrom("events").select(["id", "title", "description", "cover_image"]).where("id", "=", params.id).executeTakeFirst();
     if (!event) return { status: 404 as const, body: { error: "Event not found" } as any };
 
     try {

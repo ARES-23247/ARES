@@ -2,7 +2,7 @@ import { Context } from "hono";
 import { siteConfig } from "../../utils/site.config";
 import { parseAstToText } from "../../utils/content";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { safeJSONParse } from "../../utils/json";
 
 // ── Cloudflare Bindings ──────────────────────────────────────────────

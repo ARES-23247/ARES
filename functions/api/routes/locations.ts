@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { locationContract } from "../../../src/schemas/contracts/locationContract";
+import { locationContract } from "../../../shared/schemas/contracts/locationContract";
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 
 const s = initServer<AppEnv>();
@@ -33,7 +33,7 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
-        .selectAll()
+        .select(["id", "name", "address", "maps_url", "is_deleted"])
         .orderBy("name", "asc")
         .execute();
 

@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
-import { docSchema } from "../schemas/docSchema";
+import { docSchema } from "@shared/schemas/docSchema";
 import { api } from "../api/client";
 import { useModal } from "../contexts/ModalContext";
 import EditorFooter from "./editor/EditorFooter";

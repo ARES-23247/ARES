@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Send, Trash2, RefreshCw, Pencil, Check, X } from "lucide-react";
 import { api } from "../api/client";
-import { commentSchema } from "../schemas/commentSchema";
+import { commentSchema } from "@shared/schemas/commentSchema";
 
 interface Comment {
   id: number;

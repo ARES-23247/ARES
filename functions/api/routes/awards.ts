@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { awardContract } from "../../../src/schemas/contracts/awardContract";
+import { awardContract } from "../../../shared/schemas/contracts/awardContract";
 
 const s = initServer<AppEnv>();
 export const awardsRouter = new Hono<AppEnv>();

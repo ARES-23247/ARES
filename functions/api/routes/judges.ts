@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { judgeContract } from "../../../src/schemas/contracts/judgeContract";
+import { judgeContract } from "../../../shared/schemas/contracts/judgeContract";
 import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction } from "../middleware";
 
 const s = initServer<AppEnv>();

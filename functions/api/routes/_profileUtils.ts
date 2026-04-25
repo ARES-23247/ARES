@@ -1,7 +1,7 @@
  
 import { Context } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { AppEnv, getSessionUser } from "../middleware";
 import { encrypt } from "../../utils/crypto";
 import { safeJSONStringify } from "../../utils/json";
@@ -17,7 +17,7 @@ export async function upsertProfile(
   
   // Fetch existing profile to allow merging
   const existing = await db.selectFrom("user_profiles")
-    .selectAll()
+    .select(["user_id", "nickname", "first_name", "last_name", "pronouns", "phone", "contact_email", "bio", "subteams", "dietary_restrictions", "show_on_about", "show_email", "show_phone", "member_type", "grade_year", "colleges", "employers", "favorite_first_thing", "fun_fact", "favorite_robot_mechanism", "pre_match_superstition", "leadership_role", "rookie_year", "tshirt_size", "emergency_contact_name", "emergency_contact_phone", "parents_name", "parents_email", "students_name", "students_email", "favorite_food"])
     .where("user_id", "=", userId)
     .executeTakeFirst();
   

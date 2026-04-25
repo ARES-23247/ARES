@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { seasonContract as seasonsContract } from "../../../src/schemas/contracts/seasonContract";
+import { seasonContract as seasonsContract } from "../../../shared/schemas/contracts/seasonContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 
 const s = initServer<AppEnv>();
 export const seasonsRouter = new Hono<AppEnv>();
@@ -12,7 +12,7 @@ const seasonsTsRestRouter: any = s.router(seasonsContract as any, {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
-        .selectAll()
+        .select(["start_year", "end_year", "challenge_name", "robot_name", "robot_image", "robot_description", "robot_cad_url", "summary", "album_url", "album_cover", "status", "is_deleted"])
         .where("is_deleted", "=", 0)
         .where("status", "=", "published")
         .orderBy("start_year", "desc")
@@ -35,7 +35,7 @@ const seasonsTsRestRouter: any = s.router(seasonsContract as any, {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
-        .selectAll()
+        .select(["start_year", "end_year", "challenge_name", "robot_name", "robot_image", "robot_description", "robot_cad_url", "summary", "album_url", "album_cover", "status", "is_deleted"])
         .orderBy("start_year", "desc")
         .execute();
 
@@ -57,7 +57,7 @@ const seasonsTsRestRouter: any = s.router(seasonsContract as any, {
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       const row = await db.selectFrom("seasons")
-        .selectAll()
+        .select(["start_year", "end_year", "challenge_name", "robot_name", "robot_image", "robot_description", "robot_cad_url", "summary", "album_url", "album_cover", "status", "is_deleted"])
         .where("start_year", "=", year)
         .executeTakeFirst();
 
@@ -86,11 +86,11 @@ const seasonsTsRestRouter: any = s.router(seasonsContract as any, {
       if (isNaN(year)) return { status: 404 as const, body: { error: "Invalid year" } };
 
       const [seasonRow, awards, events, posts, outreach] = await Promise.all([
-        db.selectFrom("seasons").selectAll().where("start_year", "=", year).executeTakeFirst(),
-        db.selectFrom("awards").selectAll().where("season_id", "=", Number(year) as any).execute(),
-        db.selectFrom("events").selectAll().where("season_id", "=", Number(year) as any).where("is_deleted", "=", 0).execute(),
-        db.selectFrom("posts").selectAll().where("season_id", "=", Number(year) as any).where("is_deleted", "=", 0).execute(),
-        db.selectFrom("outreach_logs").selectAll().where("season_id", "=", Number(year) as any).execute(),
+        db.selectFrom("seasons").select(["start_year", "end_year", "challenge_name", "robot_name", "robot_image", "robot_description", "robot_cad_url", "summary", "album_url", "album_cover", "status", "is_deleted"]).where("start_year", "=", year).executeTakeFirst(),
+        db.selectFrom("awards").select(["id", "title", "award_name", "event_name", "date", "season_id", "is_deleted"]).where("season_id", "=", Number(year) as any).execute(),
+        db.selectFrom("events").select(["id", "title", "category", "date_start", "date_end", "location", "cover_image", "status", "is_deleted", "season_id"]).where("season_id", "=", Number(year) as any).where("is_deleted", "=", 0).execute(),
+        db.selectFrom("posts").select(["slug", "title", "excerpt", "cover_image", "status", "is_deleted", "season_id", "created_at"]).where("season_id", "=", Number(year) as any).where("is_deleted", "=", 0).execute(),
+        db.selectFrom("outreach_logs").select(["id", "event_name", "date", "location", "hours_logged", "students_count", "reach_count", "description", "season_id", "is_deleted"]).where("season_id", "=", Number(year) as any).execute(),
       ]);
 
       if (!seasonRow) return { status: 404 as const, body: { error: "Season not found" } };

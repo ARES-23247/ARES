@@ -141,17 +141,11 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
                                         const membership = await res.json() as { state: string, role: string };
                                         if (membership.state === "active") {
                                             if (membership.role === "admin") {
-                                                if (env.ENVIRONMENT !== "production") {
-                                                  console.log(`[GitHub Auth] Verified ${session.userId} as ${siteConfig.urls.githubOrg} Org Owner. Promoting to Admin.`);
-                                                }
                                                 await kyselyDb.updateTable("user")
                                                     .set({ role: 'admin' })
                                                     .where("id", "=", session.userId)
                                                     .execute();
                                             } else {
-                                                if (env.ENVIRONMENT !== "production") {
-                                                  console.log(`[GitHub Auth] Verified ${session.userId} as ${siteConfig.urls.githubOrg} Org Member. Promoting to User.`);
-                                                }
                                                 await kyselyDb.updateTable("user")
                                                     .set({ role: 'user' })
                                                     .where("id", "=", session.userId)

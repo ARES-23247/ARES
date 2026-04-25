@@ -38,7 +38,7 @@ export function checkRateLimit(ip: string, limit = 100, windowSeconds = 60): boo
 
 // ── Write-Endpoint Rate Limiting (Persistent D1) ────────────────────────────
 
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 
 export async function checkPersistentRateLimit(db: Kysely<DB>, ip: string, limit: number, windowSeconds: number): Promise<boolean> {
   const now = Math.floor(Date.now() / 1000);

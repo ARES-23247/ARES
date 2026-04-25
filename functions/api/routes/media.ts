@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { AppEnv, ensureAdmin, getDbSettings, checkRateLimit, logAuditAction } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
-import { mediaContract } from "../../../src/schemas/contracts/mediaContract";
+import { mediaContract } from "../../../shared/schemas/contracts/mediaContract";
 
 const s = initServer<AppEnv>();
 export const mediaRouter = new Hono<AppEnv>();

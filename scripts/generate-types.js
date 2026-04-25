@@ -28,16 +28,16 @@ console.log(`Using database: ${latestDb}`);
 
 try {
   // Use npx so it uses the local kysely-codegen
-  execSync(`npx kysely-codegen --dialect sqlite --url "${latestDb}" --out-file src/schemas/database.ts`, { stdio: 'inherit' });
+  execSync(`npx kysely-codegen --dialect sqlite --url "${latestDb}" --out-file shared/schemas/database.ts`, { stdio: 'inherit' });
   
   // Replace Buffer with Uint8Array since Cloudflare Workers use standard web APIs
   const { readFileSync, writeFileSync } = await import('fs');
-  const typeFile = join(process.cwd(), 'src/schemas/database.ts');
+  const typeFile = join(process.cwd(), 'shared/schemas/database.ts');
   let typeContent = readFileSync(typeFile, 'utf8');
   typeContent = typeContent.replace(/\bBuffer\b/g, 'Uint8Array');
   writeFileSync(typeFile, typeContent, 'utf8');
 
-  console.log("Successfully generated src/schemas/database.ts");
+  console.log("Successfully generated shared/schemas/database.ts");
 } catch (error) {
   console.error("Failed to run kysely-codegen.", error);
   process.exit(1);

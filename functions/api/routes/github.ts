@@ -3,7 +3,7 @@ import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, getSocialConfig } from "../middleware";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem } from "../../utils/githubProjects";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
-import { githubContract } from "../../../src/schemas/contracts/githubContract";
+import { githubContract } from "../../../shared/schemas/contracts/githubContract";
 
 const s = initServer<AppEnv>();
 export const githubRouter = new Hono<AppEnv>();

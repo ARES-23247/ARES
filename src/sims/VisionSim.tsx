@@ -8,7 +8,7 @@ export default function VisionSim() {
   const [tagCount, setTagCount] = useState<number>(1);
   const [yawRate, setYawRate] = useState<number>(0);
   const [tiltVal, setTiltVal] = useState<number>(0);
-  const [solverLog, setSolverLog] = useState<{ text: string, color: string }>({ text: "Drag your robot across the field grid.", color: "#c9d1d9" });
+  const [solverLog, setSolverLog] = useState<{ text: string, color: string }>({ text: "Drag your robot across the field grid.", color: "var(--ares-muted)" });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,7 +26,7 @@ export default function VisionSim() {
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = "#1A1A1A";
+      ctx.strokeStyle = "var(--obsidian)";
       ctx.lineWidth = 1;
       
       for (let i = 0; i < canvas.width; i += SCALE) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
@@ -69,13 +69,13 @@ export default function VisionSim() {
       if (rejectReason) {
         ctx.fillStyle = "rgba(192, 0, 0, 0.4)";
         ctx.fillRect(ROBOT.x - 20, ROBOT.y - 20, 40, 40);
-        ctx.fillStyle = "#FF4D4D"; // var(--ares-red-light)
+        ctx.fillStyle = "var(--ares-red)"; // var(--ares-red-light)
         ctx.font = "bold 16px 'Orbitron', sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("REJECTED", ROBOT.x, ROBOT.y - 30);
         
         if (!isDraggingRef.current) {
-          setSolverLog({ text: `FILTRATION TRIGGERED: ${rejectReason}. Measurement discarded.`, color: "#FF4D4D" });
+          setSolverLog({ text: `FILTRATION TRIGGERED: ${rejectReason}. Measurement discarded.`, color: "var(--ares-red)" });
         }
         ctx.textAlign = "left";
         animationFrameId = requestAnimationFrame(render);
@@ -88,11 +88,11 @@ export default function VisionSim() {
       
       const radiusPx = (linearStdDev * SCALE) + 5;
       ctx.fillStyle = tagsVisible > 1 ? "rgba(34, 197, 94, 0.15)" : "rgba(0, 229, 255, 0.15)";
-      ctx.strokeStyle = tagsVisible > 1 ? "#22C55E" : "#00E5FF";
+      ctx.strokeStyle = tagsVisible > 1 ? "var(--ares-success)" : "var(--ares-cyan)";
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.arc(ROBOT.x, ROBOT.y, Math.min(radiusPx, 300), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       
-      ctx.fillStyle = tagsVisible > 1 ? "#22C55E" : "#00E5FF";
+      ctx.fillStyle = tagsVisible > 1 ? "var(--ares-success)" : "var(--ares-cyan)";
       ctx.textAlign = "center";
       ctx.font = "12px 'Orbitron', sans-serif";
       ctx.fillText(`StdDev: ${linearStdDev.toFixed(3)}m`, ROBOT.x, ROBOT.y + Math.min(radiusPx, 300) + 15);
@@ -101,7 +101,7 @@ export default function VisionSim() {
       if (!isDraggingRef.current) {
         setSolverLog({ 
           text: `Measurement ACCEPTED: Avg Dist = ${avgDist.toFixed(2)}m. Scaling ${baseStdDev} * dist^2. ${tagsVisible > 1 ? '\\nApplied 0.1x Multi-Tag Boost.' : ''}`,
-          color: tagsVisible > 1 ? "#22C55E" : "#00E5FF"
+          color: tagsVisible > 1 ? "var(--ares-success)" : "var(--ares-cyan)"
         });
       }
 
@@ -139,10 +139,10 @@ export default function VisionSim() {
   }, [tagCount, yawRate, tiltVal]);
 
   return (
-    <div className="simulator-container" style={{ background: '#050505', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '12px', padding: '24px', margin: '40px 0', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}>
+    <div className="simulator-container" style={{ background: 'var(--obsidian)', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '12px', padding: '24px', margin: '40px 0', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h3 style={{ margin: 0, color: 'white', fontFamily: '"Orbitron", sans-serif' }}>Interactive Vision Trust Simulator</h3>
+          <h3 style={{ margin: 0, color: 'var(--marble)', fontFamily: '"Orbitron", sans-serif' }}>Interactive Vision Trust Simulator</h3>
           <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--ifm-color-emphasis-600)' }}>Visualize StdDev scaling and rejection filters in real time.</p>
         </div>
       </div>
@@ -151,20 +151,20 @@ export default function VisionSim() {
         ref={canvasRef}
         width={800} 
         height={400} 
-        style={{ width: '100%', height: 'auto', background: '#1A1A1A', borderRadius: '12px', border: '1px solid var(--ifm-color-emphasis-200)', cursor: 'crosshair', aspectRatio: '2/1' }}
+        style={{ width: '100%', height: 'auto', background: 'var(--obsidian)', borderRadius: '12px', border: '1px solid var(--ifm-color-emphasis-200)', cursor: 'crosshair', aspectRatio: '2/1' }}
       />
       
       <div style={{ display: 'flex', gap: '20px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div style={{ flex: 1, minWidth: '180px' }}>
-          <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Tags Visible: <span style={{ color: '#00E5FF' }}>{tagCount === 1 ? "1 Tag" : "2 Tags (MegaTagBoost)"}</span></label>
+          <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Tags Visible: <span style={{ color: 'var(--ares-cyan)' }}>{tagCount === 1 ? "1 Tag" : "2 Tags (MegaTagBoost)"}</span></label>
           <input aria-label="Simulation Configuration Slider" type="range" min="1" max="2" value={tagCount} step="1" onChange={(e) => setTagCount(parseInt(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '180px' }}>
-          <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Robot Spin Rate: <span style={{ color: '#00E5FF' }}>{yawRate}&deg;/s</span></label>
+          <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Robot Spin Rate: <span style={{ color: 'var(--ares-cyan)' }}>{yawRate}&deg;/s</span></label>
           <input aria-label="Simulation Configuration Slider" type="range" min="0" max="250" value={yawRate} step="5" onChange={(e) => setYawRate(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '180px' }}>
-          <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Robot Pitch (Tilt): <span style={{ color: '#00E5FF' }}>{tiltVal}&deg;</span></label>
+          <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Robot Pitch (Tilt): <span style={{ color: 'var(--ares-cyan)' }}>{tiltVal}&deg;</span></label>
           <input aria-label="Simulation Configuration Slider" type="range" min="0" max="30" value={tiltVal} step="1" onChange={(e) => setTiltVal(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
       </div>

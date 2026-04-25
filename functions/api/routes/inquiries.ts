@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { inquiryContract } from "../../../src/schemas/contracts/inquiryContract";
+import { inquiryContract } from "../../../shared/schemas/contracts/inquiryContract";
 import { AppEnv, ensureAdmin, logAuditAction, turnstileMiddleware, getSocialConfig, SocialConfig, persistentRateLimitMiddleware } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../utils/notifications";
 import { buildGitHubConfig, createProjectItem } from "../../utils/githubProjects";
 import { sql, Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { encrypt, decrypt } from "../../utils/crypto";
 import { safeJSONStringify } from "../../utils/json";
 
@@ -36,7 +36,7 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
         }
       }
 
-      let dbQuery = db.selectFrom("inquiries").selectAll().orderBy("created_at", "desc").limit(limit).offset(offset);
+      let dbQuery = db.selectFrom("inquiries").select(["id", "type", "name", "email", "metadata", "status", "created_at"]).orderBy("created_at", "desc").limit(limit).offset(offset);
       
       if (filterOutreach) {
         dbQuery = dbQuery.where("type", "in", ["outreach", "support"]);
@@ -139,10 +139,11 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
           tierStr = (metadata as any).level;
           tierStr = tierStr.replace(" Tier Sponsor", "");
         }
+        const encryptedSponsorName = await encrypt(name, c.env.ENCRYPTION_SECRET);
         await db.insertInto("sponsors")
           .values({
             id,
-            name,
+            name: encryptedSponsorName,
             tier: tierStr as any,
             is_active: 0,
           })

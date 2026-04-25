@@ -1,8 +1,8 @@
 import { Hono, Context } from "hono";
 import { sql, Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { postContract } from "../../../src/schemas/contracts/postContract";
+import { postContract } from "../../../shared/schemas/contracts/postContract";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, validateLength, MAX_INPUT_LENGTHS, logAuditAction } from "../middleware";
 import { getStandardDate } from "../../utils/content";

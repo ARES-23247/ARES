@@ -73,19 +73,19 @@ export default function StateMachineSim() {
         pivotAngRef.current += (goalPivot - pAng) * 0.15;
         
         smCtx.clearRect(0,0,250,200);
-        smCtx.fillStyle = '#333';
+        smCtx.fillStyle = 'var(--ares-gray-dark)';
         smCtx.fillRect(60, 160, 100, 30); // Base
-        smCtx.fillStyle = '#222';
+        smCtx.fillStyle = 'var(--obsidian)';
         smCtx.fillRect(85, 40, 15, 120);  // Elevator track
 
         const carY = 140 - (elevPosRef.current * 80);
-        smCtx.fillStyle = '#B32416'; // var(--mars-red-light) roughly
+        smCtx.fillStyle = 'var(--ares-red)'; // var(--mars-red-light) roughly
         smCtx.fillRect(75, carY, 35, 20); // Elevator car
 
         smCtx.save();
         smCtx.translate(140, 165); // Pivot joint
         smCtx.rotate(-pivotAngRef.current * (Math.PI/2));
-        smCtx.fillStyle = '#00d0ff'; // var(--ai-cyan)
+        smCtx.fillStyle = 'var(--ares-cyan)'; // var(--ai-cyan)
         smCtx.fillRect(-5, -50, 10, 55); // Pivot arm
         smCtx.restore();
         
@@ -100,48 +100,48 @@ export default function StateMachineSim() {
   }, []);
 
   return (
-    <div style={{ background: '#050505', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '12px', margin: '30px 0', overflow: 'hidden', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}>
-      <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: '0.8rem', color: '#00d0ff', letterSpacing: '1px', padding: '16px 20px', borderBottom: '1px solid var(--ifm-color-emphasis-200)', background: 'rgba(255,255,255,0.03)', textTransform: 'uppercase' }}>
+    <div style={{ background: 'var(--obsidian)', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '12px', margin: '30px 0', overflow: 'hidden', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}>
+      <div style={{ fontFamily: '"Orbitron", sans-serif', fontSize: '0.8rem', color: 'var(--ares-cyan)', letterSpacing: '1px', padding: '16px 20px', borderBottom: '1px solid var(--ifm-color-emphasis-200)', background: 'rgba(255,255,255,0.03)', textTransform: 'uppercase' }}>
         Superstructure Collision Sequencer
       </div>
       
       <div style={{ display: 'flex', gap: '10px', padding: '16px 20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
          <button 
             onClick={() => setSmTarget("STOW")} 
-            style={{ flex: 1, background: smTarget === "STOW" ? '#00d0ff' : '#222', color: smTarget === "STOW" ? '#000' : '#fff', border: smTarget === "STOW" ? 'none' : '1px solid #444', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
+            style={{ flex: 1, background: smTarget === "STOW" ? 'var(--ares-cyan)' : 'var(--obsidian)', color: smTarget === "STOW" ? '#000' : 'var(--marble)', border: smTarget === "STOW" ? 'none' : '1px solid var(--ares-gray)', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
             STOW
          </button>
          <button 
             onClick={() => setSmTarget("INTAKE")} 
-            style={{ flex: 1, background: smTarget === "INTAKE" ? '#00d0ff' : '#222', color: smTarget === "INTAKE" ? '#000' : '#fff', border: smTarget === "INTAKE" ? 'none' : '1px solid #444', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
+            style={{ flex: 1, background: smTarget === "INTAKE" ? 'var(--ares-cyan)' : 'var(--obsidian)', color: smTarget === "INTAKE" ? '#000' : 'var(--marble)', border: smTarget === "INTAKE" ? 'none' : '1px solid var(--ares-gray)', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
             INTAKING
          </button>
          <button 
             onClick={() => setSmTarget("SCORE")} 
-            style={{ flex: 1, background: smTarget === "SCORE" ? '#00d0ff' : '#222', color: smTarget === "SCORE" ? '#000' : '#fff', border: smTarget === "SCORE" ? 'none' : '1px solid #444', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
+            style={{ flex: 1, background: smTarget === "SCORE" ? 'var(--ares-cyan)' : 'var(--obsidian)', color: smTarget === "SCORE" ? '#000' : 'var(--marble)', border: smTarget === "SCORE" ? 'none' : '1px solid var(--ares-gray)', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 700, transition: '0.2s' }}>
             HUB SCORE
          </button>
       </div>
       
       <div style={{ padding: '0 20px 20px 20px', display: 'flex', gap: '20px', alignItems: 'stretch', flexWrap: 'wrap' }}>
         {/* Active Logic Log */}
-        <div style={{ flex: 1, minWidth: '200px', fontFamily: '"JetBrains Mono", monospace', fontSize: '11px', background: '#111', border: '1px solid #333', padding: '15px', borderRadius: '6px', height: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div style={{ flex: 1, minWidth: '200px', fontFamily: '"JetBrains Mono", monospace', fontSize: '11px', background: 'var(--obsidian)', border: '1px solid var(--ares-gray-dark)', padding: '15px', borderRadius: '6px', height: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
               <div style={{ color: 'var(--ifm-color-emphasis-600)', marginBottom: '5px' }}>
-                SUPERSTRUCTURE TARGET: <span style={{ color: '#fff' }}>{smTarget === "SCORE" ? "HUB SCORE" : (smTarget === "INTAKE" ? "INTAKING" : "STOW")}</span>
+                SUPERSTRUCTURE TARGET: <span style={{ color: 'var(--marble)' }}>{smTarget === "SCORE" ? "HUB SCORE" : (smTarget === "INTAKE" ? "INTAKING" : "STOW")}</span>
               </div>
               <div style={{ color: 'var(--ifm-color-emphasis-600)' }}>ACTIVE CONSTRAINTS:</div>
-              <ul style={{ listStyleType: 'none', padding: 0, color: '#ffb300', marginTop: '5px', height: '90px' }}>
+              <ul style={{ listStyleType: 'none', padding: 0, color: 'var(--ares-gold)', marginTop: '5px', height: '90px' }}>
                  {logs.map((log, i) => <li key={i}>{log}</li>)}
               </ul>
           </div>
-          <div style={{ color: isFin ? '#4caf50' : '#ffb300', fontWeight: 700 }}>
-             {isFin ? "âœ”ï¸ MECHANISMS ALIGNED" : "â³ RESOLVING KINEMATICS..."}
+          <div style={{ color: isFin ? 'var(--ares-success)' : 'var(--ares-gold)', fontWeight: 700 }}>
+             {isFin ? "✔ MECHANISMS ALIGNED" : "⌛ RESOLVING KINEMATICS..."}
           </div>
         </div>
         
         {/* Mechanism Canvas */}
-        <div style={{ flex: '0 0 250px', position: 'relative', background: '#111', height: '200px', borderRadius: '6px', border: '1px solid #333' }}>
+        <div style={{ flex: '0 0 250px', position: 'relative', background: 'var(--obsidian)', height: '200px', borderRadius: '6px', border: '1px solid var(--ares-gray-dark)' }}>
             <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={canvasRef} width={250} height={200} style={{ width: '100%', height: '100%', display: 'block' }}></canvas>
         </div>
       </div>

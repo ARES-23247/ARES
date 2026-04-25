@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { outreachContract } from "../../../src/schemas/contracts/outreachContract";
+import { outreachContract } from "../../../shared/schemas/contracts/outreachContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 
 const s = initServer<AppEnv>();

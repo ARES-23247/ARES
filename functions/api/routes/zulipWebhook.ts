@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";

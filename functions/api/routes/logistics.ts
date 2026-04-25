@@ -1,9 +1,9 @@
 import { AppEnv, ensureAdmin } from "../middleware";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { Hono, Context } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { logisticsContract } from "../../../src/schemas/contracts/logisticsContract";
+import { logisticsContract } from "../../../shared/schemas/contracts/logisticsContract";
 
 const s = initServer<AppEnv>();
 const logisticsRouter = new Hono<AppEnv>();

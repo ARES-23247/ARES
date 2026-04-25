@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { badgeContract } from "../../../src/schemas/contracts/badgeContract";
+import { badgeContract } from "../../../shared/schemas/contracts/badgeContract";
 import { AppEnv, ensureAdmin, getSessionUser, rateLimitMiddleware } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
@@ -14,7 +14,7 @@ const badgesTsRestRouter: any = s.router(badgeContract as any, {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("badges")
-        .selectAll()
+        .select(["id", "name", "description", "icon", "color_theme", "created_at"])
         .orderBy("created_at", "asc")
         .execute();
       

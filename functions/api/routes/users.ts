@@ -1,10 +1,10 @@
 import { Hono, Context } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { userContract } from "../../../src/schemas/contracts/userContract";
+import { userContract } from "../../../shared/schemas/contracts/userContract";
 import { AppEnv, ensureAdmin, logAuditAction, parsePagination } from "../middleware";
 import { upsertProfile } from "./_profileUtils";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 
 const s = initServer<AppEnv>();
 export const usersRouter = new Hono<AppEnv>();

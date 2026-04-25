@@ -1,11 +1,11 @@
 import { Hono, Context } from "hono";
 import { Kysely } from "kysely";
-import { DB } from "../../../src/schemas/database";
+import { DB } from "../../../shared/schemas/database";
 import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, persistentRateLimitMiddleware } from "../middleware";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
-import { commentContract } from "../../../src/schemas/contracts/commentContract";
+import { commentContract } from "../../../shared/schemas/contracts/commentContract";
 
 const s = initServer<AppEnv>();
 export const commentsRouter = new Hono<AppEnv>();

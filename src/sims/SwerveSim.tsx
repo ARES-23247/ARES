@@ -83,7 +83,7 @@ export default function SwerveSim() {
       // Draw Trajectory History
       if (history.length > 1) {
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(41, 182, 246, 0.4)'; // AI Cyan
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)'; // ARES Cyan
         ctx.lineWidth = 3;
         ctx.moveTo(history[0].x, history[0].y);
         for(let i = 1; i < history.length; i++) {
@@ -101,7 +101,7 @@ export default function SwerveSim() {
 
       // Chassis
       ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
-      ctx.strokeStyle = '#B32416'; // MARS Red
+      ctx.strokeStyle = 'var(--ares-red)'; // MARS Red
       ctx.lineWidth = 2;
       ctx.fillRect(-rbW/2, -rbH/2, rbW, rbH);
       ctx.strokeRect(-rbW/2, -rbH/2, rbW, rbH);
@@ -130,7 +130,7 @@ export default function SwerveSim() {
         ctx.save();
         ctx.translate(pos[0], pos[1]);
         
-        ctx.fillStyle = '#222';
+        ctx.fillStyle = 'var(--obsidian)';
         ctx.beginPath(); ctx.arc(0, 0, mR, 0, Math.PI * 2); ctx.fill();
         
         // Only point direction if moving or rotating
@@ -138,12 +138,12 @@ export default function SwerveSim() {
             ctx.rotate(mAngle);
         }
         
-        ctx.fillStyle = '#29b6f6'; // Cyan wheel
+        ctx.fillStyle = 'var(--ares-cyan)'; // Cyan wheel
         ctx.fillRect(-mR, -2, mR * 2, 4);
         
         // Velocity vector
         if (mSpeed > 0.1) {
-           ctx.strokeStyle = '#9c7bcc'; // Purple vector
+           ctx.strokeStyle = 'var(--ares-gold)'; // Gold vector
            ctx.lineWidth = 2;
            ctx.beginPath();
            ctx.moveTo(0,0);
@@ -155,7 +155,7 @@ export default function SwerveSim() {
       });
 
       // Direction indicator
-      ctx.fillStyle = '#d42e1e';
+      ctx.fillStyle = 'var(--ares-red)';
       ctx.beginPath(); ctx.arc(rbW/2, 0, 4, 0, Math.PI * 2); ctx.fill();
 
       ctx.restore();
@@ -184,25 +184,25 @@ export default function SwerveSim() {
   }, []);
 
   return (
-    <div style={{ width: '100%', minHeight: '480px', height: 'auto', backgroundColor: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ width: '100%', minHeight: '480px', height: 'auto', backgroundColor: 'var(--obsidian)', border: '1px solid var(--ares-gray-dark)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={canvasRef} style={{ display: 'block', width: '100%', height: '400px' }} />
-      <div style={{ padding: '15px', borderTop: '1px solid #2a2a2a', display: 'flex', gap: '20px', background: '#111', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <div style={{ padding: '15px', borderTop: '1px solid var(--ares-gray-dark)', display: 'flex', gap: '20px', background: 'var(--obsidian)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div style={{ flex: 1, minWidth: '150px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: '#ccc', marginBottom: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>Vx (Forward/Back)</span>
                 <span>{vx.toFixed(1)} m/s</span>
             </div>
             <input type="range" aria-label="Forward/Back Velocity" min="-5" max="5" step="0.1" value={vx} onChange={e => setVx(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: '#ccc', marginBottom: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>Vy (Left/Right)</span>
                 <span>{vy.toFixed(1)} m/s</span>
             </div>
             <input type="range" aria-label="Left/Right Velocity" min="-5" max="5" step="0.1" value={vy} onChange={e => setVy(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: '#ccc', marginBottom: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>Omega (Rotation)</span>
                 <span>{omega.toFixed(1)} rad/s</span>
             </div>
@@ -211,7 +211,7 @@ export default function SwerveSim() {
         <div style={{ display: 'flex', alignItems: 'center' }}>
             <button 
                 onClick={() => { setVx(0); setVy(0); setOmega(0); }} 
-                style={{ background: '#B32416', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
+                style={{ background: 'var(--ares-red)', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
                 ZERO
             </button>
         </div>
