@@ -81,7 +81,7 @@ export default function AutonomousLogicDiagram() {
   );
 
   return (
-    <div className="h-[500px] w-full bg-obsidian border border-white/5 rounded-2xl overflow-hidden ares-cut-lg shadow-2xl relative">
+    <div className="h-[500px] w-full bg-obsidian border border-white/5 overflow-hidden ares-cut-lg shadow-2xl relative">
       <div className="absolute top-4 left-4 z-10">
         <span className="text-[10px] font-black uppercase tracking-widest text-ares-gold bg-ares-gold/10 px-2 py-1 rounded border border-ares-gold/20">
           Interactive Logic Engine

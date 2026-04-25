@@ -1,4 +1,4 @@
-import { useEntityFetch } from "../hooks/useEntityFetch";
+import { api } from "../api/client";
 
 interface Season {
   start_year: number;
@@ -13,8 +13,9 @@ interface SeasonPickerProps {
 }
 
 export default function SeasonPicker({ value, onChange, label = "Linked Season" }: SeasonPickerProps) {
-  const { data } = useEntityFetch<{ seasons: Season[] }>("/api/seasons");
-  const seasons = data?.seasons || [];
+  const { data: seasonsRes } = api.seasons.list.useQuery(["seasons-list"], {});
+  
+  const seasons = (seasonsRes?.status === 200 ? (Array.isArray(seasonsRes.body) ? seasonsRes.body : (seasonsRes.body as any)?.seasons) : []) as Season[];
 
   return (
     <div className="w-full">
@@ -27,7 +28,7 @@ export default function SeasonPicker({ value, onChange, label = "Linked Season" 
         className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all shadow-inner"
       >
         <option value="">-- No Season Link --</option>
-        {seasons.map((s) => (
+        {seasons?.map((s) => (
           <option key={s.start_year} value={s.start_year.toString()}>
             {s.start_year}-{s.end_year} | {s.challenge_name}
           </option>

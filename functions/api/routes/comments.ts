@@ -1,7 +1,7 @@
 import { Hono, Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../src/schemas/database";
-import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig } from "../middleware";
+import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, persistentRateLimitMiddleware } from "../middleware";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
@@ -187,6 +187,14 @@ const commentHandlers = {
 };
 
 const commentTsRestRouter = s.router(commentContract, commentHandlers as any);
+
+commentsRouter.use("/submit/*", persistentRateLimitMiddleware(10, 60));
+commentsRouter.use("/:id", (c, next) => {
+  if (c.req.method === "POST" || c.req.method === "PUT" || c.req.method === "DELETE") {
+    return persistentRateLimitMiddleware(10, 60)(c, next);
+  }
+  return next();
+});
 
 createHonoEndpoints(commentContract, commentTsRestRouter, commentsRouter);
 

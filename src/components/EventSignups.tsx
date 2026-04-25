@@ -143,7 +143,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                   <span className="text-xs text-white/50 block mb-2 font-bold uppercase tracking-widest">Entire Team Roster</span>
                   <div className="flex flex-wrap gap-2 opacity-70 grayscale">
                     {Object.entries(teamDietarySummary).map(([restriction, count]) => (
-                      <span key={`team-${restriction}`} className="px-2 py-1 bg-ares-gray-dark border border-white/20 ares-cut-sm text-xs font-bold text-marble">
+                      <span key={`team-${restriction}`} className="px-2 py-1 bg-white/10 border border-white/20 ares-cut-sm text-xs font-bold text-marble">
                         {count} {restriction}
                       </span>
                     ))}
@@ -210,7 +210,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <img src={entry.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${entry.user_id}`}
-                            alt="" className="w-6 h-6 ares-cut-sm bg-ares-gray-dark" />
+                            alt="" className="w-6 h-6 ares-cut-sm bg-white/10" />
                           <span className={`text-sm font-bold ${entry.attended ? "text-white" : "text-marble/40"}`}>{entry.nickname || "ARES Member"}</span>
                         </div>
                       </td>
@@ -241,14 +241,14 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                   placeholder="What are you bringing? (e.g. chips & salsa)"
                   value={mySignup?.bringing || ""}
                   onChange={e => setMySignup(prev => ({ bringing: e.target.value, notes: prev?.notes || "", prep_hours: prev?.prep_hours || 0 }))}
-                  className="w-full bg-ares-gray-dark/40 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white placeholder-marble/40 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
+                  className="w-full bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white placeholder-marble/40 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
                 />
               )}
               <input
                 placeholder={isPotluck ? "Notes (dietary info, arrival time...)" : "Notes (arrival time, etc...)"}
                 value={mySignup?.notes || ""}
                 onChange={e => setMySignup(prev => ({ bringing: prev?.bringing || "", notes: e.target.value, prep_hours: prev?.prep_hours || 0 }))}
-                className={`w-full ${isPotluck && isVolunteer ? 'md:col-span-2' : ''} bg-ares-gray-dark/40 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white placeholder-marble/40 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all`}
+                className={`w-full ${isPotluck && isVolunteer ? 'md:col-span-2' : ''} bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white placeholder-marble/40 focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all`}
                 style={(!isPotluck && !isVolunteer) ? { gridColumn: 'span 2' } : {}}
               />
               {isVolunteer && (
@@ -258,7 +258,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                     type="number" step="0.5" min="0" placeholder="0"
                     value={mySignup?.prep_hours || 0}
                     onChange={e => setMySignup(prev => ({ bringing: prev?.bringing || "", notes: prev?.notes || "", prep_hours: parseFloat(e.target.value) || 0 }))}
-                    className="w-full md:w-32 bg-ares-gray-dark/40 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
+                    className="w-full md:w-32 bg-white/5 border border-white/10 ares-cut-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-ares-gold focus:ring-1 focus:ring-ares-gold/20 transition-all"
                   />
                 </div>
               )}

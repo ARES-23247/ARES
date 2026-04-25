@@ -77,7 +77,7 @@ function RobotChassis() {
 
 export default function RobotViewer() {
   return (
-    <div className="h-[400px] w-full bg-gradient-to-b from-black to-obsidian border border-white/5 rounded-3xl overflow-hidden relative ares-cut-lg shadow-[0_0_50px_-12px_rgba(192,0,0,0.2)]"
+    <div className="h-[400px] w-full bg-gradient-to-b from-black to-obsidian border border-white/5 overflow-hidden relative ares-cut-lg shadow-[0_0_50px_-12px_rgba(192,0,0,0.2)]"
       role="img" aria-label="Interactive 3D render of ARES.V1 Robot Chassis">
       <div className="absolute top-6 left-6 z-10 space-y-1">
         <h4 className="text-white font-black uppercase tracking-tighter text-xl flex items-center gap-2">

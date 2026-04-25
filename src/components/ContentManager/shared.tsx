@@ -66,7 +66,7 @@ export const ClickToDeleteButton = ({
     return (
       <button
         onClick={onDelete}
-        className="text-xs font-bold text-white bg-ares-red/80 hover:bg-ares-red px-3 py-1 ares-cut-sm shadow-[0_0_10px_rgba(204,0,0,0.5)] transition-all animate-pulse focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="text-xs font-bold text-white bg-ares-red hover:bg-ares-red/80 px-3 py-1 ares-cut-sm shadow-[0_0_20px_rgba(204,0,0,0.4)] transition-all animate-pulse focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
       >
         CONFIRM DELETE
       </button>
@@ -76,7 +76,7 @@ export const ClickToDeleteButton = ({
   return (
     <button
       onClick={() => setConfirmId(id)}
-      className="text-xs font-bold text-marble/40 hover:text-ares-red bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-red"
+      className="text-xs font-bold text-marble/40 hover:text-white bg-white/5 hover:bg-ares-red px-3 py-1 ares-cut-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
     >
       DELETE
     </button>

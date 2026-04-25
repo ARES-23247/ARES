@@ -142,7 +142,7 @@ export default function DocManagerTab({
 
       <div className="text-xs text-marble/20 mb-2 px-1 flex justify-between items-center font-mono uppercase tracking-widest border-b border-white/5 pb-1">
         <span>VIEW: {view} | RAW: {docs.length} | FILTERED: {filtered.length}</span>
-        {isError && <span className="text-ares-red font-bold">API ERROR!</span>}
+        {isError && <span className="text-ares-red font-bold animate-pulse">API ERROR!</span>}
       </div>
 
       <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
@@ -158,10 +158,10 @@ export default function DocManagerTab({
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-marble/90 truncate flex items-center gap-2">
                   {doc.title}
-                  {Number(doc.is_deleted) === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
-                  {doc.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
-                  {doc.status === 'rejected' && <span className="text-[9px] font-bold text-ares-bronze bg-ares-bronze/10 border border-ares-bronze/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
-                  {doc.status === 'draft' && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
+                  {Number(doc.is_deleted) === 1 && <span className="text-[9px] font-black text-white bg-ares-red px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
+                  {doc.revision_of && <span className="text-[9px] font-black text-black bg-ares-gold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-[0_0_10px_rgba(255,191,0,0.3)]">Revision</span>}
+                  {doc.status === 'rejected' && <span className="text-[9px] font-black text-white bg-ares-bronze px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
+                  {doc.status === 'draft' && <span className="text-[9px] font-black text-black bg-ares-gold px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs text-ares-cyan/70 bg-ares-cyan/10 border border-ares-cyan/20 px-2 py-0.5 ares-cut-sm truncate max-w-[120px]">
@@ -212,14 +212,14 @@ export default function DocManagerTab({
                       <button
                         onClick={() => localApproveMutation.mutate({ params: { slug: doc.slug }, body: {} })}
                         disabled={localApproveMutation.isPending}
-                        className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan/40 border border-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
+                        className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         APPROVE
                       </button>
                       <button
                         onClick={() => localRejectMutation.mutate({ params: { slug: doc.slug }, body: {} })}
                         disabled={localRejectMutation.isPending}
-                        className="text-xs font-bold text-orange-400 hover:text-white bg-orange-400/10 hover:bg-orange-400/40 border border-orange-400/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
+                        className="text-xs font-bold text-white bg-ares-red/80 hover:bg-ares-red px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         REJECT
                       </button>

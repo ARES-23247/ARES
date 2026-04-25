@@ -53,7 +53,7 @@ export default function PowerSheddingSim() {
   };
 
   return (
-    <div className="bg-ares-black border border-white/10 rounded-xl my-8 flex flex-col overflow-hidden text-white font-['Orbitron']">
+    <div className="bg-ares-black border border-white/10 ares-cut-lg my-8 flex flex-col overflow-hidden text-white font-['Orbitron']">
       <div className="px-5 py-4 bg-white/5 border-b border-white/10 text-sm font-bold text-ares-red">
         REAL-TIME POWER SHEDDING DIAGNOSTICS
       </div>
@@ -65,7 +65,7 @@ export default function PowerSheddingSim() {
           
           <button 
             onClick={() => toggleLoad('swerve')}
-            className={`p-3 px-4 rounded-md border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
+            className={`p-3 px-4 ares-cut-sm border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
               loads.swerve ? 'bg-ares-red shadow-[0_0_15px_rgba(192,0,0,0.4)]' : 'bg-white/5 hover:bg-white/10'
             }`}>
             <span>[T1] SWERVE DRIVE</span>
@@ -74,7 +74,7 @@ export default function PowerSheddingSim() {
 
           <button 
             onClick={() => toggleLoad('shooter')}
-            className={`p-3 px-4 rounded-md border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
+            className={`p-3 px-4 ares-cut-sm border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
               loads.shooter ? 'bg-ares-bronze shadow-[0_0_15px_rgba(205,127,50,0.4)]' : 'bg-white/5 hover:bg-white/10'
             }`}>
             <span>[T2] SHOOTER FLYWHEELS</span>
@@ -83,7 +83,7 @@ export default function PowerSheddingSim() {
 
           <button 
             onClick={() => toggleLoad('intake')}
-            className={`p-3 px-4 rounded-md border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
+            className={`p-3 px-4 ares-cut-sm border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
               loads.intake ? (isShedding ? 'bg-white/10 opacity-60' : 'bg-ares-cyan shadow-[0_0_15px_rgba(0,229,255,0.4)]') : 'bg-white/5 hover:bg-white/10'
             }`}>
             <span>[T3] INTAKE MOTORS</span>
@@ -94,7 +94,7 @@ export default function PowerSheddingSim() {
 
           <button 
             onClick={() => toggleLoad('compressor')}
-            className={`p-3 px-4 rounded-md border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
+            className={`p-3 px-4 ares-cut-sm border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
               loads.compressor ? (isShedding ? 'bg-white/10 opacity-60' : 'bg-ares-cyan shadow-[0_0_15px_rgba(0,229,255,0.4)]') : 'bg-white/5 hover:bg-white/10'
             }`}>
             <span>[T3] COMPRESSOR</span>
@@ -105,7 +105,7 @@ export default function PowerSheddingSim() {
         </div>
 
         {/* DASHBOARD */}
-        <div className="flex-1 min-w-[250px] bg-white/[0.03] p-6 rounded-lg border border-white/10 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+        <div className="flex-1 min-w-[250px] bg-white/[0.03] p-6 ares-cut border border-white/10 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
           <div className="text-5xl font-extrabold" style={{ color: getVoltageColor(), textShadow: `0 0 20px ${getVoltageColor()}44` }}>
             {voltage.toFixed(1)}V
           </div>
@@ -129,7 +129,7 @@ export default function PowerSheddingSim() {
           )}
 
           {isBrownout && (
-            <div className="px-3 py-2 bg-ares-red text-black font-black text-xs rounded-sm mt-2">
+            <div className="px-3 py-2 bg-ares-red text-black font-black text-xs ares-cut-sm mt-2">
               ROBORIO DISCONNECT RISK
             </div>
           )}

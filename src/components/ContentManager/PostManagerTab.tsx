@@ -83,7 +83,7 @@ export default function PostManagerTab({
         <Radio size={12} className={isLoading ? "animate-pulse text-ares-red" : "text-ares-red"} />
         Post Registry
         {isError && (
-          <span className="ml-auto text-[9px] text-ares-red animate-pulse flex items-center gap-1">
+          <span className="ml-auto text-[9px] text-ares-red animate-pulse flex items-center gap-1 font-bold">
             TELEMETRY FAULT
           </span>
         )}
@@ -106,10 +106,10 @@ export default function PostManagerTab({
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-marble/90 truncate flex items-center gap-2">
                   {post.title}
-                  {Number(post.is_deleted) === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
-                  {post.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
-                  {post.status === 'rejected' && <span className="text-[9px] font-bold text-ares-bronze bg-ares-bronze/10 border border-ares-bronze/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
-                  {post.status === 'draft' && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
+                  {Number(post.is_deleted) === 1 && <span className="text-[9px] font-black text-white bg-ares-red px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
+                  {post.revision_of && <span className="text-[9px] font-black text-black bg-ares-gold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-[0_0_10px_rgba(255,191,0,0.3)]">Revision</span>}
+                  {post.status === 'rejected' && <span className="text-[9px] font-black text-white bg-ares-bronze px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
+                  {post.status === 'draft' && <span className="text-[9px] font-black text-black bg-ares-gold px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">{format(new Date(post.date), 'MMM do, yyyy')}</span>
@@ -137,14 +137,14 @@ export default function PostManagerTab({
                       <button
                         onClick={() => localApproveMutation.mutate({ params: { slug: post.slug }, body: {} })}
                         disabled={localApproveMutation.isPending}
-                        className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan/40 border border-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
+                        className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         APPROVE
                       </button>
                       <button
                         onClick={() => localRejectMutation.mutate({ params: { slug: post.slug }, body: {} })}
                         disabled={localRejectMutation.isPending}
-                        className="text-xs font-bold text-ares-red hover:text-white bg-ares-red/10 hover:bg-ares-red/40 border border-ares-red/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
+                        className="text-xs font-bold text-white bg-ares-red/80 hover:bg-ares-red px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         REJECT
                       </button>

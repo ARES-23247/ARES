@@ -102,6 +102,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
   useEffect(() => {
     if (eventRes?.status === 200 && eventRes.body.event) {
       const event = eventRes.body.event;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDeleted(event.is_deleted === 1);
       reset({
         title: event.title || "",
@@ -110,12 +111,14 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         location: event.location || "",
         description: event.description || "",
         coverImage: event.cover_image || DEFAULT_COVER_IMAGE,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         category: (event.category || "internal") as any,
         tbaEventKey: event.tba_event_key || "",
         isPotluck: event.is_potluck === 1,
         isVolunteer: event.is_volunteer === 1,
         publishedAt: event.published_at || "",
         seasonId: event.season_id ? String(event.season_id) : "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         socials: (socials as any) || {}
       });
       if (editor) {
@@ -126,6 +129,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventRes, reset, editor]);
 
 
@@ -171,6 +175,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
   });
 
   const deleteMutation = api.events.deleteEvent.useMutation({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSuccess: (data: any) => {
       if (data.status === 200) {
         queryClient.invalidateQueries({ queryKey: ["events"] });

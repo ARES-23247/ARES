@@ -18,6 +18,7 @@ export default function Leaderboard() {
   const { data: leaderboardRes, isLoading } = api.analytics.getLeaderboard.useQuery(["leaderboard"], {});
 
   const leaders = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawBody = (leaderboardRes as any)?.body;
     return (leaderboardRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.leaderboard) ? rawBody.leaderboard : [])) : []) as LeaderboardUser[];
   }, [leaderboardRes]);
@@ -137,7 +138,7 @@ export default function Leaderboard() {
             transition={{ delay: 0.6 }}
             className="max-w-3xl mx-auto"
           >
-            <div className="bg-obsidian/40 border border-white/5 rounded-3xl p-6 md:p-8 backdrop-blur-md">
+            <div className="bg-obsidian/40 border border-white/5 ares-cut-lg p-6 md:p-8 backdrop-blur-md">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-white/10 uppercase tracking-widest text-xs text-ares-gray">

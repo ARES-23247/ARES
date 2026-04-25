@@ -145,7 +145,7 @@ export default function FlywheelKvSim() {
   }, []);
 
   return (
-    <div className="bg-obsidian border border-white/10 rounded-2xl overflow-hidden flex flex-col color-marble mt-6 ares-cut-lg">
+    <div className="bg-obsidian border border-white/10 overflow-hidden flex flex-col color-marble mt-6 ares-cut-lg">
       <div className="p-4 border-b border-white/5 flex gap-4 bg-black/40 backdrop-blur-md items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
@@ -162,7 +162,7 @@ export default function FlywheelKvSim() {
           <canvas role="img" aria-label="Flywheel Visualization" ref={wCanvasRef} width="120" height="120" className="bg-black/40 rounded-full border border-white/5 shadow-2xl" />
         </div>
         <div className="flex-1 w-full relative">
-          <canvas role="img" aria-label="Velocity Graph" ref={fwGCanvasRef} width="600" height="220" className="block w-full bg-black/40 rounded-xl border border-white/5" />
+          <canvas role="img" aria-label="Velocity Graph" ref={fwGCanvasRef} width="600" height="220" className="block w-full bg-black/40 ares-cut-lg border border-white/5" />
           <div className="absolute top-4 right-4 flex flex-col gap-1">
              <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-tighter text-ares-cyan">
                 <div className="w-2 h-0.5 bg-ares-cyan" /> Target

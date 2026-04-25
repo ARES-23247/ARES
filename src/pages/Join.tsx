@@ -76,7 +76,7 @@ export default function Join() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="bg-obsidian p-8 rounded-2xl border border-white/10 shadow-2xl inline-block"
+            className="bg-obsidian p-8 ares-cut-lg border border-white/10 shadow-2xl inline-block"
           >
             <p aria-hidden="true" className="bg-ares-red text-white inline-block px-4 py-1 rounded-full uppercase tracking-[0.3em] font-bold text-xs mb-6 shadow-lg shadow-ares-red/20 before:content-['Enrollment_Open']"></p>
             <p className="sr-only">Enrollment Open</p>

@@ -224,7 +224,7 @@ export default function Sponsors() {
           {/* Subtle grid pattern background */}
           <div className="absolute inset-0 bg-[url('/assets/grid.svg')] opacity-5 mix-blend-overlay pointer-events-none z-0" aria-hidden="true"></div>
 
-          <div className="flex-1 relative z-10 flex flex-col justify-between bg-obsidian p-6 rounded-xl border border-white/5">
+          <div className="flex-1 relative z-10 flex flex-col justify-between bg-obsidian p-6 ares-cut border border-white/5">
             <div>
               <h2 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter">Join the<br/><span className="text-ares-gold italic">Engineering Journey.</span></h2>
               <p className="text-marble text-lg mb-8 max-w-xl leading-relaxed">

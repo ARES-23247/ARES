@@ -230,8 +230,7 @@ const postHandlers = {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
 
-      return await db.transaction().execute(async (trx) => {
-        const existing = await trx.selectFrom("posts").select("slug").where("slug", "=", slug).executeTakeFirst();
+        const existing = await db.selectFrom("posts").select("slug").where("slug", "=", slug).executeTakeFirst();
         if (existing) {
           const suffix = Math.random().toString(36).substring(2, 6);
           slug = `${slug}-${suffix}`;
@@ -245,7 +244,7 @@ const postHandlers = {
         const email = user?.email || "anonymous_dashboard_user";
         const status = body.isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
-        await trx.insertInto("posts")
+        await db.insertInto("posts")
           .values({
             slug,
             title: body.title,
@@ -308,7 +307,7 @@ const postHandlers = {
             notifyByRole(c, ["admin", "author", "coach", "mentor"] as any[], {
               title: "📝 Pending Blog Post",
               message: `"${body.title}" submitted by ${email} needs review.`,
-              link: "/dashboard",
+              link: "/dashboard/manage_blog",
               external: true,
               priority: "medium"
             }).catch(() => {})
@@ -319,7 +318,6 @@ const postHandlers = {
           status: 200 as const, 
           body: { success: true, slug, warning: warnings.join(" | ") } as any
         };
-      });
     } catch (err) {
       return { status: 200 as const, body: { success: false, warning: (err as Error)?.message || "Database write failed" } as any };
     }
@@ -425,7 +423,7 @@ const postHandlers = {
             userId: String(author.id),
             title: "Post Rejected",
             message: `Your post "${row.title}" was rejected${reason ? `: "${reason}"` : "."}`,
-            link: "/dashboard?tab=posts",
+            link: "/dashboard/manage_blog",
             priority: "high"
           }));
         }

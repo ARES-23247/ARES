@@ -26,6 +26,7 @@ const config: Config = {
         "obsidian": "#1A1A1A",
         "marble": "#F9F9F9",
         "ares-gray": "#4a4a4a",
+        "ares-gray-dark": "#2A2A2A",
         "ares-gray-deep": "#0B0B0B",
         "ares-offwhite": "#e6edf3",
         "ares-muted": "#c9d1d9",

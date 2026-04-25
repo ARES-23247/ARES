@@ -126,7 +126,7 @@ export default function EventManagerTab({
 
       <div className="text-xs text-marble/20 mb-2 px-1 flex justify-between items-center font-mono uppercase tracking-widest border-b border-white/5 pb-1">
         <span>VIEW: {view} | RAW: {events.length} | FILTERED: {filtered.length}</span>
-        {isError && <span className="text-ares-red font-bold">API ERROR!</span>}
+        {isError && <span className="text-ares-red font-bold animate-pulse">API ERROR!</span>}
       </div>
 
       <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0 pr-2 custom-scrollbar">
@@ -142,10 +142,10 @@ export default function EventManagerTab({
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-marble/90 truncate flex items-center gap-2">
                   {event.title || "Untitled Event"}
-                  {Number(event.is_deleted) === 1 && <span className="text-[9px] font-bold text-ares-red bg-ares-red/10 border border-ares-red/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
-                  {event.revision_of && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
-                  {event.status === 'rejected' && <span className="text-[9px] font-bold text-ares-bronze bg-ares-bronze/10 border border-ares-bronze/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
-                  {event.status === 'draft' && <span className="text-[9px] font-bold text-ares-gold bg-ares-gold/10 border border-ares-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
+                  {Number(event.is_deleted) === 1 && <span className="text-[9px] font-black text-white bg-ares-red px-1.5 py-0.5 rounded uppercase tracking-wider">Deleted</span>}
+                  {event.revision_of && <span className="text-[9px] font-black text-black bg-ares-gold px-1.5 py-0.5 rounded uppercase tracking-wider">Revision</span>}
+                  {event.status === 'rejected' && <span className="text-[9px] font-black text-white bg-ares-bronze px-1.5 py-0.5 rounded uppercase tracking-wider">Rejected</span>}
+                  {event.status === 'draft' && <span className="text-[9px] font-black text-black bg-ares-gold px-1.5 py-0.5 rounded uppercase tracking-wider">Draft</span>}
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`w-2 h-2 rounded-full ${event.category === 'internal' ? 'bg-ares-red' : event.category === 'outreach' ? 'bg-ares-gold' : 'bg-ares-cyan'}`}></span>
@@ -168,14 +168,14 @@ export default function EventManagerTab({
                       <button
                         onClick={() => localApproveMutation.mutate({ params: { id: event.id }, body: {} })}
                         disabled={localApproveMutation.isPending}
-                        className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan/40 border border-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
+                        className="text-xs font-bold text-ares-cyan hover:text-white bg-ares-cyan/10 hover:bg-ares-cyan px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         APPROVE
                       </button>
                       <button
                         onClick={() => localRejectMutation.mutate({ params: { id: event.id }, body: {} })}
                         disabled={localRejectMutation.isPending}
-                        className="text-xs font-bold text-ares-gold hover:text-white bg-ares-gold/10 hover:bg-ares-gold/40 border border-ares-gold/20 px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
+                        className="text-xs font-bold text-white bg-ares-red/80 hover:bg-ares-red px-3 py-1 ares-cut-sm transition-colors disabled:opacity-50"
                       >
                         REJECT
                       </button>

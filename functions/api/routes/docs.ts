@@ -310,14 +310,13 @@ const docTsRestRouter: any = s.router(docContract as any, {
       const user = await getSessionUser(c);
       const email = user?.email || "anonymous_admin";
 
-      return await db.transaction().execute(async (trx) => {
-        const existing = await trx.selectFrom("docs")
+        const existing = await db.selectFrom("docs")
           .select(["slug", "title", "category", "description", "content", "cf_email", "is_portfolio", "is_executive_summary"])
           .where("slug", "=", slug)
           .executeTakeFirst();
 
         if (existing) {
-          await trx.insertInto("docs_history")
+          await db.insertInto("docs_history")
             .values({
               slug: String(existing.slug),
               title: existing.title,
@@ -332,7 +331,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
 
         if (user?.role !== "admin" && existing) {
           const revSlug = `${slug}-rev-${Math.random().toString(36).substring(2, 6)}`;
-          await trx.insertInto("docs")
+          await db.insertInto("docs")
             .values({
               slug: revSlug,
               title: title || "",
@@ -352,16 +351,17 @@ const docTsRestRouter: any = s.router(docContract as any, {
           c.executionCtx.waitUntil(notifyByRole(c, ["admin", "coach", "mentor"], {
             title: "📝 Doc Revision Pending",
             message: `"${title}" revised by ${email} needs admin approval.`,
-            link: "/dashboard",
+            link: "/dashboard/manage_docs",
             external: true,
             priority: "medium"
           }));
+
           return { status: 200 as const, body: { success: true, slug: revSlug } };
         }
 
         const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
-        await trx.insertInto("docs")
+        await db.insertInto("docs")
           .values({
             slug,
             title: title || "",
@@ -398,14 +398,13 @@ const docTsRestRouter: any = s.router(docContract as any, {
           c.executionCtx.waitUntil(notifyByRole(c, ["admin", "coach", "mentor"], {
             title: "📝 Pending Document",
             message: `"${title}" submitted by ${email} needs review.`,
-            link: "/dashboard",
+            link: "/dashboard/manage_docs",
             external: true,
             priority: "medium"
           }));
         }
 
         return { status: 200 as const, body: { success: true, slug } };
-      });
     } catch {
       return { status: 500 as const, body: { error: "Write failed" } };
     }
@@ -466,8 +465,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      return await db.transaction().execute(async (trx) => {
-        const row = await trx.selectFrom("docs_history")
+        const row = await db.selectFrom("docs_history")
           .select(["title", "category", "description", "content"])
           .where("id", "=", Number(id))
           .where("slug", "=", slug)
@@ -478,13 +476,13 @@ const docTsRestRouter: any = s.router(docContract as any, {
         const user = await getSessionUser(c);
         const email = user?.email || "anonymous_admin";
 
-        const current = await trx.selectFrom("docs")
+        const current = await db.selectFrom("docs")
           .select(["slug", "title", "category", "description", "content", "cf_email"])
           .where("slug", "=", slug)
           .executeTakeFirst();
           
         if (current) {
-          await trx.insertInto("docs_history")
+          await db.insertInto("docs_history")
             .values({
               slug: String(current.slug),
               title: current.title,
@@ -497,7 +495,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           c.executionCtx.waitUntil(pruneDocHistory(c, slug, 10));
         }
 
-        await trx.updateTable("docs")
+        await db.updateTable("docs")
           .set({ 
             title: row.title || "", 
             category: row.category || "", 
@@ -510,7 +508,6 @@ const docTsRestRouter: any = s.router(docContract as any, {
           .execute();
 
         return { status: 200 as const, body: { success: true } };
-      });
     } catch {
       return { status: 404 as const, body: { error: "Restore failed" } };
     }
@@ -554,7 +551,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       await db.updateTable("docs").set({ status: "rejected" }).where("slug", "=", slug).execute();
       if (row?.cf_email) {
         const author = await db.selectFrom("user").select("id").where("email", "=", row.cf_email).executeTakeFirst();
-                if (author) await emitNotification(c, { userId: String(author.id), title: "Doc Rejected", message: `Your document "${row.title}" was rejected${reason ? `: "${reason}"` : "."}`, link: "/dashboard?tab=docs", priority: "high" });
+                if (author) await emitNotification(c, { userId: String(author.id), title: "Doc Rejected", message: `Your document "${row.title}" was rejected${reason ? `: "${reason}"` : "."}`, link: "/dashboard/manage_docs", priority: "high" });
       }
                   return { status: 200 as const, body: { success: true } };
     } catch {

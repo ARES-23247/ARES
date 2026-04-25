@@ -60,13 +60,13 @@ export default function SponsorTokensManager() {
       )}
 
       {/* Generate Action */}
-      <div className="bg-obsidian/50 border border-white/5 rounded-2xl p-6">
+      <div className="bg-obsidian/50 border border-white/5 ares-cut-lg p-6">
         <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-widest flex items-center gap-2">
           <FileKey2 size={16} className="text-ares-gold" /> Generate Magic Link
         </h3>
         <div className="flex flex-col sm:flex-row gap-4">
           <select 
-            className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:border-ares-gold focus:outline-none"
+            className="flex-1 bg-black border border-white/10 ares-cut-sm px-4 py-2.5 text-sm font-bold text-white focus:border-ares-gold focus:outline-none"
             value={selectedSponsor}
             onChange={(e) => setSelectedSponsor(e.target.value)}
             title="Select a sponsor to generate a magic link for"
@@ -79,7 +79,7 @@ export default function SponsorTokensManager() {
           <button
             disabled={!selectedSponsor || generateMutation.isPending}
             onClick={() => generateMutation.mutate({ body: { sponsor_id: selectedSponsor } })}
-            className="px-6 py-2.5 bg-ares-gold hover:opacity-90 text-black font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="px-6 py-2.5 bg-ares-gold hover:opacity-90 text-black font-black uppercase tracking-widest ares-cut-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {generateMutation.isPending ? <RefreshCw className="animate-spin" size={16} /> : <Plus size={16} />} 
             Generate Link
@@ -88,7 +88,7 @@ export default function SponsorTokensManager() {
       </div>
 
       {/* List */}
-      <div className="bg-obsidian/50 border border-white/5 rounded-2xl overflow-hidden">
+      <div className="bg-obsidian/50 border border-white/5 ares-cut-lg overflow-hidden">
         {tokens.length === 0 ? (
           <div className="p-8 text-center text-white/60 font-bold uppercase tracking-widest text-xs">
             No access tokens generated yet.
@@ -112,7 +112,7 @@ export default function SponsorTokensManager() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <input readOnly value={url} aria-label="Magic link URL" className="bg-black text-xs text-white/60 font-mono px-3 py-1.5 rounded-lg border border-white/5 w-64 focus:outline-none" />
+                        <input readOnly value={url} aria-label="Magic link URL" className="bg-black text-xs text-white/60 font-mono px-3 py-1.5 ares-cut-sm border border-white/5 w-64 focus:outline-none" />
                         <a href={url} target="_blank" rel="noreferrer" title="Open magic link" className="text-ares-gold hover:text-white transition-colors">
                           <ExternalLink size={14} />
                         </a>

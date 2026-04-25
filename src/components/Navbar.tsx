@@ -61,9 +61,17 @@ export default function Navbar() {
    
   const rawNotifications = (notifRes?.body as any)?.notifications || [];
   
+  // Filter out redundant DB notifications that duplicate our synthetic sticky action items
+  const filteredRawNotifications = rawNotifications.filter((n: any) => {
+    const t = n.title || "";
+    return !(t.includes("Inquiry") && t.startsWith("New ")) &&
+           !(t === "📝 Pending Blog Post") &&
+           !(t === "📝 Pending Document" || t === "📝 Doc Revision Pending");
+  });
+  
   // Combine db notifications with pending inquiries and pending posts
   const notifications = [
-    ...rawNotifications,
+    ...filteredRawNotifications,
     ...pendingInquiries.map((i: any) => ({
       id: `inquiry-${i.id}`,
       title: `New ${i.type === 'support' ? 'Support' : i.type === 'outreach' ? 'Outreach' : i.type === 'sponsor' ? 'Sponsor' : 'Inquiry'} Request`,
@@ -166,7 +174,7 @@ export default function Navbar() {
               </button>
               
               {showNotifs && (
-                <div className="absolute top-12 right-0 w-80 bg-obsidian border border-white/10 shadow-2xl rounded-lg overflow-hidden flex flex-col z-[200]">
+                <div className="absolute top-12 right-0 w-80 bg-obsidian border border-white/10 shadow-2xl ares-cut-sm overflow-hidden flex flex-col z-[200]">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20">
                     <h3 className="text-sm font-bold text-white">Notifications</h3>
                     {unreadCount > 0 && (
@@ -238,7 +246,7 @@ export default function Navbar() {
           )}
 
 
-          <Link to="/sponsors" className="hidden md:flex bg-ares-red text-white px-6 py-2 rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-md rounded-bl-md font-bold uppercase tracking-widest text-xs hover:bg-ares-bronze hover:text-white transition-all shadow-lg items-center gap-2">
+          <Link to="/sponsors" className="hidden md:flex bg-ares-red text-white px-6 py-2 clipped-button-sm font-bold uppercase tracking-widest text-xs hover:bg-ares-bronze hover:text-white transition-all shadow-lg items-center gap-2">
             <Heart size={14} className="fill-white" />
             <span>Support Us</span>
           </Link>

@@ -1,5 +1,5 @@
 import { Hono, Context } from "hono";
-import { AppEnv, getSessionUser, sanitizeProfileForPublic, rateLimitMiddleware } from "../middleware";
+import { AppEnv, getSessionUser, sanitizeProfileForPublic, persistentRateLimitMiddleware } from "../middleware";
 import { getAuth } from "../../utils/auth";
 import { decrypt } from "../../utils/crypto";
 import { upsertProfile } from "./_profileUtils";
@@ -21,8 +21,16 @@ const profileHandlers = {
     try {
       const profileRow = await db.selectFrom("user_profiles as p")
         .innerJoin("user as u", "p.user_id", "u.id")
-        .selectAll("p")
-        .select("u.image as avatar")
+        .select([
+          "p.user_id", "p.nickname", "p.first_name", "p.last_name", "p.bio", "p.pronouns", 
+          "p.subteams", "p.member_type", "p.grade_year", "p.favorite_food", "p.dietary_restrictions",
+          "p.favorite_first_thing", "p.fun_fact", "p.show_email", "p.contact_email", "p.show_phone", "p.phone",
+          "p.show_on_about", "p.favorite_robot_mechanism", "p.pre_match_superstition", "p.leadership_role",
+          "p.rookie_year", "p.colleges", "p.employers", "p.tshirt_size",
+          "p.emergency_contact_name", "p.emergency_contact_phone", 
+          "p.parents_name", "p.parents_email", "p.students_name", "p.students_email",
+          "u.image as avatar"
+        ])
         .where("p.user_id", "=", user.id)
         .executeTakeFirst();
 
@@ -230,7 +238,8 @@ const profileHandlers = {
 const profileTsRestRouter = s.router(profileContract, profileHandlers as any);
 createHonoEndpoints(profileContract, profileTsRestRouter, profilesRouter);
 
-profilesRouter.put("/avatar", rateLimitMiddleware(15, 60), async (c: any) => {
+profilesRouter.use("/update-me", persistentRateLimitMiddleware(10, 60));
+profilesRouter.put("/avatar", persistentRateLimitMiddleware(15, 60), async (c: any) => {
   const user = await getSessionUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
   try {

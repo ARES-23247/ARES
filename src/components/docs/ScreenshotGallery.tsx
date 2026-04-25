@@ -55,15 +55,15 @@ export default function ScreenshotGallery() {
 
       {!isLoading && images.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={prev} className="p-2 bg-black/50 hover:bg-ares-red/80 text-white rounded-full backdrop-blur transition-colors"><ChevronLeft size={24} /></button>
-          <button onClick={next} className="p-2 bg-black/50 hover:bg-ares-cyan/80 text-white rounded-full backdrop-blur transition-colors"><ChevronRight size={24} /></button>
+          <button onClick={prev} className="p-2 bg-black/50 hover:bg-ares-red/80 text-white ares-cut-sm backdrop-blur transition-colors"><ChevronLeft size={24} /></button>
+          <button onClick={next} className="p-2 bg-black/50 hover:bg-ares-cyan/80 text-white ares-cut-sm backdrop-blur transition-colors"><ChevronRight size={24} /></button>
         </div>
       )}
 
       {!isLoading && images.length > 1 && (
         <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
           {images.map((_: any, i: any) => (
-            <div key={i} className={`w-2 h-2 rounded-full transition-all ${i === index ? "bg-ares-gold scale-125" : "bg-white/60"}`} />
+            <div key={i} className={`w-2 h-2 ares-cut-sm transition-all ${i === index ? "bg-ares-gold scale-125" : "bg-white/60"}`} />
           ))}
         </div>
       )}

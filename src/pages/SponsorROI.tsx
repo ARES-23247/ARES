@@ -62,14 +62,14 @@ export default function SponsorROI() {
   if (error || !data?.sponsor) {
     return (
       <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center text-marble gap-4 p-6 text-center">
-        <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2">
+        <div className="w-24 h-24 ares-cut-lg bg-white/5 border border-white/10 flex items-center justify-center mb-2">
           <ShieldAlert size={48} className="text-ares-red" />
         </div>
         <h1 className="text-3xl font-black uppercase tracking-tighter">Access Denied</h1>
         <p className="text-marble/60 max-w-md">
           {error || "The secure link you are trying to access is invalid or has expired."}
         </p>
-        <Link to="/" className="mt-8 px-8 py-3 bg-ares-red hover:bg-ares-bronze rounded-xl transition-all font-bold uppercase tracking-widest text-xs">
+        <Link to="/" className="mt-8 bg-ares-red text-white hover:bg-ares-bronze clipped-button text-xs shadow-lg shadow-ares-red/20">
           Return to Portal
         </Link>
       </div>
@@ -97,7 +97,7 @@ export default function SponsorROI() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row items-center md:items-end justify-between gap-8 mb-16">
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 bg-white/5 border border-white/10 p-4 rounded-3xl flex items-center justify-center shrink-0 shadow-2xl backdrop-blur-sm">
+            <div className="w-24 h-24 bg-white/5 border border-white/10 p-4 ares-cut flex items-center justify-center shrink-0 shadow-2xl backdrop-blur-sm">
               {sponsor.logo_url ? (
                 <img src={sponsor.logo_url} alt={sponsor.name} className="max-w-full max-h-full object-contain filter grayscale" />
               ) : (
@@ -131,7 +131,7 @@ export default function SponsorROI() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * i }}
-              className="bg-ares-gray-dark/40 border border-white/5 rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group"
+              className="bg-ares-gray-dark/40 border border-white/5 ares-cut-lg p-6 backdrop-blur-md relative overflow-hidden group"
             >
               <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-110 group-hover:rotate-12 group-hover:-translate-y-2 group-hover:translate-x-2">
                 <kpi.icon size={80} className={kpi.color} />
@@ -150,7 +150,7 @@ export default function SponsorROI() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-ares-gray-dark/40 border border-white/5 rounded-3xl p-8 backdrop-blur-md"
+          className="bg-ares-gray-dark/40 border border-white/5 ares-cut-lg p-8 backdrop-blur-md"
         >
           <div className="flex items-center gap-3 mb-8">
             <Calendar className="text-ares-red" size={24} />
@@ -158,7 +158,7 @@ export default function SponsorROI() {
           </div>
           
           {metrics.length === 0 ? (
-            <div className="py-12 border-2 border-dashed border-ares-gray-dark rounded-2xl flex flex-col items-center justify-center text-center">
+            <div className="py-12 border-2 border-dashed border-ares-gray-dark ares-cut-lg flex flex-col items-center justify-center text-center">
               <MousePointerClick size={32} className="text-ares-gray mb-4" />
               <p className="text-ares-gray font-bold uppercase tracking-widest text-xs">Awaiting Metric Aggregation</p>
               <p className="text-ares-gray text-xs max-w-sm mt-2">Data will appear here at the end of the first billing cycle.</p>

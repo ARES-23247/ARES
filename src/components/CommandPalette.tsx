@@ -186,7 +186,7 @@ export default function CommandPalette() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="w-full max-w-2xl bg-obsidian border border-white/5 rounded-2xl shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col ring-1 ring-white/10"
+            className="w-full max-w-2xl bg-obsidian border border-white/5 ares-cut-lg shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col ring-1 ring-white/10"
           >
             <Command 
               shouldFilter={false} 
@@ -234,7 +234,7 @@ export default function CommandPalette() {
                     key={res.id}
                     value={res.id}
                     onSelect={() => handleSelect(res)}
-                    className="w-full text-left flex items-center px-4 py-3 rounded-lg mb-1 transition-colors ares-cut-sm cursor-pointer data-[selected=true]:bg-ares-red/20 data-[selected=true]:border-l-2 data-[selected=true]:border-ares-red data-[selected=true]:text-white border-l-2 border-transparent text-marble/40 hover:bg-white/5"
+                    className="w-full text-left flex items-center px-4 py-3 mb-1 transition-colors ares-cut-sm cursor-pointer data-[selected=true]:bg-ares-red/20 data-[selected=true]:border-l-2 data-[selected=true]:border-ares-red data-[selected=true]:text-white border-l-2 border-transparent text-marble/40 hover:bg-white/5"
                   >
                     <div className="mr-4 shrink-0 transition-colors group-data-[selected=true]:text-ares-red text-marble/30">
                       {res.icon}

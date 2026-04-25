@@ -28,6 +28,7 @@ interface Award {
 
 export default function Seasons() {
   const { data: seasonsRes, isLoading: isLoadingSeasons } = api.seasons.list.useQuery(["public-seasons"], {});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawBody = (seasonsRes as any)?.body;
   const seasons = seasonsRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.seasons) ? rawBody.seasons : [])) : [];
 

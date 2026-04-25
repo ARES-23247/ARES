@@ -45,7 +45,7 @@ export const eventHandlers = {
           .limit(Number(limit) || 50)
           .offset(Number(offset) || 0)
           .execute();
-      } catch (e) {
+      } catch (_e) {
         results = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
           .where("is_deleted", "=", 0)
@@ -127,7 +127,7 @@ export const eventHandlers = {
           .limit(Number(limit) || 100)
           .offset(Number(offset) || 0)
           .execute();
-      } catch (e) {
+      } catch (_e) {
         results = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
           .orderBy("date_start", "desc")
@@ -159,7 +159,7 @@ export const eventHandlers = {
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id"])
           .where("id", "=", id)
           .executeTakeFirst();
-      } catch (e) {
+      } catch (_e) {
         row = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
           .where("id", "=", id)

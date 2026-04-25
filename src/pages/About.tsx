@@ -31,6 +31,7 @@ export default function About() {
   const { data: rosterRes, isLoading } = api.profiles.getTeamRoster.useQuery(["team-roster"], {});
 
   const members = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawBody = (rosterRes as any)?.body;
     // Robust check for members array in different possible response formats
     const list = rosterRes?.status === 200 

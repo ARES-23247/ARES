@@ -11,7 +11,8 @@ import CompetitionBanner from "../components/CompetitionBanner";
 
 export default function Events() {
   const { data: eventsRes, isLoading } = api.events.getEvents.useQuery(["events"], {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawBody = (eventsRes as any)?.body;
   const events = eventsRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.events) ? rawBody.events : [])) as unknown as EventItem[] : [];
 
@@ -85,7 +86,7 @@ export default function Events() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="relative z-10 max-w-4xl mx-auto space-y-6 bg-obsidian p-8 rounded-2xl border border-white/10 shadow-2xl"
+          className="relative z-10 max-w-4xl mx-auto space-y-6 bg-obsidian p-8 ares-cut-lg border border-white/10 shadow-2xl"
         >
           {/* ACC-F01: Fixed H1 for screen readers while maintaining visual style */}
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">

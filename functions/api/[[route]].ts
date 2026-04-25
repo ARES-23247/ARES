@@ -36,6 +36,20 @@ import zulipRouter from "./routes/zulip";
 import notificationsRouter from "./routes/notifications";
 
 const app = new Hono<AppEnv>();
+
+// ── 1. Logger (Top of stack for maximum visibility) ────
+app.use("*", async (c, next) => {
+  if (c.env?.ENVIRONMENT !== "production") {
+    const logUrl = new URL(c.req.url);
+    for (const key of [...logUrl.searchParams.keys()]) {
+      if (/token|secret|key|auth|session/i.test(key)) logUrl.searchParams.set(key, "***");
+    }
+    console.log(`[${c.req.method}] ${logUrl.pathname}${logUrl.search}`);
+  }
+  await next();
+});
+
+// ── 2. Env & DB setup ────
 app.use("*", envMiddleware);
 app.use("*", dbMiddleware);
 
@@ -51,17 +65,6 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-// ── Request Logger ────
-app.use("*", async (c, next) => {
-  if (c.env?.ENVIRONMENT !== "production") {
-    const logUrl = new URL(c.req.url);
-    for (const key of [...logUrl.searchParams.keys()]) {
-      if (/token|secret|key|auth|session/i.test(key)) logUrl.searchParams.set(key, "***");
-    }
-    console.log(`[${c.req.method}] ${logUrl.pathname}${logUrl.search}`);
-  }
-  await next();
-});
 
 // ── CORS ─────
 apiRouter.use("*", cors({
@@ -134,7 +137,10 @@ apiRouter.get("/admin/audit-log", ensureAdmin, async (c) => {
 app.onError(async (err, c: any) => {
   console.error("Global API Error:", err);
   const db = c.get("db") as Kysely<DB>;
-  if (c.env?.DB) await logSystemError(db, "GlobalErrorHandler", err.message || "Unknown error", err.stack);
+  if (c.env?.DB && db) {
+    // SCA-F01: Non-blocking error logging
+    c.executionCtx.waitUntil(logSystemError(db, "GlobalErrorHandler", err.message || "Unknown error", err.stack));
+  }
   const isProd = c.env?.ENVIRONMENT === "production";
   return c.json({ error: "Internal Server Error", message: isProd ? "Unexpected error" : err.message }, 500);
 });
