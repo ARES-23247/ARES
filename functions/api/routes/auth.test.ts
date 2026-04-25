@@ -28,7 +28,7 @@ describe("Auth Router", () => {
       vi.mocked(shared.getSessionUser).mockResolvedValue(mockUser as any);
 
       const req = new Request("http://localhost/auth-check");
-      const res = await authRouter.request(req, {}, { DB: {} } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {}, DEV_BYPASS: "true" } as any, mockExecutionContext);
 
       expect(res.status).toBe(200);
       const body = await res.json() as any;
@@ -40,7 +40,7 @@ describe("Auth Router", () => {
       vi.mocked(shared.getSessionUser).mockResolvedValue(null);
 
       const req = new Request("http://localhost/auth-check");
-      const res = await authRouter.request(req, {}, { DB: {} } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {}, DEV_BYPASS: "true" } as any, mockExecutionContext);
 
       expect(res.status).toBe(401);
       const body = await res.json() as any;
