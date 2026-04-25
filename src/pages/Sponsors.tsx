@@ -83,8 +83,8 @@ export default function Sponsors() {
   const [turnstileToken, setTurnstileToken] = useState("");
 
   const trackSponsorClick = (sponsorId: string) => {
-    api.analytics.trackPageView.mutation({
-      body: { path: "/sponsors", category: "sponsor-click", metadata: { sponsor_id: sponsorId } }
+    api.analytics.trackSponsorClick.mutation({
+      body: { sponsor_id: sponsorId }
     }).catch(() => {});
   };
 

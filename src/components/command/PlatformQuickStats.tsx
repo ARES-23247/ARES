@@ -1,28 +1,31 @@
 import { Zap } from "lucide-react";
+import { Card, Metric, Text, Grid, Color } from "@tremor/react";
 
 interface PlatformQuickStatsProps {
   stats: Record<string, number>;
 }
 
 export default function PlatformQuickStats({ stats }: PlatformQuickStatsProps) {
+  const data: { label: string; value: number; color: Color }[] = [
+    { label: "Blog Posts", value: stats.posts || 0, color: "red" },
+    { label: "Events", value: stats.events || 0, color: "amber" },
+    { label: "Docs", value: stats.docs || 0, color: "cyan" },
+  ];
+
   return (
-    <div className="bg-obsidian/50 border border-white/5 ares-cut p-6">
-      <h3 className="font-black text-white text-sm uppercase tracking-widest flex items-center gap-2 mb-4">
+    <div className="space-y-4">
+      <h3 className="font-black text-white text-sm uppercase tracking-widest flex items-center gap-2 mb-2 ml-1">
         <Zap size={16} className="text-ares-gold" />
         Platform Stats
       </h3>
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "Blog Posts", value: stats.posts || 0, color: "text-ares-red" },
-          { label: "Events", value: stats.events || 0, color: "text-ares-gold" },
-          { label: "Docs", value: stats.docs || 0, color: "text-ares-cyan" },
-        ].map(stat => (
-          <div key={stat.label} className="text-center p-4 bg-ares-gray-dark/30 ares-cut-sm border border-white/5">
-            <p className={`text-3xl font-black ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs font-bold text-marble/40 uppercase tracking-wider mt-1">{stat.label}</p>
-          </div>
+      <Grid numItems={3} className="gap-4">
+        {data.map(stat => (
+          <Card key={stat.label} className="bg-ares-gray-dark/30 border-white/5 ares-cut-sm p-4 text-center" decoration="top" decorationColor={stat.color}>
+            <Text className="text-marble/40 uppercase tracking-widest font-bold text-[10px] mb-1">{stat.label}</Text>
+            <Metric className="text-white font-black text-2xl">{stat.value}</Metric>
+          </Card>
         ))}
-      </div>
+      </Grid>
     </div>
   );
 }

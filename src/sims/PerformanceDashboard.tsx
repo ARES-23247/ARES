@@ -300,7 +300,7 @@ export default function PerformanceDashboard({ className = '' }: PerformanceDash
     <div className={`performance-dashboard ${className}`}>
       {/* Header */}
       <div className="dashboard-header">
-        <h2>🔧 MARSLib Performance Dashboard</h2>
+        <h2>🔧 ARESLib Performance Dashboard</h2>
         <div className="upload-section">
           <label className="upload-label">
             <input

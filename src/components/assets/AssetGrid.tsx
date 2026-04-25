@@ -52,6 +52,7 @@ export default function AssetGrid({
     return r;
   }, [assets, columns]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,

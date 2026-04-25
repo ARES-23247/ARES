@@ -101,6 +101,7 @@ export function useMedia() {
     uploadAssets: bulkUpload,
     isUploading: uploadMutation.isPending,
     syndicateMutation,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     moveAsset: (key: string, newFolder: string) => moveMutation.mutate({ params: { key }, body: { folder: newFolder } } as any),
     isMoving: moveMutation.isPending
   };

@@ -55,7 +55,7 @@ export default function FieldVisualizer({
     // Robot bumper
     const bumperGeometry = new THREE.BoxGeometry(0.9, 0.25, 0.9);
     const bumperMaterial = new THREE.MeshStandardMaterial({
-      color: 0xB32416,
+      color: 0xC00000,
       roughness: 0.7,
     });
     const bumper = new THREE.Mesh(bumperGeometry, bumperMaterial);
@@ -85,7 +85,7 @@ export default function FieldVisualizer({
 
     // Direction indicator
     const arrowGeometry = new THREE.ConeGeometry(0.05, 0.2, 3);
-    const arrowMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const arrowMaterial = new THREE.MeshBasicMaterial({ color: 0xC00000 });
     const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
     arrow.position.set(0, 0.4, 0.35);
     arrow.rotation.x = Math.PI / 2;
@@ -127,7 +127,7 @@ export default function FieldVisualizer({
 
     const boundaryGeometry = new THREE.ShapeGeometry(boundaryShape);
     const boundaryMaterial = new THREE.MeshBasicMaterial({
-      color: 0x29b6f6,
+      color: 0x00E5FF,
       side: THREE.DoubleSide,
       transparent: true,
       opacity: 0.3,
@@ -365,7 +365,7 @@ export default function FieldVisualizer({
           padding: '8px 12px',
           borderRadius: '4px',
           color: '#aaa',
-          fontFamily: '"Ubuntu", sans-serif',
+          fontFamily: 'Inter, sans-serif',
           fontSize: '11px',
         }}
       >

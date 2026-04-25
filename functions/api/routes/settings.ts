@@ -113,7 +113,7 @@ settingsRouter.get("/admin/backup", async (c: any) => {
     };
     
     const backup: Record<string, unknown[]> = {};
-    for (const tableName of SAFE_TABLES) {
+    const backupPromises = SAFE_TABLES.map(async (tableName) => {
       try {
         const cols = TABLE_COLUMNS[tableName];
         let q: any = db.selectFrom(tableName);
@@ -122,19 +122,30 @@ settingsRouter.get("/admin/backup", async (c: any) => {
         } else {
           q = q.selectAll();
         }
-        backup[tableName] = await q.limit(1000).execute() as unknown[];
+        const data = await q.limit(1000).execute() as unknown[];
         
         if (tableName === "inquiries") {
-          backup[tableName] = (backup[tableName] || []).map((r) => {
-            const row = r as Record<string, unknown>;
-            return {
-              ...row,
-              name: row.name ? String(row.name).substring(0, 1) + "***" : "***",
-              email: "***@***.***"
-            };
-          });
+          return {
+            tableName,
+            data: (data || []).map((r) => {
+              const row = r as Record<string, unknown>;
+              return {
+                ...row,
+                name: row.name ? String(row.name).substring(0, 1) + "***" : "***",
+                email: "***@***.***"
+              };
+            })
+          };
         }
-      } catch { /* skip */ }
+        return { tableName, data };
+      } catch { 
+        return { tableName, data: [] };
+      }
+    });
+
+    const results = await Promise.all(backupPromises);
+    for (const res of results) {
+      backup[res.tableName] = res.data;
     }
     
     c.executionCtx.waitUntil(logAuditAction(c, "database_export", "system", null, "Exported full D1 database backup as JSON."));
