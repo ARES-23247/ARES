@@ -191,7 +191,7 @@ export default function Navbar() {
           )}
 
 
-          <Link to="/sponsors" className="hidden md:flex bg-ares-red text-white px-6 py-2 clipped-button-sm font-bold uppercase tracking-widest text-xs hover:bg-ares-bronze hover:text-white transition-all shadow-lg items-center gap-2">
+          <Link to="/sponsors" className="hidden md:flex bg-ares-red text-white px-6 py-1.5 ares-cut-sm font-bold uppercase tracking-widest text-xs hover:bg-ares-bronze hover:text-white transition-all shadow-lg shadow-ares-red/20 border border-ares-red/50 items-center gap-2">
             <Heart size={14} className="fill-white" />
             <span>Support Us</span>
           </Link>
