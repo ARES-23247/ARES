@@ -55,8 +55,8 @@ export default function ScreenshotGallery() {
 
       {!isLoading && images.length > 1 && (
         <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={prev} aria-label="Previous image" className="p-2 bg-black/50 hover:bg-ares-red/80 text-white ares-cut-sm backdrop-blur transition-colors"><ChevronLeft size={24} /></button>
-          <button onClick={next} aria-label="Next image" className="p-2 bg-black/50 hover:bg-ares-red/80 text-white ares-cut-sm backdrop-blur transition-colors"><ChevronRight size={24} /></button>
+          <button title="Previous image" onClick={prev} aria-label="Previous image" className="p-2 bg-black/50 hover:bg-ares-red/80 text-white ares-cut-sm backdrop-blur transition-colors"><ChevronLeft size={24} /></button>
+          <button title="Next image" onClick={next} aria-label="Next image" className="p-2 bg-black/50 hover:bg-ares-red/80 text-white ares-cut-sm backdrop-blur transition-colors"><ChevronRight size={24} /></button>
         </div>
       )}
 

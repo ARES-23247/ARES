@@ -63,7 +63,7 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
               category: 'tutorial-checkpoint',
               metadata: { syncId, progress: progressArray }
             }
-          }).catch(e => console.error("Failed to sync progress to cloud", e));
+          }).catch((e: unknown) => console.error("Failed to sync progress to cloud", e));
         }
 
         return next;

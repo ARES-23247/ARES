@@ -24,6 +24,7 @@ export default function SeasonPicker({ value, onChange, label = "Linked Season" 
         {label}
       </label>
       <select
+        title={label}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         className="w-full bg-black border border-white/10 ares-cut-sm px-4 py-3 text-marble placeholder-marble/30 focus:outline-none focus:ring-1 focus:ring-ares-red focus:border-ares-red transition-all shadow-inner"

@@ -208,7 +208,7 @@ export default function Navbar() {
           }} 
           className="md:hidden text-ares-gold w-10 h-10 flex flex-col justify-center items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded transition-colors group"
           aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-          aria-expanded={open}
+          aria-expanded={open ? "true" : "false"}
         >
           <span className={`w-7 h-1 bg-current block rounded-full transition-all duration-300 ${open ? "rotate-45 translate-y-2.5" : "group-hover:w-8"}`}></span>
           <span className={`w-7 h-1 bg-current block rounded-full transition-opacity duration-300 ${open ? "opacity-0" : "group-hover:w-5"}`}></span>
@@ -226,7 +226,7 @@ export default function Navbar() {
           <Link to="/seasons" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SEASONS</Link>
           <Link to="/outreach" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">OUTREACH</Link>
           <Link to="/events" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">EVENTS</Link>
-          <Link to="/blog" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter text-ares-gold">TEAM BLOG</Link>
+          <Link to="/blog" onClick={() => setOpen(false)} className="text-xl font-black italic tracking-tighter text-ares-gold">TEAM BLOG</Link>
           <Link to="/sponsors" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SUPPORT US</Link>
         </div>
           {isSignedIn && (

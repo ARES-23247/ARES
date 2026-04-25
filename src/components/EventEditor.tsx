@@ -380,7 +380,7 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
       </div>
 
       <div className="mt-4">
-        <label htmlFor="event-notes-editor" className="block text-xs font-bold text-ares-red uppercase tracking-wider mb-2 flex items-center gap-2">
+        <label htmlFor="event-notes-editor" className="flex items-center gap-2 text-xs font-bold text-ares-red uppercase tracking-wider mb-2">
           <span>🔒 Private Meeting Notes</span>
           <span className="text-white/60 font-normal normal-case">(verified members only)</span>
         </label>
