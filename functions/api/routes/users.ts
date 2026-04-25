@@ -95,17 +95,29 @@ const userHandlers = {
         await db.deleteFrom("session").where("userId", "=", params.id).execute();
       }
       if (member_type) {
-        await db.insertInto("user_profiles")
-          .values({ user_id: params.id, member_type })
-          .onConflict((oc) => oc.column("user_id").doUpdateSet({ member_type }))
-          .execute();
+        const existing = await db.selectFrom("user_profiles")
+          .select("user_id")
+          .where("user_id", "=", params.id)
+          .executeTakeFirst();
+        
+        if (existing) {
+          await db.updateTable("user_profiles")
+            .set({ member_type })
+            .where("user_id", "=", params.id)
+            .execute();
+        } else {
+          await db.insertInto("user_profiles")
+            .values({ user_id: params.id, member_type })
+            .execute();
+        }
       }
 
       c.executionCtx.waitUntil(logAuditAction(c, "PATCH_USER", "user", params.id, `Updated user ${params.id}: role=${role}, type=${member_type}`));
 
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 500 as const, body: { error: "Update failed" } as any };
+    } catch (e: any) {
+      console.error("patchUser failed:", e);
+      return { status: 500 as const, body: { error: "Update failed: " + (e.message || "Unknown error") } as any };
     }
   },
   updateUserProfile: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
