@@ -140,6 +140,11 @@ h1, h2, h3, h4, .font-heading {
   @apply bg-transparent p-0 text-inherit;
 }
 
+/* Fix native select option background in dark mode wrappers */
+select option {
+  @apply bg-obsidian text-white;
+}
+
 /* --- NATIVE PDF PORTFOLIO EXPORTS --- */
 @media print {
   /* Hide global UI elements */
@@ -181,8 +186,7 @@ h1, h2, h3, h4, .font-heading {
     break-inside: avoid;
   }
   
-  /* Fix native select option background in dark mode wrappers */
-  select option {
-    @apply bg-obsidian text-white;
+  .print-layout table {
+    break-inside: avoid;
   }
 }
