@@ -18,10 +18,9 @@ CREATE TABLE IF NOT EXISTS seasons (
 );
 
 -- Add season relationship columns to existing content tables
-ALTER TABLE events ADD COLUMN season_id TEXT;
-ALTER TABLE awards ADD COLUMN season_id TEXT;
-ALTER TABLE outreach_logs ADD COLUMN season_id TEXT;
-ALTER TABLE posts ADD COLUMN season_id TEXT;
+-- RESOLVED: Columns already exist in production schema.sql
+-- This is kept as a no-op so wrangler marks it as applied and proceeds.
+SELECT 1;
 
 -- Create indexes for performance filtering
 CREATE INDEX IF NOT EXISTS idx_events_season ON events(season_id);

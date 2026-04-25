@@ -1,9 +1,8 @@
 -- Migration: Add revision_of column to content tables for shadow revisions
 -- Created: 2026-04-24
 
-ALTER TABLE posts ADD COLUMN revision_of TEXT;
-ALTER TABLE events ADD COLUMN revision_of TEXT;
-ALTER TABLE docs ADD COLUMN revision_of TEXT;
+-- RESOLVED: Columns already exist in production schema.sql
+SELECT 1;
 
 -- Index for faster lookup of revisions
 CREATE INDEX IF NOT EXISTS idx_posts_revision_of ON posts(revision_of);
