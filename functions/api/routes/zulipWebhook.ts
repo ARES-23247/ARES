@@ -63,7 +63,17 @@ zulipWebhookRouter.post("/", async (c) => {
   }
   if (!timingSafeEqual(body.token, expectedToken)) {
     console.warn("[ZulipWebhook] Invalid token");
-    return c.json({ content: "❌ Unauthorized: Invalid webhook token." }, 403);
+    c.executionCtx.waitUntil(
+      c.get("db").insertInto("audit_log").values({
+        id: `err-${Date.now()}`,
+        actor: "system",
+        action: "INTEGRATION_FAILURE",
+        resource_type: "Zulip",
+        resource_id: "Webhook",
+        details: JSON.stringify({ expected: expectedToken, received: body.token, sender: body.message?.sender_email })
+      }).execute().catch(() => {})
+    );
+    return c.json({ content: `❌ Unauthorized: Invalid webhook token.` }, 403);
   }
 
   const rawContent = body.message?.content || "";
