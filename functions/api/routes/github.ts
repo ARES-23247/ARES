@@ -50,18 +50,25 @@ const githubHandlers = {
     const org = siteConfig.urls.githubOrg;
     const cacheUrl = new URL(c.req.url);
     const cacheKey = new Request(cacheUrl.toString(), c.req.raw);
-    const cache = await caches.open("ares-github-activity");
+    const cache = await caches.open("ares-github-activity-v2"); // Bumped cache version
     
     const cachedResponse = await cache.match(cacheKey);
-            if (cachedResponse) {
+    if (cachedResponse) {
       const data = await cachedResponse.json() as any;
       return { status: 200 as const, body: data };
     }
 
     try {
+      const config = await getSocialConfig(c);
+      const ghConfig = buildGitHubConfig(config);
+
       const headers: Record<string, string> = {
         "User-Agent": `${siteConfig.team.name}-Cloudflare-Worker`
       };
+      
+      if (ghConfig?.pat) {
+        headers["Authorization"] = `Bearer ${ghConfig.pat}`;
+      }
 
       const repoRes = await fetch(`https://api.github.com/orgs/${org}/repos?per_page=100&type=public`, { headers });
       if (!repoRes.ok) throw new Error("GitHub API Error");
@@ -70,12 +77,12 @@ const githubHandlers = {
       const activityResults = await Promise.all(
         repos.map(repo => 
           fetch(`https://api.github.com/repos/${org}/${repo.name}/stats/commit_activity`, { headers })
-            .then(res => res.ok ? res.json() : null)
+            .then(res => res.ok && res.status !== 202 ? res.json() : null)
             .catch(() => null)
         )
       );
 
-      const allActivity = activityResults.filter((json): json is WeekData[] => Array.isArray(json));
+      const allActivity = activityResults.filter((json): json is WeekData[] => Array.isArray(json) && json.length > 0);
 
       const dailyMap = new Map<string, number>();
       for (const repoWeeks of allActivity) {
@@ -122,13 +129,17 @@ const githubHandlers = {
 
       const payload = { grid: weeks, totalCommits, repoCount: repos.length };
       
-      const response = new Response(JSON.stringify(payload), {
-        headers: { 
-          "Content-Type": "application/json",
-          "Cache-Control": "public, s-maxage=3600, max-age=3600"
-        }
-      });
-      c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+      // DO NOT CACHE IF WE RECEIVED MOSTLY 202 ACCEPTED (Empty Activity)
+      // GitHub might be compiling stats. We don't want to freeze the graph empty.
+      if (totalCommits > 0 || repos.length === 0) {
+        const response = new Response(JSON.stringify(payload), {
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "public, s-maxage=3600, max-age=3600"
+          }
+        });
+        c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+      }
       
       return { status: 200 as const, body: payload as any };
     } catch {
