@@ -150,7 +150,7 @@ export function SocialCard({
             />
           </div>
           <div>
-            <label htmlFor="gcal_service_pk" className="block text-xs font-bold text-ares-gray uppercase tracking-wider mb-2 flex items-center gap-2">
+            <label htmlFor="gcal_service_pk" className="text-xs font-bold text-ares-gray uppercase tracking-wider mb-2 flex items-center gap-2">
               RSA Private Key
             </label>
             <textarea
@@ -175,7 +175,7 @@ export function SocialCard({
         </p>
         <div className="space-y-4">
           <div>
-            <label htmlFor="slack_webhook" className="block text-xs font-bold text-ares-gray uppercase tracking-wider mb-2 flex items-center gap-1"><Hash size={12}/> Slack</label>
+            <label htmlFor="slack_webhook" className="text-xs font-bold text-ares-gray uppercase tracking-wider mb-2 flex items-center gap-1"><Hash size={12}/> Slack</label>
             <input
               id="slack_webhook"
               type="text"
@@ -186,7 +186,7 @@ export function SocialCard({
             />
           </div>
           <div>
-            <label htmlFor="teams_webhook" className="block text-xs font-bold text-ares-gray uppercase tracking-wider mb-2 flex items-center gap-1"><Users size={12}/> Microsoft Teams</label>
+            <label htmlFor="teams_webhook" className="text-xs font-bold text-ares-gray uppercase tracking-wider mb-2 flex items-center gap-1"><Users size={12}/> Microsoft Teams</label>
             <input
               id="teams_webhook"
               type="text"
@@ -197,7 +197,7 @@ export function SocialCard({
             />
           </div>
           <div>
-            <label htmlFor="gchat_webhook" className="block text-xs font-bold text-ares-gray uppercase tracking-wider mb-2 flex items-center gap-1"><MessageSquare size={12}/> Google Chat</label>
+            <label htmlFor="gchat_webhook" className="text-xs font-bold text-ares-gray uppercase tracking-wider mb-2 flex items-center gap-1"><MessageSquare size={12}/> Google Chat</label>
             <input
               id="gchat_webhook"
               type="text"
