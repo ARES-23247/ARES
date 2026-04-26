@@ -48,6 +48,18 @@ function timingSafeEqual(a: string, b: string): boolean {
 // ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
 // ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
 zulipWebhookRouter.post("/", async (c) => {
+  // Debug log to prove the request reached the worker
+  c.executionCtx.waitUntil(
+    c.get("db").insertInto("audit_log").values({
+      id: `webhook-${Date.now()}`,
+      actor: "system",
+      action: "WEBHOOK_RECEIVED",
+      resource_type: "Zulip",
+      resource_id: "Ping",
+      details: "Request arrived at route handler"
+    }).execute().catch(() => {})
+  );
+
   let body: ZulipOutgoingPayload;
   try {
     body = await c.req.json();

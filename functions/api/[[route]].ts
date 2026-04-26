@@ -61,14 +61,21 @@ apiRouter.use("*", async (c, next) => {
 });
 
 // ── CSRF Protection ──
-apiRouter.use("*", csrf({
-  origin: (origin) => {
-    if (!origin) return false;
-    const trusted = ["http://localhost:5173", "http://localhost:8788", "https://aresfirst.org"];
-    if (trusted.includes(origin)) return true;
-    return origin.endsWith(".pages.dev") || origin.endsWith(".aresfirst.org");
+apiRouter.use("*", async (c, next) => {
+  // Webhooks from external services don't have our origin
+  if (c.req.path.startsWith("/api/webhooks/")) {
+    return await next();
   }
-}));
+  
+  return csrf({
+    origin: (origin) => {
+      if (!origin) return false;
+      const trusted = ["http://localhost:5173", "http://localhost:8788", "https://aresfirst.org"];
+      if (trusted.includes(origin)) return true;
+      return origin.endsWith(".pages.dev") || origin.endsWith(".aresfirst.org");
+    }
+  })(c, next);
+});
 
 
 // ── CORS ─────
