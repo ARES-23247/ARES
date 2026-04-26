@@ -3,6 +3,7 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { userContract } from "../../../shared/schemas/contracts/userContract";
 import { AppEnv, ensureAdmin, logAuditAction, parsePagination } from "../middleware";
 import { upsertProfile } from "./_profileUtils";
+import { decrypt } from "../../utils/crypto";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
@@ -126,6 +127,85 @@ const userHandlers = {
       return { status: 200 as const, body: { success: true } as any };
     } catch {
       return { status: 500 as const, body: { error: "Profile update failed" } as any };
+    }
+  },
+  adminGetProfile: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const user = await db.selectFrom("user").select(["id", "name", "email", "image", "role"]).where("id", "=", params.id).executeTakeFirst();
+      if (!user) return { status: 404 as const, body: { error: "User not found" } as any };
+
+      const profileRow = await db.selectFrom("user_profiles as p")
+        .select([
+          "p.user_id", "p.nickname", "p.first_name", "p.last_name", "p.bio", "p.pronouns", 
+          "p.subteams", "p.member_type", "p.grade_year", "p.favorite_food", "p.dietary_restrictions",
+          "p.favorite_first_thing", "p.fun_fact", "p.show_email", "p.contact_email", "p.show_phone", "p.phone",
+          "p.show_on_about", "p.favorite_robot_mechanism", "p.pre_match_superstition", "p.leadership_role",
+          "p.rookie_year", "p.colleges", "p.employers", "p.tshirt_size",
+          "p.emergency_contact_name", "p.emergency_contact_phone", 
+          "p.parents_name", "p.parents_email", "p.students_name", "p.students_email"
+        ])
+        .where("p.user_id", "=", params.id)
+        .executeTakeFirst();
+
+      const p = { 
+        ...(profileRow || {
+          user_id: user.id,
+          nickname: user.name || "",
+          first_name: "",
+          last_name: "",
+          member_type: "student",
+        })
+      } as Record<string, unknown>;
+
+      if (profileRow) {
+        const secret = c.env.ENCRYPTION_SECRET;
+        const safeDecrypt = async (val: any) => {
+          if (!val) return null;
+          try {
+            return await decrypt(val as string, secret);
+          } catch (err) {
+            console.error("[Crypto] Decryption failed for field:", err);
+            return "[Decryption Failed]";
+          }
+        };
+
+        const [
+          emergency_contact_name, emergency_contact_phone, phone, contact_email,
+          parents_name, parents_email, students_name, students_email
+        ] = await Promise.all([
+          safeDecrypt(p.emergency_contact_name), safeDecrypt(p.emergency_contact_phone),
+          safeDecrypt(p.phone), safeDecrypt(p.contact_email),
+          safeDecrypt(p.parents_name), safeDecrypt(p.parents_email),
+          safeDecrypt(p.students_name), safeDecrypt(p.students_email)
+        ]);
+
+        p.emergency_contact_name = emergency_contact_name;
+        p.emergency_contact_phone = emergency_contact_phone;
+        p.phone = phone;
+        p.contact_email = contact_email;
+        p.parents_name = parents_name;
+        p.parents_email = parents_email;
+        p.students_name = students_name;
+        p.students_email = students_email;
+      }
+
+      return { 
+        status: 200 as const, 
+        body: {
+          profile: {
+            ...p,
+            member_type: String(p.member_type || "student"),
+            first_name: String(p.first_name || ""),
+            last_name: String(p.last_name || ""),
+            nickname: String(p.nickname || ""),
+            auth: { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role }
+          }
+        } as any
+      };
+    } catch (err) {
+      console.error("[Admin:GetProfile] Error", err);
+      return { status: 500 as const, body: { error: "Failed to fetch user profile" } as any };
     }
   },
   deleteUser: async ({ params }: { params: any }, c: Context<AppEnv>) => {

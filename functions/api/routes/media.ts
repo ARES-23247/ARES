@@ -138,7 +138,8 @@ const mediaTsRestRouter: any = s.router(mediaContract as any, {
       }
 
       let altText = "ARES 23247 Team Media Image";
-      if (!isLarge && c.env.AI && (buffer || file.size < 2.5 * 1024 * 1024)) {
+      const isAiSupported = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+      if (isAiSupported && !isLarge && c.env.AI && (buffer || file.size < 2.5 * 1024 * 1024)) {
         try {
           if (!buffer) buffer = await file.arrayBuffer();
           const uint8 = new Uint8Array(buffer);

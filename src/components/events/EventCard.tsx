@@ -21,11 +21,18 @@ export interface EventItem {
 export const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean }) => {
   // EFF-N01: Memoize expensive parsing/formatting
   const startDate = useMemo(() => parseISO(event.date_start), [event.date_start]);
+  const endDate = useMemo(() => event.date_end ? parseISO(event.date_end) : null, [event.date_end]);
   const plainDescription = useMemo(() => extractAstText(event.description), [event.description]);
   
   const formattedDay = useMemo(() => format(startDate, 'd'), [startDate]);
   const formattedMonth = useMemo(() => format(startDate, 'MMM'), [startDate]);
-  const formattedTime = useMemo(() => format(startDate, 'h:mm a'), [startDate]);
+  const formattedTime = useMemo(() => {
+    const startStr = format(startDate, 'h:mm a');
+    if (endDate) {
+      return `${startStr} - ${format(endDate, 'h:mm a')}`;
+    }
+    return startStr;
+  }, [startDate, endDate]);
 
   return (
     <div className={`relative flex flex-col md:flex-row gap-6 bg-black/40 border ${isPast ? 'border-white/5 opacity-80' : 'border-ares-gold/30 shadow-lg shadow-ares-gold/10'} hero-card overflow-hidden group transition-all duration-300`}>

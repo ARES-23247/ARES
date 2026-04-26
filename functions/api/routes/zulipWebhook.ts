@@ -5,6 +5,7 @@ import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem, fetchProjectFields, updateProjectItemStatus } from "../../utils/githubProjects";
+import { calculateIRV } from "../../utils/irvCalculator";
 
 export const zulipWebhookRouter = new Hono<AppEnv>();
 
@@ -116,6 +117,7 @@ zulipWebhookRouter.post("/", async (c) => {
             "| `!inquiries` | Pending inquiry count |",
             "| `!events` | Upcoming events |",
             "| `!broadcast <stream> <msg>` | Broadcast an admin msg |",
+            "| `!rcv` | Ranked choice voting (type `!rcv` for help) |",
             "| `!help` | Show this help |",
           ].join("\n"),
         });
@@ -217,7 +219,7 @@ zulipWebhookRouter.post("/", async (c) => {
 
       case "!events": {
         const results = await db.selectFrom("events")
-          .select(["title", "date_start", "location"])
+          .select(["title", "date_start", "date_end", "location"])
           .where("is_deleted", "=", 0)
           .where("status", "=", "published")
           .where("date_start", ">=", new Date().toISOString().split('T')[0])
@@ -230,8 +232,9 @@ zulipWebhookRouter.post("/", async (c) => {
         }
 
         const lines = results.map((e) => {
-          const dt = new Date(String(e.date_start)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-          return `• **${e.title}** — ${dt}${e.location ? ` @ ${e.location}` : ""}`;
+          const dtStart = new Date(String(e.date_start)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+          const dtEnd = e.date_end ? ` - ${new Date(String(e.date_end)).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "";
+          return `• **${e.title}** — ${dtStart}${dtEnd}${e.location ? ` @ ${e.location}` : ""}`;
         });
 
         return c.json({
@@ -254,6 +257,163 @@ zulipWebhookRouter.post("/", async (c) => {
         })());
 
         return c.json({ content: `✅ Broadcast dispatched to \`${streamTarget}\`.` });
+      }
+
+      case "!rcv": {
+        const rcvSubcommand = args[1]?.toLowerCase();
+        
+        if (!rcvSubcommand || rcvSubcommand === "help") {
+          return c.json({
+            content: [
+              "🗳️ **Ranked Choice Voting (IRV)**",
+              "",
+              "| Command | Description |",
+              "|---|---|",
+              "| `!rcv create \"Title\" \"Opt 1\" \"Opt 2\"` | Create a poll (Admin) |",
+              "| `!rcv vote <id> 2 1 3` | Rank options (1st=2, 2nd=1...) |",
+              "| `!rcv status <id>` | View poll options & vote count |",
+              "| `!rcv tally <id>` | Close poll & calculate winner (Admin) |",
+            ].join("\n"),
+          });
+        }
+
+        const senderEmail = body.message?.sender_email;
+
+        // Helper to check admin
+        const ensureAdmin = async () => {
+          if (!senderEmail) return false;
+          const user = await db.selectFrom("user as u")
+            .select("u.role")
+            .where("u.email", "=", senderEmail)
+            .where("u.role", "in", ["admin", "author"])
+            .executeTakeFirst();
+          return !!user;
+        };
+
+        if (rcvSubcommand === "create") {
+          if (!(await ensureAdmin())) {
+            return c.json({ content: "🔒 Permission denied. `!rcv create` requires admin privileges." });
+          }
+          const title = args[2];
+          const options = args.slice(3);
+          if (!title || options.length < 2) {
+             return c.json({ content: "⚠️ Usage: `!rcv create \"Title\" \"Option 1\" \"Option 2\" ...`" });
+          }
+          
+          const pollId = Math.random().toString(36).slice(2, 6);
+          const pollData = {
+            title,
+            options,
+            votes: {}, // email -> number[]
+            active: true
+          };
+
+          await db.insertInto("settings")
+            .values({ key: `rcv_poll_${pollId}`, value: JSON.stringify(pollData) })
+            .execute();
+
+          const optionsList = options.map((opt, i) => `${i + 1}️⃣ **${opt}**`).join("\n");
+          return c.json({
+            content: `📊 **Poll Created: ${title}** (ID: \`${pollId}\`)\n\n**Options:**\n${optionsList}\n\nTo vote, reply with: \`!rcv vote ${pollId} <1st_choice> <2nd_choice>...\`\nExample ranking option 2 first, then 1: \`!rcv vote ${pollId} 2 1\``
+          });
+        }
+
+        const pollId = args[2];
+        if (!pollId) {
+          return c.json({ content: "⚠️ Please specify a poll ID." });
+        }
+        
+        const pollRecord = await db.selectFrom("settings").select("value").where("key", "=", `rcv_poll_${pollId}`).executeTakeFirst();
+        if (!pollRecord) {
+          return c.json({ content: `❌ Poll \`${pollId}\` not found.` });
+        }
+
+        const poll = JSON.parse(pollRecord.value as string);
+
+        if (rcvSubcommand === "status") {
+          const optionsList = poll.options.map((opt: string, i: number) => `${i + 1}️⃣ **${opt}**`).join("\n");
+          const voteCount = Object.keys(poll.votes).length;
+          return c.json({
+             content: `📊 **Poll: ${poll.title}** (ID: \`${pollId}\`) - ${poll.active ? "🟢 Active" : "🔴 Closed"}\n\n**Options:**\n${optionsList}\n\n**Total Votes:** ${voteCount}`
+          });
+        }
+
+        if (rcvSubcommand === "vote") {
+          if (!poll.active) {
+            return c.json({ content: "❌ This poll is closed." });
+          }
+          if (!senderEmail) return c.json({ content: "❌ Could not identify voter." });
+          
+          // Parse votes
+          const rankings = args.slice(3).map(n => parseInt(n) - 1); // 0-indexed
+          
+          // Validate
+          if (rankings.length === 0 || rankings.some(r => isNaN(r) || r < 0 || r >= poll.options.length)) {
+            return c.json({ content: `⚠️ Invalid ranking. Use numbers 1 to ${poll.options.length} separated by spaces.` });
+          }
+
+          // Ensure no duplicates
+          if (new Set(rankings).size !== rankings.length) {
+            return c.json({ content: "⚠️ Invalid ranking. Do not repeat options." });
+          }
+
+          poll.votes[senderEmail] = rankings;
+          
+          await db.updateTable("settings")
+            .set({ value: JSON.stringify(poll), updated_at: new Date().toISOString() })
+            .where("key", "=", `rcv_poll_${pollId}`)
+            .execute();
+
+          return c.json({ content: `✅ Your vote for \`${pollId}\` has been recorded! (You ranked ${rankings.length} option(s))` });
+        }
+
+        if (rcvSubcommand === "tally") {
+           if (!(await ensureAdmin())) {
+            return c.json({ content: "🔒 Permission denied. `!rcv tally` requires admin privileges." });
+          }
+          if (!poll.active) {
+             return c.json({ content: "⚠️ This poll is already closed." });
+          }
+
+          // Close the poll
+          poll.active = false;
+          await db.updateTable("settings")
+            .set({ value: JSON.stringify(poll), updated_at: new Date().toISOString() })
+            .where("key", "=", `rcv_poll_${pollId}`)
+            .execute();
+
+          const ballots = Object.values(poll.votes) as number[][];
+          if (ballots.length === 0) {
+            return c.json({ content: `🔴 **Poll Closed: ${poll.title}**\nNo votes were cast.` });
+          }
+
+          const result = calculateIRV(poll.options.length, ballots);
+
+          let resultMsg = `🔴 **Poll Closed: ${poll.title}**\n**Total Ballots:** ${ballots.length}\n\n`;
+          
+          for (const round of result.rounds) {
+             resultMsg += `**Round ${round.roundNumber}:**\n`;
+             for (const [cIdx, votes] of Object.entries(round.voteCounts)) {
+               resultMsg += `- ${poll.options[parseInt(cIdx)]}: ${votes} votes\n`;
+             }
+             if (round.eliminatedCandidates.length > 0) {
+               const elimNames = round.eliminatedCandidates.map(idx => poll.options[idx]).join(", ");
+               resultMsg += `❌ *Eliminated: ${elimNames}*\n`;
+             }
+             resultMsg += "\n";
+          }
+
+          if (result.winner !== undefined) {
+             resultMsg += `🏆 **WINNER: ${poll.options[result.winner]}**!`;
+          } else if (result.tied !== undefined) {
+             const tiedNames = result.tied.map(idx => poll.options[idx]).join(" and ");
+             resultMsg += `🤝 **TIE between: ${tiedNames}**!`;
+          }
+
+          return c.json({ content: resultMsg });
+        }
+
+        return c.json({ content: "⚠️ Unknown `!rcv` subcommand." });
       }
 
       default:

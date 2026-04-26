@@ -63,6 +63,17 @@ export const userContract = c.router({
     },
     summary: "Update user profile",
   },
+  adminGetProfile: {
+    method: "GET",
+    path: "/admin/:id/profile",
+    responses: {
+      200: z.object({
+        profile: z.record(z.string(), z.any()),
+      }),
+      404: z.object({ error: z.string() }),
+    },
+    summary: "Get full user profile for admin editing",
+  },
   deleteUser: {
     method: "DELETE",
     path: "/admin/:id",

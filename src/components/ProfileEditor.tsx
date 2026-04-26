@@ -48,12 +48,24 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
 
   const profileValues = useWatch({ control });
 
-  const { data: profileRes, isLoading, isError } = api.profiles.getMe.useQuery(["profile", adminEditUserId || "me"], {});
+  const { data: meRes, isLoading: meLoading, isError: meError } = api.profiles.getMe.useQuery(["profile", "me"], undefined, {
+    enabled: !adminEditUserId
+  } as any);
+
+  const { data: adminRes, isLoading: adminLoading, isError: adminError } = api.users.adminGetProfile.useQuery(
+    ["profile", adminEditUserId || "none"], 
+    { params: { id: adminEditUserId || "" } }, 
+    { enabled: !!adminEditUserId } as any
+  );
+
+  const profileRes = adminEditUserId ? adminRes : meRes;
+  const isLoading = adminEditUserId ? adminLoading : meLoading;
+  const isError = adminEditUserId ? adminError : meError;
 
   useEffect(() => {
-    // If it's a "me" fetch and we have data
-    if (!adminEditUserId && profileRes?.status === 200) {
-      const data = profileRes.body;
+    if (profileRes?.status === 200) {
+      // @ts-ignore
+      const data = adminEditUserId ? profileRes.body.profile : profileRes.body;
       reset({
         ...DEFAULT_PROFILE,
         ...data,
@@ -69,7 +81,7 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
     }
   }, [adminEditUserId, reset, profileRes]);
 
-  const saveMutation = api.profiles.updateMe.useMutation({
+  const meMutation = api.profiles.updateMe.useMutation({
     onSuccess: () => {
       setMessage({ type: "success", text: "Profile saved!" });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
@@ -80,6 +92,20 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
       setMessage({ type: "error", text: err.message || "Failed to save profile." });
     }
   });
+
+  const adminMutation = api.users.updateUserProfile.useMutation({
+    onSuccess: () => {
+      setMessage({ type: "success", text: "Profile saved!" });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["admin_users"] });
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      setMessage({ type: "error", text: err.message || "Failed to save profile." });
+    }
+  });
+
+  const isPending = meMutation.isPending || adminMutation.isPending;
 
   const onFormSubmit = (data: ProfileData) => {
     const formatted = {
@@ -92,7 +118,12 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
       show_phone: data.show_phone ? 1 : 0,
       show_on_about: data.show_on_about ? 1 : 0,
     };
-    saveMutation.mutate({ body: formatted });
+    
+    if (adminEditUserId) {
+      adminMutation.mutate({ params: { id: adminEditUserId }, body: formatted });
+    } else {
+      meMutation.mutate({ body: formatted });
+    }
   };
 
   const isMinor = profileValues.member_type === "student";
@@ -149,11 +180,11 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
             {message.text}
           </div>
         )}
-        <button type="submit" disabled={saveMutation.isPending}
+        <button type="submit" disabled={isPending}
           className="w-full flex items-center justify-center gap-2 py-4 font-bold bg-gradient-to-r from-ares-red to-ares-bronze hover:from-ares-bronze hover:to-ares-red text-white ares-cut shadow-[0_0_30px_rgba(192,0,0,0.3)] transition-all disabled:opacity-50"
         >
-          {saveMutation.isPending ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
-          {saveMutation.isPending ? "Saving..." : "Save Profile"}
+          {isPending ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
+          {isPending ? "Saving..." : "Save Profile"}
         </button>
       </form>
     </motion.div>
