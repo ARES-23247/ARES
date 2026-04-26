@@ -102,8 +102,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
       }));
 
       return { status: 200 as const, body: { docs: docs as any[] } };
-    } catch {
-      return { status: 200 as const, body: { docs: [] } };
+    } catch (e) {
+      console.error("[Docs:List] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch documents" } as any };
     }
   },
     getDoc: async ({ params }: { params: any }, c: any) => {
@@ -188,8 +189,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
           contributors 
         } as any
       };
-    } catch {
-      return { status: 404 as const, body: { error: "Database error" } };
+    } catch (e) {
+      console.error("[Docs:Detail] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch document detail" } as any };
     }
   },
     searchDocs: async ({ query }: { query: any }, c: any) => {
@@ -223,8 +225,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
       const payload = { results: mapped };
       setCache(q, { data: payload, expiresAt: now + 60000 });
       return { status: 200 as const, body: payload as any };
-    } catch {
-      return { status: 500 as const, body: { error: "Search failed" } };
+    } catch (e) {
+      console.error("[Docs:Search] Error", e);
+      return { status: 500 as const, body: { error: "Search failed" } as any };
     }
   },
     adminList: async (_: any, c: any) => {
@@ -257,7 +260,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
 
       return { status: 200 as const, body: { docs: docs as any[] } };
     } catch (e) {
-      console.error("ADMIN LIST ERROR", e);
+      console.error("[Docs:AdminList] Error", e);
       return { status: 500 as const, body: { error: "Failed to fetch docs" } as any };
     }
   },
@@ -292,8 +295,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
           } 
         } as any
       };
-    } catch {
-      return { status: 404 as const, body: { error: "Database error" } };
+    } catch (e) {
+      console.error("[Docs:AdminDetail] Error", e);
+      return { status: 500 as const, body: { error: "Database error" } as any };
     }
   },
     deleteDoc: async ({ params }: { params: any }, c: any) => {
@@ -302,8 +306,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("docs").set({ is_deleted: 1 }).where("slug", "=", slug).execute();
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Docs:Delete] Error", e);
+      return { status: 500 as const, body: { error: "Delete failed" } as any };
     }
   },
     saveDoc: async ({ body }: { body: any }, c: any) => {
@@ -408,8 +413,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
         }
 
         return { status: 200 as const, body: { success: true, slug } };
-    } catch {
-      return { status: 500 as const, body: { error: "Write failed" } };
+    } catch (e) {
+      console.error("[Docs:Save] Error", e);
+      return { status: 500 as const, body: { error: "Write failed" } as any };
     }
 
   },
@@ -420,8 +426,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("docs").set({ sort_order: sortOrder }).where("slug", "=", slug).execute();
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Docs:Sort] Error", e);
+      return { status: 500 as const, body: { error: "Sort update failed" } as any };
     }
   },
     submitFeedback: async ({ params, body }: { params: any, body: any }, c: any) => {
@@ -439,8 +446,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
       const db = c.get("db") as Kysely<DB>;
       await db.insertInto("docs_feedback").values({ slug, is_helpful: isHelpful ? 1 : 0, comment: comment || null }).execute();
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 500 as const, body: { error: "Feedback failed" } };
+    } catch (e) {
+      console.error("[Docs:Feedback] Error", e);
+      return { status: 500 as const, body: { error: "Feedback failed" } as any };
     }
   },
     getHistory: async ({ params }: { params: any }, c: any) => {
@@ -460,8 +468,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
       }));
 
       return { status: 200 as const, body: { history: history as any[] } };
-    } catch {
-      return { status: 200 as const, body: { history: [] } };
+    } catch (e) {
+      console.error("[Docs:History] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch history" } as any };
     }
   },
     restoreHistory: async ({ params, id }: { params: any, id: any }, c: any) => {
@@ -511,8 +520,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
           .execute();
 
         return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 404 as const, body: { error: "Restore failed" } };
+    } catch (e) {
+      console.error("[Docs:Restore] Error", e);
+      return { status: 500 as const, body: { error: "Restore failed" } as any };
     }
   },
     approveDoc: async ({ params }: { params: any }, c: any) => {
@@ -520,7 +530,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
             try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("docs").select(["revision_of", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "cf_email"]).where("slug", "=", slug).executeTakeFirst();
-      if (!row) return { status: 200 as const, body: { success: false } };
+      if (!row) return { status: 404 as const, body: { error: "Doc not found" } };
 
       if (row.revision_of) {
         await db.updateTable("docs")
@@ -541,8 +551,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
         }
                   }
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Docs:Approve] Error", e);
+      return { status: 500 as const, body: { error: "Approve failed" } as any };
     }
   },
     rejectDoc: async ({ params, body }: { params: any, body: any }, c: any) => {
@@ -557,8 +568,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
                 if (author) await emitNotification(c, { userId: String(author.id), title: "Doc Rejected", message: `Your document "${row.title}" was rejected${reason ? `: "${reason}"` : "."}`, link: "/dashboard/manage_docs", priority: "high" });
       }
                   return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Docs:Reject] Error", e);
+      return { status: 500 as const, body: { error: "Reject failed" } as any };
     }
   },
     undeleteDoc: async ({ params }: { params: any }, c: any) => {
@@ -567,8 +579,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("docs").set({ is_deleted: 0, status: "draft" }).where("slug", "=", slug).execute();
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Docs:Undelete] Error", e);
+      return { status: 500 as const, body: { error: "Undelete failed" } as any };
     }
   },
     purgeDoc: async ({ params }: { params: any }, c: any) => {
@@ -577,8 +590,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("docs").where("slug", "=", slug).execute();
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Docs:Purge] Error", e);
+      return { status: 500 as const, body: { error: "Purge failed" } as any };
     }
   },
 } as any);

@@ -91,8 +91,8 @@ describe("Hono Backend - /profiles Router", () => {
 
     const res = await testApp.request("/me", {}, env, mockExecutionContext);
 
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ auth: null, member_type: "student", first_name: "", last_name: "", nickname: "" });
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "Failed to fetch your profile" });
     
     consoleSpy.mockRestore();
   });
@@ -121,8 +121,8 @@ describe("Hono Backend - /profiles Router", () => {
       headers: { "Content-Type": "application/json" },
     }, env, mockExecutionContext);
 
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ success: false });
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "Failed to update profile" });
     consoleSpy.mockRestore();
   });
 
@@ -190,9 +190,8 @@ describe("Hono Backend - /profiles Router", () => {
 
     const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
 
-    expect(res.status).toBe(200); 
-    const body = await res.json() as any;
-    expect(body.members).toHaveLength(0);
+    expect(res.status).toBe(500); 
+    expect(await res.json()).toEqual({ error: "Failed to fetch team roster" });
     consoleSpy.mockRestore();
   });
 

@@ -48,22 +48,29 @@ const commentHandlers = {
           role: user?.role || null
         } as any
       };
-    } catch {
-      return { status: 200 as const, body: { comments: [], authenticated: !!user, role: user?.role || null } as any };
+    } catch (e) {
+      console.error("[Comments:List] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch comments" } as any };
     }
   },
   submit: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
     const user = await getSessionUser(c);
-    if (!user || user.role === "unverified") {
-      return { status: 200 as const, body: { success: false } as any };
+    if (!user) {
+      return { status: 401 as const, body: { error: "Unauthorized" } as any };
+    }
+    if (user.role === "unverified") {
+      return { status: 403 as const, body: { error: "Verify your email to comment" } as any };
     }
 
     const { targetType, targetId } = params;
     const db = c.get("db") as Kysely<DB>;
     const content = body.content.trim();
 
-    if (!content || content.length > MAX_INPUT_LENGTHS.comment) {
-      return { status: 200 as const, body: { success: false } as any };
+    if (!content) {
+      return { status: 400 as const, body: { error: "Comment content is required" } as any };
+    }
+    if (content.length > MAX_INPUT_LENGTHS.comment) {
+      return { status: 400 as const, body: { error: "Comment is too long" } as any };
     }
 
     try {
@@ -92,7 +99,7 @@ const commentHandlers = {
         if (msgId) {
           await db.updateTable("comments").set({ zulip_message_id: String(msgId) }).where("id", "=", id as any).execute();
         }
-      })().catch(() => {}));
+      })().catch((err) => console.error("[Comments:ZulipSync] Error", err)));
 
       if (targetType === 'post') {
         const row = await db.selectFrom("posts").select("cf_email").where("slug", "=", targetId).executeTakeFirst();
@@ -105,34 +112,35 @@ const commentHandlers = {
               message: `${user.name || 'Someone'} commented on your post "${targetId}"`,
               link: `/blog/${targetId}`,
               priority: "medium"
-            }));
+            }).catch((err) => console.error("[Comments:Notification] Error", err)));
           }
         }
       }
 
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("[Comments:Submit] Error", e);
+      return { status: 500 as const, body: { error: "Failed to submit comment" } as any };
     }
   },
   update: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
     const user = (await getSessionUser(c))!;
-    if (user.role === "unverified") return { status: 200 as const, body: { success: false } as any };
+    if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } as any };
 
     const { id } = params;
     const db = c.get("db") as Kysely<DB>;
-    const content = body.content.trim();
+    const content = body.content?.trim();
 
-    if (!content) return { status: 200 as const, body: { success: false } as any };
+    if (!content) return { status: 400 as const, body: { error: "Content is required" } as any };
 
     try {
       const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id).executeTakeFirst();
-      if (!row) return { status: 200 as const, body: { success: false } as any };
+      if (!row) return { status: 404 as const, body: { error: "Comment not found" } as any };
       
       const isOwner = row.user_id === user.id;
       const isModerator = user.role === "admin" || user.member_type === "mentor" || user.member_type === "coach";
       
-      if (!isOwner && !isModerator) return { status: 200 as const, body: { success: false } as any };
+      if (!isOwner && !isModerator) return { status: 403 as const, body: { error: "Unauthorized to update this comment" } as any };
 
       await db.updateTable("comments")
         .set({ content })
@@ -142,30 +150,31 @@ const commentHandlers = {
       if (row.zulip_message_id) {
         c.executionCtx.waitUntil(
           updateZulipMessage(c.env, String(row.zulip_message_id), `**${user.name}** (edited):\n\n${content}`)
-            .catch(() => {})
+            .catch((err) => console.error("[Comments:ZulipUpdate] Error", err))
         );
       }
 
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("[Comments:Update] Error", e);
+      return { status: 500 as const, body: { error: "Failed to update comment" } as any };
     }
   },
   delete: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const user = (await getSessionUser(c))!;
-    if (user.role === "unverified") return { status: 200 as const, body: { success: false } as any };
+    if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } as any };
 
     const { id } = params;
     const db = c.get("db") as Kysely<DB>;
 
     try {
       const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id).executeTakeFirst();
-      if (!row) return { status: 200 as const, body: { success: false } as any };
+      if (!row) return { status: 404 as const, body: { error: "Comment not found" } as any };
       
       const isOwner = row.user_id === user.id;
       const isModerator = user.role === "admin" || user.member_type === "mentor" || user.member_type === "coach";
       
-      if (!isOwner && !isModerator) return { status: 200 as const, body: { success: false } as any };
+      if (!isOwner && !isModerator) return { status: 403 as const, body: { error: "Unauthorized to delete this comment" } as any };
 
       await db.updateTable("comments")
         .set({ is_deleted: 1 })
@@ -175,13 +184,14 @@ const commentHandlers = {
       if (row.zulip_message_id) {
         c.executionCtx.waitUntil(
           deleteZulipMessage(c.env, String(row.zulip_message_id))
-            .catch(() => {})
+            .catch((err) => console.error("[Comments:ZulipDelete] Error", err))
         );
       }
 
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("[Comments:Delete] Error", e);
+      return { status: 500 as const, body: { error: "Failed to delete comment" } as any };
     }
   },
 };

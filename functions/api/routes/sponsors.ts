@@ -26,8 +26,9 @@ const sponsorHandlers = {
       }));
 
       return { status: 200 as const, body: { sponsors: sponsors as any[] } };
-    } catch {
-      return { status: 200 as const, body: { sponsors: [] } };
+    } catch (e) {
+      console.error("[Sponsors:List] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch sponsors" } as any };
     }
   },
   getRoi: async ({ params }: { params: any }, c: any) => {
@@ -67,8 +68,9 @@ const sponsorHandlers = {
       }));
 
       return { status: 200 as const, body: { sponsor, metrics } as any };
-    } catch {
-      return { status: 500 as const, body: { error: "Failed to fetch ROI" } };
+    } catch (e) {
+      console.error("[Sponsors:ROI] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch ROI" } as any };
     }
   },
   adminList: async (_: any, c: any) => {
@@ -87,8 +89,9 @@ const sponsorHandlers = {
       }));
 
       return { status: 200 as const, body: { sponsors: sponsors as any[] } };
-    } catch {
-      return { status: 200 as const, body: { sponsors: [] } };
+    } catch (e) {
+      console.error("[Sponsors:AdminList] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch sponsors" } as any };
     }
   },
   saveSponsor: async ({ body }: { body: any }, c: any) => {
@@ -117,8 +120,9 @@ const sponsorHandlers = {
 
       c.executionCtx.waitUntil(logAuditAction(c, "SAVE_SPONSOR", "sponsors", finalId, `Saved sponsor: ${name}`));
       return { status: 200 as const, body: { success: true, id: finalId } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Sponsors:Save] Error", e);
+      return { status: 500 as const, body: { error: "Failed to save sponsor" } as any };
     }
   },
   deleteSponsor: async ({ params }: { params: any }, c: any) => {
@@ -127,8 +131,9 @@ const sponsorHandlers = {
       await db.updateTable("sponsors").set({ is_active: 0 }).where("id", "=", params.id).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DEACTIVATE_SPONSOR", "sponsors", params.id, `Deactivated sponsor ${params.id}`));
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Sponsors:Delete] Error", e);
+      return { status: 500 as const, body: { error: "Failed to deactivate sponsor" } as any };
     }
   },
   getAdminTokens: async (_: any, c: any) => {
@@ -146,8 +151,9 @@ const sponsorHandlers = {
       }));
 
       return { status: 200 as const, body: { tokens: tokens as any[] } };
-    } catch {
-      return { status: 500 as const, body: { tokens: [] } };
+    } catch (e) {
+      console.error("[Sponsors:Tokens] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch tokens" } as any };
     }
   },
   generateToken: async ({ body }: { body: any }, c: any) => {

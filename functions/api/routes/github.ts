@@ -19,7 +19,10 @@ const githubHandlers = {
             try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
-      if (!ghConfig) return { status: 200 as const, body: { success: false, board: [] } };
+      if (!ghConfig) {
+        console.error("[GitHub:Board] Configuration missing");
+        return { status: 500 as const, body: { error: "GitHub configuration missing" } as any };
+      }
       
       const boardResults = await fetchProjectBoard(ghConfig);
       const board = (boardResults as any as any[]).map((i: any) => ({
@@ -30,20 +33,25 @@ const githubHandlers = {
       }));
 
       return { status: 200 as const, body: { success: true, board: board as any[] } };
-    } catch {
-      return { status: 200 as const, body: { success: false, board: [] } };
+    } catch (e) {
+      console.error("[GitHub:Board] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch GitHub board" } as any };
     }
   },
   createItem: async ({ body }: { body: any }, c: any) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
-      if (!ghConfig) return { status: 200 as const, body: { success: false } };
+      if (!ghConfig) {
+        console.error("[GitHub:Create] Configuration missing");
+        return { status: 500 as const, body: { error: "GitHub configuration missing" } as any };
+      }
       
       await createProjectItem(ghConfig, body.title);
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[GitHub:Create] Error", e);
+      return { status: 500 as const, body: { error: "Failed to create project item" } as any };
     }
   },
   getActivity: async (_: any, c: any) => {
@@ -71,7 +79,7 @@ const githubHandlers = {
       }
 
       const repoRes = await fetch(`https://api.github.com/orgs/${org}/repos?per_page=100&type=public`, { headers });
-      if (!repoRes.ok) throw new Error("GitHub API Error");
+      if (!repoRes.ok) throw new Error(`GitHub API Error: ${repoRes.status}`);
       const repos = await repoRes.json() as { name: string }[];
       
       const activityResults = await Promise.all(
@@ -142,8 +150,9 @@ const githubHandlers = {
       }
       
       return { status: 200 as const, body: payload as any };
-    } catch {
-      return { status: 200 as const, body: { grid: [], totalCommits: 0, repoCount: 0 } as any };
+    } catch (e) {
+      console.error("[GitHub:Activity] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch GitHub activity" } as any };
     }
   }
 };

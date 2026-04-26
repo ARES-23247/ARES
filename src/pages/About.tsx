@@ -172,15 +172,15 @@ export default function About() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { q: "Our Mission?", a: "To bridge the untapped talent within West Virginia with the technical opportunities of the global stage." },
-              { q: "Prerequisites?", a: "Zero. Many of our roster are FLL veterans, others are dual-rostering with MARS FRC, but most start with just a drive to learn." },
-              { q: "School Requirements?", a: "We are community-based. We accept public students, homeschoolers, and HOPE scholars from Monongalia, Harrison, and Preston counties, SW PA, and anywhere within driving distance of Morgantown." },
-              { q: "Cost of Entry?", a: "Zero. Our operations are fully funded by the generous support of our sponsors and the ARES community donors." },
-              { q: "The Season?", a: "Rules drop in September. Build season begins in December. High-stakes competition rounds run through May." },
-              { q: "Time Commitment?", a: "One major weekend team meeting per week, with optional weekday lab openings for technical iteration." },
-              { q: "Technical Barriers?", a: "None. We exist to teach you. From Java coding to Fusion 360 CAD, we provide the curriculum and the tools." },
-              { q: "Where We Meet?", a: "ARES HQ is located within the dedicated MARS RoboticS facility at Mountaineer Middle School." },
-              { q: "Is it enjoyable?", a: "Radical fun is a core value of the ARES mission." },
+              { q: "Our Mission?", a: "To connect West Virginia students with the world's best technical opportunities." },
+              { q: "Prerequisites?", a: "Zero. Many members come from other teams, but most start with just a drive to learn." },
+              { q: "School Requirements?", a: "We accept all local students, including those in public school or homeschool, who can drive to Morgantown." },
+              { q: "Cost of Entry?", a: "Zero. Our sponsors and donors pay for everything so any student can join." },
+              { q: "The Season?", a: "We get the rules in September. We build the robot in December. Competitions run through May." },
+              { q: "Time Commitment?", a: "We have one big meeting each weekend. You can also come to the lab during the week to work on projects." },
+              { q: "Technical Barriers?", a: "None. We teach you everything. You will learn to code in Java and design parts in 3D." },
+              { q: "Where We Meet?", a: "Our main office is at Mountaineer Middle School in Morgantown." },
+              { q: "Is it enjoyable?", a: "Having fun while working hard is a core part of being on ARES." },
             ].map((faq) => (
               <div key={faq.q} className="marble-card hero-card p-8 group">
                 <h3 className="text-obsidian font-bold text-lg mb-4 font-heading group-hover:text-ares-bronze transition-colors uppercase italic">{faq.q}</h3>

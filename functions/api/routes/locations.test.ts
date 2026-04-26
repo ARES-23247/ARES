@@ -36,6 +36,8 @@ describe("Hono Backend - /locations Router", () => {
       executeTakeFirst: vi.fn().mockResolvedValue(null),
       insertInto: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis(),
+      onConflict: vi.fn().mockReturnThis(),
+      doUpdateSet: vi.fn().mockReturnThis(),
       updateTable: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
       deleteFrom: vi.fn().mockReturnThis(),

@@ -8,8 +8,8 @@ const CodePlayground = lazy(() => import('./docs/CodePlayground').catch(() => ({
 const InteractiveTutorial = lazy(() => import('./InteractiveTutorial').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load InteractiveTutorial</div> })));
 // @ts-expect-error -- CoreValueCallout uses named export; catch fallback provides default shape
 const CoreValueCallout = lazy(() => import('./CoreValueCallout').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load CoreValueCallout</div> })));
-const SwerveSimulator = lazy(() => import('../sims/SwerveSimulator'));
-const SOTMSimulator = lazy(() => import('../sims/SOTMSimulator'));
+const SotmSim = lazy(() => import('../sims/SotmSim'));
+const SwerveSim = lazy(() => import('../sims/SwerveSim'));
 const ConfigVisualizer = lazy(() => import('./docs/ConfigVisualizer'));
 const ScreenshotGallery = lazy(() => import('./docs/ScreenshotGallery'));
 const FaultSim = lazy(() => import('../sims/FaultSim'));
@@ -27,12 +27,13 @@ const FlywheelKvSim = lazy(() => import('../sims/FlywheelKvSim'));
 const PowerSheddingSim = lazy(() => import('../sims/PowerSheddingSim'));
 const StateMachineSim = lazy(() => import('../sims/StateMachineSim'));
 
-const ComponentMap = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ComponentMap: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   CodePlayground,
   InteractiveTutorial,
   CoreValueCallout,
-  SwerveSimulator,
-  SOTMSimulator,
+  SwerveSim,
+  SotmSim,
   ConfigVisualizer,
   ScreenshotGallery,
   FaultSim,
@@ -51,8 +52,7 @@ const ComponentMap = {
   StateMachineSim,
   Mermaid: lazy(() => Promise.resolve({ default: () => <div className="p-4 border border-white/10 bg-ares-gray-dark rounded text-ares-gray text-sm font-mono">[Mermaid Diagram]</div> })),
   HomeCoreValues: lazy(() => Promise.resolve({ default: () => <div className="p-4 border border-white/10 bg-ares-gray-dark rounded text-ares-gray text-sm font-mono">[Core Values Component]</div> }))
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as Record<string, any>;
+};
 
 export interface ASTMark { type: string; }
 export interface ASTNode {

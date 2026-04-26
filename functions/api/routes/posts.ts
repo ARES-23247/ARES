@@ -81,8 +81,9 @@ const postHandlers = {
       }));
 
       return { status: 200 as const, body: { posts } as any };
-    } catch {
-      return { status: 200 as const, body: { posts: [] } as any };
+    } catch (e) {
+      console.error("[Posts:List] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch posts" } as any };
     }
   },
   getPost: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -132,8 +133,9 @@ const postHandlers = {
           }
         } as any
       };
-    } catch {
-      return { status: 404 as const, body: { error: "Database error" } as any };
+    } catch (e) {
+      console.error("[Posts:Detail] Error", e);
+      return { status: 500 as const, body: { error: "Database error" } as any };
     }
   },
   getAdminPosts: async ({ query }: { query: any }, c: Context<AppEnv>) => {
@@ -164,8 +166,9 @@ const postHandlers = {
       }));
 
       return { status: 200 as const, body: { posts } as any };
-    } catch {
-      return { status: 200 as const, body: { posts: [] } as any };
+    } catch (e) {
+      console.error("[Posts:AdminList] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch admin posts" } as any };
     }
   },
   getAdminPost: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -197,8 +200,9 @@ const postHandlers = {
           }
         } as any
       };
-    } catch {
-      return { status: 404 as const, body: { error: "Database error" } as any };
+    } catch (e) {
+      console.error("[Posts:AdminDetail] Error", e);
+      return { status: 500 as const, body: { error: "Database error" } as any };
     }
   },
   savePost: async ({ body }: { body: any }, c: Context<AppEnv>) => {
@@ -211,7 +215,7 @@ const postHandlers = {
       }
 
       const titleError = validateLength(body.title, MAX_INPUT_LENGTHS.title, "Title");
-      if (titleError) return { status: 200 as const, body: { success: false, warning: titleError } as any };
+      if (titleError) return { status: 400 as const, body: { error: titleError } as any };
 
       const user = await getSessionUser(c);
       const email = user?.email || "anonymous_dashboard_user";
@@ -226,7 +230,7 @@ const postHandlers = {
         .executeTakeFirst();
       
       if (recent) {
-        return { status: 200 as const, body: { success: true, slug: recent.slug, warning: "Double-submission prevented" } as any };
+        return { status: 409 as const, body: { error: "A post with this title already exists for today" } as any };
       }
 
       let slug = body.title
@@ -319,8 +323,9 @@ const postHandlers = {
           status: 200 as const, 
           body: { success: true, slug, warning: warnings.join(" | ") } as any
         };
-    } catch (err) {
-      return { status: 200 as const, body: { success: false, warning: (err as Error)?.message || "Database write failed" } as any };
+    } catch (e) {
+      console.error("[Posts:Save] Error", e);
+      return { status: 500 as const, body: { error: "Database write failed" } as any };
     }
   },
   updatePost: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
@@ -383,8 +388,9 @@ const postHandlers = {
       await db.updateTable("posts").set({ is_deleted: 1, status: "draft" }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_POST", "posts", slug));
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("[Posts:Delete] Error", e);
+      return { status: 500 as const, body: { error: "Delete failed" } as any };
     }
   },
   undeletePost: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -394,8 +400,9 @@ const postHandlers = {
       await db.updateTable("posts").set({ is_deleted: 0, status: "draft" }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "RESTORE_POST", "posts", slug));
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("[Posts:Undelete] Error", e);
+      return { status: 500 as const, body: { error: "Undelete failed" } as any };
     }
   },
   purgePost: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -405,8 +412,9 @@ const postHandlers = {
       await db.deleteFrom("posts").where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "PURGE_POST", "posts", slug));
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("[Posts:Purge] Error", e);
+      return { status: 500 as const, body: { error: "Purge failed" } as any };
     }
   },
   approvePost: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -415,8 +423,9 @@ const postHandlers = {
       const result = await approvePost(c, slug);
       if (!result.success) return { status: 404 as const, body: { error: result.error || "Approval failed" } as any };
       return { status: 200 as const, body: { success: true, warnings: result.warnings } as any };
-    } catch {
-      return { status: 404 as const, body: { error: "Approval failed" } as any };
+    } catch (e) {
+      console.error("[Posts:Approve] Error", e);
+      return { status: 500 as const, body: { error: "Approval failed" } as any };
     }
   },
   rejectPost: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
@@ -442,8 +451,9 @@ const postHandlers = {
       }
       c.executionCtx.waitUntil(logAuditAction(c, "REJECT_POST", "posts", slug));
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 404 as const, body: { error: "Reject failed" } as any };
+    } catch (e) {
+      console.error("[Posts:Reject] Error", e);
+      return { status: 500 as const, body: { error: "Reject failed" } as any };
     }
   },
   getPostHistory: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -455,8 +465,9 @@ const postHandlers = {
         id: Number(h.id)
       }));
       return { status: 200 as const, body: { history } as any };
-    } catch {
-      return { status: 200 as const, body: { history: [] } as any };
+    } catch (e) {
+      console.error("[Posts:History] Error", e);
+      return { status: 500 as const, body: { error: "Failed to fetch history" } as any };
     }
   },
   restorePostHistory: async ({ params }: { params: any }, c: Context<AppEnv>) => {

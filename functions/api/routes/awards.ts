@@ -35,8 +35,9 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       }));
 
       return { status: 200 as const, body: { awards } };
-    } catch {
-      return { status: 200 as const, body: { awards: [] } };
+    } catch (e) {
+      console.error("GET_AWARDS ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch awards" } as any };
     }
   },
     saveAward: async ({ body }: { body: any }, c: any) => {
@@ -84,14 +85,16 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
         c.executionCtx.waitUntil(logAuditAction(c, "award_updated", "awards", finalId, `Award "${title}" (${year}) updated`));
       } else {
         const res = await db.insertInto("awards").values({ ...values, id: undefined }).executeTakeFirst();
-        const newId = String(res.insertId || finalId || "new");
+        // Handle null result from executeTakeFirst (common in some mock/db drivers for inserts)
+        const newId = res && "insertId" in res ? String(res.insertId) : (finalId || "new");
         c.executionCtx.waitUntil(logAuditAction(c, "award_created", "awards", newId, `Award "${title}" (${year}) created`));
         finalId = newId;
       }
 
       return { status: 200 as const, body: { success: true, id: finalId || "" } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("SAVE_AWARD ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to save award", success: false } as any };
     }
   },
     deleteAward: async ({ params, body: _body }: { params: any, body: any }, c: any) => {
@@ -101,8 +104,9 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       await db.updateTable("awards").set({ is_deleted: 1 }).where("id", "=", Number(params.id) as any).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "award_deleted", "awards", params.id, "Award soft-deleted"));
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("DELETE_AWARD ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to delete award", success: false } as any };
     }
   },
 } as any);

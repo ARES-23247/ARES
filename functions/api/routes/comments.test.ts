@@ -89,15 +89,15 @@ describe("Hono Backend - /comments Router", () => {
     expect(await res.json()).toEqual(expect.objectContaining({ success: true }));
   });
 
-  it("should return 200 with success false for empty comment content", async () => {
+  it("should return 400 for empty comment content", async () => {
     const res = await testApp.request("/post/my-post", {
       method: "POST",
       body: JSON.stringify({ content: "" }),
       headers: { "Content-Type": "application/json" },
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
 
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual(expect.objectContaining({ success: false }));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual(expect.objectContaining({ error: "Comment content is required" }));
   });
 
   it("should edit an existing comment", async () => {

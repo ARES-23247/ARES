@@ -43,8 +43,9 @@ const tbaHandlers = {
       }
       const data = await getTBA(`/event/${eventKey}/rankings`, c);
       return { status: 200 as const, body: { rankings: (data as any)?.rankings as any[] || [] } as any };
-    } catch {
-      return { status: 200 as const, body: { rankings: [] } as any };
+    } catch (e) {
+      console.error("GET_TBA_RANKINGS ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch rankings" } as any };
     }
   },
   getMatches: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -56,8 +57,9 @@ const tbaHandlers = {
       const data = await getTBA(`/event/${eventKey}/matches/simple`, c) as any[];
       const sorted = (data || []).sort((a, b) => (a.time || 0) - (b.time || 0));
       return { status: 200 as const, body: { matches: sorted as any[] } as any };
-    } catch {
-      return { status: 200 as const, body: { matches: [] } as any };
+    } catch (e) {
+      console.error("GET_TBA_MATCHES ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch matches" } as any };
     }
   },
 };

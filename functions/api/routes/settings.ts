@@ -12,7 +12,7 @@ const s = initServer<AppEnv>();
 // SEC-03: Infrastructure secrets that must never be returned in plaintext
 const SENSITIVE_KEYS = new Set([
   'ENCRYPTION_SECRET', 'BETTER_AUTH_SECRET',
-  'BLUESKY_APP_PASSWORD',
+  'BLUESKY_APP_PASSWORD', 'BAND_ACCESS_TOKEN',
   'FACEBOOK_ACCESS_TOKEN', 'TWITTER_API_SECRET', 'TWITTER_ACCESS_SECRET',
   'INSTAGRAM_ACCESS_TOKEN', 'GCAL_PRIVATE_KEY',
   'ZULIP_API_KEY', 'GITHUB_PAT', 'GITHUB_WEBHOOK_SECRET',
@@ -36,8 +36,9 @@ const settingsHandlers = {
         masked[key] = SENSITIVE_KEYS.has(key) ? maskSecret(value) : value;
       }
       return { status: 200 as const, body: { success: true, settings: masked } as any };
-    } catch {
-      return { status: 500 as const, body: { success: false, settings: {} } as any };
+    } catch (e) {
+      console.error("GET_SETTINGS ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Failed to fetch settings" } as any };
     }
   },
    
@@ -55,8 +56,9 @@ const settingsHandlers = {
       }
       c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, `Updated ${entries.length} integration keys.`));
       return { status: 200 as const, body: { success: true, updated: entries.length } as any };
-    } catch {
-      return { status: 500 as const, body: { success: false, updated: 0 } as any };
+    } catch (e) {
+      console.error("UPDATE_SETTINGS ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Update failed" } as any };
     }
   },
    
@@ -80,8 +82,9 @@ const settingsHandlers = {
           users: Number(users?.count || 0),
         } as any
       };
-    } catch {
-      return { status: 200 as const, body: { posts: 0, events: 0, docs: 0, inquiries: 0, users: 0 } as any };
+    } catch (e) {
+      console.error("GET_STATS ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch stats" } as any };
     }
   }
 };

@@ -209,6 +209,7 @@ const analyticsHandlers = {
             github: !!dbSettings["GITHUB_PAT"],
             discord: !!dbSettings["DISCORD_WEBHOOK_URL"],
             bluesky: !!dbSettings["BLUESKY_APP_PASSWORD"],
+            band: !!dbSettings["BAND_ACCESS_TOKEN"],
             slack: !!dbSettings["SLACK_WEBHOOK_URL"],
             gcal: !!dbSettings["GCAL_PRIVATE_KEY"]
           }

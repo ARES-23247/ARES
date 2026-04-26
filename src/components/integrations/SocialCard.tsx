@@ -301,6 +301,40 @@ export function SocialCard({
         </div>
       </div>
 
+      <div className="glass-card bg-black/40 p-6 ares-cut border border-white/5 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-brand-facebook/10 blur-3xl rounded-full pointer-events-none" />
+        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <MessageSquare size={20} className="text-brand-facebook" /> BAND Integrations
+        </h3>
+        <p className="text-xs text-ares-gray mb-4 block">
+          Automatically posts announcements to your team&apos;s BAND group via the OpenAPI.
+        </p>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="band_access_token" className="block text-xs font-bold text-ares-gray uppercase tracking-wider mb-2">Access Token</label>
+            <input
+              id="band_access_token"
+              type="text"
+              placeholder="••••••••••••••••"
+              value={localSettings["BAND_ACCESS_TOKEN"] || ""}
+              onChange={(e) => handleChange("BAND_ACCESS_TOKEN", e.target.value)}
+              className="w-full bg-black/60 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-brand-facebook transition-colors font-mono"
+            />
+          </div>
+          <div>
+            <label htmlFor="band_key" className="block text-xs font-bold text-ares-gray uppercase tracking-wider mb-2">Band Key</label>
+            <input
+              id="band_key"
+              type="text"
+              placeholder="XXXXXXXXXXXX"
+              value={localSettings["BAND_KEY"] || ""}
+              onChange={(e) => handleChange("BAND_KEY", e.target.value)}
+              className="w-full bg-black/60 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-brand-facebook transition-colors font-mono"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* X / Twitter Setup */}
       <div className="glass-card bg-black/40 p-6 ares-cut border border-white/5 relative overflow-hidden group lg:col-span-2">
         <div className="absolute top-0 right-0 w-32 h-32 bg-ares-gray/10 blur-3xl rounded-full pointer-events-none" />

@@ -62,8 +62,9 @@ export const eventHandlers = {
       }));
 
       return { status: 200 as const, body: { events } as any };
-    } catch {
-      return { status: 200 as const, body: { events: [] } as any };
+    } catch (e) {
+      console.error("GET_EVENTS ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch events" } as any };
     }
   },
   getCalendarSettings: async (_: any, c: Context<AppEnv>) => {
@@ -81,8 +82,9 @@ export const eventHandlers = {
         calendarIdOutreach: map["CALENDAR_ID_OUTREACH"] || "",
         calendarIdExternal: map["CALENDAR_ID_EXTERNAL"] || "",
       } as any };
-    } catch {
-      return { status: 200 as const, body: { calendarIdInternal: "", calendarIdOutreach: "", calendarIdExternal: "" } as any };
+    } catch (e) {
+      console.error("GET_CALENDAR_SETTINGS ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch calendar settings" } as any };
     }
   },
   getEvent: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -112,7 +114,8 @@ export const eventHandlers = {
           is_editor: user?.role === "admin"
         } as any
       };
-    } catch {
+    } catch (e) {
+      console.error("GET_EVENT ERROR", e);
       return { status: 404 as const, body: { error: "Database error" } as any };
     }
   },
@@ -146,7 +149,8 @@ export const eventHandlers = {
       }));
 
       return { status: 200 as const, body: { events, lastSyncedAt: lastSyncRow?.value || null } as any };
-    } catch {
+    } catch (e) {
+      console.error("GET_ADMIN_EVENTS ERROR", e);
       return { status: 500 as const, body: { error: "Failed to fetch events" } as any };
     }
   },
@@ -179,7 +183,8 @@ export const eventHandlers = {
           }
         } as any
       };
-    } catch {
+    } catch (e) {
+      console.error("ADMIN_EVENT_DETAIL ERROR", e);
       return { status: 500 as const, body: { error: "Database error" } as any };
     }
   },
@@ -254,8 +259,9 @@ export const eventHandlers = {
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_EVENT", "events", genId, `Created event: ${title} (${status})`));
 
       return { status: 200 as const, body: { success: true, id: genId } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false, error: "Write failed" } as any };
+    } catch (e) {
+      console.error("CREATE_EVENT ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Write failed" } as any };
     }
   },
   updateEvent: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
@@ -294,8 +300,9 @@ export const eventHandlers = {
         .execute();
 
       return { status: 200 as const, body: { success: true, id } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false, error: "Update failed" } as any };
+    } catch (e) {
+      console.error("UPDATE_EVENT ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Update failed" } as any };
     }
   },
   deleteEvent: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -304,8 +311,9 @@ export const eventHandlers = {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("events").set({ is_deleted: 1 }).where("id", "=", id).execute();
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("DELETE_EVENT ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Delete failed" } as any };
     }
   },
   approveEvent: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -323,8 +331,9 @@ export const eventHandlers = {
         await db.updateTable("events").set({ status: 'published' }).where("id", "=", id).execute();
       }
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("APPROVE_EVENT ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Approval failed" } as any };
     }
   },
   rejectEvent: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -333,8 +342,9 @@ export const eventHandlers = {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("events").set({ status: 'rejected' }).where("id", "=", id).execute();
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("REJECT_EVENT ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Rejection failed" } as any };
     }
   },
   undeleteEvent: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -343,8 +353,9 @@ export const eventHandlers = {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("events").set({ is_deleted: 0 }).where("id", "=", id).execute();
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("UNDELETE_EVENT ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Restore failed" } as any };
     }
   },
   purgeEvent: async ({ params }: { params: any }, c: Context<AppEnv>) => {
@@ -353,8 +364,9 @@ export const eventHandlers = {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("events").where("id", "=", id).execute();
       return { status: 200 as const, body: { success: true } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("PURGE_EVENT ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Purge failed" } as any };
     }
   },
   syncEvents: async (_: any, c: Context<AppEnv>) => {
@@ -409,93 +421,119 @@ export const eventHandlers = {
       }
 
       return { status: 200 as const, body: { success: true, count: total } as any };
-    } catch {
-      return { status: 200 as const, body: { success: false } as any };
+    } catch (e) {
+      console.error("SYNC_EVENTS ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Sync failed" } as any };
     }
   },
   getSignups: async ({ params }: { params: any }, c: Context<AppEnv>) => {
-    const eventId = params.id;
-    const user = await getSessionUser(c);
-    const db = c.get("db") as Kysely<DB>;
-    const isVerified = user && user.role !== "unverified";
-    const isManagement = user && (user.role === "admin" || ["coach", "mentor"].includes(user.member_type || ""));
+    try {
+      const eventId = params.id;
+      const user = await getSessionUser(c);
+      const db = c.get("db") as Kysely<DB>;
+      const isVerified = user && user.role !== "unverified";
+      const isManagement = user && (user.role === "admin" || ["coach", "mentor"].includes(user.member_type || ""));
 
-    const results = await db.selectFrom("event_signups as s")
-      .innerJoin("user_profiles as p", "s.user_id", "p.user_id")
-      .innerJoin("user as u", "s.user_id", "u.id")
-      .selectAll("s")
-      .select(["p.nickname", "u.image as avatar", "p.dietary_restrictions"])
-      .where("s.event_id", "=", eventId)
-      .where("u.role", "!=", "unverified")
-      .orderBy("s.created_at", "asc")
-      .execute();
+      const results = await db.selectFrom("event_signups as s")
+        .innerJoin("user_profiles as p", "s.user_id", "p.user_id")
+        .innerJoin("user as u", "s.user_id", "u.id")
+        .selectAll("s")
+        .select(["p.nickname", "u.image as avatar", "p.dietary_restrictions"])
+        .where("s.event_id", "=", eventId)
+        .where("u.role", "!=", "unverified")
+        .orderBy("s.created_at", "asc")
+        .execute();
 
-    const signups = isVerified ? results.map((rec) => ({
-      user_id: rec.user_id,
-      nickname: rec.nickname || null,
-      bringing: rec.bringing || null,
-      notes: (isManagement || (user && rec.user_id === user.id)) ? rec.notes : null,
-      prep_hours: Number(rec.prep_hours || 0),
-      attended: Number(rec.attended || 0),
-      is_own: user ? rec.user_id === user.id : false,
-    })) : [];
+      const signups = isVerified ? results.map((rec) => ({
+        user_id: rec.user_id,
+        nickname: rec.nickname || null,
+        bringing: rec.bringing || null,
+        notes: (isManagement || (user && rec.user_id === user.id)) ? rec.notes : null,
+        prep_hours: Number(rec.prep_hours || 0),
+        attended: Number(rec.attended || 0),
+        is_own: user ? rec.user_id === user.id : false,
+      })) : [];
 
-    const dietarySummary: Record<string, number> = {};
-    results.forEach((r) => {
-      if (r.dietary_restrictions) {
-        const restrictions = r.dietary_restrictions.split(',').map((st: string) => st.trim());
-        restrictions.forEach((res: string) => {
-          if (res) dietarySummary[res] = (dietarySummary[res] || 0) + 1;
-        });
-      }
-    });
+      const dietarySummary: Record<string, number> = {};
+      results.forEach((r) => {
+        if (r.dietary_restrictions) {
+          const restrictions = r.dietary_restrictions.split(',').map((st: string) => st.trim());
+          restrictions.forEach((res: string) => {
+            if (res) dietarySummary[res] = (dietarySummary[res] || 0) + 1;
+          });
+        }
+      });
 
-    return { status: 200 as const, body: { 
-      signups, 
-      dietary_summary: dietarySummary, 
-      team_dietary_summary: {}, 
-      authenticated: !!user, 
-      role: user?.role || null, 
-      member_type: user?.member_type || null, 
-      can_manage: !!isManagement 
-    } as any };
+      return { status: 200 as const, body: { 
+        signups, 
+        dietary_summary: dietarySummary, 
+        team_dietary_summary: {}, 
+        authenticated: !!user, 
+        role: user?.role || null, 
+        member_type: user?.member_type || null, 
+        can_manage: !!isManagement 
+      } as any };
+    } catch (e) {
+      console.error("GET_SIGNUPS ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch signups" } as any };
+    }
   },
   submitSignup: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
-    const user = await getSessionUser(c);
-    if (!user || user.role === "unverified") return { status: 403 as const, body: { error: "Forbidden" } as any };
-    const db = c.get("db") as Kysely<DB>;
-    await db.insertInto("event_signups")
-      .values({ event_id: params.id, user_id: user.id, bringing: body.bringing || "", notes: body.notes || "", prep_hours: body.prep_hours || 0 })
-      .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ bringing: body.bringing || "", notes: body.notes || "", prep_hours: body.prep_hours || 0 }))
-      .execute();
-    return { status: 200 as const, body: { success: true } as any };
+    try {
+      const user = await getSessionUser(c);
+      if (!user || user.role === "unverified") return { status: 403 as const, body: { error: "Forbidden" } as any };
+      const db = c.get("db") as Kysely<DB>;
+      await db.insertInto("event_signups")
+        .values({ event_id: params.id, user_id: user.id, bringing: body.bringing || "", notes: body.notes || "", prep_hours: body.prep_hours || 0 })
+        .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ bringing: body.bringing || "", notes: body.notes || "", prep_hours: body.prep_hours || 0 }))
+        .execute();
+      return { status: 200 as const, body: { success: true } as any };
+    } catch (e) {
+      console.error("SUBMIT_SIGNUP ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Signup failed" } as any };
+    }
   },
   deleteMySignup: async ({ params }: { params: any }, c: Context<AppEnv>) => {
-    const user = await getSessionUser(c);
-    if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
-    const db = c.get("db") as Kysely<DB>;
-    await db.deleteFrom("event_signups").where("event_id", "=", params.id).where("user_id", "=", user.id).execute();
-    return { status: 200 as const, body: { success: true } as any };
+    try {
+      const user = await getSessionUser(c);
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      const db = c.get("db") as Kysely<DB>;
+      await db.deleteFrom("event_signups").where("event_id", "=", params.id).where("user_id", "=", user.id).execute();
+      return { status: 200 as const, body: { success: true } as any };
+    } catch (e) {
+      console.error("DELETE_SIGNUP ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Delete failed" } as any };
+    }
   },
   updateMyAttendance: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
-    const user = await getSessionUser(c);
-    if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
-    const db = c.get("db") as Kysely<DB>;
-    await db.insertInto("event_signups")
-      .values({ event_id: params.id, user_id: user.id, attended: body.attended ? 1 : 0 })
-      .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended: body.attended ? 1 : 0 }))
-      .execute();
-    return { status: 200 as const, body: { success: true } as any };
+    try {
+      const user = await getSessionUser(c);
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      const db = c.get("db") as Kysely<DB>;
+      await db.insertInto("event_signups")
+        .values({ event_id: params.id, user_id: user.id, attended: body.attended ? 1 : 0 })
+        .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended: body.attended ? 1 : 0 }))
+        .execute();
+      return { status: 200 as const, body: { success: true } as any };
+    } catch (e) {
+      console.error("UPDATE_MY_ATTENDANCE ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Update failed" } as any };
+    }
   },
   updateUserAttendance: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
-    const user = await getSessionUser(c);
-    if (user?.role !== "admin" && !["coach", "mentor"].includes(user?.member_type || "")) return { status: 401 as const, body: { error: "Unauthorized" } as any };
-    const db = c.get("db") as Kysely<DB>;
-    await db.insertInto("event_signups")
-      .values({ event_id: params.id, user_id: params.userId, attended: body.attended ? 1 : 0 })
-      .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended: body.attended ? 1 : 0 }))
-      .execute();
-    return { status: 200 as const, body: { success: true } as any };
+    try {
+      const user = await getSessionUser(c);
+      if (user?.role !== "admin" && !["coach", "mentor"].includes(user?.member_type || "")) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      const db = c.get("db") as Kysely<DB>;
+      await db.insertInto("event_signups")
+        .values({ event_id: params.id, user_id: params.userId, attended: body.attended ? 1 : 0 })
+        .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended: body.attended ? 1 : 0 }))
+        .execute();
+      return { status: 200 as const, body: { success: true } as any };
+    } catch (e) {
+      console.error("UPDATE_USER_ATTENDANCE ERROR", e);
+      return { status: 500 as const, body: { success: false, error: "Update failed" } as any };
+    }
   },
   repushEvent: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
     const user = await getSessionUser(c);
@@ -525,6 +563,7 @@ export const eventHandlers = {
       );
       return { status: 200 as const, body: { success: true } as any };
     } catch (err) {
+      console.error("REPUSH_EVENT ERROR", err);
       return { status: 502 as const, body: { error: String(err) } as any };
     }
   },

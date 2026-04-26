@@ -8,6 +8,7 @@ import {
   dispatchMake 
 } from './social/webhooks';
 import { dispatchBluesky } from './social/bluesky';
+import { dispatchBand } from './social/band';
 import { dispatchTwitterPhoto } from './social/twitter';
 import { dispatchFacebook, dispatchMetaPhoto } from './social/meta';
 import { logSystemError } from '../api/middleware';
@@ -21,6 +22,8 @@ export interface SocialConfig {
   SLACK_WEBHOOK_URL?: string;
   TEAMS_WEBHOOK_URL?: string;
   GCHAT_WEBHOOK_URL?: string;
+  BAND_ACCESS_TOKEN?: string;
+  BAND_KEY?: string;
   FACEBOOK_PAGE_ID?: string;
   FACEBOOK_ACCESS_TOKEN?: string;
   INSTAGRAM_ACCOUNT_ID?: string;
@@ -98,6 +101,7 @@ export async function dispatchSocials(
   // 3. Social Platforms
   if (isEnabled('facebook')) promises.push(wrapRetry(() => dispatchFacebook(payload, config), 'Facebook'));
   if (isEnabled('bluesky')) promises.push(wrapRetry(() => dispatchBluesky(payload, config), 'Bluesky'));
+  if (isEnabled('band')) promises.push(wrapRetry(() => dispatchBand(payload, config), 'Band'));
 
   const results = await Promise.allSettled(promises);
   const failures: string[] = [];

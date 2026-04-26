@@ -35,6 +35,7 @@ vi.mock("../../../functions/utils/postHistory", () => ({
   approvePost: vi.fn().mockResolvedValue({ success: true, warnings: [] }),
   getPostHistory: vi.fn().mockResolvedValue([]),
   restorePostFromHistory: vi.fn().mockResolvedValue({ success: true }),
+  pruneHistory: vi.fn().mockResolvedValue(true),
 }));
 
 describe("Hono Backend - /posts Router", () => {

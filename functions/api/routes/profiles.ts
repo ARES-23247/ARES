@@ -97,8 +97,8 @@ const profileHandlers = {
         } as any
       };
     } catch (err) {
-      console.error("[Profile] Error in getMe:", err);
-      return { status: 200 as const, body: { auth: null, member_type: "student", first_name: "", last_name: "", nickname: "" } as any };
+      console.error("[Profile:Me] Error", err);
+      return { status: 500 as const, body: { error: "Failed to fetch your profile" } as any };
     }
   },
   updateMe: async ({ body }: { body: any }, c: Context<AppEnv>) => {
@@ -106,8 +106,9 @@ const profileHandlers = {
     try {
       await upsertProfile(c as any, user.id, body as any);
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("[Profile:UpdateMe] Error", e);
+      return { status: 500 as const, body: { error: "Failed to update profile" } as any };
     }
   },
   getTeamRoster: async (_: any, c: Context<AppEnv>) => {
@@ -134,7 +135,7 @@ const profileHandlers = {
         try {
           return await decrypt(val, secret);
         } catch (err) {
-          console.error("[Roster] Decryption failed:", err);
+          console.error("[Roster:Decrypt] Error", err);
           return null;
         }
       };
@@ -167,8 +168,8 @@ const profileHandlers = {
 
       return { status: 200 as const, body: { members } as any };
     } catch (err) {
-      console.error("[Roster] Global fetch error:", err);
-      return { status: 200 as const, body: { members: [] } as any };
+      console.error("[Profile:Roster] Error", err);
+      return { status: 500 as const, body: { error: "Failed to fetch team roster" } as any };
     }
   },
   getPublicProfile: async ({ params }: { params: any }, c: Context<AppEnv>) => {

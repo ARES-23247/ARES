@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw, Radio } from "lucide-react";
+import { RefreshCw, Radio, MessageSquare } from "lucide-react";
 import TeamAvailability from "./TeamAvailability";
 import IntegrationHealthMonitor from "./command/IntegrationHealthMonitor";
 import ProjectBoardKanban from "./command/ProjectBoardKanban";
@@ -38,6 +38,7 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: any 
     { name: "GitHub Projects", key: "github", icon: <img src="/icons/github.svg" alt="GitHub" className="w-8 h-8 mx-auto" />, configured: stats.integrations.github },
     { name: "Discord", key: "discord", icon: <img src="/icons/discord.svg" alt="Discord" className="w-8 h-8 mx-auto" />, configured: stats.integrations.discord },
     { name: "Bluesky", key: "bluesky", icon: <img src="/icons/bluesky.svg" alt="Bluesky" className="w-8 h-8 mx-auto" />, configured: stats.integrations.bluesky },
+    { name: "BAND", key: "band", icon: <MessageSquare className="w-8 h-8 mx-auto text-brand-facebook" />, configured: stats.integrations.band },
     { name: "Slack", key: "slack", icon: <img src="/icons/slack.svg" alt="Slack" className="w-8 h-8 mx-auto grayscale invert" />, configured: stats.integrations.slack },
     { name: "Google Calendar", key: "gcal", icon: <img src="/icons/gcal.svg" alt="Google Calendar" className="w-8 h-8 mx-auto" />, configured: stats.integrations.gcal },
   ] : [];

@@ -8,8 +8,8 @@ import TiptapRenderer from "../TiptapRenderer";
 import { CodeBlock } from "./CodeBlock";
 
 // ── Lazy-loaded Simulators ───────────────────────────────────────────
-const SwerveSimulator = lazy(() => import("../../sims/SwerveSimulator"));
-const SOTMSimulator = lazy(() => import("../../sims/SOTMSimulator"));
+const SwerveSimulator = lazy(() => import("../../sims/SwerveSim"));
+const SOTMSimulator = lazy(() => import("../../sims/SotmSim"));
 const ConfigVisualizer = lazy(() => import("../docs/ConfigVisualizer"));
 const CodePlayground = lazy(() => import("../docs/CodePlayground"));
 const ScreenshotGallery = lazy(() => import("../docs/ScreenshotGallery"));

@@ -25,8 +25,9 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
       }));
 
       return { status: 200 as const, body: { locations: locations as any[] } };
-    } catch {
-      return { status: 200 as const, body: { locations: [] } };
+    } catch (e) {
+      console.error("LIST_LOCATIONS ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch locations" } as any };
     }
   },
     adminList: async (_: any, c: any) => {
@@ -44,8 +45,9 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
       }));
 
       return { status: 200 as const, body: { locations: locations as any[] } };
-    } catch {
-      return { status: 200 as const, body: { locations: [] } };
+    } catch (e) {
+      console.error("ADMIN_LIST_LOCATIONS ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to fetch locations" } as any };
     }
   },
     save: async ({ body }: { body: any }, c: any) => {
@@ -71,8 +73,9 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
 
       c.executionCtx.waitUntil(logAuditAction(c, "SAVE_LOCATION", "locations", id, `Saved location: ${body.name}`));
       return { status: 200 as const, body: { success: true, id } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("SAVE_LOCATION ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to save location", success: false } as any };
     }
   },
     delete: async ({ params }: { params: any }, c: any) => {
@@ -84,8 +87,9 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "delete_location", "locations", params.id, "Location soft-deleted"));
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 200 as const, body: { success: false } };
+    } catch (e) {
+      console.error("DELETE_LOCATION ERROR", e);
+      return { status: 500 as const, body: { error: "Failed to delete location", success: false } as any };
     }
   },
 } as any);
