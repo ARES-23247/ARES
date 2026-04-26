@@ -110,7 +110,7 @@ export default function MassEmailComposer() {
             <AlertTriangle className="shrink-0 mt-0.5" size={18} />
             <div>
               <p className="font-bold">No active recipients found.</p>
-              <p className="opacity-80">Make sure your Resend integration is correctly configured in the Admin Settings.</p>
+              <p className="opacity-80">There are no registered website users in the database.</p>
             </div>
           </div>
         )}
