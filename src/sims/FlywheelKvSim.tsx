@@ -145,7 +145,7 @@ export default function FlywheelKvSim() {
   }, []);
 
   return (
-    <div className="bg-obsidian border border-white/10 overflow-hidden flex flex-col color-marble mt-6 ares-cut-lg">
+    <div className="bg-obsidian border border-white/10 overflow-hidden flex flex-col color-marble mt-6 ares-cut-lg" role="region" aria-label="Flywheel kV Tuning Simulator — interactive physics simulation for PID-controlled flywheel velocity recovery">
       <div className="p-4 border-b border-white/5 flex gap-4 bg-black/40 backdrop-blur-md items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
@@ -159,10 +159,12 @@ export default function FlywheelKvSim() {
       </div>
       <div className="flex flex-col md:flex-row p-6 gap-6 items-center">
         <div className="shrink-0">
-          <canvas role="img" aria-label="Flywheel Visualization" ref={wCanvasRef} width="120" height="120" className="bg-black/40 rounded-full border border-white/5 shadow-2xl" />
+          <canvas role="img" aria-label="Flywheel Visualization" aria-describedby="fw-wheel-desc" ref={wCanvasRef} width="120" height="120" className="bg-black/40 rounded-full border border-white/5 shadow-2xl" />
+          <span id="fw-wheel-desc" className="sr-only">Animated spinning flywheel showing current rotational velocity. Speed varies based on kV feedforward and kP proportional gain parameters.</span>
         </div>
         <div className="flex-1 w-full relative">
-          <canvas role="img" aria-label="Velocity Graph" ref={fwGCanvasRef} width="600" height="220" className="block w-full bg-black/40 ares-cut-lg border border-white/5" />
+          <canvas role="img" aria-label="Velocity Graph" aria-describedby="fw-graph-desc" ref={fwGCanvasRef} width="600" height="220" className="block w-full bg-black/40 ares-cut-lg border border-white/5" />
+          <span id="fw-graph-desc" className="sr-only">Real-time line graph showing flywheel velocity (red) versus target setpoint (cyan) over time. Demonstrates PID controller response and recovery after ball injection disturbances.</span>
           <div className="absolute top-4 right-4 flex flex-col gap-1">
              <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-tighter text-ares-cyan">
                 <div className="w-2 h-0.5 bg-ares-cyan" /> Target

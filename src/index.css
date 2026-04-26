@@ -140,6 +140,18 @@ h1, h2, h3, h4, .font-heading {
   @apply bg-transparent p-0 text-inherit;
 }
 
+/* --- GLOBAL FOCUS-VISIBLE (ACC-F01: WCAG 2.1 AA Keyboard Navigation) --- */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--ares-cyan);
+  outline-offset: 2px;
+}
+
 /* --- NATIVE FORM FIXES FOR DARK MODE --- */
 input, textarea, select {
   color-scheme: dark;

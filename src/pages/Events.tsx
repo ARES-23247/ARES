@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
-import { isAfter, subDays, addDays, parseISO } from "date-fns";
 import { motion } from "framer-motion";
 import SEO from "../components/SEO";
 import { api } from "../api/client";
 
 import { EventCard, EventItem } from "../components/events/EventCard";
 import CompetitionBanner from "../components/CompetitionBanner";
+import { useEventFilters } from "../hooks/useEventFilters";
 
 export default function Events() {
   const { data: eventsRes, isLoading } = api.events.getEvents.useQuery(["events"], {});
@@ -36,7 +36,7 @@ export default function Events() {
     return `https://calendar.google.com/calendar/embed?${calendars.map(c => `src=${encodeURIComponent(c.id as string)}&color=${c.color}`).join("&")}&ctz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}&bgcolor=%23ffffff&showPrint=0&showTabs=1&showCalendars=1`;
   }, [calendars]);
   
-  // EFF-N02: Memoize complex filtering and sorting
+  // REF-F01: Extracted event filtering into custom hook
   const { 
     upcomingOutreach, 
     upcomingPractices, 
@@ -44,30 +44,7 @@ export default function Events() {
     pastOutreach, 
     pastPractices,
     activeCompetition
-  } = useMemo(() => {
-    const now = new Date();
-    const bufferTime = subDays(now, 1);
-
-    const outreach = events.filter(e => e.category === "outreach");
-    const internal = events.filter(e => e.category === "internal");
-    const external = events.filter(e => e.category === "external");
-
-    const sortAsc = (a: EventItem, b: EventItem) => parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime();
-
-    return {
-      upcomingOutreach: outreach.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
-      upcomingPractices: internal.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
-      upcomingExternal: external.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
-      pastOutreach: outreach.filter(e => !isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc).reverse(),
-      pastPractices: internal.filter(e => !isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc).reverse(),
-      activeCompetition: events.find(e => {
-        if (!e.tba_event_key) return false;
-        const start = parseISO(e.date_start);
-        const end = e.date_end ? parseISO(e.date_end) : addDays(start, 3);
-        return now >= start && now <= end;
-      })
-    };
-  }, [events]);
+  } = useEventFilters(events);
 
   return (
     <motion.div 

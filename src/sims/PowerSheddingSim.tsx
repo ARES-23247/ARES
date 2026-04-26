@@ -53,7 +53,7 @@ export default function PowerSheddingSim() {
   };
 
   return (
-    <div className="bg-ares-black border border-white/10 my-8 flex flex-col overflow-hidden text-white" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+    <div className="bg-ares-black border border-white/10 my-8 flex flex-col overflow-hidden text-white" style={{ fontFamily: "'Orbitron', sans-serif" }} role="region" aria-label="Power Shedding Simulator — interactive demonstration of FRC robot battery voltage sag under varying motor loads">
       <div className="px-5 py-4 bg-white/5 border-b border-white/10 text-sm font-bold text-ares-red">
         REAL-TIME POWER SHEDDING DIAGNOSTICS
       </div>
