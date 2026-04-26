@@ -71,6 +71,22 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } as any };
     }
   },
+  deleteNotification: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const user = await getSessionUser(c);
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+
+      await db.deleteFrom("notifications")
+        .where("id", "=", params.id)
+        .where("user_id", "=", user.id)
+        .execute();
+
+      return { status: 200 as const, body: { success: true } as any };
+    } catch {
+      return { status: 500 as const, body: { error: "Delete failed" } as any };
+    }
+  },
   getPendingCounts: async (_: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;

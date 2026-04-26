@@ -54,7 +54,7 @@ export const notificationContract = c.router({
   markAllAsRead: {
     method: "PUT",
     path: "/read-all",
-    body: c.type<null>(),
+    body: c.noBody(),
     responses: {
       200: z.object({
         success: z.boolean(),
@@ -67,6 +67,26 @@ export const notificationContract = c.router({
       }),
     },
     summary: "Mark all notifications as read",
+  },
+  deleteNotification: {
+    method: "DELETE",
+    path: "/:id",
+    pathParams: z.object({
+      id: z.string(),
+    }),
+    body: c.noBody(),
+    responses: {
+      200: z.object({
+        success: z.boolean(),
+      }),
+      401: z.object({
+        error: z.string(),
+      }),
+      500: z.object({
+        error: z.string(),
+      }),
+    },
+    summary: "Delete a notification",
   },
   getPendingCounts: {
     method: "GET",

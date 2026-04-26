@@ -1,7 +1,7 @@
  
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Search, LayoutDashboard, LogIn, Bell, Check, Heart } from "lucide-react";
+import { Search, LayoutDashboard, LogIn, Bell, Check, Heart, X } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -48,6 +48,12 @@ export default function Navbar() {
   });
 
   const markRead = api.notifications.markAsRead.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }
+  });
+
+  const deleteNotif = api.notifications.deleteNotification.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     }
@@ -138,7 +144,7 @@ export default function Navbar() {
                       </li>
                     ) : (
                       notifications.map((n: MergedNotification) => (
-                        <li key={n.id}>
+                        <li key={n.id} className="relative group/notif">
                           <div 
                             role="button"
                             tabIndex={0}
@@ -147,24 +153,36 @@ export default function Navbar() {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
 
-                                if (!n.is_read && !n.is_inquiry) markRead.mutate(n.id);
+                                if (!n.is_read && !n.is_inquiry) markRead.mutate({ params: { id: n.id }, body: undefined });
                                 if (n.link) navigate(n.link);
                                 setShowNotifs(false);
                               }
                             }}
                             onClick={() => {
                               
-                              if (!n.is_read && !n.is_inquiry) markRead.mutate(n.id);
+                              if (!n.is_read && !n.is_inquiry) markRead.mutate({ params: { id: n.id }, body: undefined });
                               if (n.link) navigate(n.link);
                               setShowNotifs(false);
                             }}
                           >
                           <div className="flex justify-between items-start gap-2">
-                             <span className="text-sm font-bold text-white">{n.title}</span>
+                             <span className="text-sm font-bold text-white pr-4">{n.title}</span>
                              {!n.is_read && <span className="h-2 w-2 rounded-full bg-ares-red flex-shrink-0 mt-1"></span>}
                           </div>
-                          <span className="text-xs text-marble/90 line-clamp-2">{n.message}</span>
+                          <span className="text-xs text-marble/90 line-clamp-2 pr-4">{n.message}</span>
                           </div>
+                          {!n.is_inquiry && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotif.mutate({ params: { id: n.id }, body: undefined });
+                              }}
+                              className="absolute top-2 right-2 p-1 text-marble/40 hover:text-ares-red opacity-0 group-hover/notif:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:text-ares-red"
+                              aria-label="Delete notification"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
                         </li>
                       ))
                     )}
