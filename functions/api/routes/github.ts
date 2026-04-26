@@ -50,7 +50,7 @@ const githubHandlers = {
     const org = siteConfig.urls.githubOrg;
     const cacheUrl = new URL(c.req.url);
     const cacheKey = new Request(cacheUrl.toString(), c.req.raw);
-    const cache = await caches.open("ares-github-activity-v2"); // Bumped cache version
+    const cache = await caches.open("ares-github-activity-v3"); // Bumped cache version
     
     const cachedResponse = await cache.match(cacheKey);
     if (cachedResponse) {
@@ -60,14 +60,14 @@ const githubHandlers = {
 
     try {
       const config = await getSocialConfig(c);
-      const ghConfig = buildGitHubConfig(config);
+      const pat = config["GITHUB_PAT"];
 
       const headers: Record<string, string> = {
         "User-Agent": `${siteConfig.team.name}-Cloudflare-Worker`
       };
       
-      if (ghConfig?.pat) {
-        headers["Authorization"] = `Bearer ${ghConfig.pat}`;
+      if (pat) {
+        headers["Authorization"] = `Bearer ${pat}`;
       }
 
       const repoRes = await fetch(`https://api.github.com/orgs/${org}/repos?per_page=100&type=public`, { headers });
