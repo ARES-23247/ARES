@@ -382,48 +382,59 @@ export const eventHandlers = {
         { id: dbSettings["CALENDAR_ID_EXTERNAL"], category: "external" }
       ].filter(cal => !!cal.id);
 
-      if (!gcalEmail || !gcalKey || calendars.length === 0) throw new Error("Config missing");
+      if (!gcalEmail || !gcalKey || calendars.length === 0) {
+        return { status: 400 as const, body: { success: false, error: "GCal config missing: need GCAL_SERVICE_ACCOUNT_EMAIL, GCAL_PRIVATE_KEY, and at least one CALENDAR_ID" } as any };
+      }
 
       let total = 0;
-      const allEvents: any[] = [];
+      const errors: string[] = [];
 
       for (const cal of calendars) {
-        const events = await pullEventsFromGcal({ email: gcalEmail as string, privateKey: gcalKey as string, calendarId: cal.id as string });
-        for (const ev of events) {
-          allEvents.push({
-            id: crypto.randomUUID(),
-            title: ev.title,
-            date_start: ev.date_start,
-            date_end: ev.date_end || null,
-            location: ev.location,
-            description: ev.description,
-            gcal_event_id: ev.gcal_event_id,
-            status: 'published',
-            category: cal.category
-          });
+        try {
+          const events = await pullEventsFromGcal({ email: gcalEmail as string, privateKey: gcalKey as string, calendarId: cal.id as string });
+          
+          // D1 has a variable binding limit (~100 per query).
+          // With ~10 columns per event, chunk at 20 events per INSERT to stay safe.
+          const CHUNK_SIZE = 20;
+          for (let i = 0; i < events.length; i += CHUNK_SIZE) {
+            const chunk = events.slice(i, i + CHUNK_SIZE).map(ev => ({
+              id: crypto.randomUUID(),
+              title: ev.title,
+              date_start: ev.date_start,
+              date_end: ev.date_end || null,
+              location: ev.location,
+              description: ev.description,
+              gcal_event_id: ev.gcal_event_id,
+              status: 'published' as const,
+              category: cal.category
+            }));
+
+            await db.insertInto("events")
+              .values(chunk)
+              .onConflict((oc) => oc.column("gcal_event_id").doUpdateSet({
+                title: sql`excluded.title`,
+                date_start: sql`excluded.date_start`,
+                date_end: sql`excluded.date_end`,
+                location: sql`excluded.location`,
+                description: sql`excluded.description`,
+                category: sql`excluded.category`
+              }))
+              .execute();
+          }
+          
+          total += events.length;
+        } catch (calErr) {
+          // Isolate per-calendar failures so one bad calendar doesn't kill the whole sync
+          const msg = calErr instanceof Error ? calErr.message : String(calErr);
+          console.error(`SYNC_EVENTS: Calendar ${cal.category} (${cal.id}) failed:`, msg);
+          errors.push(`${cal.category}: ${msg}`);
         }
       }
 
-      if (allEvents.length > 0) {
-        // D1 has a variable limit; chunking would be safer but for a typical calendar sync this is okay.
-        await db.insertInto("events")
-          .values(allEvents)
-          .onConflict((oc) => oc.column("gcal_event_id").doUpdateSet({
-            title: sql`excluded.title`,
-            date_start: sql`excluded.date_start`,
-            date_end: sql`excluded.date_end`,
-            location: sql`excluded.location`,
-            description: sql`excluded.description`,
-            category: sql`excluded.category`
-          }))
-          .execute();
-        total = allEvents.length;
-      }
-
-      return { status: 200 as const, body: { success: true, count: total } as any };
+      return { status: 200 as const, body: { success: true, count: total, errors: errors.length > 0 ? errors : undefined } as any };
     } catch (e) {
       console.error("SYNC_EVENTS ERROR", e);
-      return { status: 500 as const, body: { success: false, error: "Sync failed" } as any };
+      return { status: 500 as const, body: { success: false, error: e instanceof Error ? e.message : "Sync failed" } as any };
     }
   },
   getSignups: async ({ params }: { params: any }, c: Context<AppEnv>) => {

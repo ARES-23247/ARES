@@ -196,22 +196,9 @@ export async function deleteEventFromGcal(gcal_id: string, config: GCalConfig) {
 export async function pullEventsFromGcal(config: GCalConfig): Promise<ARES_Event[]> {
   const token = await getGcalAccessToken(config);
   
-  // Fetch up to 2500 events starting from 2 years ago to avoid truncating current events
+  // Fetch events starting from 2 years ago
   const timeMin = new Date();
   timeMin.setFullYear(timeMin.getFullYear() - 2);
-  
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events?maxResults=2500&orderBy=startTime&singleEvents=true&timeMin=${encodeURIComponent(timeMin.toISOString())}`;
-
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000),
-    method: "GET",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to pull from GCal: ${res.status}`);
-  }
-
-  const data = (await res.json()) as Record<string, unknown>;
   
   interface GCalItem {
     id: string;
@@ -221,10 +208,40 @@ export async function pullEventsFromGcal(config: GCalConfig): Promise<ARES_Event
     location?: string;
     description?: string;
   }
-  
-  const items = (data.items as GCalItem[]) || [];
 
-  return items.map((item: GCalItem) => ({
+  const allItems: GCalItem[] = [];
+  let pageToken: string | undefined;
+
+  // Paginate through ALL pages of results
+  do {
+    const params = new URLSearchParams({
+      maxResults: "250",
+      orderBy: "startTime",
+      singleEvents: "true",
+      timeMin: timeMin.toISOString(),
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events?${params.toString()}`;
+
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(30000),
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "(no body)");
+      throw new Error(`Failed to pull from GCal (${config.calendarId}): ${res.status} — ${text}`);
+    }
+
+    const data = (await res.json()) as Record<string, unknown>;
+    const items = (data.items as GCalItem[]) || [];
+    allItems.push(...items);
+    pageToken = data.nextPageToken as string | undefined;
+  } while (pageToken);
+
+  return allItems.map((item: GCalItem) => ({
     id: `gcal-${item.id}`,
     title: item.summary || "Untitled Event",
     date_start: item.start?.dateTime || item.start?.date || "",

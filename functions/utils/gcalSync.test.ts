@@ -210,7 +210,7 @@ describe("gcalSync Utilities", () => {
         })
       );
 
-      await expect(pullEventsFromGcal(config)).rejects.toThrow("Failed to pull from GCal: 500");
+      await expect(pullEventsFromGcal(config)).rejects.toThrow("Failed to pull from GCal (test-calendar-id): 500");
     });
 
     it("should handle empty items array", async () => {
