@@ -5,15 +5,13 @@ interface DashboardPageHeaderProps {
   subtitle: string;
   icon?: ReactNode;
   action?: ReactNode;
-  italicTitle?: boolean;
 }
 
 export default function DashboardPageHeader({ 
   title, 
   subtitle, 
   icon, 
-  action, 
-  italicTitle 
+  action 
 }: DashboardPageHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/40 border border-white/10 p-6 ares-cut mb-6">

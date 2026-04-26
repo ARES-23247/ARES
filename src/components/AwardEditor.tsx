@@ -81,7 +81,6 @@ export default function AwardEditor() {
         title="Trophy Case Management"
         subtitle="Archiving the milestones of ARES 23247."
         icon={<Trophy className="text-ares-gold" />}
-        italicTitle={true}
         action={
           <button
             onClick={() => {

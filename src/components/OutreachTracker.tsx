@@ -114,7 +114,6 @@ export default function OutreachTracker() {
         title="Impact Logging"
         subtitle="Document every interaction for the FIRST Impact Award."
         icon={<Target className="text-ares-red" />}
-        italicTitle={true}
         action={
           <button
             onClick={() => {
