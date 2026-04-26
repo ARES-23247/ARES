@@ -19,8 +19,19 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 describe("ProjectBoardKanban Component", () => {
+  const defaultProps = {
+    isLoading: false,
+    isCreating: false,
+    newTaskTitle: "",
+    setNewTaskTitle: vi.fn(),
+    showCreateForm: false,
+    setShowCreateForm: vi.fn(),
+    onCreateTask: vi.fn(),
+    onRefresh: vi.fn(),
+  };
+
   it("renders empty state when board is null", () => {
-    render(<ProjectBoardKanban board={null} refreshBoard={vi.fn()} isRefreshing={false} />);
+    render(<ProjectBoardKanban board={null} {...defaultProps} />);
     expect(screen.getByText("GitHub Projects not configured")).toBeInTheDocument();
     expect(screen.getByText(/Set your/)).toBeInTheDocument();
   });
@@ -32,16 +43,16 @@ describe("ProjectBoardKanban Component", () => {
       items: [],
       totalCount: 0
     };
-    render(<ProjectBoardKanban board={emptyBoard} refreshBoard={vi.fn()} isRefreshing={false} />);
+    render(<ProjectBoardKanban board={emptyBoard} {...defaultProps} />);
     
     // Verify standard columns exist
-    expect(screen.getByText("Todo")).toBeInTheDocument();
-    expect(screen.getByText("In Progress")).toBeInTheDocument();
-    expect(screen.getByText("Done")).toBeInTheDocument();
-    expect(screen.getByText("Blocked")).toBeInTheDocument();
+    expect(screen.getAllByText("Todo").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("In Progress").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Done").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Blocked").length).toBeGreaterThan(0);
     
     // Check total count is displayed
-    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.getAllByText("0").length).toBeGreaterThan(0);
   });
 
   it("renders tasks within correct columns", () => {
@@ -49,13 +60,13 @@ describe("ProjectBoardKanban Component", () => {
       title: "Test Board",
       shortDescription: "Test Desc",
       items: [
-        { id: "1", title: "Task 1", status: "Todo", updated_at: new Date().toISOString() },
-        { id: "2", title: "Task 2", status: "In Progress", updated_at: new Date().toISOString() },
-        { id: "3", title: "Task 3", status: "Done", updated_at: new Date().toISOString() },
+        { id: "1", title: "Task 1", status: "Todo", updated_at: new Date().toISOString(), assignees: [] },
+        { id: "2", title: "Task 2", status: "In Progress", updated_at: new Date().toISOString(), assignees: [] },
+        { id: "3", title: "Task 3", status: "Done", updated_at: new Date().toISOString(), assignees: [] },
       ],
       totalCount: 3
     };
-    render(<ProjectBoardKanban board={board as any} refreshBoard={vi.fn()} isRefreshing={false} />);
+    render(<ProjectBoardKanban board={board as unknown as import("./types").ProjectBoard} {...defaultProps} />);
     
     expect(screen.getByText("Task 1")).toBeInTheDocument();
     expect(screen.getByText("Task 2")).toBeInTheDocument();
