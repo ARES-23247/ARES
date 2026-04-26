@@ -102,7 +102,7 @@ export const docContract = c.router({
   deleteDoc: {
     method: "DELETE",
     path: "/admin/:slug",
-    body: z.object({}),
+    body: z.any().optional(),
     responses: {
       200: z.object({ success: z.boolean() }),
     },
@@ -151,7 +151,7 @@ export const docContract = c.router({
   restoreHistory: {
     method: "PATCH",
     path: "/admin/:slug/history/:id/restore",
-    body: z.object({}),
+    body: z.any().optional(),
     responses: {
       200: z.object({ success: z.boolean() }),
       404: z.object({ error: z.string() }),
@@ -160,7 +160,7 @@ export const docContract = c.router({
   approveDoc: {
     method: "POST",
     path: "/admin/:slug/approve",
-    body: z.object({}),
+    body: z.any().optional(),
     responses: {
       200: z.object({ success: z.boolean() }),
     },
@@ -176,7 +176,7 @@ export const docContract = c.router({
   undeleteDoc: {
     method: "POST",
     path: "/admin/:slug/undelete",
-    body: z.object({}),
+    body: z.any().optional(),
     responses: {
       200: z.object({ success: z.boolean() }),
     },
@@ -184,7 +184,7 @@ export const docContract = c.router({
   purgeDoc: {
     method: "POST",
     path: "/admin/:slug/purge",
-    body: z.object({}),
+    body: z.any().optional(),
     responses: {
       200: z.object({ success: z.boolean() }),
     },

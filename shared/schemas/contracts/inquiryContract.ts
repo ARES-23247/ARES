@@ -85,7 +85,7 @@ export const inquiryContract = c.router({
     pathParams: z.object({
       id: z.string(),
     }),
-    body: z.object({}),
+    body: z.any().optional(),
     responses: {
       200: z.object({
         success: z.boolean(),
