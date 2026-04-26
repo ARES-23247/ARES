@@ -38,6 +38,7 @@ export interface SocialConfig {
   ZULIP_URL?: string;
   ZULIP_ADMIN_STREAM?: string;
   ZULIP_COMMENT_STREAM?: string;
+  ZULIP_WEBHOOK_TOKEN?: string;
 }
 
 export interface PostPayload {

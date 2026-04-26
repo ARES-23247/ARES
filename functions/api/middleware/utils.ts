@@ -99,6 +99,7 @@ export type SocialConfig = {
   ZULIP_URL?: string;
   ZULIP_ADMIN_STREAM?: string;
   ZULIP_COMMENT_STREAM?: string;
+  ZULIP_WEBHOOK_TOKEN?: string;
   GITHUB_PAT?: string;
   GITHUB_PROJECT_ID?: string;
   GITHUB_ORG?: string;
