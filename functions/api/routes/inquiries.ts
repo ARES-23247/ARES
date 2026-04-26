@@ -199,8 +199,9 @@ const inquiriesTsRestRouter: any = s.router(inquiryContract as any, {
       await db.deleteFrom("inquiries").where("id", "=", params.id).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "inquiry_deleted", "inquiries", params.id, "Inquiry deleted"));
       return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 500 as const, body: { error: "Delete failed" } };
+    } catch (e: any) {
+      console.error("DELETE_INQUIRY ERROR", e);
+      return { status: 500 as const, body: { error: e?.message || "Delete failed" } };
     }
   },
 } as any);
