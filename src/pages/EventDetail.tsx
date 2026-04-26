@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { format, isBefore } from "date-fns";
 import { motion } from "framer-motion";
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
-import CommentSection from "../components/CommentSection";
 import EventSignups from "../components/EventSignups";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { api } from "../api/client";
@@ -25,7 +24,7 @@ interface EventRow {
   meeting_notes?: string | null;
 }
 
-import { Calendar, Edit2 } from "lucide-react";
+import { Calendar, Edit2, MessageSquare } from "lucide-react";
 import { GreekMeander } from "../components/GreekMeander";
 import { useSession } from "../utils/auth-client";
 import { downloadICS } from "../utils/calendar";
@@ -183,9 +182,26 @@ export default function EventDetail() {
             </div>
           )}
 
-          {/* Sign-Up Sheet & Comments (auth-gated) */}
+          {/* Sign-Up Sheet */}
           {id && <EventSignups eventId={id} isPotluck={event.is_potluck === 1} isVolunteer={event.is_volunteer === 1} />}
-          {id && <CommentSection targetType="event" targetId={id} />}
+          
+          {/* Zulip Discussion Link */}
+          <div className="mt-12 bg-white/5 border border-white/10 ares-cut-sm p-8 text-center">
+            <h2 className="text-2xl font-bold text-ares-gold flex items-center justify-center gap-2 mb-4 font-heading uppercase">
+              <MessageSquare size={24} /> Event Discussion
+            </h2>
+            <p className="text-marble/70 mb-6 max-w-lg mx-auto">
+              Join the conversation with other team members to coordinate carpools, ask questions, and prepare for this event on our Zulip server.
+            </p>
+            <a 
+              href={`https://ares.zulipchat.com/#narrow/stream/events/topic/${encodeURIComponent("Event: " + event.title).replace(/%/g, '.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 ares-cut-sm font-bold uppercase tracking-widest bg-ares-cyan/20 hover:bg-ares-cyan text-ares-cyan hover:text-black border border-ares-cyan/50 transition-all shadow-lg"
+            >
+              <MessageSquare size={16} /> Discuss on Zulip
+            </a>
+          </div>
         </motion.article>
       </section>
     </motion.div>
