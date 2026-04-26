@@ -6,7 +6,7 @@ const c = initContract();
 export const communicationsContract = c.router({
   sendMassEmail: {
     method: "POST",
-    path: "/api/communications/mass-email",
+    path: "/mass-email",
     body: z.object({
       subject: z.string().min(1, "Subject is required"),
       htmlContent: z.string().min(1, "Content is required"),
@@ -30,7 +30,7 @@ export const communicationsContract = c.router({
   },
   getStats: {
     method: "GET",
-    path: "/api/communications/stats",
+    path: "/stats",
     responses: {
       200: z.object({
         activeUsers: z.number(),
