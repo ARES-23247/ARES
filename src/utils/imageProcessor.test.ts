@@ -121,9 +121,9 @@ describe('imageProcessor utility', () => {
   });
   
   it('rejects if the canvas output is too small (blank layout error)', async () => {
-    // Override toBlob to return a tiny blob (e.g. 500 bytes)
+    // Override toBlob to return a tiny blob (e.g. 100 bytes)
     HTMLCanvasElement.prototype.toBlob = vi.fn(function (this: any, callback) {
-      callback(new Blob([new ArrayBuffer(500)])); // < 1024 bytes
+      callback(new Blob([new ArrayBuffer(100)])); // < 256 bytes
     });
 
     const pngFile = new File(['dummy'], 'robot.png', { type: 'image/png' });

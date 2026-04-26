@@ -120,25 +120,32 @@ const mediaTsRestRouter: any = s.router(mediaContract as any, {
 
       const isLarge = file.size > 10 * 1024 * 1024;
       let buffer: ArrayBuffer | null = null;
+      let headerBuffer: ArrayBuffer;
       
-      // Use small slice for type validation to avoid memory spike
-      const headerBuffer = await file.slice(0, 1024).arrayBuffer();
+      if (!isLarge) {
+        buffer = await file.arrayBuffer();
+        headerBuffer = buffer.slice(0, 1024);
+      } else {
+        // Use small slice for type validation to avoid memory spike on large files
+        headerBuffer = await file.slice(0, 1024).arrayBuffer();
+      }
+      
       if (!isValidImage(headerBuffer)) return { status: 400 as const, body: { error: "Invalid file type." } };
 
       const key = folder ? `${folder}/${file.name}` : file.name;
       if (c.env.ARES_STORAGE) {
         if (isLarge) {
+          // Note: file.stream() might have issues if file.slice() partially consumed it in some CF worker versions
           await c.env.ARES_STORAGE.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
         } else {
-          buffer = await file.arrayBuffer();
-          await c.env.ARES_STORAGE.put(key, buffer, { httpMetadata: { contentType: file.type } });
+          await c.env.ARES_STORAGE.put(key, buffer!, { httpMetadata: { contentType: file.type } });
         }
       } else {
         console.warn("[media.ts] R2Bucket not bound! Skipping physical upload.");
       }
 
       let altText = "ARES 23247 Team Media Image";
-      const isAiSupported = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+      const isAiSupported = ["image/jpeg", "image/png"].includes(file.type);
       if (isAiSupported && !isLarge && c.env.AI && (buffer || file.size < 2.5 * 1024 * 1024)) {
         try {
           if (!buffer) buffer = await file.arrayBuffer();

@@ -58,8 +58,8 @@ const canvasConvert = (sourceBlob: Blob): Promise<Blob> => {
 
         canvas.toBlob(
           (blob) => {
-            if (!blob || blob.size < 1024) {
-              // A sub-1KB "image" is almost certainly a transparent/empty frame
+            if (!blob || blob.size < 256) {
+              // A sub-256B "image" is almost certainly a transparent/empty frame from a failed native decode
               return reject(new Error("CANVAS_OUTPUT_TOO_SMALL"));
             }
             resolve(blob);
