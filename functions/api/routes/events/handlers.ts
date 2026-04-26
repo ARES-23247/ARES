@@ -386,7 +386,7 @@ export const eventHandlers = {
         if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
           try {
             const gcalId = await pushEventToGcal(
-              { id: targetRow.id, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined },
+              { id: targetRow.id as string, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined },
               { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
             );
             if (gcalId && gcalId !== targetRow.gcal_event_id) {
@@ -431,7 +431,7 @@ export const eventHandlers = {
         if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
           try {
             const gcalId = await pushEventToGcal(
-              { id: targetRow.id, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined },
+              { id: targetRow.id as string, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined },
               { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
             );
             if (gcalId && gcalId !== targetRow.gcal_event_id) {
@@ -691,7 +691,7 @@ export const eventHandlers = {
       if (social["GCAL_SERVICE_ACCOUNT_EMAIL"] && social["GCAL_PRIVATE_KEY"] && calId) {
         try {
           const gcalId = await pushEventToGcal(
-            { id: event.id, title: event.title, date_start: event.date_start, date_end: event.date_end || undefined, location: event.location || undefined, description: event.description || undefined, cover_image: event.cover_image || undefined, gcal_event_id: event.gcal_event_id || undefined },
+            { id: event.id as string, title: event.title, date_start: event.date_start, date_end: event.date_end || undefined, location: event.location || undefined, description: event.description || undefined, cover_image: event.cover_image || undefined, gcal_event_id: event.gcal_event_id || undefined },
             { email: social["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: social["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
           );
           if (gcalId && gcalId !== event.gcal_event_id) {

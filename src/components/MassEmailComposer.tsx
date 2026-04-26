@@ -14,7 +14,7 @@ export default function MassEmailComposer() {
 
   const { isPending, data: statsRes } = api.communications.getStats.useQuery(["mass_email_stats"], {});
   const sendMutation = api.communications.sendMassEmail.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.body.success) {
         toast.success(`Mass email dispatched successfully to ${res.body.recipientCount} recipients.`);
         setSubject("");
@@ -23,7 +23,7 @@ export default function MassEmailComposer() {
         toast.error(`Error: ${res.body.error}`);
       }
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast.error(`Failed to send mass email. ${err.message}`);
     }
   });
