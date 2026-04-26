@@ -48,18 +48,6 @@ function timingSafeEqual(a: string, b: string): boolean {
 // ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
 // ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
 zulipWebhookRouter.post("/", async (c) => {
-  // Debug log to prove the request reached the worker
-  c.executionCtx.waitUntil(
-    c.get("db").insertInto("audit_log").values({
-      id: `webhook-${Date.now()}`,
-      actor: "system",
-      action: "WEBHOOK_RECEIVED",
-      resource_type: "Zulip",
-      resource_id: "Ping",
-      details: "Request arrived at route handler"
-    }).execute().catch(() => {})
-  );
-
   let body: ZulipOutgoingPayload;
   try {
     body = await c.req.json();
@@ -71,21 +59,11 @@ zulipWebhookRouter.post("/", async (c) => {
   const expectedToken = config.ZULIP_WEBHOOK_TOKEN;
   if (!expectedToken) {
     console.error("[ZulipWebhook] ZULIP_WEBHOOK_TOKEN is not configured.");
-    return c.json({ content: "❌ Webhook token not configured on server." }, 401);
+    return c.json({ content: "❌ Webhook token not configured on server." }, 403);
   }
   if (!timingSafeEqual(body.token, expectedToken)) {
     console.warn("[ZulipWebhook] Invalid token");
-    c.executionCtx.waitUntil(
-      c.get("db").insertInto("audit_log").values({
-        id: `err-${Date.now()}`,
-        actor: "system",
-        action: "INTEGRATION_FAILURE",
-        resource_type: "Zulip",
-        resource_id: "Webhook",
-        details: JSON.stringify({ expected: expectedToken, received: body.token, sender: body.message?.sender_email })
-      }).execute().catch(() => {})
-    );
-    return c.json({ content: `❌ Unauthorized: Invalid webhook token.` }, 401);
+    return c.json({ content: "❌ Unauthorized: Invalid webhook token." }, 403);
   }
 
   const rawContent = body.message?.content || "";

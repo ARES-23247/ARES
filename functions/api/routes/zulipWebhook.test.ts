@@ -7,6 +7,18 @@ vi.mock("../../utils/zulipSync", () => ({
   sendZulipMessage: vi.fn().mockResolvedValue(1),
 }));
 
+vi.mock("../middleware/utils", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("../middleware/utils")>();
+  return {
+    ...mod,
+    getSocialConfig: vi.fn().mockImplementation(async (c: any) => ({
+      ZULIP_WEBHOOK_TOKEN: c.env.ZULIP_WEBHOOK_TOKEN,
+      ZULIP_BOT_EMAIL: c.env.ZULIP_BOT_EMAIL,
+      ZULIP_API_KEY: c.env.ZULIP_API_KEY,
+    })),
+  };
+});
+
 describe("Zulip Webhook Router", () => {
   const env = {
     ZULIP_WEBHOOK_TOKEN: "test-token",
