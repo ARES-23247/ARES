@@ -23,7 +23,7 @@ const zulipHandlers = {
       // if credentials contain hidden unicode characters or non-breaking spaces.
       const credentials = `${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`;
       const authHeader = "Basic " + btoa(unescape(encodeURIComponent(credentials)));
-      const url = `${config.ZULIP_URL || "https://ares.zulipchat.com"}/api/v1/realm/presence`;
+      const url = `${config.ZULIP_URL || "https://aresfirst.zulipchat.com"}/api/v1/realm/presence`;
 
       const res = await fetch(url, {
         method: "GET",
@@ -34,7 +34,7 @@ const zulipHandlers = {
         return { status: 500 as const, body: { success: false, error: await res.text() } as any };
       }
 
-      const usersRes = await fetch(`${config.ZULIP_URL || "https://ares.zulipchat.com"}/api/v1/users`, {
+      const usersRes = await fetch(`${config.ZULIP_URL || "https://aresfirst.zulipchat.com"}/api/v1/users`, {
         method: "GET",
         headers: { "Authorization": authHeader }
       });

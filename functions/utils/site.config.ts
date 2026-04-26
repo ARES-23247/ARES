@@ -9,7 +9,7 @@ export const siteConfig = {
   urls: {
     base: "https://aresfirst.org",
     githubOrg: "ARES-23247",
-    zulip: "https://ares.zulipchat.com",
+    zulip: "https://aresfirst.zulipchat.com",
     bluesky: "ares23247.bsky.social",
     tiktok: "ares.robotics.23247"
   },

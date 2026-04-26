@@ -262,7 +262,7 @@ export async function getSocialConfig(c: Context<AppEnv>): Promise<SocialConfig>
       GCAL_PRIVATE_KEY: c.env.GCAL_PRIVATE_KEY || dbSettings["GCAL_PRIVATE_KEY"],
       ZULIP_BOT_EMAIL: c.env.ZULIP_BOT_EMAIL || dbSettings["ZULIP_BOT_EMAIL"],
       ZULIP_API_KEY: c.env.ZULIP_API_KEY || dbSettings["ZULIP_API_KEY"],
-      ZULIP_URL: c.env.ZULIP_URL || dbSettings["ZULIP_URL"] || "https://ares.zulipchat.com",
+      ZULIP_URL: c.env.ZULIP_URL || dbSettings["ZULIP_URL"] || "https://aresfirst.zulipchat.com",
       ZULIP_ADMIN_STREAM: c.env.ZULIP_ADMIN_STREAM || dbSettings["ZULIP_ADMIN_STREAM"] || "leadership",
       ZULIP_COMMENT_STREAM: c.env.ZULIP_COMMENT_STREAM || dbSettings["ZULIP_COMMENT_STREAM"] || "website-discussion",
       ZULIP_WEBHOOK_TOKEN: c.env.ZULIP_WEBHOOK_TOKEN || dbSettings["ZULIP_WEBHOOK_TOKEN"],

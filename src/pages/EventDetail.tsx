@@ -194,7 +194,7 @@ export default function EventDetail() {
               Join the conversation with other team members to coordinate carpools, ask questions, and prepare for this event on our Zulip server.
             </p>
             <a 
-              href={`https://ares.zulipchat.com/#narrow/stream/events/topic/${encodeURIComponent("Event: " + event.title).replace(/%/g, '.')}`}
+              href={`https://aresfirst.zulipchat.com/#narrow/stream/events/topic/${encodeURIComponent("Event: " + event.title).replace(/%/g, '.')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 ares-cut-sm font-bold uppercase tracking-widest bg-ares-cyan/20 hover:bg-ares-cyan text-ares-cyan hover:text-black border border-ares-cyan/50 transition-all shadow-lg"

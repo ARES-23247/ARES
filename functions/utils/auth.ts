@@ -41,9 +41,9 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
                         providerId: "zulip",
                         clientId: env.ZULIP_CLIENT_ID as string,
                         clientSecret: env.ZULIP_CLIENT_SECRET as string,
-                        authorizationEndpoint: `${env.ZULIP_URL || "https://ares.zulipchat.com"}/o/authorize/`,
-                        tokenEndpoint: `${env.ZULIP_URL || "https://ares.zulipchat.com"}/o/token/`,
-                        userInfoEndpoint: `${env.ZULIP_URL || "https://ares.zulipchat.com"}/api/v1/users/me`,
+                        authorizationEndpoint: `${env.ZULIP_URL || "https://aresfirst.zulipchat.com"}/o/authorize/`,
+                        tokenEndpoint: `${env.ZULIP_URL || "https://aresfirst.zulipchat.com"}/o/token/`,
+                        userInfoEndpoint: `${env.ZULIP_URL || "https://aresfirst.zulipchat.com"}/api/v1/users/me`,
                         mapping: {
                             id: "user_id",
                             email: "email",

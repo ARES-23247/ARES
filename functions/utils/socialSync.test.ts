@@ -68,9 +68,9 @@ describe("socialSync Utilities", () => {
     BLUESKY_APP_PASSWORD: "test-pass",
     FACEBOOK_PAGE_ID: "123",
     FACEBOOK_ACCESS_TOKEN: "fb-token",
-    ZULIP_BOT_EMAIL: "bot@ares.zulipchat.com",
+    ZULIP_BOT_EMAIL: "bot@aresfirst.zulipchat.com",
     ZULIP_API_KEY: "zulip-key",
-    ZULIP_URL: "https://ares.zulipchat.com",
+    ZULIP_URL: "https://aresfirst.zulipchat.com",
   };
 
   beforeEach(() => {

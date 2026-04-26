@@ -24,7 +24,7 @@ export function ZulipCard({
           <input
             id="zulip_url"
             type="text"
-            placeholder="https://ares.zulipchat.com"
+            placeholder="https://aresfirst.zulipchat.com"
             value={localSettings["ZULIP_URL"] || ""}
             onChange={(e) => handleChange("ZULIP_URL", e.target.value)}
             className="w-full bg-black/60 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-cyan transition-colors"
@@ -37,7 +37,7 @@ export function ZulipCard({
           <input
             id="zulip_bot_email"
             type="text"
-            placeholder="ares-bot@ares.zulipchat.com"
+            placeholder="ares-bot@aresfirst.zulipchat.com"
             value={localSettings["ZULIP_BOT_EMAIL"] || ""}
             onChange={(e) => handleChange("ZULIP_BOT_EMAIL", e.target.value)}
             className="w-full bg-black/60 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:border-ares-cyan transition-colors"
