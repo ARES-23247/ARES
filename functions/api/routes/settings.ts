@@ -46,16 +46,23 @@ const settingsHandlers = {
     const db = c.get("db") as Kysely<DB>;
     try {
       const entries = Object.entries(body) as [string, string][];
+      let updatedCount = 0;
       for (const [key, value] of entries) {
+        // SEC-03: Prevent overwriting secrets with the masked versions passed back by the frontend
+        if (SENSITIVE_KEYS.has(key) && typeof value === 'string' && value.startsWith('••••')) {
+          continue;
+        }
+
         const error = validateLength(value, MAX_INPUT_LENGTHS.generic, key);
         if (error) return { status: 400 as const, body: { success: false, updated: 0 } as any };
         await db.insertInto("settings")
           .values({ key, value, updated_at: new Date().toISOString() })
           .onConflict((oc: any) => oc.column("key").doUpdateSet({ value, updated_at: new Date().toISOString() }))
           .execute();
+        updatedCount++;
       }
-      c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, `Updated ${entries.length} integration keys.`));
-      return { status: 200 as const, body: { success: true, updated: entries.length } as any };
+      c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, `Updated ${updatedCount} integration keys.`));
+      return { status: 200 as const, body: { success: true, updated: updatedCount } as any };
     } catch (e) {
       console.error("UPDATE_SETTINGS ERROR", e);
       return { status: 500 as const, body: { success: false, error: "Update failed" } as any };
