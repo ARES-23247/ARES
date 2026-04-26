@@ -50,12 +50,12 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
 
   const { data: meRes, isLoading: meLoading, isError: meError } = api.profiles.getMe.useQuery(["profile", "me"], undefined, {
     enabled: !adminEditUserId
-  } as any);
+  } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const { data: adminRes, isLoading: adminLoading, isError: adminError } = api.users.adminGetProfile.useQuery(
     ["profile", adminEditUserId || "none"], 
     { params: { id: adminEditUserId || "" } }, 
-    { enabled: !!adminEditUserId } as any
+    { enabled: !!adminEditUserId } as any // eslint-disable-line @typescript-eslint/no-explicit-any
   );
 
   const profileRes = adminEditUserId ? adminRes : meRes;
@@ -64,7 +64,7 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
 
   useEffect(() => {
     if (profileRes?.status === 200) {
-      // @ts-ignore
+      // @ts-expect-error backend responses branch dynamically
       const data = adminEditUserId ? profileRes.body.profile : profileRes.body;
       reset({
         ...DEFAULT_PROFILE,
