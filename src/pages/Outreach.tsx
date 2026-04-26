@@ -157,23 +157,23 @@ export default function Outreach() {
       </section>
 
       {/* Spark! Initiative */}
-      <section className="py-32 px-6 bg-white text-ares-black ares-cut-lg relative z-10 mt-20">
+      <section className="py-32 px-6 bg-obsidian border-t border-white/5 text-marble ares-cut-lg relative z-10 mt-20">
         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-4xl md:text-6xl font-black text-ares-red mb-8 tracking-tighter">Sparking Curiosity.</h2>
-            <p className="text-lg leading-relaxed mb-6 font-medium text-ares-gray">
-              ARES is proud to partner with <a href="https://sparkwv.org" target="_blank" rel="noopener noreferrer" className="text-ares-red underline font-black">Spark! Imagination and Science Center</a> in Morgantown. 
+            <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter">Sparking Curiosity.</h2>
+            <p className="text-lg leading-relaxed mb-6 font-medium text-marble/80">
+              ARES is proud to partner with <a href="https://sparkwv.org" target="_blank" rel="noopener noreferrer" className="text-white hover:text-ares-red transition-colors underline font-black">Spark! Imagination and Science Center</a> in Morgantown. 
             </p>
-            <p className="text-lg leading-relaxed text-ares-gray">
+            <p className="text-lg leading-relaxed text-marble/80">
               Together, we are developing a new rotating exhibit structure that highlights STEM stories unique to West Virginia. Our first project is the <strong>WV Bridge Exhibit</strong>, using the Engineering Design Process to teach children about structural integrity and local history.
             </p>
             <div className="mt-10 flex gap-4">
                <a href="https://sparkwv.org" target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-ares-red text-white font-black ares-cut-sm hover:scale-105 transition-all shadow-lg shadow-ares-red/20">Support Spark!</a>
-               <a href="/join" className="px-6 py-3 bg-marble border border-white/10 text-ares-black font-black ares-cut-sm hover:bg-ares-gray transition-all">Join the Mission</a>
+               <a href="/join" className="px-6 py-3 bg-white/5 border border-white/10 text-marble font-black ares-cut-sm hover:bg-white/10 transition-all">Join the Mission</a>
             </div>
           </div>
           <div className="relative">
-             <div className="aspect-square bg-ares-red ares-cut-lg overflow-hidden rotate-3 shadow-2xl border-8 border-white">
+             <div className="aspect-square bg-ares-red ares-cut-lg overflow-hidden rotate-3 shadow-2xl border-8 border-obsidian">
                 <div className="w-full h-full flex items-center justify-center text-white">
                    <Target size={120} strokeWidth={1} />
                 </div>

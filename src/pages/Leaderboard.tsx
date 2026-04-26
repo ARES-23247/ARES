@@ -71,7 +71,7 @@ export default function Leaderboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-white max-w-xl mx-auto text-lg"
+            className="text-white bg-obsidian px-6 py-3 ares-cut-sm inline-block max-w-xl mx-auto text-lg border border-white/5"
           >
             Recognizing the students and mentors who go above and beyond in engineering, outreach, and leadership.
           </motion.p>

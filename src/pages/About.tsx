@@ -167,7 +167,7 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 font-heading uppercase">Quick Answers</h2>
-            <p className="text-ares-red font-bold tracking-widest uppercase text-sm">Frequently Asked Questions</p>
+            <p className="text-white font-bold tracking-widest uppercase text-sm">Frequently Asked Questions</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

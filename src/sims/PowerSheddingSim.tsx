@@ -46,22 +46,35 @@ export default function PowerSheddingSim() {
     setLoads(prev => ({ ...prev, [load]: !prev[load] }));
   };
 
-  const getVoltageColor = () => {
-    if (isBrownout) return 'var(--ares-red)';
-    if (isShedding) return 'var(--ares-bronze)';
-    return 'var(--ares-cyan)';
+  // Re-write to use CSS classes instead of inline styles
+  const getVoltageTextColor = () => {
+    if (isBrownout) return 'text-ares-red';
+    if (isShedding) return 'text-ares-bronze';
+    return 'text-ares-cyan';
+  };
+
+  const getVoltageBgColor = () => {
+    if (isBrownout) return 'bg-ares-red';
+    if (isShedding) return 'bg-ares-bronze';
+    return 'bg-ares-cyan';
+  };
+  
+  const getVoltageShadowClass = () => {
+    if (isBrownout) return 'drop-shadow-[0_0_20px_rgba(192,0,0,0.3)]';
+    if (isShedding) return 'drop-shadow-[0_0_20px_rgba(205,127,50,0.3)]';
+    return 'drop-shadow-[0_0_20px_rgba(0,229,255,0.3)]';
   };
 
   return (
-    <div className="bg-ares-black border border-white/10 my-8 flex flex-col overflow-hidden text-white" style={{ fontFamily: "'Orbitron', sans-serif" }} role="region" aria-label="Power Shedding Simulator — interactive demonstration of FRC robot battery voltage sag under varying motor loads">
+    <div className="bg-ares-black border border-white/10 my-8 flex flex-col overflow-hidden text-white font-heading tracking-wider" role="region" aria-label="Power Shedding Simulator — interactive demonstration of FRC robot battery voltage sag under varying motor loads">
       <div className="px-5 py-4 bg-white/5 border-b border-white/10 text-sm font-bold text-ares-red">
         REAL-TIME POWER SHEDDING DIAGNOSTICS
       </div>
 
-      <div className="flex p-6 gap-8 flex-wrap justify-center">
+      <div className="flex p-6 gap-8 flex-wrap justify-center font-sans tracking-normal">
         {/* LOAD TOGGLES */}
         <div className="flex-1 min-w-[300px] flex flex-col gap-3">
-          <div className="text-xs text-white/60 mb-1">LOAD CONTROL (ACTIVATE MECHANISMS)</div>
+          <div className="text-xs text-white/60 mb-1 font-bold">LOAD CONTROL (ACTIVATE MECHANISMS)</div>
           
           <button 
             type="button"
@@ -69,8 +82,8 @@ export default function PowerSheddingSim() {
             className={`p-3 px-4 border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
               loads.swerve ? 'bg-ares-red shadow-[0_0_15px_rgba(192,0,0,0.4)]' : 'bg-white/5 hover:bg-white/10'
             }`}>
-            <span>[T1] SWERVE DRIVE</span>
-            <span className="text-xs opacity-80">+160A</span>
+            <span className="font-bold">[T1] SWERVE DRIVE</span>
+            <span className="text-xs opacity-80 font-bold">+160A</span>
           </button>
 
           <button 
@@ -79,18 +92,18 @@ export default function PowerSheddingSim() {
             className={`p-3 px-4 border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
               loads.shooter ? 'bg-ares-bronze shadow-[0_0_15px_rgba(205,127,50,0.4)]' : 'bg-white/5 hover:bg-white/10'
             }`}>
-            <span>[T2] SHOOTER FLYWHEELS</span>
-            <span className="text-xs opacity-80">+60A</span>
+            <span className="font-bold">[T2] SHOOTER FLYWHEELS</span>
+            <span className="text-xs opacity-80 font-bold">+60A</span>
           </button>
 
           <button 
             type="button"
             onClick={() => toggleLoad('intake')}
             className={`p-3 px-4 border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
-              loads.intake ? (isShedding ? 'bg-white/10 opacity-60' : 'bg-ares-cyan shadow-[0_0_15px_rgba(0,229,255,0.4)]') : 'bg-white/5 hover:bg-white/10'
+              loads.intake ? (isShedding ? 'bg-white/10 opacity-60' : 'bg-ares-cyan text-black shadow-[0_0_15px_rgba(0,229,255,0.4)]') : 'bg-white/5 hover:bg-white/10'
             }`}>
-            <span>[T3] INTAKE MOTORS</span>
-            <span className="text-xs opacity-80">
+            <span className="font-bold">[T3] INTAKE MOTORS</span>
+            <span className="text-xs opacity-80 font-bold">
               {loads.intake && isShedding ? '+4A (SHED)' : '+40A'}
             </span>
           </button>
@@ -99,32 +112,29 @@ export default function PowerSheddingSim() {
             type="button"
             onClick={() => toggleLoad('compressor')}
             className={`p-3 px-4 border-none text-white cursor-pointer text-left flex justify-between transition-all duration-200 ${
-              loads.compressor ? (isShedding ? 'bg-white/10 opacity-60' : 'bg-ares-cyan shadow-[0_0_15px_rgba(0,229,255,0.4)]') : 'bg-white/5 hover:bg-white/10'
+              loads.compressor ? (isShedding ? 'bg-white/10 opacity-60' : 'bg-ares-cyan text-black shadow-[0_0_15px_rgba(0,229,255,0.4)]') : 'bg-white/5 hover:bg-white/10'
             }`}>
-            <span>[T3] COMPRESSOR</span>
-            <span className="text-xs opacity-80">
+            <span className="font-bold">[T3] COMPRESSOR</span>
+            <span className="text-xs opacity-80 font-bold">
               {loads.compressor && isShedding ? '+3A (SHED)' : '+30A'}
             </span>
           </button>
         </div>
 
         {/* DASHBOARD */}
-        <div className="flex-1 min-w-[250px] bg-white/[0.03] p-6 border border-white/10 flex flex-col items-center justify-center gap-4 relative overflow-hidden">
-          <div className="text-5xl font-extrabold" style={{ color: getVoltageColor(), textShadow: `0 0 20px ${getVoltageColor()}44` }}>
+        <div className="flex-1 min-w-[250px] bg-white/[0.03] p-6 border border-white/10 flex flex-col items-center justify-center gap-4 relative overflow-hidden font-heading tracking-wider">
+          <div className={`text-5xl font-extrabold ${getVoltageTextColor()} ${getVoltageShadowClass()}`}>
             {voltage.toFixed(1)}V
           </div>
           
-          <div className="text-[12px] tracking-widest" style={{ color: isBrownout ? 'var(--ares-red)' : (isShedding ? 'var(--ares-bronze)' : 'var(--ares-cyan)') }}>
+          <div className={`text-[12px] tracking-widest font-bold ${getVoltageTextColor()}`}>
             {isBrownout ? 'CRITICAL BROWNOUT' : (isShedding ? 'POWER SHEDDING ACTIVE' : 'SYSTEM NOMINAL')}
           </div>
 
           <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden">
             <div 
-              className="h-full transition-all duration-300 ease-out"
-              style={{ 
-                width: `${(voltage / 12.5) * 100}%`,
-                backgroundColor: getVoltageColor()
-              }}
+              className={`h-full transition-all duration-300 ease-out ${getVoltageBgColor()}`}
+              style={{ width: `${(voltage / 12.5) * 100}%` }}
             ></div>
           </div>
 
