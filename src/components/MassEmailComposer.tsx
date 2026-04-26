@@ -26,7 +26,7 @@ export default function MassEmailComposer() {
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (err: any) => {
-      toast.error(`Failed to send mass email. ${err.message}`);
+      toast.error(`Failed to send mass email. ${err?.message || "Server returned an error."}`);
     }
   });
 

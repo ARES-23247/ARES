@@ -21,6 +21,9 @@ export const communicationsContract = c.router({
         success: z.literal(false),
         error: z.string(),
       }),
+      401: z.object({
+        error: z.string(),
+      }),
       500: z.object({
         success: z.literal(false),
         error: z.string(),
@@ -35,6 +38,9 @@ export const communicationsContract = c.router({
       200: z.object({
         activeUsers: z.number(),
       }),
+      401: z.object({
+        error: z.string(),
+      }),
       500: z.object({
         success: z.literal(false),
         error: z.string(),
@@ -43,3 +49,4 @@ export const communicationsContract = c.router({
     summary: "Get count of active users for mass email preview",
   },
 });
+

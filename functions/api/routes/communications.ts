@@ -1,10 +1,13 @@
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { communicationsContract } from "../../../shared/schemas/contracts/communicationsContract";
-import { AppEnv, getSocialConfig, logAuditAction, logSystemError } from "../middleware/utils";
+import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError } from "../middleware";
 
 const s = initServer<AppEnv>();
 export const communicationsRouter = new Hono<AppEnv>();
+
+// Require admin for all communications endpoints
+communicationsRouter.use("/*", ensureAdmin);
 
 const handlers = {
   getStats: async (_args: any, c: any) => {
@@ -95,10 +98,13 @@ const handlers = {
       };
 
     } catch (err: any) {
-      console.error("[Communications] Send mass email failed:", err);
-      const db = c.get("db");
-      await logSystemError(db, "Communications", "Failed to send mass email", err.message);
-      return { status: 500 as const, body: { success: false as const, error: err.message || "Failed to dispatch emails" } };
+      const errMsg = err instanceof Error ? err.message : (typeof err === "string" ? err : JSON.stringify(err) || "Unknown error");
+      console.error("[Communications] Send mass email failed:", errMsg);
+      try {
+        const db = c.get("db");
+        await logSystemError(db, "Communications", "Failed to send mass email", errMsg);
+      } catch { /* don't let logging failure mask the real error */ }
+      return { status: 500 as const, body: { success: false as const, error: errMsg || "Failed to dispatch emails" } };
     }
   }
 };
