@@ -238,13 +238,13 @@ export const eventHandlers = {
         if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
           try {
             const gcalId = await pushEventToGcal(
-              { id: genId, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined },
+              { id: genId, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, meeting_notes: meetingNotes || undefined },
               { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
             );
             if (gcalId) {
               await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", genId).execute();
             }
-          } catch { /* ignore GCal failure */ }
+          } catch (e) { console.error("GCAL_SAVE_FAIL", e); }
         }
 
         if (status === "published") {
@@ -252,7 +252,9 @@ export const eventHandlers = {
           if (socials) {
             await dispatchSocials(c.env.DB, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", coverImageUrl: coverImage || "/gallery_1.png", baseUrl }, socialConfig, socials).catch(() => {});
           }
-          await sendZulipMessage(c.env, "announcements", "Calendar", `📅 **New Event:** ${title}\n📍 ${location || "TBD"}\n[View](${baseUrl}/events)`).catch(() => {});
+          const eventTopic = `Event: ${title}`;
+          const eventContent = `📅 **New Event Scheduled**\n\n**Title:** ${title}\n**Location:** ${location || "TBD"}\n\n[View Event](${baseUrl}/events)`;
+          await sendZulipMessage(c.env, "events", eventTopic, eventContent).catch(() => {});
         }
       })());
 
@@ -309,13 +311,13 @@ export const eventHandlers = {
             try {
               const row = await db.selectFrom("events").select("gcal_event_id").where("id", "=", id).executeTakeFirst();
               const gcalId = await pushEventToGcal(
-                { id, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, gcal_event_id: row?.gcal_event_id || undefined },
+                { id, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, gcal_event_id: row?.gcal_event_id || undefined, meeting_notes: meetingNotes || undefined },
                 { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
               );
               if (gcalId && gcalId !== row?.gcal_event_id) {
                 await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", id).execute();
               }
-            } catch { /* ignore GCal failure */ }
+            } catch (e) { console.error("GCAL_UPDATE_FAIL", e); }
           }
         }
       })());
@@ -386,14 +388,19 @@ export const eventHandlers = {
         if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
           try {
             const gcalId = await pushEventToGcal(
-              { id: targetRow.id as string, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined },
+              { id: targetRow.id as string, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined, meeting_notes: targetRow.meeting_notes || undefined },
               { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
             );
             if (gcalId && gcalId !== targetRow.gcal_event_id) {
               await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", targetRow.id).execute();
             }
-          } catch { /* ignore GCal failure */ }
+          } catch (e) { console.error("GCAL_APPROVE_FAIL", e); }
         }
+
+        const baseUrl = new URL(c.req.url).origin;
+        const eventTopic = `Event: ${targetRow.title}`;
+        const eventContent = `📅 **Event Approved & Scheduled**\n\n**Title:** ${targetRow.title}\n**Location:** ${targetRow.location || "TBD"}\n\n[View Event](${baseUrl}/events)`;
+        await sendZulipMessage(c.env, "events", eventTopic, eventContent).catch(() => {});
       })());
 
       return { status: 200 as const, body: { success: true } as any };
@@ -431,13 +438,13 @@ export const eventHandlers = {
         if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
           try {
             const gcalId = await pushEventToGcal(
-              { id: targetRow.id as string, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined },
+              { id: targetRow.id as string, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined, meeting_notes: targetRow.meeting_notes || undefined },
               { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
             );
             if (gcalId && gcalId !== targetRow.gcal_event_id) {
               await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", targetRow.id).execute();
             }
-          } catch { /* ignore GCal failure */ }
+          } catch (e) { console.error("GCAL_UNDELETE_FAIL", e); }
         }
       })());
 
@@ -691,7 +698,7 @@ export const eventHandlers = {
       if (social["GCAL_SERVICE_ACCOUNT_EMAIL"] && social["GCAL_PRIVATE_KEY"] && calId) {
         try {
           const gcalId = await pushEventToGcal(
-            { id: event.id as string, title: event.title, date_start: event.date_start, date_end: event.date_end || undefined, location: event.location || undefined, description: event.description || undefined, cover_image: event.cover_image || undefined, gcal_event_id: event.gcal_event_id || undefined },
+            { id: event.id as string, title: event.title, date_start: event.date_start, date_end: event.date_end || undefined, location: event.location || undefined, description: event.description || undefined, cover_image: event.cover_image || undefined, gcal_event_id: event.gcal_event_id || undefined, meeting_notes: event.meeting_notes || undefined },
             { email: social["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: social["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
           );
           if (gcalId && gcalId !== event.gcal_event_id) {

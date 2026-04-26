@@ -16,6 +16,7 @@ export interface ARES_Event {
   description?: string;
   cover_image?: string;
   gcal_event_id?: string;
+  meeting_notes?: string;
 }
 
 /**
@@ -116,16 +117,25 @@ function prepareGcalPayload(event: ARES_Event) {
       const tzLess = d.toISOString().replace(".000Z", "");
       endObj = { dateTime: formatFloatingDateTime(tzLess), timeZone: "America/New_York" };
     } else {
-      endObj = startObj;
+      endObj = { date: baseStart.split("T")[0] };
     }
   }
 
+  // Google Calendar API requires the end date to be exclusive for all-day events
+  // Since ARESWEB provides inclusive dates, we add 1 day to the end date.
+  if (startObj.date && endObj.date) {
+    const d = new Date(endObj.date + "T12:00:00Z");
+    d.setUTCDate(d.getUTCDate() + 1);
+    endObj.date = d.toISOString().split("T")[0];
+  }
+
   const cleanDescription = parseAstToText(event.description || "");
+  const notesText = event.meeting_notes ? `\n\n--- Meeting Notes ---\n${event.meeting_notes}` : "";
 
   return {
     summary: event.title,
     location: event.location || "",
-    description: cleanDescription,
+    description: cleanDescription + notesText,
     start: startObj,
     end: endObj,
   };
