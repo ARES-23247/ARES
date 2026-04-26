@@ -29,6 +29,7 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: any 
   const board = boardArray ? {
     title: "Project Board",
     shortDescription: "GitHub Projects",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- API response items are dynamically shaped
     items: boardArray.map((item: any) => ({
       id: item.id,
       title: item.title,

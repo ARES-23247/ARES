@@ -341,7 +341,7 @@ export function SocialCard({
           <Camera size={20} className="text-white/80" /> Community Shared Resources
         </h3>
         <p className="text-xs text-ares-gray mb-4 block">
-          Public links to your team's Google Drive, Google Photos, or Google Docs. These will appear on the public-facing pages.
+          Public links to your team&apos;s Google Drive, Google Photos, or Google Docs. These will appear on the public-facing pages.
         </p>
         <div className="space-y-4">
           <div>
