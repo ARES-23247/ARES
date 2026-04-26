@@ -6,7 +6,10 @@ export const onRequest: PagesFunction = async (context) => {
 
   if (host.endsWith(".pages.dev")) {
     // API requests: block, except for webhooks which need to work on pages.dev domains
-    if (url.pathname.startsWith("/api/") && !url.pathname.startsWith("/api/webhooks/")) {
+    if (url.pathname.startsWith("/api/")) {
+      if (url.pathname.startsWith("/api/webhooks/")) {
+        return context.next();
+      }
       return new Response(JSON.stringify({ error: "Use aresfirst.org" }), {
         status: 403,
         headers: { "Content-Type": "application/json" }
