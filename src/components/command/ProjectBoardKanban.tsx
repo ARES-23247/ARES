@@ -121,7 +121,7 @@ export default function ProjectBoardKanban({
 
   const findColumn = (id: string): string | null => {
     // Check if the id is a column droppable
-    if (COLUMNS.includes(id as any)) return id;
+    if ((COLUMNS as readonly string[]).includes(id)) return id;
     // Otherwise find which column the task is in
     for (const col of COLUMNS) {
       if (grouped[col].some(t => String(t.id) === String(id))) return col;

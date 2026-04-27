@@ -1,11 +1,9 @@
-// @ts-nocheck -- test mocks are loosely typed
  
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../../src/test/utils";
 import eventsRouter from "./index";
 import * as shared from "../../middleware";
-import { sql } from "kysely";
 
 vi.mock("kysely", async (importOriginal) => {
   const actual = await importOriginal<typeof import("kysely")>();

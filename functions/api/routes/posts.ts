@@ -1,5 +1,4 @@
-// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -22,7 +21,7 @@ import {
 const s = initServer<AppEnv>();
 
 const postTsRestRouter = s.router(postContract, {
-  getPosts: async (input, c: Context<AppEnv>) => {
+  getPosts: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -105,7 +104,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { posts: [] } }; // Graceful degradation
     }
   },
-  getPost: async (input, c: Context<AppEnv>) => {
+  getPost: async (input: any, c: any) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -163,7 +162,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  getAdminPosts: async (input, c: Context<AppEnv>) => {
+  getAdminPosts: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -200,7 +199,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { posts: [] } };
     }
   },
-  getAdminPost: async (input, c: Context<AppEnv>) => {
+  getAdminPost: async (input: any, c: any) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -229,7 +228,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  savePost: async (input, c: Context<AppEnv>) => {
+  savePost: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -352,7 +351,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  updatePost: async (input, c: Context<AppEnv>) => {
+  updatePost: async (input: any, c: any) => {
     const { params, body } = input;
     const { slug } = params;
     try {
@@ -406,7 +405,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async (input, c: Context<AppEnv>) => {
+  deletePost: async (input: any, c: any) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -419,7 +418,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undeletePost: async (input, c: Context<AppEnv>) => {
+  undeletePost: async (input: any, c: any) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -432,7 +431,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Undelete failed" } };
     }
   },
-  purgePost: async (input, c: Context<AppEnv>) => {
+  purgePost: async (input: any, c: any) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -461,7 +460,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-  approvePost: async (input, c: Context<AppEnv>) => {
+  approvePost: async (input: any, c: any) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -473,7 +472,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async (input, c: Context<AppEnv>) => {
+  rejectPost: async (input: any, c: any) => {
     const { params, body } = input;
     const { slug } = params;
     const { reason } = body;
@@ -502,7 +501,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async (input, c: Context<AppEnv>) => {
+  getPostHistory: async (input: any, c: any) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -517,7 +516,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Failed to fetch history" } };
     }
   },
-  restorePostHistory: async (input, c: Context<AppEnv>) => {
+  restorePostHistory: async (input: any, c: any) => {
     const { params } = input;
     const { slug, id } = params;
     const user = await getSessionUser(c);
@@ -525,7 +524,7 @@ const postTsRestRouter = s.router(postContract, {
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async (input, c: Context<AppEnv>) => {
+  repushSocials: async (input: any, c: any) => {
     const { params, body } = input;
     const { slug } = params;
     const { socials } = body;

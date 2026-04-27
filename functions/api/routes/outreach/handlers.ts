@@ -1,4 +1,3 @@
-// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
 
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -6,9 +5,8 @@ import { outreachContract } from "../../../../shared/schemas/contracts/outreachC
 import { AppEnv, getSessionUser, logAuditAction } from "../../middleware";
 import { retryTransaction } from "../../middleware/dbUtils";
 import { initServer } from "ts-rest-hono";
-import { Context } from "hono";
 
-const s = initServer<AppEnv>();
+const _s = initServer<AppEnv>();
 
 async function fetchVolunteerEvents(db: Kysely<DB>) {
   try {
@@ -39,8 +37,8 @@ async function fetchVolunteerEvents(db: Kysely<DB>) {
   }
 }
 
-export const outreachHandlers: Parameters<typeof s.router<typeof outreachContract>>[1] = {
-  list: async (_input, c: Context<AppEnv>) => {
+export const outreachHandlers: Parameters<typeof _s.router<typeof outreachContract>>[1] = {
+  list: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("outreach_logs")
@@ -81,7 +79,7 @@ export const outreachHandlers: Parameters<typeof s.router<typeof outreachContrac
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-  adminList: async (_input, c: Context<AppEnv>) => {
+  adminList: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("outreach_logs")
@@ -122,7 +120,7 @@ export const outreachHandlers: Parameters<typeof s.router<typeof outreachContrac
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-  save: async (input, c: Context<AppEnv>) => {
+  save: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -178,7 +176,7 @@ export const outreachHandlers: Parameters<typeof s.router<typeof outreachContrac
       return { status: 500, body: { error: "Save failed" } };
     }
   },
-  delete: async (input, c: Context<AppEnv>) => {
+  delete: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;

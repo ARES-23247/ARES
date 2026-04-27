@@ -1,20 +1,18 @@
-// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
 import { getSocialConfig, getSessionUser, getDbSettings, logAuditAction, AppEnv } from "../../middleware";
 import { pushEventToGcal, pullEventsFromGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials } from "../../../utils/socialSync";
 import { sendZulipMessage } from "../../../utils/zulipSync";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
-import { Context } from "hono";
 import { initServer } from "ts-rest-hono";
 
-const s = initServer<AppEnv>();
+const _s = initServer<AppEnv>();
 import { eventContract } from "../../../../shared/schemas/contracts/eventContract";
 
-type EventHandlers = Parameters<typeof s.router<typeof eventContract>>[1];
+type EventHandlers = Parameters<typeof _s.router<typeof eventContract>>[1];
 
 export const eventHandlers: EventHandlers = {
-  getEvents: async (input, c: Context<AppEnv>) => {
+  getEvents: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -79,7 +77,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { error: "Failed to fetch events" } } as any;
     }
   },
-  getCalendarSettings: async (_input, c: Context<AppEnv>) => {
+  getCalendarSettings: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("settings")
@@ -99,7 +97,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { error: "Failed to fetch calendar settings" } } as any;
     }
   },
-  getEvent: async (input, c: Context<AppEnv>) => {
+  getEvent: async (input: any, c: any) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -132,7 +130,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  getAdminEvents: async (input, c: Context<AppEnv>) => {
+  getAdminEvents: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -171,7 +169,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { error: "Failed to fetch events" } } as any;
     }
   },
-  adminDetail: async (input, c: Context<AppEnv>) => {
+  adminDetail: async (input: any, c: any) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -209,7 +207,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { error: "Database error" } } as any;
     }
   },
-  saveEvent: async (input, c: Context<AppEnv>) => {
+  saveEvent: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -286,7 +284,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Write failed" } } as any;
     }
   },
-  updateEvent: async (input, c: Context<AppEnv>) => {
+  updateEvent: async (input: any, c: any) => {
     const { params, body } = input;
     const { id } = params;
     try {
@@ -349,7 +347,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Update failed" } } as any;
     }
   },
-  deleteEvent: async (input, c: Context<AppEnv>) => {
+  deleteEvent: async (input: any, c: any) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -382,7 +380,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Delete failed" } } as any;
     }
   },
-  approveEvent: async (input, c: Context<AppEnv>) => {
+  approveEvent: async (input: any, c: any) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -432,7 +430,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Approval failed" } } as any;
     }
   },
-  rejectEvent: async (input, c: Context<AppEnv>) => {
+  rejectEvent: async (input: any, c: any) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -444,7 +442,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Rejection failed" } } as any;
     }
   },
-  undeleteEvent: async (input, c: Context<AppEnv>) => {
+  undeleteEvent: async (input: any, c: any) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -479,7 +477,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Restore failed" } } as any;
     }
   },
-  purgeEvent: async (input, c: Context<AppEnv>) => {
+  purgeEvent: async (input: any, c: any) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -512,7 +510,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Purge failed" } } as any;
     }
   },
-  syncEvents: async (_input, c: Context<AppEnv>) => {
+  syncEvents: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const dbSettings = await getDbSettings(c);
@@ -577,7 +575,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Sync failed" } } as any;
     }
   },
-  getSignups: async (input, c: Context<AppEnv>) => {
+  getSignups: async (input: any, c: any) => {
     try {
       const { params } = input;
       const eventId = params.id;
@@ -630,7 +628,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { error: "Failed to fetch signups" } } as any;
     }
   },
-  submitSignup: async (input, c: Context<AppEnv>) => {
+  submitSignup: async (input: any, c: any) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -646,7 +644,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Signup failed" } } as any;
     }
   },
-  deleteMySignup: async (input, c: Context<AppEnv>) => {
+  deleteMySignup: async (input: any, c: any) => {
     const { params } = input;
     try {
       const user = await getSessionUser(c);
@@ -659,7 +657,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Delete failed" } } as any;
     }
   },
-  updateMyAttendance: async (input, c: Context<AppEnv>) => {
+  updateMyAttendance: async (input: any, c: any) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -675,7 +673,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Update failed" } } as any;
     }
   },
-  updateUserAttendance: async (input, c: Context<AppEnv>) => {
+  updateUserAttendance: async (input: any, c: any) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -691,7 +689,7 @@ export const eventHandlers: EventHandlers = {
       return { status: 500, body: { success: false, error: "Update failed" } } as any;
     }
   },
-  repushEvent: async (input, c: Context<AppEnv>) => {
+  repushEvent: async (input: any, c: any) => {
     const { params, body } = input;
     const user = await getSessionUser(c);
     if (user?.role !== "admin" && user?.role !== "author") return { status: 401, body: { error: "Unauthorized" } };

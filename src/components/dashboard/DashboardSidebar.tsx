@@ -91,7 +91,7 @@ export default function DashboardSidebar({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
 
-  const { isAuthorized, canSeeInquiries, isAdmin, canSeeLogistics, role, memberType, canSeeTasks } = permissions;
+  const { isAuthorized, canSeeInquiries, isAdmin, canSeeLogistics, role, memberType } = permissions;
   const { pendingInquiriesCount, pendingPostsCount, pendingEventsCount, pendingDocsCount } = notifications;
 
   return (

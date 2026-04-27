@@ -30,7 +30,7 @@ import { suggestionRenderer } from '../suggestionRenderer';
 /**
  * Returns the full list of Tiptap extensions used by the ARES editor.
  */
-export const getEditorExtensions = (lowlight: any) => [
+export const getEditorExtensions = (lowlight: unknown) => [
   GlobalDragHandle.configure({
     dragHandleWidth: 20,
     scrollTreshold: 100,
@@ -71,7 +71,7 @@ export const getEditorExtensions = (lowlight: any) => [
   }),
   Mention.configure({
     HTMLAttributes: { class: 'bg-ares-red/10 text-ares-red font-bold py-0.5 px-2 ares-cut-sm border border-ares-red/20' },
-    renderLabel({ node }: any) {
+    renderLabel({ node }: { node: { attrs: Record<string, string> } }) {
       return `@${node.attrs.label ?? node.attrs.id}`;
     },
     suggestion: {

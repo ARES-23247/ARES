@@ -1,6 +1,4 @@
-// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
 import { Hono } from "hono";
-import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -12,7 +10,7 @@ const financeRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
 const financeTsRestRouter = s.router(financeContract, {
-  getSummary: async (input, c: Context<AppEnv>) => {
+  getSummary: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -60,7 +58,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  listPipeline: async (input, c: Context<AppEnv>) => {
+  listPipeline: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -85,7 +83,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  savePipeline: async (input, c: Context<AppEnv>) => {
+  savePipeline: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -157,7 +155,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  deletePipeline: async (input, c: Context<AppEnv>) => {
+  deletePipeline: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -169,7 +167,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  listTransactions: async (input, c: Context<AppEnv>) => {
+  listTransactions: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -196,7 +194,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  saveTransaction: async (input, c: Context<AppEnv>) => {
+  saveTransaction: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -229,7 +227,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  deleteTransaction: async (input, c: Context<AppEnv>) => {
+  deleteTransaction: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;

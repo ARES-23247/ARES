@@ -122,7 +122,7 @@ const renderText = (node: ASTNode) => {
 
 const renderHeading = (node: ASTNode, children: ReactNode) => {
   const level = node.attrs?.level || node.level || 1;
-  const Tag = `h${level}` as any;
+  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
   
   let className = "font-heading font-bold mb-4 text-white border-b border-white/10 pb-2";
   if (level === 1) className = "text-3xl " + className + " mt-10";

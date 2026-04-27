@@ -1,6 +1,4 @@
-// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
 import { Hono } from "hono";
-import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -11,7 +9,7 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 const s = initServer<AppEnv>();
 
 const badgesTsRestRouter = s.router(badgeContract, {
-  list: async (_input, c: Context<AppEnv>) => {
+  list: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -34,7 +32,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to fetch badges" } };
     }
   },
-  create: async (input, c: Context<AppEnv>) => {
+  create: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -53,7 +51,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to create badge" } };
     }
   },
-  grant: async (input, c: Context<AppEnv>) => {
+  grant: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -115,7 +113,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to award badge" } };
     }
   },
-  revoke: async (input, c: Context<AppEnv>) => {
+  revoke: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -129,7 +127,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to revoke badge" } };
     }
   },
-  delete: async (input, c: Context<AppEnv>) => {
+  delete: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -139,7 +137,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to delete badge definition" } };
     }
   },
-  leaderboard: async (_input, c: Context<AppEnv>) => {
+  leaderboard: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db

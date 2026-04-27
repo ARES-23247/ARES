@@ -1,7 +1,5 @@
-// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { Context } from "hono";
 import { seasonContract } from "../../../shared/schemas/contracts/seasonContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 import { Kysely } from "kysely";
@@ -10,7 +8,7 @@ import { DB } from "../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 
 const seasonsTsRestRouter = s.router(seasonContract, {
-  list: async (_input, c: Context<AppEnv>) => {
+  list: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -34,7 +32,7 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Failed to fetch seasons" } };
     }
   },
-  adminList: async (_input, c: Context<AppEnv>) => {
+  adminList: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -56,7 +54,7 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Failed to list seasons" } };
     }
   },
-  adminDetail: async (input, c: Context<AppEnv>) => {
+  adminDetail: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -85,7 +83,7 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Failed to fetch season" } };
     }
   },
-  getDetail: async (input, c: Context<AppEnv>) => {
+  getDetail: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -123,7 +121,7 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Failed to fetch season details" } };
     }
   },
-  save: async (input, c: Context<AppEnv>) => {
+  save: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -187,7 +185,7 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Save failed" } };
     }
   },
-  delete: async (input, c: Context<AppEnv>) => {
+  delete: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -203,7 +201,7 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undelete: async (input, c: Context<AppEnv>) => {
+  undelete: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -219,7 +217,7 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Restore failed" } };
     }
   },
-  purge: async (input, c: Context<AppEnv>) => {
+  purge: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;

@@ -1,4 +1,3 @@
-// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
 
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -10,8 +9,6 @@ import { sendZulipMessage } from "../../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../../utils/notifications";
 import { buildGitHubConfig, createProjectItem } from "../../../utils/githubProjects";
 import { initServer } from "ts-rest-hono";
-import { Context } from "hono";
-
 const _s = initServer<AppEnv>();
 
 export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
@@ -30,7 +27,7 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
 type InquiryHandlers = Parameters<typeof _s.router<typeof inquiryContract>>[1];
 
 export const inquiryHandlers: InquiryHandlers = {
-  list: async (input, c: Context<AppEnv>) => {
+  list: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -114,7 +111,7 @@ export const inquiryHandlers: InquiryHandlers = {
       return { status: 500, body: { error: "Failed to fetch inquiries" } };
     }
   },
-  submit: async (input, c: Context<AppEnv>) => {
+  submit: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -216,7 +213,7 @@ export const inquiryHandlers: InquiryHandlers = {
       return { status: 500, body: { error: "Submission failed" } };
     }
   },
-  updateStatus: async (input, c: Context<AppEnv>) => {
+  updateStatus: async (input: any, c: any) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -232,7 +229,7 @@ export const inquiryHandlers: InquiryHandlers = {
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-  delete: async (input, c: Context<AppEnv>) => {
+  delete: async (input: any, c: any) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
