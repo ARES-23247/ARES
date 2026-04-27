@@ -64,8 +64,8 @@ export default function ArmKgSim() {
       // @ts-expect-error -- D1 untyped response
       const cy = aCanvas.height/2;
 
-      const aresRed = getComputedStyle(document.documentElement).getPropertyValue('--ares-red').trim() || '#C00000';
-      const aresCyan = getComputedStyle(document.documentElement).getPropertyValue('--ares-cyan').trim() || '#00E5FF';
+      const aresRed = getComputedStyle(document.documentElement).getPropertyValue('--ares-red').trim() || 'var(--ares-red)';
+      const aresCyan = getComputedStyle(document.documentElement).getPropertyValue('--ares-cyan').trim() || 'var(--ares-cyan)';
       
       aCtx!.fillStyle = 'var(--ares-gray)';
       aCtx!.beginPath(); aCtx!.arc(cx,cy, 15, 0, Math.PI*2); aCtx!.fill();

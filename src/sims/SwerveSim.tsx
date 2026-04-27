@@ -121,7 +121,7 @@ export default function SwerveSim() {
 
       // Chassis
       ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
-      ctx.strokeStyle = '#C00000'; // ares-red
+      ctx.strokeStyle = 'var(--ares-red)'; // ares-red
       ctx.lineWidth = 2;
       ctx.fillRect(-rbW/2, -rbH/2, rbW, rbH);
       ctx.strokeRect(-rbW/2, -rbH/2, rbW, rbH);
@@ -142,10 +142,10 @@ export default function SwerveSim() {
         
         ctx.save();
         ctx.translate(pos[0], pos[1]);
-        ctx.fillStyle = '#1A1A1A';
+        ctx.fillStyle = 'var(--obsidian)';
         ctx.beginPath(); ctx.arc(0, 0, mR, 0, Math.PI * 2); ctx.fill();
         if (mSpeed > 0.01) ctx.rotate(mAngle);
-        ctx.fillStyle = '#00E5FF'; // ares-cyan
+        ctx.fillStyle = 'var(--ares-cyan)'; // ares-cyan
         ctx.fillRect(-mR, -2, mR * 2, 4);
         if (mSpeed > 0.1) {
            ctx.strokeStyle = '#FFD700'; // ares-gold
@@ -156,7 +156,7 @@ export default function SwerveSim() {
       });
 
       // Direction indicator
-      ctx.fillStyle = '#C00000';
+      ctx.fillStyle = 'var(--ares-red)';
       ctx.beginPath(); ctx.arc(rbW/2, 0, 4, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 

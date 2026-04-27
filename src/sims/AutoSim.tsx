@@ -169,7 +169,7 @@ export default function AutoSim() {
 
       waypointsRef.current.forEach((p: Point, i: number) => {
         ctx!.beginPath();
-        ctx!.fillStyle = i === 0 || i === waypointsRef.current.length-1 ? '#B32416' : '#29b6f6';
+        ctx!.fillStyle = i === 0 || i === waypointsRef.current.length-1 ? 'var(--ares-red)' : 'var(--ares-cyan)';
         ctx!.arc(p.x, p.y, 8, 0, Math.PI * 2);
         ctx!.fill();
         ctx!.strokeStyle = 'rgba(255,255,255,0.8)';
@@ -187,7 +187,7 @@ export default function AutoSim() {
       ctx!.translate(rx, ry);
       
       ctx!.fillStyle = 'rgba(40, 40, 40, 0.9)';
-      ctx!.strokeStyle = '#29b6f6';
+      ctx!.strokeStyle = 'var(--ares-cyan)';
       ctx!.lineWidth = 2;
       ctx!.fillRect(-rbW/2, -rbH/2, rbW, rbH);
       ctx!.strokeRect(-rbW/2, -rbH/2, rbW, rbH);
@@ -216,15 +216,15 @@ export default function AutoSim() {
   }, []);
 
   return (
-    <div style={{ width: '100%', minHeight: '480px', height: 'auto', backgroundColor: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ width: '100%', minHeight: '480px', height: 'auto', backgroundColor: 'var(--obsidian)', border: '1px solid #2a2a2a', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={canvasRef} style={{ display: 'block', width: '100%', height: '400px', cursor: 'crosshair' }} />
-      <div style={{ padding: '15px', borderTop: '1px solid #2a2a2a', display: 'flex', gap: '20px', background: '#111', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ color: '#ccc', fontFamily: '"Orbitron", sans-serif', fontSize: '14px' }}>
-            <strong style={{ color: '#29b6f6' }}>PATHPLANNER</strong> SPLINE GENERATOR
+      <div style={{ padding: '15px', borderTop: '1px solid #2a2a2a', display: 'flex', gap: '20px', background: 'var(--obsidian)', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ color: 'var(--ares-gray)', fontFamily: '"Orbitron", sans-serif', fontSize: '14px' }}>
+            <strong style={{ color: 'var(--ares-cyan)' }}>PATHPLANNER</strong> SPLINE GENERATOR
         </div>
         <button 
             onClick={() => setIsPlaying(!isPlaying)} 
-            style={{ background: isPlaying ? '#444' : '#B32416', color: '#fff', border: 'none', padding: '8px 25px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
+            style={{ background: isPlaying ? 'var(--ares-gray)' : 'var(--ares-red)', color: 'var(--marble)', border: 'none', padding: '8px 25px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
             {isPlaying ? 'STOP' : 'FOLLOW SPLINE'}
         </button>
       </div>

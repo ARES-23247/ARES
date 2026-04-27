@@ -126,7 +126,7 @@
 }
 
 .question-card h2 {
-  color: #fff;
+  color: var(--marble);
   font-size: 24px;
   margin: 0 0 30px 0;
 }
@@ -142,11 +142,11 @@
 
 .choice-btn,
 .yesno-btn {
-  background: #252525;
+  background: var(--ares-gray);
   border: 1px solid var(--ifm-color-emphasis-200);
   border-radius: 8px;
   padding: 16px 24px;
-  color: #ccc;
+  color: var(--ares-gray);
   font-size: 16px;
   cursor: pointer;
   transition: all 0.2s;
@@ -157,7 +157,7 @@
 .yesno-btn:hover {
   background: var(--ifm-color-emphasis-200);
   border-color: var(--ifm-color-emphasis-300);
-  color: #fff;
+  color: var(--marble);
 }
 
 .yesno-yes {
@@ -217,7 +217,7 @@
 }
 
 .solution-header h2 {
-  color: #fff;
+  color: var(--marble);
   font-size: 24px;
   margin: 0 0 10px 0;
 }
@@ -247,11 +247,11 @@
 }
 
 .solution-time {
-  color: #888;
+  color: var(--ares-gray);
 }
 
 .solution-description {
-  color: #ccc;
+  color: var(--ares-gray);
   font-size: 16px;
   line-height: 1.6;
   margin: 0 0 25px 0;
@@ -262,7 +262,7 @@
 }
 
 .solution-steps h3 {
-  color: #fff;
+  color: var(--marble);
   font-size: 18px;
   margin: 0 0 15px 0;
 }
@@ -270,7 +270,7 @@
 .solution-steps ol {
   margin: 0;
   padding-left: 20px;
-  color: #ccc;
+  color: var(--ares-gray);
 }
 
 .solution-steps li {
@@ -279,14 +279,14 @@
 }
 
 .related-docs {
-  background: #252525;
+  background: var(--ares-gray);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 25px;
 }
 
 .related-docs h4 {
-  color: #fff;
+  color: var(--marble);
   font-size: 14px;
   margin: 0 0 10px 0;
 }
@@ -319,7 +319,7 @@
 .nav-btn {
   background: var(--ifm-color-emphasis-200);
   border: 1px solid var(--ifm-color-emphasis-300);
-  color: #ccc;
+  color: var(--ares-gray);
   padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
@@ -329,17 +329,17 @@
 
 .nav-btn:hover {
   background: var(--ifm-color-emphasis-300);
-  color: #fff;
+  color: var(--marble);
 }
 
 .nav-btn-reset {
   background: var(--ares-red);
   border-color: var(--ares-red);
-  color: #fff;
+  color: var(--marble);
 }
 
 .nav-btn-reset:hover {
-  background: #d42e1e;
+  background: var(--ares-red);
 }
 
 /* Footer */
@@ -352,7 +352,7 @@
 }
 
 .wizard-footer p {
-  color: #888;
+  color: var(--ares-gray);
   font-size: 14px;
   margin: 0;
 }

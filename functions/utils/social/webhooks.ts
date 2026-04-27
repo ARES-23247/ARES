@@ -37,7 +37,7 @@ export async function dispatchDiscord(payload: PostPayload, config: SocialConfig
           url: payload.url,
           color: 12582912, // ARES Red (0xC00000)
           author: { name: "ARES 23247 Bot" },
-          image: payload.coverImageUrl ? { url: payload.url.replace('/blog/', '') + payload.coverImageUrl } : null,
+          image: payload.thumbnail ? { url: payload.url.replace('/blog/', '') + payload.thumbnail } : null,
           footer: { text: "FIRST Robotics Competition • ARES 23247" }
         }
       ]

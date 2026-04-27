@@ -51,7 +51,7 @@ export default function SotmSim() {
       for (let i = 0; i < canvas.height; i += SCALE) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
       
       // Hub
-      ctx.fillStyle = aresRed || "#C00000";
+      ctx.fillStyle = aresRed || 'var(--ares-red)';
       ctx.beginPath(); ctx.arc(HUB.x, HUB.y, 12, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "var(--marble)";
       ctx.font = "12px 'Orbitron', sans-serif";
@@ -59,7 +59,7 @@ export default function SotmSim() {
       
       // Robot
       const ROBOT = robotPosRef.current;
-      ctx.fillStyle = aresCyan || "#00E5FF";
+      ctx.fillStyle = aresCyan || 'var(--ares-cyan)';
       ctx.fillRect(ROBOT.x - 15, ROBOT.y - 15, 30, 30);
       
       const rVel = botVelocity;
@@ -69,7 +69,7 @@ export default function SotmSim() {
       const vy = -rVel * Math.cos(rHdg);
       
       if (rVel > 0) {
-        drawArrow(ROBOT.x, ROBOT.y, ROBOT.x + vx * SCALE, ROBOT.y + vy * SCALE, aresCyan || "#00E5FF", 2);
+        drawArrow(ROBOT.x, ROBOT.y, ROBOT.x + vx * SCALE, ROBOT.y + vy * SCALE, aresCyan || 'var(--ares-cyan)', 2);
       }
       
       let virtualTarget = { x: HUB.x, y: HUB.y };
@@ -99,7 +99,7 @@ export default function SotmSim() {
       drawArrow(ROBOT.x, ROBOT.y, virtualTarget.x, virtualTarget.y, aresBronze || "#CD7F32", 2);
       const absX = ROBOT.x + (virtualTarget.x - ROBOT.x) + (vx * tof * SCALE);
       const absY = ROBOT.y + (virtualTarget.y - ROBOT.y) + (vy * tof * SCALE);
-      drawArrow(ROBOT.x, ROBOT.y, absX, absY, aresRed || "#C00000", 3);
+      drawArrow(ROBOT.x, ROBOT.y, absX, absY, aresRed || 'var(--ares-red)', 3);
       
       if (!isDraggingRef.current) {
          setSolverLogs(logs.join('\n'));

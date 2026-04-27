@@ -54,7 +54,7 @@ describe("socialSync Utilities", () => {
     title: "New Blog Post",
     url: "https://aresfirst.org/blog/test",
     snippet: "Exciting news from ARES!",
-    coverImageUrl: "/gallery_1.png",
+    thumbnail: "/gallery_1.png",
     baseUrl: "https://aresfirst.org",
   };
 

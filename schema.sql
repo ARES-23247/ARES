@@ -293,6 +293,7 @@ CREATE TABLE IF NOT EXISTS inquiries (
     email TEXT NOT NULL,
     metadata TEXT,
     status TEXT DEFAULT 'pending',
+    is_deleted INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);

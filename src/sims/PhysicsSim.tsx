@@ -45,11 +45,11 @@ export default function PhysicsSim() {
         const robot = robotRef.current;
         const balls = ballsRef.current;
 
-        const aresRed = getComputedStyle(document.documentElement).getPropertyValue('--ares-red').trim() || '#C00000';
-        const aresCyan = getComputedStyle(document.documentElement).getPropertyValue('--ares-cyan').trim() || '#00E5FF';
-        const aresGold = getComputedStyle(document.documentElement).getPropertyValue('--ares-gold').trim() || '#FFB81C';
-        const obsidian = getComputedStyle(document.documentElement).getPropertyValue('--obsidian').trim() || '#1A1A1A';
-        const marble = getComputedStyle(document.documentElement).getPropertyValue('--marble').trim() || '#F9F9F9';
+        const aresRed = getComputedStyle(document.documentElement).getPropertyValue('--ares-red').trim() || 'var(--ares-red)';
+        const aresCyan = getComputedStyle(document.documentElement).getPropertyValue('--ares-cyan').trim() || 'var(--ares-cyan)';
+        const aresGold = getComputedStyle(document.documentElement).getPropertyValue('--ares-gold').trim() || 'var(--ares-gold)';
+        const obsidian = getComputedStyle(document.documentElement).getPropertyValue('--obsidian').trim() || 'var(--obsidian)';
+        const marble = getComputedStyle(document.documentElement).getPropertyValue('--marble').trim() || 'var(--marble)';
 
         // Resolve physics step
         const robotVx = robot.x - lastRobotPosRef.current.x;

@@ -14,7 +14,7 @@ export const eventSchema = z.object({
   isVolunteer: z.boolean().default(false),
   publishedAt: z.string().max(255).optional(),
   isDraft: z.boolean().optional(),
-  seasonId: z.string().max(255).optional(),
+  seasonId: z.coerce.number().optional(),
   meetingNotes: z.string().max(200000).optional(),
   socials: z.record(z.string().max(255), z.boolean()).optional(),
 });

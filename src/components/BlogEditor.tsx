@@ -34,7 +34,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
     resolver: zodResolver(postSchema),
     defaultValues: {
       title: "",
-      coverImageUrl: DEFAULT_COVER_IMAGE,
+      thumbnail: DEFAULT_COVER_IMAGE,
       ast: {},
       socials: {
         discord: true,
@@ -53,7 +53,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
   });
 
   const title = useWatch({ control, name: "title" });
-  const coverImageUrl = useWatch({ control, name: "coverImageUrl" });
+  const thumbnail = useWatch({ control, name: "thumbnail" });
   const socials = useWatch({ control, name: "socials" }) || {};
   const seasonId = useWatch({ control, name: "seasonId" });
 
@@ -81,7 +81,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         title: post.title || "",
         publishedAt: post.published_at || "",
         seasonId: post.season_id ? String(post.season_id) : "",
-        coverImageUrl: post.thumbnail || DEFAULT_COVER_IMAGE,
+        thumbnail: post.thumbnail || DEFAULT_COVER_IMAGE,
         ast: post.ast ? JSON.parse(post.ast) : {},
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         socials: (socials as any) || {}
@@ -170,7 +170,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
   const onFormSubmit = (data: PostPayload, isDraft = false) => {
     if (!editor) return;
     const ast = editor.getJSON();
-    const payload = { ...data, ast, isDraft, coverImageUrl: data.coverImageUrl === DEFAULT_COVER_IMAGE ? "" : data.coverImageUrl };
+    const payload = { ...data, ast, isDraft, thumbnail: data.thumbnail === DEFAULT_COVER_IMAGE ? "" : data.thumbnail };
     if (editSlug) {
       updateMutation.mutate({ params: { slug: editSlug }, body: payload });
     } else {
@@ -229,15 +229,15 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         </div>
         <div className="flex-1">
           <CoverAssetPicker 
-            coverImage={coverImageUrl || DEFAULT_COVER_IMAGE}
+            coverImage={thumbnail || DEFAULT_COVER_IMAGE}
             isUploading={isUploadingCover}
             onLibraryClick={() => setIsCoverPickerOpen(true)}
-            onUrlChange={(url) => setValue("coverImageUrl", url)}
+            onUrlChange={(url) => setValue("thumbnail", url)}
             onFileChange={async (file) => {
               try {
                 setUploadError("");
                 const { url } = await uploadFile(file);
-                setValue("coverImageUrl", url);
+                setValue("thumbnail", url);
               } catch {
                 // handled by hook
               }
@@ -270,7 +270,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         isOpen={isCoverPickerOpen}
         onClose={() => setIsCoverPickerOpen(false)}
         onSelect={(url) => {
-          setValue("coverImageUrl", url);
+          setValue("thumbnail", url);
           setIsCoverPickerOpen(false);
         }}
       />

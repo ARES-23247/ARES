@@ -325,7 +325,7 @@ export default function FieldVisualizer({
         width: '100%',
         height: '500px',
         position: 'relative',
-        backgroundColor: '#0a0a0a',
+        backgroundColor: 'var(--obsidian)',
         border: '1px solid #2a2a2a',
         borderRadius: '8px',
         overflow: 'hidden',
@@ -349,7 +349,7 @@ export default function FieldVisualizer({
           backgroundColor: 'rgba(0, 0, 0, 0.7)',
           padding: '8px 12px',
           borderRadius: '4px',
-          color: '#fff',
+          color: 'var(--marble)',
           fontFamily: '"Orbitron", sans-serif',
           fontSize: '12px',
         }}
@@ -364,7 +364,7 @@ export default function FieldVisualizer({
           backgroundColor: 'rgba(0, 0, 0, 0.7)',
           padding: '8px 12px',
           borderRadius: '4px',
-          color: '#aaa',
+          color: 'var(--ares-gray)',
           fontFamily: 'Inter, sans-serif',
           fontSize: '11px',
         }}

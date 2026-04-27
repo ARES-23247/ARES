@@ -85,12 +85,12 @@ export default function FlywheelKvSim() {
       wCtx!.translate(cx, cy);
       wCtx!.rotate(fwAngle);
       
-      wCtx!.fillStyle = '#1a1a1a';
-      wCtx!.strokeStyle = '#29b6f6'; 
+      wCtx!.fillStyle = 'var(--obsidian)';
+      wCtx!.strokeStyle = 'var(--ares-cyan)'; 
       wCtx!.lineWidth = 4;
       wCtx!.beginPath(); wCtx!.arc(0,0, 50, 0, Math.PI*2); wCtx!.fill(); wCtx!.stroke();
       
-      wCtx!.fillStyle = '#444';
+      wCtx!.fillStyle = 'var(--ares-gray)';
       for(let i=0; i<3; i++) {
           wCtx!.rotate(Math.PI*2/3);
           wCtx!.beginPath(); wCtx!.arc(35, 0, 8, 0, Math.PI*2); wCtx!.fill();
@@ -113,7 +113,7 @@ export default function FlywheelKvSim() {
       if(fwHist.length < 2) { frameId = requestAnimationFrame(drawFlywheel); return; }
       
       fwGCtx!.beginPath();
-      fwGCtx!.strokeStyle = '#29b6f6';
+      fwGCtx!.strokeStyle = 'var(--ares-cyan)';
       fwGCtx!.lineWidth = 2;
       for(let i=0; i<fwHist.length; i++) {
           const x = i * slice;
@@ -123,7 +123,7 @@ export default function FlywheelKvSim() {
       fwGCtx!.stroke();
       
       fwGCtx!.beginPath();
-      fwGCtx!.strokeStyle = '#B32416';
+      fwGCtx!.strokeStyle = 'var(--ares-red)';
       fwGCtx!.lineWidth = 2;
       for(let i=0; i<fwHist.length; i++) {
           const x = i * slice;

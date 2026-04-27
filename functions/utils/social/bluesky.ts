@@ -31,9 +31,9 @@ export async function dispatchBluesky(payload: PostPayload, config: SocialConfig
 
     let embed = undefined;
     // Only attempt to fetch and upload the image to BlueSky if it's an explicit, absolute, external URL.
-    if (payload.coverImageUrl && payload.coverImageUrl.startsWith('http')) {
+    if (payload.thumbnail && payload.thumbnail.startsWith('http')) {
       try {
-        const imgRes = await fetch(payload.coverImageUrl, { signal: AbortSignal.timeout(5000) });
+        const imgRes = await fetch(payload.thumbnail, { signal: AbortSignal.timeout(5000) });
         if (imgRes.ok) {
           const imgBuffer = await imgRes.arrayBuffer();
           const mimeType = imgRes.headers.get("content-type") || "image/jpeg";

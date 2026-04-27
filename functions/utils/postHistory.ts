@@ -31,7 +31,7 @@ export async function createShadowRevision(
   data: {
     title: string;
     author?: string;
-    coverImageUrl?: string;
+    thumbnail?: string;
     snippet: string;
     astStr: string;
     publishedAt?: string;
@@ -49,7 +49,7 @@ export async function createShadowRevision(
       title: data.title,
       author: data.author || "ARES Team",
       date: dateStr,
-      thumbnail: data.coverImageUrl || "",
+      thumbnail: data.thumbnail || "",
       snippet: data.snippet,
       ast: data.astStr,
       cf_email: user.email,
@@ -256,7 +256,7 @@ export async function approvePost(c: Context<AppEnv>, slug: string) {
         title: row.title as string,
         url: `${baseUrl}/blog/${slug}`,
         snippet: (row.snippet || "Read the latest engineering update from ARES 23247!") as string,
-        coverImageUrl: (row.thumbnail || "/gallery_1.png") as string,
+        thumbnail: (row.thumbnail || "/gallery_1.png") as string,
         baseUrl: baseUrl
       },
       socialConfig

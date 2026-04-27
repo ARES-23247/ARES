@@ -47,10 +47,36 @@ export interface Awards {
   event_name: string;
   icon_type: Generated<string | null>;
   id: Generated<number | null>;
-  id_new: string | null;
   is_deleted: Generated<number | null>;
-  season_id: string | null;
+  season_id: number | null;
   title: string;
+}
+
+export interface AwardsFts {
+  description: string | null;
+  event_name: string | null;
+  title: string | null;
+}
+
+export interface AwardsFtsConfig {
+  k: string;
+  v: string | null;
+}
+
+export interface AwardsFtsData {
+  block: Uint8Array | null;
+  id: Generated<number | null>;
+}
+
+export interface AwardsFtsDocsize {
+  id: Generated<number | null>;
+  sz: Uint8Array | null;
+}
+
+export interface AwardsFtsIdx {
+  pgno: string | null;
+  segid: string;
+  term: string;
 }
 
 export interface Badges {
@@ -65,20 +91,24 @@ export interface Badges {
 export interface Comments {
   content: string;
   created_at: Generated<string | null>;
-  id: Generated<number | null>;
+  id: string | null;
   is_deleted: Generated<number | null>;
   target_id: string;
   target_type: string;
+  updated_at: Generated<string | null>;
   user_id: string;
   zulip_message_id: string | null;
-  zulip_message_id_num: number | null;
-  zulip_sender_id: number | null;
 }
 
 export interface D1Migrations {
   applied_at: Generated<string>;
   id: Generated<number | null>;
   name: string | null;
+}
+
+export interface DietaryCategories {
+  category: string;
+  restriction: string | null;
 }
 
 export interface Docs {
@@ -101,7 +131,7 @@ export interface DocsFeedback {
   comment: string | null;
   created_at: Generated<string | null>;
   id: Generated<number | null>;
-  is_helpful: number;
+  is_helpful: number | null;
   slug: string;
 }
 
@@ -149,13 +179,23 @@ export interface DocsFtsIdx {
 
 export interface DocsHistory {
   author_email: string | null;
-  category: string;
-  content: string;
+  category: string | null;
+  content: string | null;
   created_at: Generated<string | null>;
   description: string | null;
   id: Generated<number | null>;
   slug: string;
-  title: string;
+  title: string | null;
+}
+
+export interface EntityLinks {
+  created_at: Generated<string | null>;
+  id: string | null;
+  link_type: Generated<string | null>;
+  source_id: string;
+  source_type: string;
+  target_id: string;
+  target_type: string;
 }
 
 export interface Events {
@@ -174,7 +214,7 @@ export interface Events {
   meeting_notes: string | null;
   published_at: string | null;
   revision_of: string | null;
-  season_id: string | null;
+  season_id: number | null;
   status: Generated<string | null>;
   tba_event_key: string | null;
   title: string;
@@ -231,6 +271,19 @@ export interface EventSignups {
   user_id: string;
 }
 
+export interface FinanceTransactions {
+  amount: number;
+  category: string;
+  created_at: Generated<string | null>;
+  date: string;
+  description: string | null;
+  id: string | null;
+  logged_by: string | null;
+  receipt_url: string | null;
+  season_id: number | null;
+  type: string;
+}
+
 export interface Inquiries {
   created_at: Generated<string | null>;
   email: string;
@@ -242,23 +295,34 @@ export interface Inquiries {
 }
 
 export interface JudgeAccessCodes {
-  code: string | null;
+  code: string;
   created_at: Generated<string | null>;
   expires_at: string | null;
   id: string | null;
+  label: Generated<string | null>;
 }
 
 export interface Locations {
-  address: string;
-  created_at: Generated<string | null>;
+  address: string | null;
   id: string | null;
   is_deleted: Generated<number | null>;
   maps_url: string | null;
   name: string;
 }
 
+export interface MatchStrategy {
+  created_at: Generated<string | null>;
+  event_id: string;
+  id: string | null;
+  match_number: number;
+  our_role: string | null;
+  partner_team: string | null;
+  post_match_result: string | null;
+  strategy_notes: string | null;
+}
+
 export interface MediaTags {
-  folder: string | null;
+  folder: Generated<string | null>;
   key: string | null;
   tags: string | null;
 }
@@ -272,6 +336,33 @@ export interface Notifications {
   priority: Generated<string | null>;
   title: string;
   user_id: string;
+}
+
+export interface OutreachFts {
+  impact_summary: string | null;
+  location: string | null;
+  title: string | null;
+}
+
+export interface OutreachFtsConfig {
+  k: string;
+  v: string | null;
+}
+
+export interface OutreachFtsData {
+  block: Uint8Array | null;
+  id: Generated<number | null>;
+}
+
+export interface OutreachFtsDocsize {
+  id: Generated<number | null>;
+  sz: Uint8Array | null;
+}
+
+export interface OutreachFtsIdx {
+  pgno: string | null;
+  segid: string;
+  term: string;
 }
 
 export interface OutreachLogs {
@@ -288,13 +379,13 @@ export interface OutreachLogs {
   mentored_team_number: string | null;
   metadata: string | null;
   people_reached: number | null;
-  season_id: string | null;
+  season_id: number | null;
   students_count: Generated<number | null>;
   title: string;
 }
 
 export interface PageAnalytics {
-  category: string;
+  category: Generated<string | null>;
   id: Generated<number | null>;
   path: string;
   referrer: string | null;
@@ -302,8 +393,24 @@ export interface PageAnalytics {
   user_agent: string | null;
 }
 
+export interface PitScouting {
+  can_help_with: string | null;
+  created_at: Generated<string | null>;
+  drive_train: string | null;
+  event_id: string;
+  id: string | null;
+  image_url: string | null;
+  needs_help_with: string | null;
+  notes: string | null;
+  scoring_capabilities: string | null;
+  scouted_by: string | null;
+  team_name: string | null;
+  team_number: string;
+  updated_at: Generated<string | null>;
+}
+
 export interface Posts {
-  ast: string | null;
+  ast: string;
   author: string | null;
   cf_email: string | null;
   date: string | null;
@@ -311,21 +418,19 @@ export interface Posts {
   is_portfolio: Generated<number | null>;
   published_at: string | null;
   revision_of: string | null;
-  season_id: string | null;
+  season_id: number | null;
   slug: string | null;
   snippet: string | null;
   status: Generated<string | null>;
   thumbnail: string | null;
-  title: string | null;
+  title: string;
 }
 
 export interface PostsFts {
   ast: string | null;
   author: string | null;
-  is_deleted: string | null;
   slug: string | null;
   snippet: string | null;
-  status: string | null;
   title: string | null;
 }
 
@@ -340,8 +445,6 @@ export interface PostsFtsContent {
   c2: string | null;
   c3: string | null;
   c4: string | null;
-  c5: string | null;
-  c6: string | null;
   id: Generated<number | null>;
 }
 
@@ -367,7 +470,7 @@ export interface PostsHistory {
   author_email: string | null;
   created_at: Generated<string | null>;
   id: Generated<number | null>;
-  season_id: string | null;
+  season_id: number | null;
   slug: string;
   snippet: string | null;
   thumbnail: string | null;
@@ -378,6 +481,17 @@ export interface RateLimits {
   count: number;
   expires_at: number;
   ip: string | null;
+}
+
+export interface SeasonGoals {
+  category: string;
+  created_at: Generated<string | null>;
+  current_value: Generated<number | null>;
+  id: string | null;
+  notes: string | null;
+  season_id: number;
+  target_value: number;
+  updated_at: Generated<string | null>;
 }
 
 export interface Seasons {
@@ -414,46 +528,6 @@ export interface Settings {
   value: string;
 }
 
-export interface Tasks {
-  id: string | null;
-  title: string;
-  description: string | null;
-  status: Generated<string | null>;
-  priority: Generated<string | null>;
-  sort_order: Generated<number | null>;
-  assigned_to: string | null;
-  created_by: string;
-  due_date: string | null;
-  created_at: Generated<string | null>;
-  updated_at: Generated<string | null>;
-}
-
-export interface FinanceTransactions {
-  amount: number;
-  category: string;
-  created_at: Generated<string | null>;
-  date: string;
-  description: string | null;
-  id: string | null;
-  logged_by: string | null;
-  receipt_url: string | null;
-  season_id: string | null;
-  type: string;
-}
-
-export interface SponsorshipPipeline {
-  company_name: string;
-  contact_person: string | null;
-  created_at: Generated<string | null>;
-  estimated_value: Generated<number | null>;
-  id: string | null;
-  notes: string | null;
-  season_id: string | null;
-  sponsor_id: string | null;
-  status: Generated<string>;
-  updated_at: Generated<string | null>;
-}
-
 export interface SponsorMetrics {
   clicks: Generated<number | null>;
   created_at: Generated<string | null>;
@@ -473,11 +547,38 @@ export interface Sponsors {
   website_url: string | null;
 }
 
+export interface SponsorshipPipeline {
+  company_name: string;
+  contact_person: string | null;
+  created_at: Generated<string | null>;
+  estimated_value: Generated<number | null>;
+  id: string | null;
+  notes: string | null;
+  season_id: number | null;
+  sponsor_id: string | null;
+  status: Generated<string>;
+  updated_at: Generated<string | null>;
+}
+
 export interface SponsorTokens {
   created_at: Generated<string | null>;
   created_by: string | null;
   sponsor_id: string;
   token: string | null;
+}
+
+export interface Tasks {
+  assigned_to: string | null;
+  created_at: Generated<string | null>;
+  created_by: string;
+  description: string | null;
+  due_date: string | null;
+  id: string | null;
+  priority: Generated<string | null>;
+  sort_order: Generated<number | null>;
+  status: Generated<string | null>;
+  title: string;
+  updated_at: Generated<string | null>;
 }
 
 export interface User {
@@ -488,6 +589,9 @@ export interface User {
   image: string | null;
   name: string;
   role: Generated<string | null>;
+  twoFactorBackupCodes: string | null;
+  twoFactorEnabled: Generated<number | null>;
+  twoFactorSecret: string | null;
   updatedAt: number;
 }
 
@@ -583,67 +687,20 @@ export interface Verification {
   value: string;
 }
 
-export interface EntityLinks {
-  id: string | null;
-  source_type: string;
-  source_id: string;
-  target_type: string;
-  target_id: string;
-  link_type: Generated<string | null>;
-  created_at: Generated<string | null>;
-}
-
-export interface PitScouting {
-  id: string | null;
-  event_id: string;
-  team_number: string;
-  team_name: string | null;
-  drive_train: string | null;
-  scoring_capabilities: string | null;
-  can_help_with: string | null;
-  needs_help_with: string | null;
-  notes: string | null;
-  image_url: string | null;
-  scouted_by: string | null;
-  created_at: Generated<string | null>;
-  updated_at: Generated<string | null>;
-}
-
-export interface MatchStrategy {
-  id: string | null;
-  event_id: string;
-  match_number: number;
-  our_role: string | null;
-  partner_team: string | null;
-  strategy_notes: string | null;
-  post_match_result: string | null;
-  created_at: Generated<string | null>;
-}
-
-export interface SeasonGoals {
-  id: string | null;
-  season_id: number;
-  category: string;
-  target_value: number;
-  current_value: Generated<number | null>;
-  notes: string | null;
-  created_at: Generated<string | null>;
-  updated_at: Generated<string | null>;
-}
-
 export interface DB {
   _cf_METADATA: _CfMETADATA;
   account: Account;
   audit_log: AuditLog;
   awards: Awards;
-  awards_fts: {
-    title: string | null;
-    event_name: string | null;
-    description: string | null;
-  };
+  awards_fts: AwardsFts;
+  awards_fts_config: AwardsFtsConfig;
+  awards_fts_data: AwardsFtsData;
+  awards_fts_docsize: AwardsFtsDocsize;
+  awards_fts_idx: AwardsFtsIdx;
   badges: Badges;
   comments: Comments;
   d1_migrations: D1Migrations;
+  dietary_categories: DietaryCategories;
   docs: Docs;
   docs_feedback: DocsFeedback;
   docs_fts: DocsFts;
@@ -669,11 +726,11 @@ export interface DB {
   match_strategy: MatchStrategy;
   media_tags: MediaTags;
   notifications: Notifications;
-  outreach_fts: {
-    title: string | null;
-    location: string | null;
-    impact_summary: string | null;
-  };
+  outreach_fts: OutreachFts;
+  outreach_fts_config: OutreachFtsConfig;
+  outreach_fts_data: OutreachFtsData;
+  outreach_fts_docsize: OutreachFtsDocsize;
+  outreach_fts_idx: OutreachFtsIdx;
   outreach_logs: OutreachLogs;
   page_analytics: PageAnalytics;
   pit_scouting: PitScouting;

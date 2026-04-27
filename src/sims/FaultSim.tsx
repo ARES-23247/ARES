@@ -65,18 +65,18 @@ export default function FaultSim() {
       const cy = height / 2;
 
       // Draw RIO
-      ctx!.fillStyle = '#111';
-      ctx!.strokeStyle = '#555';
+      ctx!.fillStyle = 'var(--obsidian)';
+      ctx!.strokeStyle = 'var(--ares-gray)';
       ctx!.lineWidth = 2;
       ctx!.fillRect(cx - 150, cy - 40, 80, 80);
       ctx!.strokeRect(cx - 150, cy - 40, 80, 80);
-      ctx!.fillStyle = '#29b6f6';
+      ctx!.fillStyle = 'var(--ares-cyan)';
       ctx!.font = '12px "Orbitron", sans-serif';
       ctx!.fillText('RoboRIO', cx - 140, cy + 5);
 
       // Draw Motor
-      ctx!.fillStyle = '#111';
-      ctx!.strokeStyle = healthy ? '#29b6f6' : '#B32416';
+      ctx!.fillStyle = 'var(--obsidian)';
+      ctx!.strokeStyle = healthy ? 'var(--ares-cyan)' : 'var(--ares-red)';
       ctx!.lineWidth = 2;
       ctx!.beginPath();
       ctx!.arc(cx + 100, cy, 40, 0, Math.PI * 2);
@@ -91,13 +91,13 @@ export default function FaultSim() {
       ctx!.lineTo(cx - 40, cy);
       
       if (!healthy) {
-         ctx!.strokeStyle = '#B32416';
+         ctx!.strokeStyle = 'var(--ares-red)';
          ctx!.setLineDash([5, 5]);
          // Draw snapped wire
          ctx!.lineTo(cx, cy - 10);
          ctx!.moveTo(cx + 10, cy + 10);
       } else {
-         ctx!.strokeStyle = (time % 0.5 < 0.25) ? '#e5e112' : '#28c035'; // Blinking CAN colors
+         ctx!.strokeStyle = (time % 0.5 < 0.25) ? 'var(--ares-gold)' : '#28c035'; // Blinking CAN colors
          ctx!.setLineDash([]);
          ctx!.lineTo(cx, cy);
       }
@@ -111,7 +111,7 @@ export default function FaultSim() {
       ctx!.save();
       ctx!.translate(cx + 100, cy);
       ctx!.rotate(hwAngle);
-      ctx!.fillStyle = healthy ? '#e8e8e8' : '#B32416';
+      ctx!.fillStyle = healthy ? 'var(--marble)' : 'var(--ares-red)';
       ctx!.fillRect(-5, -30, 10, 60);
       ctx!.restore();
 
@@ -141,22 +141,22 @@ export default function FaultSim() {
       ctx!.restore();
 
       // Ghost text
-      ctx!.fillStyle = '#29b6f6';
+      ctx!.fillStyle = 'var(--ares-cyan)';
       ctx!.fillText('IO Abstraction (Sim Node)', cx + 40, cy - 140);
       
       // Readout Box
       ctx!.fillStyle = 'rgba(10,10,10,0.8)';
       ctx!.fillRect(20, 20, 200, 80);
-      ctx!.strokeStyle = '#2a2a2a';
+      ctx!.strokeStyle = 'var(--ares-gray)';
       ctx!.strokeRect(20, 20, 200, 80);
       
-      ctx!.fillStyle = '#e8e8e8';
+      ctx!.fillStyle = 'var(--marble)';
       ctx!.fillText(`HW Velocity: ${hardwareSpeedRef.current.toFixed(1)}`, 30, 45);
       ctx!.fillText(`SW Velocity: ${simSpeedRef.current.toFixed(1)}`, 30, 65);
       
       // The crucial logic metric: what does the robot code ACTUALLY read?
       const reportedVelocity = healthy ? hardwareSpeedRef.current : simSpeedRef.current;
-      ctx!.fillStyle = healthy ? '#28c035' : '#B32416';
+      ctx!.fillStyle = healthy ? '#28c035' : 'var(--ares-red)';
       ctx!.fillText(`Reported to Subsystem:`, 30, 85);
       ctx!.fillText(`${reportedVelocity.toFixed(1)}`, 180, 85);
 
@@ -175,22 +175,22 @@ export default function FaultSim() {
   }, []);
 
   return (
-    <div style={{ width: '100%', minHeight: '400px', height: 'auto', backgroundColor: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ width: '100%', minHeight: '400px', height: 'auto', backgroundColor: 'var(--obsidian)', border: '1px solid #2a2a2a', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={canvasRef} style={{ display: 'block', width: '100%', height: '320px', cursor: 'pointer' }} />
-      <div style={{ padding: '15px', borderTop: '1px solid #2a2a2a', display: 'flex', gap: '20px', background: '#111', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: '15px', borderTop: '1px solid #2a2a2a', display: 'flex', gap: '20px', background: 'var(--obsidian)', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '15px' }}>
             <button 
                 onClick={() => setSpeed(speed === 0 ? 100 : 0)} 
-                style={{ background: '#29b6f6', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
+                style={{ background: 'var(--ares-cyan)', color: '#000', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
                 {speed === 0 ? 'START MOTOR' : 'STOP MOTOR'}
             </button>
             <button 
                 onClick={() => setCanHealthy(!canHealthy)} 
-                style={{ background: canHealthy ? '#B32416' : '#28c035', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
+                style={{ background: canHealthy ? 'var(--ares-red)' : '#28c035', color: 'var(--marble)', border: 'none', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontFamily: '"Orbitron", sans-serif', fontWeight: 'bold' }}>
                 {canHealthy ? 'SEVER CAN WIRE' : 'REPAIR CAN WIRE'}
             </button>
         </div>
-        <div style={{ color: canHealthy ? '#29b6f6' : '#B32416', fontFamily: '"Orbitron", sans-serif', fontSize: '14px', letterSpacing: '1px' }}>
+        <div style={{ color: canHealthy ? 'var(--ares-cyan)' : 'var(--ares-red)', fontFamily: '"Orbitron", sans-serif', fontSize: '14px', letterSpacing: '1px' }}>
             STATUS: {canHealthy ? 'NOMINAL' : 'FALLBACK ENGAGED'}
         </div>
       </div>

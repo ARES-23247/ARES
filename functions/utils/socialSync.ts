@@ -45,7 +45,7 @@ export interface PostPayload {
   title: string;
   url: string;
   snippet: string;
-  coverImageUrl?: string;
+  thumbnail?: string;
   baseUrl?: string;
 }
 

@@ -132,7 +132,7 @@ function generateZones(dimensions: FieldDimensions) {
     y: 0,
     width: allianceDepth,
     height: width,
-    color: '#B32416',
+    color: 'var(--ares-red)',
     alpha: 0.3,
   });
 
@@ -143,7 +143,7 @@ function generateZones(dimensions: FieldDimensions) {
     y: 0,
     width: allianceDepth,
     height: width,
-    color: '#29b6f6',
+    color: 'var(--ares-cyan)',
     alpha: 0.3,
   });
 
@@ -154,7 +154,7 @@ function generateZones(dimensions: FieldDimensions) {
     y: 0,
     width: sourceDepth,
     height: width,
-    color: '#ff6b6b',
+    color: 'var(--ares-red)',
     alpha: 0.2,
   });
 
@@ -165,7 +165,7 @@ function generateZones(dimensions: FieldDimensions) {
     y: 0,
     width: sourceDepth,
     height: width,
-    color: '#6bb6ff',
+    color: 'var(--ares-cyan)',
     alpha: 0.2,
   });
 
@@ -178,7 +178,7 @@ export function spawnGamePieces(field: keyof typeof FIELDS, count: number = 10):
   const pieces: GamePiece[] = [];
 
   const pieceType = field === 'CRESCENDO_2024' ? 'cone' : 'cube';
-  const pieceColor = field === 'CRESCENDO_2024' ? '#ff9800' : '#ffeb3b';
+  const pieceColor = field === 'CRESCENDO_2024' ? 'var(--ares-gold)' : 'var(--ares-gold)';
 
   for (let i = 0; i < count; i++) {
     pieces.push({
