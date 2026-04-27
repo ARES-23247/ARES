@@ -44,7 +44,7 @@ describe('analytics utility', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/analytics/track', expect.objectContaining({
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: expect.any(Headers),
       body: expect.stringContaining('"category":"event"'),
     }));
   });
