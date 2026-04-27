@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { Context } from "hono";
 import { seasonContract } from "../../../shared/schemas/contracts/seasonContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 import { Kysely } from "kysely";
@@ -8,7 +9,7 @@ import { DB } from "../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 
 const seasonsTsRestRouter = s.router(seasonContract, {
-  list: async (_, c) => {
+  list: async (_input, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -32,7 +33,7 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Failed to fetch seasons" } };
     }
   },
-  adminList: async (_, c) => {
+  adminList: async (_input, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -54,8 +55,9 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Failed to list seasons" } };
     }
   },
-  adminDetail: async ({ params }, c) => {
+  adminDetail: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       const row = await db.selectFrom("seasons")
@@ -82,8 +84,9 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Failed to fetch season" } };
     }
   },
-  getDetail: async ({ params }, c) => {
+  getDetail: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.year);
       if (isNaN(year)) return { status: 404, body: { error: "Invalid year" } };
@@ -119,8 +122,9 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Failed to fetch season details" } };
     }
   },
-  save: async ({ body }, c) => {
+  save: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const targetYear = body.original_year || body.start_year;
 
@@ -182,8 +186,9 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Save failed" } };
     }
   },
-  delete: async ({ params }, c) => {
+  delete: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       await db.updateTable("seasons")
@@ -197,8 +202,9 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undelete: async ({ params }, c) => {
+  undelete: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       await db.updateTable("seasons")
@@ -212,8 +218,9 @@ const seasonsTsRestRouter = s.router(seasonContract, {
       return { status: 500, body: { error: "Restore failed" } };
     }
   },
-  purge: async ({ params }, c) => {
+  purge: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       await db.deleteFrom("seasons")

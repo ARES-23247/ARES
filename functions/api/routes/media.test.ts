@@ -1,4 +1,4 @@
- 
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
@@ -163,36 +163,206 @@ describe("Hono Backend - /media Router", () => {
 
     const fileBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); // Valid PNG header
     const file = new File([fileBytes], "test.png", { type: "image/png" });
-    
-    // Mock FormData object
-    const mockFormData = {
-      file: file,
-      folder: "Gallery"
-    };
-
-    const mockC = {
-      env,
-      req: {
-        url: "http://localhost/api/media/admin/upload",
-        header: vi.fn().mockReturnValue("127.0.0.1"),
-      },
-      executionCtx: mockExecutionContext
-    };
+    const mockFormData = { file, folder: "Gallery" };
+    const mockC = { env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn().mockReturnValue("127.0.0.1") }, executionCtx: mockExecutionContext };
 
     const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
-    
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(mockR2.put).toHaveBeenCalled();
   });
 
-  it("GET /:key - serves raw object", async () => {
-    mockR2.get.mockResolvedValue({ 
-      body: "data", 
-      httpMetadata: { contentType: "image/png" },
-      writeHttpMetadata: vi.fn((headers) => headers.set("Content-Type", "image/png")) 
-    });
+  it("POST /admin/upload - upload HEIC file", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    const heicBytes = new Uint8Array([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63]);
+    const file = new File([heicBytes], "test.heic", { type: "image/heic" });
+    const mockFormData = { file, folder: "Gallery" };
+    const mockC = { env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() }, executionCtx: mockExecutionContext };
 
+    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it("POST /admin/upload - invalid magic bytes", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    const invalidBytes = new Uint8Array([0x00, 0x01, 0x02, 0x03]);
+    const file = new File([invalidBytes], "test.txt", { type: "text/plain" });
+    const mockFormData = { file };
+    const mockC = { env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() } };
+
+    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("Invalid file type");
+  });
+
+  it("POST /admin/upload - large file (>10MB)", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    const largeContent = new Uint8Array(11 * 1024 * 1024);
+    largeContent.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+    const file = new File([largeContent], "large.png", { type: "image/png" });
+    if (!file.stream) {
+      (file as any).stream = () => {
+        return { getReader: () => ({ read: () => Promise.resolve({ done: true, value: undefined }) }) };
+      };
+    }
+    const mockFormData = { file };
+    const mockC = { env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() }, executionCtx: mockExecutionContext };
+
+    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    expect(res.status).toBe(200);
+  });
+
+  it("POST /admin/upload - AI failure scenario", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    env.AI.run.mockRejectedValue(new Error("AI Down"));
+    const fileBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const file = new File([fileBytes], "test.png", { type: "image/png" });
+    const mockFormData = { file };
+    const mockC = { env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() }, executionCtx: mockExecutionContext };
+
+    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    expect(res.status).toBe(200);
+    expect(res.body.altText).toBe("ARES 23247 Team Media Image");
+  });
+
+  it("PUT /admin/move/:key - R2 move failure", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    mockR2.get.mockRejectedValue(new Error("R2 Get Failed"));
+    const mockC = { env, req: { url: "http://localhost/api/media/admin/move/test.png", header: vi.fn() } };
+
+    const res = await (mediaHandlers.move as any)({ params: { key: "test.png" }, body: { folder: "Archive" } }, mockC);
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("Move failed");
+  });
+
+  it("DELETE /admin/:key - R2 delete failure", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    mockR2.delete.mockRejectedValue(new Error("R2 Delete Failed"));
+    const mockC = { env, req: { url: "http://localhost/api/media/admin/test.png", header: vi.fn() } };
+
+    const res = await (mediaHandlers.delete as any)({ params: { key: "test.png" } }, mockC);
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("Delete failed");
+  });
+
+  it("POST /admin/syndicate - failure", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    const mockC = { env, req: { url: "invalid url", header: vi.fn() }, executionCtx: mockExecutionContext };
+    const res = await (mediaHandlers.syndicate as any)({ body: { key: "test.png" } }, mockC);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/upload - failure", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    const fileBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const file = new File([fileBytes], "test.png", { type: "image/png" });
+    const mockFormData = { file };
+    const mockC = { env: { ...env, DB: null }, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() }, executionCtx: mockExecutionContext };
+    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    expect(res.status).toBe(500);
+  });
+
+  it("PUT /admin/move/:key - without R2", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    const mockC = { env: { ...env, ARES_STORAGE: null }, req: { url: "http://localhost/api/media/admin/move/test.png", header: vi.fn() }, executionCtx: mockExecutionContext };
+    const res = await (mediaHandlers.move as any)({ params: { key: "test.png" }, body: { folder: "Archive" } }, mockC);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /:key - not found", async () => {
+    mockR2.get.mockResolvedValue(null);
+    const res = await testApp.request("/Gallery/missing.png", {}, env, mockExecutionContext);
+    expect(res.status).toBe(404);
+  });
+
+  it("GET /admin - without R2", async () => {
+    const res = await testApp.request("/admin", {}, { ...env, ARES_STORAGE: null }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET / - without R2", async () => {
+    const res = await testApp.request("/", {}, { ...env, ARES_STORAGE: null }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET / - rate limited", async () => {
+    const { checkRateLimit } = await import("../middleware");
+    (checkRateLimit as any).mockReturnValueOnce(false);
+    const mockC = { env, req: { url: "http://localhost/api/media", header: vi.fn().mockReturnValue("127.0.0.1") } };
+    const { mediaHandlers } = await import("./media/handlers");
+    const res = await (mediaHandlers.getMedia as any)({}, mockC);
+    expect(res.status).toBe(429);
+  });
+
+  it("GET /admin - database failure", async () => {
+    const mockDbFail = { prepare: vi.fn().mockReturnValue({ all: vi.fn().mockRejectedValue(new Error("DB Error")) }) };
+    const mockC = { env: { ...env, DB: mockDbFail }, req: { url: "http://localhost/api/media/admin", header: vi.fn().mockReturnValue("admin") } };
+    const { mediaHandlers } = await import("./media/handlers");
+    const res = await (mediaHandlers.adminList as any)({}, mockC);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /:key - object without body", async () => {
+    mockR2.get.mockResolvedValue({ body: null, writeHttpMetadata: vi.fn() });
+    const res = await testApp.request("/Gallery/empty.png", {}, env, mockExecutionContext);
+    expect(res.status).toBe(404);
+  });
+
+  it("isValidImage - JPEG, GIF, WEBP", async () => {
+    const { isValidImage } = await import("./media/handlers");
+    expect(isValidImage(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]).buffer)).toBe(true);
+    expect(isValidImage(new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]).buffer)).toBe(true);
+    expect(isValidImage(new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50]).buffer)).toBe(true);
+  });
+
+  it("GET / admin - paginated list", async () => {
+    mockR2.list
+      .mockResolvedValueOnce({ objects: [{ key: "1.png", size: 100, uploaded: new Date(), httpEtag: "e1" }], truncated: true, cursor: "c1" })
+      .mockResolvedValueOnce({ objects: [{ key: "2.png", size: 200, uploaded: new Date(), httpEtag: "e2" }], truncated: false });
+    
+    const res = await testApp.request("/admin", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET / - filter non-public objects", async () => {
+    mockR2.list.mockResolvedValue({ objects: [{ key: "Public.png", size: 100, uploaded: new Date() }, { key: "Private.png", size: 100, uploaded: new Date() }], truncated: false });
+    const mockDb = { prepare: vi.fn().mockReturnValue({ all: vi.fn().mockResolvedValue({ results: [{ key: "Public.png", folder: "Gallery", tags: "" }] }) }) };
+    const { mediaHandlers } = await import("./media/handlers");
+    const res = await (mediaHandlers.getMedia as any)({}, { env: { ...env, DB: mockDb }, req: { url: "http://localhost/", header: vi.fn().mockReturnValue("1.2.3.4") } });
+    expect(res.body.media).toHaveLength(1);
+  });
+
+  it("GET /:key - private object cache control", async () => {
+    const { getSessionUser } = await import("../middleware");
+    (getSessionUser as any).mockResolvedValueOnce({ id: "1", role: "admin" });
+    mockR2.get.mockResolvedValue({ body: "data", httpMetadata: { contentType: "image/png" }, writeHttpMetadata: (h: Headers) => h.set("Content-Type", "image/png") });
+    const res = await testApp.request("/Archive/secret.png", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("no-store, no-cache, must-revalidate");
+  });
+
+  it("GET / - internal failure", async () => {
+    const { mediaHandlers } = await import("./media/handlers");
+    const res = await (mediaHandlers.getMedia as any)({}, { env: { ...env, ARES_STORAGE: { list: vi.fn().mockRejectedValue(new Error("List Fail")) } }, req: { url: "http://localhost/", header: vi.fn() } });
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /:key - unauthorized", async () => {
+    const { getSessionUser } = await import("../middleware");
+    (getSessionUser as any).mockResolvedValueOnce(null);
+    const res = await testApp.request("/Private/secret.png", {}, env, mockExecutionContext);
+    expect(res.status).toBe(401);
+  });
+
+  it("GET /:key - internal error", async () => {
+    mockR2.get.mockRejectedValue(new Error("R2 Error"));
+    const res = await testApp.request("/Gallery/error.png", {}, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /:key - serves raw object", async () => {
+    mockR2.get.mockResolvedValue({ body: "data", httpMetadata: { contentType: "image/png" }, writeHttpMetadata: vi.fn((headers) => headers.set("Content-Type", "image/png")) });
     const res = await testApp.request("/Gallery/img1.png", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });

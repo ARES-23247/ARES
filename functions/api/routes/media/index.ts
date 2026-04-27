@@ -24,6 +24,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
     const publicFolders = ["Gallery", "Library"];
     if (!publicFolders.includes(folder)) {
       const user = await getSessionUser(c);
+      console.log("[Media:Raw] Folder:", folder, "User:", user ? "Defined" : "Null");
       if (!user) return c.text("Unauthorized", 401);
     }
     const cache = typeof caches !== 'undefined' ? (caches as any).default : null;
@@ -39,7 +40,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
     if (!c.env.ARES_STORAGE) return c.text("R2 Not Bound", 404);
     
     const object = await c.env.ARES_STORAGE.get(key);
-    if (!object) return c.text("Not Found", 404);
+    if (!object || !object.body) return c.text("Not Found", 404);
 
     const headers = new Headers();
     object.writeHttpMetadata(headers);

@@ -19,6 +19,21 @@ vi.mock("../../utils/auth", () => ({
   })
 }));
 
+import * as shared from "../middleware";
+import * as cryptoUtils from "../../utils/crypto";
+
+vi.mock("../middleware", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../middleware")>();
+  return {
+    ...actual,
+    ensureAuth: async (_c: unknown, next: any) => next(),
+    persistentRateLimitMiddleware: () => (c: any, next: any) => next(),
+    rateLimitMiddleware: () => (c: any, next: any) => next(),
+    getSessionUser: vi.fn((c: any) => c.get("sessionUser")),
+    sanitizeProfileForPublic: vi.fn().mockImplementation((val) => val),
+  };
+});
+
 describe("Hono Backend - /profiles Router", () => {
   let mockDb: any;
   let testApp: Hono<any>;
@@ -269,6 +284,39 @@ describe("Hono Backend - /profiles Router", () => {
 
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: "Profile fetch failed" });
+    consoleSpy.mockRestore();
+  });
+
+  it("should handle decryption failures in /me", async () => {
+    vi.mocked(cryptoUtils.decrypt).mockRejectedValue(new Error("Corrupt"));
+    const mockProfile = createMockProfile({ user_id: "local-dev", phone: "bad-data" });
+    mockDb.executeTakeFirst.mockResolvedValueOnce(mockProfile);
+
+    const res = await testApp.request("/me", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.phone).toBe("[Decryption Failed]");
+  });
+
+  it("should handle decryption failures in team-roster", async () => {
+    vi.mocked(cryptoUtils.decrypt).mockRejectedValue(new Error("Corrupt"));
+    mockDb.execute.mockResolvedValueOnce([{ user_id: "1", member_type: "mentor", contact_email: "bad:data", show_on_about: 1 }]);
+
+    const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.members[0].contact_email).toBeNull();
+  });
+
+  it("should handle empty results in team-roster with warning", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ user_id: "1", show_on_about: 1 }]); 
+    
+    vi.mocked(shared.sanitizeProfileForPublic).mockReturnValueOnce(null as any);
+    
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
 });

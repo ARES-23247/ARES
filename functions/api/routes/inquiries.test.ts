@@ -429,6 +429,7 @@ describe("Hono Backend - /inquiries Router", () => {
     mockDb.execute.mockResolvedValueOnce([{ id: "1" }]);
     const res = await purgeOldInquiries(mockDb as any, 30);
     expect(res.deleted).toBe(1);
+    expect(mockDb.deleteFrom).toHaveBeenCalledWith("inquiries");
     
     const res2 = await purgeOldInquiries(mockDb as any, 0);
     expect(res2.deleted).toBe(0);

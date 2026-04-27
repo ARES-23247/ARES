@@ -5,6 +5,7 @@ import { outreachContract } from "../../../../shared/schemas/contracts/outreachC
 import { AppEnv, getSessionUser, logAuditAction } from "../../middleware";
 import { retryTransaction } from "../../middleware/dbUtils";
 import { initServer } from "ts-rest-hono";
+import { Context } from "hono";
 
 const s = initServer<AppEnv>();
 
@@ -38,7 +39,7 @@ async function fetchVolunteerEvents(db: Kysely<DB>) {
 }
 
 export const outreachHandlers: Parameters<typeof s.router<typeof outreachContract>>[1] = {
-  list: async (_, c) => {
+  list: async (_input, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("outreach_logs")
@@ -79,7 +80,7 @@ export const outreachHandlers: Parameters<typeof s.router<typeof outreachContrac
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-  adminList: async (_, c) => {
+  adminList: async (_input, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("outreach_logs")
@@ -120,8 +121,9 @@ export const outreachHandlers: Parameters<typeof s.router<typeof outreachContrac
       return { status: 500, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-  save: async ({ body }, c) => {
+  save: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -175,8 +177,9 @@ export const outreachHandlers: Parameters<typeof s.router<typeof outreachContrac
       return { status: 500, body: { error: "Save failed" } };
     }
   },
-  delete: async ({ params }, c) => {
+  delete: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };

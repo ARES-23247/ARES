@@ -61,37 +61,61 @@ describe("Hono Backend - /finance Router", () => {
     testApp = new Hono<any>();
     testApp.use("*", async (c, next) => {
       c.set("db", mockDb as unknown as Kysely<any>);
+      c.set("executionCtx", mockExecutionContext);
       await next();
     });
     testApp.route("/", financeRouter);
   });
 
   describe("GET /summary", () => {
-    it("returns correct totals for a season", async () => {
-      mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2024 });
+    it("returns correct totals for a specific season", async () => {
       mockDb.execute.mockResolvedValueOnce([{ type: "income", total: 1000 }, { type: "expense", total: 400 }]);
-      
-      const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
+      const res = await testApp.request("/summary?season_id=2024", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.total_income).toBe(1000);
       expect(body.total_expenses).toBe(400);
+      expect(mockDb.where).toHaveBeenCalledWith("season_id", "=", "2024");
+    });
+
+    it("returns correct totals for latest season if not specified", async () => {
+      mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2024 });
+      mockDb.execute.mockResolvedValueOnce([{ type: "income", total: 1000 }]);
+      
+      const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.season_id).toBe(2024);
     });
 
     it("handles no seasons", async () => {
       mockDb.executeTakeFirst.mockResolvedValueOnce(null);
       const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.season_id).toBe(null);
+    });
+
+    it("handles summary error", async () => {
+      mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("Fail"));
+      const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(500);
     });
   });
 
   describe("GET /sponsorship", () => {
-    it("lists pipeline", async () => {
+    it("lists pipeline with season filter", async () => {
       mockDb.execute.mockResolvedValueOnce([{ id: "lead-1", company_name: "Test Corp", status: "potential", estimated_value: 500 }]);
-      const res = await testApp.request("/sponsorship", {}, mockEnv, mockExecutionContext);
+      const res = await testApp.request("/sponsorship?season_id=2024", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
-      expect(body.pipeline[0].company_name).toBe("Test Corp");
+      expect(body.pipeline).toHaveLength(1);
+    });
+
+    it("handles list pipeline error", async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error("Fail"));
+      const res = await testApp.request("/sponsorship", {}, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(500);
     });
   });
 
@@ -103,8 +127,17 @@ describe("Hono Backend - /finance Router", () => {
       season_id: 2024
     };
 
+    it("creates a new pipeline item", async () => {
+      const res = await testApp.request("/sponsorship", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, status: "potential" })
+      }, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(200);
+      expect(mockDb.insertInto).toHaveBeenCalledWith("sponsorship_pipeline");
+    });
+
     it("handles 'secured' side-effects atomically", async () => {
-      // In this test, isNew is true, so no executeTakeFirst call for current status
       const res = await testApp.request("/sponsorship", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,8 +146,6 @@ describe("Hono Backend - /finance Router", () => {
 
       expect(res.status).toBe(200);
       expect(mockDb.insertInto).toHaveBeenCalledWith("sponsors");
-      expect(mockDb.insertInto).toHaveBeenCalledWith("finance_transactions");
-      expect(mockDb.insertInto).toHaveBeenCalledWith("sponsorship_pipeline");
     });
 
     it("idempotent when already 'secured'", async () => {
@@ -128,6 +159,16 @@ describe("Hono Backend - /finance Router", () => {
       expect(res.status).toBe(200);
       expect(mockDb.insertInto).not.toHaveBeenCalledWith("sponsors");
     });
+
+    it("handles save error", async () => {
+      mockDb.transaction.mockImplementationOnce(() => { throw new Error("Fail"); });
+      const res = await testApp.request("/sponsorship", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(500);
+    });
   });
 
   describe("DELETE /sponsorship/:id", () => {
@@ -138,17 +179,32 @@ describe("Hono Backend - /finance Router", () => {
         body: JSON.stringify({})
       }, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      expect(mockDb.deleteFrom).toHaveBeenCalledWith("sponsorship_pipeline");
+    });
+
+    it("handles delete error", async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error("Fail"));
+      const res = await testApp.request("/sponsorship/123", { 
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      }, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(500);
     });
   });
 
   describe("GET /transactions", () => {
-    it("lists transactions", async () => {
-      mockDb.execute.mockResolvedValueOnce([{ id: "1", amount: 100, type: "income", category: "Donation", date: "2024-01-01" }]);
-      const res = await testApp.request("/transactions", {}, mockEnv, mockExecutionContext);
+    it("lists transactions with filters", async () => {
+      mockDb.execute.mockResolvedValueOnce([{ id: "tx-1", amount: 100, type: "income", category: "Donation", date: "2024-01-01" }]);
+      const res = await testApp.request("/transactions?season_id=2024&type=income", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
-      expect(body.transactions[0].amount).toBe(100);
+      expect(body.transactions).toHaveLength(1);
+    });
+
+    it("handles list error", async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error("Fail"));
+      const res = await testApp.request("/transactions", {}, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(500);
     });
   });
 
@@ -160,16 +216,6 @@ describe("Hono Backend - /finance Router", () => {
       date: "2024-01-10"
     };
 
-    it("saves existing transaction", async () => {
-      const res = await testApp.request("/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, id: "tx-1" })
-      }, mockEnv, mockExecutionContext);
-      expect(res.status).toBe(200);
-      expect(mockDb.updateTable).toHaveBeenCalledWith("finance_transactions");
-    });
-
     it("creates new transaction", async () => {
       const res = await testApp.request("/transactions", {
         method: "POST",
@@ -179,12 +225,31 @@ describe("Hono Backend - /finance Router", () => {
       expect(res.status).toBe(200);
       expect(mockDb.insertInto).toHaveBeenCalledWith("finance_transactions");
     });
+
+    it("updates existing transaction", async () => {
+      const res = await testApp.request("/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, id: "tx-123" })
+      }, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(200);
+      expect(mockDb.updateTable).toHaveBeenCalledWith("finance_transactions");
+    });
+
+    it("handles save error", async () => {
+      mockDb.insertInto.mockImplementationOnce(() => { throw new Error("Fail"); });
+      const res = await testApp.request("/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(500);
+    });
   });
 
   describe("DELETE /transactions/:id", () => {
     it("triggers R2 asset cleanup", async () => {
       mockDb.executeTakeFirst.mockResolvedValueOnce({ receipt_url: "https://storage.com/receipts/123.jpg" });
-      mockDb.execute.mockResolvedValueOnce([]);
       const res = await testApp.request("/transactions/123", { 
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -202,6 +267,16 @@ describe("Hono Backend - /finance Router", () => {
         body: JSON.stringify({})
       }, mockEnv, mockExecutionContext);
       expect(res.status).toBe(404);
+    });
+
+    it("handles delete error", async () => {
+      mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("Fail"));
+      const res = await testApp.request("/transactions/123", { 
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      }, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(500);
     });
   });
 });

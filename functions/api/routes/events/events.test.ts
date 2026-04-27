@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../../src/test/utils";
 import eventsRouter from "./index";
+import * as shared from "../../middleware";
 import { sql } from "kysely";
 
 vi.mock("kysely", async (importOriginal) => {
@@ -30,13 +31,18 @@ vi.mock("../../middleware", async (importOriginal) => {
       ZULIP_SITE: "https://test.com",
       GCAL_SERVICE_ACCOUNT_EMAIL: "gcal@test.com",
       GCAL_PRIVATE_KEY: "key",
-      CALENDAR_ID: "cal1"
+      CALENDAR_ID: "cal1",
+      CALENDAR_ID_INTERNAL: "cal1",
+      CALENDAR_ID_OUTREACH: "cal2",
+      CALENDAR_ID_EXTERNAL: "cal3"
     }),
     getDbSettings: vi.fn().mockResolvedValue({
       GCAL_SERVICE_ACCOUNT_EMAIL: "gcal@test.com",
       GCAL_PRIVATE_KEY: "key",
       CALENDAR_ID: "cal1"
     }),
+    getSessionUser: vi.fn().mockResolvedValue(null),
+    sanitizeProfileForPublic: vi.fn().mockImplementation((val) => val),
   };
 });
 
@@ -51,7 +57,12 @@ vi.mock("../../../utils/zulipSync", () => ({
 vi.mock("../../../utils/gcalSync", () => ({
   pushEventToGcal: vi.fn().mockResolvedValue("gcal_123"),
   pullEventsFromGcal: vi.fn().mockResolvedValue([{ title: "Sync Event", date_start: "2026-01-01T00:00:00Z", gcal_event_id: "ext_123" }]),
-  deleteEventFromGcal: vi.fn().mockResolvedValue(true),
+  deleteEventFromGcal: vi.fn().mockResolvedValue(true)
+}));
+
+vi.mock("../../utils/crypto", () => ({
+  decrypt: vi.fn().mockImplementation((val) => val),
+  encrypt: vi.fn().mockImplementation((val) => val),
 }));
 
 describe("Hono Backend - Events Router", () => {
@@ -101,7 +112,8 @@ describe("Hono Backend - Events Router", () => {
     testApp = new Hono<any>();
     testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
-      c.set("sessionUser", { id: "1", email: "admin@test.com", role: "admin", member_type: "mentor" });
+      const user = c.get("sessionUser") || { id: "local-dev", email: "admin@test.com", role: "admin", name: "Local Dev", nickname: "Local Dev", image: null, member_type: "mentor" };
+      vi.mocked(shared.getSessionUser).mockResolvedValue(user);
       await next();
     });
     testApp.route("/", eventsRouter);
@@ -429,7 +441,9 @@ describe("Hono Backend - Events Router", () => {
     testApp = new Hono();
     testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
-      c.set("sessionUser", { id: "user2", role: "user", member_type: "student" });
+      const user = { id: "user2", role: "user", member_type: "student" };
+      c.set("sessionUser", user);
+      vi.mocked(shared.getSessionUser).mockResolvedValue(user);
       await next();
     });
     testApp.route("/", eventsRouter);
@@ -544,5 +558,248 @@ describe("Hono Backend - Events Router", () => {
       body: "{}"
     }, env, mockExecutionContext);
     expect(res.status).toBe(500);
+  });
+
+  it("DELETE /admin/:id/purge - handles db error", async () => {
+    mockDb.selectFrom.mockImplementationOnce(() => { throw new Error("DB fail") });
+    const res = await testApp.request("/admin/1/purge", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/sync - handles missing config", async () => {
+    vi.mocked(shared.getDbSettings).mockResolvedValueOnce({});
+    const res = await testApp.request("/admin/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ success: false, error: "GCal config missing" });
+  });
+
+  it("POST /admin/sync - handles fatal error", async () => {
+    vi.mocked(shared.getDbSettings).mockRejectedValueOnce(new Error("Fatal"));
+    const res = await testApp.request("/admin/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ success: false, error: "Sync failed" });
+  });
+
+  it("GET /:id/signups - handles unverified user", async () => {
+    vi.mocked(shared.getSessionUser).mockResolvedValueOnce({ id: "unv-1", email: "unv@test.com", role: "unverified", name: "Unv", nickname: "Unv", image: null, member_type: "student" });
+    mockDb.execute.mockResolvedValueOnce([]); 
+    const res = await testApp.request("/1/signups", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.signups).toHaveLength(0);
+  });
+
+  it("GET /admin/list - handles error without fallback", async () => {
+    mockDb.execute.mockRejectedValue(new Error("Total fail"));
+    const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/:id/reject - handles db error", async () => {
+    mockDb.updateTable.mockImplementationOnce(() => { throw new Error("DB fail") });
+    const res = await testApp.request("/admin/1/reject", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/:id/restore - handles db error", async () => {
+    mockDb.updateTable.mockImplementationOnce(() => { throw new Error("DB fail") });
+    const res = await testApp.request("/admin/1/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/:id/restore - handles gcal error in wait", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Test", status: "published", category: "internal" });
+    const { pushEventToGcal } = await import("../../../utils/gcalSync");
+    vi.mocked(pushEventToGcal).mockRejectedValueOnce(new Error("GCal fail"));
+    
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await testApp.request("/admin/1/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    // Flush waitUntil promises
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    expect(consoleSpy).toHaveBeenCalledWith("GCAL_UNDELETE_FAIL", expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it("DELETE /admin/:id - handles gcal delete", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", gcal_event_id: "gcal-1", category: "internal" });
+    const { deleteEventFromGcal } = await import("../../../utils/gcalSync");
+    const res = await testApp.request("/admin/1", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    expect(deleteEventFromGcal).toHaveBeenCalled();
+  });
+
+  it("POST /admin/:id/approve - handles gcal fail", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Test", category: "internal" });
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Test", category: "internal" }); // second for wait
+    const { pushEventToGcal } = await import("../../../utils/gcalSync");
+    vi.mocked(pushEventToGcal).mockRejectedValueOnce(new Error("GCal fail"));
+    
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await testApp.request("/admin/1/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    expect(consoleSpy).toHaveBeenCalledWith("GCAL_APPROVE_FAIL", expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it("PATCH /admin/:id - handles non-admin revision", async () => {
+    vi.mocked(shared.getSessionUser).mockResolvedValueOnce({ id: "author-1", email: "author@test.com", role: "author", name: "Author", nickname: "Author", image: null, member_type: "student" });
+    
+    testApp = new Hono();
+    testApp.use("*", async (c, next) => {
+      c.set("db", mockDb);
+      c.set("sessionUser", { id: "author-1", role: "author" });
+      await next();
+    });
+    testApp.route("/", eventsRouter);
+
+    const res = await testApp.request("/admin/1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New Title", category: "internal", date_start: "2026-01-01T00:00:00Z" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.insertInto).toHaveBeenCalledWith("events");
+    const body = await res.json() as any;
+    expect(body.id).toContain("-rev-");
+  });
+
+  it("PATCH /admin/:id - handles gcal fail in wait", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ gcal_event_id: "old" });
+    const { pushEventToGcal } = await import("../../../utils/gcalSync");
+    vi.mocked(pushEventToGcal).mockRejectedValueOnce(new Error("GCal fail"));
+    
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await testApp.request("/admin/1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New", category: "internal", date_start: "2026-01-01T00:00:00Z" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    expect(consoleSpy).toHaveBeenCalledWith("GCAL_UPDATE_FAIL", expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it("PATCH /admin/:id - handles db fail", async () => {
+    mockDb.updateTable.mockImplementationOnce(() => { throw new Error("DB fail") });
+    const res = await testApp.request("/admin/1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New", category: "internal", date_start: "2026-01-01T00:00:00Z" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/:id/approve - handles db fail", async () => {
+    mockDb.selectFrom.mockImplementationOnce(() => { throw new Error("DB fail") });
+    const res = await testApp.request("/admin/1/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /admin/:id - handles error with fallback", async () => {
+    mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("Schema fail"));
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Fallback" });
+    const res = await testApp.request("/admin/1", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /admin/:id - handles fatal error", async () => {
+    mockDb.selectFrom.mockImplementationOnce(() => { throw new Error("Fatal 1") });
+    mockDb.selectFrom.mockImplementationOnce(() => { throw new Error("Fatal 2") });
+    const res = await testApp.request("/admin/1", {}, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/save - handles double submission", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "recent-1" });
+    const res = await testApp.request("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Recent", category: "internal", dateStart: "2026-01-01T00:00:00Z" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.warning).toBe("Double-submission prevented");
+  });
+
+  it("POST /admin/save - handles gcal fail in wait", async () => {
+    vi.mocked(shared.getSessionUser).mockResolvedValueOnce({ id: "admin-1", email: "admin@test.com", role: "admin", name: "Admin", nickname: "Admin", image: null, member_type: "mentor" });
+    vi.mocked(shared.getSocialConfig).mockResolvedValueOnce({
+      GCAL_SERVICE_ACCOUNT_EMAIL: "gcal@test.com",
+      GCAL_PRIVATE_KEY: "key",
+      CALENDAR_ID: "cal1",
+      CALENDAR_ID_INTERNAL: "cal1"
+    });
+    
+    const { pushEventToGcal } = await import("../../../utils/gcalSync");
+    vi.mocked(pushEventToGcal).mockRejectedValueOnce(new Error("GCal fail"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    
+    const testEnv = { 
+      DB: mockDb,
+      GCAL_SERVICE_ACCOUNT_EMAIL: "gcal@test.com",
+      GCAL_PRIVATE_KEY: "key"
+    };
+
+    const res = await testApp.request("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        title: "New", 
+        category: "internal", 
+        dateStart: "2026-01-01T00:00:00Z", 
+        isDraft: false,
+        id: "new-evt-1"
+      })
+    }, testEnv as any, mockExecutionContext);
+    expect(res.status).toBe(200);
+    
+    console.log("WAIT_UNTIL_CALLS", vi.mocked(mockExecutionContext.waitUntil).mock.calls.length);
+
+    // Flush waitUntil promises
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    
+    expect(pushEventToGcal).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/GCAL_(SAVE|UPDATE)_FAIL/), expect.any(Error));
+    consoleSpy.mockRestore();
   });
 });

@@ -9,8 +9,9 @@ import { sendZulipMessage } from "../../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../../utils/notifications";
 import { buildGitHubConfig, createProjectItem } from "../../../utils/githubProjects";
 import { initServer } from "ts-rest-hono";
+import { Context } from "hono";
 
-const s = initServer<AppEnv>();
+const _s = initServer<AppEnv>();
 
 export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
   if (days <= 0) return { deleted: 0 };
@@ -25,11 +26,12 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
   return { deleted: res.length };
 }
 
-type InquiryHandlers = Parameters<typeof s.router<typeof inquiryContract>>[1];
+type InquiryHandlers = Parameters<typeof _s.router<typeof inquiryContract>>[1];
 
 export const inquiryHandlers: InquiryHandlers = {
-  list: async ({ query }: { query: { limit?: number, offset?: number } }, c: any) => {
+  list: async (input, c: Context<AppEnv>) => {
     try {
+      const { query } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = c.get("sessionUser");
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -111,8 +113,9 @@ export const inquiryHandlers: InquiryHandlers = {
       return { status: 500, body: { error: "Failed to fetch inquiries" } };
     }
   },
-  submit: async ({ body }: { body: { type: "sponsor" | "student" | "mentor" | "outreach" | "support", name: string, email: string, metadata?: Record<string, unknown>, turnstileToken?: string } }, c: any) => {
+  submit: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const { type, name, email, metadata } = body;
       const secret = c.env.ENCRYPTION_SECRET;
@@ -212,8 +215,9 @@ export const inquiryHandlers: InquiryHandlers = {
       return { status: 500, body: { error: "Submission failed" } };
     }
   },
-  updateStatus: async ({ params, body }: { params: { id: string }, body: { status: "pending" | "approved" | "resolved" | "rejected" } }, c: any) => {
+  updateStatus: async (input, c: Context<AppEnv>) => {
     try {
+      const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("inquiries")
         .set({ status: body.status })
@@ -227,8 +231,9 @@ export const inquiryHandlers: InquiryHandlers = {
       return { status: 500, body: { error: "Update failed" } };
     }
   },
-  delete: async ({ params }: { params: { id: string } }, c: any) => {
+  delete: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("inquiries").where("id", "=", params.id).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "inquiry_deleted", "inquiries", params.id, "Inquiry deleted"));

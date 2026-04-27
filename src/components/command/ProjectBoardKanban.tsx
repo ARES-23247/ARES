@@ -133,10 +133,20 @@ export default function ProjectBoardKanban({
     const { active, over } = event;
     if (!over) return;
 
-    const activeCol = findColumn(String(active.id));
-    const overCol = findColumn(String(over.id));
+    const activeId = String(active.id);
+    const overId = String(over.id);
 
-    if (!activeCol || !overCol) return;
+    // Find the containers
+    const activeContainer = findColumn(activeId);
+    const overContainer = findColumn(overId);
+
+    if (!activeContainer || !overContainer || activeContainer === overContainer) {
+      return;
+    }
+
+    // We don't actually update state here yet because we're using props,
+    // but dnd-kit uses this to track container transitions.
+    // In a full implementation, we'd move the item between local state arrays here.
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -147,45 +157,53 @@ export default function ProjectBoardKanban({
     const activeTaskId = String(active.id);
     const overId = String(over.id);
 
-    // 1. Find columns
     const sourceCol = findColumn(activeTaskId);
-    let targetCol = findColumn(overId);
+    const targetCol = findColumn(overId);
 
     if (!sourceCol || !targetCol) return;
 
     const task = tasks.find(t => String(t.id) === activeTaskId);
     if (!task) return;
 
-    // 2. Build items for the target column
-    const targetItems = [...(grouped[targetCol] || [])];
-    
-    // If moving within same column, remove from list first to calculate new index
+    // 1. Calculate new state for BOTH columns if they changed, or just one if same
+    const sourceItems = [...(grouped[sourceCol] || [])];
+    const targetItems = sourceCol === targetCol ? sourceItems : [...(grouped[targetCol] || [])];
+
     if (sourceCol === targetCol) {
-      const oldIndex = targetItems.findIndex(t => String(t.id) === activeTaskId);
-      const newIndex = targetItems.findIndex(t => String(t.id) === overId);
+      const oldIndex = sourceItems.findIndex(t => String(t.id) === activeTaskId);
+      const newIndex = sourceItems.findIndex(t => String(t.id) === overId);
       
-      if (oldIndex !== newIndex) {
-        const [moved] = targetItems.splice(oldIndex, 1);
-        targetItems.splice(newIndex, 0, moved);
-      } else {
-        return; // No change
+      if (oldIndex !== newIndex && oldIndex !== -1 && newIndex !== -1) {
+        const [moved] = sourceItems.splice(oldIndex, 1);
+        sourceItems.splice(newIndex, 0, moved);
+        
+        const reorderItems = sourceItems.map((t, i) => ({
+          id: t.id,
+          status: sourceCol,
+          sort_order: i,
+        }));
+        onReorder(reorderItems);
       }
     } else {
       // Cross-column move
+      // Remove from source
+      const oldIndex = sourceItems.findIndex(t => String(t.id) === activeTaskId);
+      if (oldIndex !== -1) sourceItems.splice(oldIndex, 1);
+
+      // Insert into target
       const overIndex = targetItems.findIndex(t => String(t.id) === overId);
       const insertAt = overIndex >= 0 ? overIndex : targetItems.length;
       targetItems.splice(insertAt, 0, { ...task, status: targetCol });
+
+      // Build payload for ALL affected tasks in BOTH columns to ensure consistency
+      const reorderItems = [
+        ...sourceItems.map((t, i) => ({ id: t.id, status: sourceCol, sort_order: i })),
+        ...targetItems.map((t, i) => ({ id: t.id, status: targetCol, sort_order: i }))
+      ];
+      
+      console.log(`[Kanban] Moving ${activeTaskId} from ${sourceCol} to ${targetCol}`);
+      onReorder(reorderItems);
     }
-
-    // 3. Generate reorder payload for ALL affected tasks in THAT column
-    const reorderItems = targetItems.map((t, i) => ({
-      id: t.id,
-      status: targetCol,
-      sort_order: i,
-    }));
-
-    console.log("[Kanban] Reorder payload:", reorderItems);
-    onReorder(reorderItems);
   };
 
   const handleCreate = () => {
@@ -299,7 +317,7 @@ export default function ProjectBoardKanban({
                     </span>
                   </div>
                   <SortableContext
-                    items={[status, ...items.map(i => String(i.id))]}
+                    items={items.map(i => String(i.id))}
                     strategy={verticalListSortingStrategy}
                     id={status}
                   >

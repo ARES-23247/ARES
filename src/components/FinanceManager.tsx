@@ -126,10 +126,10 @@ export default function FinanceManager() {
       {/* Overview Metrics */}
       <DashboardMetricsGrid 
         metrics={[
-          { label: "Total Income", value: `$${summary.total_income.toLocaleString()}`, icon: <TrendingUp className="text-ares-green" /> },
-          { label: "Total Expenses", value: `$${summary.total_expenses.toLocaleString()}`, icon: <TrendingDown className="text-ares-red" /> },
-          { label: "Cash Balance", value: `$${summary.balance.toLocaleString()}`, icon: <Wallet className="text-ares-gold" /> },
-          { label: "Pipeline Value", value: `$${pipeline.reduce((acc, p) => acc + (p.status !== 'lost' ? (p.estimated_value || 0) : 0), 0).toLocaleString()}`, icon: <PieChart className="text-ares-cyan" /> },
+          { label: "Total Income", value: `$${(summary?.total_income ?? 0).toLocaleString()}`, icon: <TrendingUp className="text-ares-green" /> },
+          { label: "Total Expenses", value: `$${(summary?.total_expenses ?? 0).toLocaleString()}`, icon: <TrendingDown className="text-ares-red" /> },
+          { label: "Cash Balance", value: `$${(summary?.balance ?? 0).toLocaleString()}`, icon: <Wallet className="text-ares-gold" /> },
+          { label: "Pipeline Value", value: `$${pipeline.reduce((acc, p) => acc + (p.status !== 'lost' ? (Number(p.estimated_value) || 0) : 0), 0).toLocaleString()}`, icon: <PieChart className="text-ares-cyan" /> },
         ]}
       />
 

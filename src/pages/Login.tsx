@@ -47,7 +47,7 @@ export default function Login() {
           <div className="w-16 h-16 bg-ares-red ares-cut flex items-center justify-center mb-6 shadow-lg shadow-ares-red/20">
             <LogIn className="text-white w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Team Portal</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">ARES Portal</h1>
           <p className="text-ares-gray text-center text-sm">
             <span className="text-ares-gold font-bold">Authorized Access Only</span> <br/>
             Internal system for Team 23247 members.

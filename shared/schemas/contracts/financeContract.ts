@@ -57,6 +57,7 @@ export const financeContract = c.router({
     body: c.noBody(),
     responses: {
       200: z.object({ success: z.boolean() }),
+      404: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
     },
     summary: "Delete a sponsorship pipeline item",
@@ -94,7 +95,8 @@ export const financeContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: c.noBody(),
     responses: {
-      200: z.object({ success: z.boolean() }),
+      200: z.object({ success: z.literal(true) }),
+      404: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
     },
     summary: "Delete a financial transaction",

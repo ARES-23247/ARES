@@ -140,7 +140,7 @@ const profileHandlers = {
         }
       };
 
-      const members = await Promise.all((results || []).map(async (r) => {
+      const members = (await Promise.all((results || []).map(async (r) => {
         const row = r as Record<string, unknown>;
         const memberType = String(row.member_type || "student").toLowerCase();
         
@@ -150,6 +150,8 @@ const profileHandlers = {
         }
 
         const sanitized = sanitizeProfileForPublic(row, memberType) as any;
+        if (!sanitized) return null;
+
         return {
           ...sanitized,
           user_id: String(sanitized.user_id),
@@ -160,7 +162,7 @@ const profileHandlers = {
           colleges: Array.isArray(sanitized.colleges) ? (sanitized.colleges as string[]) : [],
           employers: Array.isArray(sanitized.employers) ? (sanitized.employers as string[]) : []
         };
-      }));
+      }))).filter(m => !!m);
 
       if (members.length === 0 && results.length > 0) {
         console.warn("[Roster] Results found but all members were filtered out or failed processing.");

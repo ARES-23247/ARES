@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -9,7 +10,7 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 const s = initServer<AppEnv>();
 
 const badgesTsRestRouter = s.router(badgeContract, {
-  list: async (_, c) => {
+  list: async (_input, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -27,13 +28,14 @@ const badgesTsRestRouter = s.router(badgeContract, {
         created_at: String(b.created_at),
       }));
 
-      return { status: 200, body: { badges } };
+      return { status: 200 as const, body: { badges } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.message || "Failed to fetch badges" } };
+      return { status: 500 as const, body: { error: e.message || "Failed to fetch badges" } };
     }
   },
-  create: async ({ body }, c) => {
+  create: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       await db
         .insertInto("badges")
@@ -45,13 +47,14 @@ const badgesTsRestRouter = s.router(badgeContract, {
           color_theme: body.color_theme,
         })
         .execute();
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.message || "Failed to create badge" } };
+      return { status: 500 as const, body: { error: e.message || "Failed to create badge" } };
     }
   },
-  grant: async ({ body }, c) => {
+  grant: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       const sessionId = user?.id || "system";
@@ -106,34 +109,36 @@ const badgesTsRestRouter = s.router(badgeContract, {
         })()
       );
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.message || "Failed to award badge" } };
+      return { status: 500 as const, body: { error: e.message || "Failed to award badge" } };
     }
   },
-  revoke: async ({ params }, c) => {
+  revoke: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       await db
         .deleteFrom("user_badges")
         .where("user_id", "=", params.userId)
         .where("badge_id", "=", params.badgeId)
         .execute();
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.message || "Failed to revoke badge" } };
+      return { status: 500 as const, body: { error: e.message || "Failed to revoke badge" } };
     }
   },
-  delete: async ({ params }, c) => {
+  delete: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("badges").where("id", "=", params.id).execute();
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.message || "Failed to delete badge definition" } };
+      return { status: 500 as const, body: { error: e.message || "Failed to delete badge definition" } };
     }
   },
-  leaderboard: async (_, c) => {
+  leaderboard: async (_input, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -154,9 +159,9 @@ const badgesTsRestRouter = s.router(badgeContract, {
         badge_count: Number(r.badge_count),
       }));
 
-      return { status: 200, body: { leaderboard } };
+      return { status: 200 as const, body: { leaderboard } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.message || "Failed to fetch leaderboard" } };
+      return { status: 500 as const, body: { error: e.message || "Failed to fetch leaderboard" } };
     }
   },
 });

@@ -1,17 +1,19 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { financeContract } from "../../../shared/schemas/contracts/financeContract";
 import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser } from "../middleware";
-import { AppEnv } from "../index";
+import { AppEnv } from "../middleware";
 
 const financeRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
 const financeTsRestRouter = s.router(financeContract, {
-  getSummary: async ({ query }, c) => {
+  getSummary: async (input, c: Context<AppEnv>) => {
     try {
+      const { query } = input;
       const db = c.get("db") as Kysely<DB>;
       const seasonId = query.season_id;
 
@@ -23,7 +25,7 @@ const financeTsRestRouter = s.router(financeContract, {
 
       if (!latestSeasonId) {
         return {
-          status: 200,
+          status: 200 as const,
           body: { total_income: 0, total_expenses: 0, balance: 0, season_id: null },
         };
       }
@@ -44,7 +46,7 @@ const financeTsRestRouter = s.router(financeContract, {
       };
 
       return {
-        status: 200,
+        status: 200 as const,
         body: {
           total_income: totals.income,
           total_expenses: totals.expense,
@@ -53,12 +55,13 @@ const financeTsRestRouter = s.router(financeContract, {
         },
       };
     } catch (e: any) {
-      return { status: 500, body: { error: e.stack || e.message } };
+      return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-  listPipeline: async ({ query }, c) => {
+  listPipeline: async (input, c: Context<AppEnv>) => {
     try {
+      const { query } = input;
       const db = c.get("db") as Kysely<DB>;
       let queryBuilder = db.selectFrom("sponsorship_pipeline").selectAll();
       if (query.season_id) {
@@ -66,7 +69,7 @@ const financeTsRestRouter = s.router(financeContract, {
       }
       const pipeline = await queryBuilder.orderBy("created_at", "desc").execute();
       return { 
-        status: 200, 
+        status: 200 as const, 
         body: { 
           pipeline: pipeline.map(p => ({
             ...p,
@@ -77,12 +80,13 @@ const financeTsRestRouter = s.router(financeContract, {
         } as any 
       };
     } catch (e: any) {
-      return { status: 500, body: { error: e.stack || e.message } };
+      return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-  savePipeline: async ({ body }, c) => {
+  savePipeline: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       const id = body.id || crypto.randomUUID();
@@ -146,25 +150,27 @@ const financeTsRestRouter = s.router(financeContract, {
       });
 
       await logAuditAction(c, isNew ? "create" : "update", "sponsorship_pipeline", result.id);
-      return { status: 200, body: { success: true, id: result.id } };
+      return { status: 200 as const, body: { success: true, id: result.id } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.stack || e.message } };
+      return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-  deletePipeline: async ({ params }, c) => {
+  deletePipeline: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("sponsorship_pipeline").where("id", "=", params.id).execute();
       await logAuditAction(c, "delete", "sponsorship_pipeline", params.id);
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.stack || e.message } };
+      return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-  listTransactions: async ({ query }, c) => {
+  listTransactions: async (input, c: Context<AppEnv>) => {
     try {
+      const { query } = input;
       const db = c.get("db") as Kysely<DB>;
       let queryBuilder = db.selectFrom("finance_transactions").selectAll();
       if (query.season_id) {
@@ -175,7 +181,7 @@ const financeTsRestRouter = s.router(financeContract, {
       }
       const transactions = await queryBuilder.orderBy("date", "desc").execute();
       return { 
-        status: 200, 
+        status: 200 as const, 
         body: { 
           transactions: transactions.map(t => ({
             ...t,
@@ -185,12 +191,13 @@ const financeTsRestRouter = s.router(financeContract, {
         } as any 
       };
     } catch (e: any) {
-      return { status: 500, body: { error: e.stack || e.message } };
+      return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-  saveTransaction: async ({ body }, c) => {
+  saveTransaction: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       const id = body.id || crypto.randomUUID();
@@ -215,14 +222,15 @@ const financeTsRestRouter = s.router(financeContract, {
       }
 
       await logAuditAction(c, isNew ? "create" : "update", "finance_transactions", id);
-      return { status: 200, body: { success: true, id } };
+      return { status: 200 as const, body: { success: true, id } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.stack || e.message } };
+      return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-  deleteTransaction: async ({ params }, c) => {
+  deleteTransaction: async (input, c: Context<AppEnv>) => {
     try {
+      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const tx = await db
         .selectFrom("finance_transactions")
@@ -230,7 +238,7 @@ const financeTsRestRouter = s.router(financeContract, {
         .where("id", "=", params.id)
         .executeTakeFirst();
 
-      if (!tx) return { status: 404, body: { error: "Transaction not found" } };
+      if (!tx) return { status: 404 as const, body: { error: "Transaction not found" } };
 
       await db.deleteFrom("finance_transactions").where("id", "=", params.id).execute();
 
@@ -240,9 +248,10 @@ const financeTsRestRouter = s.router(financeContract, {
       }
 
       await logAuditAction(c, "delete", "finance_transactions", params.id);
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e: any) {
-      return { status: 500, body: { error: e.message } };
+      console.error("[Finance] Delete error:", e);
+      return { status: 500 as const, body: { error: e.message } };
     }
   },
 });

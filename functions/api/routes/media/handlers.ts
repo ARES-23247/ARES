@@ -1,6 +1,7 @@
 
-import { AppEnv, getDbSettings, checkRateLimit, logAuditAction, getSessionUser } from "../../middleware";
+import { AppEnv, getDbSettings, checkRateLimit, logAuditAction } from "../../middleware";
 import { initServer } from "ts-rest-hono";
+import { Context } from "hono";
 
 const s = initServer<AppEnv>();
 import { mediaContract } from "../../../../shared/schemas/contracts/mediaContract";
@@ -41,11 +42,12 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
 type MediaHandlers = Parameters<typeof s.router<typeof mediaContract>>[1];
 
 export const mediaHandlers: MediaHandlers = {
-  getMedia: async (_, c: any) => {
+  getMedia: async (_input, c: Context<AppEnv>) => {
     const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
     const ua = c.req.header("user-agent") || "unknown";
-    if (c.env.DEV_BYPASS !== "true" && !checkRateLimit(ip, ua, 30, 60)) {
-      return { status: 429, body: { error: "Too many requests" } as any };
+    const rl = await checkRateLimit(c, `media_list_${ip}_${ua}`, 30, 60);
+    if (!rl) {
+      return { status: 429, body: { error: "Rate limit exceeded", media: [] } };
     }
 
     try {
@@ -61,7 +63,7 @@ export const mediaHandlers: MediaHandlers = {
 
       const [objects, dbRes] = await Promise.all([
         listAllObjects(c.env.ARES_STORAGE),
-        c.env.DB.prepare("SELECT key, folder, tags FROM media_tags WHERE folder = 'Gallery'").all().catch(() => ({ results: [] }))
+        c.env.DB.prepare("SELECT key, folder, tags FROM media_tags WHERE folder = 'Gallery'").all()
       ]);
 
       const results = (dbRes.results || []) as { key: string, folder: string, tags: string }[];
@@ -96,11 +98,11 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  adminList: async (_, c: any) => {
+  adminList: async (_input, c: Context<AppEnv>) => {
     try {
       const [objects, dbRes] = await Promise.all([
         listAllObjects(c.env.ARES_STORAGE),
-        c.env.DB.prepare("SELECT key, folder, tags FROM media_tags").all().catch(() => ({ results: [] }))
+        c.env.DB.prepare("SELECT key, folder, tags FROM media_tags").all()
       ]);
 
       const metaMap = new Map<string, { folder: string, tags: string }>();
@@ -124,8 +126,9 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  upload: async ({ body }: { body: FormData }, c: any) => {
+  upload: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const formData = body as any;
       const file = formData.file as File;
       const folder = (formData.folder as string) || "Library";
@@ -185,7 +188,8 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "Upload failed" } };
     }
   },
-  move: async ({ params, body }: { params: { key: string }, body: { folder: string } }, c: any) => {
+  move: async (input, c: Context<AppEnv>) => {
+    const { params, body } = input;
     const oldKey = params.key;
     const { folder } = body;
     try {
@@ -211,7 +215,8 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "Move failed" } };
     }
   },
-  delete: async ({ params }: { params: { key: string } }, c: any) => {
+  delete: async (input, c: Context<AppEnv>) => {
+    const { params } = input;
     try {
       if (c.env.ARES_STORAGE) {
         await c.env.ARES_STORAGE.delete(params.key);
@@ -224,8 +229,9 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  syndicate: async ({ body }: { body: { key: string, caption?: string } }, c: any) => {
+  syndicate: async (input, c: Context<AppEnv>) => {
     try {
+      const { body } = input;
       const { key, caption } = body;
       const config = await getDbSettings(c);
       const baseUrl = new URL(c.req.url).origin;
