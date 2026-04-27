@@ -29,7 +29,7 @@ describe("useDocs hook", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate = vi.fn();
-    vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+    vi.mocked(useNavigate).mockReturnValue(mockNavigate as any);
 
     vi.mocked(api.docs.getDocs.useQuery).mockReturnValue({
       data: { status: 200, body: { docs: [
@@ -112,4 +112,5 @@ describe("useDocs hook", () => {
     expect(result.current.contributors).toEqual([]);
     expect(result.current.searchResults).toEqual([]);
   });
+
 });

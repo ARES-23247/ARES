@@ -36,6 +36,7 @@ vi.mock("../../../functions/utils/postHistory", () => ({
   getPostHistory: vi.fn().mockResolvedValue([]),
   restorePostFromHistory: vi.fn().mockResolvedValue({ success: true }),
   pruneHistory: vi.fn().mockResolvedValue(true),
+  captureHistory: vi.fn().mockResolvedValue(true),
 }));
 
 describe("Hono Backend - /posts Router", () => {
@@ -204,12 +205,12 @@ describe("Hono Backend - /posts Router", () => {
     expect(res.status).toBe(200);
   });
 
-  it("PATCH /admin/:slug - update post", async () => {
+  it("POST /admin/:slug - update post", async () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({ title: "Old" }); // for history capture
     const res = await testApp.request("/admin/test-post", {
-      method: "PATCH",
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "Updated" })
+      body: JSON.stringify({ title: "Updated", ast: { type: "doc", content: [] } })
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
     expect(mockDb.updateTable).toHaveBeenCalledWith("posts");

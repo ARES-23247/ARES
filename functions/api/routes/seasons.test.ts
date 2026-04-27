@@ -13,7 +13,7 @@ vi.mock("../middleware", async (importOriginal) => {
   };
 });
 
-import seasonsRouter from "./seasons";
+import { seasonsRouter } from "./seasons";
 
 describe("Hono Backend - /seasons Router", () => {
   let mockDb: any;
@@ -71,5 +71,51 @@ describe("Hono Backend - /seasons Router", () => {
       headers: { "Content-Type": "application/json" }
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
+  });
+
+  it("GET /admin/list - admin list seasons", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ start_year: 2024, end_year: 2025, challenge_name: "Test", status: "published" }]);
+    const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /admin/:id - admin get season details", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2024, end_year: 2025, challenge_name: "Test", status: "published" });
+    const res = await testApp.request("/admin/2024", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("DELETE /admin/:id - soft delete season", async () => {
+    const res = await testApp.request("/admin/2024", {
+      method: "DELETE",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" }
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("POST /admin/:id/undelete - undelete season", async () => {
+    const res = await testApp.request("/admin/2024/undelete", {
+      method: "POST",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" }
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("DELETE /admin/:id/purge - permanently delete season", async () => {
+    const res = await testApp.request("/admin/2024/purge", {
+      method: "DELETE",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" }
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  // Error paths
+  it("GET /admin/list - error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(500);
   });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import communicationsRouter from "./communications";
@@ -16,7 +16,7 @@ vi.mock("../middleware", async (importOriginal) => {
 
 import { getSocialConfig, logAuditAction, logSystemError } from "../middleware";
 
-const globalFetch = global.fetch;
+const globalFetch = (globalThis as any).fetch;
 
 describe("Hono Backend - /communications Router", () => {
   let mockDb: any;
@@ -24,7 +24,7 @@ describe("Hono Backend - /communications Router", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
+    (globalThis as any).fetch = vi.fn();
 
     mockDb = {
       selectFrom: vi.fn().mockReturnThis(),
@@ -41,7 +41,7 @@ describe("Hono Backend - /communications Router", () => {
   });
 
   afterEach(() => {
-    global.fetch = globalFetch;
+    (globalThis as any).fetch = globalFetch;
   });
 
   it("GET /stats - returns active users count", async () => {
@@ -114,7 +114,7 @@ describe("Hono Backend - /communications Router", () => {
     vi.mocked(getSocialConfig).mockResolvedValueOnce({ RESEND_API_KEY: "test_key" });
     mockDb.execute.mockResolvedValueOnce([{ email: "test@test.com" }]);
     
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked((globalThis as any).fetch).mockResolvedValueOnce({
       ok: false,
       text: async () => "Unauthorized"
     } as any);
@@ -135,7 +135,7 @@ describe("Hono Backend - /communications Router", () => {
     vi.mocked(getSocialConfig).mockResolvedValueOnce({ RESEND_API_KEY: "test_key" });
     mockDb.execute.mockResolvedValueOnce([{ email: "test@test.com" }]);
     
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    vi.mocked((globalThis as any).fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ error: { message: "Invalid domain" } })
     } as any);
@@ -158,7 +158,7 @@ describe("Hono Backend - /communications Router", () => {
     const mockUsers = Array.from({ length: 51 }, (_, i) => ({ email: `user${i}@test.com` }));
     mockDb.execute.mockResolvedValueOnce(mockUsers);
     
-    vi.mocked(global.fetch).mockResolvedValue({
+    vi.mocked((globalThis as any).fetch).mockResolvedValue({
       ok: true,
       json: async () => ({ id: "batch-id" })
     } as any);
@@ -175,7 +175,7 @@ describe("Hono Backend - /communications Router", () => {
     expect(body.recipientCount).toBe(51);
 
     // Expect fetch to have been called twice (1 for 50, 1 for 1)
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect((globalThis as any).fetch).toHaveBeenCalledTimes(2);
     expect(logAuditAction).toHaveBeenCalled();
   });
 });

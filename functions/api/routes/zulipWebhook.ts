@@ -11,6 +11,7 @@ export const zulipWebhookRouter = new Hono<AppEnv>();
 interface ZulipOutgoingPayload {
   token: string;
   message: {
+    sender_id: number;
     sender_email: string;
     sender_full_name: string;
     content: string;

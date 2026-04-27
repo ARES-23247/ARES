@@ -82,6 +82,46 @@ describe("Hono Backend - /github Router", () => {
     expect(body.success).toBe(true);
   });
 
+  it("GET /projects - missing config", async () => {
+    const { buildGitHubConfig } = await import("../../utils/githubProjects");
+    vi.mocked(buildGitHubConfig).mockReturnValueOnce(null);
+    const res = await testApp.request("/projects", {}, {}, mockExecutionContext);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.success).toBe(false);
+  });
+
+  it("GET /projects - fetch error", async () => {
+    const { fetchProjectBoard } = await import("../../utils/githubProjects");
+    vi.mocked(fetchProjectBoard).mockRejectedValueOnce(new Error("API Error"));
+    const res = await testApp.request("/projects", {}, {}, mockExecutionContext);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.success).toBe(false);
+  });
+
+  it("POST /projects/items - missing config", async () => {
+    const { buildGitHubConfig } = await import("../../utils/githubProjects");
+    vi.mocked(buildGitHubConfig).mockReturnValueOnce(null);
+    const res = await testApp.request("/projects/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New Test Task" })
+    }, {}, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /projects/items - creation error", async () => {
+    const { createProjectItem } = await import("../../utils/githubProjects");
+    vi.mocked(createProjectItem).mockRejectedValueOnce(new Error("API Error"));
+    const res = await testApp.request("/projects/items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New Test Task" })
+    }, {}, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
   describe("GET /activity", () => {
     let fetchMock: ReturnType<typeof vi.fn>;
 

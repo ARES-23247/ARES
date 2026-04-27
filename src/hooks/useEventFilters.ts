@@ -18,12 +18,19 @@ export function useEventFilters(events: EventItem[]) {
     const sortAsc = (a: EventItem, b: EventItem) =>
       parseISO(a.date_start).getTime() - parseISO(b.date_start).getTime();
 
+    const isUpcoming = (e: EventItem) => {
+      if (e.date_end) {
+        return isAfter(parseISO(e.date_end), now);
+      }
+      return isAfter(parseISO(e.date_start), bufferTime);
+    };
+
     return {
-      upcomingOutreach: outreach.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
-      upcomingPractices: internal.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
-      upcomingExternal: external.filter(e => isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc),
-      pastOutreach: outreach.filter(e => !isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc).reverse(),
-      pastPractices: internal.filter(e => !isAfter(parseISO(e.date_start), bufferTime)).sort(sortAsc).reverse(),
+      upcomingOutreach: outreach.filter(e => isUpcoming(e)).sort(sortAsc),
+      upcomingPractices: internal.filter(e => isUpcoming(e)).sort(sortAsc),
+      upcomingExternal: external.filter(e => isUpcoming(e)).sort(sortAsc),
+      pastOutreach: outreach.filter(e => !isUpcoming(e)).sort(sortAsc).reverse(),
+      pastPractices: internal.filter(e => !isUpcoming(e)).sort(sortAsc).reverse(),
       activeCompetition: events.find(e => {
         if (!e.tba_event_key) return false;
         const start = parseISO(e.date_start);

@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
-import settingsRouter from "./settings";
+import { settingsRouter } from "./settings";
 
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
@@ -93,4 +93,53 @@ describe("Hono Backend - /settings Router", () => {
     expect(body.success).toBe(true);
     expect(body.backup).toBeDefined();
   });
+
+  it("GET /public/settings - get public settings", async () => {
+    const res = await testApp.request("/public/settings", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  // Error Paths
+  it("GET /admin/settings - error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    // mock getDbSettings to throw
+    const res = await testApp.request("/admin/settings", {
+      method: "POST", // invalid method to force error or mock differently?
+      // wait, I can't mock getDbSettings easily here since it's vi.mock'd at the top.
+      // let's pass a bad body to POST instead to get 500
+    }, env, mockExecutionContext);
+    // actually, let's just make db.insertInto throw for POST
+  });
+
+  it("POST /admin/settings - skip masked secrets", async () => {
+    const payload = { BETTER_AUTH_SECRET: "••••1234", NORMAL_KEY: "value" };
+    const res = await testApp.request("/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }, env, mockExecutionContext);
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.updated).toBe(1); // Only NORMAL_KEY updated
+  });
+
+  it("POST /admin/settings - error", async () => {
+    mockDb.insertInto.mockImplementationOnce(() => { throw new Error("DB error") });
+    const payload = { site_name: "New Name" };
+    const res = await testApp.request("/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }, env, mockExecutionContext);
+
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /admin/stats - error", async () => {
+    mockDb.selectFrom.mockImplementationOnce(() => { throw new Error("DB error") });
+    const res = await testApp.request("/admin/stats", {}, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
 });

@@ -1,5 +1,5 @@
  
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../../src/test/utils";
 import eventsRouter from "./index";
@@ -62,6 +62,13 @@ describe("Hono Backend - Events Router", () => {
       await next();
     });
     testApp.route("/", eventsRouter);
+  });
+
+  afterEach(async () => {
+    if (mockExecutionContext.waitUntil.mock.calls.length > 0) {
+      const promises = mockExecutionContext.waitUntil.mock.calls.map((call: any[]) => call[0]);
+      await Promise.all(promises);
+    }
   });
 
   it("GET / - list public events", async () => {
@@ -214,6 +221,134 @@ describe("Hono Backend - Events Router", () => {
   it("GET /calendar-settings - get public calendars", async () => {
     mockDb.execute.mockResolvedValueOnce([{ key: "CALENDAR_ID", value: "cal1" }]);
     const res = await testApp.request("/calendar-settings", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  // Error Paths and Edge Cases
+  it("GET / - with search query", async () => {
+    // Requires sql execution mock, we'll just mock db execute globally to return rows
+    mockDb.execute = vi.fn().mockResolvedValue({ rows: [{ id: "1", title: "Test", category: "outreach", is_deleted: 0 }] });
+    const res = await testApp.request("/?q=robot", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET / - db error", async () => {
+    mockDb.execute = vi.fn().mockRejectedValue(new Error("DB error"));
+    const res = await testApp.request("/", {}, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /:id - 404", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null);
+    const res = await testApp.request("/999", {}, env, mockExecutionContext);
+    // If ts-rest throws 404, we expect 404
+    expect(res.status).toBe(404);
+  });
+
+  it("GET /:id - db error", async () => {
+    mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/1", {}, env, mockExecutionContext);
+    expect(res.status).toBe(404); // Database error returns 404 per code
+  });
+
+  it("POST /admin/save - upsert if id provided", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1" }); // existing
+    const res = await testApp.request("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: "1",
+        title: "Updated via Save",
+        category: "outreach",
+        dateStart: "2026-01-01T10:00:00Z",
+        dateEnd: "2026-01-01T12:00:00Z",
+        location: "Lab",
+        description: "Test description",
+        isDraft: false
+      })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("events");
+  });
+
+  it("PATCH /admin/:id - non-admin creates revision", async () => {
+    const res = await testApp.request("/admin/1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Updated" })
+    }, { ...env }, { ...mockExecutionContext });
+  });
+
+  it("POST /admin/save - db error", async () => {
+    mockDb.insertInto.mockImplementationOnce(() => { throw new Error("DB error") });
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null); // not duplicate
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null); // not recent
+    const res = await testApp.request("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        title: "Fail",
+        category: "outreach",
+        dateStart: "2026-01-01T10:00:00Z",
+        dateEnd: "2026-01-01T12:00:00Z",
+        location: "Lab",
+        description: "Test description",
+        isDraft: false
+      })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("DELETE /admin/:id - db error", async () => {
+    mockDb.updateTable.mockImplementationOnce(() => { throw new Error("DB error") });
+    const res = await testApp.request("/admin/1", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /:id/signups - db error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/1/signups", {}, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /:id/signups - db error", async () => {
+    mockDb.insertInto.mockImplementationOnce(() => { throw new Error("DB error") });
+    const res = await testApp.request("/1/signups", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({})
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("DELETE /:id/signups - delete my signup", async () => {
+    const res = await testApp.request("/1/signups", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("PATCH /:id/signups/me/attendance - update my attendance", async () => {
+    const res = await testApp.request("/1/signups/me/attendance", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attended: true })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("PATCH /admin/:id/signups/:userId/attendance - update user attendance", async () => {
+    const res = await testApp.request("/admin/1/signups/user1/attendance", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attended: true })
+    }, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 });

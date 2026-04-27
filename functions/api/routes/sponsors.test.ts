@@ -39,6 +39,7 @@ describe("Hono Backend - /sponsors Router", () => {
       updateTable: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
       deleteFrom: vi.fn().mockReturnThis(),
+      innerJoin: vi.fn().mockReturnThis(),
       getExecutor: vi.fn().mockReturnValue({
         compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),
         executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
@@ -50,6 +51,10 @@ describe("Hono Backend - /sponsors Router", () => {
     testApp.use("*", async (c: any, next) => {
       c.set("db", mockDb);
       await next();
+    });
+    testApp.onError((err, c) => {
+      console.error("HONO ERROR:", err);
+      return c.text("Internal Server Error", 500);
     });
     testApp.route("/", sponsorsRouter);
   });
@@ -76,5 +81,103 @@ describe("Hono Backend - /sponsors Router", () => {
       headers: { "Content-Type": "application/json" }
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
+  });
+
+  it("GET / - list sponsors error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /roi/:token - invalid token", async () => {
+    mockDb.execute.mockResolvedValueOnce([]); // No token found
+    const res = await testApp.request("/roi/bad-token", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(403);
+  });
+
+  it("GET /roi/:token - sponsor not found", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ sponsor_id: "1" }]); // Token found
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null); // Sponsor not found
+    const res = await testApp.request("/roi/good-token", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(403);
+  });
+
+  it("GET /roi/:token - normal path", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ sponsor_id: "1" }]); // Token found
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", name: "Google" }); // Sponsor found
+    mockDb.execute.mockResolvedValueOnce([{ id: "m1", metric_value: "100" }]); // Metrics
+    const res = await testApp.request("/roi/good-token", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /roi/:token - error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/roi/good-token", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /admin/list - normal path", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ id: "1", is_active: 1 }]);
+    const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /admin/list - error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/save - save sponsor error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/admin/save", {
+      method: "POST",
+      body: JSON.stringify({ name: "Google", tier: "Gold" }),
+      headers: { "Content-Type": "application/json" }
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("DELETE /admin/:id - normal path", async () => {
+    const res = await testApp.request("/admin/123", {
+      method: "DELETE",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" }
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    const text = await res.text();
+    console.error("DEBUG TEXT: ", text);
+    expect(res.status).toBe(200);
+  });
+
+  it("DELETE /admin/:id - error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/admin/123", {
+      method: "DELETE",
+      body: JSON.stringify({}),
+      headers: { "Content-Type": "application/json" }
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /admin/tokens - normal path", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ id: "1" }]);
+    const res = await testApp.request("/admin/tokens", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /admin/tokens - error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/admin/tokens", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/tokens/generate - generate token error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/admin/tokens/generate", {
+      method: "POST",
+      body: JSON.stringify({ sponsor_id: "123" }),
+      headers: { "Content-Type": "application/json" }
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(500);
   });
 });
