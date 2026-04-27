@@ -453,17 +453,18 @@ zulipWebhookRouter.post("/", async (c) => {
             const targetType = topicParts[0];
             const targetId = topicParts.slice(1).join("/");
 
-            let userId: string;
+            // KNT-01: Verified Mirroring Shield
             const existingUser = await db.selectFrom("user")
-              .select("id")
+              .select(["id", "role"])
               .where("email", "=", body.message.sender_email)
               .executeTakeFirst();
 
-            if (existingUser) {
-              userId = existingUser.id as string;
-            } else {
-              userId = "zulip-shadow";
+            if (!existingUser || existingUser.role === "unverified") {
+              // DROP: We do not mirror comments from unverified external users
+              return c.json({ content: "" });
             }
+
+            const userId = existingUser.id as string;
 
             try {
               await db.insertInto("comments")
@@ -473,7 +474,7 @@ zulipWebhookRouter.post("/", async (c) => {
                   user_id: userId,
                   content: rawContent,
                   zulip_message_id: String(body.trigger === "message" ? (body as any).message_id || 0 : 0),
-                  zulip_sender_id: 0, // Placeholder for shadow user or resolve to number if possible
+                  zulip_sender_id: body.message.sender_id || 0,
                   created_at: new Date().toISOString()
                 })
                 .execute();

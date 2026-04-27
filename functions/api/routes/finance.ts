@@ -60,7 +60,7 @@ const financeTsRestRouter: any = s.router(financeContract as any, {
         seasonId = latest?.start_year ? Number(latest.start_year) : undefined;
       }
 
-      let q = db.selectFrom("sponsorship_pipeline").selectAll();
+      let q = db.selectFrom("sponsorship_pipeline").select(["id", "company_name", "status", "estimated_value", "contact_person", "season_id", "sponsor_id"]);
       if (seasonId) {
         q = q.where("season_id", "=", seasonId as any);
       }
@@ -200,7 +200,7 @@ const financeTsRestRouter: any = s.router(financeContract as any, {
         seasonId = latest?.start_year ? Number(latest.start_year) : undefined;
       }
 
-      let q = db.selectFrom("finance_transactions").selectAll();
+      let q = db.selectFrom("finance_transactions").select(["id", "type", "amount", "category", "date", "description", "receipt_url", "season_id"]);
       if (seasonId) q = q.where("season_id", "=", seasonId as any);
       if (query.type) q = q.where("type", "=", query.type);
 
@@ -275,13 +275,16 @@ const financeTsRestRouter: any = s.router(financeContract as any, {
     try {
       const db = c.get("db") as Kysely<DB>;
       
-      // 1. Check for physical assets in R2
+      // 1. Fetch full record for forensic snapshot
       const existing = await db.selectFrom("finance_transactions")
-        .select("receipt_url")
+        .selectAll()
         .where("id", "=", params.id)
         .executeTakeFirst();
       
-      if (existing?.receipt_url && c.env.ARES_STORAGE) {
+      if (!existing) return { status: 404 as const, body: { error: "Not found" } };
+
+      // 2. Physical R2 Cleanup
+      if (existing.receipt_url && c.env.ARES_STORAGE) {
         try {
           const url = new URL(existing.receipt_url);
           const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
@@ -291,11 +294,12 @@ const financeTsRestRouter: any = s.router(financeContract as any, {
         }
       }
 
+      // 3. Atomic Delete with Forensic Log
       await retryTransaction(db, async (trx) => {
         await trx.deleteFrom("finance_transactions").where("id", "=", params.id).execute();
       });
 
-      c.executionCtx.waitUntil(logAuditAction(c, "delete_finance_transaction", "finance_transactions", params.id, "Transaction deleted"));
+      c.executionCtx.waitUntil(logAuditAction(c, "delete_finance_transaction", "finance_transactions", params.id, JSON.stringify(existing)));
       return { status: 200 as const, body: { success: true } };
     } catch {
       return { status: 500 as const, body: { error: "Delete failed" } };

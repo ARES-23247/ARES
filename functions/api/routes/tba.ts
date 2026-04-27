@@ -28,10 +28,15 @@ async function getTBA(path: string, c: Context<AppEnv>) {
   const apiKey = settingsRow?.value;
   if (!apiKey) throw new Error("TBA_API_KEY missing");
 
-  const r = await fetch(`https://www.thebluealliance.com/api/v3${path}`, { headers: { "X-TBA-Auth-Key": apiKey } });
+  const r = await fetch(`https://www.thebluealliance.com/api/v3${path}`, { headers: { "X-TBA-Auth-Key": apiKey } }).catch(() => null);
   
-  if (!r.ok) {
-    throw new Error(`TBA API Error: ${r.status}`);
+  if (!r || !r.ok) {
+    // ECO-TBA-01: Graceful fallback to expired cache if external API is down or rate-limited
+    if (cached) {
+      console.warn(`[TBA Fallback] External API error ${r?.status || 'network'}. Serving expired cache for ${path}`);
+      return cached.data;
+    }
+    throw new Error(`TBA API Error: ${r?.status || 'Network failure'} and no cache available`);
   }
 
   const data = await r.json();

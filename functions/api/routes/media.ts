@@ -258,7 +258,7 @@ mediaRouter.get("/:key{.+$}", async (c: any) => {
     const headers = new Headers();
     object.writeHttpMetadata(headers);
     headers.set("etag", object.httpEtag);
-    if (publicFolders.includes(folder)) headers.set("Cache-Control", "public, max-age=3600");
+    if (publicFolders.includes(folder)) headers.set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=86400");
     else headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
 
     const response = new Response(object.body, { headers });

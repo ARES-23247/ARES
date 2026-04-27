@@ -80,6 +80,9 @@ const postHandlers = {
         season_id: p.season_id ? Number(p.season_id) : null
       }));
 
+      // ECON-SCA-01: Shield D1 with CDN cache for public lists
+      c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=600");
+
       return { status: 200 as const, body: { posts } as any };
     } catch (e) {
       console.error("[Posts:List] Error", e);

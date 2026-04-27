@@ -51,6 +51,12 @@ export default function SwerveSim() {
     let animationFrameId: number;
 
     function loop(currentTime: number) {
+      // ECON-F01 FIX: Pause simulation when tab is backgrounded
+      if (document.hidden) {
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
+
       const { vx: curVx, vy: curVy, omega: curOmega } = stateRef.current;
       
       const frameTime = (currentTime - lastTime) / 1000;

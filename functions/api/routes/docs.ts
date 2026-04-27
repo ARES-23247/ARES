@@ -302,9 +302,13 @@ const docTsRestRouter: any = s.router(docContract as any, {
   },
     deleteDoc: async ({ params }: { params: any }, c: any) => {
     const { slug } = params;
-            try {
+    try {
       const db = c.get("db") as Kysely<DB>;
+      const existing = await db.selectFrom("docs").selectAll().where("slug", "=", slug).executeTakeFirst();
+      if (!existing) return { status: 404 as const, body: { error: "Doc not found" } };
+
       await db.updateTable("docs").set({ is_deleted: 1 }).where("slug", "=", slug).execute();
+      c.executionCtx.waitUntil(logAuditAction(c, "DELETE_DOC", "docs", slug, JSON.stringify(existing)));
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Delete] Error", e);
@@ -622,6 +626,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
 
       await db.deleteFrom("docs").where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(db.deleteFrom("docs_history").where("slug", "=", slug).execute());
+      c.executionCtx.waitUntil(logAuditAction(c, "PURGE_DOC", "docs", slug, JSON.stringify(doc)));
       
       return { status: 200 as const, body: { success: true } };
     } catch (e) {

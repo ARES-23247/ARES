@@ -36,6 +36,7 @@ import zulipRouter from "./routes/zulip";
 import notificationsRouter from "./routes/notifications";
 import tasksRouter from "./routes/tasks";
 import financeRouter from "./routes/finance";
+import entitiesRouter from "./routes/entities";
 
 const app = new Hono<AppEnv>();
 
@@ -104,6 +105,7 @@ apiRouter.use("*", cors({
 // ── Mount Domain Routers ─────────────────────────────────────────────
 apiRouter.route("/auth", authRouter);
 apiRouter.route("/finance", financeRouter);
+apiRouter.route("/entities", entitiesRouter);
 apiRouter.route("/posts", postsRouter);
 apiRouter.route("/docs", docsRouter);
 apiRouter.route("/events", eventsRouter);
@@ -137,9 +139,9 @@ apiRouter.route("/webhooks/zulip", zulipWebhookRouter);
 apiRouter.route("/communications", communicationsRouter);
 
 // ── Global Search ───
-apiRouter.get("/search", rateLimitMiddleware(50, 60), async (c) => {
+apiRouter.get("/search", rateLimitMiddleware(20, 60), async (c) => {
   const q = c.req.query("q") || "";
-  if (q.length < 2) return c.json({ results: [] });
+  if (q.length < 3) return c.json({ results: [] });
   
   // SCA-FTS-01: Sanitize FTS5 query
   const qClean = q.replace(/[^a-zA-Z0-9\s]/g, "").trim();

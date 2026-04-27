@@ -58,22 +58,39 @@ const logisticsHandlers = {
     const secret = c.env.ENCRYPTION_SECRET;
 
     try {
-      const results = await db.selectFrom("user")
-        .select(["name", "email", "role"])
-        .where("role", "!=", "unverified")
+      const results = await db.selectFrom("user as u")
+        .leftJoin("user_profiles as p", "u.id", "p.user_id")
+        .select([
+          "u.name", 
+          "u.email", 
+          "u.role",
+          "p.emergency_contact_name",
+          "p.emergency_contact_phone"
+        ])
+        .where("u.role", "!=", "unverified")
         .execute();
 
-      const users: { name: string, email: string, role: string }[] = [];
+      const users: any[] = [];
       for (const r of results) {
         let email = String(r.email);
+        let emergencyPhone = r.emergency_contact_phone;
+
+        // Decrypt sensitive fields
         try {
-          if (email.includes(":")) {
-            email = await decrypt(email, secret);
+          if (email.includes(":")) email = await decrypt(email, secret);
+          if (emergencyPhone && emergencyPhone.includes(":")) {
+            emergencyPhone = await decrypt(emergencyPhone, secret);
           }
-        } catch { /* ignore fallback to plaintext */ }
+        } catch { /* ignore fallback */ }
         
         if (email && email.includes("@")) {
-          users.push({ name: String(r.name), email, role: String(r.role) });
+          users.push({ 
+            name: String(r.name), 
+            email, 
+            role: String(r.role),
+            emergencyName: r.emergency_contact_name || "—",
+            emergencyPhone: emergencyPhone || "—"
+          });
         }
       }
 
@@ -81,9 +98,8 @@ const logisticsHandlers = {
         status: 200 as const,
         body: { users }
       };
-    } catch (e) {
-      console.error("EXPORT_EMAILS ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to export emails" } as any };
+    } catch {
+      return { status: 500 as const, body: { error: "Failed to export roster" } };
     }
   },
 };

@@ -8,6 +8,7 @@ interface LogisticsData {
   dietary: Record<string, number>;
   tshirts: Record<string, number>;
   totalCount: number;
+  staleProfiles?: { name: string; lastUpdate: string }[];
 }
 
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
@@ -31,7 +32,8 @@ export default function DietarySummary() {
         const users = (res.body as any).users;
         setExportedEmails(users.map((u: any) => u.email).join(", "));
         
-        const csvContent = "Name,Email,Role\n" + users.map((u: any) => `"${u.name}","${u.email}","${u.role}"`).join("\n");
+        const csvContent = "Name,Email,Role,Emergency Contact,Emergency Phone\n" + 
+          users.map((u: any) => `"${u.name}","${u.email}","${u.role}","${u.emergencyName}","${u.emergencyPhone}"`).join("\n");
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -125,6 +127,27 @@ export default function DietarySummary() {
         }
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      {/* Predictive Health Panel (Level-20 Hardening) */}
+      {data.staleProfiles && data.staleProfiles.length > 0 && (
+        <div className="md:col-span-2 bg-ares-red/5 border border-ares-red/30 ares-cut p-6">
+           <div className="flex items-center gap-3 text-ares-red mb-2">
+             <AlertCircle size={20} />
+             <h3 className="font-black uppercase tracking-widest text-sm">Critical: Stale Wellness Data</h3>
+           </div>
+           <p className="text-xs text-marble/60 mb-4 font-bold">
+             The following members have not updated their medical/dietary profile in over 6 months. This may pose a safety risk for event catering.
+           </p>
+           <div className="flex flex-wrap gap-2">
+             {data.staleProfiles.map(p => (
+               <span key={p.name} className="px-2 py-1 bg-ares-red/10 border border-ares-red/20 text-[10px] font-mono text-ares-red ares-cut-sm">
+                 {p.name} ({new Date(p.lastUpdate).toLocaleDateString()})
+               </span>
+             ))}
+           </div>
+        </div>
+      )}
+
       {/* Dietary Panel */}
       <div className="bg-obsidian/50 border border-ares-gray-dark ares-cut p-6 relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">

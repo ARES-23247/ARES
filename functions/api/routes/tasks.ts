@@ -4,6 +4,7 @@ import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { taskContract } from "../../../shared/schemas/contracts/taskContract";
 import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig } from "../middleware";
+import { retryTransaction } from "../middleware/dbUtils";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
 
@@ -198,14 +199,18 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
       if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
       const now = new Date().toISOString();
-      for (const item of body.items) {
-        await db.updateTable("tasks")
-          .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
-          .where("id", "=", item.id)
-          .execute();
-      }
+      
+      // KNT-02: Use retryTransaction to handle high-velocity morning standup contention
+      await retryTransaction(db, async (trx) => {
+        for (const item of body.items) {
+          await trx.updateTable("tasks")
+            .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
+            .where("id", "=", item.id)
+            .execute();
+        }
+      });
 
-      await db.insertInto("audit_log").values({
+      c.executionCtx.waitUntil(db.insertInto("audit_log").values({
         id: crypto.randomUUID(),
         actor: user.id,
         action: "reorder_tasks",
@@ -213,7 +218,7 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
         resource_id: "multiple",
         details: `Reordered ${body.items.length} tasks`,
         created_at: now,
-      }).execute();
+      }).execute());
 
       return { status: 200 as const, body: { success: true } };
     } catch (err) {
