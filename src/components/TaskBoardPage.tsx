@@ -1,15 +1,22 @@
 import { useState } from "react";
 import { Layout } from "lucide-react";
 import ProjectBoardKanban from "./command/ProjectBoardKanban";
+import type { TaskItem } from "./command/ProjectBoardKanban";
 import { api } from "../api/client";
 import { useQueryClient } from "@tanstack/react-query";
+
+interface TaskListResponse {
+  status: number;
+  body: { tasks: TaskItem[] };
+  headers: Headers;
+}
 
 export default function TaskBoardPage() {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
 
   // -- Queries --------------------------------------------------------
-  const queryKey = api.tasks.list.queryKey(["command-tasks"], {});
+  const queryKey = ["tasks", "list", {}];
   const { data: tasksRes, isLoading: isTasksLoading } = api.tasks.list.useQuery(
     queryKey,
     {},
@@ -21,13 +28,13 @@ export default function TaskBoardPage() {
 
   // -- Mutations ------------------------------------------------------
   const updateMutation = api.tasks.update.useMutation({
-    onMutate: async ({ params, body }) => {
+    onMutate: async ({ params, body }: { params: { id: string }; body: Partial<TaskItem> }) => {
       await queryClient.cancelQueries({ queryKey });
       const previousTasks = queryClient.getQueryData(queryKey);
 
-      queryClient.setQueryData(queryKey, (old: any) => {
+      queryClient.setQueryData(queryKey, (old: TaskListResponse | undefined) => {
         if (!old?.body?.tasks) return old;
-        const newTasks = old.body.tasks.map((task: any) =>
+        const newTasks = old.body.tasks.map((task: TaskItem) =>
           task.id === params.id ? { ...task, ...body } : task
         );
         return { ...old, body: { ...old.body, tasks: newTasks } };
@@ -35,7 +42,7 @@ export default function TaskBoardPage() {
 
       return { previousTasks };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err: unknown, _vars: unknown, context: { previousTasks?: unknown } | undefined) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
@@ -46,19 +53,19 @@ export default function TaskBoardPage() {
   });
 
   const deleteMutation = api.tasks.delete.useMutation({
-    onMutate: async ({ params }) => {
+    onMutate: async ({ params }: { params: { id: string } }) => {
       await queryClient.cancelQueries({ queryKey });
       const previousTasks = queryClient.getQueryData(queryKey);
 
-      queryClient.setQueryData(queryKey, (old: any) => {
+      queryClient.setQueryData(queryKey, (old: TaskListResponse | undefined) => {
         if (!old?.body?.tasks) return old;
-        const newTasks = old.body.tasks.filter((task: any) => task.id !== params.id);
+        const newTasks = old.body.tasks.filter((task: TaskItem) => task.id !== params.id);
         return { ...old, body: { ...old.body, tasks: newTasks } };
       });
 
       return { previousTasks };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err: unknown, _vars: unknown, context: { previousTasks?: unknown } | undefined) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
@@ -69,14 +76,14 @@ export default function TaskBoardPage() {
   });
 
   const reorderMutation = api.tasks.reorder.useMutation({
-    onMutate: async ({ body }) => {
+    onMutate: async ({ body }: { body: { items: { id: string; status: string; sort_order: number }[] } }) => {
       await queryClient.cancelQueries({ queryKey });
       const previousTasks = queryClient.getQueryData(queryKey);
 
-      queryClient.setQueryData(queryKey, (old: any) => {
+      queryClient.setQueryData(queryKey, (old: TaskListResponse | undefined) => {
         if (!old?.body?.tasks) return old;
-        const newTasks = old.body.tasks.map((task: any) => {
-          const updatedItem = body.items.find((i: any) => i.id === task.id);
+        const newTasks = old.body.tasks.map((task: TaskItem) => {
+          const updatedItem = body.items.find((i) => i.id === task.id);
           if (updatedItem) {
             return { ...task, status: updatedItem.status, sort_order: updatedItem.sort_order };
           }
@@ -87,7 +94,7 @@ export default function TaskBoardPage() {
 
       return { previousTasks };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err: unknown, _vars: unknown, context: { previousTasks?: unknown } | undefined) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
@@ -114,7 +121,7 @@ export default function TaskBoardPage() {
     }
   };
 
-  const handleUpdateTask = async (id: string, updates: any) => {
+  const handleUpdateTask = async (id: string, updates: Partial<TaskItem>) => {
     updateMutation.mutate({ params: { id }, body: updates });
   };
 
@@ -122,7 +129,7 @@ export default function TaskBoardPage() {
     deleteMutation.mutate({ params: { id } });
   };
 
-  const handleReorder = async (items: any[]) => {
+  const handleReorder = async (items: { id: string; status: string; sort_order: number }[]) => {
     reorderMutation.mutate({ body: { items } });
   };
 
@@ -152,7 +159,7 @@ export default function TaskBoardPage() {
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
         onReorder={handleReorder}
-        onRefresh={() => queryClient.invalidateQueries({ queryKey: ["command-tasks"] })}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey })}
       />
     </div>
   );
