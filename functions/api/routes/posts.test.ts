@@ -197,4 +197,56 @@ describe("Hono Backend - /posts Router", () => {
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
+
+  it("GET / - search published posts", async () => {
+    mockDb.execute.mockResolvedValue({ rows: [createMockPost()] });
+    const res = await testApp.request("/?q=test", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("PATCH /admin/:slug - update post", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ title: "Old" }); // for history capture
+    const res = await testApp.request("/admin/test-post", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Updated" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("posts");
+  });
+
+  it("POST /admin/:slug/history/:id/restore - restore history", async () => {
+    const res = await testApp.request("/admin/test-post/history/1/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("POST /admin/:slug/repush - repush socials", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ title: "Test" });
+    const res = await testApp.request("http://localhost/admin/test-post/repush", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ socials: ["zulip"] })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /admin/:slug - returns 404 if post not found", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null);
+    const res = await testApp.request("/admin/not-found", {}, env, mockExecutionContext);
+    expect(res.status).toBe(404);
+  });
+
+  it("POST /admin/save - returns 409 on duplicate", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ slug: "duplicate" });
+    const res = await testApp.request("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "duplicate", ast: { type: "doc" } })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(409);
+  });
 });

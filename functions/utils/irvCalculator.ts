@@ -19,6 +19,11 @@ export interface IRVResult {
  * @returns The round-by-round results and the final winner or ties.
  */
 export function calculateIRV(candidatesCount: number, ballots: number[][]): IRVResult {
+  // MATH-F02 FIX: Immediate exit for zero ballots
+  if (ballots.length === 0 || candidatesCount === 0) {
+    return { rounds: [] };
+  }
+
   const activeCandidates = new Set<number>();
   for (let i = 0; i < candidatesCount; i++) {
     activeCandidates.add(i);

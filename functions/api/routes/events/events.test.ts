@@ -129,4 +129,91 @@ describe("Hono Backend - Events Router", () => {
     expect(res.status).toBe(200);
     expect(mockDb.insertInto).toHaveBeenCalledWith("event_signups");
   });
+  it("PATCH /admin/:id - update event", async () => {
+    const res = await testApp.request("/admin/1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Updated", category: "outreach" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("events");
+  });
+
+  it("POST /admin/:id/approve - approve event", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Test", revision_of: null });
+    const res = await testApp.request("/admin/1/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("events");
+  });
+
+  it("POST /admin/:id/reject - reject event", async () => {
+    const res = await testApp.request("/admin/1/reject", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("events");
+  });
+
+  it("POST /admin/:id/restore - undelete event", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Test", status: "published" });
+    const res = await testApp.request("/admin/1/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("events");
+  });
+
+  it("DELETE /admin/:id/purge - permanently delete event", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ gcal_event_id: "test", category: "internal" });
+    const res = await testApp.request("/admin/1/purge", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.deleteFrom).toHaveBeenCalledWith("events");
+  });
+
+  it("POST /admin/sync - sync events", async () => {
+    // getDbSettings mocked to return GCAL settings
+    const { getDbSettings } = await import("../../middleware");
+    vi.mocked(getDbSettings).mockResolvedValueOnce({
+      GCAL_SERVICE_ACCOUNT_EMAIL: "test@test.com",
+      GCAL_PRIVATE_KEY: "key",
+      CALENDAR_ID: "cal1"
+    });
+
+    const res = await testApp.request("/admin/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    
+    // GCal API mock is not available, but should handle error or empty list
+    expect(res.status).toBe(200);
+  });
+
+  it("POST /admin/:id/repush - repush event", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Test", status: "published" });
+    const res = await testApp.request("http://localhost/admin/1/repush", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ socials: ["zulip"] })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /calendar-settings - get public calendars", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ key: "CALENDAR_ID", value: "cal1" }]);
+    const res = await testApp.request("/calendar-settings", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
 });
