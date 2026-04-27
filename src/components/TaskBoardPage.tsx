@@ -9,7 +9,7 @@ export default function TaskBoardPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   // -- Queries --------------------------------------------------------
-  const queryKey = ["command-tasks"];
+  const queryKey = api.tasks.list.queryKey(["command-tasks"], {});
   const { data: tasksRes, isLoading: isTasksLoading } = api.tasks.list.useQuery(
     queryKey,
     {},
@@ -19,6 +19,84 @@ export default function TaskBoardPage() {
   const tasksBody = tasksRes?.status === 200 ? tasksRes.body : null;
   const tasks = tasksBody?.tasks || [];
 
+  // -- Mutations ------------------------------------------------------
+  const updateMutation = api.tasks.update.useMutation({
+    onMutate: async ({ params, body }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousTasks = queryClient.getQueryData(queryKey);
+
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old?.body?.tasks) return old;
+        const newTasks = old.body.tasks.map((task: any) =>
+          task.id === params.id ? { ...task, ...body } : task
+        );
+        return { ...old, body: { ...old.body, tasks: newTasks } };
+      });
+
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(queryKey, context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const deleteMutation = api.tasks.delete.useMutation({
+    onMutate: async ({ params }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousTasks = queryClient.getQueryData(queryKey);
+
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old?.body?.tasks) return old;
+        const newTasks = old.body.tasks.filter((task: any) => task.id !== params.id);
+        return { ...old, body: { ...old.body, tasks: newTasks } };
+      });
+
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(queryKey, context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const reorderMutation = api.tasks.reorder.useMutation({
+    onMutate: async ({ body }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousTasks = queryClient.getQueryData(queryKey);
+
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old?.body?.tasks) return old;
+        const newTasks = old.body.tasks.map((task: any) => {
+          const updatedItem = body.items.find((i: any) => i.id === task.id);
+          if (updatedItem) {
+            return { ...task, status: updatedItem.status, sort_order: updatedItem.sort_order };
+          }
+          return task;
+        });
+        return { ...old, body: { ...old.body, tasks: newTasks } };
+      });
+
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(queryKey, context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
   // -- Handlers -------------------------------------------------------
   const handleCreateTask = async (title: string) => {
     setIsCreating(true);
@@ -27,7 +105,7 @@ export default function TaskBoardPage() {
         body: { title }
       });
       if (res.status === 200 && res.body.success) {
-        queryClient.invalidateQueries({ queryKey: api.tasks.list.queryKey(queryKey, {}) });
+        queryClient.invalidateQueries({ queryKey });
       }
     } catch (err) {
       console.error("Create task failed:", err);
@@ -36,84 +114,16 @@ export default function TaskBoardPage() {
     }
   };
 
-  const handleUpdateTask = async (id: string, updates: Record<string, unknown>) => {
-    const tKey = api.tasks.list.queryKey(queryKey, {});
-    
-    // Optimistic Update
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    queryClient.setQueryData(tKey, (oldData: any) => {
-      if (!oldData || !oldData.body || !oldData.body.tasks) return oldData;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newTasks = oldData.body.tasks.map((task: any) => 
-        task.id === id ? { ...task, ...updates } : task
-      );
-      return { ...oldData, body: { ...oldData.body, tasks: newTasks } };
-    });
-
-    try {
-      await api.tasks.update.mutation({
-        params: { id },
-        body: updates,
-      });
-      queryClient.invalidateQueries({ queryKey: tKey });
-    } catch (err) {
-      console.error("Update task failed:", err);
-      queryClient.invalidateQueries({ queryKey: tKey });
-    }
+  const handleUpdateTask = async (id: string, updates: any) => {
+    updateMutation.mutate({ params: { id }, body: updates });
   };
 
   const handleDeleteTask = async (id: string) => {
-    const tKey = api.tasks.list.queryKey(queryKey, {});
-    
-    // Optimistic Update
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    queryClient.setQueryData(tKey, (oldData: any) => {
-      if (!oldData || !oldData.body || !oldData.body.tasks) return oldData;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newTasks = oldData.body.tasks.filter((task: any) => task.id !== id);
-      return { ...oldData, body: { ...oldData.body, tasks: newTasks } };
-    });
-
-    try {
-      await api.tasks.delete.mutation({
-        params: { id },
-        body: null,
-      });
-      queryClient.invalidateQueries({ queryKey: tKey });
-    } catch (err) {
-      console.error("Delete task failed:", err);
-      queryClient.invalidateQueries({ queryKey: tKey });
-    }
+    deleteMutation.mutate({ params: { id } });
   };
-  const handleReorder = async (items: { id: string; status: string; sort_order: number }[]) => {
-    const tKey = api.tasks.list.queryKey(queryKey, {});
-    
-    // Optimistic Update
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    queryClient.setQueryData(tKey, (oldData: any) => {
-      if (!oldData || !oldData.body || !oldData.body.tasks) return oldData;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newTasks = oldData.body.tasks.map((task: any) => {
-        const updatedItem = items.find((i) => i.id === task.id);
-        if (updatedItem) {
-          return { ...task, status: updatedItem.status, sort_order: updatedItem.sort_order };
-        }
-        return task;
-      });
-      return { ...oldData, body: { ...oldData.body, tasks: newTasks } };
-    });
 
-    try {
-      await api.tasks.reorder.mutation({
-        body: { items },
-      });
-      // No need to invalidate immediately if we trust our optimistic update, 
-      // but we do it to be safe and catch up with any other changes.
-      queryClient.invalidateQueries({ queryKey: tKey });
-    } catch (err) {
-      console.error("Reorder tasks failed:", err);
-      queryClient.invalidateQueries({ queryKey: tKey });
-    }
+  const handleReorder = async (items: any[]) => {
+    reorderMutation.mutate({ body: { items } });
   };
 
   return (

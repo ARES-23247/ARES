@@ -121,7 +121,7 @@ export default function ProjectBoardKanban({
 
   const findColumn = (id: string): string | null => {
     // Check if the id is a column droppable
-    if (COLUMNS.includes(id as typeof COLUMNS[number])) return id;
+    if (COLUMNS.includes(id as any)) return id;
     // Otherwise find which column the task is in
     for (const col of COLUMNS) {
       if (grouped[col].some(t => String(t.id) === String(id))) return col;
@@ -136,9 +136,7 @@ export default function ProjectBoardKanban({
     const activeCol = findColumn(String(active.id));
     const overCol = findColumn(String(over.id));
 
-    if (!activeCol || !overCol || activeCol === overCol) return;
-
-    // Moving to a different column — optimistically handled in DragEnd
+    if (!activeCol || !overCol) return;
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -147,51 +145,47 @@ export default function ProjectBoardKanban({
     if (!over) return;
 
     const activeTaskId = String(active.id);
-    const overTarget = String(over.id);
+    const overId = String(over.id);
 
-    // Determine target column
-    let targetCol: string;
-    if (COLUMNS.includes(overTarget as typeof COLUMNS[number])) {
-      targetCol = overTarget;
-    } else {
-      targetCol = findColumn(overTarget) || "todo";
-    }
+    // 1. Find columns
+    const sourceCol = findColumn(activeTaskId);
+    let targetCol = findColumn(overId);
+
+    if (!sourceCol || !targetCol) return;
 
     const task = tasks.find(t => String(t.id) === activeTaskId);
     if (!task) return;
 
-    // If status changed, update it and reorder
-    const currentCol = task.status;
-    if (currentCol !== targetCol) {
-      // Build new order for target column
-      const targetItems = [...(grouped[targetCol] || [])];
-      const overIndex = targetItems.findIndex(t => String(t.id) === overTarget);
+    // 2. Build items for the target column
+    const targetItems = [...(grouped[targetCol] || [])];
+    
+    // If moving within same column, remove from list first to calculate new index
+    if (sourceCol === targetCol) {
+      const oldIndex = targetItems.findIndex(t => String(t.id) === activeTaskId);
+      const newIndex = targetItems.findIndex(t => String(t.id) === overId);
+      
+      if (oldIndex !== newIndex) {
+        const [moved] = targetItems.splice(oldIndex, 1);
+        targetItems.splice(newIndex, 0, moved);
+      } else {
+        return; // No change
+      }
+    } else {
+      // Cross-column move
+      const overIndex = targetItems.findIndex(t => String(t.id) === overId);
       const insertAt = overIndex >= 0 ? overIndex : targetItems.length;
       targetItems.splice(insertAt, 0, { ...task, status: targetCol });
-
-      const reorderItems = targetItems.map((t, i) => ({
-        id: t.id,
-        status: targetCol,
-        sort_order: i,
-      }));
-      onReorder(reorderItems);
-    } else {
-      // Same column reorder
-      const colItems = [...(grouped[currentCol] || [])];
-      const oldIndex = colItems.findIndex(t => String(t.id) === activeTaskId);
-      const newIndex = colItems.findIndex(t => String(t.id) === overTarget);
-      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
-
-      const [moved] = colItems.splice(oldIndex, 1);
-      colItems.splice(newIndex, 0, moved);
-
-      const reorderItems = colItems.map((t, i) => ({
-        id: t.id,
-        status: currentCol,
-        sort_order: i,
-      }));
-      onReorder(reorderItems);
     }
+
+    // 3. Generate reorder payload for ALL affected tasks in THAT column
+    const reorderItems = targetItems.map((t, i) => ({
+      id: t.id,
+      status: targetCol,
+      sort_order: i,
+    }));
+
+    console.log("[Kanban] Reorder payload:", reorderItems);
+    onReorder(reorderItems);
   };
 
   const handleCreate = () => {
@@ -305,7 +299,7 @@ export default function ProjectBoardKanban({
                     </span>
                   </div>
                   <SortableContext
-                    items={items.map(i => String(i.id))}
+                    items={[status, ...items.map(i => String(i.id))]}
                     strategy={verticalListSortingStrategy}
                     id={status}
                   >

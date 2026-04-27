@@ -1,240 +1,251 @@
-import { Hono, Context } from "hono";
-import { Kysely, sql } from "kysely";
+import { Hono } from "hono";
+import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { financeContract } from "../../../shared/schemas/contracts/financeContract";
-import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware, getSessionUser } from "../middleware";
-import { retryTransaction } from "../middleware/dbUtils";
+import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser } from "../middleware";
+import { AppEnv } from "../index";
 
+const financeRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
-export const financeRouter = new Hono<AppEnv>();
 
 const financeTsRestRouter = s.router(financeContract, {
   getSummary: async ({ query }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const seasonId = query.season_id;
-      
-      const latest = await db.selectFrom("seasons").selectAll().orderBy("start_year", "desc").executeTakeFirst();
-      const targetSeasonId = seasonId ?? (latest?.start_year ? Number(latest.start_year) : undefined);
 
-      if (!targetSeasonId) {
+      let latestSeasonId = seasonId;
+      if (!latestSeasonId) {
+        const latest = await db.selectFrom("seasons").selectAll().orderBy("start_year", "desc").executeTakeFirst();
+        latestSeasonId = latest?.start_year;
+      }
+
+      if (!latestSeasonId) {
         return {
-          status: 200 as const,
-          body: {
-            total_income: 0,
-            total_expenses: 0,
-            balance: 0,
-            season_id: null
-          }
+          status: 200,
+          body: { total_income: 0, total_expenses: 0, balance: 0, season_id: null },
         };
       }
 
-      const results = await db.selectFrom("finance_transactions")
-        .select(["type", (eb) => eb.fn.sum<number>("amount").as("total")])
-        .where("season_id", "=", targetSeasonId)
+      const summary = await db
+        .selectFrom("finance_transactions")
+        .select([
+          "type",
+          (eb: any) => eb.fn.sum("amount").as("total")
+        ])
+        .where("season_id", "=", latestSeasonId.toString())
         .groupBy("type")
         .execute();
 
-      const summary = {
-        total_income: Number(results.find(r => r.type === "income")?.total || 0),
-        total_expenses: Number(results.find(r => r.type === "expense")?.total || 0),
+      const totals = {
+        income: Number(summary.find((s) => s.type === "income")?.total || 0),
+        expense: Number(summary.find((s) => s.type === "expense")?.total || 0),
       };
 
       return {
-        status: 200 as const,
+        status: 200,
         body: {
-          ...summary,
-          balance: summary.total_income - summary.total_expenses,
-          season_id: targetSeasonId
-        }
+          total_income: totals.income,
+          total_expenses: totals.expense,
+          balance: totals.income - totals.expense,
+          season_id: Number(latestSeasonId),
+        },
       };
-    } catch (err) {
-      console.error("[Finance] Summary failed:", err);
-      return { status: 500 as const, body: { error: "Failed to calculate summary" } };
+    } catch (e: any) {
+      return { status: 500, body: { error: e.stack || e.message } };
     }
   },
 
   listPipeline: async ({ query }, c) => {
     try {
-      const db = c.get("db");
-      const seasonId = query.season_id;
-
-      let q = db.selectFrom("sponsorship_pipeline").selectAll();
-      if (seasonId) q = q.where("season_id", "=", seasonId);
-      
-      const results = await q.orderBy("updated_at", "desc").execute();
-      return { status: 200 as const, body: { pipeline: results as any } };
-    } catch {
-      return { status: 500 as const, body: { error: "Failed to fetch pipeline" } };
+      const db = c.get("db") as Kysely<DB>;
+      let queryBuilder = db.selectFrom("sponsorship_pipeline").selectAll();
+      if (query.season_id) {
+        queryBuilder = queryBuilder.where("season_id", "=", query.season_id.toString());
+      }
+      const pipeline = await queryBuilder.orderBy("created_at", "desc").execute();
+      return { 
+        status: 200, 
+        body: { 
+          pipeline: pipeline.map(p => ({
+            ...p,
+            season_id: p.season_id ? Number(p.season_id) : null,
+            estimated_value: Number(p.estimated_value || 0),
+            status: (p.status || "potential").toLowerCase() as any
+          })) 
+        } as any 
+      };
+    } catch (e: any) {
+      return { status: 500, body: { error: e.stack || e.message } };
     }
   },
 
   savePipeline: async ({ body }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       const id = body.id || crypto.randomUUID();
+      const isNew = !body.id;
 
-      await retryTransaction(db, async (trx) => {
-        if (body.id) {
-          const existing = await trx.selectFrom("sponsorship_pipeline")
+      const result = await db.transaction().execute(async (trx) => {
+        let currentStatus = null;
+        if (!isNew) {
+          const existing = await trx
+            .selectFrom("sponsorship_pipeline")
             .select("status")
-            .where("id", "=", body.id)
+            .where("id", "=", id)
             .executeTakeFirst();
-          
-          if (!existing) throw new Error("Not found");
+          currentStatus = existing?.status?.toLowerCase();
+        }
 
-          // Atomic side-effect: If moving to Secured, create sponsor and transaction
-          if (existing.status !== "Secured" && body.status === "Secured" && body.amount) {
-            const sponsorId = crypto.randomUUID();
-            const batch = [
-              trx.insertInto("sponsors").values({
-                id: sponsorId,
-                name: body.company_name,
-                tier: body.tier || "Bronze",
-                season_id: body.season_id,
-                amount: body.amount,
-                status: "active"
-              }),
-              trx.insertInto("finance_transactions").values({
-                id: crypto.randomUUID(),
-                type: "income",
-                amount: body.amount,
-                category: "Sponsorship",
-                description: `Sponsorship from ${body.company_name}`,
-                date: new Date().toISOString().split("T")[0],
-                season_id: body.season_id,
-                created_by: user?.id || "system"
-              })
-            ];
-            for (const b of batch) await b.execute();
-          }
+        const data = {
+          id,
+          company_name: body.company_name,
+          contact_person: body.contact_person,
+          status: body.status,
+          estimated_value: body.estimated_value,
+          season_id: body.season_id?.toString(),
+          notes: body.notes,
+        };
 
-          await trx.updateTable("sponsorship_pipeline")
-            .set({
-              ...body,
-              updated_at: sql`datetime('now')`
-            })
-            .where("id", "=", body.id)
-            .execute();
+        if (isNew) {
+          await trx.insertInto("sponsorship_pipeline").values(data).execute();
         } else {
-          await trx.insertInto("sponsorship_pipeline")
+          await trx.updateTable("sponsorship_pipeline").set(data).where("id", "=", id).execute();
+        }
+
+        console.log("DEBUG: status check", { bodyStatus: body.status, currentStatus });
+        if (body.status === "secured" && currentStatus !== "secured") {
+          await trx
+            .insertInto("sponsors")
             .values({
-              ...body,
-              id,
-              created_at: sql`datetime('now')`,
-              updated_at: sql`datetime('now')`
+              id: crypto.randomUUID(),
+              name: body.company_name,
+              tier: "Bronze",
+              is_active: 1,
+            })
+            .execute();
+
+          await trx
+            .insertInto("finance_transactions")
+            .values({
+              id: crypto.randomUUID(),
+              amount: body.estimated_value || 0,
+              type: "income",
+              category: "Sponsorship",
+              date: new Date().toISOString().split("T")[0],
+              description: `Sponsorship from ${body.company_name}`,
+              season_id: body.season_id?.toString(),
+              logged_by: user?.id || "system",
             })
             .execute();
         }
+        return { id };
       });
 
-      c.executionCtx.waitUntil(logAuditAction(c, body.id ? "update_sponsorship" : "create_sponsorship", "sponsorship_pipeline", id, `Saved pipeline item for ${body.company_name}`));
-      return { status: 200 as const, body: { success: true, id } };
-    } catch (err: any) {
-      if (err.message === "Not found") return { status: 404 as const, body: { error: "Not found" } } as any;
-      return { status: 500 as const, body: { error: "Save failed" } };
+      await logAuditAction(c, isNew ? "create" : "update", "sponsorship_pipeline", result.id);
+      return { status: 200, body: { success: true, id: result.id } };
+    } catch (e: any) {
+      return { status: 500, body: { error: e.stack || e.message } };
     }
   },
 
   deletePipeline: async ({ params }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("sponsorship_pipeline").where("id", "=", params.id).execute();
-      c.executionCtx.waitUntil(logAuditAction(c, "delete_sponsorship", "sponsorship_pipeline", params.id, "Deleted pipeline item"));
-      return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 500 as const, body: { error: "Delete failed" } };
+      await logAuditAction(c, "delete", "sponsorship_pipeline", params.id);
+      return { status: 200, body: { success: true } };
+    } catch (e: any) {
+      return { status: 500, body: { error: e.stack || e.message } };
     }
   },
 
   listTransactions: async ({ query }, c) => {
     try {
-      const db = c.get("db");
-      let q = db.selectFrom("finance_transactions").selectAll();
-      if (query.season_id) q = q.where("season_id", "=", query.season_id);
-      if (query.type) q = q.where("type", "=", query.type);
-      
-      const results = await q.orderBy("date", "desc").execute();
-      return { status: 200 as const, body: { transactions: results as any } };
-    } catch {
-      return { status: 500 as const, body: { error: "Failed to fetch transactions" } };
+      const db = c.get("db") as Kysely<DB>;
+      let queryBuilder = db.selectFrom("finance_transactions").selectAll();
+      if (query.season_id) {
+        queryBuilder = queryBuilder.where("season_id", "=", query.season_id.toString());
+      }
+      if (query.type) {
+        queryBuilder = queryBuilder.where("type", "=", query.type);
+      }
+      const transactions = await queryBuilder.orderBy("date", "desc").execute();
+      return { 
+        status: 200, 
+        body: { 
+          transactions: transactions.map(t => ({
+            ...t,
+            season_id: t.season_id ? Number(t.season_id) : null,
+            amount: Number(t.amount)
+          }))
+        } as any 
+      };
+    } catch (e: any) {
+      return { status: 500, body: { error: e.stack || e.message } };
     }
   },
 
   saveTransaction: async ({ body }, c) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       const id = body.id || crypto.randomUUID();
+      const isNew = !body.id;
 
-      await retryTransaction(db, async (trx) => {
-        if (body.id) {
-          await trx.updateTable("finance_transactions")
-            .set({
-              ...body,
-              updated_at: sql`datetime('now')`
-            })
-            .where("id", "=", body.id)
-            .execute();
-        } else {
-          await trx.insertInto("finance_transactions")
-            .values({
-              ...body,
-              id,
-              created_by: user?.id || "system",
-              created_at: sql`datetime('now')`,
-              updated_at: sql`datetime('now')`
-            })
-            .execute();
-        }
-      });
+      const data = {
+        id,
+        amount: body.amount,
+        type: body.type,
+        category: body.category,
+        date: body.date,
+        description: body.description,
+        receipt_url: body.receipt_url,
+        season_id: body.season_id?.toString(),
+        logged_by: user?.id || "system",
+      };
 
-      if (!body.id) {
-        c.executionCtx.waitUntil(logAuditAction(c, "create_finance_transaction", "finance_transactions", id, `Created transaction: ${body.description || body.category}`));
+      if (isNew) {
+        await db.insertInto("finance_transactions").values(data).execute();
+      } else {
+        await db.updateTable("finance_transactions").set(data).where("id", "=", id).execute();
       }
-      return { status: 200 as const, body: { success: true, id } };
-    } catch (err) {
-      console.error("[Finance] Save failed:", err);
-      return { status: 500 as const, body: { error: "Save failed" } };
+
+      await logAuditAction(c, isNew ? "create" : "update", "finance_transactions", id);
+      return { status: 200, body: { success: true, id } };
+    } catch (e: any) {
+      return { status: 500, body: { error: e.stack || e.message } };
     }
   },
 
   deleteTransaction: async ({ params }, c) => {
     try {
-      const db = c.get("db");
-      const existing = await db.selectFrom("finance_transactions")
+      const db = c.get("db") as Kysely<DB>;
+      const tx = await db
+        .selectFrom("finance_transactions")
         .select("receipt_url")
         .where("id", "=", params.id)
         .executeTakeFirst();
-      
-      if (!existing) return { status: 404 as const, body: { error: "Not found" } } as any;
 
-      // EFF-01: Auto-cleanup R2 assets when transaction is deleted
-      if (existing.receipt_url && c.env.ARES_STORAGE) {
-        try {
-          const url = new URL(existing.receipt_url);
-          const key = url.pathname.startsWith("/") ? url.pathname.slice(1) : url.pathname;
-          c.executionCtx.waitUntil(c.env.ARES_STORAGE.delete(key));
-        } catch (e) {
-          console.error("[Finance] Failed to parse/delete R2 receipt:", e);
-        }
+      if (!tx) return { status: 404, body: { error: "Transaction not found" } };
+
+      await db.deleteFrom("finance_transactions").where("id", "=", params.id).execute();
+
+      if (tx.receipt_url && tx.receipt_url.includes("receipts/")) {
+        const key = tx.receipt_url.split("receipts/")[1];
+        c.executionCtx.waitUntil(c.env.ARES_STORAGE.delete(`receipts/${key}`));
       }
 
-      await retryTransaction(db, async (trx) => {
-        await trx.deleteFrom("finance_transactions").where("id", "=", params.id).execute();
-      });
-
-      c.executionCtx.waitUntil(logAuditAction(c, "delete_finance_transaction", "finance_transactions", params.id, "Deleted transaction"));
-      return { status: 200 as const, body: { success: true } };
-    } catch {
-      return { status: 500 as const, body: { error: "Delete failed" } };
+      await logAuditAction(c, "delete", "finance_transactions", params.id);
+      return { status: 200, body: { success: true } };
+    } catch (e: any) {
+      return { status: 500, body: { error: e.message } };
     }
   },
 });
 
-// Middlewares
 financeRouter.use("*", ensureAdmin);
 financeRouter.use("*", rateLimitMiddleware(30, 60));
 
