@@ -12,7 +12,7 @@ import { eventContract } from "../../../../shared/schemas/contracts/eventContrac
 type EventHandlers = Parameters<typeof _s.router<typeof eventContract>>[1];
 
 export const eventHandlers: EventHandlers = {
-  getEvents: async (input: any, c: any) => {
+  getEvents: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -34,7 +34,7 @@ export const eventHandlers: EventHandlers = {
           is_deleted: Number(e.is_deleted || 0)
         }));
 
-        return { status: 200, body: { events } };
+        return { status: 200 as const, body: { events } };
       }
 
       let results;
@@ -71,13 +71,13 @@ export const eventHandlers: EventHandlers = {
         meeting_notes: (e as any).meeting_notes || null
       }));
 
-      return { status: 200, body: { events } };
+      return { status: 200 as const, body: { events } };
     } catch (e) {
       console.error("[Events:List] Error", e);
-      return { status: 500, body: { error: "Failed to fetch events" } } as any;
+      return { status: 500 as const, body: { error: "Failed to fetch events" } } as any;
     }
   },
-  getCalendarSettings: async (_input: any, c: any) => {
+  getCalendarSettings: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("settings")
@@ -87,17 +87,17 @@ export const eventHandlers: EventHandlers = {
             
       const map: any = results.reduce((acc, row) => ({ ...acc, [(row.key as any)]: row.value || "" }), {});
       
-      return { status: 200, body: { 
+      return { status: 200 as const, body: { 
         calendarIdInternal: map["CALENDAR_ID_INTERNAL"] || map["CALENDAR_ID"] || "",
         calendarIdOutreach: map["CALENDAR_ID_OUTREACH"] || "",
         calendarIdExternal: map["CALENDAR_ID_EXTERNAL"] || "",
       } };
     } catch (e) {
       console.error("[Events:CalendarSettings] Error", e);
-      return { status: 500, body: { error: "Failed to fetch calendar settings" } } as any;
+      return { status: 500 as const, body: { error: "Failed to fetch calendar settings" } } as any;
     }
   },
-  getEvent: async (input: any, c: any) => {
+  getEvent: async (input, c) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -111,10 +111,10 @@ export const eventHandlers: EventHandlers = {
         .where("status", "=", "published")
         .executeTakeFirst();
 
-      if (!row) return { status: 404, body: { error: "Event not found" } };
+      if (!row) return { status: 404 as const, body: { error: "Event not found" } };
 
       return { 
-        status: 200, 
+        status: 200 as const, 
         body: { 
           event: {
             ...row,
@@ -127,10 +127,10 @@ export const eventHandlers: EventHandlers = {
       };
     } catch (e) {
       console.error("[Events:Detail] Error", e);
-      return { status: 404, body: { error: "Database error" } };
+      return { status: 404 as const, body: { error: "Database error" } };
     }
   },
-  getAdminEvents: async (input: any, c: any) => {
+  getAdminEvents: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -163,13 +163,13 @@ export const eventHandlers: EventHandlers = {
         meeting_notes: (e as any).meeting_notes || null
       }));
 
-      return { status: 200, body: { events, lastSyncedAt: lastSyncRow?.value || null } };
+      return { status: 200 as const, body: { events, lastSyncedAt: lastSyncRow?.value || null } };
     } catch (e) {
       console.error("[Events:AdminList] Error", e);
-      return { status: 500, body: { error: "Failed to fetch events" } } as any;
+      return { status: 500 as const, body: { error: "Failed to fetch events" } } as any;
     }
   },
-  adminDetail: async (input: any, c: any) => {
+  adminDetail: async (input, c) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -187,10 +187,10 @@ export const eventHandlers: EventHandlers = {
           .executeTakeFirst() as any;
       }
 
-      if (!row) return { status: 404, body: { error: "Event not found" } };
+      if (!row) return { status: 404 as const, body: { error: "Event not found" } };
 
       return { 
-        status: 200, 
+        status: 200 as const, 
         body: { 
           event: {
             ...row,
@@ -204,10 +204,10 @@ export const eventHandlers: EventHandlers = {
       };
     } catch (e) {
       console.error("[Events:AdminDetail] Error", e);
-      return { status: 500, body: { error: "Database error" } } as any;
+      return { status: 500 as const, body: { error: "Database error" } } as any;
     }
   },
-  saveEvent: async (input: any, c: any) => {
+  saveEvent: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -229,7 +229,7 @@ export const eventHandlers: EventHandlers = {
         .executeTakeFirst();
       
       if (recent) {
-        return { status: 200, body: { success: true, id: recent.id, warning: "Double-submission prevented" } };
+        return { status: 200 as const, body: { success: true, id: recent.id, warning: "Double-submission prevented" } };
       }
 
       const cat = category || 'internal';
@@ -268,7 +268,7 @@ export const eventHandlers: EventHandlers = {
         if (status === "published") {
           const baseUrl = new URL(c.req.url).origin;
           if (socials) {
-            await dispatchSocials(c.env.DB, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", coverImageUrl: coverImage || "/gallery_1.png", baseUrl }, socialConfig as any, socials).catch(() => {});
+            await dispatchSocials(c.env.DB, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", thumbnail: coverImage || "/gallery_1.png", baseUrl }, socialConfig as any, socials).catch(() => {});
           }
           const eventTopic = `Event: ${title}`;
           const eventContent = `📅 **New Event Scheduled**\n\n**Title:** ${title}\n**Location:** ${location || "TBD"}\n\n[View Event](${baseUrl}/events)`;
@@ -278,13 +278,13 @@ export const eventHandlers: EventHandlers = {
 
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_EVENT", "events", genId, `Created event: ${title} (${status})`));
 
-      return { status: 200, body: { success: true, id: genId } };
+      return { status: 200 as const, body: { success: true, id: genId } };
     } catch (e) {
       console.error("[Events:Save] Error", e);
-      return { status: 500, body: { success: false, error: "Write failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Write failed" } } as any;
     }
   },
-  updateEvent: async (input: any, c: any) => {
+  updateEvent: async (input, c) => {
     const { params, body } = input;
     const { id } = params;
     try {
@@ -306,7 +306,7 @@ export const eventHandlers: EventHandlers = {
             revision_of: id, published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null
           })
           .execute();
-        return { status: 200, body: { success: true, id: revId } };
+        return { status: 200 as const, body: { success: true, id: revId } };
       }
 
       await db.updateTable("events")
@@ -341,13 +341,13 @@ export const eventHandlers: EventHandlers = {
         }
       })());
 
-      return { status: 200, body: { success: true, id } };
+      return { status: 200 as const, body: { success: true, id } };
     } catch (e) {
       console.error("[Events:Update] Error", e);
-      return { status: 500, body: { success: false, error: "Update failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Update failed" } } as any;
     }
   },
-  deleteEvent: async (input: any, c: any) => {
+  deleteEvent: async (input, c) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -374,13 +374,13 @@ export const eventHandlers: EventHandlers = {
         }
       })());
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Delete] Error", e);
-      return { status: 500, body: { success: false, error: "Delete failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Delete failed" } } as any;
     }
   },
-  approveEvent: async (input: any, c: any) => {
+  approveEvent: async (input, c) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -424,25 +424,25 @@ export const eventHandlers: EventHandlers = {
         await sendZulipMessage(socialConfig as any, "events", eventTopic, eventContent).catch(() => {});
       })());
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Approve] Error", e);
-      return { status: 500, body: { success: false, error: "Approval failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Approval failed" } } as any;
     }
   },
-  rejectEvent: async (input: any, c: any) => {
+  rejectEvent: async (input, c) => {
     const { params } = input;
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("events").set({ status: 'rejected' }).where("id", "=", id).execute();
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Reject] Error", e);
-      return { status: 500, body: { success: false, error: "Rejection failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Rejection failed" } } as any;
     }
   },
-  undeleteEvent: async (input: any, c: any) => {
+  undeleteEvent: async (input, c) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -471,13 +471,13 @@ export const eventHandlers: EventHandlers = {
         }
       })());
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Undelete] Error", e);
-      return { status: 500, body: { success: false, error: "Restore failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Restore failed" } } as any;
     }
   },
-  purgeEvent: async (input: any, c: any) => {
+  purgeEvent: async (input, c) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -504,13 +504,13 @@ export const eventHandlers: EventHandlers = {
         }
       })());
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Purge] Error", e);
-      return { status: 500, body: { success: false, error: "Purge failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Purge failed" } } as any;
     }
   },
-  syncEvents: async (_input: any, c: any) => {
+  syncEvents: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const dbSettings = await getDbSettings(c);
@@ -524,7 +524,7 @@ export const eventHandlers: EventHandlers = {
       ].filter(cal => !!cal.id);
 
       if (!gcalEmail || !gcalKey || calendars.length === 0) {
-        return { status: 500, body: { success: false, error: "GCal config missing" } } as any;
+        return { status: 500 as const, body: { success: false, error: "GCal config missing" } } as any;
       }
 
       let total = 0;
@@ -569,13 +569,13 @@ export const eventHandlers: EventHandlers = {
         }
       }
 
-      return { status: 200, body: { success: true, count: total } };
+      return { status: 200 as const, body: { success: true, count: total } };
     } catch (e) {
       console.error("[Events:Sync] Error", e);
-      return { status: 500, body: { success: false, error: "Sync failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Sync failed" } } as any;
     }
   },
-  getSignups: async (input: any, c: any) => {
+  getSignups: async (input, c) => {
     try {
       const { params } = input;
       const eventId = params.id;
@@ -614,7 +614,7 @@ export const eventHandlers: EventHandlers = {
         }
       });
 
-      return { status: 200, body: { 
+      return { status: 200 as const, body: { 
         signups, 
         dietary_summary: dietarySummary, 
         team_dietary_summary: {}, 
@@ -625,78 +625,78 @@ export const eventHandlers: EventHandlers = {
       } };
     } catch (e) {
       console.error("[Events:Signups] Error", e);
-      return { status: 500, body: { error: "Failed to fetch signups" } } as any;
+      return { status: 500 as const, body: { error: "Failed to fetch signups" } } as any;
     }
   },
-  submitSignup: async (input: any, c: any) => {
+  submitSignup: async (input, c) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
-      if (!user || user.role === "unverified") return { status: 403, body: { error: "Forbidden" } };
+      if (!user || user.role === "unverified") return { status: 403 as const, body: { error: "Forbidden" } };
       const db = c.get("db") as Kysely<DB>;
       await db.insertInto("event_signups")
         .values({ event_id: params.id, user_id: user.id, bringing: body.bringing || "", notes: body.notes || "", prep_hours: body.prep_hours || 0 })
         .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ bringing: body.bringing || "", notes: body.notes || "", prep_hours: body.prep_hours || 0 }))
         .execute();
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:SubmitSignup] Error", e);
-      return { status: 500, body: { success: false, error: "Signup failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Signup failed" } } as any;
     }
   },
-  deleteMySignup: async (input: any, c: any) => {
+  deleteMySignup: async (input, c) => {
     const { params } = input;
     try {
       const user = await getSessionUser(c);
-      if (!user) return { status: 401, body: { error: "Unauthorized" } };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("event_signups").where("event_id", "=", params.id).where("user_id", "=", user.id).execute();
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:DeleteSignup] Error", e);
-      return { status: 500, body: { success: false, error: "Delete failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Delete failed" } } as any;
     }
   },
-  updateMyAttendance: async (input: any, c: any) => {
+  updateMyAttendance: async (input, c) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
-      if (!user) return { status: 401, body: { error: "Unauthorized" } };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
       const db = c.get("db") as Kysely<DB>;
       await db.insertInto("event_signups")
         .values({ event_id: params.id, user_id: user.id, attended: body.attended ? 1 : 0 })
         .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended: body.attended ? 1 : 0 }))
         .execute();
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:UpdateMyAttendance] Error", e);
-      return { status: 500, body: { success: false, error: "Update failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Update failed" } } as any;
     }
   },
-  updateUserAttendance: async (input: any, c: any) => {
+  updateUserAttendance: async (input, c) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
-      if (user?.role !== "admin" && !["coach", "mentor"].includes(user?.member_type || "")) return { status: 401, body: { error: "Unauthorized" } };
+      if (user?.role !== "admin" && !["coach", "mentor"].includes(user?.member_type || "")) return { status: 401 as const, body: { error: "Unauthorized" } };
       const db = c.get("db") as Kysely<DB>;
       await db.insertInto("event_signups")
         .values({ event_id: params.id, user_id: params.userId, attended: body.attended ? 1 : 0 })
         .onConflict((oc) => oc.columns(["event_id", "user_id"]).doUpdateSet({ attended: body.attended ? 1 : 0 }))
         .execute();
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:UpdateUserAttendance] Error", e);
-      return { status: 500, body: { success: false, error: "Update failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Update failed" } } as any;
     }
   },
-  repushEvent: async (input: any, c: any) => {
+  repushEvent: async (input, c) => {
     const { params, body } = input;
     const user = await getSessionUser(c);
-    if (user?.role !== "admin" && user?.role !== "author") return { status: 401, body: { error: "Unauthorized" } };
+    if (user?.role !== "admin" && user?.role !== "author") return { status: 401 as const, body: { error: "Unauthorized" } };
     const db = c.get("db") as Kysely<DB>;
     try {
       const event = await db.selectFrom("events").selectAll().where("id", "=", params.id).executeTakeFirst();
-      if (!event) return { status: 404, body: { error: "Event not found" } };
+      if (!event) return { status: 404 as const, body: { error: "Event not found" } };
 
       const social = await getSocialConfig(c);
       const baseUrl = new URL(c.req.url).origin;
@@ -711,7 +711,7 @@ export const eventHandlers: EventHandlers = {
           title: event.title,
           url: `${baseUrl}/events/${event.id}`,
           snippet: event.description || "",
-          coverImageUrl: event.cover_image || undefined,
+          thumbnail: event.cover_image || undefined,
         },
         social as any,
         socialsFilter
@@ -735,10 +735,10 @@ export const eventHandlers: EventHandlers = {
         }
       }
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (err) {
       console.error("[Events:Repush] Error", err);
-      return { status: 502, body: { error: String(err) } };
+      return { status: 502 as const, body: { error: String(err) } };
     }
   },
 };

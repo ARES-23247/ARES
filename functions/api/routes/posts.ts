@@ -20,8 +20,10 @@ import {
 
 const s = initServer<AppEnv>();
 
-const postTsRestRouter = s.router(postContract, {
-  getPosts: async (input: any, c: any) => {
+type PostHandlers = Parameters<typeof s.router<typeof postContract>>[1];
+
+const postTsRestRouterObj: PostHandlers = {
+  getPosts: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -104,7 +106,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { posts: [] } }; // Graceful degradation
     }
   },
-  getPost: async (input: any, c: any) => {
+  getPost: async (input, c) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -162,7 +164,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  getAdminPosts: async (input: any, c: any) => {
+  getAdminPosts: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -199,7 +201,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 200, body: { posts: [] } };
     }
   },
-  getAdminPost: async (input: any, c: any) => {
+  getAdminPost: async (input, c) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -228,7 +230,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  savePost: async (input: any, c: any) => {
+  savePost: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -351,7 +353,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  updatePost: async (input: any, c: any) => {
+  updatePost: async (input, c) => {
     const { params, body } = input;
     const { slug } = params;
     try {
@@ -405,7 +407,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async (input: any, c: any) => {
+  deletePost: async (input, c) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -418,7 +420,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undeletePost: async (input: any, c: any) => {
+  undeletePost: async (input, c) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -431,7 +433,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Undelete failed" } };
     }
   },
-  purgePost: async (input: any, c: any) => {
+  purgePost: async (input, c) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -460,7 +462,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-  approvePost: async (input: any, c: any) => {
+  approvePost: async (input, c) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -472,7 +474,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async (input: any, c: any) => {
+  rejectPost: async (input, c) => {
     const { params, body } = input;
     const { slug } = params;
     const { reason } = body;
@@ -501,7 +503,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async (input: any, c: any) => {
+  getPostHistory: async (input, c) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -516,7 +518,7 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 500, body: { error: "Failed to fetch history" } };
     }
   },
-  restorePostHistory: async (input: any, c: any) => {
+  restorePostHistory: async (input, c) => {
     const { params } = input;
     const { slug, id } = params;
     const user = await getSessionUser(c);
@@ -524,7 +526,7 @@ const postTsRestRouter = s.router(postContract, {
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async (input: any, c: any) => {
+  repushSocials: async (input, c) => {
     const { params, body } = input;
     const { slug } = params;
     const { socials } = body;
@@ -552,7 +554,9 @@ const postTsRestRouter = s.router(postContract, {
       return { status: 502, body: { error: (err as Error).message } };
     }
   },
-});
+};
+
+const postTsRestRouter = s.router(postContract, postTsRestRouterObj as any);
 
 export const postsRouter = new Hono<AppEnv>();
 

@@ -27,12 +27,12 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
 type InquiryHandlers = Parameters<typeof _s.router<typeof inquiryContract>>[1];
 
 export const inquiryHandlers: InquiryHandlers = {
-  list: async (input: any, c: any) => {
+  list: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = c.get("sessionUser");
-      if (!user) return { status: 401, body: { error: "Unauthorized" } };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
       const limit = query.limit || 50;
       const offset = query.offset || 0;
@@ -105,13 +105,13 @@ export const inquiryHandlers: InquiryHandlers = {
         };
       }));
 
-      return { status: 200, body: { inquiries: inquiries as any[] } };
+      return { status: 200 as const, body: { inquiries: inquiries as any[] } };
     } catch (e) {
       console.error("[Inquiry:List] Error", e);
-      return { status: 500, body: { error: "Failed to fetch inquiries" } };
+      return { status: 500 as const, body: { error: "Failed to fetch inquiries" } };
     }
   },
-  submit: async (input: any, c: any) => {
+  submit: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -131,7 +131,7 @@ export const inquiryHandlers: InquiryHandlers = {
           if (decryptedEmail === email) {
             const currentMeta = safeJSONStringify(metadata, null as any);
             if (r.metadata === currentMeta) {
-              return { status: 200, body: { success: true, id: r.id } };
+              return { status: 200 as const, body: { success: true, id: r.id } };
             }
           }
         } catch { /* ignore */ }
@@ -207,13 +207,13 @@ export const inquiryHandlers: InquiryHandlers = {
         }
       })());
 
-      return { status: 200, body: { success: true, id } };
+      return { status: 200 as const, body: { success: true, id } };
     } catch (e) {
       console.error("[Inquiry:Submit] Error", e);
-      return { status: 500, body: { error: "Submission failed" } };
+      return { status: 500 as const, body: { error: "Submission failed" } };
     }
   },
-  updateStatus: async (input: any, c: any) => {
+  updateStatus: async (input, c) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -223,17 +223,17 @@ export const inquiryHandlers: InquiryHandlers = {
         .execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "inquiry_status_change", "inquiries", params.id, `Status changed to ${body.status}`));
-      return { status: 200, body: { success: true, status: body.status as any } };
+      return { status: 200 as const, body: { success: true, status: body.status as any } };
     } catch (err) {
       console.error("[Inquiry:UpdateStatus] Error", err);
-      return { status: 500, body: { error: "Update failed" } };
+      return { status: 500 as const, body: { error: "Update failed" } };
     }
   },
-  delete: async (input: any, c: any) => {
+  delete: async (input, c) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
-      await db.deleteFrom("inquiries").where("id", "=", params.id).execute();
+      await db.updateTable("inquiries").set({ is_deleted: 1 }).where("id", "=", params.id).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "inquiry_deleted", "inquiries", params.id, "Inquiry deleted"));
       return { status: 200, body: { success: true } };
     } catch (e: any) {

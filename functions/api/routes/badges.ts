@@ -8,8 +8,10 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 
 const s = initServer<AppEnv>();
 
-const badgesTsRestRouter = s.router(badgeContract, {
-  list: async (_input: any, c: any) => {
+type BadgesTsRestRouterHandlers = Parameters<typeof s.router<typeof badgeContract>>[1];
+
+const badgesTsRestRouterObj: BadgesTsRestRouterHandlers = {
+  list: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -32,7 +34,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to fetch badges" } };
     }
   },
-  create: async (input: any, c: any) => {
+  create: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -51,7 +53,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to create badge" } };
     }
   },
-  grant: async (input: any, c: any) => {
+  grant: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -113,7 +115,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to award badge" } };
     }
   },
-  revoke: async (input: any, c: any) => {
+  revoke: async (input, c) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -127,7 +129,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to revoke badge" } };
     }
   },
-  delete: async (input: any, c: any) => {
+  delete: async (input, c) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -137,7 +139,7 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to delete badge definition" } };
     }
   },
-  leaderboard: async (_input: any, c: any) => {
+  leaderboard: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -163,8 +165,9 @@ const badgesTsRestRouter = s.router(badgeContract, {
       return { status: 500 as const, body: { error: e.message || "Failed to fetch leaderboard" } };
     }
   },
-});
+};
 
+const badgesTsRestRouter = s.router(badgeContract, badgesTsRestRouterObj as any);
 export const badgesRouter = new Hono<AppEnv>();
 
 // Middlewares

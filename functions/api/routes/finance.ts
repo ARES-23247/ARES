@@ -9,8 +9,10 @@ import { AppEnv } from "../middleware";
 const financeRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
-const financeTsRestRouter = s.router(financeContract, {
-  getSummary: async (input: any, c: any) => {
+type FinanceHandlers = Parameters<typeof s.router<typeof financeContract>>[1];
+
+const financeTsRestRouterObj: FinanceHandlers = {
+  getSummary: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -58,7 +60,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  listPipeline: async (input: any, c: any) => {
+  listPipeline: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -83,7 +85,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  savePipeline: async (input: any, c: any) => {
+  savePipeline: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -155,7 +157,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  deletePipeline: async (input: any, c: any) => {
+  deletePipeline: async (input, c) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -167,7 +169,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  listTransactions: async (input: any, c: any) => {
+  listTransactions: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -194,7 +196,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  saveTransaction: async (input: any, c: any) => {
+  saveTransaction: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -227,7 +229,7 @@ const financeTsRestRouter = s.router(financeContract, {
     }
   },
 
-  deleteTransaction: async (input: any, c: any) => {
+  deleteTransaction: async (input, c) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -253,7 +255,9 @@ const financeTsRestRouter = s.router(financeContract, {
       return { status: 500 as const, body: { error: e.message } };
     }
   },
-});
+};
+
+const financeTsRestRouter = s.router(financeContract, financeTsRestRouterObj as any);
 
 financeRouter.use("*", ensureAdmin);
 financeRouter.use("*", rateLimitMiddleware(30, 60));

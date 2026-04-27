@@ -440,7 +440,7 @@ describe("Hono Backend - Events Router", () => {
     testApp = new Hono();
     testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
-      const user = { id: "user2", role: "user", member_type: "student" };
+      const user = { id: "user2", role: "user", member_type: "student", email: "u2@example.com", name: "User 2", nickname: "U2", image: null };
       c.set("sessionUser", user);
       vi.mocked(shared.getSessionUser).mockResolvedValue(user);
       await next();
@@ -639,7 +639,7 @@ describe("Hono Backend - Events Router", () => {
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
     // Flush waitUntil promises
-    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
     expect(consoleSpy).toHaveBeenCalledWith("GCAL_UNDELETE_FAIL", expect.any(Error));
     consoleSpy.mockRestore();
   });
@@ -653,7 +653,7 @@ describe("Hono Backend - Events Router", () => {
       body: "{}"
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
     expect(deleteEventFromGcal).toHaveBeenCalled();
   });
 
@@ -670,7 +670,7 @@ describe("Hono Backend - Events Router", () => {
       body: "{}"
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
     expect(consoleSpy).toHaveBeenCalledWith("GCAL_APPROVE_FAIL", expect.any(Error));
     consoleSpy.mockRestore();
   });
@@ -709,7 +709,7 @@ describe("Hono Backend - Events Router", () => {
       body: JSON.stringify({ title: "New", category: "internal", date_start: "2026-01-01T00:00:00Z" })
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
     expect(consoleSpy).toHaveBeenCalledWith("GCAL_UPDATE_FAIL", expect.any(Error));
     consoleSpy.mockRestore();
   });
@@ -765,8 +765,7 @@ describe("Hono Backend - Events Router", () => {
     vi.mocked(shared.getSocialConfig).mockResolvedValueOnce({
       GCAL_SERVICE_ACCOUNT_EMAIL: "gcal@test.com",
       GCAL_PRIVATE_KEY: "key",
-      CALENDAR_ID: "cal1",
-      CALENDAR_ID_INTERNAL: "cal1"
+      CALENDAR_ID: "cal1"
     });
     
     const { pushEventToGcal } = await import("../../../utils/gcalSync");
@@ -795,7 +794,7 @@ describe("Hono Backend - Events Router", () => {
     console.log("WAIT_UNTIL_CALLS", vi.mocked(mockExecutionContext.waitUntil).mock.calls.length);
 
     // Flush waitUntil promises
-    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map(r => r.value));
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
     
     expect(pushEventToGcal).toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/GCAL_(SAVE|UPDATE)_FAIL/), expect.any(Error));

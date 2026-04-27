@@ -1,4 +1,4 @@
-import { ReactNode, lazy, Suspense, useState, JSX } from "react";
+import { ReactNode, lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Eye } from "lucide-react";
 import { CodeBlock } from "./docs/CodeBlock";
@@ -122,7 +122,7 @@ const renderText = (node: ASTNode) => {
 
 const renderHeading = (node: ASTNode, children: ReactNode) => {
   const level = node.attrs?.level || node.level || 1;
-  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+  const Tag = `h${level}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
   
   let className = "font-heading font-bold mb-4 text-white border-b border-white/10 pb-2";
   if (level === 1) className = "text-3xl " + className + " mt-10";

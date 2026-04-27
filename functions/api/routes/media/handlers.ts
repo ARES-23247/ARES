@@ -41,7 +41,7 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
 type MediaHandlers = Parameters<typeof _s.router<typeof mediaContract>>[1];
 
 export const mediaHandlers: MediaHandlers = {
-  getMedia: async (_input: any, c: any) => {
+  getMedia: async (_input, c) => {
     const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
     const ua = c.req.header("user-agent") || "unknown";
     const rl = await checkRateLimit(c, `media_list_${ip}_${ua}`, 30, 60);
@@ -97,7 +97,7 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  adminList: async (_input: any, c: any) => {
+  adminList: async (_input, c) => {
     try {
       const [objects, dbRes] = await Promise.all([
         listAllObjects(c.env.ARES_STORAGE),
@@ -125,7 +125,7 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  upload: async (input: any, c: any) => {
+  upload: async (input, c) => {
     try {
       const { body } = input;
       const formData = body as any;
@@ -187,7 +187,7 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "Upload failed" } };
     }
   },
-  move: async (input: any, c: any) => {
+  move: async (input, c) => {
     const { params, body } = input;
     const oldKey = params.key;
     const { folder } = body;
@@ -214,7 +214,7 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "Move failed" } };
     }
   },
-  delete: async (input: any, c: any) => {
+  delete: async (input, c) => {
     const { params } = input;
     try {
       if (c.env.ARES_STORAGE) {
@@ -228,7 +228,7 @@ export const mediaHandlers: MediaHandlers = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  syndicate: async (input: any, c: any) => {
+  syndicate: async (input, c) => {
     try {
       const { body } = input;
       const { key, caption } = body;
