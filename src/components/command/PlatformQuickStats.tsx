@@ -10,6 +10,7 @@ export default function PlatformQuickStats({ stats }: PlatformQuickStatsProps) {
     { label: "Blog Posts", value: stats.posts || 0, color: "red" },
     { label: "Events", value: stats.events || 0, color: "amber" },
     { label: "Docs", value: stats.docs || 0, color: "cyan" },
+    { label: "Sec Blocks", value: stats.securityBlocks || 0, color: "emerald" },
   ];
 
   return (
@@ -18,7 +19,7 @@ export default function PlatformQuickStats({ stats }: PlatformQuickStatsProps) {
         <Zap size={16} className="text-ares-gold" />
         Platform Stats
       </h3>
-      <Grid numItems={3} className="gap-4">
+      <Grid numItems={2} numItemsSm={2} numItemsLg={4} className="gap-4">
         {data.map(stat => (
           <Card key={stat.label} className="bg-ares-gray-dark/30 border-white/5 ares-cut-sm p-4 text-center" decoration="top" decorationColor={stat.color}>
             <Text className="text-marble/40 uppercase tracking-widest font-bold text-[10px] mb-1">{stat.label}</Text>

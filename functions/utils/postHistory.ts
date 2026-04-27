@@ -263,6 +263,18 @@ export async function approvePost(c: Context<AppEnv>, slug: string) {
     ).catch(err => console.error("[Approve] Social dispatch failed:", err))
   );
 
+  // Initialize Zulip Thread
+  import("./zulipSync").then(({ sendZulipMessage }) => {
+    c.executionCtx.waitUntil(
+      sendZulipMessage(
+        socialConfig,
+        "announcements",
+        `Blog: ${row.title}`,
+        `🚀 **New Blog Post Published:** [${row.title}](${baseUrl}/blog/${slug})\n\n${row.snippet?.substring(0, 300) || ""}`
+      ).catch(err => console.error("[Approve] Zulip thread creation failed:", err))
+    );
+  }).catch(() => {});
+
   // Notify original author
   if (row.cf_email) {
     const author = await db.selectFrom("user")

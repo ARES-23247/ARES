@@ -8,6 +8,19 @@ import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction } from "../middlew
 const s = initServer<AppEnv>();
 export const judgesRouter = new Hono<AppEnv>();
 
+/**
+ * Strips internal metadata and TODOs from content before judge consumption.
+ * Ensures the printed portfolio is championship-ready.
+ */
+function sanitizeJudgeContent(content: string): string {
+  if (!content) return "";
+  return content
+    .replace(/\[\/\/\]: # \(.*?\)/gs, '') // HTML comments / Tiptap hidden nodes
+    .replace(/TODO:.*?(?:\n|$)/gi, '')        // Inline TODOs
+    .replace(/FIXME:.*?(?:\n|$)/gi, '')       // Inline FIXMEs
+    .trim();
+}
+
 const portfolioCache = new Map<string, { data: any; expiresAt: number }>();
 const judgesTsRestRouter: any = s.router(judgeContract as any, {
     login: async ({ body }: { body: any }, c: any) => {
@@ -93,9 +106,22 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
       ]);
 
       const payload = {
-        portfolioDocs: portfolioDocs.map(d => ({ ...d })),
-        outreach: outreach.map(o => ({ ...o, students_count: Number(o.students_count), hours_logged: Number(o.hours_logged), reach_count: Number(o.reach_count) })),
-        awards: awards.map(a => ({ ...a, year: Number(a.date) })),
+        portfolioDocs: portfolioDocs.map(d => ({ 
+          ...d, 
+          content: sanitizeJudgeContent(d.content) 
+        })),
+        outreach: outreach.map(o => ({ 
+          ...o, 
+          description: sanitizeJudgeContent(o.description || ""),
+          students_count: Number(o.students_count), 
+          hours_logged: Number(o.hours_logged), 
+          reach_count: Number(o.reach_count) 
+        })),
+        awards: awards.map(a => ({ 
+          ...a, 
+          description: sanitizeJudgeContent(a.description || ""),
+          year: Number(a.date) 
+        })),
         sponsors: sponsors.map(s => ({ ...s, id: s.id || "", tier: s.tier as any }))
       };
 

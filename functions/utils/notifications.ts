@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Context } from "hono";
 import { AppEnv } from "../api/middleware/utils";
+import { sendZulipAlert } from "./zulipSync";
 
 
 /**
@@ -42,9 +43,10 @@ export async function emitNotification(
 
     // 2. External Broadcasting (Optional)
     if (external) {
-      if (c.env.ZULIP_BOT_EMAIL && c.env.ZULIP_API_KEY) {
-         // Log for now, implement Zulip call when needed
-      }
+      c.executionCtx.waitUntil(
+        sendZulipAlert(c.env, "System", title, `${message}\n\n[View Details](${link || "#"})`)
+          .catch(e => console.error("[Notification] External broadcast failed:", e))
+      );
     }
   } catch (err) {
     console.error("[Notification] Failed to emit:", err);
@@ -127,8 +129,11 @@ export async function notifyByRole(
     }
 
     // External broadcasting
-    if (payload.external && c.env.ZULIP_BOT_EMAIL && c.env.ZULIP_API_KEY) {
-       // Batch external broadcast dispatched
+    if (payload.external) {
+      c.executionCtx.waitUntil(
+        sendZulipAlert(c.env, "System", payload.title, `${payload.message}\n\n[View Details](${payload.link || "#"})`)
+          .catch(e => console.error("[Notification] Role broadcast failed:", e))
+      );
     }
   } catch (err) {
     console.error("[Notification] notifyByRole failed:", err);

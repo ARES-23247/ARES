@@ -13,14 +13,15 @@ import { Context } from "hono";
 const analyticsHandlers = {
   trackPageView: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
-    if (!checkRateLimit(`track:${ip}`, 20, 600)) {
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!checkRateLimit(`track:${ip}`, ua, 20, 600)) {
       return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } as any };
     }
 
     const db = c.get("db") as Kysely<DB>;
     try {
       const { path, category, referrer } = body;
-      const userAgent = c.req.header("user-agent") || "";
+      const userAgent = c.req.header("user-agent") || ua;
       
       await db.insertInto("page_analytics")
         .values({
@@ -39,7 +40,8 @@ const analyticsHandlers = {
   },
   trackSponsorClick: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
-    if (!checkRateLimit(`click:${ip}`, 10, 600)) {
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!checkRateLimit(`click:${ip}`, ua, 10, 600)) {
       return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } as any };
     }
 
@@ -191,10 +193,11 @@ const analyticsHandlers = {
   getStats: async (_: any, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
-      const [postsCount, eventsCount, docsCount, dbSettings] = await Promise.all([
+      const [postsCount, eventsCount, docsCount, securityBlocksRow, dbSettings] = await Promise.all([
         db.selectFrom("posts").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
         db.selectFrom("events").select((eb) => eb.fn.count("id").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
         db.selectFrom("docs").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("audit_log").select((eb) => eb.fn.count("id").as("total")).where("action", "=", "SECURITY_BLOCK").executeTakeFirst(),
         getDbSettings(c)
       ]);
 
@@ -212,7 +215,8 @@ const analyticsHandlers = {
             band: !!dbSettings["BAND_ACCESS_TOKEN"],
             slack: !!dbSettings["SLACK_WEBHOOK_URL"],
             gcal: !!dbSettings["GCAL_PRIVATE_KEY"]
-          }
+          },
+          securityBlocks: Number(securityBlocksRow?.total || 0)
         } as any
       };
     } catch {

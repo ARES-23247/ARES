@@ -3,7 +3,7 @@ import { Kysely } from "kysely";
 import { handle } from "hono/cloudflare-pages";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
-import { Bindings, AppEnv, checkRateLimit, rateLimitMiddleware, logSystemError, ensureAdmin, dbMiddleware, envMiddleware, parsePagination } from "./middleware";
+import { Bindings, AppEnv, checkRateLimit, rateLimitMiddleware, logSystemError, ensureAdmin, dbMiddleware, envMiddleware, parsePagination, originIntegrityMiddleware } from "./middleware";
 import { sql } from "kysely";
 import { DB } from "../../shared/schemas/database";
 
@@ -42,9 +42,10 @@ const app = new Hono<AppEnv>();
 // ── 2. Isolate-Memory Rate Limiting (Fast reject) ────────────────────
 app.use("*", async (c, next) => {
   const ip = c.req.header("CF-Connecting-IP") || "unknown";
+  const ua = c.req.header("User-Agent") || "unknown";
   if (ip !== "unknown" && !c.req.path.startsWith("/assets")) {
     const isBypass = c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1";
-    const allowed = isBypass || checkRateLimit(ip, 150, 60); 
+    const allowed = isBypass || checkRateLimit(ip, ua, 150, 60); 
     if (!allowed) return c.json({ error: "Too many requests" }, 429);
   }
   await next();
@@ -53,6 +54,9 @@ app.use("*", async (c, next) => {
 // ── 3. Env & DB setup ────
 app.use("*", envMiddleware);
 app.use("*", dbMiddleware);
+
+// ── 4. Origin Integrity Check (Non-GET) ────
+app.use("*", originIntegrityMiddleware());
 
 const apiRouter = new Hono<AppEnv>();
 

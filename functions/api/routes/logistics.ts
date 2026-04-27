@@ -59,11 +59,11 @@ const logisticsHandlers = {
 
     try {
       const results = await db.selectFrom("user")
-        .select(["email"])
+        .select(["name", "email", "role"])
         .where("role", "!=", "unverified")
         .execute();
 
-      const emails: string[] = [];
+      const users: { name: string, email: string, role: string }[] = [];
       for (const r of results) {
         let email = String(r.email);
         try {
@@ -73,13 +73,13 @@ const logisticsHandlers = {
         } catch { /* ignore fallback to plaintext */ }
         
         if (email && email.includes("@")) {
-          emails.push(email);
+          users.push({ name: String(r.name), email, role: String(r.role) });
         }
       }
 
       return {
         status: 200 as const,
-        body: { emails }
+        body: { users }
       };
     } catch (e) {
       console.error("EXPORT_EMAILS ERROR", e);

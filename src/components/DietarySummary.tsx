@@ -28,7 +28,18 @@ export default function DietarySummary() {
     try {
       const res = await api.logistics.exportEmails.query();
       if (res.status === 200) {
-        setExportedEmails((res.body as any).emails.join(", "));
+        const users = (res.body as any).users;
+        setExportedEmails(users.map((u: any) => u.email).join(", "));
+        
+        const csvContent = "Name,Email,Role\n" + users.map((u: any) => `"${u.name}","${u.email}","${u.role}"`).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", "ares_roster_emails.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
         setShowExportModal(true);
       } else {
         alert("Failed to export emails");
@@ -206,6 +217,7 @@ export default function DietarySummary() {
             <button 
               onClick={() => setShowExportModal(false)}
               className="absolute top-4 right-4 text-marble/50 hover:text-white transition-colors"
+              aria-label="Close export modal"
             >
               <X size={24} />
             </button>
@@ -218,6 +230,7 @@ export default function DietarySummary() {
               <textarea 
                 readOnly
                 value={exportedEmails}
+                aria-label="Exported Emails List"
                 className="w-full h-48 bg-black/50 border border-white/10 p-4 font-mono text-sm text-white resize-none focus:outline-none focus:border-ares-red/50 ares-cut-sm"
               />
               <button

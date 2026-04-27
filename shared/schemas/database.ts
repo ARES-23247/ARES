@@ -71,6 +71,7 @@ export interface Comments {
   target_type: string;
   user_id: string;
   zulip_message_id: string | null;
+  zulip_message_id_num: number | null;
   zulip_sender_id: number | null;
 }
 
@@ -275,6 +276,7 @@ export interface Notifications {
 
 export interface OutreachLogs {
   cf_email: string | null;
+  core_values: string | null;
   created_at: Generated<string | null>;
   date: string;
   hours: number | null;
@@ -581,11 +583,64 @@ export interface Verification {
   value: string;
 }
 
+export interface EntityLinks {
+  id: string | null;
+  source_type: string;
+  source_id: string;
+  target_type: string;
+  target_id: string;
+  link_type: Generated<string | null>;
+  created_at: Generated<string | null>;
+}
+
+export interface PitScouting {
+  id: string | null;
+  event_id: string;
+  team_number: string;
+  team_name: string | null;
+  drive_train: string | null;
+  scoring_capabilities: string | null;
+  can_help_with: string | null;
+  needs_help_with: string | null;
+  notes: string | null;
+  image_url: string | null;
+  scouted_by: string | null;
+  created_at: Generated<string | null>;
+  updated_at: Generated<string | null>;
+}
+
+export interface MatchStrategy {
+  id: string | null;
+  event_id: string;
+  match_number: number;
+  our_role: string | null;
+  partner_team: string | null;
+  strategy_notes: string | null;
+  post_match_result: string | null;
+  created_at: Generated<string | null>;
+}
+
+export interface SeasonGoals {
+  id: string | null;
+  season_id: number;
+  category: string;
+  target_value: number;
+  current_value: Generated<number | null>;
+  notes: string | null;
+  created_at: Generated<string | null>;
+  updated_at: Generated<string | null>;
+}
+
 export interface DB {
   _cf_METADATA: _CfMETADATA;
   account: Account;
   audit_log: AuditLog;
   awards: Awards;
+  awards_fts: {
+    title: string | null;
+    event_name: string | null;
+    description: string | null;
+  };
   badges: Badges;
   comments: Comments;
   d1_migrations: D1Migrations;
@@ -598,6 +653,7 @@ export interface DB {
   docs_fts_docsize: DocsFtsDocsize;
   docs_fts_idx: DocsFtsIdx;
   docs_history: DocsHistory;
+  entity_links: EntityLinks;
   event_signups: EventSignups;
   events: Events;
   events_fts: EventsFts;
@@ -606,23 +662,21 @@ export interface DB {
   events_fts_data: EventsFtsData;
   events_fts_docsize: EventsFtsDocsize;
   events_fts_idx: EventsFtsIdx;
+  finance_transactions: FinanceTransactions;
   inquiries: Inquiries;
   judge_access_codes: JudgeAccessCodes;
   locations: Locations;
+  match_strategy: MatchStrategy;
   media_tags: MediaTags;
   notifications: Notifications;
-  outreach_logs: OutreachLogs;
   outreach_fts: {
     title: string | null;
     location: string | null;
     impact_summary: string | null;
   };
-  awards_fts: {
-    title: string | null;
-    event_name: string | null;
-    description: string | null;
-  };
+  outreach_logs: OutreachLogs;
   page_analytics: PageAnalytics;
+  pit_scouting: PitScouting;
   posts: Posts;
   posts_fts: PostsFts;
   posts_fts_config: PostsFtsConfig;
@@ -632,15 +686,14 @@ export interface DB {
   posts_fts_idx: PostsFtsIdx;
   posts_history: PostsHistory;
   rate_limits: RateLimits;
+  season_goals: SeasonGoals;
   seasons: Seasons;
   session: Session;
   settings: Settings;
-  tasks: Tasks;
-  finance_transactions: FinanceTransactions;
-  sponsorship_pipeline: SponsorshipPipeline;
   sponsor_metrics: SponsorMetrics;
   sponsor_tokens: SponsorTokens;
   sponsors: Sponsors;
+  tasks: Tasks;
   user: User;
   user_badges: UserBadges;
   user_profiles: UserProfiles;

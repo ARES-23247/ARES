@@ -9,7 +9,7 @@ import { useSession } from "../utils/auth-client";
 import { Edit2 } from "lucide-react";
 
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
-import CommentSection from "../components/CommentSection";
+import ZulipThreadViewer from "../components/events/ZulipThreadViewer";
 import { api } from "../api/client";
 import SEO from "../components/SEO";
 import { extractTextFromAst } from "../utils/content";
@@ -123,8 +123,8 @@ export default function BlogPost() {
         >
           <TiptapRenderer node={parsedAst} />
 
-          {/* Comments (auth-gated) */}
-          {slug && <CommentSection targetType="post" targetId={slug} />}
+          {/* Comments (auth-gated, handled via Zulip) */}
+          {slug && <ZulipThreadViewer stream="announcements" topic={`Blog: ${post.title}`} />}
         </motion.article>
       </div>
     </motion.div>

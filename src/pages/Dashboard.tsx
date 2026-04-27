@@ -28,6 +28,7 @@ export default function Dashboard() {
     posts: statsRes?.status === 200 ? statsRes.body.posts : 0,
     events: statsRes?.status === 200 ? statsRes.body.events : 0,
     docs: statsRes?.status === 200 ? statsRes.body.docs : 0,
+    securityBlocks: statsRes?.status === 200 ? statsRes.body.securityBlocks : 0,
     integrations: statsRes?.status === 200 ? statsRes.body.integrations : {
       zulip: false,
       github: false,

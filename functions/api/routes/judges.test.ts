@@ -15,6 +15,10 @@ vi.mock("../middleware", async (importOriginal) => {
   };
 });
 
+vi.mock("../middleware/security", () => ({
+  checkPersistentRateLimit: vi.fn().mockResolvedValue(true)
+}));
+
 describe("Hono Backend - /judges Router", () => {
   
   
@@ -83,18 +87,32 @@ describe("Hono Backend - /judges Router", () => {
     expect(body.success).toBe(true);
   });
 
-  it("GET /portfolio - fetch data", async () => {
+  it("GET /portfolio - fetch and sanitize data", async () => {
     // 1st call: rate limit check
     // 2nd call: judge code check
     mockDb.executeTakeFirst.mockResolvedValueOnce({ count: 0, expires_at: 9999999999 })
                           .mockResolvedValueOnce({ code: "VALID" }); 
-    mockDb.execute.mockResolvedValue([]); // For the 4 queries
+    
+    // Mock documents with internal notes
+    const mockDocs = [
+      { slug: "test", title: "Test Doc", content: "Championship info. TODO: check intake physics. FIXME: robot image missing.", category: "Build", description: "TODO: fix" }
+    ];
+    mockDb.execute.mockResolvedValueOnce(mockDocs) // docs
+                 .mockResolvedValueOnce([]) // outreach
+                 .mockResolvedValueOnce([]) // awards
+                 .mockResolvedValueOnce([]); // sponsors
 
     const res = await testApp.request("/portfolio", {
       headers: { "X-Judge-Code": "VALID" }
     }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    
+    // VERIFY SANITIZATION (Level-13 Hardening)
+    expect(body.portfolioDocs[0].content).not.toContain("TODO:");
+    expect(body.portfolioDocs[0].content).not.toContain("FIXME:");
+    expect(body.portfolioDocs[0].content).toBe("Championship info.");
   });
 
   it("GET /admin/codes - list codes", async () => {

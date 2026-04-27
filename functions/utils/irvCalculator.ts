@@ -74,33 +74,58 @@ export function calculateIRV(candidatesCount: number, ballots: number[][]): IRVR
       if (count < minVotes) minVotes = count;
     }
 
-    const toEliminate = [];
+    const tiedForLast = [];
     for (const [candidateStr, count] of Object.entries(voteCounts)) {
       if (count === minVotes) {
-        toEliminate.push(parseInt(candidateStr));
+        tiedForLast.push(parseInt(candidateStr));
       }
     }
 
     // Unresolvable tie condition (all remaining candidates tied for last)
-    if (toEliminate.length === activeCandidates.size) {
+    if (tiedForLast.length === activeCandidates.size) {
       rounds.push({
         roundNumber,
         voteCounts,
         eliminatedCandidates: [],
-        tied: toEliminate,
+        tied: tiedForLast,
       });
-      return { rounds, tied: toEliminate };
+      return { rounds, tied: tiedForLast };
     }
 
-    // Eliminate candidates
-    for (const c of toEliminate) {
-      activeCandidates.delete(c);
+    // IRV-F01 FIX: Sequential Elimination
+    // If multiple candidates are tied for last, we eliminate the one with the FEWEST 
+    // total higher-preference mentions across all ballots to break the tie fairly.
+    let candidateToEliminate = tiedForLast[0];
+    
+    if (tiedForLast.length > 1) {
+      const tieBreakerScores: Record<number, number> = {};
+      for (const c of tiedForLast) tieBreakerScores[c] = 0;
+
+      for (const ballot of ballots) {
+        for (let rank = 0; rank < ballot.length; rank++) {
+          const c = ballot[rank];
+          if (tiedForLast.includes(c)) {
+            // Higher ranks (lower index) get more "weight" to stay
+            tieBreakerScores[c] += (ballot.length - rank);
+          }
+        }
+      }
+
+      let lowestScore = Infinity;
+      for (const c of tiedForLast) {
+        if (tieBreakerScores[c] < lowestScore) {
+          lowestScore = tieBreakerScores[c];
+          candidateToEliminate = c;
+        }
+      }
     }
+
+    activeCandidates.delete(candidateToEliminate);
 
     rounds.push({
       roundNumber,
       voteCounts,
-      eliminatedCandidates: toEliminate,
+      eliminatedCandidates: [candidateToEliminate],
     });
 
     roundNumber++;
