@@ -5,9 +5,7 @@ export { fetchBlob, uploadFile, fetchJson } from "../utils/apiClient";
 
 export const api = initQueryClient(apiContract, {
   baseUrl: "/api",
-  baseHeaders: {
-    "Content-Type": "application/json",
-  },
+  baseHeaders: {},
   api: async (args) => {
     // ts-rest appends trailing slashes for root contract paths (path: "/"),
     // e.g. /api/events/ instead of /api/events, causing Hono 404s.
@@ -15,9 +13,16 @@ export const api = initQueryClient(apiContract, {
       ? args.path.replace(/\/+$/, "")
       : args.path;
     
+    // Don't set Content-Type for FormData — the browser must auto-generate
+    // the multipart/form-data boundary. For all other requests, use JSON.
+    const headers = new Headers(args.headers);
+    if (!(args.body instanceof FormData) && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+
     const res = await fetch(normalizedPath, {
       method: args.method,
-      headers: args.headers,
+      headers,
       body: args.body,
     });
     
