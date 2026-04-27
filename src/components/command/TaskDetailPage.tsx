@@ -167,9 +167,9 @@ export default function TaskDetailPage() {
         {/* Status + Priority bar */}
         <div className="p-6 border-b border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
-            <label className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-2 block">
+            <span className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-2 block">
               Status
-            </label>
+            </span>
             <div className="flex flex-wrap gap-2">
               {STATUS_OPTIONS.map(opt => {
                 const Icon = opt.icon;
@@ -192,9 +192,9 @@ export default function TaskDetailPage() {
           </div>
 
           <div>
-            <label className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-2 block">
+            <span className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-2 block">
               Priority
-            </label>
+            </span>
             <div className="flex flex-wrap gap-2">
               {PRIORITY_OPTIONS.map(opt => (
                 <button

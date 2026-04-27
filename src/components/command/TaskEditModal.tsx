@@ -158,9 +158,9 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
           {/* Status + Priority row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
+              <span className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
                 Status
-              </label>
+              </span>
               <div className="grid grid-cols-2 gap-1.5">
                 {STATUS_OPTIONS.map(opt => {
                   const Icon = opt.icon;
@@ -183,9 +183,9 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
+              <span className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
                 Priority
-              </label>
+              </span>
               <div className="grid grid-cols-2 gap-1.5">
                 {PRIORITY_OPTIONS.map(opt => (
                   <button
