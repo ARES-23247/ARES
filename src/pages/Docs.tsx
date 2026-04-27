@@ -11,6 +11,7 @@ import DocsTableOfContents from "../components/docs/DocsTableOfContents";
 import AutonomousLogicDiagram from "../components/docs/AutonomousLogicDiagram";
 import { api } from "../api/client";
 import { useModal } from "../contexts/ModalContext";
+import ZulipThreadViewer from "../components/events/ZulipThreadViewer";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDocs } from "../hooks/useDocs";
 
@@ -250,7 +251,7 @@ export default function Docs() {
               )}
 
               {/* ── Documentation Feedback ───────────────────────────── */}
-              <div className="mt-16 p-8 ares-cut bg-obsidian/50 border border-white/5 relative overflow-hidden group/feedback">
+              <div className="mt-16 p-8 ares-cut bg-obsidian/50 border border-white/5 relative overflow-hidden group/feedback mb-8">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/feedback:opacity-20 transition-opacity">
                   <BookOpen size={64} className="text-ares-gold rotate-12" />
                 </div>
@@ -293,6 +294,9 @@ export default function Docs() {
                   </div>
                 </div>
               </div>
+
+              {/* ── Documentation Discussion ───────────────────────────── */}
+              {slug && <ZulipThreadViewer stream="announcements" topic={`Doc: ${currentDoc.title}`} />}
             </motion.article>
           )}
         </main>

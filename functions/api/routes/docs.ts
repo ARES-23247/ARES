@@ -401,7 +401,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           const action = existing ? "updated" : "created";
           c.executionCtx.waitUntil((async () => {
             const socialConfig = await getSocialConfig(c);
-            await sendZulipMessage(socialConfig, "engineering", "Engineering Docs", `📝 **Doc ${action}:** [${title}](${siteConfig.urls.base}/docs/${slug}) (${category})`);
+            await sendZulipMessage(socialConfig, "engineering", `Doc: ${title}`, `📝 **Doc ${action}:** [${title}](${siteConfig.urls.base}/docs/${slug}) (${category})`);
           })());
         }
 
@@ -542,17 +542,28 @@ const docTsRestRouter: any = s.router(docContract as any, {
           .execute();
         await db.deleteFrom("docs").where("slug", "=", slug).execute();
 
+        c.executionCtx.waitUntil((async () => {
+          const socialConfig = await getSocialConfig(c);
+          await sendZulipMessage(socialConfig, "engineering", `Doc: ${row.title}`, `📝 **Doc updated:** [${row.title}](${siteConfig.urls.base}/docs/${row.revision_of}) (${row.category})`);
+        })());
+
         if (row.cf_email) {
           const author = await db.selectFrom("user").select("id").where("email", "=", row.cf_email).executeTakeFirst();
-                    if (author) await emitNotification(c, { userId: String(author.id), title: "Doc Merged", message: `Your changes to document "${row.title}" have been approved.`, link: `/docs/${row.revision_of}`, priority: "medium" });
+          if (author) await emitNotification(c, { userId: String(author.id), title: "Doc Merged", message: `Your changes to document "${row.title}" have been approved.`, link: `/docs/${row.revision_of}`, priority: "medium" });
         }
-                  } else {
+      } else {
         await db.updateTable("docs").set({ status: "published" }).where("slug", "=", slug).execute();
+        
+        c.executionCtx.waitUntil((async () => {
+          const socialConfig = await getSocialConfig(c);
+          await sendZulipMessage(socialConfig, "engineering", `Doc: ${row.title}`, `📝 **Doc created:** [${row.title}](${siteConfig.urls.base}/docs/${slug}) (${row.category})`);
+        })());
+
         if (row.cf_email) {
           const author = await db.selectFrom("user").select("id").where("email", "=", row.cf_email).executeTakeFirst();
-                    if (author) await emitNotification(c, { userId: String(author.id), title: "Doc Approved", message: `Your document "${row.title}" has been published.`, link: `/docs/${slug}`, priority: "medium" });
+          if (author) await emitNotification(c, { userId: String(author.id), title: "Doc Approved", message: `Your document "${row.title}" has been published.`, link: `/docs/${slug}`, priority: "medium" });
         }
-                  }
+      }
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Approve] Error", e);

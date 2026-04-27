@@ -298,7 +298,7 @@ const postHandlers = {
             await sendZulipMessage(
               socialConfig,
               "announcements",
-              "Website Updates",
+              `Blog: ${body.title}`,
               `🚀 **New Blog Post Published:** [${body.title}](${siteConfig.urls.base}/blog/${slug})\n\n${snippet.substring(0, 300)}`
             );
           } catch (err) {

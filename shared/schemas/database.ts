@@ -651,4 +651,46 @@ export interface DB {
   user_profiles_fts_docsize: UserProfilesFtsDocsize;
   user_profiles_fts_idx: UserProfilesFtsIdx;
   verification: Verification;
+  entity_links: {
+    id: string | null;
+    source_type: string;
+    source_id: string;
+    target_type: string;
+    target_id: string;
+    link_type: Generated<string | null>;
+    created_at: Generated<string | null>;
+  };
+  pit_scouting: {
+    id: string | null;
+    event_id: string;
+    team_number: string;
+    team_name: string | null;
+    drive_train: string | null;
+    scoring_capabilities: string | null;
+    notes: string | null;
+    image_url: string | null;
+    scouted_by: string | null;
+    created_at: Generated<string | null>;
+    updated_at: Generated<string | null>;
+  };
+  match_strategy: {
+    id: string | null;
+    event_id: string;
+    match_number: number;
+    our_role: string | null;
+    partner_team: string | null;
+    strategy_notes: string | null;
+    post_match_result: string | null;
+    created_at: Generated<string | null>;
+  };
+  season_goals: {
+    id: string | null;
+    season_id: number;
+    category: string;
+    target_value: number;
+    current_value: Generated<number | null>;
+    notes: string | null;
+    created_at: Generated<string | null>;
+    updated_at: Generated<string | null>;
+  };
 }
