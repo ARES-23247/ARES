@@ -27,6 +27,7 @@ describe("Hono Backend - /logistics Router", () => {
     mockDb = {
       selectFrom: vi.fn().mockReturnThis(),
       innerJoin: vi.fn().mockReturnThis(),
+      leftJoin: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       execute: vi.fn().mockResolvedValue([]),
@@ -71,7 +72,7 @@ describe("Hono Backend - /logistics Router", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as any;
     expect(body.users).toHaveLength(2);
-    expect(body.users[0]).toEqual({ name: "Alice", email: "alice@test.com", role: "student" });
-    expect(body.users[1]).toEqual({ name: "Bob", email: "bob@test.com", role: "mentor" });
+    expect(body.users[0]).toEqual({ name: "Alice", email: "alice@test.com", role: "student", emergencyName: "—", emergencyPhone: "—" });
+    expect(body.users[1]).toEqual({ name: "Bob", email: "bob@test.com", role: "mentor", emergencyName: "—", emergencyPhone: "—" });
   });
 });

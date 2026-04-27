@@ -59,6 +59,7 @@ describe("Hono Backend - /docs Router", () => {
       values: vi.fn().mockReturnThis(),
       onConflict: vi.fn().mockReturnThis(),
       column: vi.fn().mockReturnThis(),
+      selectAll: vi.fn().mockReturnThis(),
       doUpdateSet: vi.fn().mockReturnThis(),
       updateTable: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
@@ -117,5 +118,60 @@ describe("Hono Backend - /docs Router", () => {
 
     expect(res.status).toBe(401);
     authBypass = true; // reset for other tests
+  });
+
+  it("GET /search - returns matching docs", async () => {
+    const res = await testApp.request("/search?q=query", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+    // Uses fallback SQL stub which returns { rows: [] } 
+    const body = await res.json() as any;
+    expect(body.results).toEqual([]);
+  });
+
+  it("GET /search - ignores short queries", async () => {
+    const res = await testApp.request("/search?q=ab", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.results).toEqual([]);
+  });
+
+  it("GET /admin/list - list all docs for admin", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ slug: "test", title: "Test Doc", category: "General", sort_order: 1, status: "draft" }]);
+    const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("DELETE /admin/:slug - soft deletes a doc", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ slug: "test-doc" });
+    const res = await testApp.request("/admin/test-doc", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({})
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    if (res.status !== 200) {
+      console.error(await res.text());
+    }
+    expect(res.status).toBe(200);
+  });
+
+  it("PATCH /admin/:slug/history/:id/restore - restores a soft-deleted doc", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ title: "test", content: "test" });
+    const res = await testApp.request("/admin/test-doc/history/1/restore", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({})
+    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    if (res.status !== 200) {
+      console.error(await res.text());
+    }
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /admin/:slug/history - fetches document history", async () => {
+    mockDb.execute.mockResolvedValueOnce([
+      { id: 1, slug: "test-doc", author_nickname: "Admin", created_at: "2026-01-01T00:00:00Z" }
+    ]);
+    const res = await testApp.request("/admin/test-doc/history", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    expect(res.status).toBe(200);
   });
 });

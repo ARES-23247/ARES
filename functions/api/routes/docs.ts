@@ -2,7 +2,7 @@ import { Context, Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { docContract } from "../../../shared/schemas/contracts/docContract";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkRateLimit, verifyTurnstile, emitNotification, notifyByRole, getSocialConfig } from "../middleware";
+import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkRateLimit, verifyTurnstile, emitNotification, notifyByRole, getSocialConfig, logAuditAction } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -44,7 +44,7 @@ async function pruneDocHistory(c: Context<AppEnv>, slug: string, limit = 10) {
 }
 
 const docTsRestRouter: any = s.router(docContract as any, {
-    getDocs: async (_: any, c: any) => {
+  getDocs: async (_: any, c: any) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       let results;
@@ -105,6 +105,42 @@ const docTsRestRouter: any = s.router(docContract as any, {
     } catch (e) {
       console.error("[Docs:List] Error", e);
       return { status: 500 as const, body: { error: "Failed to fetch documents" } as any };
+    }
+  },
+  searchDocs: async ({ query }: { query: any }, c: any) => {
+    const { q } = query;
+            if (!q || q.length < 3) return { status: 200 as const, body: { results: [] } };
+    try {
+      const now = Date.now();
+      const cached = docSearchCache.get(q);
+      if (cached && cached.expiresAt > now) return { status: 200 as const, body: cached.data };
+
+      const db = c.get("db") as Kysely<DB>;
+      const results = await sql<{ slug: string, title: string, category: string, description: string | null }>`
+        SELECT f.slug, f.title, f.category, f.description 
+        FROM docs_fts f 
+        JOIN docs d ON f.slug = d.slug 
+        WHERE d.is_deleted = 0 AND d.status = 'published' AND f.docs_fts MATCH ${`"${q.replace(/"/g, '""')}"*`} 
+        ORDER BY f.rank LIMIT 20
+      `.execute(db);
+
+      const mapped = (results.rows ?? []).map((row) => {
+        return {
+          slug: String(row.slug),
+          title: String(row.title),
+          category: String(row.category),
+          description: row.description || null,
+          // eslint-disable-next-line security/detect-non-literal-regexp
+          snippet: String(row.description || "").replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi"), "**$1**")
+        };
+      });
+
+      const payload = { results: mapped };
+      setCache(q, { data: payload, expiresAt: now + 60000 });
+      return { status: 200 as const, body: payload as any };
+    } catch (e) {
+      console.error("[Docs:Search] Error", e);
+      return { status: 500 as const, body: { error: "Search failed" } as any };
     }
   },
     getDoc: async ({ params }: { params: any }, c: any) => {
@@ -194,42 +230,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Failed to fetch document detail" } as any };
     }
   },
-    searchDocs: async ({ query }: { query: any }, c: any) => {
-    const { q } = query;
-            if (!q || q.length < 3) return { status: 200 as const, body: { results: [] } };
-    try {
-      const now = Date.now();
-      const cached = docSearchCache.get(q);
-      if (cached && cached.expiresAt > now) return { status: 200 as const, body: cached.data };
 
-      const db = c.get("db") as Kysely<DB>;
-      const results = await sql<{ slug: string, title: string, category: string, description: string | null }>`
-        SELECT f.slug, f.title, f.category, f.description 
-        FROM docs_fts f 
-        JOIN docs d ON f.slug = d.slug 
-        WHERE d.is_deleted = 0 AND d.status = 'published' AND f.docs_fts MATCH ${`"${q.replace(/"/g, '""')}"*`} 
-        ORDER BY f.rank LIMIT 20
-      `.execute(db);
-
-      const mapped = (results.rows ?? []).map((row) => {
-        return {
-          slug: String(row.slug),
-          title: String(row.title),
-          category: String(row.category),
-          description: row.description || null,
-          // eslint-disable-next-line security/detect-non-literal-regexp
-          snippet: String(row.description || "").replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi"), "**$1**")
-        };
-      });
-
-      const payload = { results: mapped };
-      setCache(q, { data: payload, expiresAt: now + 60000 });
-      return { status: 200 as const, body: payload as any };
-    } catch (e) {
-      console.error("[Docs:Search] Error", e);
-      return { status: 500 as const, body: { error: "Search failed" } as any };
-    }
-  },
     adminList: async (_: any, c: any) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
@@ -308,7 +309,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       if (!existing) return { status: 404 as const, body: { error: "Doc not found" } };
 
       await db.updateTable("docs").set({ is_deleted: 1 }).where("slug", "=", slug).execute();
-      c.executionCtx.waitUntil(logAuditAction(c, "DELETE_DOC", "docs", slug, JSON.stringify(existing)));
+      c.executionCtx?.waitUntil?.(logAuditAction(c, "DELETE_DOC", "docs", slug, JSON.stringify(existing)));
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Delete] Error", e);
@@ -620,13 +621,13 @@ const docTsRestRouter: any = s.router(docContract as any, {
         let match;
         while ((match = assetRegex.exec(doc.content)) !== null) {
           const key = match[1];
-          c.executionCtx.waitUntil(c.env.ARES_STORAGE.delete(key).catch(() => {}));
+          c.executionCtx?.waitUntil?.(c.env.ARES_STORAGE.delete(key).catch(() => {}));
         }
       }
 
       await db.deleteFrom("docs").where("slug", "=", slug).execute();
-      c.executionCtx.waitUntil(db.deleteFrom("docs_history").where("slug", "=", slug).execute());
-      c.executionCtx.waitUntil(logAuditAction(c, "PURGE_DOC", "docs", slug, JSON.stringify(doc)));
+      c.executionCtx?.waitUntil?.(db.deleteFrom("docs_history").where("slug", "=", slug).execute());
+      c.executionCtx?.waitUntil?.(logAuditAction(c, "PURGE_DOC", "docs", slug, JSON.stringify(doc)));
       
       return { status: 200 as const, body: { success: true } };
     } catch (e) {

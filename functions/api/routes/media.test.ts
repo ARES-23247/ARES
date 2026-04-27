@@ -119,6 +119,17 @@ describe("Hono Backend - /media Router", () => {
     expect(res.status).toBe(200);
   });
 
+  it("GET /admin - list all media for admin", async () => {
+    mockR2.list.mockResolvedValue({ objects: [{ key: "Library/doc1.pdf", size: 500, uploaded: new Date(), httpEtag: "etag" }], truncated: false });
+    env.DB.prepare().all.mockResolvedValue({ results: [{ key: "Library/doc1.pdf", folder: "Library", tags: "test doc" }] });
+
+    const res = await testApp.request("/admin", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.media).toHaveLength(1);
+    expect(body.media[0].folder).toBe("Library");
+  });
+
   it("DELETE /admin/:key - delete asset", async () => {
     const res = await testApp.request("/admin/img1.png", {
       method: "DELETE",
@@ -126,6 +137,32 @@ describe("Hono Backend - /media Router", () => {
       body: JSON.stringify({})
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
+  });
+
+  it("PUT /admin/move/:key - move asset", async () => {
+    mockR2.get.mockResolvedValue({ body: "data", httpMetadata: { contentType: "image/png" } });
+    
+    const res = await testApp.request("/admin/move/img1.png", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folder: "Archive" })
+    }, env, mockExecutionContext);
+    
+    expect(res.status).toBe(200);
+    expect(mockR2.put).toHaveBeenCalledWith("Archive/img1.png", "data", expect.any(Object));
+    expect(mockR2.delete).toHaveBeenCalledWith("img1.png");
+  });
+
+  it("POST /admin/syndicate - syndicates media", async () => {
+    const { dispatchPhotoSocials } = await import("../../utils/socialSync");
+    const res = await testApp.request("/admin/syndicate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "Gallery/img1.png", caption: "Test post" })
+    }, env, mockExecutionContext);
+    
+    expect(res.status).toBe(200);
+    expect(dispatchPhotoSocials).toHaveBeenCalled();
   });
 
   it("POST /admin/upload - upload file (route reachable)", async () => {
@@ -141,5 +178,16 @@ describe("Hono Backend - /media Router", () => {
     // error is specifically the body parsing failure (not a missing route).
     expect(res.status).not.toBe(404);
     expect([200, 400, 500]).toContain(res.status);
+  });
+
+  it("GET /:key - serves raw object", async () => {
+    mockR2.get.mockResolvedValue({ 
+      body: "data", 
+      httpMetadata: { contentType: "image/png" },
+      writeHttpMetadata: vi.fn((headers) => headers.set("Content-Type", "image/png")) 
+    });
+
+    const res = await testApp.request("/Gallery/img1.png", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
   });
 });

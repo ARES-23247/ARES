@@ -44,12 +44,16 @@ const mediaTsRestRouter: any = s.router(mediaContract as any, {
     }
 
     try {
-            const cache = (caches as any).default;
+      // ECON-RCF-01: Runtime Cache Fallback for portability
+      const cache = typeof caches !== 'undefined' ? (caches as any).default : null;
       const url = new URL(c.req.url);
       url.search = "";
       const cacheKey = new Request(url.toString(), { method: "GET" });
-      const cached = await cache.match(cacheKey);
-      if (cached) return cached as any;
+      
+      if (cache) {
+        const cached = await cache.match(cacheKey);
+        if (cached) return cached as any;
+      }
 
       const [objects, dbRes] = await Promise.all([
         listAllObjects(c.env.ARES_STORAGE),
@@ -243,12 +247,15 @@ mediaRouter.get("/:key{.+$}", async (c: any) => {
       const user = await getSessionUser(c);
       if (!user) return c.text("Unauthorized", 401);
     }
-        const cache = (caches as any).default;
+    const cache = typeof caches !== 'undefined' ? (caches as any).default : null;
     const url = new URL(c.req.url);
     url.search = "";
     const cacheKey = new Request(url.toString(), { method: "GET" });
-    const cached = await cache.match(cacheKey);
-    if (cached && publicFolders.includes(folder)) return cached;
+    
+    if (cache) {
+      const cached = await cache.match(cacheKey);
+      if (cached && publicFolders.includes(folder)) return cached;
+    }
 
     if (!c.env.ARES_STORAGE) return c.text("R2 Not Bound", 404);
     

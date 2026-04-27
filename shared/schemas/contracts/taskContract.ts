@@ -50,6 +50,23 @@ export const taskContract = c.router({
     },
     summary: "Create a new task",
   },
+  reorder: {
+    method: "PATCH",
+    path: "/reorder",
+    body: z.object({
+      items: z.array(z.object({
+        id: z.string(),
+        status: z.string(),
+        sort_order: z.number(),
+      })),
+    }),
+    responses: {
+      200: z.object({ success: z.boolean() }),
+      401: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Batch reorder tasks (for drag-and-drop)",
+  },
   update: {
     method: "PATCH",
     path: "/:id",
@@ -70,23 +87,6 @@ export const taskContract = c.router({
       500: z.object({ error: z.string() }),
     },
     summary: "Update a task",
-  },
-  reorder: {
-    method: "PATCH",
-    path: "/reorder",
-    body: z.object({
-      items: z.array(z.object({
-        id: z.string(),
-        status: z.string(),
-        sort_order: z.number(),
-      })),
-    }),
-    responses: {
-      200: z.object({ success: z.boolean() }),
-      401: z.object({ error: z.string() }),
-      500: z.object({ error: z.string() }),
-    },
-    summary: "Batch reorder tasks (for drag-and-drop)",
   },
   delete: {
     method: "DELETE",

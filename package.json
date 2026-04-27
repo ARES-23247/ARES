@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "setup": "node scripts/autonomous_setup.mjs",
     "build": "vite build",
     "preview": "wrangler pages dev dist",
     "deploy": "wrangler pages deploy dist --project-name aresweb",

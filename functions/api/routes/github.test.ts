@@ -81,4 +81,70 @@ describe("Hono Backend - /github Router", () => {
     const body = await res.json() as any;
     expect(body.success).toBe(true);
   });
+
+  describe("GET /activity", () => {
+    let fetchMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      vi.stubGlobal("caches", {
+        open: vi.fn().mockResolvedValue({
+          match: vi.fn().mockResolvedValue(null),
+          put: vi.fn().mockResolvedValue(undefined)
+        })
+      });
+    });
+
+    it("returns activity data and caches it", async () => {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ name: "repo1" }]
+      });
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => [
+          {
+            total: 5,
+            week: Math.floor(Date.now() / 1000) - 86400 * 7, // 1 week ago
+            days: [0, 1, 0, 2, 0, 2, 0]
+          }
+        ]
+      });
+
+      const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.repoCount).toBe(1);
+      expect(body.totalCommits).toBe(5);
+      expect(body.grid.length).toBeGreaterThanOrEqual(52);
+    });
+
+    it("handles GitHub API error on repo list", async () => {
+      fetchMock.mockResolvedValueOnce({ ok: false, status: 500 });
+      const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
+      expect(res.status).toBe(500);
+    });
+
+    it("returns cached response if available", async () => {
+      vi.stubGlobal("caches", {
+        open: vi.fn().mockResolvedValue({
+          match: vi.fn().mockResolvedValue({
+            json: async () => ({ repoCount: 2, totalCommits: 10, grid: [] })
+          }),
+          put: vi.fn()
+        })
+      });
+
+      const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.repoCount).toBe(2);
+      expect(body.totalCommits).toBe(10);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
 });
+

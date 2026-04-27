@@ -127,6 +127,41 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
     }
   },
 
+  reorder: async ({ body }: { body: any }, c: any) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const user = await getSessionUser(c);
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+
+      const now = new Date().toISOString();
+      
+      // KNT-02: Use retryTransaction to handle high-velocity morning standup contention
+      await retryTransaction(db, async (trx) => {
+        for (const item of body.items) {
+          await trx.updateTable("tasks")
+            .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
+            .where("id", "=", item.id)
+            .execute();
+        }
+      });
+
+      c.executionCtx.waitUntil(db.insertInto("audit_log").values({
+        id: crypto.randomUUID(),
+        actor: user.id,
+        action: "reorder_tasks",
+        resource_type: "task",
+        resource_id: "multiple",
+        details: `Reordered ${body.items.length} tasks`,
+        created_at: now,
+      }).execute());
+
+      return { status: 200 as const, body: { success: true } };
+    } catch (err) {
+      console.error("[Tasks] Reorder error:", err);
+      return { status: 500 as const, body: { error: "Failed to reorder tasks" } };
+    }
+  },
+
   update: async ({ params, body }: { params: any; body: any }, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -189,41 +224,6 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
     } catch (err) {
       console.error("[Tasks] Update error:", err);
       return { status: 500 as const, body: { error: "Failed to update task" } };
-    }
-  },
-
-  reorder: async ({ body }: { body: any }, c: any) => {
-    try {
-      const db = c.get("db") as Kysely<DB>;
-      const user = await getSessionUser(c);
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
-
-      const now = new Date().toISOString();
-      
-      // KNT-02: Use retryTransaction to handle high-velocity morning standup contention
-      await retryTransaction(db, async (trx) => {
-        for (const item of body.items) {
-          await trx.updateTable("tasks")
-            .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
-            .where("id", "=", item.id)
-            .execute();
-        }
-      });
-
-      c.executionCtx.waitUntil(db.insertInto("audit_log").values({
-        id: crypto.randomUUID(),
-        actor: user.id,
-        action: "reorder_tasks",
-        resource_type: "task",
-        resource_id: "multiple",
-        details: `Reordered ${body.items.length} tasks`,
-        created_at: now,
-      }).execute());
-
-      return { status: 200 as const, body: { success: true } };
-    } catch (err) {
-      console.error("[Tasks] Reorder error:", err);
-      return { status: 500 as const, body: { error: "Failed to reorder tasks" } };
     }
   },
 
