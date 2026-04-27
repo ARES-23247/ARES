@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Layers, Plus, RefreshCw, Trash2,
   CheckCircle2, Circle, Clock, AlertTriangle,
-  ChevronDown, User
+  ChevronDown, User, Edit3, GripVertical
 } from "lucide-react";
 import {
   DndContext,
@@ -15,6 +15,7 @@ import {
   DragStartEvent,
   DragEndEvent,
   DragOverEvent,
+  useDroppable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -22,6 +23,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import TaskEditModal from "./TaskEditModal";
 
 // ── Types ────────────────────────────────────────────────────────────
 export interface TaskItem {
@@ -44,7 +46,7 @@ interface ProjectBoardKanbanProps {
   tasks: TaskItem[];
   isLoading: boolean;
   onCreateTask: (title: string) => void;
-  onUpdateTask: (id: string, updates: Partial<TaskItem>) => void;
+  onUpdateTask: (id: string, updates: Partial<TaskItem>) => Promise<void>;
   onDeleteTask: (id: string) => void;
   onReorder: (items: { id: string; status: string; sort_order: number }[]) => void;
   onRefresh: () => void;
@@ -68,13 +70,24 @@ const priorityBadge: Record<string, string> = {
   low: "bg-white/5 text-ares-gray/50",
 };
 
+// ── Droppable Column ───────────────────────────────────────────────────
+function DroppableColumn({ id, children, className }: { id: string, children: React.ReactNode, className?: string }) {
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className={className}>
+      {children}
+    </div>
+  );
+}
+
 // ── Sortable Task Card ───────────────────────────────────────────────
 function SortableTaskCard({
-  task, onDelete, onUpdateStatus,
+  task, onDelete, onUpdateStatus, onEdit,
 }: {
   task: TaskItem;
   onDelete: (id: string) => void;
   onUpdateStatus: (id: string, status: string) => void;
+  onEdit: (task: TaskItem) => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const {
@@ -91,12 +104,25 @@ function SortableTaskCard({
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="p-3 bg-obsidian/60 hover:bg-ares-gray-dark/60 ares-cut-sm border border-white/5 hover:border-white/10 transition-all cursor-grab active:cursor-grabbing group relative"
+      className="p-2.5 bg-obsidian/60 hover:bg-ares-gray-dark/60 ares-cut-sm border border-white/5 hover:border-white/10 transition-all group relative flex gap-2"
     >
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <p className="text-sm font-bold text-white leading-tight flex-1">{task.title}</p>
+      <div 
+        {...attributes}
+        {...listeners}
+        className="text-white/20 hover:text-white cursor-grab active:cursor-grabbing flex items-start pt-0.5"
+      >
+        <GripVertical size={14} />
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+            className="text-sm font-bold text-white leading-tight flex-1 text-left hover:text-ares-cyan transition-colors flex items-center gap-1.5 group/title"
+          >
+          {task.title}
+          <Edit3 size={10} className="text-ares-gray opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
+        </button>
         <div className="relative flex-shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
@@ -117,6 +143,12 @@ function SortableTaskCard({
                 </button>
               ))}
               <div className="border-t border-white/5 my-1" />
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(task); setShowMenu(false); }}
+                className="w-full text-left px-3 py-1.5 text-xs font-bold text-marble/80 hover:bg-white/5 hover:text-white flex items-center gap-1.5"
+              >
+                <Edit3 size={10} /> Edit
+              </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(task.id); setShowMenu(false); }}
                 className="w-full text-left px-3 py-1.5 text-xs font-bold text-ares-red hover:bg-ares-red/10 flex items-center gap-1.5"
@@ -140,11 +172,13 @@ function SortableTaskCard({
             </span>
           )}
         </div>
-        {task.due_date && (
-          <span className="text-[9px] text-ares-gray font-mono">
-            {new Date(task.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-          </span>
-        )}
+          {task.due_date && (
+            <span className={`text-[9px] font-mono ${task.due_date && new Date(task.due_date) < new Date() && task.status !== "done" ? "text-ares-red font-black" : "text-ares-gray"}`}>
+              {new Date(task.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              {task.due_date && new Date(task.due_date) < new Date() && task.status !== "done" && " ⚠"}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -167,6 +201,7 @@ export default function ProjectBoardKanban({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -281,6 +316,7 @@ export default function ProjectBoardKanban({
   };
 
   return (
+    <>
     <div className="bg-obsidian/50 border border-white/5 ares-cut p-6">
       <div className="flex items-center justify-between mb-5">
         <h3 className="font-black text-white text-sm uppercase tracking-widest flex items-center gap-2">
@@ -387,7 +423,7 @@ export default function ProjectBoardKanban({
                     strategy={verticalListSortingStrategy}
                     id={status}
                   >
-                    <div className="p-2 space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/5 min-h-[60px]">
+                    <DroppableColumn id={status} className="p-2 space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/5 min-h-[60px]">
                       {items.length === 0 ? (
                         <p className="text-ares-gray text-xs text-center py-6 italic">No items</p>
                       ) : (
@@ -397,10 +433,11 @@ export default function ProjectBoardKanban({
                             task={task}
                             onDelete={onDeleteTask}
                             onUpdateStatus={(id, s) => onUpdateTask(id, { status: s })}
+                            onEdit={(t) => setEditingTask(t)}
                           />
                         ))
                       )}
-                    </div>
+                    </DroppableColumn>
                   </SortableContext>
                 </div>
               );
@@ -413,5 +450,24 @@ export default function ProjectBoardKanban({
         </DndContext>
       )}
     </div>
+
+    {/* Edit Modal */}
+    <AnimatePresence>
+      {editingTask && (
+        <TaskEditModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onSave={async (id, updates) => {
+            await onUpdateTask(id, updates);
+            setEditingTask(null);
+          }}
+          onDelete={(id) => {
+            onDeleteTask(id);
+            setEditingTask(null);
+          }}
+        />
+      )}
+    </AnimatePresence>
+  </>
   );
 }

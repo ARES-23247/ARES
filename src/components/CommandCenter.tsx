@@ -1,30 +1,16 @@
-import { useState } from "react";
 import { RefreshCw, Radio, MessageSquare, Database } from "lucide-react";
 import TeamAvailability from "./TeamAvailability";
 import IntegrationHealthMonitor from "./command/IntegrationHealthMonitor";
-import ProjectBoardKanban from "./command/ProjectBoardKanban";
 import PlatformQuickStats from "./command/PlatformQuickStats";
 import CommandQuickActions from "./command/CommandQuickActions";
 import ZulipBotCommands from "./command/ZulipBotCommands";
 import BroadcastWidget from "./command/BroadcastWidget";
-import { api } from "../api/client";
 import { useQueryClient } from "@tanstack/react-query";
 
 // -- Command Center Component -----------------------------------------
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function CommandCenter({ stats: prefetchedStats }: { stats?: any }) {
   const queryClient = useQueryClient();
-  const [isCreating, setIsCreating] = useState(false);
-
-  // -- Queries --------------------------------------------------------
-  const { data: tasksRes, isLoading: isTasksLoading } = api.tasks.list.useQuery(
-    ["command-tasks"],
-    {},
-    { refetchInterval: 30000 }
-  );
-
-  const tasksBody = tasksRes?.status === 200 ? tasksRes.body : null;
-  const tasks = tasksBody?.tasks || [];
 
   // Using prefetched stats from parent to avoid waterfall
   const stats = prefetchedStats || { posts: 0, events: 0, docs: 0, integrations: {} };
@@ -41,65 +27,8 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: any 
   ] : [];
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
     queryClient.invalidateQueries({ queryKey: ["command-health"] });
     queryClient.invalidateQueries({ queryKey: ["command-stats"] });
-  };
-
-  // -- Create Task ----------------------------------------------------
-  const handleCreateTask = async (title: string) => {
-    setIsCreating(true);
-    try {
-      const res = await api.tasks.create.mutation({
-        body: { title }
-      });
-      if (res.status === 200 && res.body.success) {
-        queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
-      }
-    } catch (err) {
-      console.error("Create task failed:", err);
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  // -- Update Task ----------------------------------------------------
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleUpdateTask = async (id: string, updates: any) => {
-    try {
-      await api.tasks.update.mutation({
-        params: { id },
-        body: updates,
-      });
-      queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
-    } catch (err) {
-      console.error("Update task failed:", err);
-    }
-  };
-
-  // -- Delete Task ----------------------------------------------------
-  const handleDeleteTask = async (id: string) => {
-    try {
-      await api.tasks.delete.mutation({
-        params: { id },
-        body: null,
-      });
-      queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
-    } catch (err) {
-      console.error("Delete task failed:", err);
-    }
-  };
-
-  // -- Reorder Tasks --------------------------------------------------
-  const handleReorder = async (items: { id: string; status: string; sort_order: number }[]) => {
-    try {
-      await api.tasks.reorder.mutation({
-        body: { items },
-      });
-      queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
-    } catch (err) {
-      console.error("Reorder tasks failed:", err);
-    }
   };
 
   return (
@@ -124,29 +53,16 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: any 
           </span>
           <button
             onClick={handleRefresh}
-            disabled={isTasksLoading}
             title="Refresh dashboard data"
-            className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm text-marble/40 hover:text-white transition-all disabled:opacity-30"
+            className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm text-marble/40 hover:text-white transition-all"
           >
-            <RefreshCw size={16} className={isTasksLoading ? "animate-spin" : ""} />
+            <RefreshCw size={16} />
           </button>
         </div>
       </div>
 
       {/* Integration Health Monitor */}
       <IntegrationHealthMonitor health={health} />
-
-      {/* Native Task Board – Kanban View */}
-      <ProjectBoardKanban
-        tasks={tasks}
-        isLoading={isTasksLoading}
-        isCreating={isCreating}
-        onCreateTask={handleCreateTask}
-        onUpdateTask={handleUpdateTask}
-        onDeleteTask={handleDeleteTask}
-        onReorder={handleReorder}
-        onRefresh={() => queryClient.invalidateQueries({ queryKey: ["command-tasks"] })}
-      />
 
       {/* Platform Quick Stats + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
