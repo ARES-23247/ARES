@@ -54,7 +54,7 @@ const ComponentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   HomeCoreValues: lazy(() => Promise.resolve({ default: () => <div className="p-4 border border-white/10 bg-ares-gray-dark rounded text-ares-gray text-sm font-mono">[Core Values Component]</div> }))
 };
 
-export interface ASTMark { type: string; }
+export interface ASTMark { type: string; attrs?: Record<string, string | number | boolean>; }
 export interface ASTNode {
   type: string;
   text?: string;
@@ -102,6 +102,24 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
       node.marks.forEach((mark) => {
         if (mark.type === "bold") text = <strong key={typeof text === "string" ? text + "b" : "b"}>{text}</strong>;
         if (mark.type === "italic") text = <em key={typeof text === "string" ? text + "i" : "i"}>{text}</em>;
+        if (mark.type === "link") {
+          const href = (mark.attrs?.href as string) || "#";
+          const target = (mark.attrs?.target as string) || "_blank";
+          text = (
+            <a
+              key={typeof text === "string" ? text + "a" : "a"}
+              href={href}
+              target={target}
+              rel={target === "_blank" ? "noopener noreferrer" : undefined}
+              className="text-ares-gold underline decoration-ares-gold/40 underline-offset-2 hover:text-ares-cyan hover:decoration-ares-cyan transition-colors"
+            >
+              {text}
+            </a>
+          );
+        }
+        if (mark.type === "code") text = <code key={typeof text === "string" ? text + "c" : "c"} className="bg-white/10 px-1.5 py-0.5 rounded text-ares-cyan text-sm font-mono">{text}</code>;
+        if (mark.type === "strike") text = <s key={typeof text === "string" ? text + "s" : "s"}>{text}</s>;
+        if (mark.type === "underline") text = <u key={typeof text === "string" ? text + "u" : "u"}>{text}</u>;
       });
     }
     return <>{text}</>;
