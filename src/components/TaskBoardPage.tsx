@@ -60,6 +60,21 @@ export default function TaskBoardPage() {
   };
 
   const handleReorder = async (items: { id: string; status: string; sort_order: number }[]) => {
+    // Optimistic Update
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryClient.setQueryData(["command-tasks"], (oldData: any) => {
+      if (!oldData || !oldData.body || !oldData.body.tasks) return oldData;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newTasks = oldData.body.tasks.map((task: any) => {
+        const updatedItem = items.find((i) => i.id === task.id);
+        if (updatedItem) {
+          return { ...task, status: updatedItem.status, sort_order: updatedItem.sort_order };
+        }
+        return task;
+      });
+      return { ...oldData, body: { ...oldData.body, tasks: newTasks } };
+    });
+
     try {
       await api.tasks.reorder.mutation({
         body: { items },
@@ -67,6 +82,7 @@ export default function TaskBoardPage() {
       queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
     } catch (err) {
       console.error("Reorder tasks failed:", err);
+      queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
     }
   };
 

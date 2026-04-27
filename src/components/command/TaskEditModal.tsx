@@ -90,6 +90,9 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
 
       {/* Modal */}
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -103,7 +106,7 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
               <Flag size={16} className="text-ares-cyan" />
             </div>
             <div>
-              <h3 className="font-black text-white text-sm uppercase tracking-wider">Edit Task</h3>
+              <h3 id="modal-title" className="font-black text-white text-sm uppercase tracking-wider">Edit Task</h3>
               <p className="text-[10px] text-ares-gray font-mono mt-0.5">{task.id.slice(0, 8)}</p>
             </div>
           </div>

@@ -79,6 +79,16 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
         })
         .execute();
 
+      await db.insertInto("audit_log").values({
+        id: crypto.randomUUID(),
+        actor: user.id,
+        action: "create_task",
+        resource_type: "task",
+        resource_id: id,
+        details: `Created task: ${body.title}`,
+        created_at: now,
+      }).execute();
+
       const task = {
         id,
         title: body.title,
@@ -130,6 +140,16 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
         .where("id", "=", params.id)
         .execute();
 
+      await db.insertInto("audit_log").values({
+        id: crypto.randomUUID(),
+        actor: user.id,
+        action: "update_task",
+        resource_type: "task",
+        resource_id: params.id,
+        details: "Updated task",
+        created_at: new Date().toISOString(),
+      }).execute();
+
       return { status: 200 as const, body: { success: true } };
     } catch (err) {
       console.error("[Tasks] Update error:", err);
@@ -151,6 +171,16 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
           .execute();
       }
 
+      await db.insertInto("audit_log").values({
+        id: crypto.randomUUID(),
+        actor: user.id,
+        action: "reorder_tasks",
+        resource_type: "task",
+        resource_id: "multiple",
+        details: `Reordered ${body.items.length} tasks`,
+        created_at: now,
+      }).execute();
+
       return { status: 200 as const, body: { success: true } };
     } catch (err) {
       console.error("[Tasks] Reorder error:", err);
@@ -167,6 +197,16 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
       await db.deleteFrom("tasks")
         .where("id", "=", params.id)
         .execute();
+
+      await db.insertInto("audit_log").values({
+        id: crypto.randomUUID(),
+        actor: user.id,
+        action: "delete_task",
+        resource_type: "task",
+        resource_id: params.id,
+        details: "Deleted task",
+        created_at: new Date().toISOString(),
+      }).execute();
 
       return { status: 200 as const, body: { success: true } };
     } catch (err) {
