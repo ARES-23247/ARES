@@ -32,7 +32,7 @@ export default function SponsorTokensManager() {
   const rawSponsorsBody = (sponsorsData as unknown as { body?: { sponsors?: unknown[] } | unknown[] })?.body;
   const sponsors = sponsorsData?.status === 200 ? (Array.isArray(rawSponsorsBody) ? rawSponsorsBody : (Array.isArray(rawSponsorsBody?.sponsors) ? rawSponsorsBody.sponsors : [])) as { id: string; name: string }[] : [];
   const rawTokensBody = (tokensData as unknown as { body?: { tokens?: unknown[] } | unknown[] })?.body;
-  const tokens = tokensData?.status === 200 ? (Array.isArray(rawTokensBody) ? rawTokensBody : (Array.isArray(rawTokensBody?.tokens) ? rawTokensBody.tokens : [])) : [];
+  const tokens = tokensData?.status === 200 ? (Array.isArray(rawTokensBody) ? rawTokensBody : (Array.isArray(rawTokensBody?.tokens) ? rawTokensBody.tokens : [])) as { token: string; sponsor_name: string; created_at: string }[] : [];
   const isLoading = loadingSponsors || loadingTokens;
   const isError = isSponsorsError || isTokensError;
 

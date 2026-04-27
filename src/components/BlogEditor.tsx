@@ -99,22 +99,22 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
 
 
   const saveMutation = api.posts.savePost.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: { status: number; body?: { warning?: string; error?: string; slug?: string; isDraft?: boolean } | null }) => {
       if (data.status === 200 || data.status === 207) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
         queryClient.invalidateQueries({ queryKey: ["admin_posts"] });
         
-        if (data.body.warning) {
+        if (data.body?.warning) {
           toast.info("Post saved successfully, but social syndication had issues:\n\n" + data.body.warning);
         }
 
-        if (data.body.isDraft || userRole === "author") {
+        if (data.body?.isDraft || userRole === "author") {
           navigate("/dashboard");
         } else {
-          navigate(`/blog/${data.body.slug}`);
+          navigate(`/blog/${data.body?.slug}`);
         }
       } else {
-        setErrorMsg(data.body.error || "Failed to publish");
+        setErrorMsg(data.body?.error || "Failed to publish");
       }
     },
     onError: (err: Error) => {

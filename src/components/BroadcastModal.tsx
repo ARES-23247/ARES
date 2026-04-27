@@ -37,8 +37,8 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
   }, [isOpen]);
 
   const postRepushMutation = api.posts.repushSocials.useMutation({
-    onSuccess: (res: { status: number }) => {
-      if (res.status === 200 && res.body.success) {
+    onSuccess: (res: { status: number; body?: { success?: boolean } | null }) => {
+      if (res.status === 200 && res.body?.success) {
         setStatus("success");
         setTimeout(onClose, 2000);
       } else {
@@ -52,10 +52,9 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
     }
   });
 
-  // @ts-expect-error repushEvent is not yet typed in the api contract
   const eventRepushMutation = api.events.repushEvent.useMutation({
-    onSuccess: (res: { status: number }) => {
-      if (res.status === 200 && res.body.success) {
+    onSuccess: (res: { status: number; body?: { success?: boolean } | null }) => {
+      if (res.status === 200 && res.body?.success) {
         setStatus("success");
         setTimeout(onClose, 2000);
       } else {

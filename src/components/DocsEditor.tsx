@@ -36,7 +36,7 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
   const editor = useRichEditor({ placeholder: "<p>Start writing documentation here...</p>" });
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<DocFormValues>({
-    resolver: zodResolver(docSchema),
+    resolver: zodResolver(docSchema) as unknown as import("react-hook-form").Resolver<DocFormValues>,
     defaultValues: {
       slug: "",
       title: "",

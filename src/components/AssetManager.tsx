@@ -1,4 +1,5 @@
 import { FolderOpen } from "lucide-react";
+import { UseMutationResult } from "@tanstack/react-query";
 import AssetUploader from "./assets/AssetUploader";
 import AssetGrid from "./assets/AssetGrid";
 import AssetSyndicateModal from "./assets/AssetSyndicateModal";
@@ -38,7 +39,7 @@ export default function AssetManager() {
           <AssetUploader 
             activeFolder={selectedFolderFilter === "All" ? "" : selectedFolderFilter}
             setActiveFolder={setSelectedFolderFilter}
-            uploadMutation={{ isPending: isUploading, mutate: uploadAssets } as unknown as { isPending: boolean; mutate: (vars: never) => void }}
+            uploadMutation={{ isPending: isUploading, mutate: uploadAssets } as unknown as UseMutationResult<void, Error, File[], unknown>}
             uploadProgress={null}
           />
         </div>
@@ -91,7 +92,7 @@ export default function AssetManager() {
         setSyndicateKey={setSyndicateKey}
         syndicateCaption={syndicateCaption}
         setSyndicateCaption={setSyndicateCaption}
-        syndicateMutation={syndicateMutation as unknown as { isPending: boolean; mutate: (vars: never) => void }}
+        syndicateMutation={syndicateMutation as unknown as UseMutationResult<unknown, Error, { key: string; caption: string; }, unknown>}
       />
     </div>
   );

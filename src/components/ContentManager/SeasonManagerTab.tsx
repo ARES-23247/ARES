@@ -32,7 +32,7 @@ export default function SeasonManagerTab({
 
   const { data, isLoading, isError } = api.seasons.adminList.useQuery(["admin-seasons"], {});
 
-  const rawBody = (data as unknown as { body: { seasons: SeasonRow[] } })?.body;
+  const rawBody = (data as unknown as { body: { seasons: unknown[] } })?.body;
   const seasons = data?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.seasons) ? rawBody.seasons : [])) : [];
 
   const deleteMutation = api.seasons.delete.useMutation({

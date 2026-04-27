@@ -46,7 +46,7 @@ export default function TaskDetailPage() {
   const getValue = (field: string) => {
     if (field in edits) return edits[field] as string;
 
-    return (task as Record<string, unknown>)?.[field] || "";
+    return ((task as Record<string, unknown>)?.[field] as string) || "";
   };
   const setField = (field: string, value: unknown) => setEdits(prev => ({ ...prev, [field]: value }));
 

@@ -60,7 +60,7 @@ export default function DashboardRoutes({
     pendingDocsCount: number;
   };
 
-  stats: unknown;
+  stats: { posts: number; events: number; docs: number; integrations: Record<string, boolean>; } | undefined;
 }) {
   const location = useLocation();
   const navigate = useNavigate();

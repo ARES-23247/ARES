@@ -9,6 +9,9 @@ import { ClickToDeleteButton } from "./ContentManager/shared";
 
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 
+interface BadgeRecord { id: string; name: string; description?: string | null; icon: string; color_theme: string; }
+interface UserRecord { id: string; name?: string | null; nickname?: string | null; email: string; }
+
 export default function BadgeManager() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
@@ -162,7 +165,7 @@ export default function BadgeManager() {
           ) : (
              
             badges.map((b: BadgeRecord) => {
-              const IconComp = ((LucideIcons as unknown as Record<string, React.ElementType>)[b.icon] || LucideIcons.Award);
+              const IconComp = ((LucideIcons as unknown as Record<string, React.ElementType>)[b.icon] || LucideIcons.Award) as any;
               return (
                 <div key={b.id} className="bg-ares-gray-dark/50 border border-white/10 ares-cut-sm p-4 flex items-start gap-4">
                   <div className={`p-3 ares-cut-sm bg-obsidian/50 flex-shrink-0 text-${b.color_theme.replace("text-", "")}`}>

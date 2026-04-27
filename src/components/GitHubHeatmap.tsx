@@ -35,7 +35,7 @@ export default function GitHubHeatmap() {
 
           const rawGridBody = (res.body as unknown as { grid?: DayCell[][] })?.grid;
 
-          setGrid(Array.isArray(rawGridBody) ? rawGridBody : (Array.isArray((res.body as unknown as { body?: { grid?: DayCell[][] } })?.body?.grid) ? (res.body as unknown as { body?: { grid?: DayCell[][] } })?.body?.grid : []));
+          setGrid((Array.isArray(rawGridBody) ? rawGridBody : (Array.isArray((res.body as unknown as { body?: { grid?: DayCell[][] } })?.body?.grid) ? (res.body as unknown as { body?: { grid?: DayCell[][] } })?.body?.grid : [])) as DayCell[][]);
           setTotalCommits(res.body.totalCommits || 0);
           setRepoCount(res.body.repoCount || 0);
         }

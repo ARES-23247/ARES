@@ -65,7 +65,7 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: { po
 
       {/* Platform Quick Stats + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PlatformQuickStats stats={stats} />
+        <PlatformQuickStats stats={{ posts: stats.posts, events: stats.events, docs: stats.docs }} />
         <CommandQuickActions />
       </div>
 

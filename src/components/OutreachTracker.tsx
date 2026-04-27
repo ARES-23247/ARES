@@ -41,7 +41,7 @@ export default function OutreachTracker() {
   const [isAdding, setIsAdding] = useState(false);
 
   const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<OutreachFormValues>({
-    resolver: zodResolver(outreachFormSchema),
+    resolver: zodResolver(outreachFormSchema) as unknown as import("react-hook-form").Resolver<OutreachFormValues>,
     defaultValues: {
       title: "",
       date: new Date().toISOString().split('T')[0],
@@ -85,7 +85,7 @@ export default function OutreachTracker() {
     }
   });
 
-  const onFormSubmit = (data: OutreachFormValues) => {
+  const onFormSubmit = (data: z.infer<typeof outreachFormSchema>) => {
     const finalId = data.id || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + data.date;
     saveMutation.mutate({ body: { ...data, id: finalId } as unknown as never });
   };
@@ -249,9 +249,11 @@ export default function OutreachTracker() {
                   try {
                     const ast = JSON.parse(log.description || "");
                     if (ast && ast.type === "doc") {
-                      const extract = (node: { text?: string; content?: unknown[] }): string => {
-                        if (node.text) return node.text;
-                        if (node.content) return node.content.map(extract).join(" ");
+                      const extract = (node: unknown): string => {
+                        if (typeof node !== "object" || !node) return "";
+                        const n = node as { text?: string; content?: unknown[] };
+                        if (n.text) return String(n.text);
+                        if (Array.isArray(n.content)) return n.content.map(extract).join(" ");
                         return "";
                       };
                       return extract(ast);

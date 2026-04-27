@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, Context } from "hono";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -12,10 +12,8 @@ import { siteConfig } from "../../utils/site.config";
 const s = initServer<AppEnv>();
 export const tasksRouter = new Hono<AppEnv>();
 
-type TaskHandlers = Parameters<typeof s.router<typeof taskContract>>[1];
-
-const tasksTsRestRouter: TaskHandlers = {
-  list: async ({ query }, c) => {
+const taskHandlers = {
+  list: async ({ query }: { query: any }, c: Context<AppEnv>): Promise<any> => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -77,7 +75,7 @@ const tasksTsRestRouter: TaskHandlers = {
     }
   },
 
-  create: async ({ body }, c) => {
+  create: async ({ body }: { body: any }, c: Context<AppEnv>): Promise<any> => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -102,7 +100,7 @@ const tasksTsRestRouter: TaskHandlers = {
         .execute();
 
       if (body.assignees && body.assignees.length > 0) {
-        const assignments = body.assignees.map(userId => ({
+        const assignments = body.assignees.map((userId: string) => ({
           task_id: id,
           user_id: userId
         }));
@@ -166,7 +164,7 @@ const tasksTsRestRouter: TaskHandlers = {
     }
   },
 
-  reorder: async ({ body }, c) => {
+  reorder: async ({ body }: { body: any }, c: Context<AppEnv>): Promise<any> => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -174,7 +172,7 @@ const tasksTsRestRouter: TaskHandlers = {
 
       const now = new Date().toISOString();
       
-      await Promise.all(body.items.map((item) =>
+      await Promise.all(body.items.map((item: any) =>
         db.updateTable("tasks")
           .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
           .where("id", "=", item.id)
@@ -198,7 +196,7 @@ const tasksTsRestRouter: TaskHandlers = {
     }
   },
 
-  update: async ({ params, body }, c) => {
+  update: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>): Promise<any> => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -235,7 +233,7 @@ const tasksTsRestRouter: TaskHandlers = {
         // Sync assignments: delete and re-insert
         await db.deleteFrom("task_assignments").where("task_id", "=", params.id).execute();
         if (body.assignees && body.assignees.length > 0) {
-          const assignments = body.assignees.map(userId => ({
+          const assignments = body.assignees.map((userId: string) => ({
             task_id: params.id,
             user_id: userId
           }));
@@ -274,7 +272,7 @@ const tasksTsRestRouter: TaskHandlers = {
     }
   },
 
-  delete: async ({ params }, c) => {
+  delete: async ({ params }: { params: any }, c: Context<AppEnv>): Promise<any> => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -318,6 +316,8 @@ const tasksTsRestRouter: TaskHandlers = {
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));
+
+const tasksTsRestRouter = s.router(taskContract, taskHandlers as any);
 
 createHonoEndpoints(taskContract, tasksTsRestRouter, tasksRouter);
 export default tasksRouter;

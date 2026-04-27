@@ -23,9 +23,8 @@ const awardFormSchema = z.object({
   description: z.string().optional().nullable(),
   season_id: z.string().optional().nullable(),
 });
-
-
-
+type AwardFormPayload = z.infer<typeof awardFormSchema>;
+type AwardPayload = AwardFormPayload & { id: string };
 interface Award {
   id: string;
   title: string;
@@ -41,7 +40,7 @@ export default function AwardEditor() {
   const [isAdding, setIsAdding] = useState(false);
 
   const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<AwardFormPayload>({
-    resolver: zodResolver(awardFormSchema),
+    resolver: zodResolver(awardFormSchema) as unknown as import("react-hook-form").Resolver<AwardFormPayload>,
     defaultValues: {
       year: new Date().getFullYear(),
       title: "",
@@ -69,7 +68,7 @@ export default function AwardEditor() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-awards"] })
   });
 
-  const onFormSubmit = (data: AwardFormPayload) => {
+  const onFormSubmit = (data: z.infer<typeof awardFormSchema>) => {
     const finalId = data.id || `${data.year}-${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
      
     saveMutation.mutate({ body: { ...data, id: finalId } as AwardPayload });

@@ -30,7 +30,7 @@ export default function EventManagerTab({
     query: { limit: 100, offset: 0 }
   });
 
-  const rawBody = (eventsData as unknown as { body: { events: EventRow[] } })?.body;
+  const rawBody = (eventsData as unknown as { body: { events: unknown[] } })?.body;
   const events = eventsData?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.events) ? rawBody.events : [])) as unknown as EventItem[] : [];
   const lastSyncedAt = eventsData?.status === 200 ? eventsData.body.lastSyncedAt : null;
 
@@ -46,7 +46,7 @@ export default function EventManagerTab({
   });
 
   const syncGcalMutation = api.events.syncEvents.useMutation({
-    onSuccess: (res: { status: number }) => {
+    onSuccess: (res: { status: number; body: { success?: boolean, count?: number } }) => {
       if (res.status === 200 && res.body.success) {
         queryClient.invalidateQueries({ queryKey: ["admin_events"] });
         toast.success(`Sync Complete! Fetched ${res.body.count || 0} events.`);

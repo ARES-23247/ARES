@@ -16,7 +16,7 @@ export default function DashboardHome({ stats: prefetchedStats }: { stats?: unkn
   const canSeeInquiries = role !== "unverified";
 
   // Using prefetched stats from parent to avoid waterfall
-  const stats = prefetchedStats || {
+  const stats = (prefetchedStats as Record<string, number>) || {
     posts: 0,
     events: 0,
     docs: 0,
