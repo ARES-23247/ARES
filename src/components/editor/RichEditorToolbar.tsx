@@ -127,6 +127,12 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
   const importRef = useRef<HTMLInputElement>(null);
   const jsonImportRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const handleOpenSimPicker = () => setIsSimPickerOpen(true);
+    window.addEventListener('open-sim-picker', handleOpenSimPicker);
+    return () => window.removeEventListener('open-sim-picker', handleOpenSimPicker);
+  }, []);
+
   const handleDocImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editor) return;

@@ -9,8 +9,9 @@ export default function TaskBoardPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   // -- Queries --------------------------------------------------------
+  const queryKey = ["command-tasks"];
   const { data: tasksRes, isLoading: isTasksLoading } = api.tasks.list.useQuery(
-    ["command-tasks"],
+    queryKey,
     {},
     { refetchInterval: 30000 }
   );
@@ -26,7 +27,7 @@ export default function TaskBoardPage() {
         body: { title }
       });
       if (res.status === 200 && res.body.success) {
-        queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
+        queryClient.invalidateQueries({ queryKey: api.tasks.list.queryKey(queryKey, {}) });
       }
     } catch (err) {
       console.error("Create task failed:", err);
@@ -36,33 +37,60 @@ export default function TaskBoardPage() {
   };
 
   const handleUpdateTask = async (id: string, updates: Record<string, unknown>) => {
+    const tKey = api.tasks.list.queryKey(queryKey, {});
+    
+    // Optimistic Update
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryClient.setQueryData(tKey, (oldData: any) => {
+      if (!oldData || !oldData.body || !oldData.body.tasks) return oldData;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newTasks = oldData.body.tasks.map((task: any) => 
+        task.id === id ? { ...task, ...updates } : task
+      );
+      return { ...oldData, body: { ...oldData.body, tasks: newTasks } };
+    });
+
     try {
       await api.tasks.update.mutation({
         params: { id },
         body: updates,
       });
-      queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
+      queryClient.invalidateQueries({ queryKey: tKey });
     } catch (err) {
       console.error("Update task failed:", err);
+      queryClient.invalidateQueries({ queryKey: tKey });
     }
   };
 
   const handleDeleteTask = async (id: string) => {
+    const tKey = api.tasks.list.queryKey(queryKey, {});
+    
+    // Optimistic Update
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryClient.setQueryData(tKey, (oldData: any) => {
+      if (!oldData || !oldData.body || !oldData.body.tasks) return oldData;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newTasks = oldData.body.tasks.filter((task: any) => task.id !== id);
+      return { ...oldData, body: { ...oldData.body, tasks: newTasks } };
+    });
+
     try {
       await api.tasks.delete.mutation({
         params: { id },
         body: null,
       });
-      queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
+      queryClient.invalidateQueries({ queryKey: tKey });
     } catch (err) {
       console.error("Delete task failed:", err);
+      queryClient.invalidateQueries({ queryKey: tKey });
     }
   };
-
   const handleReorder = async (items: { id: string; status: string; sort_order: number }[]) => {
+    const tKey = api.tasks.list.queryKey(queryKey, {});
+    
     // Optimistic Update
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    queryClient.setQueryData(["command-tasks"], (oldData: any) => {
+    queryClient.setQueryData(tKey, (oldData: any) => {
       if (!oldData || !oldData.body || !oldData.body.tasks) return oldData;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newTasks = oldData.body.tasks.map((task: any) => {
@@ -79,10 +107,12 @@ export default function TaskBoardPage() {
       await api.tasks.reorder.mutation({
         body: { items },
       });
-      queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
+      // No need to invalidate immediately if we trust our optimistic update, 
+      // but we do it to be safe and catch up with any other changes.
+      queryClient.invalidateQueries({ queryKey: tKey });
     } catch (err) {
       console.error("Reorder tasks failed:", err);
-      queryClient.invalidateQueries({ queryKey: ["command-tasks"] });
+      queryClient.invalidateQueries({ queryKey: tKey });
     }
   };
 
