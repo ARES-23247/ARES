@@ -28,7 +28,18 @@ export default function DietarySummary() {
     try {
       const res = await api.logistics.exportEmails.query();
       if (res.status === 200) {
-        setExportedEmails((res.body as any).emails.join(", "));
+        const users = (res.body as any).users;
+        setExportedEmails(users.map((u: any) => u.email).join(", "));
+        
+        const csvContent = "Name,Email,Role\n" + users.map((u: any) => `"${u.name}","${u.email}","${u.role}"`).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", "ares_roster_emails.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
         setShowExportModal(true);
       } else {
         alert("Failed to export emails");

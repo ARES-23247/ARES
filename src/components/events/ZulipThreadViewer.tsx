@@ -90,15 +90,25 @@ export default function ZulipThreadViewer({ stream, topic }: ZulipThreadViewerPr
           </div>
         ) : (
           messages.map((msg) => (
-            <div key={msg.id} className="flex gap-4 p-4 bg-black/40 border border-white/5 ares-cut-sm relative group">
+            <div 
+              key={msg.id} 
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest('a')) return;
+                window.open(`${zulipUrl}/near/${msg.id}`, '_blank');
+              }}
+              className="flex gap-4 p-4 bg-black/40 hover:bg-black/60 border border-white/5 hover:border-ares-gold/30 cursor-pointer transition-all ares-cut-sm relative group"
+            >
+              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ExternalLink size={14} className="text-ares-gold/50" />
+              </div>
               <img 
                 src={msg.avatar_url || `https://api.dicebear.com/9.x/bottts/svg?seed=${msg.sender_id}`} 
                 alt={msg.sender_full_name} 
                 className="w-10 h-10 ares-cut-sm shrink-0 bg-obsidian"
               />
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pr-6">
                 <div className="flex items-baseline justify-between gap-2 mb-1">
-                  <span className="font-bold text-ares-cyan text-sm">{msg.sender_full_name}</span>
+                  <span className="font-bold text-ares-cyan text-sm group-hover:text-ares-gold transition-colors">{msg.sender_full_name}</span>
                   <span className="text-[10px] text-white/40 font-mono tracking-wider">
                     {format(new Date(msg.timestamp * 1000), "MMM d, h:mm a")}
                   </span>

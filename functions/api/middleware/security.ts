@@ -133,6 +133,18 @@ export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
 
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     if (!checkRateLimit(`mw:${ip}`, limit, windowSeconds)) {
+      const db = c.get("db") as any;
+      if (db) {
+        c.executionCtx.waitUntil(
+          db.insertInto("audit_log").values({
+            id: crypto.randomUUID(),
+            action: "SECURITY_BLOCK",
+            actor: ip,
+            resource_type: "rate_limit",
+            details: JSON.stringify({ reason: "Memory rate limit exceeded", path: c.req.path })
+          }).execute().catch(console.error)
+        );
+      }
       return c.json({ error: "Too many submissions. Please try again later." }, 429);
     }
     await next();
@@ -151,6 +163,17 @@ export const persistentRateLimitMiddleware = (limit = 15, windowSeconds = 60) =>
     const db = c.get("db");
     const allowed = await checkPersistentRateLimit(db, ip, limit, windowSeconds);
     if (!allowed) {
+      if (db) {
+        c.executionCtx.waitUntil(
+          (db as any).insertInto("audit_log").values({
+            id: crypto.randomUUID(),
+            action: "SECURITY_BLOCK",
+            actor: ip,
+            resource_type: "persistent_rate_limit",
+            details: JSON.stringify({ reason: "D1 rate limit exceeded", path: c.req.path })
+          }).execute().catch(console.error)
+        );
+      }
       return c.json({ error: "Too many requests. Please try again later." }, 429);
     }
     await next();
@@ -186,6 +209,18 @@ export const turnstileMiddleware = () => {
 
     const valid = await verifyTurnstile(token, c.env.TURNSTILE_SECRET_KEY, ip);
     if (!valid) {
+      const db = c.get("db") as any;
+      if (db) {
+        c.executionCtx.waitUntil(
+          db.insertInto("audit_log").values({
+            id: crypto.randomUUID(),
+            action: "SECURITY_BLOCK",
+            actor: ip,
+            resource_type: "turnstile",
+            details: JSON.stringify({ reason: "Invalid token or CAPTCHA failed", path: c.req.path })
+          }).execute().catch(console.error)
+        );
+      }
       return c.json({ error: "Security verification failed. Please try again." }, 403);
     }
     await next();

@@ -191,10 +191,11 @@ const analyticsHandlers = {
   getStats: async (_: any, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
-      const [postsCount, eventsCount, docsCount, dbSettings] = await Promise.all([
+      const [postsCount, eventsCount, docsCount, securityBlocksRow, dbSettings] = await Promise.all([
         db.selectFrom("posts").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
         db.selectFrom("events").select((eb) => eb.fn.count("id").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
         db.selectFrom("docs").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("audit_log").select((eb) => eb.fn.count("id").as("total")).where("action", "=", "SECURITY_BLOCK").executeTakeFirst(),
         getDbSettings(c)
       ]);
 
@@ -212,7 +213,8 @@ const analyticsHandlers = {
             band: !!dbSettings["BAND_ACCESS_TOKEN"],
             slack: !!dbSettings["SLACK_WEBHOOK_URL"],
             gcal: !!dbSettings["GCAL_PRIVATE_KEY"]
-          }
+          },
+          securityBlocks: Number(securityBlocksRow?.total || 0)
         } as any
       };
     } catch {

@@ -127,6 +127,7 @@ export const analyticsContract = c.router({
           slack: z.boolean(),
           gcal: z.boolean(),
         }),
+        securityBlocks: z.number().optional(),
       }),
       500: z.object({ error: z.string() }),
     },
