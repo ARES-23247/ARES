@@ -186,6 +186,17 @@ export default function DashboardSidebar({
             </div>
           </div>
 
+          {!permissions.isUnverified && (
+            <div>
+              <h4 className="text-xs uppercase font-black tracking-widest text-ares-cyan mb-2 px-6">Team Workspace</h4>
+              <div className="space-y-1 px-3">
+                <NavButton tab="tasks" icon={LayoutDashboard} label="Kanban Tasks" currentPath={location.pathname} />
+                <NavButton tab="outreach" icon={Target} label="Outreach Tracker" currentPath={location.pathname} />
+                <NavButton tab="locations" icon={MapPin} label="Meeting Locations" currentPath={location.pathname} />
+              </div>
+            </div>
+          )}
+
           {isAuthorized && (
             <div>
               <h4 className="text-xs uppercase font-black tracking-widest text-marble/90 mb-2 px-6 flex items-center gap-2">
@@ -224,9 +235,7 @@ export default function DashboardSidebar({
               <div className="space-y-1 px-3">
                 {canSeeInquiries && <NavButton tab="inquiries" icon={MessageSquare} label="Inquiries Hub" currentPath={location.pathname} pendingCount={pendingInquiriesCount} />}
                 {isAdmin && <NavButton tab="mass_email" icon={Mail} label="Mass Email Blast" currentPath={location.pathname} />}
-                <NavButton tab="outreach" icon={Target} label="Outreach Tracker" currentPath={location.pathname} />
                 {isAdmin && <NavButton tab="finance" icon={DollarSign} label="Finance & Budget" currentPath={location.pathname} />}
-                <NavButton tab="locations" icon={MapPin} label="Meeting Locations" currentPath={location.pathname} />
                 <NavButton tab="sponsors" icon={Gem} label="Sponsors & Funding" currentPath={location.pathname} />
                 {isAdmin && <NavButton tab="sponsor_tokens" icon={Gem} label="Sponsor ROI Tokens" currentPath={location.pathname} />}
                 <NavButton tab="analytics" icon={BarChart3} label="Analytics" currentPath={location.pathname} />
@@ -239,7 +248,6 @@ export default function DashboardSidebar({
               <h4 className="text-xs uppercase font-black tracking-widest text-ares-gold mb-2 px-6">Administration</h4>
               <div className="space-y-1 px-3">
                 {isAdmin && <NavButton tab="command_center" icon={Radio} label="Command Center" currentPath={location.pathname} />}
-                {canSeeTasks && <NavButton tab="tasks" icon={LayoutDashboard} label="Kanban Tasks" currentPath={location.pathname} />}
                 {isAdmin && <NavButton tab="users" icon={Users} label="User Roles & Sync" currentPath={location.pathname} />}
                 {isAdmin && <NavButton tab="impact_roster" icon={Trophy} label="Impact & Roster" currentPath={location.pathname} />}
                 {isAdmin && <NavButton tab="badges" icon={Award} label="Badges & Awards" currentPath={location.pathname} />}

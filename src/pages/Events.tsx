@@ -225,7 +225,7 @@ export default function Events() {
                 {pastPractices.length > 0 && (
                   <div className="flex flex-col gap-6">
                     <div className="flex items-center gap-4">
-                      <h3 className="text-xl font-bold text-ares-red uppercase tracking-widest">Past Practices</h3>
+                      <h3 className="text-xl font-bold text-ares-red-light uppercase tracking-widest">Past Practices</h3>
                       <div className="h-px flex-1 bg-gradient-to-r from-ares-red/30 to-transparent"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

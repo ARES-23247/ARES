@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { GreekMeander } from "./GreekMeander";
 import { siteConfig } from "../site.config";
-import { Mail, Box } from "lucide-react";
+import { Mail, Box, Hexagon } from "lucide-react";
 
 export default function Footer() {
   const [mounted, setMounted] = useState(false);
@@ -72,6 +72,9 @@ export default function Footer() {
             </a>
             <a href="https://www.printables.com/@ARESFTC_3784306" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-gold transition-colors text-white" aria-label="Printables">
               <Box className="w-5 h-5" aria-hidden="true" />
+            </a>
+            <a href={siteConfig.urls.onshape} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-cyan transition-colors text-white" aria-label="Onshape CAD">
+              <Hexagon className="w-5 h-5" aria-hidden="true" />
             </a>
             <a href={`mailto:${siteConfig.contact.email}`} aria-label={`Email ${siteConfig.team.fullName}`} className="w-10 h-10 bg-marble/10 rounded flex items-center justify-center hover:bg-ares-bronze transition-colors text-white">
               <Mail className="w-5 h-5" aria-hidden="true" />

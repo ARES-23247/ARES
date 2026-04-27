@@ -11,7 +11,8 @@ export const siteConfig = {
     githubOrg: "ARES-23247",
     zulip: "https://aresfirst.zulipchat.com",
     bluesky: "ares23247.bsky.social",
-    tiktok: "ares.robotics.23247"
+    tiktok: "ares.robotics.23247",
+    onshape: "https://cad.onshape.com/documents?nodeId=681f8b6764dc7e001a56cb6e&resourceType=resourcecompanyowner"
   },
   contact: {
     email: "contact@aresfirst.org",
