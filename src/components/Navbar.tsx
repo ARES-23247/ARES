@@ -204,9 +204,8 @@ export default function Navbar() {
           {!isPending && !isSignedIn && (
             <Link to="/login" className="flex items-center gap-2 px-4 h-9 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-ares-gold/30 ares-cut-sm transition-all group" aria-label="Sign In">
               <LogIn size={14} className="text-ares-gold" />
-              <span className="text-xs font-bold text-white group-hover:text-ares-gold uppercase tracking-wider">Sign In</span>
-            </Link>
-          )}
+              <span className="text-xs font-bold text-white group-hover:text-ares-gold uppercase tracking-wider">Internal Portal</span>
+              </Link>          )}
 
 
           <Link to="/sponsors" className="hidden md:flex bg-ares-red text-white px-6 h-9 ares-cut-sm font-bold uppercase tracking-widest text-xs hover:bg-ares-bronze hover:text-white transition-all shadow-lg shadow-ares-red/20 border border-ares-red/50 items-center gap-2">
@@ -254,7 +253,7 @@ export default function Navbar() {
           )}
           {!isPending && !isSignedIn && (
             <Link to="/login" onClick={() => setOpen(false)} className="text-ares-gold hover:text-white flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">
-              <LogIn size={16} /> Sign In
+              <LogIn size={16} /> Internal Portal
             </Link>
           )}
           <Link to="/join" onClick={() => setOpen(false)} className="text-marble hover:text-ares-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Join Us</Link>

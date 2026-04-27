@@ -105,6 +105,8 @@ export const postContract = c.router({
         slug: z.string().optional(),
         warning: z.string().optional(),
       }),
+      400: z.object({ error: z.string() }),
+      409: z.object({ error: z.string() }),
     },
     summary: "Create or update a post",
   },

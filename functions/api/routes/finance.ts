@@ -89,6 +89,7 @@ const financeTsRestRouter = s.router(financeContract, {
       const isNew = !body.id;
 
       const result = await db.transaction().execute(async (trx) => {
+
         let currentStatus = null;
         if (!isNew) {
           const existing = await trx
@@ -115,7 +116,7 @@ const financeTsRestRouter = s.router(financeContract, {
           await trx.updateTable("sponsorship_pipeline").set(data).where("id", "=", id).execute();
         }
 
-        console.log("DEBUG: status check", { bodyStatus: body.status, currentStatus });
+
         if (body.status === "secured" && currentStatus !== "secured") {
           await trx
             .insertInto("sponsors")

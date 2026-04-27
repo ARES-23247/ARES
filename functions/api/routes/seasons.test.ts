@@ -1,121 +1,173 @@
- 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
-import { mockExecutionContext } from "../../../src/test/utils";
+import seasonsRouter from "./seasons";
 
-// Mock middleware
-vi.mock("../middleware", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../middleware")>();
-  return {
-    ...actual,
-    ensureAdmin: async (c: any, next: any) => next(),
-    getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
+vi.mock("../middleware", () => ({
+  ensureAdmin: (c: any, next: any) => next(),
+  logAuditAction: vi.fn().mockResolvedValue(true),
+  rateLimitMiddleware: () => (c: any, next: any) => next(),
+}));
+
+const mockDb = {
+  selectFrom: vi.fn().mockReturnThis(),
+  select: vi.fn().mockReturnThis(),
+  where: vi.fn().mockReturnThis(),
+  orderBy: vi.fn().mockReturnThis(),
+  execute: vi.fn(),
+  executeTakeFirst: vi.fn(),
+  updateTable: vi.fn().mockReturnThis(),
+  set: vi.fn().mockReturnThis(),
+  insertInto: vi.fn().mockReturnThis(),
+  values: vi.fn().mockReturnThis(),
+  deleteFrom: vi.fn().mockReturnThis(),
+};
+
+describe("Seasons Router", () => {
+  let app: Hono<any>;
+  const env = { DB: {} };
+  const mockExecutionContext = {
+    waitUntil: vi.fn(),
   };
-});
-
-import { seasonsRouter } from "./seasons";
-
-describe("Hono Backend - /seasons Router", () => {
-  let mockDb: any;
-  let testApp: Hono<any>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockDb = {
-      selectFrom: vi.fn().mockReturnThis(),
-      selectAll: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      where: vi.fn().mockReturnThis(),
-      orderBy: vi.fn().mockReturnThis(),
-      execute: vi.fn().mockResolvedValue([]),
-      executeTakeFirst: vi.fn().mockResolvedValue(null),
-      insertInto: vi.fn().mockReturnThis(),
-      values: vi.fn().mockReturnThis(),
-      onConflict: vi.fn().mockReturnThis(),
-      doUpdateSet: vi.fn().mockReturnThis(),
-      updateTable: vi.fn().mockReturnThis(),
-      set: vi.fn().mockReturnThis(),
-      deleteFrom: vi.fn().mockReturnThis(),
-      getExecutor: vi.fn().mockReturnValue({
-        compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),
-        executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
-        transformQuery: vi.fn((q) => q),
-      }),
-    };
-
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    app = new Hono();
+    app.use("*", async (c, next) => {
       c.set("db", mockDb);
       await next();
     });
-    testApp.route("/", seasonsRouter);
+    app.route("/", seasonsRouter);
   });
 
-  it("GET / - list published seasons", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ start_year: 2024, end_year: 2025, challenge_name: "Test", status: "published" }]);
-    const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+  it("GET / - returns published seasons", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ start_year: 2023, challenge_name: "Centerstage", status: "published" }]);
+    const res = await app.request("/", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.seasons[0].start_year).toBe(2023);
   });
 
-  it("GET /:year - get season details", async () => {
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2024, end_year: 2025, challenge_name: "Test", status: "published" });
-    mockDb.execute.mockResolvedValue([]); // For awards, events, posts, outreach
-    const res = await testApp.request("/2024", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("POST /admin/save - save season", async () => {
-    const res = await testApp.request("/admin/save", {
-      method: "POST",
-      body: JSON.stringify({ start_year: 2024, end_year: 2025, challenge_name: "Test", status: "published" }),
-      headers: { "Content-Type": "application/json" }
-    }, { DEV_BYPASS: "true" }, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("GET /admin/list - admin list seasons", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ start_year: 2024, end_year: 2025, challenge_name: "Test", status: "published" }]);
-    const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("GET /admin/:id - admin get season details", async () => {
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2024, end_year: 2025, challenge_name: "Test", status: "published" });
-    const res = await testApp.request("/admin/2024", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("DELETE /admin/:id - soft delete season", async () => {
-    const res = await testApp.request("/admin/2024", {
-      method: "DELETE",
-      body: JSON.stringify({}),
-      headers: { "Content-Type": "application/json" }
-    }, { DEV_BYPASS: "true" }, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("POST /admin/:id/undelete - undelete season", async () => {
-    const res = await testApp.request("/admin/2024/undelete", {
-      method: "POST",
-      body: JSON.stringify({}),
-      headers: { "Content-Type": "application/json" }
-    }, { DEV_BYPASS: "true" }, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  it("DELETE /admin/:id/purge - permanently delete season", async () => {
-    const res = await testApp.request("/admin/2024/purge", {
-      method: "DELETE",
-      body: JSON.stringify({}),
-      headers: { "Content-Type": "application/json" }
-    }, { DEV_BYPASS: "true" }, mockExecutionContext);
-    expect(res.status).toBe(200);
-  });
-
-  // Error paths
-  it("GET /admin/list - error", async () => {
-    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
-    const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+  it("GET / - handles database error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB Fail"));
+    const res = await app.request("/", {}, env, mockExecutionContext);
     expect(res.status).toBe(500);
+  });
+
+  it("GET /admin/list - returns all seasons", async () => {
+    mockDb.execute.mockResolvedValueOnce([{ start_year: 2023, status: "draft" }]);
+    const res = await app.request("/admin/list", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /:year - returns season details with relations", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2023, status: "published" });
+    mockDb.execute.mockResolvedValue([]); // for awards, events, posts, outreach
+    const res = await app.request("/2023", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /:year - handles error", async () => {
+    mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("Detail fail"));
+    const res = await app.request("/2023", {}, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /admin/:id - returns details", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2023, status: "draft" });
+    const res = await app.request("/admin/2023", {}, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("GET /admin/:id - handles error", async () => {
+    mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("Admin Detail fail"));
+    const res = await app.request("/admin/2023", {}, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/save - creates new season", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null); // not existing
+    mockDb.execute.mockResolvedValueOnce([]); // insert success
+    const res = await app.request("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start_year: 2024, end_year: 2025, challenge_name: "Next" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("POST /admin/save - handles error", async () => {
+    mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("Save check fail"));
+    const res = await app.request("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start_year: 2024, end_year: 2025, challenge_name: "Fail" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("DELETE /admin/:id - soft deletes", async () => {
+    const res = await app.request("/admin/2023", { method: "DELETE" }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("seasons");
+  });
+
+  it("DELETE /admin/:id - handles error", async () => {
+    mockDb.updateTable.mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ execute: vi.fn().mockRejectedValueOnce(new Error("Delete fail")) }) }) });
+    const res = await app.request("/admin/2023", { method: "DELETE" }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/:id/undelete - restores", async () => {
+    const res = await app.request("/admin/2023/undelete", { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+  });
+
+  it("POST /admin/:id/undelete - handles error", async () => {
+    mockDb.updateTable.mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ execute: vi.fn().mockRejectedValueOnce(new Error("Undelete fail")) }) }) });
+    const res = await app.request("/admin/2023/undelete", { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("DELETE /admin/:id/purge - permanent delete", async () => {
+    const res = await app.request("/admin/2023/purge", { method: "DELETE" }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.deleteFrom).toHaveBeenCalledWith("seasons");
+  });
+
+  it("DELETE /admin/:id/purge - handles error", async () => {
+    mockDb.deleteFrom.mockReturnValue({ where: vi.fn().mockReturnValue({ execute: vi.fn().mockRejectedValueOnce(new Error("Purge fail")) }) });
+    const res = await app.request("/admin/2023/purge", { method: "DELETE" }, env, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("POST /admin/save - handles year change and cascading updates", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null); // no collision
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2023 }); // existing
+    const res = await app.request("/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ original_year: 2023, start_year: 2024, end_year: 2025, challenge_name: "Moved" })
+    }, env, mockExecutionContext);
+    expect(res.status).toBe(200);
+    expect(mockDb.updateTable).toHaveBeenCalledWith("events");
+  });
+
+  it("GET /:year - returns 404 for missing season", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce(null);
+    const res = await app.request("/9999", {}, env, mockExecutionContext);
+    expect(res.status).toBe(404);
+  });
+
+  it("GET /:year - returns 404 for invalid year", async () => {
+    const res = await app.request("/abc", {}, env, mockExecutionContext);
+    expect(res.status).toBe(404);
   });
 });

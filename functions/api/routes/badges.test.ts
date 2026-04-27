@@ -1,4 +1,3 @@
- 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
@@ -9,15 +8,23 @@ vi.mock("../middleware", async (importOriginal) => {
   return {
     ...actual,
     ensureAdmin: async (c: any, next: any) => next(),
+    ensureAuth: async (c: any, next: any) => next(),
+    rateLimitMiddleware: () => (c: any, next: any) => next(),
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
   };
 });
+
+// Mock Zulip
+vi.mock("../../utils/zulipSync", () => ({
+  sendZulipMessage: vi.fn().mockResolvedValue({ success: true }),
+}));
 
 import badgesRouter from "./badges";
 
 describe("Hono Backend - /badges Router", () => {
   let mockDb: any;
   let testApp: Hono<any>;
+  const mockEnv = { DEV_BYPASS: "true" };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,11 +44,6 @@ describe("Hono Backend - /badges Router", () => {
       updateTable: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
       deleteFrom: vi.fn().mockReturnThis(),
-      getExecutor: vi.fn().mockReturnValue({
-        compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),
-        executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
-        transformQuery: vi.fn((q) => q),
-      }),
     };
 
     testApp = new Hono<any>();
@@ -53,27 +55,42 @@ describe("Hono Backend - /badges Router", () => {
   });
 
   it("GET / - list badges", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Innovator", description: "...", icon: "...", color_theme: "..." }]);
-    const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Innovator", description: "...", icon: "Award", color_theme: "...", created_at: "2024-01-01" }]);
+    const res = await testApp.request("/", {}, mockEnv, mockExecutionContext);
     expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.badges[0].name).toBe("Innovator");
+  });
+
+  it("GET / - handles error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/", {}, mockEnv, mockExecutionContext);
+    expect(res.status).toBe(500);
   });
 
   it("POST /admin - create badge", async () => {
     const res = await testApp.request("/admin", {
       method: "POST",
-      body: JSON.stringify({ id: "1", name: "Innovator", description: "...", icon: "...", color_theme: "..." }),
-      headers: { "Content-Type": "application/json" }
-    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "1", name: "Innovator", description: "...", icon: "Award", color_theme: "..." }),
+    }, mockEnv, mockExecutionContext);
     expect(res.status).toBe(200);
+    expect(mockDb.insertInto).toHaveBeenCalledWith("badges");
   });
 
   it("POST /admin/grant - grant badge to user", async () => {
+    mockDb.executeTakeFirst
+      .mockResolvedValueOnce({ nickname: "testuser" }) // userProfile
+      .mockResolvedValueOnce({ name: "Innovator", icon: "Trophy" }); // badge
+
     const res = await testApp.request("/admin/grant", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: "u1", badgeId: "b1" }),
-      headers: { "Content-Type": "application/json" }
-    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    }, mockEnv, mockExecutionContext);
+    
     expect(res.status).toBe(200);
+    expect(mockDb.insertInto).toHaveBeenCalledWith("user_badges");
   });
 
   it("DELETE /admin/grant/:userId/:badgeId - revoke badge", async () => {
@@ -81,8 +98,9 @@ describe("Hono Backend - /badges Router", () => {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({})
-    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    }, mockEnv, mockExecutionContext);
     expect(res.status).toBe(200);
+    expect(mockDb.deleteFrom).toHaveBeenCalledWith("user_badges");
   });
 
   it("DELETE /admin/:id - delete badge definition", async () => {
@@ -90,13 +108,22 @@ describe("Hono Backend - /badges Router", () => {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({})
-    }, { DEV_BYPASS: "true" }, mockExecutionContext);
+    }, mockEnv, mockExecutionContext);
     expect(res.status).toBe(200);
+    expect(mockDb.deleteFrom).toHaveBeenCalledWith("badges");
   });
 
   it("GET /leaderboard - public leaderboard", async () => {
     mockDb.execute.mockResolvedValueOnce([{ user_id: "u1", nickname: "test", member_type: "student", badge_count: 5 }]);
-    const res = await testApp.request("/leaderboard", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
+    const res = await testApp.request("/leaderboard", {}, mockEnv, mockExecutionContext);
     expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.leaderboard[0].badge_count).toBe(5);
+  });
+
+  it("GET /leaderboard - handles error", async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    const res = await testApp.request("/leaderboard", {}, mockEnv, mockExecutionContext);
+    expect(res.status).toBe(500);
   });
 });

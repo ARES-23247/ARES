@@ -92,4 +92,20 @@ export const badgeContract = c.router({
     },
     summary: "Delete a badge definition",
   },
+  leaderboard: {
+    method: "GET",
+    path: "/leaderboard",
+    responses: {
+      200: z.object({
+        leaderboard: z.array(z.object({
+          user_id: z.string(),
+          nickname: z.string().nullable(),
+          member_type: z.string().nullable(),
+          badge_count: z.number().or(z.string()),
+        })),
+      }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Get public badge leaderboard",
+  },
 });

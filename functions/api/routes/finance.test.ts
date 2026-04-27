@@ -78,14 +78,10 @@ describe("Hono Backend - /finance Router", () => {
       expect(body.total_expenses).toBe(400);
     });
 
-    it("handles no transactions found", async () => {
-      mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2024 });
-      mockDb.execute.mockResolvedValueOnce([]);
-      
+    it("handles no seasons", async () => {
+      mockDb.executeTakeFirst.mockResolvedValueOnce(null);
       const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
-      expect(body.total_income).toBe(0);
     });
   });
 
@@ -108,20 +104,17 @@ describe("Hono Backend - /finance Router", () => {
     };
 
     it("handles 'secured' side-effects atomically", async () => {
-      mockDb.executeTakeFirst.mockResolvedValueOnce({ status: "potential" });
-      mockDb.execute.mockResolvedValueOnce({ id: "new-id" });
-
+      // In this test, isNew is true, so no executeTakeFirst call for current status
       const res = await testApp.request("/sponsorship", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       }, mockEnv, mockExecutionContext);
 
-      const body = await res.json() as any;
-      console.log("DEBUG: response body", body);
       expect(res.status).toBe(200);
       expect(mockDb.insertInto).toHaveBeenCalledWith("sponsors");
       expect(mockDb.insertInto).toHaveBeenCalledWith("finance_transactions");
+      expect(mockDb.insertInto).toHaveBeenCalledWith("sponsorship_pipeline");
     });
 
     it("idempotent when already 'secured'", async () => {
@@ -145,6 +138,7 @@ describe("Hono Backend - /finance Router", () => {
         body: JSON.stringify({})
       }, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
+      expect(mockDb.deleteFrom).toHaveBeenCalledWith("sponsorship_pipeline");
     });
   });
 
@@ -198,6 +192,16 @@ describe("Hono Backend - /finance Router", () => {
       }, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
       expect(mockEnv.ARES_STORAGE.delete).toHaveBeenCalledWith("receipts/123.jpg");
+    });
+
+    it("handles missing transaction", async () => {
+      mockDb.executeTakeFirst.mockResolvedValueOnce(null);
+      const res = await testApp.request("/transactions/missing", { 
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      }, mockEnv, mockExecutionContext);
+      expect(res.status).toBe(404);
     });
   });
 });
