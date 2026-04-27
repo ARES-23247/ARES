@@ -438,7 +438,8 @@ const docTsRestRouter: any = s.router(docContract as any, {
     const { slug } = params;
             const { isHelpful, comment, turnstileToken } = body;
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
-    if (!checkRateLimit(`feedback:${ip}`, 10, 60)) return { status: 429 as const, body: { error: "Too many submissions" } };
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!checkRateLimit(`feedback:${ip}`, ua, 10, 60)) return { status: 429 as const, body: { error: "Too many submissions" } };
 
     const valid = await verifyTurnstile(turnstileToken || "", c.env.TURNSTILE_SECRET_KEY, ip);
     if (!valid) return { status: 403 as const, body: { error: "Security verification failed" } };
@@ -600,9 +601,28 @@ const docTsRestRouter: any = s.router(docContract as any, {
   },
     purgeDoc: async ({ params }: { params: any }, c: any) => {
     const { slug } = params;
-            try {
+    try {
       const db = c.get("db") as Kysely<DB>;
+      
+      // 1. Fetch content to find embedded assets
+      const doc = await db.selectFrom("docs")
+        .select("content")
+        .where("slug", "=", slug)
+        .executeTakeFirst();
+      
+      // 2. Physical R2 Cleanup (Regex search for internal asset URLs)
+      if (doc?.content && c.env.ARES_STORAGE) {
+        const assetRegex = /https:\/\/ares-media\.[^/]+\/([^"'\s)]+)/g;
+        let match;
+        while ((match = assetRegex.exec(doc.content)) !== null) {
+          const key = match[1];
+          c.executionCtx.waitUntil(c.env.ARES_STORAGE.delete(key).catch(() => {}));
+        }
+      }
+
       await db.deleteFrom("docs").where("slug", "=", slug).execute();
+      c.executionCtx.waitUntil(db.deleteFrom("docs_history").where("slug", "=", slug).execute());
+      
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Purge] Error", e);

@@ -96,6 +96,15 @@ export default function ZulipThreadViewer({ stream, topic }: ZulipThreadViewerPr
                 if ((e.target as HTMLElement).closest('a')) return;
                 window.open(`${zulipUrl}/near/${msg.id}`, '_blank');
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if ((e.target as HTMLElement).closest('a')) return;
+                  window.open(`${zulipUrl}/near/${msg.id}`, '_blank');
+                }
+              }}
+              role="button"
+              tabIndex={0}
               className="flex gap-4 p-4 bg-black/40 hover:bg-black/60 border border-white/5 hover:border-ares-gold/30 cursor-pointer transition-all ares-cut-sm relative group"
             >
               <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">

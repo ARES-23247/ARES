@@ -16,8 +16,8 @@ function sanitizeJudgeContent(content: string): string {
   if (!content) return "";
   return content
     .replace(/\[\/\/\]: # \(.*?\)/gs, '') // HTML comments / Tiptap hidden nodes
-    .replace(/TODO:.*?\n/gi, '')        // Inline TODOs
-    .replace(/FIXME:.*?\n/gi, '')       // Inline FIXMEs
+    .replace(/TODO:.*?(?:\n|$)/gi, '')        // Inline TODOs
+    .replace(/FIXME:.*?(?:\n|$)/gi, '')       // Inline FIXMEs
     .trim();
 }
 

@@ -409,6 +409,24 @@ const postHandlers = {
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
+      
+      // 1. Fetch post metadata to find assets
+      const post = await db.selectFrom("posts")
+        .select("thumbnail")
+        .where("slug", "=", slug)
+        .executeTakeFirst();
+      
+      // 2. Physical R2 Cleanup
+      if (post?.thumbnail && c.env.ARES_STORAGE) {
+        try {
+          const url = new URL(post.thumbnail);
+          const key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+          c.executionCtx.waitUntil(c.env.ARES_STORAGE.delete(key));
+        } catch (e) {
+          console.error("[Posts] Failed to parse/delete thumbnail:", e);
+        }
+      }
+
       await db.deleteFrom("posts").where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "PURGE_POST", "posts", slug));
       return { status: 200 as const, body: { success: true } as any };

@@ -13,14 +13,15 @@ import { Context } from "hono";
 const analyticsHandlers = {
   trackPageView: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
-    if (!checkRateLimit(`track:${ip}`, 20, 600)) {
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!checkRateLimit(`track:${ip}`, ua, 20, 600)) {
       return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } as any };
     }
 
     const db = c.get("db") as Kysely<DB>;
     try {
       const { path, category, referrer } = body;
-      const userAgent = c.req.header("user-agent") || "";
+      const userAgent = c.req.header("user-agent") || ua;
       
       await db.insertInto("page_analytics")
         .values({
@@ -39,7 +40,8 @@ const analyticsHandlers = {
   },
   trackSponsorClick: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
-    if (!checkRateLimit(`click:${ip}`, 10, 600)) {
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!checkRateLimit(`click:${ip}`, ua, 10, 600)) {
       return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } as any };
     }
 

@@ -1,6 +1,7 @@
 import { Context, Next } from "hono";
 import { AppEnv } from "./utils";
 import { Kysely, sql } from "kysely";
+import { DB } from "../../../shared/schemas/database";
 
 // ── Rate Limiting (In-Memory Worker V8 Isolate) ────────────────────────
 const MAX_RATE_LIMIT_CACHE = 500;
@@ -13,7 +14,11 @@ function pruneCache(cache: Map<string, unknown>) {
   }
 }
 
-export function checkRateLimit(ip: string, limit = 100, windowSeconds = 60): boolean {
+/**
+ * Enhanced Rate Limit Check
+ * Incorporates User-Agent to prevent simple IP rotation/spoofing bypasses.
+ */
+export function checkRateLimit(ip: string, userAgent: string, limit = 100, windowSeconds = 60): boolean {
   const now = Date.now();
   
   if (Math.random() < 0.05) {
@@ -24,14 +29,17 @@ export function checkRateLimit(ip: string, limit = 100, windowSeconds = 60): boo
     }
   }
 
-  let record = rateLimitCache.get(ip);
+  // Create a composite key to increase entropy
+  const entropyKey = `${ip}:${userAgent.substring(0, 100)}`;
+  let record = rateLimitCache.get(entropyKey);
+  
   if (!record || record.expiresAt < now) {
     pruneCache(rateLimitCache);
     record = { count: 0, expiresAt: now + windowSeconds * 1000 };
   }
 
   record.count += 1;
-  rateLimitCache.set(ip, record);
+  rateLimitCache.set(entropyKey, record);
 
   return record.count <= limit;
 }
@@ -40,10 +48,15 @@ export function checkRateLimit(ip: string, limit = 100, windowSeconds = 60): boo
 
 import { DB } from "../../../shared/schemas/database";
 
-export async function checkPersistentRateLimit(db: Kysely<DB>, ip: string, limit: number, windowSeconds: number): Promise<boolean> {
+/**
+ * Enhanced Persistent Rate Limit Check
+ */
+export async function checkPersistentRateLimit(db: Kysely<DB>, ip: string, userAgent: string, limit: number, windowSeconds: number): Promise<boolean> {
   if (!db) return true; // Fall open if middleware wasn't attached
   
   const now = Math.floor(Date.now() / 1000);
+  // Composite key for D1 storage
+  const compositeKey = `${ip}:${userAgent.substring(0, 64)}`;
 
   try {
     // Cleanup old records occasionally to avoid table bloat
@@ -52,7 +65,7 @@ export async function checkPersistentRateLimit(db: Kysely<DB>, ip: string, limit
     }
 
     const result = await db.insertInto("rate_limits")
-      .values({ ip, count: 1, expires_at: now + windowSeconds })
+      .values({ ip: compositeKey, count: 1, expires_at: now + windowSeconds })
       .onConflict(oc => oc.column("ip").doUpdateSet({
         count: sql`CASE WHEN expires_at < ${now} THEN 1 ELSE count + 1 END`,
         expires_at: sql`CASE WHEN expires_at < ${now} THEN ${now + windowSeconds} ELSE expires_at END`
@@ -132,8 +145,9 @@ export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
     }
 
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
-    if (!checkRateLimit(`mw:${ip}`, limit, windowSeconds)) {
-      const db = c.get("db") as any;
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!checkRateLimit(`mw:${ip}`, ua, limit, windowSeconds)) {
+      const db = c.get("db") as Kysely<DB>;
       if (db) {
         c.executionCtx.waitUntil(
           db.insertInto("audit_log").values({
@@ -141,7 +155,7 @@ export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
             action: "SECURITY_BLOCK",
             actor: ip,
             resource_type: "rate_limit",
-            details: JSON.stringify({ reason: "Memory rate limit exceeded", path: c.req.path })
+            details: JSON.stringify({ reason: "Memory rate limit exceeded", path: c.req.path, ua })
           }).execute().catch(console.error)
         );
       }
@@ -160,22 +174,81 @@ export const persistentRateLimitMiddleware = (limit = 15, windowSeconds = 60) =>
       return await next();
     }
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
+    const ua = c.req.header("User-Agent") || "unknown";
     const db = c.get("db");
-    const allowed = await checkPersistentRateLimit(db, ip, limit, windowSeconds);
+    const allowed = await checkPersistentRateLimit(db, ip, ua, limit, windowSeconds);
     if (!allowed) {
       if (db) {
         c.executionCtx.waitUntil(
-          (db as any).insertInto("audit_log").values({
+          db.insertInto("audit_log").values({
             id: crypto.randomUUID(),
             action: "SECURITY_BLOCK",
             actor: ip,
             resource_type: "persistent_rate_limit",
-            details: JSON.stringify({ reason: "D1 rate limit exceeded", path: c.req.path })
+            details: JSON.stringify({ reason: "D1 rate limit exceeded", path: c.req.path, ua })
           }).execute().catch(console.error)
         );
       }
       return c.json({ error: "Too many requests. Please try again later." }, 429);
     }
+    await next();
+  };
+};
+
+/**
+ * Middleware: Origin Integrity
+ * Checks Origin and Referer headers for non-GET requests to ensure they come from trusted domains.
+ */
+export const originIntegrityMiddleware = () => {
+  return async (c: Context<AppEnv>, next: Next) => {
+    // 1. Skip for GET/OPTIONS/HEAD (read-only or preflight)
+    if (["GET", "OPTIONS", "HEAD"].includes(c.req.method)) {
+      return await next();
+    }
+
+    // 2. Skip for Webhooks (external services)
+    if (c.req.path.includes("/webhooks/")) {
+      return await next();
+    }
+
+    const origin = c.req.header("Origin");
+    const referer = c.req.header("Referer");
+    const userAgent = c.req.header("User-Agent") || "";
+
+    // 3. SEC-H01: Block headless bots / scripts that omit both Origin and Referer on state-changing requests
+    if (!origin && !referer) {
+      console.warn(`[Security] Origin Integrity: Blocked request missing both headers. Method: ${c.req.method}, Path: ${c.req.path}, UA: ${userAgent}`);
+      return c.json({ error: "Security check failed: Origin integrity required." }, 403);
+    }
+
+    // 4. Validate Trusted Origins/Referers
+    const isTrusted = (val: string | undefined) => {
+      if (!val) return false;
+      try {
+        const url = new URL(val.startsWith("http") ? val : `https://${val}`);
+        const domain = url.hostname;
+        return (
+          domain === "aresfirst.org" ||
+          domain === "localhost" ||
+          domain === "127.0.0.1" ||
+          domain.endsWith(".aresfirst.org") ||
+          domain.endsWith(".pages.dev")
+        );
+      } catch {
+        return false;
+      }
+    };
+
+    if (origin && !isTrusted(origin)) {
+      console.warn(`[Security] Origin Integrity: Untrusted Origin blocked: ${origin}`);
+      return c.json({ error: "Untrusted request origin." }, 403);
+    }
+
+    if (!origin && referer && !isTrusted(referer)) {
+       console.warn(`[Security] Origin Integrity: Untrusted Referer blocked: ${referer}`);
+       return c.json({ error: "Untrusted request source." }, 403);
+    }
+
     await next();
   };
 };
@@ -209,7 +282,7 @@ export const turnstileMiddleware = () => {
 
     const valid = await verifyTurnstile(token, c.env.TURNSTILE_SECRET_KEY, ip);
     if (!valid) {
-      const db = c.get("db") as any;
+      const db = c.get("db") as Kysely<DB>;
       if (db) {
         c.executionCtx.waitUntil(
           db.insertInto("audit_log").values({

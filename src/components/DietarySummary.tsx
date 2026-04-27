@@ -217,6 +217,7 @@ export default function DietarySummary() {
             <button 
               onClick={() => setShowExportModal(false)}
               className="absolute top-4 right-4 text-marble/50 hover:text-white transition-colors"
+              aria-label="Close export modal"
             >
               <X size={24} />
             </button>
@@ -229,6 +230,7 @@ export default function DietarySummary() {
               <textarea 
                 readOnly
                 value={exportedEmails}
+                aria-label="Exported Emails List"
                 className="w-full h-48 bg-black/50 border border-white/10 p-4 font-mono text-sm text-white resize-none focus:outline-none focus:border-ares-red/50 ares-cut-sm"
               />
               <button

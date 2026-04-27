@@ -81,4 +81,65 @@ test.describe('Admin Dashboard', () => {
 
     expect(accessibilityScanResults.violations).toEqual([]);
   });
+
+  test('Command Center displays security telemetry', async ({ page }) => {
+    await page.route('**/api/admin/stats', async route => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          users: 10,
+          events: 5,
+          inquiries: 2,
+          projects: 3,
+          securityBlocks: 42
+        }
+      });
+    });
+
+    await page.goto('/dashboard');
+    
+    // Verify Security Blocks widget is visible
+    await expect(page.getByText('Security Blocks')).toBeVisible();
+    await expect(page.getByText('42')).toBeVisible();
+  });
+
+  test('Logistics tab supports email export', async ({ page }) => {
+    await page.route('**/api/admin/summary', async route => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          totalCount: 2,
+          allergies: [{ condition: 'Peanuts', count: 1 }],
+          restrictions: [{ condition: 'Vegetarian', count: 1 }]
+        }
+      });
+    });
+    
+    await page.route('**/api/admin/export-emails', async route => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          emails: "test1@ares.org, test2@ares.org"
+        }
+      });
+    });
+
+    await page.goto('/dashboard');
+    
+    // Navigate to Logistics
+    await page.getByRole('button', { name: /Logistics/i }).click();
+    
+    // Wait for the DietarySummary component to load
+    await expect(page.getByText('Dietary Summary')).toBeVisible();
+    
+    // Click export emails
+    await page.getByRole('button', { name: /Export Emails/i }).click();
+    
+    // Verify modal appeared with the mock data
+    await expect(page.getByText('Active Roster Emails')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: /Exported Emails List/i })).toHaveValue("test1@ares.org, test2@ares.org");
+    
+    const copyBtn = page.getByRole('button', { name: /Copy/i });
+    await expect(copyBtn).toBeVisible();
+  });
 });

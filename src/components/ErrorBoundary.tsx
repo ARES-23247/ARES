@@ -46,10 +46,15 @@ export default class ErrorBoundary extends Component<Props, State> {
       }
     }
 
+    const isThirdPartyFault = 
+      errorStr.includes("SecurityError") || 
+      errorStr.includes("cross-origin") ||
+      errorStr.includes("Blocked a frame");
+
     const correlationId = Math.random().toString(36).substring(2, 10).toUpperCase();
     return { 
       hasError: true, 
-      errorStr: error.stack || error.toString(),
+      errorStr: isThirdPartyFault ? "Third-party resource or iframe blocked due to security constraints." : (error.stack || error.toString()),
       correlationId,
       statusCode: error.status || error.statusCode || error.response?.status
     };

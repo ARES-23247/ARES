@@ -83,6 +83,10 @@ export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl
             ...(requestUrl ? [new URL(requestUrl).origin] : []),
         ],
         advanced: {
+            session: {
+                ipPinning: true,
+                freshAge: 0, // SEC-A01: Force fresh session for sensitive actions
+            },
         },
         socialProviders: {
             ...(env.GOOGLE_CLIENT_ID ? {

@@ -79,4 +79,65 @@ test.describe('Interactive Systems & Workflows', () => {
       throw e;
     }
   });
+
+  test('Interactive Zulip cards attempt navigation when clicked', async ({ page }) => {
+    // Mock the single event route to return a zulip topic and messages
+    await page.route('**/api/events/*', async route => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          event: {
+            id: 'test-event',
+            title: 'Zulip E2E Event',
+            date_start: new Date().toISOString(),
+            date_end: new Date().toISOString(),
+            description: "Test description",
+            type: 'meeting',
+            zulip_topic_id: 12345
+          }
+        }
+      });
+    });
+
+    await page.route('**/api/comments/zulip/*', async route => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          messages: [
+            {
+              id: 99999,
+              sender_id: 1,
+              sender_full_name: 'Zulip Tester',
+              avatar_url: '',
+              content: '<p>This is a test message from Zulip.</p>',
+              timestamp: Date.now() / 1000
+            }
+          ],
+          zulipUrl: 'https://aresfirst.zulipchat.com'
+        }
+      });
+    });
+
+    await page.goto('/events/test-event');
+
+    // Ensure the message is rendered
+    const msgBlock = page.getByText('This is a test message from Zulip.');
+    await expect(msgBlock).toBeVisible();
+
+    // The message is wrapped in a clickable div. We intercept window.open to prevent actual navigation.
+    await page.evaluate(() => {
+      (window as any)._openedDeepLinks = [];
+      window.open = (url) => {
+        (window as any)._openedDeepLinks.push(url);
+        return null;
+      };
+    });
+
+    // Click the message
+    await msgBlock.click();
+
+    // Verify window.open was called with the deep link
+    const openedLinks = await page.evaluate(() => (window as any)._openedDeepLinks);
+    expect(openedLinks).toContain('https://aresfirst.zulipchat.com/near/99999');
+  });
 });
