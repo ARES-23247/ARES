@@ -14,8 +14,11 @@ export function extractAstText(jsonStr: string | undefined | null): string {
     
     // Handle Tiptap "doc" structure
     if (ast && ast.type === "doc") {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const extract = (node: any): string => {
+      interface AstNode {
+        text?: string;
+        content?: AstNode[];
+      }
+      const extract = (node: AstNode): string => {
         if (node.text) return node.text;
         if (node.content) return node.content.map(extract).join(" ");
         return "";

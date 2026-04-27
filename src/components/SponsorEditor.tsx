@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from "react";
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
@@ -40,11 +40,11 @@ export default function SponsorEditor() {
   });
 
   const { data, isLoading, isError } = api.sponsors.adminList.useQuery(["admin-sponsors"], {});
-  const rawBody = (data as any)?.body;
-  const sponsors = data?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.sponsors) ? rawBody.sponsors : [])) : [];
+  const rawBody = (data as unknown as { body?: { sponsors?: unknown[] } | unknown[] })?.body;
+  const sponsors = data?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (rawBody && !Array.isArray(rawBody) && Array.isArray(rawBody.sponsors) ? rawBody.sponsors : [])) : [];
 
   const saveMutation = api.sponsors.saveSponsor.useMutation({
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number; body: { success?: boolean } }) => {
       if (res.status === 200 && res.body.success) {
         queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
         setIsFormOpen(false);
@@ -83,7 +83,7 @@ export default function SponsorEditor() {
       id: s.id,
       name: s.name,
        
-      tier: s.tier as any,
+      tier: s.tier as "Titanium" | "Gold" | "Silver" | "Bronze" | "In-Kind",
       logo_url: s.logo_url || "",
       website_url: s.website_url || "",
       is_active: s.is_active ?? 1
@@ -142,7 +142,7 @@ export default function SponsorEditor() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
              
-            onSubmit={handleSubmit(onFormSubmit as any)}
+            onSubmit={handleSubmit(onFormSubmit)}
             className="bg-black/40 border border-white/10 ares-cut-lg p-6 space-y-4 overflow-hidden"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -41,8 +41,7 @@ export default function OutreachTracker() {
   const [isAdding, setIsAdding] = useState(false);
 
   const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<OutreachFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(outreachFormSchema) as any,
+    resolver: zodResolver(outreachFormSchema),
     defaultValues: {
       title: "",
       date: new Date().toISOString().split('T')[0],
@@ -62,12 +61,10 @@ export default function OutreachTracker() {
 
   const { data: outreachData, isLoading } = api.outreach.adminList.useQuery(["admin-outreach"], {});
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const logs: OutreachLog[] = useMemo(() => (outreachData?.body as any)?.logs || [], [outreachData]);
+  const logs: OutreachLog[] = useMemo(() => (outreachData?.body as unknown as { logs: OutreachLog[] })?.logs || [], [outreachData]);
 
   const saveMutation = api.outreach.save.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number }) => {
       if (res.status === 200) {
         toast.success("Impact record synchronized.");
         queryClient.invalidateQueries({ queryKey: ["admin-outreach"] });
@@ -80,8 +77,7 @@ export default function OutreachTracker() {
   });
 
   const deleteMutation = api.outreach.delete.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number }) => {
       if (res.status === 200) {
         toast.success("Impact record purged.");
         queryClient.invalidateQueries({ queryKey: ["admin-outreach"] });
@@ -89,15 +85,12 @@ export default function OutreachTracker() {
     }
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onFormSubmit = (data: any) => {
+  const onFormSubmit = (data: OutreachFormValues) => {
     const finalId = data.id || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + data.date;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    saveMutation.mutate({ body: { ...data, id: finalId } as any });
+    saveMutation.mutate({ body: { ...data, id: finalId } as unknown as never });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const totals = useMemo(() => logs.reduce((acc: any, l: any) => ({
+  const totals = useMemo(() => logs.reduce((acc: { hours: number; mentoringHours: number; reach: number; students: number; events: number }, l: OutreachLog) => ({
     hours: acc.hours + (l.hours_logged || 0),
     mentoringHours: acc.mentoringHours + (l.is_mentoring ? (l.hours_logged || 0) : 0),
     reach: acc.reach + (l.reach_count || 0),
@@ -144,8 +137,7 @@ export default function OutreachTracker() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onSubmit={handleSubmit(onFormSubmit as any)}
+            onSubmit={handleSubmit(onFormSubmit)}
             className="bg-obsidian border border-ares-red/30 ares-cut-lg p-8 space-y-6 shadow-2xl"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -257,8 +249,7 @@ export default function OutreachTracker() {
                   try {
                     const ast = JSON.parse(log.description || "");
                     if (ast && ast.type === "doc") {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const extract = (node: any): string => {
+                      const extract = (node: { text?: string; content?: unknown[] }): string => {
                         if (node.text) return node.text;
                         if (node.content) return node.content.map(extract).join(" ");
                         return "";

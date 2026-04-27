@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect, useRef, useMemo, useTransition } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -147,14 +147,14 @@ export default function CommandPalette() {
     const fetchSearch = async () => {
       setIsSearching(true);
       try {
-        const res = await (api.analytics.search as any).query({
+        const res = await (api.analytics.search as unknown as { query: (args: { query: { q: string } }) => Promise<{ status: number, body: { results?: Array<{ id: string; type: string; title: string; matched_text?: string }> } }> }).query({
           query: { q: query }
         });
 
         if (res.status !== 200) throw new Error("Search failed");
         const data = res.body;
 
-        const searchResults: SearchResult[] = (data.results || []).map((r: any) => {
+        const searchResults: SearchResult[] = (data.results || []).map((r: { id: string; type: string; title: string; matched_text?: string }) => {
           let icon = <FileText size={16} />;
           let url = "";
           if (r.type === "blog") {

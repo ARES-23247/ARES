@@ -11,8 +11,7 @@ export default function FlywheelKvSim() {
     if(velRef.current < 0) velRef.current = 0;
   };
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const setRef = useRef<any>(null);
+  const setRef = useRef<((values: Partial<{ kV: number; kP: number; fwSet: number }>) => void) | null>(null);
 
   const [{ kV, kP, fwSet }, set] = useControls(() => ({
     'Flywheel Physics': folder({

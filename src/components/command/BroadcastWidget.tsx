@@ -24,8 +24,8 @@ export default function BroadcastWidget() {
         setStatus({ type: "success", message: "Broadcast sent successfully!" });
         setTimeout(() => setStatus(null), 3000);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setStatus({ type: "error", message: (res.body as any)?.error || "Failed to send broadcast" });
+
+        setStatus({ type: "error", message: (res.body as { error?: string })?.error || "Failed to send broadcast" });
       }
     } catch (err) {
       setStatus({ type: "error", message: (err as Error).message });

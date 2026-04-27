@@ -13,9 +13,14 @@ export default function Events() {
   const { data: eventsRes, isLoading } = api.events.getEvents.useQuery(["events"], {});
 
   const events = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawBody = (eventsRes as any)?.body;
-    return eventsRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.events) ? rawBody.events : [])) as unknown as EventItem[] : [];
+    const body = eventsRes?.status === 200 ? eventsRes.body : null;
+    if (!body) return [];
+    if (Array.isArray(body)) return body as unknown as EventItem[];
+    if (typeof body === 'object' && body !== null && 'events' in body) {
+      const e = (body as { events: unknown }).events;
+      if (Array.isArray(e)) return e as unknown as EventItem[];
+    }
+    return [];
   }, [eventsRes]);
 
   const { data: calendarRes } = api.events.getCalendarSettings.useQuery(["calendar_config"], {});

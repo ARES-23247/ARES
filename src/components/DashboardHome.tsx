@@ -7,8 +7,8 @@ import PlatformQuickStats from "./command/PlatformQuickStats";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function DashboardHome({ stats: prefetchedStats }: { stats?: any }) {
+
+export default function DashboardHome({ stats: prefetchedStats }: { stats?: unknown }) {
   const { data: session } = useSession();
   
   // @ts-expect-error - BetterAuth session typing

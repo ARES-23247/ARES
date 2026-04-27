@@ -119,15 +119,13 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         location: event.location || "",
         description: event.description || "",
         coverImage: event.cover_image || DEFAULT_COVER_IMAGE,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        category: (event.category || "internal") as any,
+        category: (event.category || "internal") as "internal" | "outreach" | "external",
         tbaEventKey: event.tba_event_key || "",
         isPotluck: event.is_potluck === 1,
         isVolunteer: event.is_volunteer === 1,
         publishedAt: event.published_at || "",
         seasonId: event.season_id ? Number(event.season_id) : undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        socials: (socials as any) || {}
+        socials: (eventRes.body as unknown as { socials?: Record<string, boolean> })?.socials || {}
       });
       if (editor) {
         try {
@@ -144,13 +142,12 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [eventRes, reset, editor, notesEditor]);
 
 
   const saveMutation = api.events.saveEvent.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (data: any) => {
+    onSuccess: (data: { status: number; body: { warning?: string; error?: string } }) => {
       if (data.status === 200) {
         toast.success("Event published!");
         if (data.body.warning) toast.info(data.body.warning);
@@ -162,15 +159,13 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         setErrorMsg(data.body.error || "Event save failed.");
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMsg(err.message || "Network error.");
     }
   });
 
   const updateMutation = api.events.updateEvent.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (data: any) => {
+    onSuccess: (data: { status: number; body: { warning?: string; error?: string } }) => {
       if (data.status === 200) {
         toast.success("Event updated!");
         if (data.body?.warning) toast.info(data.body.warning);
@@ -183,15 +178,13 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
         setErrorMsg(data.body?.error || "Event update failed.");
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMsg(err.message || "Network error.");
     }
   });
 
   const deleteMutation = api.events.deleteEvent.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (data: any) => {
+    onSuccess: (data: { status: number; body: { warning?: string; error?: string } }) => {
       if (data.status === 200) {
         queryClient.invalidateQueries({ queryKey: ["events"] });
         queryClient.invalidateQueries({ queryKey: ["admin_events"] });
@@ -376,8 +369,8 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
       <EventPotluckVolunteerFlags 
         isPotluck={formValues.isPotluck || false} 
         isVolunteer={formValues.isVolunteer || false} 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onChange={(field, val) => setValue(field as any, val as any)}
+
+        onChange={(field, val) => setValue(field as "isPotluck" | "isVolunteer", val as boolean)}
       />
 
       <div>
@@ -419,10 +412,10 @@ export default function EventEditor({ userRole }: { userRole?: string | unknown 
           extraControls={
             <SocialSyndicationGrid 
               availableSocials={availableSocials}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              socials={socials as any}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onChange={(platform, val) => setValue(`socials.${platform}` as any, val)}
+
+              socials={socials as Record<string, boolean>}
+
+              onChange={(platform, val) => setValue(`socials.${platform}` as "socials", val)}
               isEdit={!!editId}
             />
           }

@@ -31,13 +31,15 @@ export interface TaskItem {
   status: string;
   priority: string;
   sort_order: number;
-  assigned_to?: string | null;
-  assignee_name?: string | null;
+  assignees: { id: string; nickname?: string | null }[];
   created_by: string;
   creator_name?: string | null;
   due_date?: string | null;
   created_at: string;
   updated_at: string;
+  // Legacy fields
+  assigned_to?: string | null;
+  assignee_name?: string | null;
 }
 
 interface ProjectBoardKanbanProps {

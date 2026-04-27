@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Save, Trash2, Calendar, User, AlertTriangle, Flag,
-  CheckCircle2, Circle, Clock, ArrowUpRight
+  CheckCircle2, Circle, Clock, ArrowUpRight, Plus
 } from "lucide-react";
 import { api } from "../../api/client";
 import type { TaskItem } from "./ProjectBoardKanban";
@@ -33,10 +33,12 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
   const [description, setDescription] = useState(task.description || "");
   const [status, setStatus] = useState(task.status);
   const [priority, setPriority] = useState(task.priority);
-  const [assignedTo, setAssignedTo] = useState(task.assigned_to || "");
+  const [assigneeIds, setAssigneeIds] = useState<string[]>(task.assignees?.map(a => a.id) || []);
   const [dueDate, setDueDate] = useState(task.due_date || "");
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch team members for assignee picker
   const { data: usersRes } = api.users.getUsers.useQuery(
@@ -55,19 +57,38 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowAssigneeDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const updates: Record<string, unknown> = {};
+      const updates: any = {};
       if (title !== task.title) updates.title = title;
       if (description !== (task.description || "")) updates.description = description || null;
       if (status !== task.status) updates.status = status;
       if (priority !== task.priority) updates.priority = priority;
-      if (assignedTo !== (task.assigned_to || "")) updates.assigned_to = assignedTo || null;
       if (dueDate !== (task.due_date || "")) updates.due_date = dueDate || null;
+      
+      // Compare arrays for equality
+      const currentIds = task.assignees?.map(a => a.id) || [];
+      const hasAssigneeChange = assigneeIds.length !== currentIds.length || 
+        !assigneeIds.every(id => currentIds.includes(id));
+      
+      if (hasAssigneeChange) {
+        updates.assignees = assigneeIds;
+      }
 
       if (Object.keys(updates).length > 0) {
-        await onSave(task.id, updates as Partial<TaskItem>);
+        await onSave(task.id, updates);
       }
       onClose();
     } finally {
@@ -75,7 +96,15 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
     }
   };
 
+  const toggleAssignee = (id: string) => {
+    setAssigneeIds(prev => 
+      prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
+    );
+  };
+
   const isOverdue = dueDate && new Date(dueDate) < new Date() && status !== "done";
+
+  const currentAssignees = teamMembers.filter((m: any) => assigneeIds.includes(m.id));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -207,27 +236,60 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
             </div>
           </div>
 
-          {/* Assignee + Due Date row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="modal-assignee" className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
-                <User size={10} className="inline mr-1" />
-                Assignee
+          {/* Assignees + Due Date row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="relative" ref={dropdownRef}>
+              <label className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block flex items-center gap-1">
+                <User size={10} />
+                Assignees ({assigneeIds.length})
               </label>
-              <select
-                id="modal-assignee"
-                title="Assignee"
-                value={assignedTo}
-                onChange={(e) => setAssignedTo(e.target.value)}
-                className="w-full bg-ares-gray-dark/50 border border-white/10 text-white text-sm px-3 py-2.5 ares-cut-sm outline-none focus:border-ares-cyan/50 transition-colors"
-              >
-                <option value="">Unassigned</option>
-                {teamMembers.map((m: { id: string; name: string; nickname?: string }) => (
-                  <option key={m.id} value={m.id}>
+              
+              <div className="flex flex-wrap gap-1.5 p-2 bg-ares-gray-dark/50 border border-white/10 ares-cut-sm min-h-[42px] content-start">
+                {currentAssignees.map((m: any) => (
+                  <span key={m.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-ares-cyan/10 border border-ares-cyan/30 text-ares-cyan text-[10px] font-black ares-cut-sm uppercase tracking-wider">
                     {m.nickname || m.name}
-                  </option>
+                    <button onClick={() => toggleAssignee(m.id)} className="hover:text-white transition-colors">
+                      <X size={10} />
+                    </button>
+                  </span>
                 ))}
-              </select>
+                <button 
+                  onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-ares-gray hover:text-white transition-all ml-auto"
+                  title="Add assignee"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {showAssigneeDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute z-[60] left-0 right-0 mt-1 bg-obsidian border border-white/10 ares-cut-sm shadow-2xl max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10"
+                  >
+                    {teamMembers.map((m: any) => (
+                      <button
+                        key={m.id}
+                        onClick={() => toggleAssignee(m.id)}
+                        className={`w-full text-left px-3 py-2 text-xs font-bold transition-all flex items-center justify-between ${
+                          assigneeIds.includes(m.id) 
+                            ? "bg-ares-cyan/10 text-ares-cyan" 
+                            : "text-marble hover:bg-white/5"
+                        }`}
+                      >
+                        {m.nickname || m.name}
+                        {assigneeIds.includes(m.id) && <CheckCircle2 size={12} />}
+                      </button>
+                    ))}
+                    {teamMembers.length === 0 && (
+                      <div className="p-3 text-xs text-ares-gray italic text-center">No team members found</div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div>

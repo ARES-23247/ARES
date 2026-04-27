@@ -59,8 +59,8 @@ export default function DashboardRoutes({
     pendingEventsCount: number;
     pendingDocsCount: number;
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  stats: any;
+
+  stats: unknown;
 }) {
   const location = useLocation();
   const navigate = useNavigate();

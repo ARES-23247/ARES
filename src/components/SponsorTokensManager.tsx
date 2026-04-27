@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from "react";
 import { Plus, FileKey2, ExternalLink, RefreshCw } from "lucide-react";
 import { api } from "../api/client";
@@ -15,7 +15,7 @@ export default function SponsorTokensManager() {
   const { data: tokensData, isLoading: loadingTokens, isError: isTokensError } = api.sponsors.getAdminTokens.useQuery(["admin_sponsor_tokens"], {});
 
   const generateMutation = api.sponsors.generateToken.useMutation({
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number; body: { success?: boolean } }) => {
       if (res.status === 200 && res.body.success) {
         queryClient.invalidateQueries({ queryKey: ["admin_sponsor_tokens"] });
         setSelectedSponsor("");
@@ -24,14 +24,14 @@ export default function SponsorTokensManager() {
         toast.error("Generation failed");
       }
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Generation failed");
     }
   });
 
-  const rawSponsorsBody = (sponsorsData as any)?.body;
-  const sponsors = sponsorsData?.status === 200 ? (Array.isArray(rawSponsorsBody) ? rawSponsorsBody : (Array.isArray(rawSponsorsBody?.sponsors) ? rawSponsorsBody.sponsors : [])) : [];
-  const rawTokensBody = (tokensData as any)?.body;
+  const rawSponsorsBody = (sponsorsData as unknown as { body?: { sponsors?: unknown[] } | unknown[] })?.body;
+  const sponsors = sponsorsData?.status === 200 ? (Array.isArray(rawSponsorsBody) ? rawSponsorsBody : (Array.isArray(rawSponsorsBody?.sponsors) ? rawSponsorsBody.sponsors : [])) as { id: string; name: string }[] : [];
+  const rawTokensBody = (tokensData as unknown as { body?: { tokens?: unknown[] } | unknown[] })?.body;
   const tokens = tokensData?.status === 200 ? (Array.isArray(rawTokensBody) ? rawTokensBody : (Array.isArray(rawTokensBody?.tokens) ? rawTokensBody.tokens : [])) : [];
   const isLoading = loadingSponsors || loadingTokens;
   const isError = isSponsorsError || isTokensError;
@@ -72,7 +72,7 @@ export default function SponsorTokensManager() {
             title="Select a sponsor to generate a magic link for"
           >
             <option value="" disabled>Select a Sponsor</option>
-            {sponsors.map((s: any) => (
+            {sponsors.map((s: { id: string; name: string }) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>

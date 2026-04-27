@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from "react";
 import { Download, ChevronUp, ChevronDown, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ export default function DocManagerTab({
 
   const { data, isLoading, isError } = api.docs.adminList.useQuery(["admin-docs"], {});
 
-  const rawBody = (data as any)?.body;
+  const rawBody = (data as unknown as { body: { docs: DocItem[] } })?.body;
   const docs = data?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.docs) ? rawBody.docs : [])) as unknown as DocItem[] : [];
 
   const deleteMutation = api.docs.deleteDoc.useMutation({
@@ -35,7 +35,7 @@ export default function DocManagerTab({
       setConfirmId(null);
       toast.success("Doc soft-deleted");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Delete failed");
     }
   });
@@ -44,7 +44,7 @@ export default function DocManagerTab({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-docs"] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Sort failed");
     }
   });
@@ -81,7 +81,7 @@ export default function DocManagerTab({
     try {
       const res = await fetch(`/api/docs/${slug}`);
       const data = await res.json();
-      const doc = (data as any).doc;
+      const doc = (data as unknown as { doc?: DocItem })?.doc;
       if (!doc) { toast.error("Doc not found."); return; }
       const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -191,11 +191,11 @@ export default function DocManagerTab({
         onReject={(d) => localRejectMutation.mutate({ params: { slug: d.slug }, body: {} })}
         isRejectPending={() => localRejectMutation.isPending}
         onDelete={(d) => deleteMutation.mutate({ params: { slug: d.slug }, body: {} })}
-        isDeletePending={(d) => deleteMutation.isPending && (deleteMutation.variables as any)?.params?.slug === d.slug}
+        isDeletePending={(d) => deleteMutation.isPending && (deleteMutation.variables as { params?: { slug: string } })?.params?.slug === d.slug}
         onRestore={(d) => localRestoreMutation.mutate({ params: { slug: d.slug }, body: {} })}
-        isRestorePending={(d) => localRestoreMutation.isPending && (localRestoreMutation.variables as any)?.params?.slug === d.slug}
+        isRestorePending={(d) => localRestoreMutation.isPending && (localRestoreMutation.variables as { params?: { slug: string } })?.params?.slug === d.slug}
         onPurge={(d) => localPurgeMutation.mutate({ params: { slug: d.slug }, body: {} })}
-        isPurgePending={(d) => localPurgeMutation.isPending && (localPurgeMutation.variables as any)?.params?.slug === d.slug}
+        isPurgePending={(d) => localPurgeMutation.isPending && (localPurgeMutation.variables as { params?: { slug: string } })?.params?.slug === d.slug}
         confirmId={confirmId}
         setConfirmId={setConfirmId}
       />

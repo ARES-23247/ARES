@@ -15,8 +15,8 @@ interface SeasonPickerProps {
 export default function SeasonPicker({ value, onChange, label = "Linked Season" }: SeasonPickerProps) {
   const { data: seasonsRes } = api.seasons.list.useQuery(["seasons-list"], {});
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const seasons = (seasonsRes?.status === 200 ? (Array.isArray(seasonsRes.body) ? seasonsRes.body : (seasonsRes.body as any)?.seasons) : []) as Season[];
+
+  const seasons = (seasonsRes?.status === 200 ? (Array.isArray(seasonsRes.body) ? seasonsRes.body : (seasonsRes.body as unknown as { seasons?: Season[] })?.seasons) : []) as Season[];
 
   return (
     <div className="w-full">

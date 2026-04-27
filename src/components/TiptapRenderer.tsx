@@ -28,8 +28,7 @@ const FlywheelKvSim = lazy(() => import('../sims/FlywheelKvSim'));
 const PowerSheddingSim = lazy(() => import('../sims/PowerSheddingSim'));
 const StateMachineSim = lazy(() => import('../sims/StateMachineSim'));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ComponentMap: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
+const ComponentMap: Record<string, React.LazyExoticComponent<React.ComponentType<Record<string, unknown>>>> = {
   CodePlayground,
   InteractiveTutorial,
   CoreValueCallout,

@@ -33,8 +33,8 @@ export default function TeamAvailability() {
         }
         setError(null);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setError((res.body as any)?.error || "Failed to fetch presence data");
+
+        setError((res.body as unknown as { error?: string })?.error || "Failed to fetch presence data");
       }
     } catch (err) {
       setError((err as Error).message);

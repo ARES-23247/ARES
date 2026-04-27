@@ -84,8 +84,7 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         seasonId: post.season_id ? Number(post.season_id) : undefined,
         thumbnail: post.thumbnail || DEFAULT_COVER_IMAGE,
         ast: post.ast ? JSON.parse(post.ast) : {},
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        socials: (socials as any) || {}
+        socials: (postRes.body as unknown as { socials?: Record<string, boolean> }).socials || {}
       });
       if (editor && post.ast) {
         try {
@@ -95,13 +94,12 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         }
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [postRes, reset, editor]); // Correct dependencies
 
 
   const saveMutation = api.posts.savePost.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (data: any) => {
+    onSuccess: (data) => {
       if (data.status === 200 || data.status === 207) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
         queryClient.invalidateQueries({ queryKey: ["admin_posts"] });
@@ -119,15 +117,13 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         setErrorMsg(data.body.error || "Failed to publish");
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMsg(err.message || "Publication failed");
     }
   });
 
   const updateMutation = api.posts.updatePost.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (data: any) => {
+    onSuccess: (data: { status: number; body: { warning?: string; isDraft?: boolean; slug?: string; error?: string } }) => {
       if (data.status === 200 || data.status === 207) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
         queryClient.invalidateQueries({ queryKey: ["admin_posts"] });
@@ -146,15 +142,13 @@ export default function BlogEditor({ userRole }: { userRole?: string | unknown }
         setErrorMsg(data.body?.error || "Failed to update");
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMsg(err.message || "Update failed");
     }
   });
 
   const deleteMutation = api.posts.deletePost.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (data: any) => {
+    onSuccess: (data: { status: number }) => {
       if (data.status === 200) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
         queryClient.invalidateQueries({ queryKey: ["admin_posts"] });

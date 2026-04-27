@@ -28,6 +28,8 @@ export function SortableTaskCard({
     opacity: isDragging ? 0.4 : 1,
   };
 
+  const assignees = task.assignees || [];
+
   return (
     <div
       ref={setNodeRef}
@@ -91,17 +93,26 @@ export function SortableTaskCard({
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {task.priority !== "normal" && (
             <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${priorityBadge[task.priority] || priorityBadge.normal}`}>
               {task.priority}
             </span>
           )}
-          {task.assignee_name && (
-            <span className="text-[9px] font-bold text-ares-gray bg-ares-gray-dark px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <User size={8} /> {task.assignee_name}
-            </span>
-          )}
+          {assignees.length > 0 ? (
+            <div className="flex -space-x-1 overflow-hidden">
+              {assignees.map((a, i) => (
+                <div 
+                  key={a.id} 
+                  title={a.nickname || "Unknown"}
+                  className="inline-block h-4 w-4 rounded-full ring-2 ring-obsidian bg-ares-gray-dark flex items-center justify-center text-[8px] font-black text-white"
+                  style={{ zIndex: assignees.length - i }}
+                >
+                  {a.nickname ? a.nickname.charAt(0).toUpperCase() : <User size={8} />}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
           {task.due_date && (
             <span className={`text-[9px] font-mono ${task.due_date && new Date(task.due_date) < new Date() && task.status !== "done" ? "text-ares-red font-black" : "text-ares-gray"}`}>

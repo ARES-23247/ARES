@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect } from "react";
 import { Utensils, Shirt, RefreshCw, AlertCircle, Users, Mail, Copy, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,11 +29,11 @@ export default function DietarySummary() {
     try {
       const res = await api.logistics.exportEmails.query();
       if (res.status === 200) {
-        const users = (res.body as any).users;
-        setExportedEmails(users.map((u: any) => u.email).join(", "));
+        const users = (res.body as unknown as { users: { name: string; email: string; role: string; emergencyName?: string; emergencyPhone?: string }[] }).users;
+        setExportedEmails(users.map((u) => u.email).join(", "));
         
         const csvContent = "Name,Email,Role,Emergency Contact,Emergency Phone\n" + 
-          users.map((u: any) => `"${u.name}","${u.email}","${u.role}","${u.emergencyName}","${u.emergencyPhone}"`).join("\n");
+          users.map((u) => `"${u.name}","${u.email}","${u.role}","${u.emergencyName || ''}","${u.emergencyPhone || ''}"`).join("\n");
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -61,17 +61,17 @@ export default function DietarySummary() {
 
   useEffect(() => {
     api.logistics.getSummary.query()
-      .then((res: any) => {
+      .then((res: { status: number; body: unknown }) => {
         if (res.status === 200) {
            
-          setData(res.body as any);
+          setData(res.body as LogisticsData);
         } else {
            
-          setError((res.body as any)?.error || "Failed to load logistics summary");
+          setError((res.body as { error?: string })?.error || "Failed to load logistics summary");
         }
         setLoading(false);
       })
-      .catch((err: any) => {
+      .catch((err: Error) => {
         console.error("Logistics fetch error:", err);
         setError(err.message || "Failed to load logistics summary");
         setLoading(false);

@@ -32,10 +32,10 @@ export default function GitHubHeatmap() {
       try {
         const res = await api.github.getActivity.query();
         if (res.status === 200) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const rawGridBody = (res.body as any)?.grid;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setGrid(Array.isArray(rawGridBody) ? rawGridBody : (Array.isArray((res.body as any)?.body?.grid) ? (res.body as any)?.body?.grid : []));
+
+          const rawGridBody = (res.body as unknown as { grid?: DayCell[][] })?.grid;
+
+          setGrid(Array.isArray(rawGridBody) ? rawGridBody : (Array.isArray((res.body as unknown as { body?: { grid?: DayCell[][] } })?.body?.grid) ? (res.body as unknown as { body?: { grid?: DayCell[][] } })?.body?.grid : []));
           setTotalCommits(res.body.totalCommits || 0);
           setRepoCount(res.body.repoCount || 0);
         }

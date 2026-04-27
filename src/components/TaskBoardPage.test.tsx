@@ -41,6 +41,14 @@ vi.mock("../api/client", () => ({
       reorder: {
         useMutation: vi.fn().mockReturnValue({ mutate: vi.fn() })
       }
+    },
+    users: {
+      getUsers: {
+        useQuery: vi.fn().mockReturnValue({
+          data: { status: 200, body: { users: [] } },
+          isLoading: false
+        })
+      }
     }
   }
 }));

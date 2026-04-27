@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect, useMemo } from "react";
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ export default function LocationsManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<z.infer<typeof locationSchema>>({
-    resolver: zodResolver(locationSchema) as any,
+    resolver: zodResolver(locationSchema) as unknown as import("react-hook-form").Resolver<z.infer<typeof locationSchema>>,
     defaultValues: {
       name: "",
       address: "",
@@ -45,11 +45,11 @@ export default function LocationsManager() {
   const { data: locationsData, isLoading, isError } = api.locations.adminList.useQuery(["admin_locations"], {});
 
    
-  const locations = useMemo(() => (locationsData?.body as any)?.locations || [], [locationsData]);
+  const locations: LocationRow[] = useMemo(() => (locationsData?.body as unknown as { locations?: LocationRow[] })?.locations || [], [locationsData]);
 
   const saveMutation = api.locations.save.useMutation({
      
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number }) => {
       if (res.status === 200) {
         toast.success("Venue record synchronized.");
         queryClient.invalidateQueries({ queryKey: ["admin_locations"] });
@@ -60,14 +60,14 @@ export default function LocationsManager() {
       }
     },
      
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMsg(err.message || "Network error.");
     }
   });
 
   const deleteMutation = api.locations.delete.useMutation({
      
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number }) => {
       if (res.status === 200) {
         toast.success("Venue deactivated.");
         queryClient.invalidateQueries({ queryKey: ["admin_locations"] });
@@ -116,12 +116,12 @@ export default function LocationsManager() {
     });
   };
 
-  const onFormSubmit = (data: any) => {
+  const onFormSubmit = (data: z.infer<typeof locationSchema>) => {
     saveMutation.mutate({ body: { ...data, id: editingId || undefined } });
   };
 
    
-  const filtered = useMemo(() => locations.filter((l: any) => l.name.toLowerCase().includes(searchTerm.toLowerCase())), [locations, searchTerm]);
+  const filtered = useMemo(() => locations.filter((l: LocationRow) => l.name.toLowerCase().includes(searchTerm.toLowerCase())), [locations, searchTerm]);
 
   return (
     <div className="w-full flex flex-col items-center h-full p-4 md:p-8 overflow-y-auto">
@@ -164,7 +164,7 @@ export default function LocationsManager() {
             {isLoading ? <div className="text-center p-8 text-marble/50 animate-pulse">Loading venues...</div> : (
               <div className="flex flex-col gap-3">
                 { }
-                {filtered.map((l: any) => (
+                {filtered.map((l: LocationRow) => (
                   <div key={l.id} className={`p-4 border ares-cut-sm flex items-center justify-between ${l.is_deleted ? 'border-ares-danger/20 bg-ares-danger/5 opacity-50' : 'border-white/10 bg-obsidian/50 hover:bg-white/5'}`}>
                     <div>
                       <h4 className={`font-bold ${l.is_deleted ? 'text-ares-red/60 line-through' : 'text-white'}`}>{l.name}</h4>

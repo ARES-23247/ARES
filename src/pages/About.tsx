@@ -31,13 +31,14 @@ export default function About() {
   const { data: rosterRes, isLoading } = api.profiles.getTeamRoster.useQuery(["team-roster"], {});
 
   const members = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawBody = (rosterRes as any)?.body;
-    // Robust check for members array in different possible response formats
-    const list = rosterRes?.status === 200 
-      ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.members) ? rawBody.members : [])) 
-      : [];
-    return list as TeamMember[];
+    const body = rosterRes?.status === 200 ? rosterRes.body : null;
+    if (!body) return [];
+    if (Array.isArray(body)) return body as TeamMember[];
+    if (typeof body === 'object' && body !== null && 'members' in body) {
+      const m = (body as { members: unknown }).members;
+      if (Array.isArray(m)) return m as TeamMember[];
+    }
+    return [];
   }, [rosterRes]);
 
   const grouped = useMemo(() => SECTION_ORDER.map(section => ({

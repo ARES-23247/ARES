@@ -1,6 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+interface MediaAsset {
+  key: string;
+  url: string;
+  folder?: string;
+  tags?: string;
+}
 import { useState } from "react";
-import { X, ImagePlus } from "lucide-react";
+import { X, ImagePlus, Plus } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { api } from "../api/client";
 
@@ -30,9 +35,9 @@ export default function AssetPickerModal({
   });
 
    
-  const assets = (mediaResponse?.body as any)?.media ?? [];
-  const uniqueFolders = Array.from(new Set(assets.map((a: any) => a.folder))).filter(Boolean);
-  const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter((a: any) => a.folder === selectedFolderFilter);
+  const assets = (mediaResponse?.body as unknown as { media: MediaAsset[] })?.media ?? [];
+  const uniqueFolders = Array.from(new Set(assets.map((a: MediaAsset) => a.folder))).filter(Boolean);
+  const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter((a: MediaAsset) => a.folder === selectedFolderFilter);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -72,10 +77,12 @@ export default function AssetPickerModal({
               >All Assets</button>
               {uniqueFolders.map(folder => (
                 <button 
-                  key={folder as any}
-                  onClick={() => setSelectedFolderFilter(folder as any)}
-                  className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest ares-cut-sm border transition-all ${selectedFolderFilter === folder ? "bg-white border-white text-black shadow-md" : "bg-black/50 border-white/10 text-white/60 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"}`}
-                >{folder as any}</button>
+                  key={folder as string}
+                  onClick={() => setSelectedFolderFilter(folder as string)}
+                  className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 ares-cut-sm transition-colors
+                    ${selectedFolderFilter === folder ? 'bg-ares-cyan text-black' : 'bg-white/5 text-marble/60 hover:text-white hover:bg-white/10 border border-white/10'}
+                  `}
+                >{folder as string}</button>
               ))}
             </div>
           )}
@@ -97,17 +104,17 @@ export default function AssetPickerModal({
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {filteredAssets.map((asset: any) => (
+                {filteredAssets.map((asset: MediaAsset) => (
                   <button
                     key={asset.key}
-                    onClick={() => onSelect((asset as any).url as string as string, asset.tags || "ARES Media")}
-                    aria-label={`Select asset ${asset.key}`}
-                    className="group relative bg-black/20 border border-white/10 ares-cut-sm overflow-hidden hover:border-ares-gold transition-colors flex flex-col text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
+                    onClick={() => onSelect(asset.url, asset.tags || "ARES Media")}
+                    className="relative aspect-video bg-black/50 border border-white/10 ares-cut-sm overflow-hidden group cursor-pointer hover:border-ares-cyan/50 transition-colors"
                   >
-                    <div className="relative aspect-square w-full">
-                      <img src={(asset as any).url as string} alt={asset.key} className="w-full h-full object-cover" loading="lazy" />
-                      <div className="absolute inset-0 bg-ares-gold/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/60 transition-opacity">
+                      <Plus className="text-ares-cyan w-8 h-8" />
                     </div>
+                      <img src={asset.url} alt={asset.key} className="w-full h-full object-cover" loading="lazy" />
+                      <div className="absolute inset-0 bg-ares-gold/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="p-3">
                       <p className="text-white/60 text-xs font-mono truncate">{asset.key}</p>
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">

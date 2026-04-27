@@ -38,8 +38,7 @@ export default function AssetManager() {
           <AssetUploader 
             activeFolder={selectedFolderFilter === "All" ? "" : selectedFolderFilter}
             setActiveFolder={setSelectedFolderFilter}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            uploadMutation={{ isPending: isUploading, mutate: uploadAssets } as any}
+            uploadMutation={{ isPending: isUploading, mutate: uploadAssets } as unknown as { isPending: boolean; mutate: (vars: never) => void }}
             uploadProgress={null}
           />
         </div>
@@ -78,8 +77,7 @@ export default function AssetManager() {
           </div>
 
           <AssetGrid 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            assets={filteredAssets as any} 
+            assets={filteredAssets as unknown as never[]} 
             isDeleting={isDeleting}
             onDelete={deleteAsset} 
             onSyndicate={(key) => setSyndicateKey(key)}
@@ -93,8 +91,7 @@ export default function AssetManager() {
         setSyndicateKey={setSyndicateKey}
         syndicateCaption={syndicateCaption}
         setSyndicateCaption={setSyndicateCaption}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        syndicateMutation={syndicateMutation as any}
+        syndicateMutation={syndicateMutation as unknown as { isPending: boolean; mutate: (vars: never) => void }}
       />
     </div>
   );

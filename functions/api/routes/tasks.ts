@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Kysely } from "kysely";
+import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { taskContract } from "../../../shared/schemas/contracts/taskContract";
@@ -8,22 +8,29 @@ import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfi
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const s = initServer<AppEnv>();
 export const tasksRouter = new Hono<AppEnv>();
 
-const tasksTsRestRouter: any = s.router(taskContract as any, {
-  list: async ({ query }: { query: any }, c: any) => {
+type TaskHandlers = Parameters<typeof s.router<typeof taskContract>>[1];
+
+const tasksTsRestRouter: TaskHandlers = {
+  list: async ({ query }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
-        .leftJoin("user_profiles as ap", "t.assigned_to", "ap.user_id")
         .leftJoin("user_profiles as cp", "t.created_by", "cp.user_id")
         .select([
           "t.id", "t.title", "t.description", "t.status", "t.priority",
-          "t.sort_order", "t.assigned_to", "t.created_by", "t.due_date",
+          "t.sort_order", "t.created_by", "t.due_date",
           "t.created_at", "t.updated_at",
-          "ap.nickname as assignee_name",
           "cp.nickname as creator_name",
+          // Aggregate assignees using a subquery and JSON aggregation
+          (eb) => eb.selectFrom("task_assignments as ta")
+            .leftJoin("user_profiles as up", "ta.user_id", "up.user_id")
+            .select(sql<string>`json_group_array(json_object('id', ta.user_id, 'nickname', up.nickname))`.as("assignees"))
+            .whereRef("ta.task_id", "=", "t.id")
+            .as("assignees_json")
         ])
         .orderBy("t.sort_order", "asc")
         .orderBy("t.created_at", "desc");
@@ -34,34 +41,47 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
 
       const results = await q.execute();
 
-      const tasks = results.map(r => ({
-        id: String(r.id),
-        title: String(r.title),
-        description: r.description || null,
-        status: String(r.status || "todo"),
-        priority: String(r.priority || "normal"),
-        sort_order: Number(r.sort_order || 0),
-        assigned_to: r.assigned_to || null,
-        assignee_name: r.assignee_name || null,
-        created_by: String(r.created_by),
-        creator_name: r.creator_name || null,
-        due_date: r.due_date || null,
-        created_at: String(r.created_at),
-        updated_at: String(r.updated_at),
-      }));
+      const tasks = results.map(r => {
+        let assignees = [];
+        try {
+          assignees = r.assignees_json ? JSON.parse(r.assignees_json) : [];
+          // Filter out null results from left join if any
+          assignees = assignees.filter((a: any) => a.id !== null);
+        } catch (e) {
+          console.error("Failed to parse assignees JSON", e);
+        }
 
-      return { status: 200 as const, body: { tasks } };
+        return {
+          id: String(r.id),
+          title: String(r.title),
+          description: r.description || null,
+          status: String(r.status || "todo"),
+          priority: String(r.priority || "normal"),
+          sort_order: Number(r.sort_order || 0),
+          assignees,
+          created_by: String(r.created_by),
+          creator_name: r.creator_name || null,
+          due_date: r.due_date || null,
+          created_at: String(r.created_at),
+          updated_at: String(r.updated_at),
+          // Backward compatibility
+          assigned_to: assignees.length > 0 ? assignees[0].id : null,
+          assignee_name: assignees.length > 0 ? assignees[0].nickname : null,
+        };
+      });
+
+      return { status: 200, body: { tasks } };
     } catch (err) {
       console.error("[Tasks] List error:", err);
-      return { status: 500 as const, body: { error: "Failed to fetch tasks" } };
+      return { status: 500, body: { error: "Failed to fetch tasks" } };
     }
   },
 
-  create: async ({ body }: { body: any }, c: any) => {
+  create: async ({ body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+      if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
@@ -74,7 +94,6 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
           status: body.status || "todo",
           priority: body.priority || "normal",
           sort_order: 0,
-          assigned_to: body.assigned_to || null,
           created_by: user.id,
           due_date: body.due_date || null,
           created_at: now,
@@ -82,15 +101,31 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
         })
         .execute();
 
+      if (body.assignees && body.assignees.length > 0) {
+        const assignments = body.assignees.map(userId => ({
+          task_id: id,
+          user_id: userId
+        }));
+        await db.insertInto("task_assignments").values(assignments).execute();
+      }
+
       await db.insertInto("audit_log").values({
         id: crypto.randomUUID(),
         actor: user.id,
         action: "create_task",
         resource_type: "task",
         resource_id: id,
-        details: `Created task: ${body.title}`,
+        details: `Created task: ${body.title} with ${body.assignees?.length || 0} assignees`,
         created_at: now,
       }).execute();
+
+      // Fetch assignee names for the response
+      const assigneeProfiles = body.assignees && body.assignees.length > 0
+        ? await db.selectFrom("user_profiles")
+            .select(["user_id as id", "nickname"])
+            .where("user_id", "in", body.assignees)
+            .execute()
+        : [];
 
       const task = {
         id,
@@ -99,46 +134,47 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
         status: body.status || "todo",
         priority: body.priority || "normal",
         sort_order: 0,
-        assigned_to: body.assigned_to || null,
-        assignee_name: null,
+        assignees: assigneeProfiles,
         created_by: user.id,
         creator_name: user.nickname || user.name || null,
         due_date: body.due_date || null,
         created_at: now,
         updated_at: now,
+        assigned_to: body.assignees?.[0] || null,
+        assignee_name: assigneeProfiles[0]?.nickname || null,
       };
 
-      if (body.assigned_to) {
+      if (body.assignees && body.assignees.length > 0) {
         try {
-          const assignee = await db.selectFrom("user").select("email").where("id", "=", body.assigned_to).executeTakeFirst();
-          if (assignee?.email) {
+          const users = await db.selectFrom("user").select("email").where("id", "in", body.assignees).execute();
+          const emails = users.map(u => u.email).filter(Boolean);
+          if (emails.length > 0) {
             const env = await getSocialConfig(c);
-            await sendZulipMessage(env, assignee.email, null, `You have been assigned a new task: **${body.title}**\n\n[Open Task Dashboard](${siteConfig.urls.base}/dashboard?tab=tasks)`, "private");
+            for (const email of emails) {
+              await sendZulipMessage(env, email, null, `You have been assigned a new task: **${body.title}**\n\n[Open Task Dashboard](${siteConfig.urls.base}/dashboard?tab=tasks)`, "private").catch(() => {});
+            }
           }
         } catch (e) {
-          console.error("Zulip DM fail", e);
+          console.error("Zulip notification fail", e);
         }
       }
 
-      return { status: 200 as const, body: { success: true, task } };
+      return { status: 200, body: { success: true, task } };
     } catch (err) {
       console.error("[Tasks] Create error:", err);
-      return { status: 500 as const, body: { error: "Failed to create task" } };
+      return { status: 500, body: { error: "Failed to create task" } };
     }
   },
 
-  reorder: async ({ body }: { body: any }, c: any) => {
+  reorder: async ({ body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+      if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
       const now = new Date().toISOString();
       
-      // Cloudflare D1 does not reliably support Kysely's implicit BEGIN/COMMIT transactions over HTTP.
-      // Since sorting updates don't strictly require full transactional rollback (worst case the board is slightly out of order),
-      // we execute them concurrently.
-      await Promise.all(body.items.map((item: any) =>
+      await Promise.all(body.items.map((item) =>
         db.updateTable("tasks")
           .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
           .where("id", "=", item.id)
@@ -155,41 +191,38 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
         created_at: now,
       }).execute());
 
-      return { status: 200 as const, body: { success: true } };
+      return { status: 200, body: { success: true } };
     } catch (err) {
       console.error("[Tasks] Reorder error:", err);
-      return { status: 500 as const, body: { error: "Failed to reorder tasks" } };
+      return { status: 500, body: { error: "Failed to reorder tasks" } };
     }
   },
 
-  update: async ({ params, body }: { params: any; body: any }, c: any) => {
+  update: async ({ params, body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+      if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
-      // Check task exists and authorization
       const existing = await db.selectFrom("tasks")
-        .select(["id", "assigned_to", "title", "created_by"])
+        .select(["id", "title", "created_by"])
         .where("id", "=", params.id)
         .executeTakeFirst();
       
-      if (!existing) return { status: 404 as const, body: { error: "Task not found" } };
+      if (!existing) return { status: 404, body: { error: "Task not found" } };
 
       const isAdmin = user.role === "admin";
       const isOwner = existing.created_by === user.id;
 
       if (!isAdmin && !isOwner) {
-        return { status: 403 as const, body: { error: "You are not authorized to update this task" } };
+        return { status: 403, body: { error: "You are not authorized to update this task" } };
       }
 
-      // Build update object dynamically
-      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      const updates: any = { updated_at: new Date().toISOString() };
       if (body.title !== undefined) updates.title = body.title;
       if (body.description !== undefined) updates.description = body.description;
       if (body.status !== undefined) updates.status = body.status;
       if (body.priority !== undefined) updates.priority = body.priority;
-      if (body.assigned_to !== undefined) updates.assigned_to = body.assigned_to;
       if (body.due_date !== undefined) updates.due_date = body.due_date;
       if (body.sort_order !== undefined) updates.sort_order = body.sort_order;
 
@@ -198,53 +231,67 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
         .where("id", "=", params.id)
         .execute();
 
+      if (body.assignees !== undefined) {
+        // Sync assignments: delete and re-insert
+        await db.deleteFrom("task_assignments").where("task_id", "=", params.id).execute();
+        if (body.assignees && body.assignees.length > 0) {
+          const assignments = body.assignees.map(userId => ({
+            task_id: params.id,
+            user_id: userId
+          }));
+          await db.insertInto("task_assignments").values(assignments).execute();
+          
+          // Notify new assignees (simplified logic: notify all currently assigned)
+          try {
+            const users = await db.selectFrom("user").select("email").where("id", "in", body.assignees).execute();
+            const emails = users.map(u => u.email).filter(Boolean);
+            if (emails.length > 0) {
+              const env = await getSocialConfig(c);
+              for (const email of emails) {
+                await sendZulipMessage(env, email, null, `Task updated: **${updates.title || existing.title}**\nYou are assigned to this task.\n\n[Open Task Dashboard](${siteConfig.urls.base}/dashboard?tab=tasks)`, "private").catch(() => {});
+              }
+            }
+          } catch (e) {
+            console.error("Zulip update notification fail", e);
+          }
+        }
+      }
+
       await db.insertInto("audit_log").values({
         id: crypto.randomUUID(),
         actor: user.id,
         action: "update_task",
         resource_type: "task",
         resource_id: params.id,
-        details: "Updated task",
+        details: "Updated task and assignments",
         created_at: new Date().toISOString(),
       }).execute();
 
-      if (body.assigned_to && body.assigned_to !== existing.assigned_to) {
-        try {
-          const assignee = await db.selectFrom("user").select("email").where("id", "=", body.assigned_to).executeTakeFirst();
-          if (assignee?.email) {
-            const env = await getSocialConfig(c);
-            await sendZulipMessage(env, assignee.email, null, `You have been assigned to an existing task: **${updates.title || existing.title}**\n\n[Open Task Dashboard](${siteConfig.urls.base}/dashboard?tab=tasks)`, "private");
-          }
-        } catch (e) {
-          console.error("Zulip DM fail", e);
-        }
-      }
-
-      return { status: 200 as const, body: { success: true } };
+      return { status: 200, body: { success: true } };
     } catch (err) {
       console.error("[Tasks] Update error:", err);
-      return { status: 500 as const, body: { error: "Failed to update task" } };
+      return { status: 500, body: { error: "Failed to update task" } };
     }
   },
 
-  delete: async ({ params }: { params: any }, c: any) => {
+  delete: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+      if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
       const existing = await db.selectFrom("tasks")
         .select(["created_by"])
         .where("id", "=", params.id)
         .executeTakeFirst();
       
-      if (!existing) return { status: 404 as const, body: { error: "Task not found" } };
+      if (!existing) return { status: 404, body: { error: "Task not found" } };
 
       const isAdmin = user.role === "admin";
       const isOwner = existing.created_by === user.id;
 
       if (!isAdmin && !isOwner) {
-        return { status: 403 as const, body: { error: "You are not authorized to delete this task" } };
+        return { status: 403, body: { error: "You are not authorized to delete this task" } };
       }
 
       await db.deleteFrom("tasks")
@@ -261,15 +308,14 @@ const tasksTsRestRouter: any = s.router(taskContract as any, {
         created_at: new Date().toISOString(),
       }).execute();
 
-      return { status: 200 as const, body: { success: true } };
+      return { status: 200, body: { success: true } };
     } catch (err) {
       console.error("[Tasks] Delete error:", err);
-      return { status: 500 as const, body: { error: "Failed to delete task" } };
+      return { status: 500, body: { error: "Failed to delete task" } };
     }
   },
-} as any);
+};
 
-// Middleware: all task endpoints require auth
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));
 

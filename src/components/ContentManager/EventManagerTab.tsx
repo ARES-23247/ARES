@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { format } from "date-fns";
 import { Radio, Calendar } from "lucide-react";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ export default function EventManagerTab({
     query: { limit: 100, offset: 0 }
   });
 
-  const rawBody = (eventsData as any)?.body;
+  const rawBody = (eventsData as unknown as { body: { events: EventRow[] } })?.body;
   const events = eventsData?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.events) ? rawBody.events : [])) as unknown as EventItem[] : [];
   const lastSyncedAt = eventsData?.status === 200 ? eventsData.body.lastSyncedAt : null;
 
@@ -40,13 +40,13 @@ export default function EventManagerTab({
       setConfirmId(null);
       toast.success("Event deleted");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Delete failed");
     }
   });
 
   const syncGcalMutation = api.events.syncEvents.useMutation({
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number }) => {
       if (res.status === 200 && res.body.success) {
         queryClient.invalidateQueries({ queryKey: ["admin_events"] });
         toast.success(`Sync Complete! Fetched ${res.body.count || 0} events.`);
@@ -54,7 +54,7 @@ export default function EventManagerTab({
         toast.error("Sync failed");
       }
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Sync failed");
     }
   });
@@ -158,11 +158,11 @@ export default function EventManagerTab({
       onReject={(e) => localRejectMutation.mutate({ params: { id: e.id }, body: {} })}
       isRejectPending={() => localRejectMutation.isPending}
       onDelete={(e) => deleteMutation.mutate({ params: { id: e.id }, body: {} })}
-      isDeletePending={(e) => deleteMutation.isPending && (deleteMutation.variables as any)?.params?.id === e.id}
+      isDeletePending={(e) => deleteMutation.isPending && (deleteMutation.variables as unknown as { params?: { id: string } })?.params?.id === e.id}
       onRestore={(e) => localRestoreMutation.mutate({ params: { id: e.id }, body: {} })}
-      isRestorePending={(e) => localRestoreMutation.isPending && (localRestoreMutation.variables as any)?.params?.id === e.id}
+      isRestorePending={(e) => localRestoreMutation.isPending && (localRestoreMutation.variables as unknown as { params?: { id: string } })?.params?.id === e.id}
       onPurge={(e) => localPurgeMutation.mutate({ params: { id: e.id }, body: {} })}
-      isPurgePending={(e) => localPurgeMutation.isPending && (localPurgeMutation.variables as any)?.params?.id === e.id}
+      isPurgePending={(e) => localPurgeMutation.isPending && (localPurgeMutation.variables as unknown as { params?: { id: string } })?.params?.id === e.id}
       confirmId={confirmId}
       setConfirmId={setConfirmId}
     />

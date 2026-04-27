@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
@@ -11,6 +11,9 @@ import EditorFooter from "./editor/EditorFooter";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RefreshCw } from "lucide-react";
+import { z } from "zod";
+
+type DocFormValues = z.infer<typeof docSchema>;
 
 interface DocData {
   slug: string;
@@ -32,8 +35,8 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
 
   const editor = useRichEditor({ placeholder: "<p>Start writing documentation here...</p>" });
 
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<any>({
-    resolver: zodResolver(docSchema) as any,
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<DocFormValues>({
+    resolver: zodResolver(docSchema),
     defaultValues: {
       slug: "",
       title: "",
@@ -86,7 +89,7 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
 
   const saveMutation = api.docs.saveDoc.useMutation({
      
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number; body: { slug?: string; error?: string } }) => {
       if (res.status === 200) {
         queryClient.invalidateQueries({ queryKey: ["docs"] });
         queryClient.invalidateQueries({ queryKey: ["admin_docs"] });
@@ -101,13 +104,13 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
       }
     },
      
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMsg(err.message || "Network error");
     }
   });
 
   const deleteMutation = api.docs.deleteDoc.useMutation({
-    onSuccess: (data: any) => {
+    onSuccess: (data: { status: number }) => {
       if (data.status === 200) {
         queryClient.invalidateQueries({ queryKey: ["docs"] });
         queryClient.invalidateQueries({ queryKey: ["admin_docs"] });
@@ -121,7 +124,7 @@ export default function DocsEditor({ userRole }: { userRole?: string | unknown }
     }
   });
 
-  const onFormSubmit = (data: any, isDraft = false) => {
+  const onFormSubmit = (data: DocFormValues, isDraft = false) => {
     if (!editor) return;
     const content = JSON.stringify(editor.getJSON());
     saveMutation.mutate({ body: { ...data, content, isDraft } });

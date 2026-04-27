@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, BookOpen, Edit2, ChevronRight, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -72,7 +71,7 @@ export default function Docs() {
               </div>
               {searchResults.length > 0 && (
                 <div className="max-h-80 overflow-y-auto">
-                  {searchResults.map((r: any) => (
+                  {searchResults.map((r: { slug: string; title: string; category: string; snippet: string }) => (
                     <button
                       key={r.slug}
                       className="w-full text-left px-4 py-3 hover:bg-white/5 border-b border-white/5 transition-colors"
@@ -178,7 +177,7 @@ export default function Docs() {
 
                 <div className="mt-16 pt-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(() => {
-                    const currentIndex = allDocs.findIndex((d: any) => d.slug === (slug || (allDocs.length > 0 ? allDocs[0].slug : "")));
+                    const currentIndex = allDocs.findIndex((d: { slug: string }) => d.slug === (slug || (allDocs.length > 0 ? allDocs[0].slug : "")));
                     const prevDoc = currentIndex > 0 ? allDocs[currentIndex - 1] : null;
                     const nextDoc = currentIndex !== -1 && currentIndex < allDocs.length - 1 ? allDocs[currentIndex + 1] : null;
                     
@@ -232,7 +231,7 @@ export default function Docs() {
                         <div className="flex flex-col">
                           <span className="text-xs uppercase font-bold text-ares-cyan/80 tracking-wider mb-1">Contributors</span>
                           <div className="flex -space-x-2">
-                            {contributors.slice(0, 5).map((c: any, idx: any) => (
+                            {contributors.slice(0, 5).map((c: { nickname?: string; author_email: string; avatar?: string }, idx: number) => (
                               <div key={idx} className="w-6 h-6 rounded-full border border-ares-gray-deep overflow-hidden bg-ares-gray-dark" title={c.nickname || c.author_email}>
                                 <img src={c.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${c.author_email}`} alt={`${c.nickname || "Contributor"}'s avatar`} className="w-full h-full object-cover"/>
                               </div>

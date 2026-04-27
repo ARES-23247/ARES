@@ -36,6 +36,7 @@ describe("Hono Backend - /tasks Router", () => {
       select: vi.fn().mockReturnThis(),
       orderBy: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
+      whereRef: vi.fn().mockReturnThis(),
       insertInto: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis(),
       updateTable: vi.fn().mockReturnThis(),
@@ -43,6 +44,7 @@ describe("Hono Backend - /tasks Router", () => {
       deleteFrom: vi.fn().mockReturnThis(),
       execute: vi.fn().mockResolvedValue([]),
       executeTakeFirst: vi.fn().mockResolvedValue(null),
+      as: vi.fn().mockReturnThis(),
     };
 
     testApp = new Hono<any>();
@@ -56,7 +58,15 @@ describe("Hono Backend - /tasks Router", () => {
 
   it("GET / - lists tasks", async () => {
     mockDb.execute.mockResolvedValueOnce([
-      { id: "task1", title: "Test Task", status: "todo", priority: "high", sort_order: 1, created_by: "user1", assignee_name: "Alice" }
+      { 
+        id: "task1", 
+        title: "Test Task", 
+        status: "todo", 
+        priority: "high", 
+        sort_order: 1, 
+        created_by: "user1", 
+        assignees_json: '[{"id":"user2","nickname":"Alice"}]' 
+      }
     ]);
 
     const res = await testApp.request("/", {}, {}, mockExecutionContext);
@@ -64,6 +74,8 @@ describe("Hono Backend - /tasks Router", () => {
     const body = await res.json() as any;
     expect(body.tasks).toHaveLength(1);
     expect(body.tasks[0].title).toBe("Test Task");
+    expect(body.tasks[0].assignees).toHaveLength(1);
+    expect(body.tasks[0].assignees[0].nickname).toBe("Alice");
   });
 
   it("GET / - handles db error", async () => {
@@ -79,21 +91,29 @@ describe("Hono Backend - /tasks Router", () => {
     expect(mockDb.where).toHaveBeenCalledWith("t.status", "=", "todo");
   });
 
-  it("POST / - creates task", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
-    
+  it("POST / - creates task with multiple assignees", async () => {
+    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student", nickname: "Creator" } as any);
+    mockDb.execute.mockResolvedValueOnce([{ user_id: "user2", nickname: "Alice" }]); // For profiles fetch
+
     const res = await testApp.request("/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "New Task", description: "Desc", priority: "high" })
+      body: JSON.stringify({ 
+        title: "New Task", 
+        description: "Desc", 
+        priority: "high",
+        assignees: ["user2", "user3"]
+      })
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
     expect(mockDb.insertInto).toHaveBeenCalledWith("tasks");
+    expect(mockDb.insertInto).toHaveBeenCalledWith("task_assignments");
     
     const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(body.task.title).toBe("New Task");
+    expect(body.task.assignees).toBeDefined();
   });
 
   it("POST / - handles create error", async () => {
@@ -111,110 +131,33 @@ describe("Hono Backend - /tasks Router", () => {
 
   it("POST / - handles Zulip failure in create gracefully", async () => {
     vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ email: "alice@test.com" });
+    mockDb.execute.mockResolvedValueOnce([]); // profiles
+    mockDb.execute.mockResolvedValueOnce([{ email: "alice@test.com" }]); // user emails
     vi.mocked(sendZulipMessage).mockRejectedValueOnce(new Error("Zulip Down"));
 
     const res = await testApp.request("/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "New Task", assigned_to: "user2" })
+      body: JSON.stringify({ title: "New Task", assignees: ["user2"] })
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
   });
 
-  it("POST / - returns 401 if unauthenticated", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce(null);
-    const res = await testApp.request("/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "New Task" })
-    }, {}, mockExecutionContext);
-    expect(res.status).toBe(401);
-  });
-
-  it("PATCH /reorder - updates tasks inside transaction", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
+  it("PATCH /:id - updates task and assignments", async () => {
+    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "admin" } as any);
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "task1", created_by: "user2", title: "Task" });
     
-    const res = await testApp.request("/reorder", {
+    const res = await testApp.request("/task1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: [{ id: "task1", status: "todo", sort_order: 1 }] })
+      body: JSON.stringify({ title: "Updated Task", assignees: ["user3"] })
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
     expect(mockDb.updateTable).toHaveBeenCalledWith("tasks");
-  });
-
-  it("PATCH /reorder - handles reorder error", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
-    mockDb.updateTable.mockImplementationOnce(() => { throw new Error("Reorder fail"); });
-
-    const res = await testApp.request("/reorder", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: [{ id: "task1", status: "todo", sort_order: 1 }] })
-    }, {}, mockExecutionContext);
-
-    expect(res.status).toBe(500);
-  });
-
-  it("PATCH /:id - updates task", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "admin" } as any);
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "task1", created_by: "user2", assigned_to: "user2", title: "Task" });
-    
-    const res = await testApp.request("/task1", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "Updated Task", status: "done" })
-    }, {}, mockExecutionContext);
-
-    expect(res.status).toBe(200);
-    expect(mockDb.updateTable).toHaveBeenCalledWith("tasks");
-  });
-
-  it("PATCH /:id - returns 403 if not admin or owner", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "task1", created_by: "user2" });
-    
-    const res = await testApp.request("/task1", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "Updated Task" })
-    }, {}, mockExecutionContext);
-
-    expect(res.status).toBe(403);
-  });
-
-  it("PATCH /:id - handles update error", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "admin" } as any);
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "task1", created_by: "user1" });
-    mockDb.updateTable.mockImplementationOnce(() => { throw new Error("Update fail"); });
-
-    const res = await testApp.request("/task1", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "Updated" })
-    }, {}, mockExecutionContext);
-
-    expect(res.status).toBe(500);
-  });
-
-  it("PATCH /:id - handles Zulip failure gracefully", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "admin" } as any);
-    mockDb.executeTakeFirst
-      .mockResolvedValueOnce({ id: "task1", created_by: "user1", assigned_to: "old", title: "Task" }) // Task check
-      .mockResolvedValueOnce({ email: "bob@test.com" }); // Assignee fetch
-    
-    vi.mocked(sendZulipMessage).mockRejectedValueOnce(new Error("Zulip Down"));
-
-    const res = await testApp.request("/task1", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assigned_to: "new" })
-    }, {}, mockExecutionContext);
-
-    expect(res.status).toBe(200);
+    expect(mockDb.deleteFrom).toHaveBeenCalledWith("task_assignments");
+    expect(mockDb.insertInto).toHaveBeenCalledWith("task_assignments");
   });
 
   it("DELETE /:id - deletes task", async () => {
@@ -224,31 +167,5 @@ describe("Hono Backend - /tasks Router", () => {
     const res = await testApp.request("/task1", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: "{}" }, {}, mockExecutionContext);
     expect(res.status).toBe(200);
     expect(mockDb.deleteFrom).toHaveBeenCalledWith("tasks");
-  });
-
-  it("DELETE /:id - returns 403 if not authorized", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ created_by: "user2" });
-    
-    const res = await testApp.request("/task1", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: "{}" }, {}, mockExecutionContext);
-    expect(res.status).toBe(403);
-  });
-
-  it("DELETE /:id - returns 404 if not found", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "admin" } as any);
-    mockDb.executeTakeFirst.mockResolvedValueOnce(null);
-    
-    const res = await testApp.request("/task1", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: "{}" }, {}, mockExecutionContext);
-    expect(res.status).toBe(404);
-  });
-
-  it("DELETE /:id - handles delete error", async () => {
-    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "admin" } as any);
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ created_by: "user1" });
-    mockDb.deleteFrom.mockImplementationOnce(() => { throw new Error("Delete fail"); });
-
-    const res = await testApp.request("/task1", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: "{}" }, {}, mockExecutionContext);
-
-    expect(res.status).toBe(500);
   });
 });

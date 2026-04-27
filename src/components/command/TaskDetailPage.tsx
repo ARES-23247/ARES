@@ -45,8 +45,8 @@ export default function TaskDetailPage() {
   const [edits, setEdits] = useState<Record<string, unknown>>({});
   const getValue = (field: string) => {
     if (field in edits) return edits[field] as string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (task as any)?.[field] || "";
+
+    return (task as Record<string, unknown>)?.[field] || "";
   };
   const setField = (field: string, value: unknown) => setEdits(prev => ({ ...prev, [field]: value }));
 

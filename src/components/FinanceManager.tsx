@@ -45,10 +45,23 @@ export default function FinanceManager() {
   const { data: transactionsRes } = api.finance.listTransactions.useQuery(["finance-transactions", selectedSeason], { query: { season_id: selectedSeason || undefined } });
 
   const summary = summaryRes?.status === 200 ? summaryRes.body : null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pipeline: any[] = pipelineRes?.status === 200 ? pipelineRes.body.pipeline : [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const transactions: any[] = transactionsRes?.status === 200 ? transactionsRes.body.transactions : [];
+  interface PipelineItem {
+    id?: string;
+    company_name: string;
+    status: string;
+    estimated_value: number;
+  }
+  interface TransactionItem {
+    id?: string;
+    type: string;
+    amount: number;
+    category: string;
+    date: string;
+    description: string;
+  }
+  const pipeline: PipelineItem[] = pipelineRes?.status === 200 ? (pipelineRes.body as unknown as { pipeline: PipelineItem[] }).pipeline : [];
+
+  const transactions: TransactionItem[] = transactionsRes?.status === 200 ? (transactionsRes.body as unknown as { transactions: TransactionItem[] }).transactions : [];
 
   const isError = summaryRes?.status === 500 || pipelineRes?.status === 500 || transactionsRes?.status === 500;
 

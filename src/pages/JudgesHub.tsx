@@ -42,8 +42,7 @@ export default function JudgesHub() {
         headers: { "Authorization": `Bearer ${code}` }
       });
       if (res.status === 200) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setPortfolio(res.body as any);
+        setPortfolio(res.body as PortfolioData);
       }
     } catch {
       console.error("Failed to fetch portfolio");
@@ -65,8 +64,8 @@ export default function JudgesHub() {
         setIsAuthenticated(true);
         fetchPortfolio(code);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setError((res.body as any)?.error || "Invalid access code.");
+        const body = res.body as { error?: string };
+        setError(body?.error || "Invalid access code.");
         localStorage.removeItem("ares_judge_code");
       }
     } catch (err) {

@@ -1,32 +1,30 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import SEO from "../components/SEO";
 import LazyImage from "../components/LazyImage";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface R2MediaItem {
+  key: string;
+  size: number;
+  uploaded: string;
+  httpMetadata?: {
+    contentType?: string;
+  };
+}
+
 interface R2MediaResponse {
-  media: {
-    key: string;
-    size: number;
-    uploaded: string;
-    httpMetadata: {
-      contentType: string;
-    };
-  }[];
+  media: R2MediaItem[];
 }
 
 export default function Gallery() {
   const { data: mediaRes, isLoading, isError } = api.media.getMedia.useQuery(["media"], {});
   const { data: settingsRes } = api.settings.getPublicSettings.useQuery(["public_settings"], {});
 
-  const data = mediaRes?.status === 200 ? mediaRes.body : null;
-  const photoDriveUrl = settingsRes?.status === 200 ? settingsRes.body.settings["COMMUNITY_PHOTO_DRIVE_URL"] : null;
+  const data = mediaRes?.status === 200 ? (mediaRes.body as R2MediaResponse) : null;
+  const photoDriveUrl = settingsRes?.status === 200 ? (settingsRes.body as { settings: Record<string, string> }).settings?.["COMMUNITY_PHOTO_DRIVE_URL"] : null;
 
   // Filter only images and reverse to show newest first
   const photos = data?.media
-    ?.filter((m: any) => m.httpMetadata?.contentType?.startsWith("image/"))
+    ?.filter((m: R2MediaItem) => m.httpMetadata?.contentType?.startsWith("image/"))
     ?.reverse() || [];
 
   return (
@@ -46,7 +44,7 @@ export default function Gallery() {
         {photoDriveUrl && (
           <div className="flex-shrink-0">
             <a
-              href={photoDriveUrl}
+              href={String(photoDriveUrl)}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-6 ares-cut inline-flex items-center gap-2 transition-all duration-300 border border-white/20 hover:border-ares-gold"
@@ -72,7 +70,7 @@ export default function Gallery() {
         <div className="text-marble/50 italic text-center py-12 font-medium">No photos found in the ARES gallery.</div>
       ) : (
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-          {photos.map((photo: any, index: any) => {
+          {photos.map((photo: R2MediaItem, index: number) => {
             // Assign varying aspect ratios for masonry visualization
             const aspects = ["aspect-video", "aspect-[3/4]", "aspect-[4/5]", "aspect-square"];
             const assignedAspect = aspects[index % aspects.length];

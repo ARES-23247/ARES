@@ -41,21 +41,20 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<ProfileData>({
+  const { handleSubmit, reset, control } = useForm<ProfilePayload>({
     defaultValues: DEFAULT_PROFILE
   });
 
   const profileValues = useWatch({ control });
 
   const { data: meRes, isLoading: meLoading, isError: meError } = api.profiles.getMe.useQuery(["profile", "me"], undefined, {
-    enabled: !adminEditUserId
-  } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    query: { enabled: !adminEditUserId }
+  });
 
   const { data: adminRes, isLoading: adminLoading, isError: adminError } = api.users.adminGetProfile.useQuery(
     ["profile", adminEditUserId || "none"], 
     { params: { id: adminEditUserId || "" } }, 
-    { enabled: !!adminEditUserId } as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    { query: { enabled: !!adminEditUserId } }
   );
 
   const profileRes = adminEditUserId ? adminRes : meRes;
@@ -86,8 +85,7 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["admin_users"] });
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setMessage({ type: "error", text: err.message || "Failed to save profile." });
     }
   });
@@ -98,8 +96,7 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["admin_users"] });
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setMessage({ type: "error", text: err.message || "Failed to save profile." });
     }
   });
@@ -136,10 +133,9 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
   const sectionClass = "bg-obsidian/50 border border-white/10 ares-cut p-6 space-y-4";
 
   // Manual setter helper for legacy sub-forms
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const setProfile = (updater: any) => {
-    const next = typeof updater === "function" ? updater(profileValues) : updater;
-    reset(next);
+  const setProfile = (updater: Partial<ProfileData> | ((prev: ProfileData) => Partial<ProfileData>)) => {
+    const next = typeof updater === "function" ? updater(profileValues as ProfileData) : updater;
+    reset({ ...profileValues, ...next } as ProfileData);
   };
 
   return (
@@ -162,16 +158,11 @@ export default function ProfileEditor({ adminEditUserId }: { adminEditUserId?: s
       )}
 
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <IdentityForm profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <RoleForm profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <ContactForm profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <SecuritySettings profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <LogisticsForm profile={profileValues as any} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <IdentityForm profile={profileValues as ProfileData} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <RoleForm profile={profileValues as ProfileData} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <ContactForm profile={profileValues as ProfileData} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <SecuritySettings profile={profileValues as ProfileData} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
+        <LogisticsForm profile={profileValues as ProfileData} setProfile={setProfile} isMinor={isMinor} inputClass={inputClass} labelClass={labelClass} sectionClass={sectionClass} />
 
         {/* Save */}
         {message && (

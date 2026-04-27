@@ -26,10 +26,8 @@ describe('calendar utility', () => {
       click: clickSpy,
     } as unknown as HTMLAnchorElement);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.spyOn(document.body, 'appendChild').mockImplementation(appendChildSpy as any);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.spyOn(document.body, 'removeChild').mockImplementation(removeChildSpy as any);
+    vi.spyOn(document.body, 'appendChild').mockImplementation(appendChildSpy as unknown as typeof document.body.appendChild);
+    vi.spyOn(document.body, 'removeChild').mockImplementation(removeChildSpy as unknown as typeof document.body.removeChild);
   });
 
   afterEach(() => {

@@ -16,8 +16,7 @@ export default function IntegrationsManager() {
   const queryClient = useQueryClient();
   const [successMsg, setSuccessMsg] = useState("");
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { register, handleSubmit, reset, setValue, control, formState: { isDirty } } = useForm<SettingsData>();
+  const { handleSubmit, reset, setValue, control, formState: { isDirty } } = useForm<SettingsData>();
   const localSettings = useWatch({ control });
 
   const { data, isLoading, isError } = api.settings.getSettings.useQuery(["admin_settings"], {});
@@ -100,14 +99,10 @@ export default function IntegrationsManager() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <ZulipCard localSettings={localSettings as any} handleChange={handleChange} />
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <GithubCard localSettings={localSettings as any} handleChange={handleChange} />
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <SocialCard localSettings={localSettings as any} handleChange={handleChange} />
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <ResendCard localSettings={localSettings as any} handleChange={handleChange} />
+          <ZulipCard localSettings={localSettings as Record<string, string>} handleChange={handleChange} />
+          <GithubCard localSettings={localSettings as Record<string, string>} handleChange={handleChange} />
+          <SocialCard localSettings={localSettings as Record<string, string>} handleChange={handleChange} />
+          <ResendCard localSettings={localSettings as Record<string, string>} handleChange={handleChange} />
           <DataBackupCard />
         </div>
       </form>

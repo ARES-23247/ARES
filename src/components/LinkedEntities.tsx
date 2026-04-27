@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { Link2, ExternalLink, FileText, CheckCircle, Target, Trophy } from "lucide-react";
 import { api } from "../api/client";
 import { Link } from "react-router-dom";
@@ -41,7 +41,7 @@ export default function LinkedEntities({ type, id }: LinkedEntitiesProps) {
         <h4 className="text-[10px] font-black uppercase tracking-widest text-marble/60">Knowledge Graph Context</h4>
       </div>
       <div className="flex flex-wrap gap-2">
-        {links.map((link: any) => (
+        {links.map((link: { id: string; target_type: string; target_id: string; target_title?: string }) => (
           <Link
             key={link.id}
             to={`${typePathMap[link.target_type as keyof typeof typePathMap]}${link.target_id}`}

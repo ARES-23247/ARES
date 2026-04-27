@@ -54,12 +54,12 @@ export default function ProfilePage() {
     let cancelled = false;
 
     api.profiles.getPublicProfile.query({ params: { userId: userId || "" } })
-      .then((res: any) => { 
+      .then((res: { status: number; body: unknown }) => { 
         if (cancelled || res.status !== 200) return;
-        const data = res.body;
+        const data = res.body as { profile: ProfilePublic; badges?: BadgeDef[] };
          
-        setProfile(data.profile as ProfilePublic); 
-        setBadges(data.badges as BadgeDef[] || []);
+        setProfile(data.profile); 
+        setBadges(data.badges || []);
         setError(null);
         setLoading(false); 
       })
@@ -157,7 +157,7 @@ export default function ProfilePage() {
               </h3>
               <div className="flex flex-wrap gap-4">
                 {badges.map((b) => {
-                  const IconComp = ((LucideIcons as any)[b.icon] || LucideIcons.Award) as React.ComponentType<any>;
+                  const IconComp = ((LucideIcons as unknown as Record<string, React.ComponentType>)[b.icon] || LucideIcons.Award);
                   const colorClass = `text-${b.color_theme.replace("text-", "")}`;
                   return (
                     <div key={b.id} className="relative group cursor-help bg-obsidian border border-white/10 hover:border-ares-gold ares-cut p-4 transition-all flex flex-col items-center justify-center w-28 h-28">

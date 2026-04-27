@@ -3,6 +3,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { toast } from "sonner";
 
+export interface R2MediaItem {
+  key: string;
+  url: string;
+  folder: string;
+  size?: number;
+  type?: string;
+  uploadedAt?: string;
+}
+
 export function useMedia() {
   const queryClient = useQueryClient();
   const [syndicateKey, setSyndicateKey] = useState<string | null>(null);
@@ -11,9 +20,8 @@ export function useMedia() {
 
   const { data: mediaResponse, isLoading, isError } = api.media.adminList.useQuery(['media'], {});
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawBody = (mediaResponse?.body as any);
-  const assets = (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.media) ? rawBody.media : [])) ?? [];
+  const rawBody = mediaResponse?.body as unknown;
+  const assets: R2MediaItem[] = (Array.isArray(rawBody) ? rawBody : ((rawBody as { media?: R2MediaItem[] })?.media || [])) as R2MediaItem[];
 
   const deleteMutation = api.media.delete.useMutation({
     onSuccess: () => {
@@ -42,8 +50,7 @@ export function useMedia() {
       formData.append("folder", selectedFolderFilter === "All" ? "Library" : selectedFolderFilter);
       
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await uploadMutation.mutateAsync({ body: formData as any });
+        await uploadMutation.mutateAsync({ body: formData as unknown as never });
         successCount++;
       } catch (err) {
         console.error("Upload error for file", file.name, err);
@@ -74,10 +81,8 @@ export function useMedia() {
     }
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const uniqueFolders = Array.from(new Set(assets.map((a: any) => a.folder))).filter(Boolean) as string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter((a: any) => a.folder === selectedFolderFilter);
+  const uniqueFolders = Array.from(new Set(assets.map((a: R2MediaItem) => a.folder))).filter(Boolean) as string[];
+  const filteredAssets = selectedFolderFilter === "All" ? assets : assets.filter((a: R2MediaItem) => a.folder === selectedFolderFilter);
 
   return {
     assets,
@@ -93,16 +98,14 @@ export function useMedia() {
     setSyndicateCaption,
     deleteAsset: (key: string) => {
        if (confirm("Permanently purge this asset from R2?")) {
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         deleteMutation.mutate({ params: { key }, body: {} } as any);
+         deleteMutation.mutate({ params: { key }, body: {} } as unknown as never);
        }
     },
     isDeleting: deleteMutation.isPending,
     uploadAssets: bulkUpload,
     isUploading: uploadMutation.isPending,
     syndicateMutation,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    moveAsset: (key: string, newFolder: string) => moveMutation.mutate({ params: { key }, body: { folder: newFolder } } as any),
+    moveAsset: (key: string, newFolder: string) => moveMutation.mutate({ params: { key }, body: { folder: newFolder } } as unknown as never),
     isMoving: moveMutation.isPending
   };
 }

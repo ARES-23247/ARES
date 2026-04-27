@@ -22,8 +22,7 @@ export function useImageUpload() {
       if (res.status === 200) {
         return { url: res.body.url, altText: res.body.altText };
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        throw new Error((res.body as any).error || "Upload failed");
+        throw new Error((res.body as unknown as { error?: string })?.error || "Upload failed");
       }
     } catch (err) {
       const msg = String(err);

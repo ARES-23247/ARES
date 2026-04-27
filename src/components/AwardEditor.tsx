@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from "react";
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
@@ -40,7 +40,7 @@ export default function AwardEditor() {
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<any>({
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<AwardFormPayload>({
     resolver: zodResolver(awardFormSchema),
     defaultValues: {
       year: new Date().getFullYear(),
@@ -69,10 +69,10 @@ export default function AwardEditor() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-awards"] })
   });
 
-  const onFormSubmit = (data: any) => {
+  const onFormSubmit = (data: AwardFormPayload) => {
     const finalId = data.id || `${data.year}-${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
      
-    saveMutation.mutate({ body: { ...data, id: finalId } as any });
+    saveMutation.mutate({ body: { ...data, id: finalId } as AwardPayload });
   };
 
   return (

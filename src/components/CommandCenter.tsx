@@ -8,8 +8,7 @@ import BroadcastWidget from "./command/BroadcastWidget";
 import { useQueryClient } from "@tanstack/react-query";
 
 // -- Command Center Component -----------------------------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function CommandCenter({ stats: prefetchedStats }: { stats?: any }) {
+export default function CommandCenter({ stats: prefetchedStats }: { stats?: { posts: number; events: number; docs: number; integrations: Record<string, boolean> } }) {
   const queryClient = useQueryClient();
 
   // Using prefetched stats from parent to avoid waterfall

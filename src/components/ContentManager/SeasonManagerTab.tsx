@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { History } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ViewType } from "./shared";
@@ -32,7 +32,7 @@ export default function SeasonManagerTab({
 
   const { data, isLoading, isError } = api.seasons.adminList.useQuery(["admin-seasons"], {});
 
-  const rawBody = (data as any)?.body;
+  const rawBody = (data as unknown as { body: { seasons: SeasonRow[] } })?.body;
   const seasons = data?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.seasons) ? rawBody.seasons : [])) : [];
 
   const deleteMutation = api.seasons.delete.useMutation({
@@ -96,11 +96,11 @@ export default function SeasonManagerTab({
       )}
       onEdit={onEdit ? (s) => onEdit(s.start_year.toString()) : undefined}
       onDelete={(s) => deleteMutation.mutate({ params: { id: s.start_year.toString() }, body: null })}
-      isDeletePending={(s) => deleteMutation.isPending && (deleteMutation.variables as any)?.params?.id === s.start_year.toString()}
+      isDeletePending={(s) => deleteMutation.isPending && (deleteMutation.variables as unknown as { params?: { id: string } })?.params?.id === s.start_year.toString()}
       onRestore={(s) => restoreMutation.mutate({ params: { id: s.start_year.toString() }, body: null })}
-      isRestorePending={(s) => restoreMutation.isPending && (restoreMutation.variables as any)?.params?.id === s.start_year.toString()}
+      isRestorePending={(s) => restoreMutation.isPending && (restoreMutation.variables as unknown as { params?: { id: string } })?.params?.id === s.start_year.toString()}
       onPurge={(s) => purgeMutation.mutate({ params: { id: s.start_year.toString() }, body: null })}
-      isPurgePending={(s) => purgeMutation.isPending && (purgeMutation.variables as any)?.params?.id === s.start_year.toString()}
+      isPurgePending={(s) => purgeMutation.isPending && (purgeMutation.variables as unknown as { params?: { id: string } })?.params?.id === s.start_year.toString()}
       confirmId={confirmId}
       setConfirmId={setConfirmId}
     />

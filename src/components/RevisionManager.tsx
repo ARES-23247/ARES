@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { format } from "date-fns";
 import { History, RotateCcw, X, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -43,7 +43,7 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       onClose();
     },
-    onError: (err: any) => toast.error(err.message || "Post restoration failed")
+    onError: (err: Error) => toast.error(err.message || "Post restoration failed")
   });
 
   const docRestoreMutation = api.docs.restoreHistory.useMutation({
@@ -52,7 +52,7 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
       queryClient.invalidateQueries({ queryKey: ["docs"] });
       onClose();
     },
-    onError: (err: any) => toast.error(err.message || "Doc restoration failed")
+    onError: (err: Error) => toast.error(err.message || "Doc restoration failed")
   });
 
   const isLoading = historyQuery.isLoading;
@@ -69,7 +69,7 @@ export default function RevisionManager({ isOpen, onClose, type, slug, displayTi
 
   const isRestoring = postRestoreMutation.isPending || docRestoreMutation.isPending;
    
-  const restoringId = (postRestoreMutation.variables as any)?.params?.id || (docRestoreMutation.variables as any)?.params?.id;
+  const restoringId = (postRestoreMutation.variables as unknown as { params?: { id: string } })?.params?.id || (docRestoreMutation.variables as unknown as { params?: { id: string } })?.params?.id;
 
   if (!isOpen) return null;
 

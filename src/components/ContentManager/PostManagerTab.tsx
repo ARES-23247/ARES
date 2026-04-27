@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from "react";
 import { format } from "date-fns";
 import { Radio, FileText } from "lucide-react";
@@ -31,7 +31,7 @@ export default function PostManagerTab({
   
   const { data, isLoading, isError } = api.posts.getAdminPosts.useQuery(["admin_posts"], {});
 
-  const rawBody = (data as any)?.body;
+  const rawBody = (data as unknown as { body: { posts: PostItem[] } })?.body;
   const posts = data?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.posts) ? rawBody.posts : [])) as unknown as PostItem[] : [];
 
   const deleteMutation = api.posts.deletePost.useMutation({
@@ -41,7 +41,7 @@ export default function PostManagerTab({
       setConfirmId(null);
       toast.success("Post deleted");
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Delete failed");
     }
   });
@@ -127,11 +127,11 @@ export default function PostManagerTab({
         onReject={(p) => localRejectMutation.mutate({ params: { slug: p.slug }, body: {} })}
         isRejectPending={() => localRejectMutation.isPending}
         onDelete={(p) => deleteMutation.mutate({ params: { slug: p.slug }, body: {} })}
-        isDeletePending={(p) => deleteMutation.isPending && (deleteMutation.variables as any)?.params?.slug === p.slug}
+        isDeletePending={(p) => deleteMutation.isPending && (deleteMutation.variables as { params?: { slug: string } })?.params?.slug === p.slug}
         onRestore={(p) => localRestoreMutation.mutate({ params: { slug: p.slug }, body: {} })}
-        isRestorePending={(p) => localRestoreMutation.isPending && (localRestoreMutation.variables as any)?.params?.slug === p.slug}
+        isRestorePending={(p) => localRestoreMutation.isPending && (localRestoreMutation.variables as { params?: { slug: string } })?.params?.slug === p.slug}
         onPurge={(p) => localPurgeMutation.mutate({ params: { slug: p.slug }, body: {} })}
-        isPurgePending={(p) => localPurgeMutation.isPending && (localPurgeMutation.variables as any)?.params?.slug === p.slug}
+        isPurgePending={(p) => localPurgeMutation.isPending && (localPurgeMutation.variables as { params?: { slug: string } })?.params?.slug === p.slug}
         confirmId={confirmId}
         setConfirmId={setConfirmId}
       />

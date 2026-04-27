@@ -14,8 +14,7 @@ export default function MassEmailComposer() {
 
   const { isPending, data: statsRes } = api.communications.getStats.useQuery(["mass_email_stats"], {});
   const sendMutation = api.communications.sendMassEmail.useMutation({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (res: any) => {
+    onSuccess: (res: { status: number; body: { success?: boolean; recipientCount?: number; error?: string; message?: string } }) => {
       if (res?.status === 200 && res?.body?.success) {
         toast.success(`Mass email dispatched successfully to ${res.body.recipientCount} recipients.`);
         setSubject("");
@@ -25,8 +24,7 @@ export default function MassEmailComposer() {
         toast.error(`Email send failed: ${errorMsg}`);
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (err: any) => {
+    onError: (err: Error & { body?: { error?: string; message?: string } }) => {
       // ts-rest fires onError when the response doesn't match any contract schema.
       // Try to extract the actual error from the raw response.
       const detail = err?.body?.error || err?.body?.message || err?.message || "An unexpected server error occurred. Check Resend API key configuration.";
