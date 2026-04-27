@@ -97,6 +97,8 @@ export default function FinanceManager() {
     defaultValues: { type: "expense", amount: 0, category: "parts", date: new Date().toISOString().split('T')[0], description: "", season_id: selectedSeason }
   });
 
+  const isInitialLoading = !summaryRes && !isError;
+
   if (isError) {
     return (
       <div className="p-8 bg-ares-red/10 border border-ares-red/20 ares-cut-lg text-center">
@@ -106,6 +108,15 @@ export default function FinanceManager() {
         <div className="font-mono text-[10px] py-1 px-2 bg-black/40 text-ares-red/80 inline-block ares-cut-sm">
           STATUS: {summaryRes?.status || pipelineRes?.status || transactionsRes?.status || "UNKNOWN"}
         </div>
+      </div>
+    );
+  }
+
+  if (isInitialLoading || !summary) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <RefreshCw className="text-ares-cyan animate-spin" size={48} />
+        <p className="text-marble/40 font-black uppercase tracking-widest animate-pulse">Syncing Ledger...</p>
       </div>
     );
   }
