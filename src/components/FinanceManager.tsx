@@ -44,11 +44,14 @@ export default function FinanceManager() {
   const { data: pipelineRes } = api.finance.listPipeline.useQuery(["finance-pipeline", selectedSeason], { query: { season_id: selectedSeason || undefined } });
   const { data: transactionsRes } = api.finance.listTransactions.useQuery(["finance-transactions", selectedSeason], { query: { season_id: selectedSeason || undefined } });
 
-  const summary = summaryRes?.status === 200 ? summaryRes.body : { total_income: 0, total_expenses: 0, balance: 0 };
+  const summary = summaryRes?.status === 200 ? summaryRes.body : null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pipeline: any[] = pipelineRes?.status === 200 ? pipelineRes.body.pipeline : [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transactions: any[] = transactionsRes?.status === 200 ? transactionsRes.body.transactions : [];
+
+  const isError = summaryRes?.status === 500 || pipelineRes?.status === 500 || transactionsRes?.status === 500;
+
 
   // ── Mutations ──
   const savePipeline = api.finance.savePipeline.useMutation({
@@ -93,6 +96,19 @@ export default function FinanceManager() {
     resolver: zodResolver(financeTransactionSchema),
     defaultValues: { type: "expense", amount: 0, category: "parts", date: new Date().toISOString().split('T')[0], description: "", season_id: selectedSeason }
   });
+
+  if (isError) {
+    return (
+      <div className="p-8 bg-ares-red/10 border border-ares-red/20 ares-cut-lg text-center">
+        <RefreshCw className="mx-auto mb-4 text-ares-red animate-spin" size={32} />
+        <h3 className="text-ares-red font-black uppercase tracking-widest text-lg mb-2">Financial Link Severed</h3>
+        <p className="text-marble/60 text-sm mb-4">An error occurred while connecting to the team ledger.</p>
+        <div className="font-mono text-[10px] py-1 px-2 bg-black/40 text-ares-red/80 inline-block ares-cut-sm">
+          STATUS: {summaryRes?.status || pipelineRes?.status || transactionsRes?.status || "UNKNOWN"}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
