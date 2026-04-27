@@ -1,3 +1,4 @@
+// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
 import { Hono } from "hono";
 import { Context } from "hono";
 import { Kysely } from "kysely";

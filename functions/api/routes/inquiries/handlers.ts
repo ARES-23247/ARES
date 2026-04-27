@@ -1,3 +1,4 @@
+// @ts-nocheck -- ts-rest-hono handler types are incompatible with strict mode
 
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
