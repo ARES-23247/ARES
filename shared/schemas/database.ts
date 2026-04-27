@@ -693,6 +693,7 @@ export interface DB {
   sponsor_metrics: SponsorMetrics;
   sponsor_tokens: SponsorTokens;
   sponsors: Sponsors;
+  sponsorship_pipeline: SponsorshipPipeline;
   tasks: Tasks;
   user: User;
   user_badges: UserBadges;

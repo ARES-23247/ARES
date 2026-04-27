@@ -28,7 +28,8 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
     const { checkPersistentRateLimit } = await import("../middleware/security");
     const db = c.get("db") as Kysely<DB>;
 
-    const allowed = await checkPersistentRateLimit(db, `judge-login:${ip}`, 10, 60);
+    const ua = c.req.header("User-Agent") || "unknown";
+    const allowed = await checkPersistentRateLimit(db, `judge-login:${ip}`, ua, 10, 60);
     if (!allowed) return { status: 429 as const, body: { error: "Too many attempts. Please try again later." } };
 
     try {
@@ -62,7 +63,8 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
 
       const ip = c.req.header("CF-Connecting-IP") || "unknown";
       const { checkPersistentRateLimit } = await import("../middleware/security");
-      const allowed = await checkPersistentRateLimit(db, `judge-portfolio:${ip}`, 20, 60);
+      const ua = c.req.header("User-Agent") || "unknown";
+      const allowed = await checkPersistentRateLimit(db, `judge-portfolio:${ip}`, ua, 20, 60);
       if (!allowed) return { status: 429 as const, body: { error: "Too many requests" } };
 
       const valid = await db.selectFrom("judge_access_codes")

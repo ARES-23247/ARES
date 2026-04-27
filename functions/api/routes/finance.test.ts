@@ -119,7 +119,7 @@ describe("Hono Backend - /finance Router", () => {
     }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    expect(env.ARES_STORAGE.delete).toHaveBeenCalledWith("receipts/123.jpg");
+    expect((env as any).ARES_STORAGE.delete).toHaveBeenCalledWith("receipts/123.jpg");
     expect(mockDb.deleteFrom).toHaveBeenCalledWith("finance_transactions");
   });
 });

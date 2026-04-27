@@ -39,7 +39,7 @@ const mediaTsRestRouter: any = s.router(mediaContract as any, {
     getMedia: async (_: any, c: any) => {
     const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
     const ua = c.req.header("user-agent") || "unknown";
-    if (c.env.DEV_BYPASS !== "true" && !checkRateLimit(ip, 30, 60, ua)) {
+    if (c.env.DEV_BYPASS !== "true" && !checkRateLimit(ip, ua, 30, 60)) {
       return { status: 429 as const, body: "Too many requests" as any };
     }
 

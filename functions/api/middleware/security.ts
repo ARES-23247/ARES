@@ -46,8 +46,6 @@ export function checkRateLimit(ip: string, userAgent: string, limit = 100, windo
 
 // ── Write-Endpoint Rate Limiting (Persistent D1) ────────────────────────────
 
-import { DB } from "../../../shared/schemas/database";
-
 /**
  * Enhanced Persistent Rate Limit Check
  */
