@@ -295,7 +295,7 @@ export default function Docs() {
               </div>
 
               {/* ── Documentation Discussion ───────────────────────────── */}
-              {slug && <ZulipThreadViewer stream="announcements" topic={`Doc: ${currentDoc.title}`} />}
+              {slug && session && <ZulipThreadViewer stream="announcements" topic={`Doc: ${currentDoc.title}`} />}
             </motion.article>
           )}
         </main>

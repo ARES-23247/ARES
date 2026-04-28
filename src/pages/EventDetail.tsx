@@ -187,9 +187,11 @@ export default function EventDetail() {
           {id && <EventSignups eventId={id} isPotluck={event.is_potluck === 1} isVolunteer={event.is_volunteer === 1} />}
           
           {/* Zulip Discussion Thread */}
-          <div className="mt-12">
-            <ZulipThreadViewer stream="events" topic={`Event: ${event.title}`} />
-          </div>
+          {session && (
+            <div className="mt-12">
+              <ZulipThreadViewer stream="events" topic={`Event: ${event.title}`} />
+            </div>
+          )}
         </motion.article>
       </section>
     </motion.div>

@@ -200,10 +200,7 @@ const commentHandlers = {
 
 const commentTsRestRouter = s.router(commentContract, commentHandlers as any);
 
-commentsRouter.use("/:targetType/:targetId", async (c, next) => {
-  if (c.req.method === "POST") return ensureAuth(c, next);
-  return next();
-});
+commentsRouter.use("/:targetType/:targetId", ensureAuth);
 
 commentsRouter.use("/:id", async (c, next) => {
   if (c.req.method === "PATCH" || c.req.method === "DELETE") return ensureAuth(c, next);

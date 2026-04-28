@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, getSocialConfig } from "../middleware";
+import { AppEnv, ensureAdmin, ensureAuth, getSocialConfig } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { zulipContract } from "../../../shared/schemas/contracts/zulipContract";
 
@@ -126,5 +126,6 @@ const zulipHandlers = {
 const zulipTsRestRouter = s.router(zulipContract, zulipHandlers as any);
 
 zulipRouter.use("/presence", ensureAdmin);
+zulipRouter.use("/messages", ensureAuth);
 createHonoEndpoints(zulipContract, zulipTsRestRouter, zulipRouter);
 export default zulipRouter;
