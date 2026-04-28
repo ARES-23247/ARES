@@ -75,7 +75,7 @@ export default function FinanceManager() {
       setIsAdding(false);
       pipelineForm.reset();
     },
-    onError: (err: any) => {
+    onError: (err: Error & { body?: { error?: string } }) => {
       toast.error(`Failed to save lead: ${err?.body?.error || err?.message || "Unknown error"}`);
     }
   });
@@ -88,7 +88,7 @@ export default function FinanceManager() {
       setIsAdding(false);
       transactionForm.reset();
     },
-    onError: (err: any) => {
+    onError: (err: Error & { body?: { error?: string } }) => {
       toast.error(`Failed to save transaction: ${err?.body?.error || err?.message || "Unknown error"}`);
     }
   });

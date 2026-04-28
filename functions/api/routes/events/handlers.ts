@@ -60,13 +60,24 @@ export const eventHandlers: any = {
           .execute() as any[];
       }
 
+      // Resolve location addresses from the locations registry
+      const locationNames = [...new Set(results.map(e => e.location).filter(Boolean))] as string[];
+      const locationMap: Record<string, string> = {};
+      if (locationNames.length > 0) {
+        try {
+          const locs = await db.selectFrom("locations").select(["name", "address"]).where("name", "in", locationNames).execute();
+          locs.forEach(l => { if (l.address) locationMap[l.name] = l.address; });
+        } catch { /* locations table may not exist */ }
+      }
+
       const events = results.map(e => ({
         ...e,
         season_id: e.season_id ? Number(e.season_id) : null,
         is_deleted: Number(e.is_deleted || 0),
         status: (e as any).status || "published",
         category: (e as any).category || "internal",
-        meeting_notes: (e as any).meeting_notes || null
+        meeting_notes: (e as any).meeting_notes || null,
+        location_address: e.location ? (locationMap[e.location] || null) : null
       }));
 
       return { status: 200 as const, body: { events } };
@@ -111,6 +122,15 @@ export const eventHandlers: any = {
 
       if (!row) return { status: 404 as const, body: { error: "Event not found" } };
 
+      // Resolve location address from locations registry
+      let locationAddress: string | null = null;
+      if (row.location) {
+        try {
+          const loc = await db.selectFrom("locations").select("address").where("name", "=", row.location).executeTakeFirst();
+          locationAddress = loc?.address || null;
+        } catch { /* locations table may not exist */ }
+      }
+
       return { 
         status: 200 as const, 
         body: { 
@@ -118,7 +138,8 @@ export const eventHandlers: any = {
             ...row,
             season_id: row.season_id ? Number(row.season_id) : null,
             is_deleted: Number(row.is_deleted || 0),
-            meeting_notes: (user && user.role !== "unverified") ? row.meeting_notes : null
+            meeting_notes: (user && user.role !== "unverified") ? row.meeting_notes : null,
+            location_address: locationAddress
           },
           is_editor: user?.role === "admin"
         }
