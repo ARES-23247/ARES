@@ -13,7 +13,7 @@
 - [ ] **TST-01**: Maximize test coverage for the backend `finance` API routes, ensuring 100% line coverage for the new idempotency and deletion logic.
 
 ## Traceability
-- **CAL-01** → Phase 01
-- **FIN-01** → Phase 02
-- **FIN-02** → Phase 02
-- **TST-01** → Phase 02
+- **CAL-01** → Phase 03
+- **FIN-01** → Phase 03
+- **FIN-02** → Phase 03
+- **TST-01** → Phase 03
