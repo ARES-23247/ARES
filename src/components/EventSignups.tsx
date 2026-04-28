@@ -289,7 +289,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
           </p>
           {!isAuthenticated ? (
             <div>
-              <a href="/login" className="px-6 py-3 bg-ares-gold hover:brightness-110 text-black ares-cut-sm font-black text-xs uppercase tracking-widest inline-block transition-all shadow-lg shadow-ares-gold/20">Sign in with ARES ID</a>
+              <a href="/login" className="px-6 py-3 bg-ares-gold hover:brightness-110 ares-cut-sm font-black text-xs uppercase tracking-widest inline-block transition-all shadow-lg shadow-ares-gold/20" style={{ color: '#000' }}>Sign in with ARES ID</a>
               <p className="text-xs uppercase tracking-widest text-marble/20 mt-6 font-bold">
                 Don&apos;t have an ARES ID? <a href="/about" className="text-ares-gold hover:underline">Contact us</a>
               </p>
