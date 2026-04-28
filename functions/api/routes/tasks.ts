@@ -231,12 +231,11 @@ const taskHandlers = {
       if (!existing) return { status: 404, body: { error: "Task not found" } };
 
       const isAdmin = user.role === "admin";
+      const isMentor = user.role === "mentor" || user.role === "coach";
       const isOwner = existing.created_by === user.id;
+      const canAssign = isAdmin || isMentor || isOwner;
 
-      if (!isAdmin && !isOwner) {
-        return { status: 403, body: { error: "You are not authorized to update this task" } };
-      }
-
+      // Any authenticated user can update task fields
       const updates: any = { updated_at: new Date().toISOString() };
       if (body.title !== undefined) updates.title = body.title;
       if (body.description !== undefined) updates.description = body.description;
@@ -250,7 +249,11 @@ const taskHandlers = {
         .where("id", "=", params.id)
         .execute();
 
+      // Only admins, mentors/coaches, and the task creator can change assignments
       if (body.assignees !== undefined) {
+        if (!canAssign) {
+          return { status: 403, body: { error: "Only mentors, coaches, admins, or the task creator can change assignments" } };
+        }
         // Sync assignments: delete and re-insert
         await db.deleteFrom("task_assignments").where("task_id", "=", params.id).execute();
         if (body.assignees && body.assignees.length > 0) {
