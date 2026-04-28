@@ -28,6 +28,8 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 **v3.0 Shipped Features:**
 - Restored Finance Dashboard functionality, explicitly fixing the `estimated_value` coercion and `season_id` type mismatch preventing card creation.
 - Stabilized and verified the backend via the `ts-rest` contract and 100% vitest line coverage requirement.
+- Hotfix: Removed unsupported interactive D1 transactions (`db.transaction()`) from `savePipeline` to ensure Cloudflare compatibility.
+- Hotfix: Resolved outstanding ESLint warnings (empty blocks, unused variables) across the test suite.
 
 ## Next Milestone Goals
 *Run `/gsd-new-milestone` to define the next objective.*
