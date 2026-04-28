@@ -19,4 +19,3 @@ Last activity: 2026-04-28 — Milestone v3.0 Archived
 ## Accumulated Context
 
 ### Pending Todos
-- [ ] Zulip integration and user assignment for sponsorship cards
