@@ -176,14 +176,17 @@ const analyticsHandlers = {
         .limit(50)
         .execute();
 
-      const leaderboard = results.map(r => ({
-        user_id: String(r.user_id),
-        first_name: String(r.first_name || "ARES"),
-        last_name: r.last_name || null,
-        nickname: r.nickname || null,
-        member_type: String(r.member_type || "student"),
-        badge_count: Number(r.badge_count)
-      }));
+      const leaderboard = results.map(r => {
+        const isMinor = r.member_type === "student";
+        return {
+          user_id: String(r.user_id),
+          first_name: isMinor ? "ARES Member" : String(r.first_name || "ARES"),
+          last_name: isMinor ? null : (r.last_name || null),
+          nickname: r.nickname || null,
+          member_type: String(r.member_type || "student"),
+          badge_count: Number(r.badge_count)
+        };
+      });
 
       return { status: 200 as const, body: { leaderboard } as any };
     } catch {

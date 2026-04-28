@@ -643,8 +643,24 @@ const docTsRestRouter: any = s.router(docContract as any, {
 // SEC-F01: Authenticated users can submit revisions via /admin/save
 docsRouter.use("/admin/save", ensureAuth);
 
-// SEC-F02: All other /admin paths require full admin privileges
-docsRouter.use("/admin/*", ensureAdmin);
+// SEC-F02: All other /admin paths require full admin privileges. 
+// We list them explicitly to avoid matching /admin/save.
+const adminPrivilegedPaths = [
+  "/admin/list",
+  "/admin/:slug/detail",
+  "/admin/:slug/sort",
+  "/admin/:slug/history",
+  "/admin/:slug/history/*",
+  "/admin/:slug/approve",
+  "/admin/:slug/reject",
+  "/admin/:slug/undelete",
+  "/admin/:slug/purge",
+  "/admin/:slug" // deleteDoc
+];
+
+adminPrivilegedPaths.forEach(path => {
+  docsRouter.use(path, ensureAdmin);
+});
 
 createHonoEndpoints(docContract, docTsRestRouter, docsRouter);
 export default docsRouter;

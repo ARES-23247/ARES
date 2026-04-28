@@ -50,6 +50,7 @@ export default function EventDetail() {
   if (isError || !event) return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white font-mono text-center">Event Record Erased or Unfound.</div>;
 
   const isPast = isBefore(new Date(event.date_start), new Date());
+  const locationAddress = (event as EventRow & { location_address?: string | null }).location_address;
   
   const handleSaveToCalendar = () => {
     if (event) {
@@ -142,7 +143,7 @@ export default function EventDetail() {
               <p className="flex items-center gap-2">
                 <span className="text-white">Location:</span>{" "}
                 <a
-                  href={`https://maps.google.com/maps?q=${encodeURIComponent((event as any).location_address || (event.location.includes('—') ? event.location.split('—').pop()!.trim() : event.location))}`}
+                  href={`https://maps.google.com/maps?q=${encodeURIComponent(locationAddress || (event.location.includes('—') ? event.location.split('—').pop()!.trim() : event.location))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline underline-offset-2 decoration-ares-bronze/50 hover:text-white hover:decoration-white transition-colors"

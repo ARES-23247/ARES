@@ -80,11 +80,17 @@ export default function MassEmailComposer() {
             }`}
           >
             {sendMutation.isPending ? (
-              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+              <>
+                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" aria-hidden="true"></div>
+                <span>DISPATCHING...</span>
+                <span className="sr-only">Sending mass email, please wait.</span>
+              </>
             ) : (
-              <Send size={18} />
+              <>
+                <Send size={18} />
+                <span>DISPATCH BLAST</span>
+              </>
             )}
-            DISPATCH BLAST
           </button>
         </div>
       </div>

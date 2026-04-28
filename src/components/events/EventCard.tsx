@@ -12,6 +12,7 @@ export interface EventItem {
   date_start: string;
   date_end: string | null;
   location: string | null;
+  location_address?: string | null;
   description: string;
   cover_image: string | null;
   tba_event_key: string | null;
@@ -59,7 +60,7 @@ export const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean
           </span>
           {event.location && (
             <a
-              href={`https://maps.google.com/maps?q=${encodeURIComponent((event as any).location_address || (event.location.includes('—') ? event.location.split('—').pop()!.trim() : event.location))}`}
+              href={`https://maps.google.com/maps?q=${encodeURIComponent(event.location_address || (event.location.includes('—') ? event.location.split('—').pop()!.trim() : event.location))}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 relative z-20 pointer-events-auto hover:text-ares-gold transition-colors"
