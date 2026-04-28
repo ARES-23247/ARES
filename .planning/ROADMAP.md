@@ -1,13 +1,12 @@
 # Project Roadmap
 
-## Active Milestone: v3.1 Calendar Integration Ecosystem
+## Active Milestone: TBD (Run `/gsd-new-milestone`)
 
 | Phase | Title | Description | Status |
 |-------|-------|-------------|--------|
-| 01 | Calendar UI Foundation | Build the themed React calendar component and subscription links. | done |
-| 02 | Event API & Schema | Construct D1 database tables and tRPC routes for local event management. | done |
-| 03 | Google Sync Pipeline | Integrate Google Calendar API and implement the push synchronization layer. | done |
+| - | - | - | - |
 
 ## Completed Milestones
+- [x] v3.1 Calendar Integration Ecosystem ([Archive](milestones/v3.1-ROADMAP.md))
 - [x] v3.0 Finance Dashboard Restoration ([Archive](milestones/v3.0-ROADMAP.md))
 - [x] v1.1 Tech Debt Cleanup ([Archive](milestones/v1.1-ROADMAP.md))

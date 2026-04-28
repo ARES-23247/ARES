@@ -22,17 +22,26 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 2 (Tech Debt Cleanup)** — Addressed architectural fragility, resolved `waitUntil` test flakiness, standardized Kysely database mocks, and hardened media upload validation.
 
 ### Active
-- Calendar Integration Ecosystem (v3.1) - Local event management with ARES styling and Google Calendar sync out.
+- TBD (Run `/gsd-new-milestone` to define next active milestone)
 
 ## Current State
 
-**v3.0 Shipped Features:**
+**v3.1 Shipped Features:**
+- Replaced the embedded Google Calendar iframe with a native React calendar component.
+- Built D1-backed event management with automatic background syncing to Google Calendar via `waitUntil`.
+- Established `ts-rest` contracts for full CRUD local event management.
+- Successfully achieved 100% test coverage across all new event API routes.
+
+<details>
+<summary>v3.0 Shipped Features</summary>
+
 - Restored Finance Dashboard functionality, explicitly fixing the `estimated_value` coercion and `season_id` type mismatch preventing card creation.
 - Stabilized and verified the backend via the `ts-rest` contract and 100% vitest line coverage requirement.
 - Hotfix: Removed unsupported interactive D1 transactions (`db.transaction()`) from `savePipeline` to ensure Cloudflare compatibility.
 - Hotfix: Resolved outstanding ESLint warnings (empty blocks, unused variables) across the test suite.
 - Hotfix: Fixed Playwright E2E test failures (`interactive-systems.spec.ts`) by correctly mocking the Better-Auth session required for Zulip components to render.
 - Feature: Integrated Zulip thread comments and multi-user task assignments to the Sponsorship Kanban pipeline.
+</details>
 
 ## Next Milestone Goals
 *Run `/gsd-new-milestone` to define the next objective.*
