@@ -1,29 +1,28 @@
----
-mapped_date: 2026-04-28
----
-# Tech Stack
+# STACK.md
 
-## Overview
-ARESWEB is a modern full-stack web application leveraging Cloudflare's serverless ecosystem.
+**Date:** 2026-04-28
 
-## Core Stack
-- **Frontend Framework:** React 18 with Vite
-- **Backend Framework:** Hono 4.7
-- **Language:** TypeScript 5
-- **Routing:** React Router (Frontend) / Hono (Backend)
-- **API Contract:** ts-rest (`@ts-rest/core`, `@ts-rest/react-query`, `ts-rest-hono`)
-- **Database:** Cloudflare D1
-- **ORM/Query Builder:** Kysely 0.28 with `kysely-d1` and `kysely-codegen`
+## Core Technologies
 
-## Key Libraries
-- **Styling:** TailwindCSS 3.4
-- **State Management:** Zustand 5.0, TanStack React Query 5
-- **UI Components:** Radix UI, Tremor, Lucide React
-- **Rich Text Editing:** TipTap 3.22 (with custom Mermaid extension)
-- **Authentication:** Better-Auth 1.6
-- **Forms/Validation:** React Hook Form, Zod 4.3
+- **Language:** TypeScript 5.x
+- **Frontend Framework:** React 18, Vite 6
+- **Backend Framework:** Hono 4.x (Cloudflare Workers via `ts-rest-hono`)
+- **Database:** Cloudflare D1 (SQLite) with Kysely Query Builder
+- **Deployment:** Cloudflare Pages (dist output)
 
-## Rationale
-- The use of **Cloudflare Pages/Workers** provides edge deployment with low latency and tight integration with D1.
-- **Hono** is highly optimized for Cloudflare Workers.
-- **ts-rest** ensures strict end-to-end type safety between the frontend and backend without requiring GraphQL.
+## Key Dependencies
+
+- **Styling:** Tailwind CSS 3.4
+- **Component Libraries:** Radix UI (`@radix-ui/*`), Headless UI, Tremor (charts)
+- **State Management:** Zustand, React Query (`@tanstack/react-query`)
+- **Data Fetching/Contracts:** `@ts-rest/core`, `@ts-rest/react-query`
+- **Authentication:** Better Auth (`better-auth`) with Kysely Adapter
+- **Editor:** Tiptap (ProseMirror based)
+- **3D Graphics:** Three.js (`three`, `@react-three/fiber`, `@react-three/drei`)
+- **Animations:** Framer Motion
+
+## Rationale & Notes
+- Cloudflare Pages + Functions is used for an edge-first, serverless architecture.
+- `ts-rest` establishes a typesafe RPC-like contract between the frontend and the Hono backend.
+- Kysely provides typesafe SQL query building for D1.
+- Better Auth handles robust authentication integrated with the D1 database.

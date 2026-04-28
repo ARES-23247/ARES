@@ -1,16 +1,9 @@
----
-mapped_date: 2026-04-28
----
-# Areas of Concern & Tech Debt
+# CONCERNS.md
 
-## Test Flakiness
-- **`waitUntil` behavior:** Asynchronous execution inside `c.executionCtx.waitUntil()` can cause race conditions or unhandled promise rejections in the Vitest environment if the test exits before the microtask queue clears. Tests often rely on `setTimeout(resolve, 10)` as a workaround.
+**Date:** 2026-04-28
 
-## Database Mocks
-- **Kysely Expression Builders:** Mocking complex Kysely SQL functions (like `eb.fn.sum()`) requires precise `mockImplementation` logic to ensure callbacks are executed, which has historically caused coverage gaps.
-
-## Media Uploads
-- Magic byte validation for PNG uploads (`89504e47`) requires careful `ArrayBuffer` slicing to prevent malformed headers.
-
-## Cloudflare D1 Constraints
-- Local testing relies on `wrangler d1 execute`, and SQLite limits apply.
+## Technical Debt & Issues
+- **Coverage Burden:** The project mandates 100% function coverage, which often leads to complex mocking patterns (e.g., Kysely expression builders) just to satisfy thresholds, occasionally introducing test race conditions.
+- **Cloudflare Edge Limitations:** Heavy dependencies like Tiptap, Three.js, and complex Markdown parsers must be carefully chunked to respect Cloudflare Pages asset limits and parsing times.
+- **AI Token Leakage / CI Blocker:** Cloudflare AI bindings were moved to dashboard-only to prevent CI/CD token blockers (`wrangler.toml` notes this).
+- **Local Dev vs Prod DB Sync:** Maintaining `schema.sql` parity with Cloudflare D1 across local setups requires strict discipline (no ORM migration engine is active).

@@ -1,18 +1,24 @@
----
-mapped_date: 2026-04-28
----
-# Testing Practices
+# TESTING.md
 
-## Frameworks
-- **Unit/Integration Testing:** `Vitest` (with V8 coverage).
-- **E2E Testing:** `Playwright` (`@playwright/test`).
-- **Accessibility:** `pa11y-ci` and `@axe-core/playwright`.
+**Date:** 2026-04-28
 
-## Backend Testing Patterns
-- Test files reside alongside their implementation (`route.test.ts`).
-- **Mocking:** Kysely query builders are heavily mocked using `vi.fn().mockImplementation()`. 
-- **Middlewares:** Auth and RBAC middleware are mocked in `functions/api/routes/__mocks__` or at the top of test files using `vi.mock()`.
+## Testing Frameworks
+- **Unit & Integration:** `vitest` (Vite-based test runner).
+- **Environment:** `jsdom` is used for React component testing.
+- **E2E:** Playwright (`@playwright/test`) for browser automation tests.
+- **Accessibility:** `pa11y-ci` used via `npm run pa11y`.
 
-## Coverage Rules
-- **CRITICAL:** The project enforces a strict **100% Function Coverage** threshold for the backend API.
-- CI/CD will block deployments if function coverage drops below 100%.
+## Structure
+- Tests colocate or reside in dedicated test directories (`/tests` or `/src/test`).
+- E2E tests reside in `/tests/e2e/` (excluded from Vitest runs).
+
+## Coverage Requirements
+- The project enforces stringent CI/CD coverage thresholds defined in `vite.config.ts`:
+  - Lines: 85%
+  - Functions: 100%
+  - Branches: 80%
+  - Statements: 85%
+- Areas prioritized for coverage: `src/utils/**`, `src/hooks/**`, `functions/api/routes/**`.
+
+## Mocking
+- Handled primarily by `msw` (Mock Service Worker) to intercept API requests during UI testing, and Vitest's built-in mocking for internal modules.
