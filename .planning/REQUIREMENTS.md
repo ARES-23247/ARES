@@ -3,7 +3,7 @@
 ## Active Requirements
 
 ### Calendar (CAL)
-- [ ] **CAL-02**: Hovering over calendar events should not cause scrollbars to appear in the calendar cells or disrupt the month view grid layout.
+- [x] **CAL-02**: Hovering over calendar events should not cause scrollbars to appear in the calendar cells or disrupt the month view grid layout.
 
 ## Traceability
 - **CAL-02** → Phase 04
