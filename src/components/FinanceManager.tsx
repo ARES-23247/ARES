@@ -199,7 +199,7 @@ export default function FinanceManager() {
             {activeTab === 'pipeline' ? (
               <form onSubmit={pipelineForm.handleSubmit(data => savePipeline.mutate({ body: { ...data, season_id: selectedSeason || undefined } }))} className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <DashboardInput id="pipeline-company" label="Company Name" {...pipelineForm.register("company_name")} error={pipelineForm.formState.errors.company_name?.message} fullWidth />
-                <DashboardInput id="pipeline-value" label="Est. Value ($)" type="number" {...pipelineForm.register("estimated_value", { valueAsNumber: true })} />
+                <DashboardInput id="pipeline-value" label="Est. Value ($)" type="number" {...pipelineForm.register("estimated_value")} error={pipelineForm.formState.errors.estimated_value?.message} />
                 <div className="flex flex-col gap-1">
                   <label htmlFor="pipeline-status" className="text-[10px] font-black uppercase tracking-widest text-marble/40 px-1">Initial Status</label>
                   <select id="pipeline-status" {...pipelineForm.register("status")} className="bg-white/5 border border-white/10 ares-cut-sm p-3 text-sm text-white focus:border-ares-red outline-none">
@@ -219,7 +219,7 @@ export default function FinanceManager() {
                     <option value="income" className="bg-obsidian text-white">Income (+)</option>
                   </select>
                 </div>
-                <DashboardInput id="ledger-amount" label="Amount ($)" type="number" step="0.01" {...transactionForm.register("amount", { valueAsNumber: true })} error={transactionForm.formState.errors.amount?.message} />
+                <DashboardInput id="ledger-amount" label="Amount ($)" type="number" step="0.01" {...transactionForm.register("amount")} error={transactionForm.formState.errors.amount?.message} />
                 <DashboardInput id="ledger-date" label="Date" type="date" {...transactionForm.register("date")} />
                 <DashboardInput id="ledger-category" label="Category" {...transactionForm.register("category")} placeholder="e.g. Parts, Travel, Reg" />
                 <DashboardInput id="ledger-desc" label="Description" {...transactionForm.register("description")} placeholder="Details about the transaction..." fullWidth />

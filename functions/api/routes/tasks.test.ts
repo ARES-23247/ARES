@@ -258,7 +258,7 @@ describe("Hono Backend - /tasks Router", () => {
   it("POST / - sends Zulip notification on create", async () => {
     vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
     mockDb.execute = vi.fn().mockResolvedValue([{ email: "alice@test.com", user_id: "user2", nickname: null }]);
-    vi.mocked(sendZulipMessage).mockResolvedValueOnce();
+    vi.mocked(sendZulipMessage).mockResolvedValueOnce("msg123");
 
     const res = await testApp.request("/", {
       method: "POST",
@@ -454,7 +454,7 @@ describe("Hono Backend - /tasks Router", () => {
     vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "admin" } as any);
     mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "task1", created_by: "user2", title: "Task" });
     mockDb.execute = vi.fn().mockResolvedValue([{ email: "bob@test.com", user_id: "user3", nickname: "Bob" }]);
-    vi.mocked(sendZulipMessage).mockResolvedValueOnce();
+    vi.mocked(sendZulipMessage).mockResolvedValueOnce("msg123");
     
     const res = await testApp.request("/task1", {
       method: "PATCH",
