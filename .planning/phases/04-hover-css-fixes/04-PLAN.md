@@ -12,8 +12,8 @@ autonomous: true
 - CAL-02: Hovering over calendar events should not cause scrollbars to appear in the calendar cells or disrupt the month view grid layout.
 
 ## Verification Criteria
-- [ ] Hovering over a calendar event does not trigger a scrollbar on the parent cell.
-- [ ] The calendar layout remains stable and does not shift.
+- [x] Hovering over a calendar event does not trigger a scrollbar on the parent cell.
+- [x] The calendar layout remains stable and does not shift.
 
 ## Tasks
 

@@ -85,12 +85,12 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
                   {format(day, "d")}
                 </span>
               </div>
-              <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] scrollbar-thin scrollbar-thumb-white/10">
+              <div className="flex flex-col gap-1 relative z-10">
                 {dayEvents.slice(0, 3).map((event) => (
                   <Link
                     to={`/events/${event.id}`}
                     key={event.id}
-                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm truncate block transition-transform hover:scale-105 ${getEventColor(
+                    className={`relative z-10 text-[10px] font-bold px-1.5 py-0.5 rounded-sm truncate block transition-all hover:scale-105 hover:z-50 hover:shadow-lg origin-left ${getEventColor(
                       event.type
                     )}`}
                     title={event.title}

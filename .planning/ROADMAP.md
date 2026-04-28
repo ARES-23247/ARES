@@ -9,7 +9,7 @@
 
 ### 🚧 v3.3 Calendar UX Refinement (In Progress)
 
-- [ ] Phase 04: Calendar Hover CSS Fixes (1 plan)
+- [x] Phase 04: Calendar Hover CSS Fixes (1 plan)
 
 <details>
 <summary>✅ v3.2 Operations & UX Refinement (Phases 01-03) — SHIPPED 2026-04-28</summary>
@@ -27,7 +27,7 @@
 | 01. Calendar Subscriptions | v3.2      | 1/1            | Complete    | 2026-04-28 |
 | 02. Finance Fixes          | v3.2      | 1/1            | Complete    | 2026-04-28 |
 | 03. Verification           | v3.2      | 0/0            | Complete    | 2026-04-28 |
-| 04. Hover CSS Fixes        | v3.3      | 0/1            | Not started | -          |
+| 04. Hover CSS Fixes        | v3.3      | 1/1            | Complete    | 2026-04-28 |
 
 ---
 
