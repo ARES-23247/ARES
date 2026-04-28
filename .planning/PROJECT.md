@@ -22,6 +22,16 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 2 (Tech Debt Cleanup)** — Addressed architectural fragility, resolved `waitUntil` test flakiness, standardized Kysely database mocks, and hardened media upload validation.
 
 ### Active
+
+## Current Milestone: v3.0 Finance Dashboard Restoration
+
+**Goal:** Restore full functionality to the `/dashboard/finance` page, specifically fixing the inability to create cards, and ensure the end-to-end finance feature is fully operational.
+
+**Target features:**
+- Debug and fix the "create cards" functionality on the Finance dashboard.
+- Audit and stabilize the surrounding finance UI and API interactions to ensure the page is fully functional.
+- Ensure any fixes adhere to the 100% backend coverage and CI/CD requirements.
+
 - [ ] Maintain functionality of the website and ensure new features align with the strict CI/CD and coverage requirements.
 
 ### Out of Scope
@@ -35,5 +45,22 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 | Cloudflare D1 + Hono | Low latency, edge native, zero-config deployment. | Validated |
 | 100% Test Coverage | Ensures no regressions in the API logic. | Validated |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-04-28 after initialization*
+*Last updated: 2026-04-28 after v3.0 initialization*
