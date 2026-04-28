@@ -140,7 +140,15 @@ export default function EventDetail() {
             </p>
             {event.location && (
               <p className="flex items-center gap-2">
-                <span className="text-white">Location:</span> {event.location}
+                <span className="text-white">Location:</span>{" "}
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2 decoration-ares-bronze/50 hover:text-white hover:decoration-white transition-colors"
+                >
+                  {event.location} ↗
+                </a>
               </p>
             )}
           </div>

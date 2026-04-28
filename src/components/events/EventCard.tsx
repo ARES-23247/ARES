@@ -58,10 +58,16 @@ export const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean
             {formattedTime}
           </span>
           {event.location && (
-            <span className="flex items-center gap-1.5">
-              <span className={`w-2.5 h-2.5 rounded-full ${event.category === 'internal' ? 'bg-ares-red' : event.category === 'outreach' ? 'bg-ares-gold' : 'bg-ares-cyan'} opacity-50`}></span> 
-              {event.location}
-            </span>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 relative z-20 pointer-events-auto hover:text-ares-gold transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className={`w-2.5 h-2.5 rounded-full ${event.category === 'internal' ? 'bg-ares-red' : event.category === 'outreach' ? 'bg-ares-gold' : 'bg-ares-cyan'} opacity-50`}></span>
+              {event.location} ↗
+            </a>
           )}
         </div>
         
