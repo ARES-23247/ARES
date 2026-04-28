@@ -208,9 +208,9 @@ export default function Navbar() {
               </Link>          )}
 
 
-          <Link to="/sponsors" className="hidden md:flex bg-ares-red text-white px-6 h-9 ares-cut-sm font-bold uppercase tracking-widest text-xs hover:bg-ares-bronze hover:text-white transition-all shadow-lg shadow-ares-red/20 border border-ares-red/50 items-center gap-2">
+          <Link id="nav-support-us" to="/sponsors" className="hidden md:flex bg-ares-red-dark text-white px-6 h-9 ares-cut-sm font-bold uppercase tracking-widest text-xs hover:bg-ares-red hover:text-white transition-all shadow-lg border border-ares-red-dark items-center gap-2">
             <Heart size={14} className="fill-white" />
-            <span>Support Us</span>
+            Support Us
           </Link>
         </div>
 

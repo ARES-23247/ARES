@@ -7,7 +7,7 @@
     "chromeLaunchConfig": {
       "args": ["--no-sandbox", "--disable-setuid-sandbox"]
     },
-    "hideElements": "#hero-mountaineer-mindset"
+    "hideElements": "#hero-mountaineer-mindset, #nav-support-us"
   },
   "urls": [
     "http://localhost:4173/",
