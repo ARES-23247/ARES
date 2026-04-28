@@ -8,6 +8,7 @@
 - [ ] **COL-03**: User can see live cursors, selection highlights, and presence avatars of other active editors in the document.
 - [ ] **COL-04**: System correctly persists the CRDT Yjs document state back to the D1 database as static HTML/AST for read-only rendering without WebSockets.
 - [ ] **COL-05**: System utilizes Liveblocks Webhooks (`YjsDocumentUpdated` or `RoomOutdated`) to automatically sync the Liveblocks room state back to the D1 database when users disconnect, preventing data loss if a user leaves without explicitly saving.
+- [ ] **COL-06**: System maintains separation between "draft" (Liveblocks CRDT state/auto-saves) and "published" (public D1 database state), ensuring webhook auto-saves only update the draft revision until a user explicitly clicks "Publish Changes".
 
 ## Traceability
 *(To be populated by Roadmap)*
