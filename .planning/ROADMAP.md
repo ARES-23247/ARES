@@ -1,20 +1,11 @@
 # Roadmap
 
-## Milestones
+## Active Phase
 
-- ✅ **v1.1 Tech Debt Cleanup** — Phases 1-2 (shipped 2026-04-28)
-
-## Phases
-
-<details>
-<summary>✅ v1.1 Tech Debt Cleanup (Phases 1-2) — SHIPPED 2026-04-28</summary>
-
-- [x] Phase 1: 100% Backend Test Coverage — completed 2026-04-28
-- [x] Phase 2: Tech Debt Cleanup — completed 2026-04-28
-
-</details>
+### Phase 1: Finance Card Creation Fix
+**Goal:** Debug and resolve the inability to create finance cards via the `/dashboard/finance` interface.
+**Requirements:** FIN-01, FIN-02, FIN-03, FIN-04
 
 ## Future Phases
 
-### Phase 3: Feature Implementation
-**Goal:** Implement new features while maintaining strict test coverage standards.
+*(No future phases currently defined)*
