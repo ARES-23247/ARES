@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { test, expect } from '@playwright/test';
 
 test.describe('Interactive Systems & Workflows', () => {
@@ -82,6 +82,15 @@ test.describe('Interactive Systems & Workflows', () => {
   });
 
   test('Interactive Zulip cards attempt navigation when clicked', async ({ page }) => {
+    await page.route('**/api/auth/get-session', async route => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          session: { id: 'mock', userId: 'mock', expiresAt: '2099-01-01T00:00:00.000Z', ipAddress: '127.0.0.1', userAgent: 'test' },
+          user: { id: 'mock', name: 'Test', email: 't@t.com', emailVerified: true, createdAt: '2020', updatedAt: '2020', role: 'user' }
+        }
+      });
+    });
     // Mock the single event route to return a zulip topic and messages
     await page.route('**/api/events/*', async route => {
       await route.fulfill({
