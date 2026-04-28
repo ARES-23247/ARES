@@ -11,6 +11,8 @@ export const sponsorshipPipelineSchema = z.object({
   notes: z.string().nullable().optional(),
   contact_person: z.string().nullable().optional(),
   season_id: z.coerce.number().nullable().optional(),
+  zulip_message_id: z.string().nullable().optional(),
+  assignees: z.array(z.string()).optional().default([]),
 });
 
 export const transactionTypeSchema = z.enum(["income", "expense"]);

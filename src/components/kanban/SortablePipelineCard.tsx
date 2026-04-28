@@ -1,7 +1,7 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trash2, GripVertical, DollarSign } from "lucide-react";
+import { Trash2, GripVertical, DollarSign, User } from "lucide-react";
 
 interface PipelineItem {
   id?: string;
@@ -10,6 +10,8 @@ interface PipelineItem {
   estimated_value: number;
   notes?: string | null;
   contact_person?: string | null;
+  zulip_message_id?: string | null;
+  assignees?: string[];
 }
 
 interface SortablePipelineCardProps {
@@ -81,11 +83,28 @@ export function SortablePipelineCard({ item, onDelete, onEdit }: SortablePipelin
           <DollarSign size={10} className="mr-0.5 opacity-70" />
           {Number(item.estimated_value || 0).toLocaleString()}
         </div>
-        {item.contact_person && (
-          <div className="text-[10px] font-medium text-marble/40 truncate max-w-[120px]" title={item.contact_person}>
-            {item.contact_person}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {item.contact_person && (
+            <div className="text-[10px] font-medium text-marble/40 truncate max-w-[80px]" title={item.contact_person}>
+              {item.contact_person}
+            </div>
+          )}
+          {item.assignees && item.assignees.length > 0 && (
+            <div className="flex -space-x-1" title={`${item.assignees.length} assignees`}>
+              {item.assignees.slice(0, 3).map((a, i) => (
+                <div key={i} className="w-4 h-4 rounded-full bg-ares-red/20 border border-ares-red flex items-center justify-center text-[8px] font-bold text-ares-red">
+                  {/* Normally would show initials or avatar here */}
+                  <span className="opacity-80"><User size={8} /></span>
+                </div>
+              ))}
+              {item.assignees.length > 3 && (
+                <div className="w-4 h-4 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[8px] font-bold text-marble">
+                  +{item.assignees.length - 3}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

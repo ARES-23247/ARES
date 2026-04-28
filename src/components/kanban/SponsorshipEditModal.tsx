@@ -1,6 +1,8 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { X, Trash2, Building, DollarSign, Type, AlignLeft } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Trash2, Building, DollarSign, Type, AlignLeft, User, CheckCircle2, Plus } from "lucide-react";
+import { api } from "../../api/client";
+import ZulipThreadViewer from "../events/ZulipThreadViewer";
 
 interface PipelineItem {
   id?: string;
@@ -9,6 +11,8 @@ interface PipelineItem {
   estimated_value: number;
   notes?: string | null;
   contact_person?: string | null;
+  zulip_message_id?: string | null;
+  assignees?: string[];
 }
 
 interface SponsorshipEditModalProps {
@@ -26,7 +30,33 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
   const [estimatedValue, setEstimatedValue] = useState(item.estimated_value?.toString() || "0");
   const [contactPerson, setContactPerson] = useState(item.contact_person || "");
   const [notes, setNotes] = useState(item.notes || "");
+  const [assigneeIds, setAssigneeIds] = useState<string[]>(item.assignees || []);
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { data: usersRes } = api.users.getUsers.useQuery(
+    ["team-members-for-sponsorships"],
+    {},
+    { staleTime: 60000 }
+  );
+  const teamMembers = usersRes?.status === 200 ? usersRes.body.users : [];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowAssigneeDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleAssignee = (id: string) => {
+    setAssigneeIds(prev => 
+      prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
+    );
+  };
 
   const handleSave = async () => {
     if (!item.id) return;
@@ -37,7 +67,8 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
         status,
         estimated_value: Number(estimatedValue),
         contact_person: contactPerson,
-        notes: notes
+        notes: notes,
+        assignees: assigneeIds,
       });
     } finally {
       setIsSaving(false);
@@ -149,6 +180,64 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
                 className="w-full bg-white/5 border border-white/10 ares-cut-sm py-2 pl-10 pr-4 text-sm text-white focus:border-ares-red outline-none resize-none"
               />
             </div>
+          </div>
+
+          <div className="relative" ref={dropdownRef}>
+            <label className="text-[10px] font-black uppercase tracking-widest text-marble/40 mb-1 flex items-center gap-1 px-1">
+              <User size={10} />
+              Assignees ({assigneeIds.length})
+            </label>
+            
+            <div className="flex flex-wrap gap-1.5 p-2 bg-white/5 border border-white/10 ares-cut-sm min-h-[42px] content-start">
+              {teamMembers.filter((m: { id: string; nickname?: string | null; name?: string | null }) => assigneeIds.includes(m.id)).map((m: { id: string; nickname?: string | null; name?: string | null }) => (
+                <span key={m.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-ares-red/10 border border-ares-red/30 text-ares-red text-[10px] font-black ares-cut-sm uppercase tracking-wider">
+                  {m.nickname || m.name}
+                  <button onClick={() => toggleAssignee(m.id)} className="hover:text-white transition-colors" title="Remove Assignee">
+                    <X size={10} />
+                  </button>
+                </span>
+              ))}
+              <button 
+                onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
+                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-marble/40 hover:text-white transition-all ml-auto"
+                title="Add assignee"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {showAssigneeDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute z-[60] left-0 right-0 mt-1 bg-obsidian border border-white/10 ares-cut-sm shadow-2xl max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10"
+                >
+                  {teamMembers.map((m: { id: string; nickname?: string | null; name?: string | null }) => (
+                    <button
+                      key={m.id}
+                      onClick={() => toggleAssignee(m.id)}
+                      className={`w-full text-left px-3 py-2 text-xs font-bold transition-all flex items-center justify-between ${
+                        assigneeIds.includes(m.id) 
+                          ? "bg-ares-red/10 text-ares-red" 
+                          : "text-marble hover:bg-white/5"
+                      }`}
+                    >
+                      {m.nickname || m.name}
+                      {assigneeIds.includes(m.id) && <CheckCircle2 size={12} />}
+                    </button>
+                  ))}
+                  {teamMembers.length === 0 && (
+                    <div className="p-3 text-xs text-marble/40 italic text-center">No team members found</div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="border-t border-white/5 pt-4">
+            <ZulipThreadViewer stream="finance" topic={companyName || "New Sponsorship"} label="Sponsorship Discussion" />
           </div>
         </div>
 

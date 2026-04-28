@@ -547,6 +547,11 @@ export interface Sponsors {
   website_url: string | null;
 }
 
+export interface SponsorshipAssignments {
+  sponsorship_id: string;
+  user_id: string;
+}
+
 export interface SponsorshipPipeline {
   company_name: string;
   contact_person: string | null;
@@ -558,6 +563,7 @@ export interface SponsorshipPipeline {
   sponsor_id: string | null;
   status: Generated<string>;
   updated_at: Generated<string | null>;
+  zulip_message_id: string | null;
 }
 
 export interface SponsorTokens {
@@ -568,7 +574,6 @@ export interface SponsorTokens {
 }
 
 export interface TaskAssignments {
-  assigned_at: Generated<string | null>;
   task_id: string;
   user_id: string;
 }
@@ -756,9 +761,10 @@ export interface DB {
   sponsor_metrics: SponsorMetrics;
   sponsor_tokens: SponsorTokens;
   sponsors: Sponsors;
+  sponsorship_assignments: SponsorshipAssignments;
   sponsorship_pipeline: SponsorshipPipeline;
-  tasks: Tasks;
   task_assignments: TaskAssignments;
+  tasks: Tasks;
   user: User;
   user_badges: UserBadges;
   user_profiles: UserProfiles;

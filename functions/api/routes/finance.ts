@@ -67,6 +67,13 @@ const financeTsRestRouterObj: any = {
         queryBuilder = queryBuilder.where("season_id", "=", query.season_id.toString());
       }
       const pipeline = await queryBuilder.orderBy("created_at", "desc").execute();
+      const pipelineIds = pipeline.map(p => p.id).filter(Boolean);
+      
+      let assignments: any[] = [];
+      if (pipelineIds.length > 0) {
+        assignments = await db.selectFrom("sponsorship_assignments").selectAll().where("sponsorship_id", "in", pipelineIds).execute();
+      }
+
       return { 
         status: 200 as const, 
         body: { 
@@ -74,7 +81,8 @@ const financeTsRestRouterObj: any = {
             ...p,
             season_id: p.season_id ? Number(p.season_id) : null,
             estimated_value: Number(p.estimated_value || 0),
-            status: (p.status || "potential").toLowerCase() as any
+            status: (p.status || "potential").toLowerCase() as any,
+            assignees: assignments.filter(a => a.sponsorship_id === p.id).map(a => a.user_id)
           })) 
         } as any 
       };
@@ -109,12 +117,24 @@ const financeTsRestRouterObj: any = {
         estimated_value: body.estimated_value ?? 0,
         season_id: body.season_id ? Number(body.season_id) : null,
         notes: body.notes || null,
+        zulip_message_id: body.zulip_message_id || null,
       };
 
       if (isNew) {
         await db.insertInto("sponsorship_pipeline").values(data).execute();
       } else {
         await db.updateTable("sponsorship_pipeline").set(data).where("id", "=", id).execute();
+      }
+
+      if (body.assignees) {
+        await db.deleteFrom("sponsorship_assignments").where("sponsorship_id", "=", id).execute();
+        if (body.assignees.length > 0) {
+          const insertData = body.assignees.map((userId: string) => ({
+            sponsorship_id: id,
+            user_id: userId
+          }));
+          await db.insertInto("sponsorship_assignments").values(insertData).execute();
+        }
       }
 
 

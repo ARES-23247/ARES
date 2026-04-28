@@ -32,6 +32,10 @@ export interface PipelineItem {
   company_name: string;
   status: string;
   estimated_value: number;
+  contact_person?: string | null;
+  notes?: string | null;
+  zulip_message_id?: string | null;
+  assignees?: string[];
 }
 
 export interface TransactionItem {
