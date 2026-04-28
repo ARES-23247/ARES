@@ -11,6 +11,7 @@ import {
   isToday,
 } from "date-fns";
 import { CalendarEvent } from "./EventMockData";
+import { Link } from "react-router-dom";
 
 interface MonthViewGridProps {
   currentDate: Date;
@@ -86,15 +87,16 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
               </div>
               <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] scrollbar-thin scrollbar-thumb-white/10">
                 {dayEvents.slice(0, 3).map((event) => (
-                  <div
+                  <Link
+                    to={`/events/${event.id}`}
                     key={event.id}
-                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm truncate ${getEventColor(
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm truncate block transition-transform hover:scale-105 ${getEventColor(
                       event.type
                     )}`}
                     title={event.title}
                   >
                     {format(event.start, "h:mm a")} - {event.title}
-                  </div>
+                  </Link>
                 ))}
                 {dayEvents.length > 3 && (
                   <div className="text-[10px] font-bold text-marble/50 px-1">
