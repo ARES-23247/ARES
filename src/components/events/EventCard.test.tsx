@@ -33,7 +33,7 @@ describe("EventCard Component", () => {
   it("renders the event title and location correctly", () => {
     renderCard(mockEvent);
     expect(screen.getByText("Championship Celebration")).toBeInTheDocument();
-    expect(screen.getByText("ARES Lab")).toBeInTheDocument();
+    expect(screen.getByText(/ARES Lab/)).toBeInTheDocument();
   });
 
   it("parses and displays the description from Tiptap AST", () => {
