@@ -25,7 +25,16 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 3.3 (Calendar UX Refinement)** — Prevented webkit scrollbar overflow issues when hovering over calendar events, preserving grid stability.
 
 ### Active
-- None
+- [v3.4] Collaborative Editing Ecosystem
+
+## Current Milestone: v3.4 Collaborative Editing Ecosystem
+
+**Goal:** Integrate real-time multiplayer document editing using Tiptap and Liveblocks.
+
+**Target features:**
+- Liveblocks backend authentication integration for secure token generation
+- Tiptap Yjs extension implementation for multiplayer document state syncing
+- Live cursors and presence avatars to visualize active collaborators
 
 ## Current State
 
