@@ -26,11 +26,16 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 3.4 (Collaborative Editing Ecosystem)** — Integrated real-time multiplayer document editing using Tiptap and Liveblocks.
 
 ### Active
-- None
+- [v3.5] Version Control & Contributor Attribution
 
-## Current Milestone: None
+## Current Milestone: v3.5 Version Control & Contributor Attribution
 
-*Run `/gsd-new-milestone` to define the next objective.*
+**Goal:** Implement historical version control and public contributor attribution for collaborative documents.
+
+**Target features:**
+- Version history viewer UI for documents, posts, and events.
+- Draft rollback functionality from historical snapshots.
+- Dynamic overlapping student avatar stack on public pages, enforcing youth protection guidelines.
 
 ## Current State
 

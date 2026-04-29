@@ -1,20 +1,20 @@
 ---
-milestone: v3.4
-name: Collaborative Editing Ecosystem
-status: executing
+milestone: v3.5
+name: Version Control & Contributor Attribution
+status: planning
 progress:
-  phases: 3/3
-  plans: 3/3
-  tasks: 11/11
+  phases: 0/3
+  plans: 0/0
+  tasks: 0/0
 ---
 # Project State
 
 ## Current Position
 
-Phase: 07
-Plan: Completed
-Status: Milestone completed
-Last activity: 2026-04-29 — Phase 07 completed. All milestone phases completed.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-29 — Milestone v3.5 started
 
 ## Accumulated Context
 - (Carried over from v3.2) Calendar integration links directly to `/events/:id` from `react-calendar` views.
