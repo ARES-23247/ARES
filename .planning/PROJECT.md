@@ -29,11 +29,20 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: Milestone 3.7 (UI Polish & CSS Linting)
+## Current Milestone: None
 
-**Goal:** Resolve component-level CSS utility conflicts and suppress IDE warnings related to PostCSS/Tailwind directives to ensure a clean developer experience.
+**Goal:** Pending `gsd-new-milestone`.
 
 ## Current State
+
+<details>
+<summary>v3.7 Shipped Features</summary>
+
+- Resolved component-level CSS utility conflicts in AgendaViewList and PresenceAvatars
+- Suppressed IDE warnings related to PostCSS/Tailwind directives in `index.css`
+- Eliminated all ESLint warnings and errors across the codebase, enforcing `--max-warnings 0`
+- Fixed `LiveblocksYjsProvider` strict TypeScript typings in Tiptap extensions
+</details>
 
 <details>
 <summary>v3.6 Shipped Features</summary>
