@@ -10,6 +10,7 @@
 | 19 | Move Rate Limiting to KV | Refactor isolate-memory global rate limits to a KV-backed implementation. | REQ-4 | Global rate limiting correctly blocks requests across multiple isolates. |
 | 20 | Edge Caching for Read Routes | Add cache headers or KV caching for heavy read routes (posts, events, seasons). | REQ-5 | Caching logic correctly prevents redundant D1 queries for public resources. |
 | 21 | Soft-Delete GC Cron | Implement a Cloudflare scheduled worker to permanently delete rows soft-deleted > 30 days ago. | REQ-6 | Cron job successfully purges old `is_deleted = 1` rows. |
+| 22 | CI Pipeline Optimization | Restructure `.github/workflows/ci.yml` to run checks and tests in parallel and isolate preview deployments. | REQ-7 | CI workflow execution time drops significantly and dual-deployment race conditions on `master` are resolved. |
 
 ### Archived Milestones
 - [v3.7 - UI Polish & CSS Linting](milestones/v3.7-ROADMAP.md)
