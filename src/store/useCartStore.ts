@@ -1,9 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { z } from "zod";
-import { ProductSchema } from "../../../shared/schemas/contracts/storeContract";
-
-export type Product = z.infer<typeof ProductSchema>;
+import { ProductSchema, Product } from "../../shared/schemas/contracts/storeContract";
 
 export interface CartItem {
   product: Product;

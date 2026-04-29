@@ -446,7 +446,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
             const { isHelpful, comment, turnstileToken } = body;
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
-    if (!checkRateLimit(`feedback:${ip}`, ua, 10, 60)) return { status: 429 as const, body: { error: "Too many submissions" } };
+    if (!(await checkRateLimit(c.env.RATE_LIMITS, `feedback:${ip}`, ua, 10, 60))) return { status: 429 as const, body: { error: "Too many submissions" } };
 
     const valid = await verifyTurnstile(turnstileToken || "", c.env.TURNSTILE_SECRET_KEY, ip);
     if (!valid) return { status: 403 as const, body: { error: "Security verification failed" } };

@@ -68,7 +68,6 @@ export async function verifyTurnstile(
 ): Promise<boolean> {
   if (!secretKey) {
     // SEC-F01: Harden Turnstile. Fail closed in production.
-    // @ts-expect-error - ENVIRONMENT might not be in AppEnv type but exists at runtime
     if (globalThis.process?.env?.ENVIRONMENT === "production" || globalThis.process?.env?.NODE_ENV === "production") {
       console.error("[Turnstile] CRITICAL: TURNSTILE_SECRET_KEY is missing in production! Failing closed.");
       return false;
@@ -79,7 +78,6 @@ export async function verifyTurnstile(
   if (!token) return false;
 
   // SEC-03: Allow E2E / local development bypass token
-  // @ts-expect-error - ENVIRONMENT might not be in AppEnv type but exists at runtime
   const isProd = globalThis.process?.env?.ENVIRONMENT === "production" || globalThis.process?.env?.NODE_ENV === "production";
   if (token === "test-bypass-token" && !isProd) {
     console.warn("[Turnstile] Accepted test-bypass-token in non-production environment.");

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { api } from "../../api/client";
 import { Package, Truck, CheckCircle2, Loader2, Search } from "lucide-react";
 import { format } from "date-fns";
+import { Order } from "../../../shared/schemas/contracts/storeContract";
 
 export const StoreOrders: React.FC = () => {
   const { data, isLoading, refetch } = api.store.getOrders.useQuery();
@@ -18,7 +19,7 @@ export const StoreOrders: React.FC = () => {
     refetch();
   };
 
-  const orders = data?.body || [];
+  const orders: Order[] = data?.body || [];
   const filteredOrders = orders.filter(o => {
     if (filter !== "all" && o.fulfillment_status !== filter) return false;
     if (search && !o.customer_email?.toLowerCase().includes(search.toLowerCase()) && !o.id.includes(search)) return false;
@@ -96,7 +97,7 @@ export const StoreOrders: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredOrders.map(order => (
+                {filteredOrders.map((order: Order) => (
                   <tr key={order.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-mono text-xs text-slate-500 truncate w-32" title={order.id}>{order.id.split('-').pop()}</div>

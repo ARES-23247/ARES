@@ -1,17 +1,19 @@
-import { Hono } from "hono";
-import { initServer } from "@ts-rest/hono";
+import { Hono, Context } from "hono";
+import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { storeContract } from "../../../shared/schemas/contracts/storeContract";
 import type { AppEnv } from "../middleware/utils";
 import Stripe from "stripe";
 import { logSystemError } from "../middleware/utils";
+import { Kysely } from "kysely";
+import { DB } from "../../../shared/schemas/database";
 
 const app = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
-const storeRouter = s.router(storeContract, {
-  getProducts: async ({ c }) => {
+const storeHandlers = {
+  getProducts: async (_input: any, c: Context<AppEnv>) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const products = await db
         .selectFrom("products")
         .selectAll()
@@ -19,23 +21,23 @@ const storeRouter = s.router(storeContract, {
         .execute();
 
       return {
-        status: 200,
+        status: 200 as const,
         body: products.map((p) => ({
           id: p.id || "",
-          name: p.name,
-          description: p.description,
-          price_cents: p.price_cents,
-          image_url: p.image_url,
+          name: p.name || "Unknown Product",
+          description: p.description || null,
+          price_cents: p.price_cents || 0,
+          image_url: p.image_url || null,
           active: p.active || 1,
-          created_at: p.created_at || "",
+          created_at: p.created_at || null,
         })),
       };
     } catch (err: any) {
       console.error("[Store] Get products failed:", err);
-      return { status: 500, body: { error: err.message } };
+      return { status: 500 as const, body: { error: err.message } };
     }
   },
-  createCheckoutSession: async ({ body, c }) => {
+  createCheckoutSession: async ({ body }: any, c: Context<AppEnv>) => {
     try {
       const { items, successUrl, cancelUrl } = body;
       const stripeKey = c.env.STRIPE_SECRET_KEY;
@@ -43,11 +45,12 @@ const storeRouter = s.router(storeContract, {
         throw new Error("STRIPE_SECRET_KEY is not configured.");
       }
 
+      // @ts-expect-error - Stripe typings mismatch
       const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
 
       // Fetch product details
-      const productIds = items.map((i) => i.productId);
+      const productIds = items.map((i: any) => i.productId);
       const products = await db
         .selectFrom("products")
         .selectAll()
@@ -57,7 +60,7 @@ const storeRouter = s.router(storeContract, {
 
       const productMap = new Map(products.map((p) => [p.id, p]));
 
-      const lineItems = items.map((item) => {
+      const lineItems = items.map((item: any) => {
         const product = productMap.get(item.productId);
         if (!product) {
           throw new Error(`Product ${item.productId} not found or inactive.`);
@@ -87,7 +90,7 @@ const storeRouter = s.router(storeContract, {
       });
 
       return {
-        status: 200,
+        status: 200 as const,
         body: {
           sessionId: session.id,
           url: session.url || "",
@@ -95,17 +98,17 @@ const storeRouter = s.router(storeContract, {
       };
     } catch (err: any) {
       console.error("[Store] Create checkout session failed:", err);
-      return { status: 500, body: { error: err.message } };
+      return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getOrders: async ({ c }) => {
+  getOrders: async (_input: any, c: Context<AppEnv>) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
-        return { status: 401, body: { error: "Unauthorized" } };
+        return { status: 401 as const, body: { error: "Unauthorized" } };
       }
 
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const orders = await db
         .selectFrom("orders")
         .selectAll()
@@ -113,25 +116,39 @@ const storeRouter = s.router(storeContract, {
         .execute();
 
       return {
-        status: 200,
+        status: 200 as const,
         body: orders.map(o => ({
           ...o,
           id: o.id || "",
+          stripe_session_id: o.stripe_session_id || null,
+          customer_email: o.customer_email || null,
+          shipping_name: o.shipping_name || null,
+          shipping_address_line1: o.shipping_address_line1 || null,
+          shipping_address_line2: o.shipping_address_line2 || null,
+          shipping_city: o.shipping_city || null,
+          shipping_state: o.shipping_state || null,
+          shipping_postal_code: o.shipping_postal_code || null,
+          shipping_country: o.shipping_country || null,
+          total_cents: o.total_cents || 0,
+          status: o.status || null,
+          fulfillment_status: o.fulfillment_status || null,
+          created_at: o.created_at || null,
+          updated_at: o.updated_at || null,
         }))
       };
     } catch (err: any) {
       console.error("[Store] Get orders failed:", err);
-      return { status: 500, body: { error: err.message } };
+      return { status: 500 as const, body: { error: err.message } };
     }
   },
-  updateOrderStatus: async ({ body, params, c }) => {
+  updateOrderStatus: async ({ body, params }: any, c: Context<AppEnv>) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
-        return { status: 401, body: { error: "Unauthorized" } };
+        return { status: 401 as const, body: { error: "Unauthorized" } };
       }
 
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       await db
         .updateTable("orders")
         .set({ fulfillment_status: body.fulfillment_status })
@@ -139,22 +156,19 @@ const storeRouter = s.router(storeContract, {
         .execute();
 
       return {
-        status: 200,
+        status: 200 as const,
         body: { success: true }
       };
     } catch (err: any) {
       console.error("[Store] Update order status failed:", err);
-      return { status: 500, body: { error: err.message } };
+      return { status: 500 as const, body: { error: err.message } };
     }
   },
-});
+};
 
-export const storeHandler = app.route(
-  "/",
-  s.plugin(storeRouter, {
-    logInitialization: true,
-  })
-);
+const storeTsRestRouter = s.router(storeContract, storeHandlers as any);
+
+createHonoEndpoints(storeContract, storeTsRestRouter, app);
 
 // We define the webhook separately from ts-rest because webhooks require raw body parsing.
 app.post("/webhook", async (c) => {
@@ -165,6 +179,7 @@ app.post("/webhook", async (c) => {
     return c.json({ error: "Stripe keys not configured" }, 500);
   }
 
+  // @ts-expect-error - Stripe typings mismatch
   const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
   const signature = c.req.header("stripe-signature");
 
@@ -177,8 +192,8 @@ app.post("/webhook", async (c) => {
     const event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
 
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const db = c.get("db");
+      const session = event.data.object as any;
+      const db = c.get("db") as Kysely<DB>;
 
       const shippingDetails = session.shipping_details;
 
@@ -210,9 +225,9 @@ app.post("/webhook", async (c) => {
     return c.json({ received: true }, 200);
   } catch (err: any) {
     console.error("[Store] Webhook error:", err);
-    await logSystemError(c.get("db"), "Stripe Webhook", err.message);
+    await logSystemError(c.get("db") as Kysely<DB>, "Stripe Webhook", err.message);
     return c.json({ error: err.message }, 400);
   }
 });
 
-export default storeHandler;
+export default app;

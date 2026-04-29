@@ -49,7 +49,7 @@ app.use("*", async (c, next) => {
   const ua = c.req.header("User-Agent") || "unknown";
   if (ip !== "unknown" && !c.req.path.startsWith("/assets")) {
     const isBypass = c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1";
-    const allowed = isBypass || checkRateLimit(ip, ua, 150, 60); 
+    const allowed = isBypass || checkRateLimit(c.env.RATE_LIMITS, ip, ua, 150, 60); 
     if (!allowed) return c.json({ error: "Too many requests" }, 429);
   }
   await next();
