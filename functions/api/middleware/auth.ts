@@ -1,6 +1,8 @@
 import { Context, Next } from "hono";
 import { getAuth } from "../../utils/auth";
 import { AppEnv, UserRole, SessionUser } from "./utils";
+import { Kysely } from "kysely";
+import { DB } from "../../../shared/schemas/database";
 
 // ── Localhost Dev Bypass Check ────────────────────────────────────────
 export function isDevBypassEnabled(c: Context<AppEnv>): boolean {
@@ -35,9 +37,11 @@ export const ensureAdmin = async (c: Context<AppEnv>, next: Next) => {
   const role = (session.user as { role?: string }).role || UserRole.UNVERIFIED;
 
   // EFF-05: Store session in context so handlers don't need to re-fetch
-  const profile = await c.env.DB.prepare(
-    "SELECT nickname, member_type FROM user_profiles WHERE user_id = ?"
-  ).bind(session.user.id).first<{ nickname: string, member_type: string }>();
+  const db = c.get("db") as Kysely<DB>;
+  const profile = await db.selectFrom("user_profiles")
+    .select(["nickname", "member_type"])
+    .where("user_id", "=", session.user.id)
+    .executeTakeFirst();
 
   const memberType = profile?.member_type || "student";
   const nickname = profile?.nickname || "ARES Member";
@@ -104,9 +108,11 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<SessionUser | 
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (session && session.user) {
       // Fetch member_type and nickname from profile
-      const profile = await c.env.DB.prepare(
-        "SELECT nickname, member_type FROM user_profiles WHERE user_id = ?"
-      ).bind(session.user.id).first<{ nickname: string, member_type: string }>();
+      const db = c.get("db") as Kysely<DB>;
+      const profile = await db.selectFrom("user_profiles")
+        .select(["nickname", "member_type"])
+        .where("user_id", "=", session.user.id)
+        .executeTakeFirst();
 
       return {
         id: session.user.id,

@@ -1,6 +1,8 @@
 
 import { AppEnv, getDbSettings, checkRateLimit, logAuditAction } from "../../middleware";
 import { initServer } from "ts-rest-hono";
+import { Kysely } from "kysely";
+import { DB } from "../../../../shared/schemas/database";
 
 const _s = initServer<AppEnv>();
 
@@ -64,14 +66,16 @@ export const mediaHandlers: any = {
         if (cached) return cached as any;
       }
 
-      const [objects, dbRes] = await Promise.all([
+      const db = c.get("db") as Kysely<DB>;
+      const [objects, results] = await Promise.all([
         listAllObjects(c.env.ARES_STORAGE),
-        c.env.DB.prepare("SELECT key, folder, tags FROM media_tags WHERE folder = 'Gallery'").all()
+        db.selectFrom("media_tags").select(["key", "folder", "tags"]).where("folder", "=", "Gallery").execute()
       ]);
 
-      const results = (dbRes.results || []) as { key: string, folder: string, tags: string }[];
       const metaMap = new Map<string, { tags: string }>();
-      for (const row of results) { metaMap.set(row.key, { tags: row.tags }); }
+      for (const row of results) {
+        if (row.key) metaMap.set(row.key, { tags: row.tags || "" });
+      }
 
       const publicKeys = new Set(results.map(r => r.key));
 
@@ -103,14 +107,15 @@ export const mediaHandlers: any = {
   },
   adminList: async (_input: any, c: any) => {
     try {
-      const [objects, dbRes] = await Promise.all([
+      const db = c.get("db") as Kysely<DB>;
+      const [objects, results] = await Promise.all([
         listAllObjects(c.env.ARES_STORAGE),
-        c.env.DB.prepare("SELECT key, folder, tags FROM media_tags").all()
+        db.selectFrom("media_tags").select(["key", "folder", "tags"]).execute()
       ]);
 
       const metaMap = new Map<string, { folder: string, tags: string }>();
-      for (const row of (dbRes.results || []) as { key: string, folder: string, tags: string }[]) {
-        metaMap.set(row.key, { folder: row.folder, tags: row.tags });
+      for (const row of results) {
+        if (row.key) metaMap.set(row.key, { folder: row.folder || "", tags: row.tags || "" });
       }
 
       const media = objects.objects.map(obj => ({
@@ -175,7 +180,11 @@ export const mediaHandlers: any = {
         }
       }
 
-      await c.env.DB.prepare("INSERT OR REPLACE INTO media_tags (key, folder, tags) VALUES (?, ?, ?)").bind(key, folder, altText).run();
+      const db = c.get("db") as Kysely<DB>;
+      await db.insertInto("media_tags")
+        .values({ key, folder, tags: altText })
+        .onConflict(oc => oc.column("key").doUpdateSet({ folder, tags: altText }))
+        .execute();
       
       if (c.executionCtx) {
         c.executionCtx.waitUntil(logAuditAction(c, "media_upload", "media", key, `Uploaded to ${folder}`));
@@ -206,9 +215,17 @@ export const mediaHandlers: any = {
         await c.env.ARES_STORAGE.put(newKey, object.body, { httpMetadata: { contentType: object.httpMetadata?.contentType } });
         await c.env.ARES_STORAGE.delete(oldKey);
         
-        await c.env.DB.prepare("UPDATE media_tags SET key = ?, folder = ? WHERE key = ?").bind(newKey, folder, oldKey).run();
+        const db = c.get("db") as Kysely<DB>;
+        await db.updateTable("media_tags")
+          .set({ key: newKey, folder })
+          .where("key", "=", oldKey)
+          .execute();
       } else {
-        await c.env.DB.prepare("UPDATE media_tags SET key = ?, folder = ? WHERE key = ?").bind(newKey, folder, oldKey).run();
+        const db = c.get("db") as Kysely<DB>;
+        await db.updateTable("media_tags")
+          .set({ key: newKey, folder })
+          .where("key", "=", oldKey)
+          .execute();
       }
       
       c.executionCtx.waitUntil(logAuditAction(c, "media_move", "media", newKey, `Moved from ${oldKey} to ${folder}`));
@@ -224,7 +241,8 @@ export const mediaHandlers: any = {
       if (c.env.ARES_STORAGE) {
         await c.env.ARES_STORAGE.delete(params.key);
       }
-      await c.env.DB.prepare("DELETE FROM media_tags WHERE key = ?").bind(params.key).run();
+      const db = c.get("db") as Kysely<DB>;
+      await db.deleteFrom("media_tags").where("key", "=", params.key).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "media_delete", "media", params.key));
       return { status: 200, body: { success: true } };
     } catch (e) {

@@ -32,9 +32,12 @@ function CollaborativeEditorInner({
   const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
   const [provider] = useState<LiveblocksYjsProvider>(() => new LiveblocksYjsProvider(room, ydoc));
 
+  const [isSynced, setIsSynced] = useState(false);
+
   useEffect(() => {
-    provider.on("synced", (isSynced: boolean) => {
-      if (isSynced) {
+    provider.on("synced", (synced: boolean) => {
+      setIsSynced(synced);
+      if (synced) {
         onDocLoaded?.(ydoc);
       }
     });
@@ -44,6 +47,14 @@ function CollaborativeEditorInner({
       provider.destroy();
     };
   }, [provider, ydoc, onDocLoaded]);
+
+  if (!isSynced) {
+    return (
+      <div className="flex items-center justify-center py-20 bg-ares-black border-x border-b border-white/10 rounded-b-xl min-h-[400px]">
+        <RefreshCw className="animate-spin text-ares-red" size={32} />
+      </div>
+    );
+  }
 
   return (
     <CollaborativeEditorContext.Provider value={{ ydoc, provider }}>

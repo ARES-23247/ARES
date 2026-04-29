@@ -3,7 +3,7 @@ import { Kysely } from "kysely";
 import { handle } from "hono/cloudflare-pages";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
-import { Bindings, AppEnv, checkRateLimit, rateLimitMiddleware, logSystemError, ensureAdmin, dbMiddleware, envMiddleware, parsePagination, originIntegrityMiddleware } from "./middleware";
+import { Bindings, AppEnv, checkRateLimit, rateLimitMiddleware, persistentRateLimitMiddleware, logSystemError, ensureAdmin, dbMiddleware, envMiddleware, parsePagination, originIntegrityMiddleware } from "./middleware";
 import { sql } from "kysely";
 import { DB } from "../../shared/schemas/database";
 
@@ -102,6 +102,13 @@ apiRouter.use("*", cors({
   credentials: true,
   maxAge: 86400,
 }));
+
+// ── Distributed Persistent Rate Limiting (D1 Backed) ─────────────────
+// Applied only to high-risk / write-heavy endpoints to preserve D1 quota
+apiRouter.use("/auth/*", persistentRateLimitMiddleware(30, 60)); // 30 req / min
+apiRouter.use("/inquiries/*", persistentRateLimitMiddleware(10, 60)); // 10 req / min 
+apiRouter.use("/comments/*", persistentRateLimitMiddleware(20, 60)); // 20 req / min
+
 
 // ── Mount Domain Routers ─────────────────────────────────────────────
 apiRouter.route("/auth", authRouter);
