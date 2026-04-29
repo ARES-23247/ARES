@@ -1,7 +1,8 @@
 -- Add draft content column for Liveblocks webhook auto-saves
-ALTER TABLE docs ADD COLUMN content_draft TEXT;
-ALTER TABLE posts ADD COLUMN content_draft TEXT;
-ALTER TABLE events ADD COLUMN content_draft TEXT;
+-- (Commented out to prevent duplicate column errors, already merged into schema.sql)
+-- ALTER TABLE docs ADD COLUMN content_draft TEXT;
+-- ALTER TABLE posts ADD COLUMN content_draft TEXT;
+-- ALTER TABLE events ADD COLUMN content_draft TEXT;
 
 -- Create unified history snapshot table
 CREATE TABLE document_history (

@@ -3,45 +3,26 @@ import { AppEnv } from "./utils";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
-// ── Rate Limiting (In-Memory Worker V8 Isolate) ────────────────────────
-const MAX_RATE_LIMIT_CACHE = 500;
-const rateLimitCache = new Map<string, { count: number; expiresAt: number }>();
-
-function pruneCache(cache: Map<string, unknown>) {
-  if (cache.size >= MAX_RATE_LIMIT_CACHE) {
-    const first = cache.keys().next().value;
-    if (first !== undefined) cache.delete(first);
-  }
-}
-
-/**
- * Enhanced Rate Limit Check
- * Incorporates User-Agent to prevent simple IP rotation/spoofing bypasses.
- */
-export function checkRateLimit(ip: string, userAgent: string, limit = 100, windowSeconds = 60): boolean {
-  const now = Date.now();
+// ── Rate Limiting (Cloudflare KV) ────────────────────────
+export async function checkRateLimit(kv: KVNamespace | undefined, ip: string, userAgent: string, limit = 100, windowSeconds = 60): Promise<boolean> {
+  if (!kv) return true; // Fall open if KV is not bound
   
-  if (Math.random() < 0.05) {
-    for (const [key, data] of rateLimitCache.entries()) {
-      if (data.expiresAt < now) {
-        rateLimitCache.delete(key);
-      }
-    }
-  }
-
-  // Create a composite key to increase entropy
   const entropyKey = `${ip}:${userAgent.substring(0, 100)}`;
-  let record = rateLimitCache.get(entropyKey);
+  const currentCountStr = await kv.get(entropyKey);
+  let currentCount = currentCountStr ? parseInt(currentCountStr, 10) : 0;
   
-  if (!record || record.expiresAt < now) {
-    pruneCache(rateLimitCache);
-    record = { count: 0, expiresAt: now + windowSeconds * 1000 };
+  currentCount += 1;
+  
+  // Set expiration if it's the first request, otherwise KV handles TTL natively
+  if (currentCount === 1) {
+    await kv.put(entropyKey, currentCount.toString(), { expirationTtl: windowSeconds });
+  } else {
+    // Note: KV doesn't support atomic increments or extending TTL on write without reading first.
+    // Overwriting the key resets the TTL, which extends the window, but we accept this as a tradeoff for KV.
+    await kv.put(entropyKey, currentCount.toString());
   }
 
-  record.count += 1;
-  rateLimitCache.set(entropyKey, record);
-
-  return record.count <= limit;
+  return currentCount <= limit;
 }
 
 // ── Write-Endpoint Rate Limiting (Persistent D1) ────────────────────────────
@@ -144,7 +125,10 @@ export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
 
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
-    if (!checkRateLimit(`mw:${ip}`, ua, limit, windowSeconds)) {
+    
+    // Use the RATE_LIMITS KV namespace bound in wrangler.toml
+    const allowed = await checkRateLimit(c.env.RATE_LIMITS, `mw:${ip}`, ua, limit, windowSeconds);
+    if (!allowed) {
       const db = c.get("db") as Kysely<DB>;
       if (db) {
         c.executionCtx.waitUntil(
@@ -153,7 +137,7 @@ export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
             action: "SECURITY_BLOCK",
             actor: ip,
             resource_type: "rate_limit",
-            details: JSON.stringify({ reason: "Memory rate limit exceeded", path: c.req.path, ua })
+            details: JSON.stringify({ reason: "KV rate limit exceeded", path: c.req.path, ua })
           }).execute().catch(console.error)
         );
       }

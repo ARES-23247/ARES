@@ -459,14 +459,12 @@ CREATE TABLE IF NOT EXISTS tasks (
     status TEXT DEFAULT 'todo',
     priority TEXT DEFAULT 'normal',
     sort_order INTEGER DEFAULT 0,
-    assigned_to TEXT REFERENCES user(id) ON DELETE SET NULL, -- Deprecated in favor of task_assignments
     created_by TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
     due_date TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
-CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_tasks_sort ON tasks(status, sort_order);
 
 CREATE TABLE IF NOT EXISTS task_assignments (

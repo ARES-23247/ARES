@@ -278,8 +278,8 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
           isPending={saveMutation.isPending}
           isEditing={!!editSlug}
           onDelete={handleDelete}
-          onSaveDraft={handleSubmit((d) => onFormSubmit(d, true))}
-          onPublish={handleSubmit((d) => onFormSubmit(d, false))}
+          onSaveDraft={handleSubmit((d: DocFormValues) => onFormSubmit(d, true))}
+          onPublish={handleSubmit((d: DocFormValues) => onFormSubmit(d, false))}
           deleteText="DELETE DOC"
           updateText="UPDATE DOC"
           publishText={userRole === "author" ? "SUBMIT FOR REVIEW" : "PUBLISH DOC"}
