@@ -1,9 +1,9 @@
 ---
-milestone: v3.9
-name: Stripe Storefront
-status: planning
+milestone: Pending
+name: None
+status: idle
 progress:
-  phases_total: 4
+  phases_total: 0
   phases_completed: 0
   tasks_total: 0
   tasks_completed: 0
@@ -13,10 +13,10 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Pending
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-29 — Milestone v3.9 started
+Status: Idle
+Last activity: 2026-04-29 — Post-v3.9 build fixes completed
 
 ## Accumulated Context
 
