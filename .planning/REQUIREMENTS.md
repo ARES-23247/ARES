@@ -6,9 +6,9 @@
 |--------|-------------|-------|--------|
 | STRIPE-01 | Stripe Secret Keys Configuration | 29 | [x] |
 | STRIPE-02 | D1 E-Commerce Schema (products, orders) | 29 | [x] |
-| STRIPE-03 | Fetch Active Inventory API | 30 | [ ] |
-| STRIPE-04 | Generate Stripe Checkout Session API | 30 | [ ] |
-| STRIPE-05 | Stripe Webhook Listener & Signature Verification | 30 | [ ] |
+| STRIPE-03 | Fetch Active Inventory API | 30 | [x] |
+| STRIPE-04 | Generate Stripe Checkout Session API | 30 | [x] |
+| STRIPE-05 | Stripe Webhook Listener & Signature Verification | 30 | [x] |
 | STORE-01 | Storefront UI Grid (ARES Brand) | 31 | [ ] |
 | STORE-02 | Shopping Cart State (Multi-item) | 31 | [ ] |
 | STORE-03 | Add/Remove Cart Items & Calculate Totals | 31 | [ ] |
@@ -26,20 +26,21 @@ Create SQL tables to manage physical merchandise.
 - **[x] AC-1**: `products` table tracks id, name, description, price, image_url, and active status.
 - **[x] AC-2**: `orders` table tracks stripe_session_id, customer email, shipping address, total amount, and fulfillment status.
 
-### [ ] STRIPE-03: Fetch Active Inventory API
+### [x] STRIPE-03: Fetch Active Inventory API
 Create a `ts-rest` Hono endpoint `GET /api/store/products`.
-- **[ ] AC-1**: Returns only `active = 1` products to the frontend.
+- **[x] AC-1**: Selects all products where `active = 1`.
+- **[x] AC-2**: Exposes id, name, description, price, and image.
 
-### [ ] STRIPE-04: Generate Stripe Checkout Session API
-Create `POST /api/store/checkout` to build Stripe hosted checkout sessions.
-- **[ ] AC-1**: Accepts an array of product IDs and quantities (the cart).
-- **[ ] AC-2**: Requires shipping address collection natively via Stripe Checkout.
-- **[ ] AC-3**: Returns the Stripe Checkout URL for frontend redirect.
+### [x] STRIPE-04: Generate Stripe Checkout Session API
+Create a `POST /api/store/checkout` endpoint.
+- **[x] AC-1**: Accepts a list of product IDs and quantities.
+- **[x] AC-2**: Cross-references product IDs against the D1 database to pull authentic prices (prevents client-side price spoofing).
+- **[x] AC-3**: Generates a Stripe Checkout Session URL and returns it to the client.
 
-### [ ] STRIPE-05: Stripe Webhook Listener
-Create `POST /api/store/webhook` to asynchronously confirm payments.
-- **[ ] AC-1**: Verifies Stripe webhook signatures.
-- **[ ] AC-2**: On `checkout.session.completed`, inserts a new row into the `orders` table with the shipping address and marks it as paid.
+### [x] STRIPE-05: Stripe Webhook Listener & Signature Verification
+Create a raw Hono endpoint `POST /api/store/webhook` to listen to Stripe events.
+- **[x] AC-1**: Validates `stripe-signature` using the official SDK.
+- **[x] AC-2**: On `checkout.session.completed`, inserts a new row into the `orders` D1 table with the customer's email and shipping address and marks it as paid.
 
 ### [ ] STORE-01: Storefront UI Grid
 Create `src/pages/Store.tsx` to display merchandise.

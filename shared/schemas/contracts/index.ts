@@ -24,6 +24,7 @@ import { communicationsContract } from "./communicationsContract";
 import { taskContract } from "./taskContract";
 import { financeContract } from "./financeContract";
 import { entityContract } from "./entityContract";
+import { storeContract } from "./storeContract";
 
 const c = initContract();
 
@@ -58,4 +59,5 @@ export const apiContract = c.router({
     pathPrefix: "/communications",
   }),
   tasks: c.router(taskContract, { pathPrefix: "/tasks" }),
+  store: c.router(storeContract, { pathPrefix: "/store" }),
 });

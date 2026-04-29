@@ -39,6 +39,7 @@ import financeRouter from "./routes/finance";
 import entitiesRouter from "./routes/entities";
 import liveblocksRouter from "./routes/liveblocks/index";
 import gcRouter from "./routes/internal/gc";
+import storeHandler from "./routes/store";
 
 const app = new Hono<AppEnv>();
 
@@ -141,6 +142,7 @@ apiRouter.route("/zulip", zulipRouter);
 apiRouter.route("/internal/gc", gcRouter);
 apiRouter.route("/tasks", tasksRouter);
 apiRouter.route("/liveblocks", liveblocksRouter);
+apiRouter.route("/store", storeHandler);
 
 import { communicationsRouter } from "./routes/communications";
 

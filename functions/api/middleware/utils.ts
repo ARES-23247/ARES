@@ -41,6 +41,8 @@ export type Bindings = {
   CRON_SECRET?: string;
   LIVEBLOCKS_WEBHOOK_SECRET?: string;
   RATE_LIMITS?: KVNamespace;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
 };
 
 export type Variables = {
