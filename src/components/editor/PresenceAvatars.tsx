@@ -13,7 +13,7 @@ export default function PresenceAvatars() {
           return (
             <div
               key={connectionId}
-              className="inline-block h-8 w-8 rounded-full ring-2 ring-obsidian bg-ares-gray-dark border border-white/20 flex items-center justify-center relative group"
+              className="h-8 w-8 rounded-full ring-2 ring-obsidian bg-ares-gray-dark border border-white/20 flex items-center justify-center relative group"
               title={info?.name || "Anonymous"}
             >
               {info?.avatar ? (

@@ -29,7 +29,7 @@ export const AgendaViewList = ({ events }: AgendaViewListProps) => {
           <Link
             to={`/events/${event.id}`}
             key={event.id}
-            className={`flex flex-col md:flex-row gap-6 p-6 border transition-all hero-card block ${
+            className={`flex flex-col md:flex-row gap-6 p-6 border transition-all hero-card ${
               past 
                 ? "bg-black/60 border-white/5 opacity-70 hover:opacity-100" 
                 : "bg-obsidian border-white/10 hover:border-ares-gold/30 hover:shadow-lg"

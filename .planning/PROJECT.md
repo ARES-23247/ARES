@@ -29,9 +29,9 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: None
+## Current Milestone: Milestone 3.7 (UI Polish & CSS Linting)
 
-**Goal:** Run `/gsd-new-milestone` to define the next objective.
+**Goal:** Resolve component-level CSS utility conflicts and suppress IDE warnings related to PostCSS/Tailwind directives to ensure a clean developer experience.
 
 ## Current State
 
