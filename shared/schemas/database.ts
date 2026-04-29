@@ -403,6 +403,24 @@ export interface OutreachLogs {
   title: string;
 }
 
+export interface Orders {
+  created_at: Generated<string | null>;
+  customer_email: string | null;
+  fulfillment_status: Generated<string | null>;
+  id: string | null;
+  shipping_address_line1: string | null;
+  shipping_address_line2: string | null;
+  shipping_city: string | null;
+  shipping_country: string | null;
+  shipping_name: string | null;
+  shipping_postal_code: string | null;
+  shipping_state: string | null;
+  status: Generated<string | null>;
+  stripe_session_id: string | null;
+  total_cents: number;
+  updated_at: Generated<string | null>;
+}
+
 export interface PageAnalytics {
   category: Generated<string | null>;
   id: Generated<number | null>;
@@ -426,6 +444,16 @@ export interface PitScouting {
   team_name: string | null;
   team_number: string;
   updated_at: Generated<string | null>;
+}
+
+export interface Products {
+  active: Generated<number | null>;
+  created_at: Generated<string | null>;
+  description: string | null;
+  id: string | null;
+  image_url: string | null;
+  name: string;
+  price_cents: number;
 }
 
 export interface Posts {
@@ -765,8 +793,10 @@ export interface DB {
   outreach_fts_docsize: OutreachFtsDocsize;
   outreach_fts_idx: OutreachFtsIdx;
   outreach_logs: OutreachLogs;
+  orders: Orders;
   page_analytics: PageAnalytics;
   pit_scouting: PitScouting;
+  products: Products;
   posts: Posts;
   posts_fts: PostsFts;
   posts_fts_config: PostsFtsConfig;

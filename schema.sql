@@ -459,14 +459,12 @@ CREATE TABLE IF NOT EXISTS tasks (
     status TEXT DEFAULT 'todo',
     priority TEXT DEFAULT 'normal',
     sort_order INTEGER DEFAULT 0,
-    assigned_to TEXT REFERENCES user(id) ON DELETE SET NULL, -- Deprecated in favor of task_assignments
     created_by TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
     due_date TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
-CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_tasks_sort ON tasks(status, sort_order);
 
 CREATE TABLE IF NOT EXISTS task_assignments (
@@ -577,6 +575,38 @@ CREATE TRIGGER IF NOT EXISTS user_profiles_fts_update AFTER UPDATE ON user_profi
     WHERE new.show_on_about = 1;
 END;
 
+
+-- ── E-Commerce Store ───────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS products (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    price_cents INTEGER NOT NULL,
+    image_url TEXT,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    stripe_session_id TEXT UNIQUE,
+    customer_email TEXT,
+    shipping_name TEXT,
+    shipping_address_line1 TEXT,
+    shipping_address_line2 TEXT,
+    shipping_city TEXT,
+    shipping_state TEXT,
+    shipping_postal_code TEXT,
+    shipping_country TEXT,
+    total_cents INTEGER NOT NULL,
+    status TEXT DEFAULT 'processing',
+    fulfillment_status TEXT DEFAULT 'unfulfilled',
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status, fulfillment_status);
+CREATE INDEX IF NOT EXISTS idx_orders_email ON orders(customer_email);
 
 -- -- Rate Limits ---------------------------------------------------------
 

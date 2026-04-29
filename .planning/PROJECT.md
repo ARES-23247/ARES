@@ -26,14 +26,39 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 3.4 (Collaborative Editing Ecosystem)** — Integrated real-time multiplayer document editing using Tiptap and Liveblocks.
 - ✓ **Milestone 3.5 (Version Control & Contributor Attribution)** — Delivered historical version control and YPP-compliant public avatar attribution across ARESWEB documents.
 
+- ✓ **Milestone 3.9 (Stripe Storefront)** — Delivered D1 ecommerce schemas, Hono Stripe backend, persistent Zustand cart, and admin fulfillment dashboard.
+
 ### Active
 - None
 
-## Current Milestone: Milestone 3.8 (Database Audit & Bug Fixes)
+## Current Milestone: None
 
-**Goal:** Resolve Liveblocks migration database errors, simplify the existing 49 migrations, and perform a codebase-wide database schema audit.
+**Goal:** None
+
+**Target features:**
+- None
 
 ## Current State
+
+<details>
+<summary>v3.9 Shipped Features</summary>
+
+- Native Stripe eCommerce Storefront with ARES branding.
+- Cloudflare D1 robust `products` and `orders` management schemas.
+- `ts-rest` Hono backend for Stripe Checkout Session generation and Webhook processing.
+- Persistent local shopping cart state via Zustand.
+- Internal ARES Admin Fulfillment Dashboard to track shipping addresses and toggle order statuses.
+</details>
+
+<details>
+<summary>v3.8 Shipped Features</summary>
+
+- Fixed duplicate `content_draft` columns in legacy Liveblocks migrations.
+- Audited and refactored backend raw SQL queries into Kysely standard types.
+- Rewrote the V8 isolate rate limiter to a globally synchronized Cloudflare KV namespace (`RATE_LIMITS`).
+- Implemented a 30-day soft-delete garbage collection Cron worker.
+- Sharded the Playwright E2E test matrix and optimized the GitHub Actions CI pipeline.
+</details>
 
 <details>
 <summary>v3.7 Shipped Features</summary>
@@ -133,4 +158,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-28 after v3.3 milestone completion*
+*Last updated: 2026-04-29 after v3.9 milestone completion*
