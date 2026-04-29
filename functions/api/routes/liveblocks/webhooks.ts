@@ -83,8 +83,8 @@ webhooksRouter.post("/", async (c) => {
           .onConflict((oc) => oc
             .columns(["room_id", "user_id"])
             .doUpdateSet({
-              user_name: info.name || "Unknown",
-              user_avatar: info.avatar || null,
+              user_name: userInfo.name || "Unknown",
+              user_avatar: userInfo.avatar || null,
               last_contributed_at: now
             })
           )
