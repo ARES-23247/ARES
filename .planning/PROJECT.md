@@ -29,11 +29,21 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: Milestone 3.8 (Database Audit & Bug Fixes)
+## Current Milestone: Pending
 
-**Goal:** Resolve Liveblocks migration database errors, simplify the existing 49 migrations, and perform a codebase-wide database schema audit.
+**Goal:** *Run `/gsd-new-milestone` to define the next objective.*
 
 ## Current State
+
+<details>
+<summary>v3.8 Shipped Features</summary>
+
+- Fixed duplicate `content_draft` columns in legacy Liveblocks migrations.
+- Audited and refactored backend raw SQL queries into Kysely standard types.
+- Rewrote the V8 isolate rate limiter to a globally synchronized Cloudflare KV namespace (`RATE_LIMITS`).
+- Implemented a 30-day soft-delete garbage collection Cron worker.
+- Sharded the Playwright E2E test matrix and optimized the GitHub Actions CI pipeline.
+</details>
 
 <details>
 <summary>v3.7 Shipped Features</summary>
