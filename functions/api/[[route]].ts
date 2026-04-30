@@ -148,6 +148,9 @@ apiRouter.route("/store", storeHandler);
 apiRouter.route("/points", pointsRouter);
 apiRouter.route("/ai", aiRouter);
 
+import { simulationsRouter } from "./routes/simulations";
+apiRouter.route("/simulations", simulationsRouter);
+
 import { communicationsRouter } from "./routes/communications";
 
 // Webhooks

@@ -2,7 +2,7 @@ import { Suspense, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, History,
-  User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert, Mail, DollarSign, Package,
+  User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert, Mail, DollarSign, Package, Sparkles,
   type LucideIcon
 } from "lucide-react";
 import { signOut } from "../../utils/auth-client";
@@ -207,6 +207,7 @@ export default function DashboardSidebar({
                 <NavButton tab="event" icon={Calendar} label={location.pathname.includes("/dashboard/event/") ? "Edit Event (Active)" : "New Event"} currentPath={location.pathname} />
                 <NavButton tab="docs" icon={Book} label={location.pathname.includes("/dashboard/docs/") ? "Edit Doc (Active)" : "New Document"} currentPath={location.pathname} />
                 <NavButton tab="seasons" icon={History} label={location.pathname.includes("/dashboard/seasons/") ? "Edit Legacy (Active)" : "Forge Legacy"} currentPath={location.pathname} />
+                {isAdmin && <NavButton tab="simulations" icon={Sparkles} label="Sim Playground" currentPath={location.pathname} />}
               </div>
             </div>
           )}

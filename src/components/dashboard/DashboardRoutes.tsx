@@ -30,6 +30,7 @@ const TaskDetailPage = lazy(() => import("@/components/command/TaskDetailPage"))
 const SponsorTokensManager = lazy(() => import("@/components/SponsorTokensManager"));
 const MassEmailComposer = lazy(() => import("@/components/MassEmailComposer"));
 const StoreOrders = lazy(() => import("../../pages/Dashboard/StoreOrders"));
+const SimulationPlayground = lazy(() => import("@/components/SimulationPlayground"));
 
 // ── Suspense Spinner ─────────────────────────────────────────────────
 function TabLoader() {
@@ -99,6 +100,7 @@ export default function DashboardRoutes({
       <Route path="tasks/:taskId" element={canSeeTasks ? <TaskDetailPage /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="mass_email" element={isAdmin ? <MassEmailComposer /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="store_orders" element={isAdmin ? <StoreOrders /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="simulations" element={isAdmin ? <SimulationPlayground /> : <div className="text-center py-20">Access Denied</div>} />
     </Routes>
   ), [location, session?.user?.role, notifications, navigate, isAdmin, canSeeInquiries, canSeeLogistics, canSeeTasks, stats]);
 
