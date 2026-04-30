@@ -193,7 +193,7 @@ USER REQUEST: ${msg}`;
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
-              accumulatedText += data.chunk;
+              if (data.chunk) accumulatedText += data.chunk;
             } catch { /* ignore */ }
           }
         }

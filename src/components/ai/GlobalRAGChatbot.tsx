@@ -58,6 +58,8 @@ export function GlobalRAGChatbot() {
             if (line.startsWith("data: ")) {
               try {
                 const data = JSON.parse(line.slice(6));
+                // Skip non-chunk events (model indicator, etc.)
+                if (!data.chunk) continue;
                 setMessages(prev => {
                   const newMsgs = [...prev];
                   const last = newMsgs[newMsgs.length - 1];
