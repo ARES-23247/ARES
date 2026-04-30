@@ -1,4 +1,3 @@
-import { indexSiteContent } from "./indexer";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 
@@ -8,6 +7,10 @@ import { DB } from "../../../../shared/schemas/database";
  *
  * This is the safe alternative to catch-all middleware — called explicitly
  * from individual route handlers, same pattern as audit logging.
+ *
+ * IMPORTANT: Uses dynamic import() for the indexer module to avoid pulling
+ * heavy AI/Vectorize code into the module graph at worker startup.
+ * (The aiRouter's /reindex endpoint does the same thing — line 283 of ai/index.ts.)
  *
  * Cost: ~50 neurons per call (incremental, only changed docs).
  */
@@ -21,7 +24,8 @@ export function triggerBackgroundReindex(
   if (!ai || !vectorize) return;
 
   executionCtx.waitUntil(
-    indexSiteContent(db, ai, vectorize, kv)
+    import("./indexer")
+      .then(({ indexSiteContent }) => indexSiteContent(db, ai, vectorize, kv))
       .then((r) => {
         if (r.indexed > 0 || r.errors.length > 0) {
           console.log(`[Auto-Reindex] Indexed: ${r.indexed}, Errors: ${r.errors.length}`);
