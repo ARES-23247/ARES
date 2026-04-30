@@ -1,22 +1,22 @@
 ---
 milestone: v4.7
 name: Gap Closure (v4.6 Tech Debt)
-status: planning
+status: completed
 progress:
   phases_total: 2
-  phases_completed: 1
+  phases_completed: 2
   tasks_total: 5
-  tasks_completed: 2
+  tasks_completed: 5
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: 52 — Index Pipeline Hardening (next)
-Plan: Pending
-Status: Phase 51 complete (20 tests, TD-01/TD-02 satisfied)
-Last activity: 2026-04-30 — Phase 51 closed, critical static import hotfix deployed
+Phase: 52 — Index Pipeline Hardening (complete)
+Plan: Executed
+Status: v4.7 milestone complete — all 5 tech debt items resolved
+Last activity: 2026-04-30 — Phase 52 shipped, D1 migration applied to production
 
 ## Accumulated Context
 

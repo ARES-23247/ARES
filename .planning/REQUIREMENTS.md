@@ -7,9 +7,9 @@
 - [x] **TD-02**: Admin reindex endpoint (`POST /api/ai/reindex`) must have an E2E or integration test verifying auth guard, incremental mode, and force mode.
 
 ### Pipeline Hardening
-- [ ] **TD-03**: `events` and `posts` tables must have `updated_at` columns with automatic update triggers, enabling true incremental timestamp-based indexing instead of full filtered scans.
-- [ ] **TD-04**: `/api/ai/reindex` endpoint must have rate limiting applied (even though admin-only) to prevent accidental neuron exhaustion.
-- [ ] **TD-05**: Cron scheduled handler must be validated as executing in production (check Cloudflare dashboard logs or add a KV heartbeat).
+- [x] **TD-03**: `events` and `posts` tables must have `updated_at` columns with automatic update triggers, enabling true incremental timestamp-based indexing instead of full filtered scans.
+- [x] **TD-04**: `/api/ai/reindex` endpoint must have rate limiting applied (even though admin-only) to prevent accidental neuron exhaustion.
+- [x] **TD-05**: Cron scheduled handler must be validated as executing in production (check Cloudflare dashboard logs or add a KV heartbeat).
 
 ### Traceability
 - **TD-01** → Phase 51
