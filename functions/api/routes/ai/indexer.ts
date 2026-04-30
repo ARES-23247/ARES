@@ -3,16 +3,16 @@ import { DB } from "../../../../shared/schemas/database";
 
 /**
  * Incremental Vectorize indexer for the RAG chatbot knowledge base.
- * 
+ *
  * Strategy:
  * - Stores the last successful index timestamp in KV (`rag_last_indexed`)
- * - Only queries records with `updated_at > lastIndexed`
+ * - Only queries records with `updated_at > lastIndexed` (where available)
  * - Generates embeddings ONLY for changed documents (saves neurons)
  * - Upserts into Vectorize (idempotent by ID)
  * - Full re-index available via `force: true` flag
- * 
+ *
  * Cost: ~50 neurons per changed doc vs ~7,000 for full re-index.
- * Safe for free tier (10K neurons/day) even with auto-trigger.
+ * Safe for free tier: 10K neurons/day handles ~200 edits/day.
  */
 
 interface IndexableDocument {
@@ -41,49 +41,60 @@ export async function indexSiteContent(
     lastIndexed = await kv.get(KV_KEY);
   }
 
-  const since = lastIndexed || "1970-01-01T00:00:00Z";
   const nowIso = new Date().toISOString();
 
-  // ── 1. Index PUBLIC events (changed since last run) ──
+  // ── 1. Index PUBLIC events ──
+  // Events schema: id, title, description, date_start, date_end, location, category, is_deleted, status, published_at
+  // No is_draft column — use status != 'draft'. No updated_at — always full scan for events.
   try {
-    let query = db
+    const events = await db
       .selectFrom("events")
-      .select(["id", "title", "description", "date_start", "date_end", "location", "category"])
+      .select(["title", "description", "date_start", "date_end", "location", "category"])
       .where("is_deleted", "!=", 1)
-      .where("is_draft", "!=", 1)
-      .where((eb) => eb.or([eb("published_at", "is", null), eb("published_at", "<=", sql`datetime('now')` as any)]))
+      .where("status", "!=", "draft")
+      .where((eb) => eb.or([
+        eb("published_at", "is", null),
+        eb("published_at", "<=", sql`datetime('now')` as any),
+      ]))
       .orderBy("date_start", "desc")
-      .limit(100);
-
-    if (!force) {
-      query = query.where("updated_at", ">", since);
-    }
-
-    const events = await query.execute();
+      .limit(100)
+      .execute();
 
     for (const event of events) {
       let descText = event.description || "";
       try {
         const ast = JSON.parse(descText);
         descText = extractTextFromAst(ast);
-      } catch { /* plain text */ }
+      } catch {
+        /* plain text */
+      }
 
       const dateStr = event.date_start
         ? new Date(event.date_start).toLocaleDateString("en-US", {
-            weekday: "long", year: "numeric", month: "long", day: "numeric",
-            hour: "numeric", minute: "2-digit",
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
           })
         : "TBD";
 
       const endStr = event.date_end
         ? ` to ${new Date(event.date_end).toLocaleDateString("en-US", {
-            weekday: "long", month: "long", day: "numeric",
-            hour: "numeric", minute: "2-digit",
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
           })}`
         : "";
 
+      // Use title+date_start as a stable composite ID
+      const stableId = `event_${event.title?.replace(/\W+/g, "_")}_${event.date_start || "nodate"}`;
+
       documents.push({
-        id: `event_${event.id}`,
+        id: stableId,
         text: `Event: ${event.title}. Date: ${dateStr}${endStr}. Location: ${event.location || "TBD"}. Category: ${event.category || "general"}. ${descText}`.trim(),
         metadata: { type: "event", title: event.title || "", date: event.date_start || "" },
       });
@@ -92,21 +103,18 @@ export async function indexSiteContent(
     errors.push(`Events indexing failed: ${e}`);
   }
 
-  // ── 2. Index published blog posts (changed since last run) ──
+  // ── 2. Index published blog posts ──
+  // Posts schema: slug, title, ast, published_at, is_deleted, status
+  // No is_draft — use status. No id — use slug. No updated_at — full scan.
   try {
-    let query = db
+    const posts = await db
       .selectFrom("posts")
-      .select(["id", "title", "ast", "published_at"])
-      .where("is_draft", "!=", 1)
+      .select(["slug", "title", "ast", "published_at"])
       .where("is_deleted", "!=", 1)
+      .where("status", "!=", "draft")
       .orderBy("published_at", "desc")
-      .limit(50);
-
-    if (!force) {
-      query = query.where("updated_at", ">", since);
-    }
-
-    const posts = await query.execute();
+      .limit(50)
+      .execute();
 
     for (const post of posts) {
       let bodyText = "";
@@ -120,7 +128,7 @@ export async function indexSiteContent(
       }
 
       documents.push({
-        id: `post_${post.id}`,
+        id: `post_${post.slug || post.title?.replace(/\W+/g, "_")}`,
         text: `Blog Post: ${post.title}. Published: ${post.published_at || "unknown"}. ${bodyText}`.trim(),
         metadata: { type: "post", title: post.title || "", date: post.published_at || "" },
       });
@@ -129,17 +137,18 @@ export async function indexSiteContent(
     errors.push(`Posts indexing failed: ${e}`);
   }
 
-  // ── 3. Index PUBLIC documentation (changed since last run) ──
+  // ── 3. Index PUBLIC documentation ──
+  // Table is "docs" (not "documentation"). Schema: slug, title, content, category, is_deleted, status, updated_at
   try {
     let query = db
-      .selectFrom("documentation")
-      .select(["id", "title", "content", "category"])
+      .selectFrom("docs")
+      .select(["slug", "title", "content", "category"])
       .where("is_deleted", "!=", 1)
-      .where("is_draft", "!=", 1)
+      .where("status", "!=", "draft")
       .limit(100);
 
-    if (!force) {
-      query = query.where("updated_at", ">", since);
+    if (!force && lastIndexed) {
+      query = query.where("updated_at", ">", lastIndexed);
     }
 
     const docs = await query.execute();
@@ -149,10 +158,12 @@ export async function indexSiteContent(
       try {
         const ast = JSON.parse(bodyText);
         bodyText = extractTextFromAst(ast);
-      } catch { /* plain text */ }
+      } catch {
+        /* plain text */
+      }
 
       documents.push({
-        id: `doc_${doc.id}`,
+        id: `doc_${doc.slug || doc.title?.replace(/\W+/g, "_")}`,
         text: `Documentation: ${doc.title}. Category: ${doc.category || "general"}. ${bodyText}`.trim(),
         metadata: { type: "documentation", title: doc.title || "", category: doc.category || "" },
       });
@@ -161,31 +172,35 @@ export async function indexSiteContent(
     errors.push(`Docs indexing failed: ${e}`);
   }
 
-  // ── 4. Index PUBLIC seasons (changed since last run) ──
+  // ── 4. Index PUBLIC seasons ──
+  // Schema: start_year, challenge_name, robot_name, summary, robot_description, status, updated_at
   try {
     let query = db
       .selectFrom("seasons")
-      .select(["id", "start_year", "challenge_name", "robot_name", "summary", "robot_description"])
+      .select(["start_year", "challenge_name", "robot_name", "summary", "robot_description"])
       .where("status", "=", "published")
       .limit(20);
 
-    if (!force) {
-      query = query.where("updated_at", ">", since);
+    if (!force && lastIndexed) {
+      query = query.where("updated_at", ">", lastIndexed);
     }
 
     const seasons = await query.execute();
 
     for (const season of seasons) {
+      const year = season.start_year ?? 0;
       let descText = season.robot_description || "";
       try {
         const ast = JSON.parse(descText);
         descText = extractTextFromAst(ast);
-      } catch { /* plain text */ }
+      } catch {
+        /* plain text */
+      }
 
       documents.push({
-        id: `season_${season.id}`,
-        text: `Season ${season.start_year}-${season.start_year + 1}: ${season.challenge_name}. Robot: ${season.robot_name || "unnamed"}. ${season.summary || ""}. ${descText}`.trim(),
-        metadata: { type: "season", title: `${season.start_year} ${season.challenge_name}` },
+        id: `season_${year}`,
+        text: `Season ${year}-${year + 1}: ${season.challenge_name}. Robot: ${season.robot_name || "unnamed"}. ${season.summary || ""}. ${descText}`.trim(),
+        metadata: { type: "season", title: `${year} ${season.challenge_name}` },
       });
     }
   } catch (e) {
