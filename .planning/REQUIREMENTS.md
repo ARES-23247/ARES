@@ -1,5 +1,25 @@
 # Requirements
 
+## v4.7 Gap Closure (Tech Debt from v4.6 Audit)
+
+### Test Coverage
+- [ ] **TD-01**: `indexer.ts` and `autoReindex.ts` must have vitest unit tests covering core indexing logic, dynamic import behavior, and error handling.
+- [ ] **TD-02**: Admin reindex endpoint (`POST /api/ai/reindex`) must have an E2E or integration test verifying auth guard, incremental mode, and force mode.
+
+### Pipeline Hardening
+- [ ] **TD-03**: `events` and `posts` tables must have `updated_at` columns with automatic update triggers, enabling true incremental timestamp-based indexing instead of full filtered scans.
+- [ ] **TD-04**: `/api/ai/reindex` endpoint must have rate limiting applied (even though admin-only) to prevent accidental neuron exhaustion.
+- [ ] **TD-05**: Cron scheduled handler must be validated as executing in production (check Cloudflare dashboard logs or add a KV heartbeat).
+
+### Traceability
+- **TD-01** → Phase 51
+- **TD-02** → Phase 51
+- **TD-03** → Phase 52
+- **TD-04** → Phase 52
+- **TD-05** → Phase 52
+
+---
+
 ## v4.6 RAG Knowledge Base Pipeline
 
 ### AI Indexing
@@ -24,9 +44,6 @@
 - [x] **INQ-01**: System must automatically generate a Zulip thread for each new inquiry submitted.
 - [x] **INQ-02**: Inquiry details view must include a "Discuss on Zulip" button that links directly to the generated Zulip thread.
 - [x] **INQ-03**: Inquiry view must include a "notes" section, functioning similarly to Kanban card notes, for internal tracking and discussion.
-
-### Out of Scope
-- None identified yet.
 
 ### Traceability
 - **NOTIF-01** → Phase 41

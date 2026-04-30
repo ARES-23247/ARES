@@ -1,11 +1,11 @@
 ---
 milestone: v4.7
-name: Next Milestone
+name: Gap Closure (v4.6 Tech Debt)
 status: planning
 progress:
-  phases_total: 0
+  phases_total: 2
   phases_completed: 0
-  tasks_total: 0
+  tasks_total: 5
   tasks_completed: 0
 ---
 
@@ -13,10 +13,10 @@ progress:
 
 ## Current Position
 
-Phase: None active — awaiting v4.7 planning
-Plan: —
-Status: Ready for next milestone
-Last activity: 2026-04-30 — v4.6.2 hotfix (dynamic import fix for autoReindex — static import crashed worker)
+Phase: 51 — RAG Indexer Test Coverage (next)
+Plan: Pending
+Status: Gap closure phases created from v4.6 audit
+Last activity: 2026-04-30 — v4.7 gap closure phases planned (51-52)
 
 ## Accumulated Context
 
