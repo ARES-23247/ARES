@@ -86,8 +86,8 @@ export default function SimPreviewFrame({ compiledCode, compileError }: SimPrevi
     .sim-grid { display: grid; gap: 16px; }
     .sim-flex { display: flex; gap: 12px; align-items: center; }
 </style>
-  <script src="/vendor/react.production.min.js"></script>
-  <script src="/vendor/react-dom.production.min.js"></script>
+  <script src="${window.location.origin}/vendor/react.production.min.js"></script>
+  <script src="${window.location.origin}/vendor/react-dom.production.min.js"></script>
 </head>
 <body>
   <div id="root"><div class="sim-loading">Loading React...</div></div>
