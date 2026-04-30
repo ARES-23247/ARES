@@ -336,7 +336,8 @@ export const eventHandlers: any = {
           location: location || "", description: description || "", cover_image: coverImage || "",
           tba_event_key: tbaEventKey || null, status, content_draft: null,
           is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
-          published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null
+          published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
+          updated_at: new Date().toISOString()
         })
         .where("id", "=", id)
         .execute();
@@ -374,7 +375,7 @@ export const eventHandlers: any = {
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      await db.updateTable("events").set({ is_deleted: 1 }).where("id", "=", id).execute();
+      await db.updateTable("events").set({ is_deleted: 1, updated_at: new Date().toISOString() }).where("id", "=", id).execute();
 
       c.executionCtx.waitUntil((async () => {
         const row = await db.selectFrom("events").select(["gcal_event_id", "category"]).where("id", "=", id).executeTakeFirst();
@@ -458,7 +459,7 @@ export const eventHandlers: any = {
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      await db.updateTable("events").set({ status: 'rejected' }).where("id", "=", id).execute();
+      await db.updateTable("events").set({ status: 'rejected', updated_at: new Date().toISOString() }).where("id", "=", id).execute();
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Reject] Error", e);
@@ -470,7 +471,7 @@ export const eventHandlers: any = {
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      await db.updateTable("events").set({ is_deleted: 0 }).where("id", "=", id).execute();
+      await db.updateTable("events").set({ is_deleted: 0, updated_at: new Date().toISOString() }).where("id", "=", id).execute();
 
       c.executionCtx.waitUntil((async () => {
         const targetRow = await db.selectFrom("events").selectAll().where("id", "=", id).executeTakeFirst();

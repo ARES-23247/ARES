@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin } from "../../middleware";
+import { AppEnv, ensureAdmin, persistentRateLimitMiddleware } from "../../middleware";
 import { streamSSE } from "hono/streaming";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -273,7 +273,7 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
 
 // ── Manual Re-Index Endpoint (admin-only) ─────────────────────────────
 
-aiRouter.post("/reindex", ensureAdmin, async (c) => {
+aiRouter.post("/reindex", ensureAdmin, persistentRateLimitMiddleware(5, 600), async (c) => {
   if (!c.env.AI || !c.env.VECTORIZE_DB) {
     return c.json({ error: "AI or Vectorize bindings not configured" }, 500);
   }

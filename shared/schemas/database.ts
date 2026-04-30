@@ -237,6 +237,7 @@ export interface Events {
   status: Generated<string | null>;
   tba_event_key: string | null;
   title: string;
+  updated_at: Generated<string | null>;
 }
 
 export interface EventsFts {
@@ -475,6 +476,7 @@ export interface Posts {
   status: Generated<string | null>;
   thumbnail: string | null;
   title: string;
+  updated_at: Generated<string | null>;
 }
 
 export interface PointsLedger {

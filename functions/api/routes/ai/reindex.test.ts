@@ -6,6 +6,7 @@ vi.mock("../../middleware", () => ({
   ensureAdmin: (c: any, next: any) => next(),
   logAuditAction: vi.fn().mockResolvedValue(true),
   rateLimitMiddleware: () => (c: any, next: any) => next(),
+  persistentRateLimitMiddleware: () => (c: any, next: any) => next(),
 }));
 
 // Mock the dynamic import of indexer

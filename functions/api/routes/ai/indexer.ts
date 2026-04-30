@@ -47,7 +47,7 @@ export async function indexSiteContent(
   // Events schema: id, title, description, date_start, date_end, location, category, is_deleted, status, published_at
   // No is_draft column — use status != 'draft'. No updated_at — always full scan for events.
   try {
-    const events = await db
+    let query = db
       .selectFrom("events")
       .select(["title", "description", "date_start", "date_end", "location", "category"])
       .where("is_deleted", "!=", 1)
@@ -57,8 +57,13 @@ export async function indexSiteContent(
         eb("published_at", "<=", sql`datetime('now')` as any),
       ]))
       .orderBy("date_start", "desc")
-      .limit(100)
-      .execute();
+      .limit(100);
+
+    if (!force && lastIndexed) {
+      query = query.where("updated_at", ">", lastIndexed);
+    }
+
+    const events = await query.execute();
 
     for (const event of events) {
       let descText = event.description || "";
@@ -104,17 +109,21 @@ export async function indexSiteContent(
   }
 
   // ── 2. Index published blog posts ──
-  // Posts schema: slug, title, ast, published_at, is_deleted, status
-  // No is_draft — use status. No id — use slug. No updated_at — full scan.
+  // Posts schema: slug, title, ast, published_at, is_deleted, status, updated_at
   try {
-    const posts = await db
+    let query = db
       .selectFrom("posts")
       .select(["slug", "title", "ast", "published_at"])
       .where("is_deleted", "!=", 1)
       .where("status", "!=", "draft")
       .orderBy("published_at", "desc")
-      .limit(50)
-      .execute();
+      .limit(50);
+
+    if (!force && lastIndexed) {
+      query = query.where("updated_at", ">", lastIndexed);
+    }
+
+    const posts = await query.execute();
 
     for (const post of posts) {
       let bodyText = "";

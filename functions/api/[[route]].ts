@@ -279,6 +279,11 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
       console.error("[Cron] Vectorize indexing failed:", e);
     }
   }
+
+  // KV heartbeat for cron validation (TD-05)
+  if (env.RATE_LIMITS) {
+    await env.RATE_LIMITS.put("cron_last_run", new Date().toISOString());
+  }
 };
 
 export default app;

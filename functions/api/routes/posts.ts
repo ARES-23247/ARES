@@ -405,7 +405,8 @@ const postTsRestRouterObj: any = {
           status,
           content_draft: null,
           published_at: body.publishedAt || null,
-          season_id: body.seasonId ? Number(body.seasonId) : null
+          season_id: body.seasonId ? Number(body.seasonId) : null,
+          updated_at: new Date().toISOString()
         })
         .where("slug", "=", slug)
         .execute();
@@ -423,7 +424,7 @@ const postTsRestRouterObj: any = {
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      await db.updateTable("posts").set({ is_deleted: 1, status: "draft" }).where("slug", "=", slug).execute();
+      await db.updateTable("posts").set({ is_deleted: 1, status: "draft", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_POST", "posts", slug));
       triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.RATE_LIMITS);
       return { status: 200, body: { success: true } };
@@ -437,7 +438,7 @@ const postTsRestRouterObj: any = {
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      await db.updateTable("posts").set({ is_deleted: 0, status: "draft" }).where("slug", "=", slug).execute();
+      await db.updateTable("posts").set({ is_deleted: 0, status: "draft", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "RESTORE_POST", "posts", slug));
       return { status: 200, body: { success: true } };
     } catch (e) {
@@ -494,7 +495,7 @@ const postTsRestRouterObj: any = {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("posts").select(["title", "cf_email"]).where("slug", "=", slug).executeTakeFirst();
       
-      await db.updateTable("posts").set({ status: "rejected" }).where("slug", "=", slug).execute();
+      await db.updateTable("posts").set({ status: "rejected", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
 
       if (row?.cf_email) {
         const author = await db.selectFrom("user").select("id").where("email", "=", row.cf_email).executeTakeFirst();
