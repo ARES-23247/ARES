@@ -1,4 +1,4 @@
-import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard, MessageSquare, Workflow, CheckCircle, Eye, ShieldCheck, Activity, Rocket, Paintbrush } from "lucide-react";
+import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard, MessageSquare, Workflow, CheckCircle, Eye, ShieldCheck, Activity, Rocket, Paintbrush, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import GitHubHeatmap from "../components/GitHubHeatmap";
 import SEO from "../components/SEO";
@@ -106,6 +106,17 @@ export default function TechStack() {
               The portal features a fully bespoke, role-based Content Management System. It inherently supports abstract syntax trees, intelligent cross-posting (Discord, Bluesky), and a tiered review pipeline allowing students to submit articles for mentor approval.
             </p>
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Custom Built</div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
+            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
+              <Users size={24} />
+            </div>
+            <h3 className="text-2xl font-bold font-heading mb-4">Liveblocks Sync</h3>
+            <p className="text-marble leading-relaxed mb-4 flex-1">
+              Multiple users can edit task boards and blog posts simultaneously like Google Docs. We use <strong>Liveblocks</strong> and Y.js Conflict-free Replicated Data Types (CRDTs) to seamlessly merge real-time typing across clients.
+            </p>
+            <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Free Tier</div>
           </div>
 
           <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
