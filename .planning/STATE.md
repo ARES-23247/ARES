@@ -1,9 +1,9 @@
 ---
-milestone: none
-name: Preparing Next Milestone
-status: archived
+milestone: v4.3
+name: Inquiries, Notifications & Docs Restoration
+status: planning
 progress:
-  phases_total: 0
+  phases_total: 4
   phases_completed: 0
   tasks_total: 0
   tasks_completed: 0
@@ -13,10 +13,10 @@ progress:
 
 ## Current Position
 
-Phase: none
-Plan: none
-Status: Archived
-Last activity: 2026-04-30 — Milestone v4.2 Archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-30 — Milestone v4.3 started
 
 ## Accumulated Context
 

@@ -35,15 +35,24 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: v4.2 Sponsor Fixes & Docs Quality
+## Current Milestone: v4.3 Inquiries, Notifications & Docs Restoration
 
-**Goal:** Resolve the sponsor logo update bug and improve ARESWEB documentation based on areslib.
+**Goal:** Resolve persistent notification bugs, restore missing documentation entries, and enhance the inquiry management workflow with Zulip integration and a notes system.
 
 **Target features:**
-- Sponsor Logo Fix: Investigate and resolve the bug preventing logo updates on `dashboard/sponsors`.
-- Documentation Improvements: Audit and upgrade the quality of `aresfirst.org/docs/` leveraging patterns/code from `areslib`.
+- **Notification State Fix:** Ensure notifications are properly dismissed and removed from the notification bar when marked as read or handled.
+- **Documentation Data Restoration:** Recover, recreate, or re-import documentation entries that were accidentally deleted to return the DB to a championship-grade state.
+- **Zulip Integration for Inquiries:** Automatically generate Zulip threads for new inquiries and include a "Discuss on Zulip" button on the inquiry details.
+- **Inquiry Notes System:** Add a "notes" section to inquiries similar to Kanban cards for internal tracking and discussion.
 
 ## Current State
+
+<details>
+<summary>v4.2 Shipped Features</summary>
+
+- Investigated and resolved the bug preventing logo updates on `dashboard/sponsors`.
+- Audited and upgraded the quality of `aresfirst.org/docs/` leveraging patterns/code from `areslib`.
+</details>
 
 <details>
 <summary>v4.1 Shipped Features</summary>
@@ -181,4 +190,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-30 after v4.1 milestone completion*
+*Last updated: 2026-04-30 after v4.2 milestone completion*
