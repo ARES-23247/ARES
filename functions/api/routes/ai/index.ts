@@ -285,6 +285,48 @@ aiRouter.post("/rag-chatbot", async (c) => {
     console.error("[RAG] Upcoming events query failed:", e);
   }
 
+  // Current season context (robot name, challenge, etc.)
+  let seasonContext = "";
+  try {
+    const currentSeason = await db.selectFrom("seasons")
+      .select(["start_year", "challenge_name", "robot_name", "summary"])
+      .where("status", "=", "published")
+      .orderBy("start_year", "desc")
+      .limit(1)
+      .executeTakeFirst();
+
+    if (currentSeason) {
+      const yr = currentSeason.start_year ?? 0;
+      seasonContext = `\n\nCurrent season (${yr}-${yr + 1}):
+- Challenge: ${currentSeason.challenge_name || "TBD"}
+- Robot name: ${currentSeason.robot_name || "TBD"}
+- Summary: ${currentSeason.summary || "No summary available"}`;
+    }
+  } catch (e) {
+    console.error("[RAG] Season query failed:", e);
+  }
+
+  // Recent blog posts (for "what's new?" queries)
+  let recentPostsContext = "";
+  try {
+    const recentPosts = await db.selectFrom("posts")
+      .select(["title", "published_at", "slug"])
+      .where("is_deleted", "!=", 1)
+      .where("status", "!=", "draft")
+      .orderBy("published_at", "desc")
+      .limit(3)
+      .execute();
+
+    if (recentPosts.length > 0) {
+      recentPostsContext = "\n\nRecent blog posts:\n" + recentPosts.map(p => {
+        const date = p.published_at ? new Date(p.published_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "unpublished";
+        return `- ${p.title} (${date})`;
+      }).join("\n");
+    }
+  } catch (e) {
+    console.error("[RAG] Recent posts query failed:", e);
+  }
+
   // Fetch history if session exists
   let historyMessages: any[] = [];
   
@@ -299,11 +341,22 @@ aiRouter.post("/rag-chatbot", async (c) => {
     }
   }
 
-  const systemPrompt = `You are the ARES 23247 Knowledge Bot — a helpful assistant for a FIRST Tech Challenge robotics team (Team 23247 ARES). 
+  const systemPrompt = `You are the ARES 23247 Knowledge Bot — a helpful assistant for FIRST Tech Challenge Team 23247 ARES.
+
+TEAM IDENTITY:
+- Team number: 23247
+- Team name: ARES
+- Program: FIRST Tech Challenge (FTC)
+- Location: West Virginia, USA
+- Website: aresfirst.org
+
 Today's date is ${todayReadable}.
-Answer questions about the team's schedule, code, rules, and activities. Be concise and helpful.
-When asked about upcoming events or practices, use the "Upcoming events" section below — those are the REAL scheduled events from the database.
-${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : "\nNo relevant context found in the knowledge base. Answer based on general FTC knowledge."}${upcomingEventsContext}`;
+Answer questions about the team's schedule, code, robot, blog, and activities. Be concise, friendly, and accurate.
+When asked about upcoming events or practices, use the "Upcoming events" section — those are REAL scheduled events from the database.
+When asked about the robot or current season, use the "Current season" section.
+When asked "what's new" or about recent updates, reference the "Recent blog posts" section.
+Never make up event dates, team members, or scores — only use what's provided in the context below.
+${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : ""}${upcomingEventsContext}${seasonContext}${recentPostsContext}`;
 
   const messages = [
     ...historyMessages.map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content })),
