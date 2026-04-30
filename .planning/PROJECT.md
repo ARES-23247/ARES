@@ -31,12 +31,15 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: None
+## Current Milestone: v4.0 System Hardening, Storefront & Member Incentives
 
-**Goal:** None
+**Goal:** Complete the e-commerce storefront, introduce a member activity points system, and perform a comprehensive codebase audit to harden testing infrastructure and update public-facing tech stack documentation.
 
 **Target features:**
-- None
+- Member Activity Points System
+- Storefront Completion (Zulip Alerts, Inventory Tracking, Webhook Testing)
+- Codebase & Test Coverage Audit (exceeding industry standards)
+- Public Tech Stack Documentation Refresh
 
 ## Current State
 

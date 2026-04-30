@@ -1,7 +1,7 @@
 ---
-milestone: Pending
-name: None
-status: idle
+milestone: v4.0
+name: System Hardening, Storefront & Member Incentives
+status: planning
 progress:
   phases_total: 0
   phases_completed: 0
@@ -13,10 +13,10 @@ progress:
 
 ## Current Position
 
-Phase: Pending
+Phase: Not started (defining requirements)
 Plan: —
-Status: Idle
-Last activity: 2026-04-29 — Post-v3.9 build fixes completed
+Status: Defining requirements
+Last activity: 2026-04-29 — Milestone v4.0 started
 
 ## Accumulated Context
 
