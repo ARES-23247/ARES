@@ -1,4 +1,5 @@
 import { getSocialConfig, getSessionUser, getDbSettings, logAuditAction, AppEnv } from "../../middleware";
+import { triggerBackgroundReindex } from "../ai/autoReindex";
 import { pushEventToGcal, pullEventsFromGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
 import { dispatchSocials } from "../../../utils/socialSync";
 import { sendZulipMessage } from "../../../utils/zulipSync";
@@ -296,6 +297,7 @@ export const eventHandlers: any = {
       })());
 
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_EVENT", "events", genId, `Created event: ${title} (${status})`));
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.RATE_LIMITS);
 
       return { status: 200 as const, body: { success: true, id: genId } };
     } catch (e) {
@@ -360,6 +362,7 @@ export const eventHandlers: any = {
         }
       })());
 
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.RATE_LIMITS);
       return { status: 200 as const, body: { success: true, id } };
     } catch (e) {
       console.error("[Events:Update] Error", e);
@@ -393,6 +396,7 @@ export const eventHandlers: any = {
         }
       })());
 
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.RATE_LIMITS);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Delete] Error", e);

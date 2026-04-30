@@ -3,6 +3,7 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { docContract } from "../../../shared/schemas/contracts/docContract";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkRateLimit, verifyTurnstile, emitNotification, notifyByRole, getSocialConfig, logAuditAction } from "../middleware";
+import { triggerBackgroundReindex } from "./ai/autoReindex";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -310,6 +311,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
 
       await db.updateTable("docs").set({ is_deleted: 1 }).where("slug", "=", slug).execute();
       c.executionCtx?.waitUntil?.(logAuditAction(c, "DELETE_DOC", "docs", slug, JSON.stringify(existing)));
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.RATE_LIMITS);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Delete] Error", e);
@@ -422,6 +424,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           }));
         }
 
+        triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.RATE_LIMITS);
         return { status: 200 as const, body: { success: true, slug } };
     } catch (e) {
       console.error("[Docs:Save] Error", e);
