@@ -146,7 +146,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           npm run db:setup:local
-          npx wrangler d1 migrations apply ares-db --local
+          npx wrangler d1 migrations apply ares-db --local -c wrangler.ci.toml
 
       - name: Playwright Tests (Shard ${{ matrix.shard }}/3)
         if: steps.check_e2e.outputs.run_e2e == 'true'
