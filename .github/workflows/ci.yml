@@ -141,6 +141,9 @@ jobs:
 
       - name: Setup D1 Database for E2E
         if: steps.check_e2e.outputs.run_e2e == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           npm run db:setup:local
           npx wrangler d1 migrations apply ares-db --local
