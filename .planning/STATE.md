@@ -1,11 +1,11 @@
 ---
-milestone: next
-name: Planning
-status: inactive
+milestone: v4.8
+name: Simulation Playground UI Fixes
+status: active
 progress:
-  phases_total: 0
+  phases_total: 1
   phases_completed: 0
-  tasks_total: 0
+  tasks_total: 2
   tasks_completed: 0
 ---
 
@@ -13,10 +13,10 @@ progress:
 
 ## Current Position
 
-Phase: None
-Plan: Pending
-Status: Planning next milestone
-Last activity: 2026-04-30 — Phase 55 shipped (RAG grounding, sim preview fix, auto-heal, chatbot links)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-30 — Milestone v4.8 started
 
 ## Accumulated Context
 

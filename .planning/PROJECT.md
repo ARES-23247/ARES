@@ -42,9 +42,13 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: None
+## Current Milestone: v4.8 Simulation Playground UI Fixes
 
-**Goal:** Planning next milestone.
+**Goal:** Resolve rendering failures in the Simulation Playground to ensure the Monaco code editor mounts and displays correctly.
+
+**Target features:**
+- **Monaco Rendering Fix:** Diagnose and fix the blank/missing code window in the left pane of the simulation playground.
+- **Dependency Loading:** Ensure Monaco's AMD loader or React wrapper correctly resolves its web workers and core libraries.
 
 
 
