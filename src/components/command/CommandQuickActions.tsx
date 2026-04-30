@@ -1,8 +1,33 @@
-import { MessageCircle, GitBranch, Activity, ArrowRight, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { MessageCircle, GitBranch, Activity, ArrowRight, ExternalLink, Brain } from "lucide-react";
+import { toast } from "sonner";
 
 import { siteConfig } from "../../site.config";
 
 export default function CommandQuickActions() {
+  const [isReindexing, setIsReindexing] = useState(false);
+
+  const handleReindex = async () => {
+    setIsReindexing(true);
+    try {
+      const res = await fetch("/api/ai/reindex", { method: "POST" });
+      const data = await res.json() as { success?: boolean; indexed?: number; errors?: string[]; error?: string };
+      if (res.ok && data.success) {
+        toast.success(`Knowledge base updated: ${data.indexed} documents indexed.`);
+        if (data.errors && data.errors.length > 0) {
+          toast.warning(`${data.errors.length} indexing warnings — check console.`);
+          console.warn("[Reindex Warnings]", data.errors);
+        }
+      } else {
+        toast.error(data.error || `Re-index failed (HTTP ${res.status})`);
+      }
+    } catch (e) {
+      toast.error(`Re-index request failed: ${e}`);
+    } finally {
+      setIsReindexing(false);
+    }
+  };
+
   return (
     <div className="bg-obsidian/50 border border-white/5 ares-cut p-6">
       <h3 className="font-black text-white text-sm uppercase tracking-widest flex items-center gap-2 mb-4">
@@ -29,6 +54,27 @@ export default function CommandQuickActions() {
             <ExternalLink size={14} className="opacity-50" />
           </a>
         ))}
+
+        {/* AI Knowledge Base Re-Index */}
+        <button
+          onClick={handleReindex}
+          disabled={isReindexing}
+          className={`w-full flex items-center justify-between p-3 ares-cut-sm border transition-all ${
+            isReindexing
+              ? "bg-white/5 text-marble/40 border-white/5 cursor-not-allowed"
+              : "bg-purple-500/10 text-purple-400 border-purple-500/20 hover:border-purple-500/40"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <Brain size={16} className={isReindexing ? "animate-pulse" : ""} />
+            <span className="text-sm font-bold">
+              {isReindexing ? "Indexing Knowledge Base..." : "Re-index AI Knowledge Base"}
+            </span>
+          </div>
+          {isReindexing && (
+            <div className="w-4 h-4 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+          )}
+        </button>
       </div>
     </div>
   );
