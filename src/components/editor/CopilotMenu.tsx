@@ -49,7 +49,7 @@ export function CopilotMenu({ editor }: CopilotMenuProps) {
             if (line.startsWith("data: ")) {
               try {
                 const data = JSON.parse(line.slice(6));
-                accumulatedText += data.chunk + " ";
+                accumulatedText += data.chunk;
               } catch (_e) {
                 // Parse error, ignore parse errors on chunks
               }

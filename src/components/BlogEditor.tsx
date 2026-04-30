@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import { CopilotMenu } from "./editor/CopilotMenu";
+import { AISuggestionsToggle } from "./editor/AISuggestionsToggle";
+import { useAISuggestions } from "../hooks/useAISuggestions";
 import AssetPickerModal from "./AssetPickerModal";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { useAdminSettings } from "../hooks/useAdminSettings";
@@ -72,6 +74,7 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
     ydoc,
     provider
   });
+  const { enabled: aiEnabled, setEnabled: setAiEnabled, isLoading: aiLoading } = useAISuggestions(editor);
 
   // Use standard API query instead of custom useEntityFetch
   const { data: postRes, isLoading, isError } = api.posts.getAdminPost.useQuery(
@@ -271,7 +274,10 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
 
 
       {/* ===== Unified Rich Editor ===== */}
-      <RichEditorToolbar editor={editor} documentTitle={title} />
+      <div className="flex items-center gap-2">
+        <div className="flex-1"><RichEditorToolbar editor={editor} documentTitle={title} /></div>
+        <AISuggestionsToggle enabled={aiEnabled} isLoading={aiLoading} onToggle={setAiEnabled} />
+      </div>
       <CopilotMenu editor={editor} />
 
       {/* Cover Image Picker Modal */}

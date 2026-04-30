@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import { CopilotMenu } from "./editor/CopilotMenu";
+import { AISuggestionsToggle } from "./editor/AISuggestionsToggle";
+import { useAISuggestions } from "../hooks/useAISuggestions";
 import AssetPickerModal from "./AssetPickerModal";
 import { MapPin, RefreshCw } from "lucide-react";
 import EventPotluckVolunteerFlags from "./events/EventPotluckVolunteerFlags";
@@ -43,6 +45,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
     provider,
     yfield: 'default'
   });
+  const { enabled: aiEnabled, setEnabled: setAiEnabled, isLoading: aiLoading } = useAISuggestions(editor);
   
   const notesEditor = useRichEditor({ 
     placeholder: "<p>Add private meeting notes here (visible to verified members only)...</p>",
@@ -399,7 +402,12 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
 
       <div>
         <label htmlFor="event-desc-editor" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Event Description / Recap</label>
-        {editor && <RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} />}
+        {editor && (
+          <div className="flex items-center gap-2">
+            <div className="flex-1"><RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} /></div>
+            <AISuggestionsToggle enabled={aiEnabled} isLoading={aiLoading} onToggle={setAiEnabled} />
+          </div>
+        )}
         {editor && <CopilotMenu editor={editor} />}
       </div>
 

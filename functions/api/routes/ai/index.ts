@@ -135,6 +135,72 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
   });
 });
 
+// ── AI Inline Suggestions Endpoint ────────────────────────────────────────
+// Returns a short completion suggestion for ghost text in the editor
+
+aiRouter.post("/suggest", persistentRateLimitMiddleware(30, 60), ensureAdmin, async (c) => {
+  const body = await c.req.json();
+  const { context } = body;
+
+  if (!context || typeof context !== "string" || context.trim().length < 10) {
+    return c.json({ suggestion: "" }, 200);
+  }
+
+  const hasZai = !!c.env.Z_AI_API_KEY;
+
+  if (!hasZai && !c.env.AI) {
+    return c.json({ suggestion: "" }, 200);
+  }
+
+  const safeContext = scrubPII(context.slice(-800)); // Last 800 chars max
+
+  const systemPrompt = `You are a writing autocomplete engine for ARES 23247, a FIRST Tech Challenge robotics team. Given the text context, predict the next 10-30 words the writer is likely to type. Output ONLY the continuation text, no quotes, no preamble, no explanation. If you cannot predict a useful continuation, output an empty string.`;
+
+  try {
+    // ── Premium path: z.ai ──
+    if (hasZai) {
+      const zaiRes = await fetch("https://api.z.ai/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": c.env.Z_AI_API_KEY!,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "zai-5.1",
+          max_tokens: 100,
+          system: systemPrompt,
+          messages: [{ role: "user", content: safeContext }]
+        })
+      });
+
+      if (zaiRes.ok) {
+        const data = await zaiRes.json() as { content?: { text?: string }[] };
+        const suggestion = data.content?.[0]?.text?.trim() || "";
+        return c.json({ suggestion });
+      }
+    }
+
+    // ── Fallback: Workers AI ──
+    if (c.env.AI) {
+      const result = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: safeContext }
+        ],
+        max_tokens: 100
+      }) as { response?: string };
+
+      return c.json({ suggestion: (result.response || "").trim() });
+    }
+
+    return c.json({ suggestion: "" }, 200);
+  } catch (e) {
+    console.error("[AI Suggest] Error:", e);
+    return c.json({ suggestion: "" }, 200);
+  }
+});
+
 // ── RAG Chatbot Endpoint ──────────────────────────────────────────────────
 
 aiRouter.post("/rag-chatbot", async (c) => {

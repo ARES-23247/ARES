@@ -29,6 +29,8 @@ interface DocData {
 import { CollaborativeEditorRoom, useCollaborativeEditor } from "./editor/CollaborativeEditorRoom";
 import VersionHistorySidebar from "./editor/VersionHistorySidebar";
 import { CopilotMenu } from "./editor/CopilotMenu";
+import { AISuggestionsToggle } from "./editor/AISuggestionsToggle";
+import { useAISuggestions } from "../hooks/useAISuggestions";
 
 function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, userRole?: string | unknown, roomId?: string | null }) {
   const queryClient = useQueryClient();
@@ -43,6 +45,7 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
     ydoc,
     provider
   });
+  const { enabled: aiEnabled, setEnabled: setAiEnabled, isLoading: aiLoading } = useAISuggestions(editor);
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<DocFormValues>({
     resolver: zodResolver(docSchema) as unknown as import("react-hook-form").Resolver<DocFormValues>,
@@ -262,7 +265,10 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
       <div className="flex-1 flex flex-col relative min-h-[500px]">
         {editor && (
           <>
-            <RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} />
+            <div className="flex items-center gap-2">
+              <div className="flex-1"><RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} /></div>
+              <AISuggestionsToggle enabled={aiEnabled} isLoading={aiLoading} onToggle={setAiEnabled} />
+            </div>
             <CopilotMenu editor={editor} />
           </>
         )}
