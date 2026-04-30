@@ -94,10 +94,10 @@ export default function SponsorEditor() {
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
+      const data = (await res.json()) as { success?: boolean; url?: string; error?: string };
       
       if (res.ok && data.success) {
-        setValue("logo_url", data.url, { shouldValidate: true });
+        setValue("logo_url", data.url || "", { shouldValidate: true });
         toast.success("Logo uploaded securely.");
       } else {
         toast.error(data.error || "Upload failed");
