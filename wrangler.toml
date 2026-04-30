@@ -28,6 +28,9 @@ database_id = "09c4aafb-89fd-4735-930e-3ff8e2289c34"
 
 # AI binding moved to dashboard-only to prevent CI/CD token blockers.
 # The API handles missing c.env.AI with graceful fallbacks.
+[ai]
+binding = "AI"
 
-
-
+[[vectorize]]
+binding = "VECTORIZE_DB"
+index_name = "ares_knowledge_base"

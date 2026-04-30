@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useMergedNotifications } from "./useMergedNotifications";
@@ -62,7 +62,8 @@ describe("useMergedNotifications hook", () => {
 
     const { result } = renderHook(() => useMergedNotifications(mockSession, mockPermissions));
 
-    expect(result.current.notifications).toHaveLength(2);
+    // We now filter out read notifications entirely
+    expect(result.current.notifications).toHaveLength(1);
     expect(result.current.unreadCount).toBe(1); // Only 1 is unread
   });
 

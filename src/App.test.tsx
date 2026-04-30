@@ -14,6 +14,10 @@ vi.mock("virtual:pwa-register/react", () => ({
   }),
 }));
 
+vi.mock("@marsidev/react-turnstile", () => ({
+  Turnstile: () => null
+}));
+
 describe("App Router Setup", () => {
   it("renders the app successfully without crashing", () => {
     const queryClient = new QueryClient();
@@ -31,6 +35,7 @@ describe("App Router Setup", () => {
     );
 
     // Navbar mounting should inject main-content block.
-    expect(container.querySelector("#main-content")).toBeInTheDocument();
+    const mainContent = container.querySelector("#main-content");
+    expect(mainContent).toBeInTheDocument();
   });
 });

@@ -28,6 +28,7 @@ interface DocData {
 
 import { CollaborativeEditorRoom, useCollaborativeEditor } from "./editor/CollaborativeEditorRoom";
 import VersionHistorySidebar from "./editor/VersionHistorySidebar";
+import { CopilotMenu } from "./editor/CopilotMenu";
 
 function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, userRole?: string | unknown, roomId?: string | null }) {
   const queryClient = useQueryClient();
@@ -259,7 +260,12 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
 
       {/* ===== Unified Rich Editor ===== */}
       <div className="flex-1 flex flex-col relative min-h-[500px]">
-        {editor && <RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} />}
+        {editor && (
+          <>
+            <RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} />
+            <CopilotMenu editor={editor} />
+          </>
+        )}
       </div>
 
       <div className="mt-4 pt-6">

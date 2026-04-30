@@ -643,4 +643,16 @@ CREATE INDEX IF NOT EXISTS idx_docs_category_sort ON docs(category, sort_order);
 CREATE INDEX IF NOT EXISTS idx_docs_history_slug_created ON docs_history(slug, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_outreach_date_desc ON outreach_logs(date DESC);
 
+-- ── AI Integrations ──────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+    history TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id ON chat_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated_at ON chat_sessions(updated_at);
+
 

@@ -769,6 +769,7 @@ export interface DB {
   awards_fts_docsize: AwardsFtsDocsize;
   awards_fts_idx: AwardsFtsIdx;
   badges: Badges;
+  chat_sessions: ChatSessions;
   comments: Comments;
   d1_migrations: D1Migrations;
   dietary_categories: DietaryCategories;

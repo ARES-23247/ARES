@@ -41,6 +41,7 @@ import liveblocksRouter from "./routes/liveblocks/index";
 import gcRouter from "./routes/internal/gc";
 import storeHandler from "./routes/store";
 import pointsRouter from "./routes/points";
+import aiRouter from "./routes/ai/index";
 
 const app = new Hono<AppEnv>();
 
@@ -145,6 +146,7 @@ apiRouter.route("/tasks", tasksRouter);
 apiRouter.route("/liveblocks", liveblocksRouter);
 apiRouter.route("/store", storeHandler);
 apiRouter.route("/points", pointsRouter);
+apiRouter.route("/ai", aiRouter);
 
 import { communicationsRouter } from "./routes/communications";
 

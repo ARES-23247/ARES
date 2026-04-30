@@ -51,6 +51,7 @@
     "@liveblocks/node": "^3.18.5",
     "@liveblocks/react": "^3.18.5",
     "@liveblocks/yjs": "^3.18.5",
+    "@marsidev/react-turnstile": "^1.5.1",
     "@octokit/graphql": "^9.0.3",
     "@opentelemetry/api": "^1.9.1",
     "@radix-ui/react-dialog": "^1.1.15",

@@ -18,6 +18,9 @@ vi.mock("../api/client", () => ({
       delete: {
         useMutation: vi.fn(),
       },
+      updateNotes: {
+        useMutation: vi.fn(),
+      },
     },
   },
 }));
@@ -67,6 +70,8 @@ describe("AdminInquiries component", () => {
     (api.inquiries.updateStatus.useMutation as any).mockReturnValue({ mutate: vi.fn(), isPending: false });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api.inquiries.delete.useMutation as any).mockReturnValue({ mutate: vi.fn(), isPending: false });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (api.inquiries.updateNotes.useMutation as any).mockReturnValue({ mutate: vi.fn(), isPending: false });
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
