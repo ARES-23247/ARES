@@ -211,7 +211,9 @@ aiRouter.post("/rag-chatbot", async (c) => {
     return c.json({ error: "Missing required fields" }, 400);
   }
 
-  if (!c.env.AI) {
+  const hasZai = !!c.env.Z_AI_API_KEY;
+
+  if (!hasZai && !c.env.AI) {
     return c.json({ error: "AI service not configured" }, 500);
   }
 
@@ -223,24 +225,26 @@ aiRouter.post("/rag-chatbot", async (c) => {
 
   const safeQuery = scrubPII(query);
 
-  // Generate embedding using Cloudflare Workers AI
-  let embeddingVector: number[] = [];
-  try {
-    const response = (await c.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [safeQuery] })) as any;
-    embeddingVector = response.data[0];
-  } catch (e) {
-    console.error("Embedding generation failed:", e);
-  }
-
-  // Query Vectorize DB
+  // Generate embedding using Cloudflare Workers AI (always needed for RAG)
   let contextDocs = "";
-  try {
-    if (c.env.VECTORIZE_DB && embeddingVector.length > 0) {
-      const vecRes = await c.env.VECTORIZE_DB.query(embeddingVector, { topK: 3, returnMetadata: true });
-      contextDocs = vecRes.matches.map((m: any) => m.metadata?.text || "").join("\n\n");
+  if (c.env.AI) {
+    let embeddingVector: number[] = [];
+    try {
+      const response = (await c.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [safeQuery] })) as any;
+      embeddingVector = response.data[0];
+    } catch (e) {
+      console.error("Embedding generation failed:", e);
     }
-  } catch (e) {
-    console.error("Vectorize query failed:", e);
+
+    // Query Vectorize DB
+    try {
+      if (c.env.VECTORIZE_DB && embeddingVector.length > 0) {
+        const vecRes = await c.env.VECTORIZE_DB.query(embeddingVector, { topK: 3, returnMetadata: true });
+        contextDocs = vecRes.matches.map((m: any) => m.metadata?.text || "").join("\n\n");
+      }
+    } catch (e) {
+      console.error("Vectorize query failed:", e);
+    }
   }
 
   // Fetch history if session exists
@@ -268,7 +272,69 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
   ];
 
   return streamSSE(c, async (stream) => {
+    let accumulatedText = "";
+
     try {
+      // ── Premium path: z.ai (zai-5.1) ──
+      if (hasZai) {
+        const zaiRes = await fetch("https://api.z.ai/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": c.env.Z_AI_API_KEY!,
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: "zai-5.1",
+            max_tokens: 1024,
+            system: systemPrompt,
+            messages,
+            stream: true
+          })
+        });
+
+        if (zaiRes.ok && zaiRes.body) {
+          const reader = zaiRes.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const dataStr = line.slice(6).trim();
+                if (dataStr === "[DONE]") continue;
+                try {
+                  const data = JSON.parse(dataStr);
+                  if (data.type === "content_block_delta" && data.delta?.text) {
+                    accumulatedText += data.delta.text;
+                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
+                  }
+                } catch (_e) { /* ignore */ }
+              }
+            }
+          }
+
+          // z.ai succeeded — save history and return
+          await saveHistory(db, sessionId, historyMessages, safeQuery, accumulatedText);
+          return;
+        } else {
+          console.error("[RAG] z.ai error, falling back to Workers AI:", zaiRes.status);
+        }
+      }
+
+      // ── Fallback: Cloudflare Workers AI (Llama 3.1) ──
+      if (!c.env.AI) {
+        await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI service unavailable]" }) });
+        return;
+      }
+
       const aiStream = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
         messages: [
           { role: "system", content: systemPrompt },
@@ -281,7 +347,6 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
       const reader = aiStream.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let accumulatedText = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -303,39 +368,41 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
                 accumulatedText += text;
                 await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
               }
-            } catch (_e) {
-              // Ignore parse errors
-            }
+            } catch (_e) { /* ignore */ }
           }
         }
       }
 
       // Save updated history
-      if (sessionId) {
-        const updatedHistory = [
-          ...historyMessages,
-          { role: "user", content: safeQuery },
-          { role: "assistant", content: accumulatedText }
-        ];
-        try {
-          await db.insertInto("chat_sessions").values({
-            id: sessionId,
-            user_id: null,
-            history: JSON.stringify(updatedHistory)
-          }).onConflict((oc) => oc.column("id").doUpdateSet({
-            history: JSON.stringify(updatedHistory),
-            updated_at: new Date().toISOString()
-          })).execute();
-        } catch (e) {
-          console.error("Failed to save chat session", e);
-        }
-      }
+      await saveHistory(db, sessionId, historyMessages, safeQuery, accumulatedText);
     } catch (e) {
       console.error("RAG stream error:", e);
       await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI processing error. Please try again.]" }) });
     }
   });
 });
+
+// Helper to persist chat session history
+async function saveHistory(db: Kysely<DB>, sessionId: string | undefined, historyMessages: any[], query: string, response: string) {
+  if (!sessionId) return;
+  const updatedHistory = [
+    ...historyMessages,
+    { role: "user", content: query },
+    { role: "assistant", content: response }
+  ];
+  try {
+    await db.insertInto("chat_sessions").values({
+      id: sessionId,
+      user_id: null,
+      history: JSON.stringify(updatedHistory)
+    }).onConflict((oc) => oc.column("id").doUpdateSet({
+      history: JSON.stringify(updatedHistory),
+      updated_at: new Date().toISOString()
+    })).execute();
+  } catch (e) {
+    console.error("Failed to save chat session", e);
+  }
+}
 
 // ── Manual Re-Index Endpoint (admin-only) ─────────────────────────────
 
