@@ -19,75 +19,61 @@ const scrubPII = (text: string): string => {
 
 aiRouter.post("/liveblocks-copilot", async (c) => {
   const body = await c.req.json();
-  const { documentContext, prompt, action } = body;
+  const { documentContext, action } = body;
 
-  if (!c.env.AI && !c.env.Z_AI_API_KEY) {
-    return c.json({ error: "AI service not configured" }, 500);
+  if (!c.env.AI) {
+    return c.json({ error: "AI service not configured. The Workers AI binding is missing." }, 500);
   }
 
   const safeContext = scrubPII(documentContext || "");
-  const safePrompt = scrubPII(prompt || "");
+
+  const systemPrompt = action === "summarize"
+    ? "You are an AI writing assistant for ARES 23247, a FIRST Tech Challenge robotics team. Summarize the following text concisely while preserving key details. Output only the summary, no preamble."
+    : "You are an AI writing assistant for ARES 23247, a FIRST Tech Challenge robotics team. Expand the following text with additional detail, examples, and context. Output only the expanded text, no preamble.";
 
   return streamSSE(c, async (stream) => {
     try {
-      const zaiRes = await fetch("https://api.z.ai/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": c.env.Z_AI_API_KEY || "",
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "zai-5.1",
-          max_tokens: 1024,
-          system: `You are an AI Copilot for ARES 23247. Action requested: ${action}`,
-          messages: [
-            { role: "user", content: `Context:\n${safeContext}\n\nPrompt:\n${safePrompt}` }
-          ],
-          stream: true
-        })
-      });
+      const aiStream = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: safeContext }
+        ],
+        max_tokens: 1024,
+        stream: true
+      }) as ReadableStream;
 
-      if (!zaiRes.ok) {
-        const errText = await zaiRes.text();
-        console.error("z.ai error:", errText);
-        await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[Error connecting to AI service]" }) });
-        return;
-      }
+      const reader = aiStream.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-      if (zaiRes.body) {
-        const reader = zaiRes.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const dataStr = line.slice(6).trim();
-              if (dataStr === "[DONE]") continue;
-              
-              try {
-                const data = JSON.parse(dataStr);
-                if (data.type === "content_block_delta" && data.delta?.text) {
-                  await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
-                }
-              } catch (_e) {
-                // Ignore parse errors on partial chunks
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === "[DONE]") continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+              const text = data.response || "";
+              if (text) {
+                await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
               }
+            } catch (_e) {
+              // Ignore parse errors on partial chunks
             }
           }
         }
       }
     } catch (e) {
       console.error("Liveblocks Copilot stream error:", e);
-      await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[Stream interrupted]" }) });
+      await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI processing error. Please try again.]" }) });
     }
   });
 });
@@ -102,6 +88,10 @@ aiRouter.post("/rag-chatbot", async (c) => {
     return c.json({ error: "Missing required fields" }, 400);
   }
 
+  if (!c.env.AI) {
+    return c.json({ error: "AI service not configured" }, 500);
+  }
+
   // Validate Turnstile (Mock validation for now)
   const isBot = false;
   if (isBot) {
@@ -113,10 +103,8 @@ aiRouter.post("/rag-chatbot", async (c) => {
   // Generate embedding using Cloudflare Workers AI
   let embeddingVector: number[] = [];
   try {
-    if (c.env.AI) {
-      const response = (await c.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [safeQuery] })) as any;
-      embeddingVector = response.data[0];
-    }
+    const response = (await c.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [safeQuery] })) as any;
+    embeddingVector = response.data[0];
   } catch (e) {
     console.error("Embedding generation failed:", e);
   }
@@ -147,91 +135,81 @@ aiRouter.post("/rag-chatbot", async (c) => {
     }
   }
 
-  const zaiMessages = [
-    ...historyMessages,
-    { role: "user", content: safeQuery }
+  const systemPrompt = `You are the ARES 23247 Knowledge Bot — a helpful assistant for a FIRST Tech Challenge robotics team (Team 23247 ARES). 
+Answer questions about the team's schedule, code, rules, and activities. Be concise and helpful.
+${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : "\nNo relevant context found in the knowledge base. Answer based on general FTC knowledge."}`;
+
+  const messages = [
+    ...historyMessages.map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content })),
+    { role: "user" as const, content: safeQuery }
   ];
 
   return streamSSE(c, async (stream) => {
     try {
-      const zaiRes = await fetch("https://api.z.ai/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": c.env.Z_AI_API_KEY || "",
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "zai-5.1",
-          max_tokens: 1024,
-          system: `You are the ARES 23247 Knowledge Bot. Use the following context to answer the user's query.\n\nContext:\n${contextDocs}`,
-          messages: zaiMessages,
-          stream: true
-        })
-      });
+      const aiStream = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages
+        ],
+        max_tokens: 1024,
+        stream: true
+      }) as ReadableStream;
 
-      if (!zaiRes.ok) {
-        console.error("z.ai RAG error:", await zaiRes.text());
-        await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[Error connecting to knowledge base]" }) });
-        return;
-      }
+      const reader = aiStream.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulatedText = "";
 
-      if (zaiRes.body) {
-        const reader = zaiRes.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        let accumulatedText = "";
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === "[DONE]") continue;
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const dataStr = line.slice(6).trim();
-              if (dataStr === "[DONE]") continue;
-              
-              try {
-                const data = JSON.parse(dataStr);
-                if (data.type === "content_block_delta" && data.delta?.text) {
-                  accumulatedText += data.delta.text;
-                  await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
-                }
-              } catch (_e) {
-                // Ignore parse errors
+            try {
+              const data = JSON.parse(dataStr);
+              const text = data.response || "";
+              if (text) {
+                accumulatedText += text;
+                await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
               }
+            } catch (_e) {
+              // Ignore parse errors
             }
           }
         }
+      }
 
-        // Save updated history
-        if (sessionId) {
-          const updatedHistory = [
-            ...zaiMessages,
-            { role: "assistant", content: accumulatedText }
-          ];
-          try {
-            await db.insertInto("chat_sessions").values({
-              id: sessionId,
-              user_id: null,
-              history: JSON.stringify(updatedHistory)
-            }).onConflict((oc) => oc.column("id").doUpdateSet({
-              history: JSON.stringify(updatedHistory),
-              updated_at: new Date().toISOString()
-            })).execute();
-          } catch (e) {
-            console.error("Failed to save chat session", e);
-          }
+      // Save updated history
+      if (sessionId) {
+        const updatedHistory = [
+          ...historyMessages,
+          { role: "user", content: safeQuery },
+          { role: "assistant", content: accumulatedText }
+        ];
+        try {
+          await db.insertInto("chat_sessions").values({
+            id: sessionId,
+            user_id: null,
+            history: JSON.stringify(updatedHistory)
+          }).onConflict((oc) => oc.column("id").doUpdateSet({
+            history: JSON.stringify(updatedHistory),
+            updated_at: new Date().toISOString()
+          })).execute();
+        } catch (e) {
+          console.error("Failed to save chat session", e);
         }
       }
     } catch (e) {
       console.error("RAG stream error:", e);
-      await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[Stream interrupted]" }) });
+      await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI processing error. Please try again.]" }) });
     }
   });
 });
