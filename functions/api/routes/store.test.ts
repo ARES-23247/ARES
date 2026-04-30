@@ -49,11 +49,11 @@ describe("Hono Backend - /store Router", () => {
     app = new Hono<AppEnv>();
     app.use("*", async (c, next) => {
       c.set("db", mockDb);
-      c.set("sessionUser", { id: "admin-1", role: "admin" });
+      c.set("sessionUser", { id: "admin-1", role: "admin" } as any);
       c.env = {
         STRIPE_SECRET_KEY: "sk_test_123",
         STRIPE_WEBHOOK_SECRET: "whsec_123"
-      };
+      } as any;
       await next();
     });
     app.route("/", storeRouter);

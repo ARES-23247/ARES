@@ -27,7 +27,7 @@ describe("Hono Backend - /points Router", () => {
     app.use("*", async (c, next) => {
       c.set("db", mockDb);
       if (sessionUser) {
-        c.set("sessionUser", sessionUser);
+        c.set("sessionUser", sessionUser as any);
       }
       await next();
     });

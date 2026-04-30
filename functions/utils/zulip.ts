@@ -9,13 +9,13 @@ import type { AppEnv } from "../api/middleware/utils";
  * - ZULIP_API_KEY: Bot API key
  */
 export async function sendZulipMessage(
-  env: AppEnv,
+  env: AppEnv["Bindings"],
   stream: string,
   topic: string,
   content: string
 ): Promise<boolean> {
   const url = env.ZULIP_URL;
-  const email = env.ZULIP_EMAIL;
+  const email = env.ZULIP_BOT_EMAIL;
   const apiKey = env.ZULIP_API_KEY;
 
   if (!url || !email || !apiKey) {

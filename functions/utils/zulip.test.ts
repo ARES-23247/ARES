@@ -3,9 +3,9 @@ import { sendZulipMessage } from "./zulip";
 import type { AppEnv } from "../api/middleware/utils";
 
 describe("sendZulipMessage", () => {
-  const mockEnv: AppEnv = {
+  const mockEnv: AppEnv["Bindings"] = {
     ZULIP_URL: "https://zulip.example.com",
-    ZULIP_EMAIL: "bot@example.com",
+    ZULIP_BOT_EMAIL: "bot@example.com",
     ZULIP_API_KEY: "secret-api-key",
   } as any;
 
@@ -14,7 +14,7 @@ describe("sendZulipMessage", () => {
   });
 
   it("returns false if environment variables are missing", async () => {
-    const env = {} as AppEnv;
+    const env = {} as AppEnv["Bindings"];
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     
     const result = await sendZulipMessage(env, "general", "topic", "hello");
