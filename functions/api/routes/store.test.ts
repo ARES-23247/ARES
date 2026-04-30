@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { AppEnv } from "../middleware/utils";
 import storeRouter from "./store";
 
 vi.mock("../../utils/zulip", () => ({
@@ -28,7 +29,7 @@ vi.mock("stripe", () => {
 });
 
 describe("Hono Backend - /store Router", () => {
-  let app: Hono;
+  let app: Hono<AppEnv>;
   let mockDb: any;
 
   beforeEach(() => {
@@ -45,7 +46,7 @@ describe("Hono Backend - /store Router", () => {
       set: vi.fn().mockReturnThis()
     };
 
-    app = new Hono();
+    app = new Hono<AppEnv>();
     app.use("*", async (c, next) => {
       c.set("db", mockDb);
       c.set("sessionUser", { id: "admin-1", role: "admin" });
@@ -65,7 +66,7 @@ describe("Hono Backend - /store Router", () => {
         body: JSON.stringify({ type: "checkout.session.completed" })
       });
       expect(res.status).toBe(400);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.error).toBe("Missing stripe signature");
     });
 
@@ -78,7 +79,7 @@ describe("Hono Backend - /store Router", () => {
         body: JSON.stringify({ type: "checkout.session.completed" })
       });
       expect(res.status).toBe(400);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.error).toBe("Invalid signature");
     });
 
@@ -127,7 +128,7 @@ describe("Hono Backend - /store Router", () => {
       ]);
       const res = await app.request("/api/store/products");
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data).toHaveLength(1);
       expect(data[0].id).toBe("prod_1");
     });
@@ -150,7 +151,7 @@ describe("Hono Backend - /store Router", () => {
       });
 
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.sessionId).toBe("cs_test_123");
       expect(data.url).toBe("https://stripe.com/checkout/test");
     });

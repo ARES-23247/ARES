@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { sendZulipMessage } from "./zulip";
-import type { AppEnv } from "../middleware/utils";
+import type { AppEnv } from "../api/middleware/utils";
 
 describe("sendZulipMessage", () => {
   const mockEnv: AppEnv = {

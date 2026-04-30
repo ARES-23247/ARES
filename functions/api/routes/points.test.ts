@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { AppEnv } from "../middleware/utils";
 import pointsRouter from "./points";
 
 describe("Hono Backend - /points Router", () => {
-  let app: Hono;
+  let app: Hono<AppEnv>;
   let mockDb: any;
   let sessionUser: any;
 
@@ -22,7 +23,7 @@ describe("Hono Backend - /points Router", () => {
 
     sessionUser = { id: "user-1", role: "user" };
 
-    app = new Hono();
+    app = new Hono<AppEnv>();
     app.use("*", async (c, next) => {
       c.set("db", mockDb);
       if (sessionUser) {
@@ -30,7 +31,7 @@ describe("Hono Backend - /points Router", () => {
       }
       await next();
     });
-    app.route("/", pointsRouter);
+    app.route("/api/points", pointsRouter);
   });
 
   describe("GET /api/points/balance/:user_id", () => {
@@ -49,7 +50,7 @@ describe("Hono Backend - /points Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ points_delta: 10 }, { points_delta: -5 }]);
       const res = await app.request("/api/points/balance/user-1");
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.balance).toBe(5);
     });
 
@@ -58,7 +59,7 @@ describe("Hono Backend - /points Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ points_delta: 20 }]);
       const res = await app.request("/api/points/balance/user-2");
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.balance).toBe(20);
     });
 
@@ -87,7 +88,7 @@ describe("Hono Backend - /points Router", () => {
       ]);
       const res = await app.request("/api/points/history/user-1");
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data).toHaveLength(1);
       expect(data[0].id).toBe("tx1");
     });
@@ -117,7 +118,7 @@ describe("Hono Backend - /points Router", () => {
         body: JSON.stringify({ user_id: "user-1", points_delta: 10, reason: "Test" })
       });
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.points_delta).toBe(10);
       expect(data.reason).toBe("Test");
     });

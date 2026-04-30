@@ -1,4 +1,4 @@
-import type { AppEnv } from "../middleware/utils";
+import type { AppEnv } from "../api/middleware/utils";
 
 /**
  * Sends a message to a Zulip stream.

@@ -233,7 +233,7 @@ app.post("/webhook", async (c) => {
           for (const item of cartItems) {
             await db
               .updateTable("products")
-              // @ts-expect-error - Kysely typing for arithmetic
+              // Kysely typing for arithmetic
               .set((eb) => ({ stock_count: eb("stock_count", "-", item.q) }))
               .where("id", "=", item.id)
               .where("stock_count", "is not", null)
