@@ -107,82 +107,85 @@ export default defineConfig({
   build: {
     target: 'es2022',
     outDir: "dist",
+    sourcemap: 'hidden',
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // Normalize path separators for cross-platform consistency (Windows \ vs Linux /)
+          const normalizedId = id.replace(/\\/g, '/');
+
           // ── Vendor isolation: route node_modules by package path ──
 
           // Editor: Tiptap + ProseMirror core (the biggest offender)
-          if (id.includes("node_modules/@tiptap/") || id.includes("node_modules/prosemirror-") || id.includes("node_modules/@tiptap/pm")) {
+          if (normalizedId.includes("node_modules/@tiptap/") || normalizedId.includes("node_modules/prosemirror-") || normalizedId.includes("node_modules/@tiptap/pm")) {
             return "editor";
           }
 
-          // Code highlighting & math rendering (used inside editor)
-          if (id.includes("node_modules/highlight.js") || id.includes("node_modules/lowlight") || id.includes("node_modules/katex")) {
-            return "syntax-highlight";
-          }
-          if (id.includes("node_modules/react-syntax-highlighter")) {
-            return "syntax";
+          // Code highlighting & syntax (co-located with markdown to avoid circular chunks)
+          // NOTE: react-syntax-highlighter and markdown/rehype share dependencies.
+          //       Splitting them causes: Circular chunk: syntax -> markdown -> syntax
+          if (normalizedId.includes("node_modules/highlight.js") || normalizedId.includes("node_modules/lowlight") || normalizedId.includes("node_modules/katex") || normalizedId.includes("node_modules/react-syntax-highlighter")) {
+            return "markdown";
           }
 
           // Icons: lucide-react ships 1500+ icon components
-          if (id.includes("node_modules/lucide-react")) {
+          if (normalizedId.includes("node_modules/lucide-react")) {
             return "icons";
           }
 
           // Media processing: heic2any is 1.3MB alone
-          if (id.includes("node_modules/heic2any")) {
+          if (normalizedId.includes("node_modules/heic2any")) {
             return "media";
           }
 
           // Document import
-          if (id.includes("node_modules/mammoth")) {
+          if (normalizedId.includes("node_modules/mammoth")) {
             return "mammoth";
           }
 
           // 3D visualization
-          if (id.includes("node_modules/three") || id.includes("node_modules/@react-three/")) {
+          if (normalizedId.includes("node_modules/three") || normalizedId.includes("node_modules/@react-three/")) {
             return "threejs";
           }
 
           // Flow diagrams
-          if (id.includes("node_modules/@xyflow/")) {
+          if (normalizedId.includes("node_modules/@xyflow/")) {
             return "flow";
           }
 
           // Analytics charts
-          if (id.includes("node_modules/@tremor/")) {
+          if (normalizedId.includes("node_modules/@tremor/")) {
             return "tremor";
           }
 
           // Animation
-          if (id.includes("node_modules/framer-motion")) {
+          if (normalizedId.includes("node_modules/framer-motion")) {
             return "motion";
           }
 
           // Router
-          if (id.includes("node_modules/react-router")) {
+          if (normalizedId.includes("node_modules/react-router")) {
             return "router";
           }
 
           // UI primitives (Radix, Headless UI, dnd-kit)
-          if (id.includes("node_modules/@radix-ui/") || id.includes("node_modules/@headlessui/") || id.includes("node_modules/@dnd-kit/")) {
+          if (normalizedId.includes("node_modules/@radix-ui/") || normalizedId.includes("node_modules/@headlessui/") || normalizedId.includes("node_modules/@dnd-kit/")) {
             return "ui-primitives";
           }
 
-          // DOMPurify + markdown rendering
-          if (id.includes("node_modules/dompurify") || id.includes("node_modules/react-markdown") || id.includes("node_modules/remark-") || id.includes("node_modules/rehype-")) {
+          // DOMPurify + markdown rendering + syntax highlighting (unified to prevent circular chunks)
+          if (normalizedId.includes("node_modules/dompurify") || normalizedId.includes("node_modules/react-markdown") || normalizedId.includes("node_modules/remark-") || normalizedId.includes("node_modules/rehype-")) {
             return "markdown";
           }
 
           // React core (shared across all chunks)
-          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+          if (normalizedId.includes("node_modules/react/") || normalizedId.includes("node_modules/react-dom/")) {
             return "react-vendor";
           }
 
           // TanStack query + table (shared data layer)
-          if (id.includes("node_modules/@tanstack/")) {
+          if (normalizedId.includes("node_modules/@tanstack/")) {
             return "tanstack";
           }
         },

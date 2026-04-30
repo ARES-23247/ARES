@@ -121,6 +121,33 @@ jobs:
         if: steps.check_e2e.outputs.run_e2e == 'true'
         run: npm run build
 
+      - name: Diagnose TDZ error source (decode Vo from sourcemaps)
+        if: steps.check_e2e.outputs.run_e2e == 'true'
+        run: |
+          echo "=== Searching for 'Vo' in source maps ==="
+          for mapfile in dist/assets/*.js.map; do
+            if grep -q '"Vo"' "$mapfile" 2>/dev/null; then
+              echo "Found Vo in: $mapfile"
+              # Extract original names near Vo in the mappings
+              node -e "
+                const fs = require('fs');
+                const map = JSON.parse(fs.readFileSync('$mapfile', 'utf8'));
+                const names = map.names || [];
+                const voIdx = names.indexOf('Vo');
+                if (voIdx >= 0) {
+                  console.log('Vo is at name index:', voIdx);
+                  console.log('Nearby names:', names.slice(Math.max(0,voIdx-5), voIdx+6));
+                }
+                // Also check sources for class declarations
+                if (map.sources) {
+                  console.log('Sources in this chunk:', map.sources.filter(s => !s.includes('node_modules')).slice(0, 20));
+                }
+              " || true
+            fi
+          done
+          echo "=== Build chunk sizes ==="
+          ls -lhS dist/assets/*.js | head -20
+
       - name: Cache Playwright
         if: steps.check_e2e.outputs.run_e2e == 'true'
         uses: actions/cache@v4
