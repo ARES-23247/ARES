@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
-import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical } from "lucide-react";
+import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown } from "lucide-react";
 import { loader } from "@monaco-editor/react";
 
 // Configure Monaco CDN — use unpkg as fallback if jsdelivr is slow
@@ -68,6 +68,14 @@ interface ChatMessage {
   content: string;
 }
 
+interface SavedSim {
+  id: number;
+  name: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function SimulationPlayground() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [compiledCode, setCompiledCode] = useState("");
@@ -76,6 +84,10 @@ export default function SimulationPlayground() {
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [simName, setSimName] = useState("Untitled Simulation");
+  const [simId, setSimId] = useState<number | null>(null);
+  const [savedSims, setSavedSims] = useState<SavedSim[]>([]);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [isLoadingSims, setIsLoadingSims] = useState(false);
   const compileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Chat state
@@ -133,6 +145,62 @@ export default function SimulationPlayground() {
   const handleReset = () => {
     setCode(DEFAULT_CODE);
     compileCode(DEFAULT_CODE);
+    setSimId(null);
+    setSimName("Untitled Simulation");
+  };
+
+  // ── Library ──
+  const fetchSavedSims = async () => {
+    setIsLoadingSims(true);
+    try {
+      const res = await fetch("/api/simulations");
+      if (res.ok) {
+        const data = await res.json() as { simulations?: SavedSim[] };
+        setSavedSims(data.simulations || []);
+      }
+    } catch (e) {
+      console.error("[SimPlayground] Failed to fetch sims:", e);
+    } finally {
+      setIsLoadingSims(false);
+    }
+  };
+
+  const handleLoadSim = async (id: number) => {
+    try {
+      const res = await fetch(`/api/simulations/${id}`);
+      if (!res.ok) throw new Error("Not found");
+      const data = await res.json() as { simulation: { id: number; name: string; code: string } };
+      const sim = data.simulation;
+      setCode(sim.code);
+      setSimName(sim.name);
+      setSimId(sim.id);
+      compileCode(sim.code);
+      setShowLibrary(false);
+      const { toast } = await import("sonner");
+      toast.success(`Loaded: ${sim.name}`);
+    } catch (e) {
+      console.error("[SimPlayground] Load failed:", e);
+    }
+  };
+
+  const handleDeleteSim = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Delete this simulation?")) return;
+    try {
+      await fetch(`/api/simulations/${id}`, { method: "DELETE" });
+      setSavedSims(prev => prev.filter(s => s.id !== id));
+      if (simId === id) {
+        setSimId(null);
+        setSimName("Untitled Simulation");
+      }
+    } catch (e) {
+      console.error("[SimPlayground] Delete failed:", e);
+    }
+  };
+
+  const handleToggleLibrary = () => {
+    if (!showLibrary) fetchSavedSims();
+    setShowLibrary(prev => !prev);
   };
 
   const handleCopy = async () => {
@@ -242,11 +310,13 @@ USER REQUEST: ${msg}`;
       const res = await fetch("/api/simulations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: simName, code }),
+        body: JSON.stringify({ name: simName, code, ...(simId ? { id: simId } : {}) }),
       });
       if (res.ok) {
+        const data = await res.json() as { id?: number };
+        if (data.id && !simId) setSimId(data.id);
         const { toast } = await import("sonner");
-        toast.success("Simulation saved!");
+        toast.success(simId ? "Simulation updated!" : "Simulation saved!");
       }
     } catch (e) {
       console.error("[SimPlayground] Save failed:", e);
@@ -309,9 +379,54 @@ USER REQUEST: ${msg}`;
             className="bg-transparent border border-white/10 text-white text-sm px-3 py-1.5 rounded-md focus:border-ares-gold/50 focus:outline-none transition-colors max-w-[250px]"
             placeholder="Simulation name..."
           />
+          {simId && <span className="text-white/20 text-[10px] font-mono">#{simId}</span>}
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Library dropdown */}
+          <div className="relative">
+            <button onClick={handleToggleLibrary} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-indigo-600/30 transition-colors">
+              <FolderOpen className="w-3.5 h-3.5" />
+              Open
+              <ChevronDown className={`w-3 h-3 transition-transform ${showLibrary ? 'rotate-180' : ''}`} />
+            </button>
+            {showLibrary && (
+              <div className="absolute top-full right-0 mt-1 w-72 bg-[#161b22] border border-white/10 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                <div className="p-2 border-b border-white/10 flex items-center justify-between">
+                  <span className="text-white/50 text-[10px] uppercase tracking-wider font-bold">Saved Simulations</span>
+                  <button onClick={handleReset} className="text-emerald-400 hover:text-emerald-300 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> New
+                  </button>
+                </div>
+                {isLoadingSims ? (
+                  <div className="p-4 text-center text-white/30 text-xs"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>
+                ) : savedSims.length === 0 ? (
+                  <div className="p-4 text-center text-white/30 text-xs">No saved simulations yet</div>
+                ) : (
+                  savedSims.map(sim => (
+                    <button
+                      key={sim.id}
+                      onClick={() => handleLoadSim(sim.id)}
+                      className={`w-full text-left px-3 py-2 hover:bg-white/5 flex items-center justify-between group transition-colors border-0 bg-transparent ${simId === sim.id ? 'bg-ares-gold/10 border-l-2 border-l-ares-gold' : ''}`}
+                    >
+                      <div className="min-w-0">
+                        <div className={`text-sm truncate ${simId === sim.id ? 'text-ares-gold' : 'text-white/80'}`}>{sim.name}</div>
+                        <div className="text-[10px] text-white/30">{new Date(sim.updated_at || sim.created_at).toLocaleDateString()}</div>
+                      </div>
+                      <button
+                        onClick={(e) => handleDeleteSim(sim.id, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded text-red-400 transition-all border-0 bg-transparent"
+                        aria-label={`Delete ${sim.name}`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
           <button onClick={handleRun} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-emerald-600/30 transition-colors">
             <Play className="w-3.5 h-3.5" /> Run
           </button>
@@ -323,7 +438,7 @@ USER REQUEST: ${msg}`;
           </button>
           <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 px-3 py-1.5 bg-ares-gold/20 text-ares-gold border border-ares-gold/30 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-ares-gold/30 transition-colors disabled:opacity-50">
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            Save
+            {simId ? 'Update' : 'Save'}
           </button>
         </div>
       </div>
