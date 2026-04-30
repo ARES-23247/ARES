@@ -369,7 +369,7 @@ export default function AdminUsers() {
 
             <form onSubmit={handleAwardPoints} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-marble/90 uppercase tracking-wider mb-1.5 block">Points Delta (+ / -)</label>
+                <label htmlFor="pointsDeltaInput" className="text-xs font-bold text-marble/90 uppercase tracking-wider mb-1.5 block">Points Delta (+ / -)</label>
                 <input
                   type="number"
                   value={pointsDelta}
@@ -380,7 +380,7 @@ export default function AdminUsers() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-marble/90 uppercase tracking-wider mb-1.5 block">Reason</label>
+                <label htmlFor="pointsReasonInput" className="text-xs font-bold text-marble/90 uppercase tracking-wider mb-1.5 block">Reason</label>
                 <input
                   type="text"
                   value={pointsReason}

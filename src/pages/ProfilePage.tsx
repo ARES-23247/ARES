@@ -48,7 +48,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfilePublic | null>(null);
   const [badges, setBadges] = useState<BadgeDef[]>([]);
   const [points, setPoints] = useState<number | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<{id: string, reason: string, points_delta: number, created_at: string}[]>([]);
   const [error, setError] = useState<{ status: number; message: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -72,12 +72,12 @@ export default function ProfilePage() {
       });
 
     api.points.getBalance.query({ params: { user_id: userId || "" } })
-      .then((res: any) => {
+      .then((res: { status: number; body: { balance: number } }) => {
         if (!cancelled && res.status === 200) setPoints(res.body.balance);
       }).catch(() => {});
       
     api.points.getHistory.query({ params: { user_id: userId || "" } })
-      .then((res: any) => {
+      .then((res: { status: number; body: { transactions: {id: string, reason: string, points_delta: number, created_at: string}[] } }) => {
         if (!cancelled && res.status === 200) setHistory(res.body.transactions);
       }).catch(() => {});
 
@@ -210,7 +210,7 @@ export default function ProfilePage() {
                 <div>
                   <h4 className="text-xs font-bold text-marble uppercase mb-3">Recent Activity</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
-                    {history.map((tx: any) => (
+                    {history.map((tx) => (
                       <div key={tx.id} className="bg-black/40 border border-white/5 ares-cut-sm p-3 flex justify-between items-center">
                         <div>
                           <p className="text-sm font-bold text-white">{tx.reason}</p>

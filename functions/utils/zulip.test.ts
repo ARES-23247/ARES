@@ -7,7 +7,7 @@ describe("sendZulipMessage", () => {
     ZULIP_URL: "https://zulip.example.com",
     ZULIP_BOT_EMAIL: "bot@example.com",
     ZULIP_API_KEY: "secret-api-key",
-  } as any;
+  } as unknown as AppEnv["Bindings"];
 
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -25,7 +25,7 @@ describe("sendZulipMessage", () => {
   it("returns true on successful message", async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
-    } as any);
+    } as unknown as Response);
 
     const result = await sendZulipMessage(mockEnv, "general", "topic", "hello");
     expect(result).toBe(true);
@@ -38,7 +38,7 @@ describe("sendZulipMessage", () => {
       ok: false,
       status: 400,
       text: vi.fn().mockResolvedValue("Bad Request"),
-    } as any);
+    } as unknown as Response);
 
     const result = await sendZulipMessage(mockEnv, "general", "topic", "hello");
     expect(result).toBe(false);

@@ -17,7 +17,7 @@ vi.mock("stripe", () => {
         }
       };
       webhooks = {
-        constructEvent: vi.fn((rawBody, signature, secret) => {
+        constructEvent: vi.fn((rawBody, signature, _secret) => {
           if (signature === "invalid") {
             throw new Error("Invalid signature");
           }

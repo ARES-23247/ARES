@@ -2,6 +2,7 @@ import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard
 import { motion } from "framer-motion";
 import GitHubHeatmap from "../components/GitHubHeatmap";
 import SEO from "../components/SEO";
+import RobotViewer from "../components/RobotViewer";
 
 export default function TechStack() {
   return (
@@ -22,7 +23,7 @@ export default function TechStack() {
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-ares-gold text-center">Interactive Hardware Architecture</h2>
               <div className="h-px flex-1 bg-white/5" />
            </div>
-           {/* <RobotViewer /> */}
+           <RobotViewer />
            <p className="text-[10px] text-marble/70 text-center uppercase tracking-widest font-mono mt-4">
               ARES-R3F Engine v1.0 // Real-time Hardware Twin
            </p>
@@ -42,8 +43,8 @@ export default function TechStack() {
 
         {/* Highlight Architecture */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl">
-            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl group transition-all duration-500 hover:-translate-y-2 hover:border-ares-cyan/50 hover:shadow-[0_0_30px_rgba(0,255,255,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <Cloud size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Cloudflare Pages</h3>
@@ -53,8 +54,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-gold/50 hover:shadow-[0_0_30px_rgba(207,181,59,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <Zap size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Edge AI Vision</h3>
@@ -64,8 +65,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-gold/50 hover:shadow-[0_0_30px_rgba(207,181,59,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <Database size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Cloudflare D1 SQL</h3>
@@ -75,8 +76,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-bronze/30 flex items-center justify-center bg-ares-bronze/10 text-ares-bronze mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-bronze/50 hover:shadow-[0_0_30px_rgba(205,127,50,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-bronze/30 flex items-center justify-center bg-ares-bronze/10 text-ares-bronze mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <HardDrive size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Cloudflare R2 Storage</h3>
@@ -86,8 +87,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-red/50 hover:shadow-[0_0_30px_rgba(237,28,36,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <Zap size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Vite + React</h3>
@@ -97,8 +98,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Open Source</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-red/50 hover:shadow-[0_0_30px_rgba(237,28,36,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <LayoutDashboard size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Headless CMS</h3>
@@ -108,8 +109,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Custom Built</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-gold/50 hover:shadow-[0_0_30px_rgba(207,181,59,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <Users size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Liveblocks Sync</h3>
@@ -119,8 +120,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Free Tier</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-cyan/50 hover:shadow-[0_0_30px_rgba(0,255,255,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <GlobeLock size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Progressive App Mode</h3>
@@ -130,8 +131,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Open Source</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-cyan/50 hover:shadow-[0_0_30px_rgba(0,255,255,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <MessageSquare size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Zulip Cloud</h3>
@@ -141,8 +142,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Sponsored</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-cyan/50 hover:shadow-[0_0_30px_rgba(0,255,255,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-cyan/30 flex items-center justify-center bg-ares-cyan/10 text-ares-cyan mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <Rocket size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Hono Edge Framework</h3>
@@ -152,8 +153,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Open Source</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-gold/50 hover:shadow-[0_0_30px_rgba(207,181,59,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-gold/30 flex items-center justify-center bg-ares-gold/10 text-ares-gold mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <ShieldCheck size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Kysely Type-Safe SQL</h3>
@@ -163,8 +164,8 @@ export default function TechStack() {
             <div className="text-xs font-bold uppercase tracking-widest text-marble mt-auto">Cost: Open Source</div>
           </div>
 
-          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col">
-            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6">
+          <div className="bg-white/5 border border-white/10 p-8 hero-card backdrop-blur-sm shadow-xl flex flex-col group transition-all duration-500 hover:-translate-y-2 hover:border-ares-red/50 hover:shadow-[0_0_30px_rgba(237,28,36,0.15)]">
+            <div className="w-12 h-12 rounded-full border border-ares-red/30 flex items-center justify-center bg-ares-red/10 text-ares-red mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
               <Paintbrush size={24} />
             </div>
             <h3 className="text-2xl font-bold font-heading mb-4">Tailwind & Framer Motion</h3>
