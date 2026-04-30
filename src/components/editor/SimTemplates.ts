@@ -233,5 +233,39 @@ export function Elevator({ setpoint, currentHeight, onHeightChange }) {
     return (this.kp * error) + (this.ki * this.integral) + (this.kd * derivative);
   }
 }`
+  },
+  "3D Swerve Physics": {
+    "SimComponent.jsx": `import React, { useState } from 'react';
+import { PhysicsWorld, SwerveModule } from 'ares-physics';
+import { useTelemetry } from 'areslib';
+
+export default function SimComponent() {
+  const [speed, setSpeed] = useState(0);
+  const [rotation, setRotation] = useState(0);
+
+  useTelemetry('Wheel Speed', speed);
+  useTelemetry('Module Angle', rotation);
+
+  return (
+    <div className="sim-container" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div className="sim-title">3D Swerve Physics</div>
+      <div style={{ flex: 1, minHeight: '300px' }} className="sim-canvas">
+        <PhysicsWorld cameraPos={[0, 2, 4]}>
+          <SwerveModule position={[0, 0, 0]} rotation={rotation} wheelSpeed={speed} />
+        </PhysicsWorld>
+      </div>
+      <div className="sim-grid" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 16 }}>
+        <div>
+          <div className="sim-label">Wheel Speed</div>
+          <input type="range" min="-1" max="1" step="0.05" value={speed} onChange={e => setSpeed(Number(e.target.value))} className="sim-slider" />
+        </div>
+        <div>
+          <div className="sim-label">Module Angle (rad)</div>
+          <input type="range" min={-Math.PI} max={Math.PI} step="0.1" value={rotation} onChange={e => setRotation(Number(e.target.value))} className="sim-slider" />
+        </div>
+      </div>
+    </div>
+  );
+}`
   }
 };

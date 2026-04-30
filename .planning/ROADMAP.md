@@ -10,14 +10,15 @@
 - ✅ **v4.2 Sponsor Fixes & Docs Quality** — Phases 38-40 (shipped 2026-04-30)
 ## Phases
 
-### ⏳ v4.9 Simulation Playground Evolution (Phases 57-62) — ACTIVE
+### ⏳ v4.9 Simulation Playground Evolution (Phases 57-63) — ACTIVE
 
 - [x] **Phase 57: Hardware & Physics IntelliSense** (SIM-03) — Inject React, Three.js, and ARESLib physics `.d.ts` types into the Monaco Editor instances to enable real-time autocomplete, parameter hints, and JSDoc explanations for hardware kinematics.
 - [x] **Phase 58: Multi-File Sandbox & Templates** (SIM-04) — Implement a CodeSandbox-style multi-file tree layout allowing users to separate components (e.g., `PIDController.js`, `Constants.js`). Add starting templates (Swerve Drive, Elevator, etc.).
 - [x] **Phase 59: Real-Time Telemetry & Data Inspector** (SIM-05) — Add a telemetry panel to the simulation pane capable of graphing real-time variables (velocity, PID error, outputs) using a custom `useTelemetry` hook.
-- [ ] **Phase 60: Visual AI Feedback Loop** (SIM-06) — Hook up `html2canvas` (or similar) to capture iframe screenshots and pass visual context to the z.ai model, enabling V0-style iterative UI and visual physics adjustments.
-- [ ] **Phase 61: Built-in Physics Engine Abstractions** (SIM-07) — Pre-load the sandbox environment with `@react-three/fiber` and `@react-three/drei`. Expose global helper components (`<SwerveModule />`, `<PhysicsWorld />`) to eliminate boilerplate.
-- [ ] **Phase 62: Cloud Save & Collaborative Sharing** (SIM-08) — Connect the playground to Cloudflare D1 to save simulations and generate unique shareable links for collaboration and mentoring.
+- [x] **Phase 60: Visual AI Feedback Loop** (SIM-06) — Hook up `html2canvas` (or similar) to capture iframe screenshots and pass visual context to the z.ai model, enabling V0-style iterative UI and visual physics adjustments.
+- [x] **Phase 61: Built-in Physics Engine Abstractions** (SIM-07) — Pre-load the sandbox environment with `@react-three/fiber` and `@react-three/drei`. Expose global helper components (`<SwerveModule />`, `<PhysicsWorld />`) to eliminate boilerplate.
+- [x] **Phase 62: Cloud Save & Collaborative Sharing** (SIM-08) — Connect the playground to Cloudflare D1 to save simulations and generate unique shareable links for collaboration and mentoring.
+- [ ] **Phase 63: Sim Layout Refactor** (SIM-09) — Move the simulation live window below the code and AI chat windows to provide more horizontal space for coding. Confirm editor rendering functionality.
 
 <details>
 <summary>✅ v4.8 Simulation Playground UI Fixes (Phase 56) — SHIPPED 2026-04-30</summary>

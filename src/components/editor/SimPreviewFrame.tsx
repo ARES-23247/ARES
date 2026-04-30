@@ -53,7 +53,9 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -100,9 +102,10 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
 </style>
   <script src="${window.location.origin}/vendor/react.production.min.js"></script>
   <script src="${window.location.origin}/vendor/react-dom.production.min.js"></script>
+  <script src="${window.location.origin}/vendor/ares-physics.min.js"></script>
 </head>
 <body>
-  <div id="root"><div class="sim-loading">Loading React...</div></div>
+  <div id="root"><div class="sim-loading">Loading Environment...</div></div>
   <script>
     window.onerror = function(msg, source, line, col, error) {
       parent.postMessage({ type: 'sim-error', message: String(msg) + (line ? ' (line ' + line + ')' : '') }, '*');
@@ -123,7 +126,11 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
             }, [key, value]);
           }
         }
-      }
+      },
+      "three": { exports: window.AresPhysics?.THREE },
+      "@react-three/fiber": { exports: window.AresPhysics?.R3F },
+      "@react-three/drei": { exports: window.AresPhysics?.Drei },
+      "ares-physics": { exports: window.AresPhysics }
     };
     
     function require(name) {
@@ -169,6 +176,18 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       parent.postMessage({ type: 'sim-error', message: e.message }, '*');
       document.getElementById('root').innerHTML = '<div class="sim-error">' + e.message + '</div>';
     }
+
+    // Listen for screenshot requests
+    window.addEventListener('message', async (e) => {
+      if (e.data?.type === 'ARES_REQUEST_SCREENSHOT' && window.html2canvas) {
+        try {
+          const canvas = await window.html2canvas(document.body, { useCORS: true, logging: false });
+          window.parent.postMessage({ type: 'ARES_SCREENSHOT', dataUrl: canvas.toDataURL('image/png') }, '*');
+        } catch(err) {
+          console.error("Screenshot failed inside sandbox:", err);
+        }
+      }
+    });
   </script>
 </body>
 </html>`;

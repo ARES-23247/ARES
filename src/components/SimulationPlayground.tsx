@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
-import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown } from "lucide-react";
+import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X } from "lucide-react";
 import { loader } from "@monaco-editor/react";
 
 // Configure Monaco CDN — use unpkg as fallback if jsdelivr is slow
@@ -54,6 +54,9 @@ export default function SimulationPlayground() {
   // Telemetry State
   const [telemetry, setTelemetry] = useState<Record<string, {time: number, value: number}[]>>({});
   
+  // Visual AI State
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  
   const compileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Chat state
@@ -66,9 +69,8 @@ export default function SimulationPlayground() {
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Pane resize state
-  const [codePaneWidth, setCodePaneWidth] = useState(40); // percent
-  const [chatPaneWidth, setChatPaneWidth] = useState(25); // percent
-  const isDraggingRef = useRef<"code" | "chat" | null>(null);
+  const [codePaneWidth, setCodePaneWidth] = useState(60); // percent
+  const isDraggingRef = useRef<"code" | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll chat
@@ -128,9 +130,22 @@ export default function SimulationPlayground() {
           return { ...prev, [key]: next };
         });
       }
+      if (e.data?.type === "ARES_SCREENSHOT") {
+        setAttachedImage(e.data.dataUrl);
+      }
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  // Check URL for shared simulation on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const idParam = params.get("simId");
+    if (idParam && !isNaN(Number(idParam))) {
+      handleLoadSim(Number(idParam));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -225,6 +240,12 @@ export default function SimulationPlayground() {
       setSimId(sim.id);
       compileCode(parsedFiles);
       setShowLibrary(false);
+      
+      // Update URL to match loaded sim
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set("simId", sim.id.toString());
+      window.history.replaceState({}, "", newUrl.toString());
+
       const { toast } = await import("sonner");
       toast.success(`Loaded: ${sim.name}`);
     } catch (e) {
@@ -241,6 +262,9 @@ export default function SimulationPlayground() {
       if (simId === id) {
         setSimId(null);
         setSimName("Untitled Simulation");
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete("simId");
+        window.history.replaceState({}, "", newUrl.toString());
       }
     } catch (e) {
       console.error("[SimPlayground] Delete failed:", e);
@@ -288,8 +312,9 @@ USER REQUEST: ${msg}`;
       const res = await fetch("/api/ai/liveblocks-copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentContext: systemContext, action: "expand" }),
+        body: JSON.stringify({ documentContext: systemContext, action: "expand", imageUrl: attachedImage }),
       });
+      setAttachedImage(null);
 
       if (!res.ok || !res.body) throw new Error("AI request failed");
 
@@ -428,7 +453,12 @@ ${cleaned}`;
       });
       if (res.ok) {
         const data = await res.json() as { id?: number };
-        if (data.id && !simId) setSimId(data.id);
+        if (data.id && !simId) {
+          setSimId(data.id);
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set("simId", data.id.toString());
+          window.history.replaceState({}, "", newUrl.toString());
+        }
         const { toast } = await import("sonner");
         toast.success(simId ? "Simulation updated!" : "Simulation saved!");
       }
@@ -440,7 +470,7 @@ ${cleaned}`;
   };
 
   // ── Resize handlers ──
-  const handleMouseDown = (pane: "code" | "chat") => (e: React.MouseEvent) => {
+  const handleMouseDown = (pane: "code") => (e: React.MouseEvent) => {
     e.preventDefault();
     isDraggingRef.current = pane;
     document.body.style.cursor = "col-resize";
@@ -454,13 +484,8 @@ ${cleaned}`;
       const pct = ((e.clientX - rect.left) / rect.width) * 100;
 
       if (isDraggingRef.current === "code") {
-        const clamped = Math.max(25, Math.min(60, pct));
+        const clamped = Math.max(25, Math.min(80, pct));
         setCodePaneWidth(clamped);
-      } else if (isDraggingRef.current === "chat") {
-        const chatEnd = codePaneWidth + chatPaneWidth;
-        const newChatEnd = Math.max(codePaneWidth + 15, Math.min(85, pct));
-        setChatPaneWidth(newChatEnd - codePaneWidth);
-        void chatEnd; // suppress unused
       }
     };
 
@@ -476,9 +501,7 @@ ${cleaned}`;
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [codePaneWidth, chatPaneWidth]);
-
-  const previewPaneWidth = 100 - codePaneWidth - chatPaneWidth;
+  }, []);
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] max-h-[900px]">
@@ -581,10 +604,12 @@ ${cleaned}`;
         </div>
       </div>
 
-      {/* 3-Pane Split */}
-      <div ref={containerRef} className="flex-1 flex min-h-0">
-        {/* ── Code Editor & Files Pane ── */}
-        <div style={{ width: `${codePaneWidth}%` }} className="flex flex-col min-h-0 min-w-0 border-r border-white/5">
+      {/* Layout Split: Top/Bottom */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Top Row: Code & Chat */}
+        <div ref={containerRef} className="flex-1 flex min-h-0 border-b border-white/10 relative z-10">
+          {/* ── Code Editor & Files Pane ── */}
+          <div style={{ width: `${codePaneWidth}%` }} className="flex flex-col min-h-0 min-w-0 border-r border-white/5">
           <div className="px-3 py-1.5 border-b border-white/10 bg-[#1e1e1e] flex items-center justify-between">
             <div className="flex gap-2 items-center">
               <span className="text-white/40 text-xs font-mono">{activeFile}</span>
@@ -643,7 +668,7 @@ ${cleaned}`;
         </button>
 
         {/* ── z.AI Chat Pane ── */}
-        <div style={{ width: `${chatPaneWidth}%` }} className="flex flex-col min-h-0 min-w-0 border-x border-white/5">
+        <div style={{ width: `${100 - codePaneWidth}%` }} className="flex flex-col min-h-0 min-w-0 border-l border-white/5">
           <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d0f14] flex items-center justify-between">
             <span className="text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
@@ -692,8 +717,28 @@ ${cleaned}`;
           </div>
 
           {/* Input */}
-          <div className="p-2 border-t border-white/10 bg-[#0d0f14]">
+          <div className="p-2 border-t border-white/10 bg-[#0d0f14] flex flex-col gap-2">
+            {attachedImage && (
+              <div className="relative inline-block w-24 h-24 border border-ares-gold/30 rounded-md overflow-hidden bg-black/50 ml-1">
+                <img src={attachedImage} alt="Context" className="w-full h-full object-contain" />
+                <button onClick={() => setAttachedImage(null)} className="absolute top-1 right-1 bg-black/70 rounded-full p-1 hover:bg-black text-white/80 transition-colors">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
             <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const iframe = document.querySelector('iframe');
+                  if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ type: 'ARES_REQUEST_SCREENSHOT' }, '*');
+                  }
+                }}
+                className="p-2 bg-zinc-800 text-zinc-400 border border-zinc-700 rounded-md hover:bg-zinc-700 transition-colors"
+                title="Capture screenshot"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
               <textarea
                 ref={chatInputRef}
                 value={chatInput}
@@ -711,22 +756,12 @@ ${cleaned}`;
                 <Send className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[10px] text-white/20 mt-1 px-1">Enter to send · Shift+Enter for newline · Code auto-applies</p>
           </div>
         </div>
-
-        {/* ── Resize Handle: Chat ↔ Preview ── */}
-        <button
-          type="button"
-          aria-label="Resize chat and preview panes"
-          onMouseDown={handleMouseDown("chat")}
-          className="w-1.5 bg-white/5 hover:bg-ares-gold/30 cursor-col-resize flex items-center justify-center transition-colors group border-0 p-0"
-        >
-          <GripVertical className="w-3 h-3 text-white/20 group-hover:text-ares-gold/60" />
-        </button>
+        </div>
 
         {/* ── Live Preview Pane ── */}
-        <div style={{ width: `${previewPaneWidth}%` }} className="flex flex-col min-h-0 min-w-0">
+        <div className="flex-1 flex flex-col min-h-[400px] min-w-0 bg-[#0d1117] z-0">
           <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d1117] flex items-center gap-2">
             <span className="text-white/40 text-xs font-mono">Live Preview</span>
             <div className={`w-2 h-2 rounded-full ${compileError ? 'bg-red-500' : 'bg-emerald-500'}`} />

@@ -30,7 +30,7 @@ aiRouter.get("/status", ensureAdmin, (c) => {
 
 aiRouter.post("/liveblocks-copilot", async (c) => {
   const body = await c.req.json();
-  const { documentContext, action } = body;
+  const { documentContext, action, imageUrl } = body;
 
   const hasZai = !!c.env.Z_AI_API_KEY;
 
@@ -48,6 +48,27 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
     try {
       // ── Premium path: z.ai (Claude) ──
       if (hasZai) {
+        let userContent: any = safeContext;
+        
+        if (imageUrl && imageUrl.startsWith('data:image')) {
+          const [header, base64] = imageUrl.split(',');
+          const mediaType = header.split(';')[0].split(':')[1];
+          userContent = [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: mediaType,
+                data: base64
+              }
+            },
+            {
+              type: "text",
+              text: safeContext
+            }
+          ];
+        }
+
         const zaiRes = await fetch("https://api.z.ai/v1/messages", {
           method: "POST",
           headers: {
@@ -59,7 +80,7 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
             model: "zai-5.1",
             max_tokens: 1024,
             system: systemPrompt,
-            messages: [{ role: "user", content: safeContext }],
+            messages: [{ role: "user", content: userContent }],
             stream: true
           })
         });
