@@ -251,6 +251,7 @@ app.route("/dashboard/api", apiRouter);
 
 export const onRequest = handle(app);
 import { purgeOldInquiries } from "./routes/inquiries/index";
+import { indexSiteContent } from "./routes/ai/indexer";
 export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
   const { D1Dialect } = await import("kysely-d1");
   const { Kysely } = await import("kysely");
@@ -264,6 +265,19 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
       .limit(100)
     )
     .execute();
+
+  // Re-index site content for the RAG chatbot knowledge base
+  if (env.AI && env.VECTORIZE_DB) {
+    try {
+      const result = await indexSiteContent(db, env.AI, env.VECTORIZE_DB);
+      console.log(`[Cron] Vectorize indexed ${result.indexed} documents. Errors: ${result.errors.length}`);
+      if (result.errors.length > 0) {
+        console.error("[Cron] Indexing errors:", result.errors);
+      }
+    } catch (e) {
+      console.error("[Cron] Vectorize indexing failed:", e);
+    }
+  }
 };
 
 export default app;

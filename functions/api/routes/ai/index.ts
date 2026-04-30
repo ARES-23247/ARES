@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv } from "../../middleware";
+import { AppEnv, ensureAdmin } from "../../middleware";
 import { streamSSE } from "hono/streaming";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -268,6 +268,25 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
       console.error("RAG stream error:", e);
       await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI processing error. Please try again.]" }) });
     }
+  });
+});
+
+// ── Manual Re-Index Endpoint (admin-only) ─────────────────────────────
+
+aiRouter.post("/reindex", ensureAdmin, async (c) => {
+  // Require admin role (checked by middleware upstream)
+  if (!c.env.AI || !c.env.VECTORIZE_DB) {
+    return c.json({ error: "AI or Vectorize bindings not configured" }, 500);
+  }
+
+  const db = c.get("db") as Kysely<DB>;
+  const { indexSiteContent } = await import("./indexer");
+  const result = await indexSiteContent(db, c.env.AI, c.env.VECTORIZE_DB);
+
+  return c.json({
+    success: true,
+    indexed: result.indexed,
+    errors: result.errors,
   });
 });
 
