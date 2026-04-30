@@ -1,10 +1,10 @@
 ---
-milestone: v4.1
-name: System Evolution
-status: complete
+milestone: v4.2
+name: Sponsor Fixes & Docs Quality
+status: planning
 progress:
-  phases_total: 1
-  phases_completed: 1
+  phases_total: 0
+  phases_completed: 0
   tasks_total: 0
   tasks_completed: 0
 ---
@@ -13,10 +13,10 @@ progress:
 
 ## Current Position
 
-Phase: 37
-Plan: none
-Status: Complete
-Last activity: 2026-04-30 — Phase 37 marked complete, milestone ready to complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-30 — Milestone v4.2 started
 
 ## Accumulated Context
 

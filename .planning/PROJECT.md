@@ -35,12 +35,13 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: v4.1 System Evolution
+## Current Milestone: v4.2 Sponsor Fixes & Docs Quality
 
-**Goal:** Establish the architecture and tooling needed for the next evolution of the ARESWEB project.
+**Goal:** Resolve the sponsor logo update bug and improve ARESWEB documentation based on areslib.
 
 **Target features:**
-- TBD
+- Sponsor Logo Fix: Investigate and resolve the bug preventing logo updates on `dashboard/sponsors`.
+- Documentation Improvements: Audit and upgrade the quality of `aresfirst.org/docs/` leveraging patterns/code from `areslib`.
 
 ## Current State
 
