@@ -294,13 +294,15 @@ export default function SimulationPlayground() {
 
     try {
       const systemContext = `You are a z.AI simulation code assistant for ARES 23247, an FTC robotics team. The user is building interactive React simulations that run in a sandboxed iframe.
-
 RULES:
 - The component MUST be named SimComponent (not exported, just function SimComponent in SimComponent.jsx)
 - Use React.useState, React.useEffect, etc. (React is a global, don't import it)
 - Available CSS classes: sim-container, sim-title, sim-label, sim-value, sim-slider, sim-canvas, sim-btn, sim-grid, sim-flex
-- Output ONLY a JSON object mapping filenames to their file content string. No markdown fences, no explanations outside of code comments.
-- When modifying code, output the COMPLETE updated files object, not a diff.
+- DO NOT use JSON. When modifying code, output the COMPLETE updated files using markdown code blocks with the filename in the language tag. Example:
+\`\`\`jsx:SimComponent.jsx
+<code here>
+\`\`\`
+- Output ONLY the markdown code blocks. No explanations outside of code comments.
 
 CURRENT FILES:
 \`\`\`json
@@ -322,6 +324,8 @@ USER REQUEST: ${msg}`;
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      
+      let finalFiles: Record<string, string> = {};
 
       while (true) {
         const { done, value } = await reader.read();
@@ -334,7 +338,42 @@ USER REQUEST: ${msg}`;
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.chunk) accumulatedText += data.chunk;
+              if (data.chunk) {
+                accumulatedText += data.chunk;
+                
+                // Live parse markdown blocks
+                const blockLines = accumulatedText.split('\\n');
+                const newFiles: Record<string, string> = {};
+                let currentFile: string | null = null;
+                let currentContent: string[] = [];
+                
+                for (let i = 0; i < blockLines.length; i++) {
+                  const l = blockLines[i];
+                  if (l.startsWith('```')) {
+                    if (currentFile) {
+                      newFiles[currentFile] = currentContent.join('\\n');
+                      currentFile = null;
+                      currentContent = [];
+                    } else {
+                      const match = l.match(/```[a-zA-Z]*:(.+)/);
+                      if (match && match[1]) {
+                        currentFile = match[1].trim();
+                      }
+                    }
+                  } else if (currentFile) {
+                    currentContent.push(l);
+                  }
+                }
+                
+                if (currentFile) {
+                  newFiles[currentFile] = currentContent.join('\\n');
+                }
+                
+                if (Object.keys(newFiles).length > 0) {
+                  finalFiles = newFiles;
+                  setFiles(prev => ({ ...prev, ...newFiles }));
+                }
+              }
             } catch { /* ignore */ }
           }
         }
@@ -343,89 +382,103 @@ USER REQUEST: ${msg}`;
       const reply = accumulatedText.trim();
       setChatMessages(prev => [...prev, { role: "assistant", content: reply }]);
 
-      // Auto-apply code if the reply looks like JSON
-      if (reply.includes("{") && reply.includes("SimComponent.jsx")) {
-        let cleaned = reply;
-        // Strip markdown fences
-        if (cleaned.includes("```")) {
-          cleaned = cleaned
-            .split("\n")
-            .filter(line => !line.trim().startsWith("```"))
-            .join("\n");
-        }
-        cleaned = cleaned.trim();
-        try {
-          const parsed = JSON.parse(cleaned);
-          if (parsed && typeof parsed === "object" && parsed["SimComponent.jsx"]) {
-            setFiles(parsed);
-            const err = await compileCode(parsed);
+      // Compile code once generation completes
+      if (Object.keys(finalFiles).length > 0) {
+        const fullFiles = { ...files, ...finalFiles };
+        const err = await compileCode(fullFiles);
 
-            // Auto-heal: if compilation fails, send error back to AI for a fix
-            if (err) {
-              setChatMessages(prev => [...prev, { role: "assistant", content: "⚙️ Compile error detected — auto-fixing..." }]);
+        // Auto-heal: if compilation fails, send error back to AI for a fix
+        if (err) {
+          setChatMessages(prev => [...prev, { role: "assistant", content: "⚙️ Compile error detected — auto-fixing..." }]);
 
-              try {
-                const fixContext = `You are a z.AI simulation code assistant. The following JSON payload of files has a compilation error. Fix ONLY the error and return the COMPLETE corrected JSON. Output ONLY JSON, no markdown fences.
+          try {
+            const fixContext = `You are a z.AI simulation code assistant. The following markdown-fenced code has a compilation error. Fix ONLY the error and return the COMPLETE corrected code using markdown fences with the filename (e.g. \`\`\`jsx:SimComponent.jsx).
 
 ERROR:
 ${err}
 
-BROKEN FILES:
-${cleaned}`;
+BROKEN CODE:
+${reply}`;
 
-                const fixRes = await fetch("/api/ai/liveblocks-copilot", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ documentContext: fixContext, action: "expand" }),
-                });
+            const fixRes = await fetch("/api/ai/liveblocks-copilot", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ documentContext: fixContext, action: "expand" }),
+            });
 
-                if (fixRes.ok && fixRes.body) {
-                  let fixText = "";
-                  const fixReader = fixRes.body.getReader();
-                  const fixDecoder = new TextDecoder();
-                  let fixBuffer = "";
+            if (fixRes.ok && fixRes.body) {
+              let fixText = "";
+              const fixReader = fixRes.body.getReader();
+              const fixDecoder = new TextDecoder();
+              let fixBuffer = "";
+              let finalFixFiles: Record<string, string> = {};
 
-                  while (true) {
-                    const { done, value } = await fixReader.read();
-                    if (done) break;
-                    fixBuffer += fixDecoder.decode(value, { stream: true });
-                    const fixLines = fixBuffer.split("\n");
-                    fixBuffer = fixLines.pop() || "";
-                    for (const line of fixLines) {
-                      if (line.startsWith("data: ")) {
-                        try {
-                          const data = JSON.parse(line.slice(6));
-                          if (data.chunk) fixText += data.chunk;
-                        } catch { /* ignore */ }
+              while (true) {
+                const { done, value } = await fixReader.read();
+                if (done) break;
+                fixBuffer += fixDecoder.decode(value, { stream: true });
+                const fixLines = fixBuffer.split("\n");
+                fixBuffer = fixLines.pop() || "";
+                
+                for (const line of fixLines) {
+                  if (line.startsWith("data: ")) {
+                    try {
+                      const data = JSON.parse(line.slice(6));
+                      if (data.chunk) {
+                        fixText += data.chunk;
+                        
+                        // Live parse for auto-fix stream
+                        const fBlockLines = fixText.split('\\n');
+                        const fNewFiles: Record<string, string> = {};
+                        let fCurrentFile: string | null = null;
+                        let fCurrentContent: string[] = [];
+                        
+                        for (let i = 0; i < fBlockLines.length; i++) {
+                          const l = fBlockLines[i];
+                          if (l.startsWith('```')) {
+                            if (fCurrentFile) {
+                              fNewFiles[fCurrentFile] = fCurrentContent.join('\\n');
+                              fCurrentFile = null;
+                              fCurrentContent = [];
+                            } else {
+                              const match = l.match(/```[a-zA-Z]*:(.+)/);
+                              if (match && match[1]) {
+                                fCurrentFile = match[1].trim();
+                              }
+                            }
+                          } else if (fCurrentFile) {
+                            fCurrentContent.push(l);
+                          }
+                        }
+                        if (fCurrentFile) {
+                          fNewFiles[fCurrentFile] = fCurrentContent.join('\\n');
+                        }
+                        if (Object.keys(fNewFiles).length > 0) {
+                          finalFixFiles = fNewFiles;
+                          setFiles(prev => ({ ...prev, ...fNewFiles }));
+                        }
                       }
-                    }
-                  }
-
-                  let fixedCode = fixText.trim();
-                  if (fixedCode.includes("```")) {
-                    fixedCode = fixedCode.split("\n").filter(l => !l.trim().startsWith("```")).join("\n").trim();
-                  }
-
-                  const fixParsed = JSON.parse(fixedCode);
-                  if (fixParsed && typeof fixParsed === "object" && fixParsed["SimComponent.jsx"]) {
-                    setFiles(fixParsed);
-                    const fixErr = await compileCode(fixParsed);
-                    if (fixErr) {
-                      setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Auto-fix failed: ${fixErr}\nPlease fix the code manually or describe the issue.` }]);
-                    } else {
-                      setChatMessages(prev => [...prev, { role: "assistant", content: "✅ Code fixed and applied!" }]);
-                    }
+                    } catch { /* ignore */ }
                   }
                 }
-              } catch {
-                // Auto-heal failed silently
+              }
+
+              if (Object.keys(finalFixFiles).length > 0) {
+                const fixFullFiles = { ...fullFiles, ...finalFixFiles };
+                const fixErr = await compileCode(fixFullFiles);
+                if (fixErr) {
+                  setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Auto-fix failed: ${fixErr}\nPlease fix the code manually or describe the issue.` }]);
+                } else {
+                  setChatMessages(prev => [...prev, { role: "assistant", content: "✅ Code fixed and applied!" }]);
+                }
               }
             }
+          } catch {
+            // Auto-heal failed silently
           }
-        } catch {
-           // not valid JSON
         }
       }
+
     } catch (e) {
       setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Error: ${(e as Error).message}` }]);
     } finally {

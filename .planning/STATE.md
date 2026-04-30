@@ -1,10 +1,10 @@
 ---
-milestone: v5.0
-name: Tech Debt
-status: completed
+milestone: v5.1
+name: IDE Experience
+status: active
 progress:
   phases_total: 1
-  phases_completed: 1
+  phases_completed: 0
   tasks_total: 0
   tasks_completed: 0
 ---
@@ -12,10 +12,10 @@ progress:
 # Project State
 
 ## Current Context
-- **Milestone:** v5.0 (Tech Debt)
-- **Phase:** 65 (Fix Swerve Physics Template PhysicsWorld Error)
-- **Status:** Completed
-- **Next Step:** Start next milestone or wrap up project.
+- **Milestone:** v5.1 (IDE Experience)
+- **Phase:** 66 (Streaming Code Generation)
+- **Status:** Planning
+- **Next Step:** Receive plan approval for streaming parser implementation.
 
 ## Accumulated Context
 

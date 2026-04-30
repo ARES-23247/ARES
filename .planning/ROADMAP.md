@@ -10,7 +10,11 @@
 - ✅ **v4.2 Sponsor Fixes & Docs Quality** — Phases 38-40 (shipped 2026-04-30)
 ## Phases
 
-### ⏳ v5.0 Tech Debt (Phase 65) — ACTIVE
+### ⏳ v5.1 IDE Experience (Phase 66) — ACTIVE
+
+- [ ] **Phase 66: Streaming Code Generation (IDE-like Experience)** — Overhaul the simulation playground's z.AI assistant to stream markdown-fenced code blocks directly into the Monaco Editor character-by-character, replacing the fragile all-at-once JSON payload mechanism.
+
+### ✅ v5.0 Tech Debt (Phase 65) — SHIPPED 2026-04-30
 
 - [x] **Phase 65: Fix Swerve Physics Template PhysicsWorld Error** — Address the `PhysicsWorld is undefined` TypeError in the simulation playground by ensuring the iframe's `require` function is available before `ares-physics.min.js` loads, allowing its internal `require('react')` to resolve correctly.
 
