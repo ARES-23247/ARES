@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { PrismAsync as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export const CodeBlock = ({ language, value, ...props }: { language?: string; value: string; [key: string]: unknown }) => {

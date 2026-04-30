@@ -70,6 +70,18 @@ function DocsSidebar({ groupedDocs, currentSlug, onSearchOpen }: DocsSidebarProp
         {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       <aside className={`
         fixed lg:sticky top-0 left-0 z-30 h-screen w-72 shrink-0
         bg-ares-gray-deep border-r border-white/8
