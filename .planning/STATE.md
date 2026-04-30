@@ -1,11 +1,11 @@
 ---
 milestone: v4.7
 name: Gap Closure (v4.6 Tech Debt)
-status: completed
+status: active
 progress:
-  phases_total: 2
+  phases_total: 3
   phases_completed: 2
-  tasks_total: 5
+  tasks_total: 6
   tasks_completed: 5
 ---
 
@@ -13,10 +13,10 @@ progress:
 
 ## Current Position
 
-Phase: 52 — Index Pipeline Hardening (complete)
-Plan: Executed
-Status: v4.7 milestone complete — all 5 tech debt items resolved
-Last activity: 2026-04-30 — Phase 52 shipped, D1 migration applied to production
+Phase: 53 — Liveblocks Fix (next)
+Plan: Pending
+Status: Liveblocks real-time collaboration not working in production
+Last activity: 2026-04-30 — Phase 53 created for Liveblocks debug
 
 ## Accumulated Context
 

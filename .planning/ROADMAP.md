@@ -13,6 +13,7 @@
 
 - [x] **Phase 51: RAG Indexer Test Coverage** (TD-01, TD-02) — Add vitest unit tests for `indexer.ts` and `autoReindex.ts`, plus E2E test for admin `POST /api/ai/reindex` endpoint. Closes test coverage gaps from v4.6 audit.
 - [x] **Phase 52: Index Pipeline Hardening** (TD-03, TD-04, TD-05) — Add `updated_at` columns to `events` and `posts` tables via D1 migration for true incremental scans. Add rate limiting to `/api/ai/reindex`. Validate cron handler executes in production.
+- [ ] **Phase 53: Liveblocks Fix** — Diagnose and repair Liveblocks real-time collaboration integration (auth, room connections, editor sync).
 
 <details>
 <summary>✅ v4.6 RAG Knowledge Base Pipeline (Phases 49-50) — SHIPPED 2026-04-30</summary>
