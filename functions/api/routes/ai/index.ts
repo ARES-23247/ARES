@@ -15,6 +15,16 @@ const scrubPII = (text: string): string => {
   return scrubbed;
 };
 
+// ── AI Status Diagnostic (admin only) ──────────────────────────────────────
+aiRouter.get("/status", ensureAdmin, (c) => {
+  return c.json({
+    zai: !!c.env.Z_AI_API_KEY,
+    workersAI: !!c.env.AI,
+    vectorize: !!c.env.VECTORIZE_DB,
+    primaryModel: c.env.Z_AI_API_KEY ? "zai-5.1" : c.env.AI ? "llama-3.1-8b" : "none",
+  });
+});
+
 // ── Liveblocks AI Copilot Endpoint ────────────────────────────────────────
 // Premium: uses z.ai (Claude) if Z_AI_API_KEY is set, otherwise falls back to Workers AI (Llama 3.1)
 
