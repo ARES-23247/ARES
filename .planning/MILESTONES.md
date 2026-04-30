@@ -2,6 +2,9 @@
 
 | Version | Status | Date | Summary |
 |---------|--------|------|---------|
+| v4.4 | ✅ SHIPPED | 2026-04-30 | AI Copilot & CI Stabilization |
+| v4.3 | ✅ SHIPPED | 2026-04-30 | Inquiries, Notifications & Docs Restoration |
+| v4.2 | ✅ SHIPPED | 2026-04-30 | Sponsor Fixes & Docs Quality |
 | [v4.1](milestones/v4.1-ROADMAP.md) | ✅ SHIPPED | 2026-04-30 | System Evolution |
 | [v4.0](milestones/v4.0-ROADMAP.md) | ✅ SHIPPED | 2026-04-29 | System Hardening, Storefront & Member Incentives |
 | [v3.9](milestones/v3.9-ROADMAP.md) | ✅ SHIPPED | 2026-04-29 | Stripe Storefront |
