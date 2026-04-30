@@ -114,7 +114,20 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
     window.__modules = {};
     window.__cache = {};
     
+    window.__virtualModules = {
+      "areslib": {
+        exports: {
+          useTelemetry: function(key, value) {
+            React.useEffect(() => {
+              window.parent.postMessage({ type: "ARES_TELEMETRY", key, value, timestamp: performance.now() }, "*");
+            }, [key, value]);
+          }
+        }
+      }
+    };
+    
     function require(name) {
+      if (window.__virtualModules[name]) return window.__virtualModules[name].exports;
       if (name === 'react') return window.React;
       if (name === 'react-dom') return window.ReactDOM;
       

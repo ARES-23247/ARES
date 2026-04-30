@@ -1,27 +1,23 @@
-# Phase 58: Multi-File Sandbox & Templates Plan
+# Phase 59: Real-Time Telemetry & Data Inspector
 
 ## Goal
-Implement a multi-file tree layout allowing users to separate components in the Simulation Playground, and provide starting templates.
+Add a telemetry panel to the simulation pane capable of graphing real-time variables (velocity, PID error, outputs) using a custom `useTelemetry` hook.
 
 ## Steps
-1. **State Refactoring**:
-   - Change `code` state from `string` to `files` state: `Record<string, string>`.
-   - Maintain `activeFile` state (e.g., `'SimComponent.jsx'`).
-   - For backwards compatibility and D1 schema stability, `handleSave` will `JSON.stringify(files)` into the existing `code` column. Loading will try `JSON.parse` or fallback to treating it as single-file `SimComponent.jsx`.
+1. **Telemetry Protocol (`postMessage`)**:
+   - In `SimPreviewFrame.tsx`, inject a global `window.aresTelemetry(key, value)` function that sends a `postMessage` to the parent window with `{ type: "TELEMETRY", key, value, timestamp }`.
+   - Implement `export function useTelemetry(key, value)` in the simulated environment. We can inject this as a virtual file `areslib.js` or directly into the global scope. Let's inject a virtual module `areslib` so users can `import { useTelemetry } from "areslib";`.
 
-2. **Compiler & Bundler (Mini CommonJS)**:
-   - In `compileCode`, iterate over all `files`. Use Babel with `presets: ["react", "env"]` to transform ESM `import`/`export` to CommonJS `require`/`exports`.
-   - Pass an object mapping `{ filename: compiledSource }` to `SimPreviewFrame`.
-   - In `SimPreviewFrame` iframe, implement a `require(name)` polyfill that resolves `./File`, executes the wrapped function, and caches `module.exports`.
-   - Finally, evaluate `SimComponent.jsx` and extract the component.
+2. **Telemetry State Management**:
+   - In `SimulationPlayground.tsx` (or a subcomponent), add an event listener for `message`.
+   - Maintain a state `telemetryData: Record<string, {time: number, value: number}[]>`. Keep the last ~100 points per key.
 
-3. **UI Updates**:
-   - Add a file explorer sidebar (e.g., 15% width) on the left of the editor pane to list `Object.keys(files)`.
-   - Support adding files (`+ New File`), renaming, and deleting files.
-   - Update editor to show the content of `activeFile`.
+3. **Telemetry UI Panel**:
+   - Create a `TelemetryPanel.tsx` component that renders below the Live Preview or as a collapsible overlay.
+   - For each telemetry key, render a simple SVG sparkline or Canvas graph of the recent values.
 
-4. **Templates**:
-   - Add a "Templates" dropdown next to "Open" that populates `files` with predefined sets (Default, Swerve Drive, Elevator).
+4. **Template Update**:
+   - Update the "Elevator System" template in `SimTemplates.ts` to use `import { useTelemetry } from "areslib";` and graph `PID Error` and `Elevator Height`.
 
 ## Automated Execution
 Executing immediately.

@@ -11,6 +11,7 @@ const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 const SimPreviewFrame = lazy(() => import("./editor/SimPreviewFrame"));
 import { FileSidebar } from "./editor/FileSidebar";
 import { SIM_TEMPLATES } from "./editor/SimTemplates";
+import { TelemetryPanel } from "./editor/TelemetryPanel";
 
 // Babel standalone for JSX transpilation
 let Babel: { transform: (code: string, opts: Record<string, unknown>) => { code: string } } | null = null;
@@ -49,6 +50,10 @@ export default function SimulationPlayground() {
   const [savedSims, setSavedSims] = useState<SavedSim[]>([]);
   const [showLibrary, setShowLibrary] = useState(false);
   const [isLoadingSims, setIsLoadingSims] = useState(false);
+  
+  // Telemetry State
+  const [telemetry, setTelemetry] = useState<Record<string, {time: number, value: number}[]>>({});
+  
   const compileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Chat state
@@ -109,6 +114,23 @@ export default function SimulationPlayground() {
   useEffect(() => {
     compileCode(files);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simId, files]);
+
+  // Listen for Telemetry from Iframe
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === "ARES_TELEMETRY") {
+        setTelemetry(prev => {
+          const key = e.data.key;
+          const current = prev[key] || [];
+          // Keep last 100 points
+          const next = [...current, { time: e.data.timestamp, value: e.data.value }].slice(-100);
+          return { ...prev, [key]: next };
+        });
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,11 +175,15 @@ export default function SimulationPlayground() {
     }
   }, []);
 
-  const handleRun = () => compileCode(files);
+  const handleRun = () => {
+    setTelemetry({}); // clear telemetry on run
+    compileCode(files);
+  };
 
   const handleReset = () => {
     setFiles(SIM_TEMPLATES["Default (Robot Arm)"]);
     setActiveFile("SimComponent.jsx");
+    setTelemetry({});
     compileCode(SIM_TEMPLATES["Default (Robot Arm)"]);
     setSimId(null);
     setSimName("Untitled Simulation");
@@ -705,10 +731,13 @@ ${cleaned}`;
             <span className="text-white/40 text-xs font-mono">Live Preview</span>
             <div className={`w-2 h-2 rounded-full ${compileError ? 'bg-red-500' : 'bg-emerald-500'}`} />
           </div>
-          <div className="flex-1 min-h-0">
-            <Suspense fallback={<div className="flex items-center justify-center h-full bg-[#0d1117] text-white/40 text-sm">Loading preview...</div>}>
-              <SimPreviewFrame compiledFiles={compiledFiles} compileError={compileError} />
-            </Suspense>
+          <div className="flex-1 min-h-0 relative flex flex-col">
+            <div className="flex-1 min-h-0">
+              <Suspense fallback={<div className="flex items-center justify-center h-full bg-[#0d1117] text-white/40 text-sm">Loading preview...</div>}>
+                <SimPreviewFrame compiledFiles={compiledFiles} compileError={compileError} />
+              </Suspense>
+            </div>
+            <TelemetryPanel data={telemetry} />
           </div>
         </div>
       </div>

@@ -110,6 +110,7 @@ export default function SimComponent() {
 }`,
     "Elevator.jsx": `import React, { useRef, useEffect } from 'react';
 import { PidController } from './PidController.js';
+import { useTelemetry } from 'areslib';
 
 export function Elevator({ setpoint, currentHeight, onHeightChange }) {
   const canvasRef = useRef(null);
@@ -122,6 +123,11 @@ export function Elevator({ setpoint, currentHeight, onHeightChange }) {
   const pidRef = useRef(new PidController(kp, ki, kd));
   const posRef = useRef(currentHeight);
   const velRef = useRef(0);
+  
+  // Send telemetry back to ARESWEB editor
+  useTelemetry('Target Height', setpoint);
+  useTelemetry('Actual Height', currentHeight);
+  useTelemetry('PID Error', setpoint - currentHeight);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -158,6 +164,9 @@ export function Elevator({ setpoint, currentHeight, onHeightChange }) {
       }
       
       onHeightChange(posRef.current);
+      
+      // We can also send high-frequency telemetry direct from loop if we want,
+      // but the React useTelemetry handles the state changes well enough.
       
       // Draw
       ctx.clearRect(0, 0, canvas.width, canvas.height);
