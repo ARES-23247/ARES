@@ -82,6 +82,7 @@ export function GlobalRAGChatbot() {
     <>
       <button
         onClick={() => setIsOpen(true)}
+        aria-label="Open AI Assistant"
         className={`fixed bottom-6 right-6 p-4 rounded-full shadow-2xl bg-indigo-600 hover:bg-indigo-500 text-white transition-all transform hover:scale-110 z-50 ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
       >
         <MessageSquare className="w-6 h-6" />
@@ -93,9 +94,9 @@ export function GlobalRAGChatbot() {
         <div className="flex items-center justify-between p-4 bg-zinc-800 border-b border-zinc-700">
           <div className="flex items-center space-x-2">
             <Bot className="w-5 h-5 text-indigo-400" />
-            <h3 className="font-bold text-zinc-100">ARES Knowledge Bot</h3>
+            <div className="font-bold text-zinc-100">ARES Knowledge Bot</div>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-zinc-400 hover:text-white transition-colors">
+          <button onClick={() => setIsOpen(false)} aria-label="Close AI Assistant" className="text-zinc-400 hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -143,6 +144,7 @@ export function GlobalRAGChatbot() {
             />
             <button
               type="submit"
+              aria-label="Send message"
               disabled={isLoading || !turnstileToken || !input.trim()}
               className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 transition-colors"
             >
