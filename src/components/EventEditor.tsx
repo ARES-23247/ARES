@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
+import { CopilotMenu } from "./editor/CopilotMenu";
 import AssetPickerModal from "./AssetPickerModal";
 import { MapPin, RefreshCw } from "lucide-react";
 import EventPotluckVolunteerFlags from "./events/EventPotluckVolunteerFlags";
@@ -399,6 +400,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
       <div>
         <label htmlFor="event-desc-editor" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Event Description / Recap</label>
         {editor && <RichEditorToolbar editor={editor} documentTitle={formValues.title || ""} />}
+        {editor && <CopilotMenu editor={editor} />}
       </div>
 
       <div className="mt-4">
@@ -407,6 +409,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
           <span className="text-white/60 font-normal normal-case">(verified members only)</span>
         </label>
         {notesEditor && <RichEditorToolbar editor={notesEditor} documentTitle={(formValues.title || "") + " Notes"} />}
+        {notesEditor && <CopilotMenu editor={notesEditor} />}
       </div>
 
       <div className="mt-6 flex flex-col gap-4">

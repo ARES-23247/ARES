@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import { toast } from "sonner";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
+import { CopilotMenu } from "./editor/CopilotMenu";
 
 export default function MassEmailComposer() {
   const [subject, setSubject] = useState("");
@@ -142,6 +143,7 @@ export default function MassEmailComposer() {
           <label htmlFor="body-input" className="text-xs font-black text-marble/60 uppercase tracking-widest">HTML Body</label>
           <div id="body-input" className="flex-1 bg-white/5 border border-white/10 ares-cut relative flex flex-col group focus-within:border-ares-red/50 transition-colors min-h-[500px] overflow-visible">
              {editor && <RichEditorToolbar editor={editor} documentTitle={subject} />}
+             {editor && <CopilotMenu editor={editor} />}
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
+import { CopilotMenu } from "./editor/CopilotMenu";
 import AssetPickerModal from "./AssetPickerModal";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { useImageUpload } from "../hooks/useImageUpload";
@@ -230,6 +231,7 @@ export default function SeasonEditor() {
       <div className="space-y-2">
         <span className="block text-xs font-black text-ares-gold uppercase tracking-[0.2em]">Robot Design & Season Highlights</span>
         <RichEditorToolbar editor={editor} documentTitle={challengeName} />
+        <CopilotMenu editor={editor} />
       </div>
 
       <AssetPickerModal 

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
+import { CopilotMenu } from "./editor/CopilotMenu";
 import AssetPickerModal from "./AssetPickerModal";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { useAdminSettings } from "../hooks/useAdminSettings";
@@ -271,6 +272,7 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
 
       {/* ===== Unified Rich Editor ===== */}
       <RichEditorToolbar editor={editor} documentTitle={title} />
+      <CopilotMenu editor={editor} />
 
       {/* Cover Image Picker Modal */}
       <AssetPickerModal 
