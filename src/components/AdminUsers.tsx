@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { RefreshCw, Shield, Trash2, ChevronDown, Edit3, X, Search, ChevronUp, MessageSquare, Zap } from "lucide-react";
 import ProfileEditor from "./ProfileEditor";
 import { api } from "../api/client";
