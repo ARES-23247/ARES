@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { BubbleMenu, Editor } from "@tiptap/react";
+import { Editor } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,8 +50,8 @@ export function CopilotMenu({ editor }: CopilotMenuProps) {
               try {
                 const data = JSON.parse(line.slice(6));
                 accumulatedText += data.chunk + " ";
-              } catch (e) {
-                // Ignore parse errors on chunks
+              } catch (_e) {
+                // Parse error, ignore parse errors on chunks
               }
             }
           }
@@ -71,25 +72,32 @@ export function CopilotMenu({ editor }: CopilotMenuProps) {
   if (!editor) return null;
 
   return (
-    <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="flex bg-zinc-900 border border-zinc-700 shadow-xl rounded-md overflow-hidden">
+    <BubbleMenu editor={editor} className="flex bg-zinc-900 border border-zinc-700 shadow-xl rounded-md overflow-hidden">
       <div className="flex px-1 items-center bg-zinc-800 text-zinc-400 border-r border-zinc-700">
         <Sparkles className="w-4 h-4 mx-2 text-indigo-400" />
         <span className="text-xs font-semibold mr-2 uppercase tracking-widest text-indigo-300">z.ai</span>
       </div>
-      <button
-        onClick={() => handleAction("summarize")}
-        disabled={isLoading}
-        className="px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors disabled:opacity-50"
-      >
-        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Summarize"}
-      </button>
-      <button
-        onClick={() => handleAction("expand")}
-        disabled={isLoading}
-        className="px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors border-l border-zinc-700 disabled:opacity-50"
-      >
-        Expand
-      </button>
+      {isLoading ? (
+        <div className="flex items-center px-4 py-1.5 text-sm text-zinc-300 bg-zinc-800/50">
+          <Loader2 className="w-4 h-4 mr-2 animate-spin text-indigo-400" />
+          <span>Generating...</span>
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={() => handleAction("summarize")}
+            className="px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors"
+          >
+            Summarize
+          </button>
+          <button
+            onClick={() => handleAction("expand")}
+            className="px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors border-l border-zinc-700"
+          >
+            Expand
+          </button>
+        </>
+      )}
     </BubbleMenu>
   );
 }

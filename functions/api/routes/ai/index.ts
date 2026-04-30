@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { AppEnv } from "../../middleware";
 import { streamSSE } from "hono/streaming";
+import { Kysely } from "kysely";
+import { DB } from "../../../../shared/schemas/database";
 
 export const aiRouter = new Hono<AppEnv>();
 
@@ -8,6 +10,7 @@ export const aiRouter = new Hono<AppEnv>();
 const scrubPII = (text: string): string => {
   // Simple regex to scrub emails and phone numbers
   let scrubbed = text.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[REDACTED_EMAIL]");
+  // eslint-disable-next-line security/detect-unsafe-regex
   scrubbed = scrubbed.replace(/\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, "[REDACTED_PHONE]");
   return scrubbed;
 };
@@ -31,7 +34,7 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": c.env.Z_AI_API_KEY,
+          "x-api-key": c.env.Z_AI_API_KEY || "",
           "anthropic-version": "2023-06-01"
         },
         body: JSON.stringify({
@@ -75,7 +78,7 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
                 if (data.type === "content_block_delta" && data.delta?.text) {
                   await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
                 }
-              } catch (e) {
+              } catch (_e) {
                 // Ignore parse errors on partial chunks
               }
             }
@@ -111,8 +114,7 @@ aiRouter.post("/rag-chatbot", async (c) => {
   let embeddingVector: number[] = [];
   try {
     if (c.env.AI) {
-      // @ts-ignore - CF AI bindings
-      const response = await c.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [safeQuery] });
+      const response = (await c.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [safeQuery] })) as any;
       embeddingVector = response.data[0];
     }
   } catch (e) {
@@ -130,22 +132,40 @@ aiRouter.post("/rag-chatbot", async (c) => {
     console.error("Vectorize query failed:", e);
   }
 
+  // Fetch history if session exists
+  const db = c.get("db") as Kysely<DB>;
+  let historyMessages: any[] = [];
+  
+  if (sessionId) {
+    try {
+      const existing = await db.selectFrom("chat_sessions").select("history").where("id", "=", sessionId).executeTakeFirst();
+      if (existing) {
+        historyMessages = JSON.parse(existing.history);
+      }
+    } catch (e) {
+      console.error("Failed to fetch chat session", e);
+    }
+  }
+
+  const zaiMessages = [
+    ...historyMessages,
+    { role: "user", content: safeQuery }
+  ];
+
   return streamSSE(c, async (stream) => {
     try {
       const zaiRes = await fetch("https://api.z.ai/v1/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": c.env.Z_AI_API_KEY,
+          "x-api-key": c.env.Z_AI_API_KEY || "",
           "anthropic-version": "2023-06-01"
         },
         body: JSON.stringify({
           model: "zai-5.1",
           max_tokens: 1024,
           system: `You are the ARES 23247 Knowledge Bot. Use the following context to answer the user's query.\n\nContext:\n${contextDocs}`,
-          messages: [
-            { role: "user", content: safeQuery }
-          ],
+          messages: zaiMessages,
           stream: true
         })
       });
@@ -160,6 +180,8 @@ aiRouter.post("/rag-chatbot", async (c) => {
         const reader = zaiRes.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
+
+        let accumulatedText = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -177,12 +199,33 @@ aiRouter.post("/rag-chatbot", async (c) => {
               try {
                 const data = JSON.parse(dataStr);
                 if (data.type === "content_block_delta" && data.delta?.text) {
+                  accumulatedText += data.delta.text;
                   await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
                 }
-              } catch (e) {
+              } catch (_e) {
                 // Ignore parse errors
               }
             }
+          }
+        }
+
+        // Save updated history
+        if (sessionId) {
+          const updatedHistory = [
+            ...zaiMessages,
+            { role: "assistant", content: accumulatedText }
+          ];
+          try {
+            await db.insertInto("chat_sessions").values({
+              id: sessionId,
+              user_id: null,
+              history: JSON.stringify(updatedHistory)
+            }).onConflict((oc) => oc.column("id").doUpdateSet({
+              history: JSON.stringify(updatedHistory),
+              updated_at: new Date().toISOString()
+            })).execute();
+          } catch (e) {
+            console.error("Failed to save chat session", e);
           }
         }
       }

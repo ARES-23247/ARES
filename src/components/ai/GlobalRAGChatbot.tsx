@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MessageSquare, X, Send, Bot, User, ShieldAlert } from "lucide-react";
+import { MessageSquare, X, Send, Bot, ShieldAlert } from "lucide-react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { v4 as uuidv4 } from "uuid";
 
 export function GlobalRAGChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +11,7 @@ export function GlobalRAGChatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [sessionId] = useState(() => uuidv4());
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +37,7 @@ export function GlobalRAGChatbot() {
       const res = await fetch("/api/ai/rag-chatbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: userMessage, turnstileToken }),
+        body: JSON.stringify({ query: userMessage, turnstileToken, sessionId }),
       });
 
       if (!res.ok) throw new Error("Failed to reach AI");
@@ -62,14 +64,14 @@ export function GlobalRAGChatbot() {
                   last.content += data.chunk;
                   return newMsgs;
                 });
-              } catch (e) {
+              } catch (_e) {
                 // Ignore chunk parse errors
               }
             }
           }
         }
       }
-    } catch (e) {
+    } catch (_e) {
       toast.error("Failed to communicate with z.ai");
     } finally {
       setIsLoading(false);

@@ -1,22 +1,9 @@
 import { useEffect, useRef, useCallback } from "react";
 import { siteConfig } from "../site.config";
 
-// Extend Window type for Turnstile API
+// Extend Window type for E2E tests
 declare global {
   interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: {
-        sitekey: string;
-        callback: (token: string) => void;
-        "expired-callback"?: () => void;
-        "error-callback"?: () => void;
-        theme?: "light" | "dark" | "auto";
-        size?: "normal" | "compact";
-        appearance?: "always" | "execute" | "interaction-only";
-      }) => string;
-      reset: (widgetId: string) => void;
-      remove: (widgetId: string) => void;
-    };
     ARES_E2E_BYPASS?: boolean;
   }
 }
@@ -62,7 +49,7 @@ export default function Turnstile({ onVerify, onExpire, theme = "dark", size = "
       theme,
       size,
       appearance: "always",
-    });
+    }) as string | null;
   }, [onVerify, onExpire, theme, size]);
 
   useEffect(() => {

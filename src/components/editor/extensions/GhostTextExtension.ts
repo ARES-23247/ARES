@@ -47,10 +47,10 @@ export const GhostTextExtension = Extension.create<GhostTextOptions>({
 
   addProseMirrorPlugins() {
     return [
-      new Plugin({
+      new Plugin<{ text: string | null }>({
         key: GhostTextPluginKey,
         state: {
-          init() {
+          init(): { text: string | null } {
             return { text: null };
           },
           apply(tr, value) {
@@ -67,7 +67,8 @@ export const GhostTextExtension = Extension.create<GhostTextOptions>({
         },
         props: {
           decorations(state) {
-            const { text } = this.getState(state);
+            const stateObj = this.getState(state);
+            const text = stateObj?.text;
             if (!text) return DecorationSet.empty;
 
             const { to } = state.selection;
@@ -83,7 +84,8 @@ export const GhostTextExtension = Extension.create<GhostTextOptions>({
             return DecorationSet.create(state.doc, [decoration]);
           },
           handleKeyDown(view, event) {
-            const { text } = this.getState(view.state);
+            const stateObj = this.getState(view.state);
+            const text = stateObj?.text;
             if (text && event.key === "Tab") {
               event.preventDefault();
               // Accept suggestion

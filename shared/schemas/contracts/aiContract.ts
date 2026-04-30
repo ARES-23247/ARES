@@ -1,7 +1,7 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
-import { errorSchema } from "./common";
 
+const errorSchema = z.object({ error: z.string() });
 const c = initContract();
 
 export const aiContract = c.router({

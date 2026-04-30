@@ -11,6 +11,8 @@ export type Bindings = {
   ENVIRONMENT?: string;
   ARES_STORAGE: R2Bucket;
   AI: { run: (model: string, input: unknown) => Promise<unknown> };
+  VECTORIZE_DB?: VectorizeIndex;
+  Z_AI_API_KEY?: string;
   DISCORD_WEBHOOK_URL?: string;
   GCAL_SERVICE_ACCOUNT_EMAIL?: string;
   GCAL_PRIVATE_KEY?: string;

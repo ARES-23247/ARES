@@ -758,6 +758,14 @@ export interface Verification {
   value: string;
 }
 
+export interface ChatSessions {
+  id: string;
+  user_id: string | null;
+  history: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export interface DB {
   _cf_METADATA: _CfMETADATA;
   account: Account;
