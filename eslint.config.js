@@ -20,7 +20,8 @@ export default ts.config(
       "*.cjs", // Ignore legacy CommonJS utility scripts at root
       "*.mjs", // Ignore ESM utility scripts at root
       "scratch/**", // Ignore scratch directory
-      "public/vendor/**" // Ignore vendored third-party UMD bundles (React, ReactDOM)
+      "public/vendor/**", // Ignore vendored third-party UMD bundles (React, ReactDOM)
+      "src/components/editor/physics/**" // Migrated from .eslintignore
     ],
   },
   js.configs.recommended,

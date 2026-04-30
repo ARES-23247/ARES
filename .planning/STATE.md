@@ -12,10 +12,10 @@ progress:
 # Project State
 
 ## Current Context
-- **Milestone:** v5.1 (IDE Experience)
-- **Phase:** 66 (Streaming Code Generation)
+- **Milestone:** v5.2 (Knowledge Base Expansion)
+- **Phase:** 68 (Knowledge Base Expansion)
 - **Status:** Planning
-- **Next Step:** Receive plan approval for streaming parser implementation.
+- **Next Step:** Research and create an implementation plan for fetching FTC resources and the ARESLIB codebase, chunking the content, and indexing it into Vectorize.
 
 ## Accumulated Context
 
