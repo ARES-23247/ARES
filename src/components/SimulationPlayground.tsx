@@ -4,7 +4,7 @@ import { loader } from "@monaco-editor/react";
 
 // Configure Monaco CDN — use unpkg as fallback if jsdelivr is slow
 loader.config({
-  paths: { vs: "https://unpkg.com/monaco-editor@0.52.2/min/vs" },
+  paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs" },
 });
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
