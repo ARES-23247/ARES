@@ -88,6 +88,14 @@ export interface Badges {
   name: string;
 }
 
+export interface ChatSessions {
+  created_at: Generated<string | null>;
+  history: string;
+  id: string | null;
+  updated_at: Generated<string | null>;
+  user_id: string;
+}
+
 export interface Comments {
   content: string;
   created_at: Generated<string | null>;
@@ -291,6 +299,17 @@ export interface EventSignups {
   user_id: string;
 }
 
+export interface ExternalKnowledgeSources {
+  branch: string | null;
+  created_at: Generated<string | null>;
+  id: string | null;
+  last_indexed_at: string | null;
+  last_indexed_sha: string | null;
+  status: Generated<string | null>;
+  type: string;
+  url: string;
+}
+
 export interface FinanceTransactions {
   amount: number;
   category: string;
@@ -310,10 +329,10 @@ export interface Inquiries {
   id: string | null;
   metadata: string | null;
   name: string;
+  notes: string | null;
   status: Generated<string | null>;
   type: string;
   zulip_message_id: string | null;
-  notes: string | null;
 }
 
 export interface JudgeAccessCodes {
@@ -358,6 +377,24 @@ export interface Notifications {
   priority: Generated<string | null>;
   title: string;
   user_id: string;
+}
+
+export interface Orders {
+  created_at: Generated<string | null>;
+  customer_email: string | null;
+  fulfillment_status: Generated<string | null>;
+  id: string | null;
+  shipping_address_line1: string | null;
+  shipping_address_line2: string | null;
+  shipping_city: string | null;
+  shipping_country: string | null;
+  shipping_name: string | null;
+  shipping_postal_code: string | null;
+  shipping_state: string | null;
+  status: Generated<string | null>;
+  stripe_session_id: string | null;
+  total_cents: number;
+  updated_at: Generated<string | null>;
 }
 
 export interface OutreachFts {
@@ -406,24 +443,6 @@ export interface OutreachLogs {
   title: string;
 }
 
-export interface Orders {
-  created_at: Generated<string | null>;
-  customer_email: string | null;
-  fulfillment_status: Generated<string | null>;
-  id: string | null;
-  shipping_address_line1: string | null;
-  shipping_address_line2: string | null;
-  shipping_city: string | null;
-  shipping_country: string | null;
-  shipping_name: string | null;
-  shipping_postal_code: string | null;
-  shipping_state: string | null;
-  status: Generated<string | null>;
-  stripe_session_id: string | null;
-  total_cents: number;
-  updated_at: Generated<string | null>;
-}
-
 export interface PageAnalytics {
   category: Generated<string | null>;
   id: Generated<number | null>;
@@ -449,15 +468,13 @@ export interface PitScouting {
   updated_at: Generated<string | null>;
 }
 
-export interface Products {
-  active: Generated<number | null>;
+export interface PointsLedger {
   created_at: Generated<string | null>;
-  description: string | null;
+  created_by: string;
   id: string | null;
-  image_url: string | null;
-  name: string;
-  price_cents: number;
-  stock_count: Generated<number | null>;
+  points_delta: number;
+  reason: string;
+  user_id: string;
 }
 
 export interface Posts {
@@ -477,15 +494,6 @@ export interface Posts {
   thumbnail: string | null;
   title: string;
   updated_at: Generated<string | null>;
-}
-
-export interface PointsLedger {
-  id: string;
-  user_id: string;
-  points_delta: number;
-  reason: string;
-  created_by: string;
-  created_at: Generated<string | null>;
 }
 
 export interface PostsFts {
@@ -539,6 +547,17 @@ export interface PostsHistory {
   title: string;
 }
 
+export interface Products {
+  active: Generated<number | null>;
+  created_at: Generated<string | null>;
+  description: string | null;
+  id: string | null;
+  image_url: string | null;
+  name: string;
+  price_cents: number;
+  stock_count: Generated<number | null>;
+}
+
 export interface RateLimits {
   count: number;
   expires_at: number;
@@ -588,6 +607,15 @@ export interface Settings {
   key: string | null;
   updated_at: Generated<string | null>;
   value: string;
+}
+
+export interface Simulations {
+  author_id: string | null;
+  code: string;
+  created_at: Generated<string>;
+  id: Generated<number | null>;
+  name: string;
+  updated_at: Generated<string>;
 }
 
 export interface SponsorMetrics {
@@ -760,14 +788,6 @@ export interface Verification {
   value: string;
 }
 
-export interface ChatSessions {
-  id: string;
-  user_id: string | null;
-  history: string;
-  created_at: string | null;
-  updated_at: string | null;
-}
-
 export interface DB {
   _cf_METADATA: _CfMETADATA;
   account: Account;
@@ -803,6 +823,7 @@ export interface DB {
   events_fts_data: EventsFtsData;
   events_fts_docsize: EventsFtsDocsize;
   events_fts_idx: EventsFtsIdx;
+  external_knowledge_sources: ExternalKnowledgeSources;
   finance_transactions: FinanceTransactions;
   inquiries: Inquiries;
   judge_access_codes: JudgeAccessCodes;
@@ -810,18 +831,17 @@ export interface DB {
   match_strategy: MatchStrategy;
   media_tags: MediaTags;
   notifications: Notifications;
+  orders: Orders;
   outreach_fts: OutreachFts;
   outreach_fts_config: OutreachFtsConfig;
   outreach_fts_data: OutreachFtsData;
   outreach_fts_docsize: OutreachFtsDocsize;
   outreach_fts_idx: OutreachFtsIdx;
   outreach_logs: OutreachLogs;
-  orders: Orders;
   page_analytics: PageAnalytics;
   pit_scouting: PitScouting;
-  products: Products;
-  posts: Posts;
   points_ledger: PointsLedger;
+  posts: Posts;
   posts_fts: PostsFts;
   posts_fts_config: PostsFtsConfig;
   posts_fts_content: PostsFtsContent;
@@ -829,11 +849,13 @@ export interface DB {
   posts_fts_docsize: PostsFtsDocsize;
   posts_fts_idx: PostsFtsIdx;
   posts_history: PostsHistory;
+  products: Products;
   rate_limits: RateLimits;
   season_goals: SeasonGoals;
   seasons: Seasons;
   session: Session;
   settings: Settings;
+  simulations: Simulations;
   sponsor_metrics: SponsorMetrics;
   sponsor_tokens: SponsorTokens;
   sponsors: Sponsors;

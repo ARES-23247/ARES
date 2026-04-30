@@ -528,7 +528,7 @@ async function saveHistory(db: Kysely<DB>, sessionId: string | undefined, histor
   try {
     await db.insertInto("chat_sessions").values({
       id: sessionId,
-      user_id: null,
+      user_id: null as any,
       history: JSON.stringify(updatedHistory)
     }).onConflict((oc) => oc.column("id").doUpdateSet({
       history: JSON.stringify(updatedHistory),
@@ -557,6 +557,52 @@ aiRouter.post("/reindex", ensureAdmin, persistentRateLimitMiddleware(5, 600), as
     mode: force ? "full" : "incremental",
     errors: result.errors,
   });
+});
+
+aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(5, 600), async (c) => {
+  if (!c.env.VECTORIZE_DB) {
+    return c.json({ error: "Vectorize DB binding not configured" }, 500);
+  }
+
+  const db = c.get("db") as Kysely<DB>;
+  const { indexExternalResources } = await import("./indexer");
+  // Assuming env.GITHUB_PAT is mapped if configured
+  const githubPat = (c.env as any).GITHUB_PAT;
+  const result = await indexExternalResources(db, c.env.AI as any, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat);
+
+  return c.json({
+    success: true,
+    indexed: result.indexed,
+    skipped: result.skipped,
+    errors: result.errors,
+  });
+});
+
+aiRouter.get("/external-sources", ensureAdmin, async (c) => {
+  const db = c.get("db") as Kysely<DB>;
+  const sources = await db.selectFrom("external_knowledge_sources").selectAll().execute();
+  return c.json(sources);
+});
+
+aiRouter.post("/external-sources", ensureAdmin, async (c) => {
+  const db = c.get("db") as Kysely<DB>;
+  const body = await c.req.json();
+  const id = crypto.randomUUID();
+  await db.insertInto("external_knowledge_sources").values({
+    id,
+    type: body.type,
+    url: body.url,
+    branch: body.branch || "main",
+    status: "active"
+  }).execute();
+  return c.json({ success: true, id });
+});
+
+aiRouter.delete("/external-sources/:id", ensureAdmin, async (c) => {
+  const db = c.get("db") as Kysely<DB>;
+  const id = c.req.param("id") as string;
+  await db.deleteFrom("external_knowledge_sources").where("id", "=", id).execute();
+  return c.json({ success: true });
 });
 
 export default aiRouter;

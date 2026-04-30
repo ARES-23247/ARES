@@ -36,3 +36,27 @@ export function triggerBackgroundReindex(
       })
   );
 }
+
+export function triggerExternalReindex(
+  executionCtx: ExecutionContext,
+  db: Kysely<DB>,
+  ai: Ai | undefined,
+  vectorize: VectorizeIndex | undefined,
+  zaiApiKey?: string,
+  githubPat?: string
+): void {
+  if (!vectorize) return; // Vectorize is strictly required, AI might be optional if zaiApiKey is provided
+
+  executionCtx.waitUntil(
+    import("./indexer")
+      .then(({ indexExternalResources }) => indexExternalResources(db, ai, vectorize, zaiApiKey, githubPat))
+      .then((r) => {
+        if (r.indexed > 0 || r.errors.length > 0) {
+          console.log(`[External-Reindex] Indexed: ${r.indexed}, Errors: ${r.errors.length}`);
+        }
+      })
+      .catch((e) => {
+        console.error("[External-Reindex] Failed:", e);
+      })
+  );
+}

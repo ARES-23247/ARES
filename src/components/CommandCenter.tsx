@@ -5,6 +5,7 @@ import PlatformQuickStats from "./command/PlatformQuickStats";
 import CommandQuickActions from "./command/CommandQuickActions";
 import ZulipBotCommands from "./command/ZulipBotCommands";
 import BroadcastWidget from "./command/BroadcastWidget";
+import ExternalSourcesManager from "./command/ExternalSourcesManager";
 import { useQueryClient } from "@tanstack/react-query";
 
 // -- Command Center Component -----------------------------------------
@@ -71,6 +72,9 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: { po
 
       {/* Zulip Bot Status */}
       <ZulipBotCommands />
+
+      {/* External Knowledge Sources Manager */}
+      <ExternalSourcesManager />
 
       {/* Team Availability Widget and Broadcast */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,5 +1,7 @@
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
+import { fetchGithubRepoFiles } from "./external/githubFetcher";
+import { chunkText } from "./external/chunker";
 
 /**
  * Incremental Vectorize indexer for the RAG chatbot knowledge base.
@@ -274,4 +276,121 @@ function extractTextFromAst(node: Record<string, unknown>): string {
     }
   }
   return text.trim();
+}
+
+export async function indexExternalResources(
+  db: Kysely<DB>,
+  ai: Ai | undefined,
+  vectorize: VectorizeIndex,
+  zaiApiKey?: string,
+  githubPat?: string
+): Promise<{ indexed: number; skipped: number; errors: string[] }> {
+  const documents: IndexableDocument[] = [];
+  const errors: string[] = [];
+
+  const sources = await db.selectFrom("external_knowledge_sources")
+    .selectAll()
+    .where("status", "=", "active")
+    .execute();
+
+  for (const source of sources) {
+    if (source.type === "github") {
+      const [owner, repo] = source.url.split("/");
+      if (!owner || !repo) {
+        errors.push(`Invalid github url: ${source.url}`);
+        continue;
+      }
+      
+      const branch = source.branch || "main";
+      // Allow all file extensions for Github indexing as per requirements
+      const res = await fetchGithubRepoFiles(owner, repo, branch, [], githubPat);
+      
+      if (res.error) {
+        errors.push(`Fetch failed for ${source.url}: ${res.error}`);
+        continue;
+      }
+      
+      if (res.commitSha !== source.last_indexed_sha) {
+        for (const file of res.files) {
+          const chunks = chunkText(file.content, 1000, 100);
+          for (const chunk of chunks) {
+            documents.push({
+              id: `${source.id}_${file.sha}_${chunk.index}`,
+              text: `${source.url} (${file.path}):\n${chunk.text}`,
+              metadata: { type: "github", path: file.path, source: source.url }
+            });
+          }
+        }
+        
+        // We will update the SHA after successful indexing
+        (source as any).new_indexed_sha = res.commitSha; 
+      }
+    } else {
+      errors.push(`Website indexing not yet implemented for ${source.url}`);
+    }
+  }
+
+  if (documents.length === 0) {
+    return { indexed: 0, skipped: 0, errors };
+  }
+
+  let indexed = 0;
+  const BATCH_SIZE = 20;
+  
+  for (let i = 0; i < documents.length; i += BATCH_SIZE) {
+    const batch = documents.slice(i, i + BATCH_SIZE);
+    try {
+      const texts = batch.map((d) => d.text.substring(0, 2000));
+      let embeddings: number[][] = [];
+      
+      if (zaiApiKey) {
+        const res = await fetch("https://api.z.ai/v1/embeddings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": zaiApiKey,
+          },
+          // Try to restrict to 768 dimensions to match bge-base-en-v1.5
+          body: JSON.stringify({ input: texts, model: "text-embedding-3-small", dimensions: 768 })
+        });
+        if (!res.ok) throw new Error(`z.ai error: ${await res.text()}`);
+        const data = await res.json() as any;
+        embeddings = data.data.map((d: any) => d.embedding);
+      } else if (ai) {
+        const res = (await ai.run("@cf/baai/bge-base-en-v1.5", { text: texts })) as { data: number[][] };
+        embeddings = res.data;
+      } else {
+        throw new Error("No AI service available");
+      }
+
+      if (!embeddings || embeddings.length !== batch.length) {
+        errors.push(`Embedding batch ${i} returned mismatched results`);
+        continue;
+      }
+
+      const vectors = batch.map((doc, j) => ({
+        id: doc.id,
+        values: embeddings[j],
+        metadata: { ...doc.metadata, text: doc.text.substring(0, 1000) },
+      }));
+
+      await vectorize.upsert(vectors);
+      indexed += batch.length;
+    } catch (e) {
+      errors.push(`Batch ${i} upsert failed: ${e}`);
+    }
+  }
+
+  if (indexed > 0) {
+    for (const source of sources) {
+      if ((source as any).new_indexed_sha) {
+        await db.updateTable("external_knowledge_sources")
+          .set({ last_indexed_sha: (source as any).new_indexed_sha, last_indexed_at: new Date().toISOString() })
+          .where("id", "=", source.id)
+          .execute();
+      }
+    }
+  }
+
+  return { indexed, skipped: 0, errors };
 }
