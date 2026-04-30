@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Brain, Trash2, Plus, GitBranch, Globe, RefreshCw } from "lucide-react";
+import { Brain, Trash2, Plus, GitBranch, Globe, RefreshCw, Terminal } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -16,6 +16,16 @@ export default function ExternalSourcesManager() {
       if (!res.ok) throw new Error("Failed to fetch sources");
       return res.json() as Promise<{ id: string; type: string; url: string; branch: string; last_indexed_at: string | null }[]>;
     }
+  });
+
+  const { data: statusData } = useQuery({
+    queryKey: ["ai-status"],
+    queryFn: async () => {
+      const res = await fetch("/api/ai/status");
+      if (!res.ok) throw new Error("Failed to fetch status");
+      return res.json() as Promise<{ indexErrors?: { timestamp: string, errors: string[] } | null }>;
+    },
+    refetchInterval: 10000 // Refetch every 10s
   });
 
   const addMutation = useMutation({
@@ -61,6 +71,7 @@ export default function ExternalSourcesManager() {
           console.warn("[External Sync Errors]", data.errors);
         }
         queryClient.invalidateQueries({ queryKey: ["external-sources"] });
+        queryClient.invalidateQueries({ queryKey: ["ai-status"] });
       } else {
         toast.error(data.error || `Sync failed (HTTP ${res.status})`);
       }
@@ -153,6 +164,26 @@ export default function ExternalSourcesManager() {
           <Plus size={16} className="text-white" />
         </button>
       </form>
+
+      {/* Admin Debug Console */}
+      {statusData?.indexErrors && (
+        <div className="mt-6 border border-red-500/30 bg-black/50 p-3 relative group">
+          <div className="absolute top-0 left-3 -translate-y-1/2 bg-obsidian px-2 flex items-center gap-1.5 text-red-400 text-[10px] font-bold uppercase tracking-widest border border-red-500/30">
+            <Terminal size={10} />
+            Debug Console
+          </div>
+          <div className="text-[10px] text-marble/60 mb-2 font-mono">
+            Last run: {new Date(statusData.indexErrors.timestamp).toLocaleString()}
+          </div>
+          <div className="space-y-1 max-h-40 overflow-y-auto font-mono text-[11px] text-red-300/80">
+            {statusData.indexErrors.errors.map((err, i) => (
+              <div key={i} className="pl-2 border-l border-red-500/30">
+                &gt; {err}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

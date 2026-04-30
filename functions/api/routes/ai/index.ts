@@ -16,12 +16,26 @@ const scrubPII = (text: string): string => {
 };
 
 // ── AI Status Diagnostic (admin only) ──────────────────────────────────────
-aiRouter.get("/status", ensureAdmin, (c) => {
+aiRouter.get("/status", ensureAdmin, async (c) => {
+  let indexErrors = null;
+  const kv = (c.env as any).KV;
+  if (kv) {
+    const errStr = await kv.get("LAST_INDEX_ERRORS");
+    if (errStr) {
+      try {
+        indexErrors = JSON.parse(errStr);
+      } catch (_e) {
+        indexErrors = errStr;
+      }
+    }
+  }
+
   return c.json({
     zai: !!c.env.Z_AI_API_KEY,
     workersAI: !!c.env.AI,
     vectorize: !!c.env.VECTORIZE_DB,
     primaryModel: c.env.Z_AI_API_KEY ? "zai-5.1" : c.env.AI ? "llama-3.1-8b" : "none",
+    indexErrors,
   });
 });
 
@@ -568,7 +582,7 @@ aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(5,
   const { indexExternalResources } = await import("./indexer");
   // Assuming env.GITHUB_PAT is mapped if configured
   const githubPat = (c.env as any).GITHUB_PAT;
-  const result = await indexExternalResources(db, c.env.AI as any, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat);
+  const result = await indexExternalResources(db, c.env.AI as any, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat, (c.env as any).KV);
 
   return c.json({
     success: true,

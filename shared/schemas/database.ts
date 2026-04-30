@@ -610,10 +610,12 @@ export interface Settings {
 }
 
 export interface Simulations {
-  author_id: string | null;
-  code: string;
+  author_id: string;
   created_at: Generated<string>;
-  id: Generated<number | null>;
+  description: string | null;
+  files: string;
+  id: string | null;
+  is_public: Generated<number>;
   name: string;
   updated_at: Generated<string>;
 }

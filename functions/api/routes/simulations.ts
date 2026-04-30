@@ -6,10 +6,23 @@ export const simulationsRouter = new Hono<AppEnv>();
 // List all simulations
 simulationsRouter.get("/", async (c) => {
   try {
-    const result = await c.env.DB.prepare(
-      "SELECT id, name, author_id, created_at, updated_at FROM simulations ORDER BY updated_at DESC"
-    ).all();
-    return c.json({ simulations: result.results || [] });
+    const sessionUser = c.get("sessionUser") as { id?: string } | undefined;
+    const userId = sessionUser?.id || "anonymous";
+
+    // Fetch from database
+    const dbSims = await c.env.DB.prepare(
+      "SELECT id, name, description, author_id, is_public, created_at, updated_at FROM simulations WHERE is_public = 1 OR author_id = ? ORDER BY updated_at DESC"
+    ).bind(userId).all();
+
+    const formattedSims = (dbSims.results || []).map((sim: any) => ({
+      ...sim,
+      type: "database"
+    }));
+
+    // TODO: Add dynamic fetching of GitHub official templates
+    // For now, return the DB sims as the primary source
+    
+    return c.json({ simulations: formattedSims });
   } catch (e) {
     console.error("[Simulations] List error:", e);
     return c.json({ error: "Failed to list simulations" }, 500);
@@ -23,39 +36,63 @@ simulationsRouter.get("/:id", async (c) => {
     const result = await c.env.DB.prepare(
       "SELECT * FROM simulations WHERE id = ?"
     ).bind(id).first();
-    if (!result) return c.json({ error: "Simulation not found" }, 404);
-    return c.json({ simulation: result });
+    
+    if (!result) {
+      // TODO: If not in DB, try fetching from GitHub using the id as the folder name
+      return c.json({ error: "Simulation not found" }, 404);
+    }
+    
+    // Parse the JSON files payload
+    if (result.files && typeof result.files === 'string') {
+      try {
+        result.files = JSON.parse(result.files);
+      } catch (e) {
+        console.error("Failed to parse files JSON:", e);
+        result.files = {};
+      }
+    }
+
+    return c.json({ simulation: { ...result, type: "database" } });
   } catch (e) {
     console.error("[Simulations] Get error:", e);
     return c.json({ error: "Failed to get simulation" }, 500);
   }
 });
 
-// Create or update a simulation (admin only)
+// Create or update a simulation
 simulationsRouter.post("/", persistentRateLimitMiddleware(10, 60), ensureAdmin, async (c) => {
   const body = await c.req.json();
-  const { name, code, id } = body as { name?: string; code?: string; id?: number };
+  const { id, name, description, files, is_public } = body as { 
+    id?: string; 
+    name?: string; 
+    description?: string;
+    files?: Record<string, string>;
+    is_public?: boolean;
+  };
 
-  if (!name || !code) {
-    return c.json({ error: "Name and code are required" }, 400);
+  if (!name || !files || Object.keys(files).length === 0) {
+    return c.json({ error: "Name and files are required" }, 400);
   }
 
   const sessionUser = c.get("sessionUser") as { id?: string } | undefined;
   const authorId = sessionUser?.id || "unknown";
+  const filesJson = JSON.stringify(files);
+  const isPublicInt = is_public ? 1 : 0;
 
   try {
     if (id) {
       // Update existing
       await c.env.DB.prepare(
-        "UPDATE simulations SET name = ?, code = ?, updated_at = datetime('now') WHERE id = ?"
-      ).bind(name, code, id).run();
+        "UPDATE simulations SET name = ?, description = ?, files = ?, is_public = ?, updated_at = datetime('now') WHERE id = ?"
+      ).bind(name, description || "", filesJson, isPublicInt, id).run();
       return c.json({ success: true, id });
     } else {
       // Create new
-      const result = await c.env.DB.prepare(
-        "INSERT INTO simulations (name, code, author_id) VALUES (?, ?, ?)"
-      ).bind(name, code, authorId).run();
-      return c.json({ success: true, id: result.meta?.last_row_id });
+      const newId = crypto.randomUUID();
+      await c.env.DB.prepare(
+        "INSERT INTO simulations (id, name, description, author_id, is_public, files) VALUES (?, ?, ?, ?, ?, ?)"
+      ).bind(newId, name, description || "", authorId, isPublicInt, filesJson).run();
+      return c.json({ success: true, id: newId });
     }
   } catch (e) {
     console.error("[Simulations] Save error:", e);

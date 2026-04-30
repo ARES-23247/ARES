@@ -283,7 +283,8 @@ export async function indexExternalResources(
   ai: Ai | undefined,
   vectorize: VectorizeIndex,
   zaiApiKey?: string,
-  githubPat?: string
+  githubPat?: string,
+  kv?: KVNamespace
 ): Promise<{ indexed: number; skipped: number; errors: string[] }> {
   const documents: IndexableDocument[] = [];
   const errors: string[] = [];
@@ -352,20 +353,7 @@ export async function indexExternalResources(
       const texts = batch.map((d) => d.text.substring(0, 2000));
       let embeddings: number[][] = [];
       
-      if (zaiApiKey) {
-        const res = await fetch("https://api.z.ai/v1/embeddings", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": zaiApiKey,
-          },
-          // Try to restrict to 768 dimensions to match bge-base-en-v1.5
-          body: JSON.stringify({ input: texts, model: "text-embedding-3-small", dimensions: 768 })
-        });
-        if (!res.ok) throw new Error(`z.ai error: ${await res.text()}`);
-        const data = await res.json() as any;
-        embeddings = data.data.map((d: any) => d.embedding);
-      } else if (ai) {
+      if (ai) {
         const res = (await ai.run("@cf/baai/bge-base-en-v1.5", { text: texts })) as { data: number[][] };
         embeddings = res.data;
       } else {
@@ -398,6 +386,19 @@ export async function indexExternalResources(
           .where("id", "=", source.id)
           .execute();
       }
+    }
+  }
+
+  // Store errors in KV for admin console debugging
+  if (kv) {
+    try {
+      if (errors.length > 0) {
+        await kv.put("LAST_INDEX_ERRORS", JSON.stringify({ timestamp: new Date().toISOString(), errors }));
+      } else {
+        await kv.delete("LAST_INDEX_ERRORS");
+      }
+    } catch (e) {
+      console.error("Failed to write errors to KV:", e);
     }
   }
 

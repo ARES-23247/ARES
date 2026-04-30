@@ -30,11 +30,12 @@ interface ChatMessage {
 }
 
 interface SavedSim {
-  id: number;
+  id: string;
   name: string;
   author_id: string;
   created_at: string;
   updated_at: string;
+  type?: string;
 }
 
 export default function SimulationPlayground() {
@@ -46,7 +47,7 @@ export default function SimulationPlayground() {
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [simName, setSimName] = useState("Untitled Simulation");
-  const [simId, setSimId] = useState<number | null>(null);
+  const [simId, setSimId] = useState<string | null>(null);
   const [savedSims, setSavedSims] = useState<SavedSim[]>([]);
   const [showLibrary, setShowLibrary] = useState(false);
   const [isLoadingSims, setIsLoadingSims] = useState(false);
@@ -144,8 +145,8 @@ export default function SimulationPlayground() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const idParam = params.get("simId");
-    if (idParam && !isNaN(Number(idParam))) {
-      handleLoadSim(Number(idParam));
+    if (idParam) {
+      handleLoadSim(idParam);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -222,19 +223,23 @@ export default function SimulationPlayground() {
     }
   };
 
-  const handleLoadSim = async (id: number) => {
+  const handleLoadSim = async (id: string) => {
     try {
       const res = await fetch(`/api/simulations/${id}`);
       if (!res.ok) throw new Error("Not found");
-      const data = await res.json() as { simulation: { id: number; name: string; code: string } };
+      const data = await res.json() as { simulation: { id: string; name: string; files: Record<string, string> | string, type?: string } };
       const sim = data.simulation;
-      let parsedFiles: Record<string, string> = { "SimComponent.jsx": sim.code };
-      try {
-        const parsed = JSON.parse(sim.code);
-        if (parsed && typeof parsed === "object" && parsed["SimComponent.jsx"]) {
-          parsedFiles = parsed;
-        }
-      } catch { /* legacy single file */ }
+      let parsedFiles: Record<string, string> = { "SimComponent.jsx": "" };
+      
+      if (typeof sim.files === "object") {
+         parsedFiles = sim.files as Record<string, string>;
+      } else if (typeof sim.files === "string") {
+         try {
+           parsedFiles = JSON.parse(sim.files);
+         } catch {
+           parsedFiles = { "SimComponent.jsx": sim.files };
+         }
+      }
       
       setFiles(parsedFiles);
       setActiveFile("SimComponent.jsx");
@@ -255,7 +260,7 @@ export default function SimulationPlayground() {
     }
   };
 
-  const handleDeleteSim = async (id: number, e: React.MouseEvent) => {
+  const handleDeleteSim = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Delete this simulation?")) return;
     try {
@@ -507,7 +512,7 @@ ${reply}`;
         body: JSON.stringify({ name: simName, code: codeToSave, ...(simId ? { id: simId } : {}) }),
       });
       if (res.ok) {
-        const data = await res.json() as { id?: number };
+        const data = await res.json() as { id?: string };
         if (data.id && !simId) {
           setSimId(data.id);
           const newUrl = new URL(window.location.href);

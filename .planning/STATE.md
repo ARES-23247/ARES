@@ -12,10 +12,10 @@ progress:
 # Project State
 
 ## Current Context
-- **Milestone:** v5.2 (Knowledge Base Expansion)
-- **Phase:** 68 (Knowledge Base Expansion)
-- **Status:** Completed
-- **Next Step:** Complete milestone and proceed to next feature in roadmap.
+- **Milestone:** v5.1 (IDE Experience)
+- **Phase:** 69 (Hybrid Simulation Storage Architecture)
+- **Status:** Planning
+- **Next Step:** Obtain user approval for PLAN.md and begin execution.
 
 ## Accumulated Context
 
@@ -23,6 +23,7 @@ progress:
 - Phase 63 added: Move sim live window below code and chat, verify code window.
 - Phase 64 added: Fix the sim (addressing PhysicsWorld undefined error in live preview).
 - Phase 65 added: Fix Swerve Physics Template PhysicsWorld Error (ensure iframe require resolves before bundling).
+- Phase 69 added: Hybrid Simulation Storage Architecture (replacing hardcoded SimTemplates.ts).
 
 ### Active Blockers
 - None
