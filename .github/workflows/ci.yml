@@ -17,6 +17,7 @@ on:
 
 env:
   PLAYWRIGHT_BROWSERS_PATH: 0
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   static-checks:
