@@ -2,16 +2,24 @@
 
 ## Milestones
 
-- ⏳ **v4.3 Inquiries, Notifications & Docs Restoration** — Phases 41-44 (active)
+- ⏳ **v4.4 Next Milestone** — Phase 45 (active)
+- ✅ **v4.3 Inquiries, Notifications & Docs Restoration** — Phases 41-44 (shipped 2026-04-30)
 - ✅ **v4.2 Sponsor Fixes & Docs Quality** — Phases 38-40 (shipped 2026-04-30)
 ## Phases
 
-### ⏳ v4.3 Inquiries, Notifications & Docs Restoration (Phases 41-44) — ACTIVE
+### ⏳ v4.4 Next Milestone (Phase 45+) — ACTIVE
 
-- [ ] **Phase 41: Notification State Fix** (NOTIF-01) — Resolve the persistent notification state issue in the UI and notification bar.
-- [ ] **Phase 42: Documentation Data Restoration** (DOCS-01) — Restore missing entries to the documentation database.
-- [ ] **Phase 43: Inquiry Zulip Integration** (INQ-01, INQ-02) — Automate Zulip thread creation and link inquiries to Zulip discussions.
-- [ ] **Phase 44: Inquiry Notes System** (INQ-03) — Add internal notes functionality to inquiries for team collaboration.
+- [ ] **Phase 45: Next Feature** (TBD) — Describe next feature
+
+<details>
+<summary>✅ v4.3 Inquiries, Notifications & Docs Restoration (Phases 41-44) — SHIPPED 2026-04-30</summary>
+
+- [x] **Phase 41: Notification State Fix** (NOTIF-01) — Resolve the persistent notification state issue in the UI and notification bar.
+- [x] **Phase 42: Documentation Data Restoration** (DOCS-01) — Restore missing entries to the documentation database.
+- [x] **Phase 43: Inquiry Zulip Integration** (INQ-01, INQ-02) — Automate Zulip thread creation and link inquiries to Zulip discussions.
+- [x] **Phase 44: Inquiry Notes System** (INQ-03) — Add internal notes functionality to inquiries for team collaboration.
+
+</details>
 
 <details>
 <summary>✅ v4.2 Sponsor Fixes & Docs Quality (Phases 38-40) — SHIPPED 2026-04-30</summary>
