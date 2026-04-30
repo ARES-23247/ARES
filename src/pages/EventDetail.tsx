@@ -135,9 +135,16 @@ export default function EventDetail() {
           </h1>
           <ContributorStack roomId={`event_${event.id}`} />
           <div className="mt-8 flex flex-col md:flex-row gap-6 text-ares-bronze font-medium text-lg lg:text-xl">
-            <p className="flex items-center gap-2">
-              <span className="text-white">Date:</span> {format(startDate, "EEEE, MMMM do, yyyy")}
-            </p>
+            <div className="flex flex-col gap-1">
+              <p className="flex items-center gap-2">
+                <span className="text-white">Start:</span> {format(startDate, "EEEE, MMMM do, yyyy 'at' h:mm a")}
+              </p>
+              {event.date_end && (
+                <p className="flex items-center gap-2">
+                  <span className="text-white">End:</span> {format(new Date(event.date_end), "EEEE, MMMM do, yyyy 'at' h:mm a")}
+                </p>
+              )}
+            </div>
             {event.location && (
               <p className="flex items-center gap-2">
                 <span className="text-white">Location:</span>{" "}
