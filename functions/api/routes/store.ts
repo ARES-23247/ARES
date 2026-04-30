@@ -4,6 +4,7 @@ import { storeContract } from "../../../shared/schemas/contracts/storeContract";
 import type { AppEnv } from "../middleware/utils";
 import Stripe from "stripe";
 import { logSystemError } from "../middleware/utils";
+import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
@@ -81,6 +82,9 @@ const storeHandlers = {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: lineItems,
+        metadata: {
+          cartItems: JSON.stringify(items.map((i: any) => ({ id: i.productId, q: i.quantity })))
+        },
         mode: "payment",
         success_url: successUrl,
         cancel_url: cancelUrl,
@@ -220,6 +224,31 @@ app.post("/webhook", async (c) => {
           fulfillment_status: "unfulfilled",
         })
         .execute();
+
+      // Deplete inventory
+      const cartItemsStr = session.metadata?.cartItems;
+      if (cartItemsStr) {
+        try {
+          const cartItems = JSON.parse(cartItemsStr);
+          for (const item of cartItems) {
+            await db
+              .updateTable("products")
+              // @ts-expect-error - Kysely typing for arithmetic
+              .set((eb) => ({ stock_count: eb("stock_count", "-", item.q) }))
+              .where("id", "=", item.id)
+              .where("stock_count", "is not", null)
+              .execute();
+          }
+        } catch (e) {
+          console.error("[Store] Failed to process stock depletion:", e);
+        }
+      }
+
+      // Send Zulip alert
+      const totalAmount = session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00";
+      const customerEmail = session.customer_details?.email || "Unknown Email";
+      const message = `🛍️ **New Order Received!**\n\n**Order ID**: ${orderId}\n**Customer**: ${customerEmail}\n**Total**: $${totalAmount}\n\n[View Dashboard](https://aresweb.org/admin)`;
+      await sendZulipMessage(c.env, "general", "Store Orders", message);
     }
 
     return c.json({ received: true }, 200);

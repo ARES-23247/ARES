@@ -454,6 +454,7 @@ export interface Products {
   image_url: string | null;
   name: string;
   price_cents: number;
+  stock_count: Generated<number | null>;
 }
 
 export interface Posts {

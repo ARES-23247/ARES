@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import storeRouter from "./store";
 
+vi.mock("../../utils/zulip", () => ({
+  sendZulipMessage: vi.fn().mockResolvedValue(true)
+}));
+
 // Mock Stripe
 vi.mock("stripe", () => {
   return {

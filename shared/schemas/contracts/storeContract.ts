@@ -11,6 +11,7 @@ export const ProductSchema = z.object({
   price_cents: z.number(),
   image_url: z.string().nullable(),
   active: z.number(),
+  stock_count: z.number().nullable(),
   created_at: z.string().nullable(),
 });
 

@@ -1,0 +1,2 @@
+-- Migration number: 0002 	 2026-04-30T00:00:00.000Z
+ALTER TABLE products ADD COLUMN stock_count INTEGER DEFAULT 100;
