@@ -1,5 +1,11 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical } from "lucide-react";
+import { loader } from "@monaco-editor/react";
+
+// Configure Monaco CDN — use unpkg as fallback if jsdelivr is slow
+loader.config({
+  paths: { vs: "https://unpkg.com/monaco-editor@0.52.2/min/vs" },
+});
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 const SimPreviewFrame = lazy(() => import("./editor/SimPreviewFrame"));
@@ -199,16 +205,19 @@ USER REQUEST: ${msg}`;
       // Auto-apply code if the reply looks like a full component
       if (reply.includes("function SimComponent") || reply.includes("SimComponent")) {
         let cleaned = reply;
-        // Strip markdown fences
+        // Strip markdown fences — simple line-based approach (no regex)
         if (cleaned.includes("```")) {
-          // eslint-disable-next-line security/detect-unsafe-regex
-          const match = cleaned.match(/```(?:jsx?|tsx?|javascript|typescript)?\n?([\s\S]*?)```/);
-          if (match) cleaned = match[1];
+          cleaned = cleaned
+            .split("\n")
+            .filter(line => !line.trim().startsWith("```"))
+            .join("\n");
         }
+        // Strip any leading/trailing prose (keep only lines that look like code)
+        cleaned = cleaned.trim();
         // Only apply if it still has SimComponent
         if (cleaned.includes("function SimComponent")) {
-          setCode(cleaned.trim());
-          compileCode(cleaned.trim());
+          setCode(cleaned);
+          compileCode(cleaned);
         }
       }
     } catch (e) {
@@ -328,7 +337,7 @@ USER REQUEST: ${msg}`;
             {isCompiling && <Loader2 className="w-3 h-3 animate-spin text-ares-gold" />}
           </div>
           <div className="flex-1 min-h-0">
-            <Suspense fallback={<div className="flex items-center justify-center h-full bg-[#1e1e1e] text-white/40 text-sm">Loading editor...</div>}>
+            <Suspense fallback={<textarea className="w-full h-full bg-[#1e1e1e] text-white/80 text-sm font-mono p-4 resize-none border-0 outline-none" value={code} onChange={e => { setCode(e.target.value); compileCode(e.target.value); }} placeholder="Loading code editor..." />}>
               <MonacoEditor
                 height="100%"
                 language="javascript"

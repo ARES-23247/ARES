@@ -277,6 +277,8 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
     try {
       // ── Premium path: z.ai (zai-5.1) ──
       if (hasZai) {
+        console.log("[RAG] Using z.ai (zai-5.1) — Z_AI_API_KEY present");
+        await stream.writeSSE({ data: JSON.stringify({ model: "zai-5.1" }) });
         const zaiRes = await fetch("https://api.z.ai/v1/messages", {
           method: "POST",
           headers: {
@@ -335,6 +337,8 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
         return;
       }
 
+      console.log("[RAG] Falling back to Workers AI (Llama 3.1) — Z_AI_API_KEY:", hasZai ? "present but z.ai failed" : "NOT SET");
+      await stream.writeSSE({ data: JSON.stringify({ model: "llama-3.1-8b" }) });
       const aiStream = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
         messages: [
           { role: "system", content: systemPrompt },
