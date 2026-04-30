@@ -2,7 +2,6 @@ import { Cloud, Zap, Database, GlobeLock, DollarSign, HardDrive, LayoutDashboard
 import { motion } from "framer-motion";
 import GitHubHeatmap from "../components/GitHubHeatmap";
 import SEO from "../components/SEO";
-import RobotViewer from "../components/RobotViewer";
 
 export default function TechStack() {
   return (
@@ -23,7 +22,7 @@ export default function TechStack() {
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-ares-gold text-center">Interactive Hardware Architecture</h2>
               <div className="h-px flex-1 bg-white/5" />
            </div>
-           <RobotViewer />
+           {/* <RobotViewer /> */}
            <p className="text-[10px] text-marble/70 text-center uppercase tracking-widest font-mono mt-4">
               ARES-R3F Engine v1.0 // Real-time Hardware Twin
            </p>
