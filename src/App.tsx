@@ -6,10 +6,11 @@ import Footer from "./components/Footer";
 import ErrorBoundary from "./components/ErrorBoundary";
 import CommandPalette from "./components/CommandPalette";
 import MobileQuickActions from "./components/MobileQuickActions";
-import { GlobalRAGChatbot } from "./components/ai/GlobalRAGChatbot";
 import ScrollToTop from "./components/ScrollToTop";
 
 import React, { Suspense } from "react";
+
+const GlobalRAGChatbot = React.lazy(() => import("./components/ai/GlobalRAGChatbot").then(m => ({ default: m.GlobalRAGChatbot })));
 
 const Home = React.lazy(() => import("./pages/Home"));
 const About = React.lazy(() => import("./pages/About"));
@@ -64,7 +65,7 @@ export default function App() {
       <ScrollToTop />
       <CommandPalette />
       <MobileQuickActions />
-      <GlobalRAGChatbot />
+      <Suspense fallback={null}><GlobalRAGChatbot /></Suspense>
       <Navbar />
       <main id="main-content" role="main" className="flex-1 flex flex-col pt-16">
         <AnimatePresence mode="wait">
