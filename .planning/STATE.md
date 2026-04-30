@@ -3,7 +3,7 @@ milestone: v4.0
 name: System Hardening, Storefront & Member Incentives
 status: planning
 progress:
-  phases_total: 0
+  phases_total: 4
   phases_completed: 0
   tasks_total: 0
   tasks_completed: 0

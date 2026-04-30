@@ -2,9 +2,19 @@
 
 ## Milestones
 
+- **v4.0 System Hardening, Storefront & Member Incentives** — Phases 33-36 (active)
 - ✅ **v3.9 Stripe Storefront** — Phases 29-32 (shipped 2026-04-29)
 
 ## Phases
+
+### v4.0 System Hardening, Storefront & Member Incentives
+| # | Phase | Goal | Requirements | Status |
+|---|-------|------|--------------|--------|
+| 33 | Testing Hardening & Code Audit | Eliminate brittle assertions and build an isolated webhook testing suite | AUDIT-01, AUDIT-02, STORE-03 | Pending |
+| 34 | Storefront Optimization | Add Zulip alerts and database-level inventory depletion | STORE-01, STORE-02 | Pending |
+| 35 | Member Activity Points System | Implement gamified points ledger and UI for member engagement | MEMBER-01, MEMBER-02, MEMBER-03 | Pending |
+| 36 | Documentation Refresh | Document the tech stack, Liveblocks/Tiptap, and GSD orchestration | DOCS-01, DOCS-02, DOCS-03 | Pending |
+
 
 <details>
 <summary>✅ v3.9 Stripe Storefront (Phases 29-32) — SHIPPED 2026-04-29</summary>
