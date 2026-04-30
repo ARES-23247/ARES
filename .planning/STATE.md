@@ -1,5 +1,5 @@
 ---
-milestone: v4.6
+milestone: v4.7
 name: Next Milestone
 status: planning
 progress:
@@ -13,10 +13,10 @@ progress:
 
 ## Current Position
 
-Phase: None active — awaiting v4.6 planning
+Phase: None active — awaiting v4.7 planning
 Plan: —
 Status: Ready for next milestone
-Last activity: 2026-04-30 — v4.5 shipped (AI Workers Migration & Copilot Expansion)
+Last activity: 2026-04-30 — v4.6 shipped (RAG Knowledge Base Pipeline)
 
 ## Accumulated Context
 
@@ -28,6 +28,7 @@ Last activity: 2026-04-30 — v4.5 shipped (AI Workers Migration & Copilot Expan
 - TODO: Remove CI sourcemap diagnostic step after 5+ consecutive green CI runs.
 - TODO: Add `BETTER_AUTH_SECRET` CI secret to suppress auth fallback warnings in E2E logs.
 - TODO: Implement inline AI auto-completion (Notion-style ghost text). Feasible with Tiptap but will burn free-tier neurons fast. Best as z.ai premium-only feature.
+- TODO: Events and Posts tables lack `updated_at` columns — incremental indexing for those tables does a full scan. Consider adding updated_at triggers.
 
 ### Cross-Phase Decisions
 - Using Stripe Checkout to handle PCI compliance and mobile wallet payments.
@@ -39,3 +40,5 @@ Last activity: 2026-04-30 — v4.5 shipped (AI Workers Migration & Copilot Expan
 - All `manualChunks` path matching must normalize separators with `id.replace(/\\\\/g, '/')` for cross-platform consistency.
 - AI Architecture: RAG chatbot uses Cloudflare Workers AI (Llama 3.1 8B, free tier). Editor copilot uses z.ai (Claude) with Workers AI fallback. `Z_AI_API_KEY` is set in Cloudflare Pages secrets.
 - CopilotMenu is attached to ALL rich text editors (DocsEditor, BlogEditor, EventEditor, SeasonEditor, MassEmailComposer).
+- RAG Indexing: Incremental via KV timestamp (`rag_last_indexed` in RATE_LIMITS KV). Only public data indexed (status != 'draft', is_deleted != 1). Auto-triggers via waitUntil middleware after content mutations on /posts, /events, /docs, /seasons.
+- Vectorize index name: `ares_knowledge_base`. Embedding model: `@cf/baai/bge-base-en-v1.5`. Batch size: 20 vectors per upsert.
