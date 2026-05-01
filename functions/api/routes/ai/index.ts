@@ -231,7 +231,7 @@ aiRouter.post("/sim-playground", async (c) => {
               "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
             },
             body: JSON.stringify({
-              model: "glm-4",
+              model: "GLM-5.1",
               messages: [
                 { role: "system", content: systemPrompt },
                 ...messages
@@ -364,7 +364,7 @@ aiRouter.post("/editor-chat", async (c) => {
             "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
           },
           body: JSON.stringify({
-            model: "glm-4",
+            model: "GLM-5.1",
             messages: [
               { role: "system", content: finalSystemPrompt },
               ...messages
