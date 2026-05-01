@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Clock, RotateCcw, Eye, X } from "lucide-react";
-import { Editor } from "@tiptap/react";
+import { Editor, EditorContent } from "@tiptap/react";
 import { toast } from "sonner";
 import { useModal } from "../../contexts/ModalContext";
+import { createPortal } from "react-dom";
+import { useRichEditor } from "./useRichEditor";
+import { useEffect } from "react";
 
 interface HistorySnapshot {
   id: number;
@@ -18,6 +21,24 @@ interface VersionHistorySidebarProps {
   roomId: string;
   editor: Editor;
   onClose: () => void;
+}
+
+function ReadOnlyPreview({ content }: { content: string }) {
+  const previewEditor = useRichEditor({ placeholder: "" });
+  
+  useEffect(() => {
+    if (previewEditor) {
+      let parsed = content;
+      try {
+        parsed = JSON.parse(content);
+      // eslint-disable-next-line no-empty
+      } catch {}
+      previewEditor.commands.setContent(parsed);
+      previewEditor.setEditable(false);
+    }
+  }, [previewEditor, content]);
+
+  return <EditorContent editor={previewEditor} />;
 }
 
 export default function VersionHistorySidebar({ roomId, editor, onClose }: VersionHistorySidebarProps) {
@@ -45,7 +66,12 @@ export default function VersionHistorySidebar({ roomId, editor, onClose }: Versi
     if (!confirmed) return;
 
     try {
-      editor.commands.setContent(snapshot.content);
+      let parsed = snapshot.content;
+      try {
+        parsed = JSON.parse(snapshot.content);
+      // eslint-disable-next-line no-empty
+      } catch {}
+      editor.commands.setContent(parsed);
       toast.success("Draft restored to selected version.");
       onClose();
     } catch (err) {
@@ -54,8 +80,8 @@ export default function VersionHistorySidebar({ roomId, editor, onClose }: Versi
     }
   };
 
-  return (
-    <div className="fixed inset-y-0 right-0 w-80 bg-obsidian border-l border-white/10 shadow-2xl z-[100] flex flex-col transform transition-transform duration-300">
+  return createPortal(
+    <div className="fixed inset-y-0 right-0 w-80 bg-obsidian border-l border-white/10 shadow-2xl z-[9999] flex flex-col transform transition-transform duration-300">
       <div className="p-4 border-b border-white/10 flex items-center justify-between bg-ares-red/10">
         <div className="flex items-center gap-2">
           <Clock size={18} className="text-ares-red" />
@@ -113,8 +139,8 @@ export default function VersionHistorySidebar({ roomId, editor, onClose }: Versi
                 <X size={20} />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 prose prose-invert max-w-none bg-white/5">
-              <div dangerouslySetInnerHTML={{ __html: previewContent }} />
+            <div className="flex-1 overflow-y-auto p-6 bg-white/5">
+              <ReadOnlyPreview content={previewContent} />
             </div>
             <div className="p-4 border-t border-white/10 flex justify-end">
               <button 
@@ -127,6 +153,7 @@ export default function VersionHistorySidebar({ roomId, editor, onClose }: Versi
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

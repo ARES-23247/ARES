@@ -9,6 +9,54 @@ import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
 import DashboardLoadingGrid from "./dashboard/DashboardLoadingGrid";
 import { toast } from "sonner";
+import { useEffect } from "react";
+
+function DebouncedNotesArea({
+  id,
+  initialValue,
+  onSave
+}: {
+  id: string;
+  initialValue: string;
+  onSave: (val: string) => void;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    // If it hasn't changed from what was initially passed, do nothing
+    if (value === initialValue) {
+      setIsTyping(false);
+      return;
+    }
+    
+    setIsTyping(true);
+    const timeout = setTimeout(() => {
+      onSave(value);
+      setIsTyping(false);
+    }, 1000); // 1-second debounce
+    
+    return () => clearTimeout(timeout);
+  }, [value, initialValue, onSave]);
+
+  return (
+    <div className="relative">
+      <textarea
+        id={`notes-${id}`}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        rows={2}
+        placeholder="Add internal notes... (auto-saves automatically)"
+        className="w-full bg-ares-gray-dark/50 border border-white/5 text-marble/80 text-xs px-3 py-2 ares-cut-sm outline-none focus:border-ares-cyan/30 transition-colors resize-none placeholder-marble/30"
+      />
+      {isTyping && (
+        <span className="absolute bottom-2 right-2 text-[10px] text-ares-gold animate-pulse uppercase font-black">
+          Saving...
+        </span>
+      )}
+    </div>
+  );
+}
 
 type Inquiry = {
   id: string;
@@ -217,22 +265,16 @@ export default function AdminInquiries() {
                   </div>
                 )}
 
-                {/* Notes Section */}
                 <div className="mt-1">
                   <label htmlFor={`notes-${inquiry.id}`} className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 flex items-center gap-1">
                     Notes
                   </label>
-                  <textarea
-                    id={`notes-${inquiry.id}`}
-                    defaultValue={inquiry.notes || ""}
-                    onBlur={(e) => {
-                      if (e.target.value !== (inquiry.notes || "")) {
-                        updateNotesMutation.mutate({ params: { id: inquiry.id }, body: { notes: e.target.value } });
-                      }
+                  <DebouncedNotesArea 
+                    id={inquiry.id}
+                    initialValue={inquiry.notes || ""}
+                    onSave={(val) => {
+                      updateNotesMutation.mutate({ params: { id: inquiry.id }, body: { notes: val } });
                     }}
-                    rows={2}
-                    placeholder="Add internal notes... (auto-saves on blur)"
-                    className="w-full bg-ares-gray-dark/50 border border-white/5 text-marble/80 text-xs px-3 py-2 ares-cut-sm outline-none focus:border-ares-cyan/30 transition-colors resize-none placeholder-marble/30"
                   />
                 </div>
 

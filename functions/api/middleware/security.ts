@@ -40,10 +40,10 @@ export async function checkPersistentRateLimit(db: Kysely<DB>, ip: string, userA
   try {
     // Cleanup old records occasionally to avoid table bloat
     if (Math.random() < 0.05) {
-      db.deleteFrom("ARES_KV").where("expires_at", "<", now).execute().catch(console.error);
+      db.deleteFrom("rate_limits").where("expires_at", "<", now).execute().catch(console.error);
     }
 
-    const result = await db.insertInto("ARES_KV")
+    const result = await db.insertInto("rate_limits")
       .values({ ip: compositeKey, count: 1, expires_at: now + windowSeconds })
       .onConflict(oc => oc.column("ip").doUpdateSet({
         count: sql`CASE WHEN expires_at < ${now} THEN 1 ELSE count + 1 END`,

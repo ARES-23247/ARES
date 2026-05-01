@@ -272,6 +272,20 @@ export const eventHandlers: any = {
         })
         .execute();
 
+      // Push snapshot to collaborative editor history
+      if (description) {
+        c.executionCtx.waitUntil(
+          db.insertInto("document_history")
+            .values({
+              room_id: `event_${genId}`,
+              content: description,
+              created_by: user?.email || "anonymous_admin",
+              created_at: new Date().toISOString()
+            })
+            .execute()
+        );
+      }
+
       c.executionCtx.waitUntil((async () => {
         if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
           try {
@@ -341,6 +355,20 @@ export const eventHandlers: any = {
         })
         .where("id", "=", id)
         .execute();
+
+      // Push snapshot to collaborative editor history
+      if (description) {
+        c.executionCtx.waitUntil(
+          db.insertInto("document_history")
+            .values({
+              room_id: `event_${id}`,
+              content: description,
+              created_by: user?.email || "anonymous",
+              created_at: new Date().toISOString()
+            })
+            .execute()
+        );
+      }
 
       c.executionCtx.waitUntil((async () => {
         if (status === "published") {

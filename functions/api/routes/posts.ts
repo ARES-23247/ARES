@@ -291,6 +291,18 @@ const postTsRestRouterObj: any = {
         })
         .execute();
 
+      // Push snapshot to collaborative editor history
+      c.executionCtx.waitUntil(
+        db.insertInto("document_history")
+          .values({
+            room_id: `post_${slug}`,
+            content: astStr,
+            created_by: email,
+            created_at: new Date().toISOString()
+          })
+          .execute()
+      );
+
       c.executionCtx.waitUntil(pruneHistory(c, slug, 10));
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`));
       triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
@@ -410,6 +422,18 @@ const postTsRestRouterObj: any = {
         })
         .where("slug", "=", slug)
         .execute();
+
+      // Push snapshot to collaborative editor history
+      c.executionCtx.waitUntil(
+        db.insertInto("document_history")
+          .values({
+            room_id: `post_${slug}`,
+            content: astStr,
+            created_by: user?.email || "anonymous",
+            created_at: new Date().toISOString()
+          })
+          .execute()
+      );
 
       c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${body.title} (${status})`));
       triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);

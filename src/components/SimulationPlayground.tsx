@@ -349,7 +349,7 @@ USER REQUEST: ${msg}`;
                 accumulatedText += data.chunk;
                 
                 // Live parse markdown blocks
-                const blockLines = accumulatedText.split('\\n');
+                const blockLines = accumulatedText.split('\n');
                 const newFiles: Record<string, string> = {};
                 let currentFile: string | null = null;
                 let currentContent: string[] = [];
@@ -358,7 +358,7 @@ USER REQUEST: ${msg}`;
                   const l = blockLines[i];
                   if (l.startsWith('```')) {
                     if (currentFile) {
-                      newFiles[currentFile] = currentContent.join('\\n');
+                      newFiles[currentFile] = currentContent.join('\n');
                       currentFile = null;
                       currentContent = [];
                     } else {
@@ -373,7 +373,7 @@ USER REQUEST: ${msg}`;
                 }
                 
                 if (currentFile) {
-                  newFiles[currentFile] = currentContent.join('\\n');
+                  newFiles[currentFile] = currentContent.join('\n');
                 }
                 
                 if (Object.keys(newFiles).length > 0) {
@@ -435,7 +435,7 @@ ${reply}`;
                         fixText += data.chunk;
                         
                         // Live parse for auto-fix stream
-                        const fBlockLines = fixText.split('\\n');
+                        const fBlockLines = fixText.split('\n');
                         const fNewFiles: Record<string, string> = {};
                         let fCurrentFile: string | null = null;
                         let fCurrentContent: string[] = [];
@@ -444,7 +444,7 @@ ${reply}`;
                           const l = fBlockLines[i];
                           if (l.startsWith('```')) {
                             if (fCurrentFile) {
-                              fNewFiles[fCurrentFile] = fCurrentContent.join('\\n');
+                              fNewFiles[fCurrentFile] = fCurrentContent.join('\n');
                               fCurrentFile = null;
                               fCurrentContent = [];
                             } else {
@@ -458,7 +458,7 @@ ${reply}`;
                           }
                         }
                         if (fCurrentFile) {
-                          fNewFiles[fCurrentFile] = fCurrentContent.join('\\n');
+                          fNewFiles[fCurrentFile] = fCurrentContent.join('\n');
                         }
                         if (Object.keys(fNewFiles).length > 0) {
                           finalFixFiles = fNewFiles;

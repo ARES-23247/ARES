@@ -406,6 +406,20 @@ const docTsRestRouter: any = s.router(docContract as any, {
           }))
           .execute();
 
+        // Push snapshot to collaborative editor history
+        if (content) {
+          c.executionCtx.waitUntil(
+            db.insertInto("document_history")
+              .values({
+                room_id: `doc_${slug}`,
+                content: content,
+                created_by: email,
+                created_at: new Date().toISOString()
+              })
+              .execute()
+          );
+        }
+
         if (status === "published") {
           const action = existing ? "updated" : "created";
           c.executionCtx.waitUntil((async () => {
