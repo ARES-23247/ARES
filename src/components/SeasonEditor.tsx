@@ -6,8 +6,6 @@ import { toast } from "sonner";
 import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import { CopilotMenu } from "./editor/CopilotMenu";
-import { AISuggestionsToggle } from "./editor/AISuggestionsToggle";
-import { useAISuggestions } from "../hooks/useAISuggestions";
 import AssetPickerModal from "./AssetPickerModal";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { useImageUpload } from "../hooks/useImageUpload";
@@ -38,7 +36,6 @@ export default function SeasonEditor() {
   const [isAlbumCoverPickerOpen, setIsAlbumCoverPickerOpen] = useState(false);
 
   const editor = useRichEditor({ placeholder: "<p>Describe the robot's design, mechanisms, and season highlights...</p>" });
-  const { enabled: aiEnabled, setEnabled: setAiEnabled, isLoading: aiLoading } = useAISuggestions(editor);
 
   const { data: detailData } = api.seasons.adminDetail.useQuery(["admin-season-detail", editId], {
     params: { id: editId || "" },
@@ -235,7 +232,6 @@ export default function SeasonEditor() {
         <span className="block text-xs font-black text-ares-gold uppercase tracking-[0.2em]">Robot Design & Season Highlights</span>
         <div className="flex items-center gap-2">
           <div className="flex-1"><RichEditorToolbar editor={editor} documentTitle={challengeName} /></div>
-          <AISuggestionsToggle enabled={aiEnabled} isLoading={aiLoading} onToggle={setAiEnabled} />
         </div>
         <CopilotMenu editor={editor} />
       </div>

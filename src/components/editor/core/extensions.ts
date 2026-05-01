@@ -23,7 +23,6 @@ import { Reveal } from '../extensions/Reveal';
 import { SlashCommands } from '../extensions/SlashCommands';
 import { MermaidBlock } from '../extensions/MermaidBlock';
 import { InteractiveComponent } from '../extensions/InteractiveComponent';
-import { GhostTextExtension } from '../extensions/GhostTextExtension';
 import { CommandsList } from '../CommandsList';
 import { MentionList } from '../MentionList';
 import { suggestionRenderer } from '../suggestionRenderer';
@@ -71,7 +70,6 @@ export const getEditorExtensions = (lowlight: unknown, ydoc?: Y.Doc, provider?: 
   Callout,
   Reveal,
   InteractiveComponent,
-  GhostTextExtension,
 
   SlashCommands.configure({
     suggestion: {

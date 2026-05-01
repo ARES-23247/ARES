@@ -113,7 +113,7 @@ export default function DashboardRoutes({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="w-full h-full"
+          className="w-full flex-1 flex flex-col min-h-0"
         >
           <Suspense fallback={<TabLoader />}>
             {routes}

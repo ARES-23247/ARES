@@ -25,10 +25,11 @@ export function GlobalRAGChatbot() {
   useEffect(() => {
     if (sessionId && messages.length === 0) {
       fetch(`/api/ai/chat-session/${sessionId}`)
-        .then(res => res.json() as Promise<{ messages?: { role: string; content: string }[] }>)
-        .then(data => {
-          if (data && data.messages && data.messages.length > 0) {
-            setMessages(data.messages.map(m => ({
+        .then(res => res.json())
+        .then((data: unknown) => {
+          const parsed = data as { messages?: { role: string; content: string }[] };
+          if (parsed && parsed.messages && parsed.messages.length > 0) {
+            setMessages(parsed.messages.map(m => ({
               role: m.role === "assistant" ? "ai" : (m.role as "ai" | "user"),
               content: m.content
             })));

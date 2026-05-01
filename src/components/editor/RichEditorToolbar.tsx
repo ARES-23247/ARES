@@ -6,6 +6,7 @@
  * word-processor feel. Includes Export .HTML / .JSON and Import .DOCX / .JSON.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
 import { toast } from "sonner";
@@ -211,7 +212,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
 
   // Components Btn and Sep moved outside.
 
-  return (
+  const content = (
     <div className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col p-4 md:p-6 overflow-hidden w-full h-full" : "w-full flex flex-col"}>
       {/* ===== FLOATING TOOLBAR ===== */}
       <div className={`flex flex-wrap items-center gap-1 bg-obsidian/95 backdrop-blur-md border border-white/10 ares-cut-sm p-2 w-full mb-0 shadow-lg ${isFullscreen ? "sticky top-0 z-50" : "sticky top-[72px] z-50"}`}>
@@ -461,4 +462,6 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
       />
     </div>
   );
+
+  return isFullscreen ? createPortal(content, document.body) : content;
 }
