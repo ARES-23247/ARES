@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import React from "react";
 import TaskBoardPage from "./TaskBoardPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LiveblocksProvider } from "@liveblocks/react";
 
 // Mock matchMedia for testing environment
 Object.defineProperty(window, 'matchMedia', {
@@ -67,9 +68,11 @@ describe("TaskBoardPage Component", () => {
 
   const renderWithProvider = (ui: React.ReactNode) => {
     return render(
-      <QueryClientProvider client={queryClient}>
-        {ui}
-      </QueryClientProvider>
+      <LiveblocksProvider publicApiKey="pk_test_mockkey">
+        <QueryClientProvider client={queryClient}>
+          {ui}
+        </QueryClientProvider>
+      </LiveblocksProvider>
     );
   };
 

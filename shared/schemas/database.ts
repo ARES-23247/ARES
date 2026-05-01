@@ -680,6 +680,7 @@ export interface Tasks {
   priority: Generated<string | null>;
   sort_order: Generated<number | null>;
   status: Generated<string | null>;
+  subteam: string | null;
   title: string;
   updated_at: Generated<string | null>;
 }

@@ -70,7 +70,8 @@ CREATE TABLE IF NOT EXISTS posts (
     revision_of TEXT,
     published_at TEXT,
     is_portfolio INTEGER DEFAULT 0,
-    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL
+    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL,
+    updated_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_posts_season ON posts(season_id);
 CREATE INDEX IF NOT EXISTS idx_posts_date ON posts(date);
@@ -365,6 +366,9 @@ CREATE TABLE IF NOT EXISTS outreach_logs (
     students_count INTEGER DEFAULT 0,
     impact_summary TEXT,
     cf_email TEXT,
+    is_mentoring INTEGER DEFAULT 0,
+    mentored_team_number TEXT,
+    metadata TEXT,
     is_deleted INTEGER DEFAULT 0,
     season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL,
     created_at TEXT DEFAULT (datetime('now'))
@@ -462,6 +466,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     priority TEXT DEFAULT 'normal',
     subteam TEXT,
     sort_order INTEGER DEFAULT 0,
+    assigned_to TEXT,
     created_by TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
     due_date TEXT,
     created_at TEXT DEFAULT (datetime('now')),

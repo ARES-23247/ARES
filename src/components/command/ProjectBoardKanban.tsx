@@ -24,6 +24,7 @@ export interface TaskItem {
   updated_at: string;
   assigned_to?: string | null;
   assignee_name?: string | null;
+  subteam?: string | null;
 }
 
 interface ProjectBoardKanbanProps {
