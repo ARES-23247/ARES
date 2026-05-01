@@ -32,6 +32,7 @@ export interface LocationRow {
 
 import { CollaborativeEditorRoom, useCollaborativeEditor } from "./editor/CollaborativeEditorRoom";
 import VersionHistorySidebar from "./editor/VersionHistorySidebar";
+import ZulipThread from "./ZulipThread";
 
 function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userRole?: string | unknown, roomId?: string | null }) {
   const navigate = useNavigate();
@@ -394,7 +395,9 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
         {editor && <CopilotMenu editor={editor} />}
       </div>
 
-
+      {editId && formValues.title && (
+        <ZulipThread stream="events" topic={`Event: ${formValues.title}`} />
+      )}
 
       <div className="mt-6 flex flex-col gap-4">
         {errorMsg && (

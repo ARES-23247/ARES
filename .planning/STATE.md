@@ -1,9 +1,9 @@
 ---
 milestone: v5.2
 name: Document Revision UX
-status: complete
+status: in_progress
 progress:
-  phases_total: 1
+  phases_total: 2
   phases_completed: 1
   tasks_total: 1
   tasks_completed: 1
@@ -13,11 +13,14 @@ progress:
 
 ## Current Context
 - **Milestone:** v5.2 (Document Revision UX)
-- **Phase:** 70-history-ui-revision-tracking-fixes
+- **Phase:** 71-zulip-comments-below-editors
 - **Status:** Completed
-- **Next Step:** Complete milestone.
+- **Next Step:** Advance milestone.
 
 ## Accumulated Context
+
+### Roadmap Evolution
+- Phase 71 added: Show Zulip comments below the editors
 
 ### Active Blockers
 - None
