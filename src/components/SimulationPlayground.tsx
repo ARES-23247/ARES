@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
-import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X } from "lucide-react";
+import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
 import { loader } from "@monaco-editor/react";
 
 // Configure Monaco CDN — use unpkg as fallback if jsdelivr is slow
@@ -58,6 +58,9 @@ export default function SimulationPlayground() {
   
   // Telemetry State
   const [telemetry, setTelemetry] = useState<Record<string, {time: number, value: number}[]>>({});
+
+  // Layout State
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Visual AI State
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
@@ -457,7 +460,7 @@ USER REQUEST: ${msg}`;
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)]">
+    <div className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col p-4 md:p-6" : "flex flex-col h-[calc(100vh-80px)]"}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-obsidian">
         <div className="flex items-center gap-2 flex-1">
@@ -553,6 +556,9 @@ USER REQUEST: ${msg}`;
           <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 px-3 py-1.5 bg-ares-gold/20 text-ares-gold border border-ares-gold/30 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-ares-gold/30 transition-colors disabled:opacity-50">
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             {simId ? 'Update' : 'Save'}
+          </button>
+          <button onClick={() => setIsFullscreen(!isFullscreen)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/80 border border-white/10 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors ml-2">
+            {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
