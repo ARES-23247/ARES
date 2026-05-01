@@ -406,96 +406,10 @@ USER REQUEST: ${msg}`;
         const fullFiles = { ...files, ...finalFiles };
         const err = await compileCode(fullFiles);
 
-        // Auto-heal: if compilation fails, send error back to AI for a fix
         if (err) {
-          setChatMessages(prev => [...prev, { role: "assistant", content: "⚙️ Compile error detected — auto-fixing..." }]);
-
-          try {
-            const fixContext = `You are a z.AI simulation code assistant. The following markdown-fenced code has a compilation error. Fix ONLY the error and return the COMPLETE corrected code using markdown fences with the filename (e.g. \`\`\`jsx:SimComponent.jsx).
-
-ERROR:
-${err}
-
-BROKEN CODE:
-${reply}`;
-
-            const fixRes = await fetch("/api/ai/liveblocks-copilot", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ documentContext: fixContext, action: "expand" }),
-            });
-
-            if (fixRes.ok && fixRes.body) {
-              let fixText = "";
-              const fixReader = fixRes.body.getReader();
-              const fixDecoder = new TextDecoder();
-              let fixBuffer = "";
-              const initialFixFiles = { ...fullFiles };
-              let finalFixFiles: Record<string, string> = {};
-
-              while (true) {
-                const { done, value } = await fixReader.read();
-                if (done) break;
-                fixBuffer += fixDecoder.decode(value, { stream: true });
-                const fixLines = fixBuffer.split("\n");
-                fixBuffer = fixLines.pop() || "";
-                
-                for (const line of fixLines) {
-                  if (line.startsWith("data: ")) {
-                    try {
-                      const data = JSON.parse(line.slice(6));
-                      if (data.chunk) {
-                        fixText += data.chunk;
-                        
-                        // Live parse for auto-fix stream
-                        const fBlockLines = fixText.split('\n');
-                        const fNewFiles: Record<string, string> = {};
-                        let fCurrentFile: string | null = null;
-                        let fCurrentContent: string[] = [];
-                        
-                        for (let i = 0; i < fBlockLines.length; i++) {
-                          const l = fBlockLines[i];
-                          if (l.startsWith('```')) {
-                            if (fCurrentFile) {
-                              fNewFiles[fCurrentFile] = fCurrentContent.join('\n');
-                              fCurrentFile = null;
-                              fCurrentContent = [];
-                            } else {
-                              const match = l.match(/```[a-zA-Z]*:(.+)/);
-                              if (match && match[1]) {
-                                fCurrentFile = match[1].trim();
-                              }
-                            }
-                          } else if (fCurrentFile) {
-                            fCurrentContent.push(l);
-                          }
-                        }
-                        if (fCurrentFile) {
-                          fNewFiles[fCurrentFile] = fCurrentContent.join('\n');
-                        }
-                        if (Object.keys(fNewFiles).length > 0) {
-                          finalFixFiles = fNewFiles;
-                          setFiles({ ...initialFixFiles, ...fNewFiles });
-                        }
-                      }
-                    } catch { /* ignore */ }
-                  }
-                }
-              }
-
-              if (Object.keys(finalFixFiles).length > 0) {
-                const fixFullFiles = { ...fullFiles, ...finalFixFiles };
-                const fixErr = await compileCode(fixFullFiles);
-                if (fixErr) {
-                  setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Auto-fix failed: ${fixErr}\nPlease fix the code manually or describe the issue.` }]);
-                } else {
-                  setChatMessages(prev => [...prev, { role: "assistant", content: "✅ Code fixed and applied!" }]);
-                }
-              }
-            }
-          } catch {
-            // Auto-heal failed silently
-          }
+          setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Compilation Error:\n\`\`\`text\n${err}\n\`\`\`\n\nThe code is in the editor. You can fix it manually or ask me to correct it.` }]);
+        } else {
+          setChatMessages(prev => [...prev, { role: "assistant", content: "✅ Code generated and compiled successfully!" }]);
         }
       }
 
