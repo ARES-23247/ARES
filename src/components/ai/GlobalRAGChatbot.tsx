@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Send, Bot, ShieldAlert } from "lucide-react";
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, TurnstileInstance } from "@marsidev/react-turnstile";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { v4 as uuidv4 } from "uuid";
@@ -12,6 +12,7 @@ export function GlobalRAGChatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
   const [sessionId] = useState(() => {
     if (typeof window !== "undefined") {
       const existing = sessionStorage.getItem("ares_rag_session");
@@ -56,6 +57,13 @@ export function GlobalRAGChatbot() {
     }
 
     const userMessage = input.trim();
+    // Cache the token to use for this request, then immediately clear it so we wait for a new one
+    const currentToken = turnstileToken;
+    setTurnstileToken(null);
+    if (turnstileRef.current) {
+      turnstileRef.current.reset();
+    }
+
     setInput("");
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
@@ -64,7 +72,7 @@ export function GlobalRAGChatbot() {
       const res = await fetch("/api/ai/rag-chatbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: userMessage, turnstileToken, sessionId }),
+        body: JSON.stringify({ query: userMessage, turnstileToken: currentToken, sessionId }),
       });
 
       if (!res.ok) {
@@ -165,7 +173,7 @@ export function GlobalRAGChatbot() {
 
         <div className="p-3 border-t border-zinc-700 bg-zinc-800/50">
           <div className="mb-2 flex justify-center transform scale-75 origin-left">
-            <Turnstile siteKey={siteKey} onSuccess={setTurnstileToken} />
+            <Turnstile ref={turnstileRef} siteKey={siteKey} onSuccess={setTurnstileToken} />
           </div>
           <form onSubmit={handleSubmit} className="flex items-center space-x-2">
             <input
