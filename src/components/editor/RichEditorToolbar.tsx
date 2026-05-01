@@ -127,6 +127,8 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
   const [isImporting, setIsImporting] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSimPickerOpen, setIsSimPickerOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"Saved ✓" | "Saving...">("Saved ✓");
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const jsonImportRef = useRef<HTMLInputElement>(null);
 
@@ -137,6 +139,21 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
     window.addEventListener('open-sim-picker', handleOpenSimPicker);
     return () => window.removeEventListener('open-sim-picker', handleOpenSimPicker);
   }, []);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setSaveStatus("Saving...");
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        setSaveStatus("Saved ✓");
+      }, 1500);
+    };
+    editor.on("update", handleUpdate);
+    return () => {
+      editor.off("update", handleUpdate);
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [editor]);
 
   const handleDocImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -197,6 +214,9 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
           {/* Undo / Redo */}
           <Btn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} ariaLabel="Undo">↶</Btn>
           <Btn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} ariaLabel="Redo">↷</Btn>
+          <div className="ml-2 mr-2 text-[10px] uppercase font-bold tracking-widest text-white/50 transition-colors duration-300">
+            {saveStatus === "Saved ✓" ? <span className="text-ares-cyan">{saveStatus}</span> : saveStatus}
+          </div>
           <Sep />
 
         {/* Headings */}
@@ -387,9 +407,14 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
       <AssetPickerModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
-        onSelect={(url, altText) => {
-          editor.chain().focus().setImage({ src: url, alt: altText || "ARES Media" }).run();
+        onSelect={async (url, altText) => {
           setIsPickerOpen(false);
+          const caption = await modal.prompt({
+            title: "Image Caption (Optional)",
+            description: "Enter a caption to be displayed below the image:",
+            defaultValue: altText || ""
+          });
+          editor.chain().focus().setImage({ src: url, alt: caption || altText || "ARES Media", title: caption || "" }).run();
         }}
       />
 

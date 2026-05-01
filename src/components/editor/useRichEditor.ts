@@ -37,6 +37,7 @@ export function useRichEditor(options?: UseRichEditorOptions): Editor | null {
     editorProps: {
       attributes: {
         class: "prose prose-invert max-w-none focus:outline-none min-h-[400px] text-[#e6edf3] font-mono",
+        spellcheck: "true"
       },
     },
   });

@@ -47,13 +47,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
   });
   const { enabled: aiEnabled, setEnabled: setAiEnabled, isLoading: aiLoading } = useAISuggestions(editor);
   
-  const notesEditor = useRichEditor({ 
-    placeholder: "<p>Add private meeting notes here (visible to verified members only)...</p>",
-    ydoc,
-    provider,
-    yfield: 'notes'
-  });
-  
+
   const { availableSocials } = useAdminSettings();
   const { uploadFile, isUploading, setErrorMsg: setUploadError } = useImageUpload();
 
@@ -159,19 +153,9 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
         }
       }
       
-      if (notesEditor) {
-        const shouldSetNotes = !ydoc || ydoc.getXmlFragment("notes").length === 0;
-        if (shouldSetNotes && event.meeting_notes) {
-          try {
-            notesEditor.commands.setContent(JSON.parse(event.meeting_notes));
-          } catch {
-            notesEditor.commands.setContent(`<p>${event.meeting_notes}</p>`);
-          }
-        }
-      }
     }
 
-  }, [eventRes, reset, editor, notesEditor, ydoc]);
+  }, [eventRes, reset, editor, ydoc]);
 
 
   const saveMutation = api.events.saveEvent.useMutation({
@@ -228,8 +212,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
 
   const onFormSubmit = (data: EventPayload, isDraft = false) => {
     const finalDescription = editor ? JSON.stringify(editor.getJSON()) : data.description;
-    const finalNotes = notesEditor && !notesEditor.isEmpty ? JSON.stringify(notesEditor.getJSON()) : data.meetingNotes;
-    const payload = { ...data, description: finalDescription, meetingNotes: finalNotes, isDraft };
+    const payload = { ...data, description: finalDescription, meetingNotes: "", isDraft };
     if (editId) {
       updateMutation.mutate({ params: { id: editId }, body: payload });
     } else {
@@ -411,14 +394,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
         {editor && <CopilotMenu editor={editor} />}
       </div>
 
-      <div className="mt-4">
-        <label htmlFor="event-notes-editor" className="flex items-center gap-2 text-xs font-bold text-ares-red uppercase tracking-wider mb-2">
-          <span>🔒 Private Meeting Notes</span>
-          <span className="text-white/60 font-normal normal-case">(verified members only)</span>
-        </label>
-        {notesEditor && <RichEditorToolbar editor={notesEditor} documentTitle={(formValues.title || "") + " Notes"} />}
-        {notesEditor && <CopilotMenu editor={notesEditor} />}
-      </div>
+
 
       <div className="mt-6 flex flex-col gap-4">
         {errorMsg && (

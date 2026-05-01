@@ -1,6 +1,7 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Editor, Range } from '@tiptap/core';
-import { Heading1, Heading2, List, ListTodo, Quote, Code, Table, Info, AlertTriangle, Lightbulb, Workflow, TerminalSquare } from 'lucide-react';
+import { Heading1, Heading2, List, ListTodo, Quote, Code, Table, Info, AlertTriangle, Lightbulb, Workflow, TerminalSquare, BookOpen } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CommandItem {
   title: string;
@@ -118,6 +119,42 @@ export const CommandsList = forwardRef<CommandsListRef, CommandsListProps>((prop
       icon: <Table size={18} />,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+      },
+    },
+    {
+      title: 'Table of Contents',
+      description: 'Generate list of headings',
+      icon: <BookOpen size={18} className="text-ares-gold" />,
+      command: ({ editor, range }) => {
+        const headings: { level: number, text: string, id: string }[] = [];
+        editor.state.doc.descendants((node) => {
+          if (node.type.name === 'heading') {
+            const level = node.attrs.level;
+            if (level === 2 || level === 3) {
+              const text = node.textContent;
+              const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              headings.push({ level, text, id });
+            }
+          }
+        });
+
+        editor.chain().focus().deleteRange(range).run();
+        
+        if (headings.length === 0) {
+          toast.error("No H2 or H3 headings found in document.");
+          return;
+        }
+
+        let html = '<ul>';
+        headings.forEach(h => {
+          if (h.level === 3) {
+            html += `<li><ul><li><a href="#${h.id}">${h.text}</a></li></ul></li>`;
+          } else {
+            html += `<li><a href="#${h.id}">${h.text}</a></li>`;
+          }
+        });
+        html += '</ul><p></p>';
+        editor.chain().focus().insertContent(html).run();
       },
     },
   ];

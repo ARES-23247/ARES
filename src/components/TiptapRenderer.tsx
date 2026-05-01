@@ -242,7 +242,7 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
   switch (node.type) {
     case "doc": return <>{children}</>;
     case "heading": return renderHeading(node, children);
-    case "paragraph": return <p className="text-white/80 leading-relaxed mb-4">{children}</p>;
+    case "paragraph": return <p className="text-white/80 leading-relaxed mb-4">{children || <br/>}</p>;
     case "bulletList": return <ul className="list-disc list-inside space-y-1 mb-4 text-white/70 ml-2">{children}</ul>;
     case "orderedList": return <ul className="list-decimal list-inside space-y-1 mb-4 text-white/70 ml-2">{children}</ul>;
     case "listItem": return <li className="leading-relaxed">{children}</li>;
