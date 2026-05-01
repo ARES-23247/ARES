@@ -90,19 +90,20 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
           ];
         }
 
-        const zaiRes = await fetch("https://api.z.ai/v1/messages", {
+        const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": c.env.Z_AI_API_KEY!,
-            "anthropic-version": "2023-06-01"
+            "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
           },
           body: JSON.stringify({
-            model: "zai-5.1",
-            max_tokens: 128000,
-            system: systemPrompt,
-            messages: [{ role: "user", content: userContent }],
-            stream: true
+            model: "GLM-5.1",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userContent }
+            ],
+            stream: true,
+            max_tokens: 4096
           })
         });
 
@@ -128,8 +129,8 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
                 if (dataStr === "[DONE]") continue;
                 try {
                   const data = JSON.parse(dataStr);
-                  if (data.type === "content_block_delta" && data.delta?.text) {
-                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
+                  if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                   }
                 } catch (_e) { /* ignore */ }
               }
@@ -482,24 +483,25 @@ aiRouter.post("/suggest", persistentRateLimitMiddleware(30, 60), ensureAdmin, as
   try {
     // ── Premium path: z.ai ──
     if (hasZai) {
-      const zaiRes = await fetch("https://api.z.ai/v1/messages", {
+      const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": c.env.Z_AI_API_KEY!,
-          "anthropic-version": "2023-06-01"
+          "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
         },
         body: JSON.stringify({
-          model: "zai-5.1",
-          max_tokens: 100,
-          system: systemPrompt,
-          messages: [{ role: "user", content: safeContext }]
+          model: "GLM-5.1",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: safeContext }
+          ],
+          max_tokens: 100
         })
       });
 
       if (zaiRes.ok) {
-        const data = await zaiRes.json() as { content?: { text?: string }[] };
-        const suggestion = data.content?.[0]?.text?.trim() || "";
+        const data = await zaiRes.json() as { choices?: { message?: { content?: string } }[] };
+        const suggestion = data.choices?.[0]?.message?.content?.trim() || "";
         return c.json({ suggestion });
       }
     }
@@ -699,21 +701,22 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
     try {
       // ── Premium path: z.ai (zai-5.1) ──
       if (hasZai) {
-        console.log("[RAG] Using z.ai (zai-5.1) — Z_AI_API_KEY present");
-        await stream.writeSSE({ data: JSON.stringify({ model: "zai-5.1" }) });
-        const zaiRes = await fetch("https://api.z.ai/v1/messages", {
+        console.log("[RAG] Using z.ai (GLM-5.1) — Z_AI_API_KEY present");
+        await stream.writeSSE({ data: JSON.stringify({ model: "GLM-5.1" }) });
+        const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": c.env.Z_AI_API_KEY!,
-            "anthropic-version": "2023-06-01"
+            "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
           },
           body: JSON.stringify({
-            model: "zai-5.1",
-            max_tokens: 128000,
-            system: systemPrompt,
-            messages,
-            stream: true
+            model: "GLM-5.1",
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...messages
+            ],
+            stream: true,
+            max_tokens: 4096
           })
         });
 
@@ -736,9 +739,9 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
                 if (dataStr === "[DONE]") continue;
                 try {
                   const data = JSON.parse(dataStr);
-                  if (data.type === "content_block_delta" && data.delta?.text) {
-                    accumulatedText += data.delta.text;
-                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
+                  if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                    accumulatedText += data.choices[0].delta.content;
+                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                   }
                 } catch (_e) { /* ignore */ }
               }
