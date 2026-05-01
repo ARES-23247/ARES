@@ -176,15 +176,36 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       ${moduleDefs}
       
       // Execute the entry point
-      const entryExports = require('SimComponent.jsx');
-      const SimComponent = entryExports.default || entryExports.SimComponent || window.SimComponent;
+      let SimComponent;
+      
+      // Try standard entry points first
+      if (window.__modules['SimComponent.jsx']) {
+        const entryExports = require('SimComponent.jsx');
+        SimComponent = entryExports.default || entryExports.SimComponent || window.SimComponent;
+      } 
+      
+      // If not found, use the first available module that looks like a component
+      if (!SimComponent) {
+        const availableModules = Object.keys(window.__modules);
+        const entryFile = availableModules.find(f => f.endsWith('.tsx') || f.endsWith('.jsx') || f.endsWith('.js'));
+        
+        if (entryFile) {
+          const entryExports = require(entryFile);
+          SimComponent = entryExports.default || entryExports[entryFile.replace(/\.[^/.]+$/, "")] || window.SimComponent;
+          
+          // Fallback: if it exports exactly one thing, use that
+          if (!SimComponent && Object.keys(entryExports).length === 1) {
+            SimComponent = entryExports[Object.keys(entryExports)[0]];
+          }
+        }
+      }
       
       if (typeof SimComponent !== 'undefined') {
         var root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(SimComponent));
         parent.postMessage({ type: 'sim-ready' }, '*');
       } else {
-        throw new Error('SimComponent is not defined. Your SimComponent.jsx must export default function SimComponent() { ... }');
+        throw new Error('SimComponent is not defined. Your code must export a default React component.');
       }
     } catch(e) {
       parent.postMessage({ type: 'sim-error', message: e.message }, '*');

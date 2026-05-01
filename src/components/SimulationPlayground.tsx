@@ -235,7 +235,7 @@ export default function SimulationPlayground() {
       if (!res.ok) throw new Error("Not found");
       const data = await res.json() as { simulation: { id: string; name: string; files: Record<string, string> | string, type?: string } };
       const sim = data.simulation;
-      let parsedFiles: Record<string, string> = { "SimComponent.jsx": "" };
+      let parsedFiles: Record<string, string> = {};
       
       if (typeof sim.files === "object") {
          parsedFiles = sim.files as Record<string, string>;
@@ -243,12 +243,16 @@ export default function SimulationPlayground() {
          try {
            parsedFiles = JSON.parse(sim.files);
          } catch {
-           parsedFiles = { "SimComponent.jsx": sim.files };
+           parsedFiles = { [sim.id]: sim.files };
          }
       }
       
+      if (Object.keys(parsedFiles).length === 0) {
+        parsedFiles = { "SimComponent.jsx": "" };
+      }
+      
       setFiles(parsedFiles);
-      setActiveFile("SimComponent.jsx");
+      setActiveFile(Object.keys(parsedFiles)[0]);
       setSimName(sim.name);
       setSimId(sim.id);
       compileCode(parsedFiles);
