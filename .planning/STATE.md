@@ -1,9 +1,9 @@
 ---
-milestone: v5.1
-name: IDE Experience
-status: active
+milestone: v5.2
+name: Document Revision UX
+status: planning
 progress:
-  phases_total: 1
+  phases_total: 0
   phases_completed: 0
   tasks_total: 0
   tasks_completed: 0
@@ -12,18 +12,12 @@ progress:
 # Project State
 
 ## Current Context
-- **Milestone:** v5.1 (IDE Experience)
-- **Phase:** 69 (Hybrid Simulation Storage Architecture)
-- **Status:** Complete
-- **Next Step:** Run gsd-audit-milestone and complete the milestone.
+- **Milestone:** v5.2 (Document Revision UX)
+- **Phase:** Not started (defining requirements)
+- **Status:** Defining requirements
+- **Next Step:** Generate roadmap and transition to Phase 1.
 
 ## Accumulated Context
-
-### Roadmap Evolution
-- Phase 63 added: Move sim live window below code and chat, verify code window.
-- Phase 64 added: Fix the sim (addressing PhysicsWorld undefined error in live preview).
-- Phase 65 added: Fix Swerve Physics Template PhysicsWorld Error (ensure iframe require resolves before bundling).
-- Phase 69 added: Hybrid Simulation Storage Architecture (replacing hardcoded SimTemplates.ts).
 
 ### Active Blockers
 - None

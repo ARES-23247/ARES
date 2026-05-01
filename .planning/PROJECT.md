@@ -43,12 +43,13 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: None
+## Current Milestone: v5.2 Document Revision UX
 
-**Goal:** Pending
+**Goal:** Ensure every document revision and publication is accurately recorded and accessible, while resolving UI overlap issues.
 
 **Target features:**
-- Pending
+- **Revision Recording:** Fix the storage mechanism to correctly record every revision/publication for docs, blogs, and events.
+- **History Tab UI:** Make the history tab closable to prevent overlapping with the header/navbar.
 
 
 
