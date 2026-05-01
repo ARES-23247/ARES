@@ -1,16 +1,16 @@
 # System State
 
-**Current Milestone**: v5.3 (GitHub Indexing Rate Limits)
-**Current Phase**: Phase 73 (Vectorize RAG Integration Verification)
-**Status**: completed
+**Current Milestone**: v5.4 (Simulation Sandbox & GitHub Storage Migration)
+**Current Phase**: Phase 74 (Simulation Sandbox UX Enhancements)
+**Status**: executing
 
 ## Context
-ARESWEB is transitioning to Milestone v5.3. The core goal is to resolve the Cloudflare Workers "Forbidden" (403) errors returned by the GitHub API during the incremental RAG indexing of external documentation sources.
+ARESWEB is transitioning to Milestone v5.4. The core goal is to migrate the Simulation Playground storage to GitHub, inject raw templates into the AI context, and improve the UI vertically.
 
 ## Current Focus
-1. Added `GITHUB_PAT` to the local development environment (`.dev.vars`) and fixed UTF-16LE encoding.
-2. Verified `AppEnv` handles `GITHUB_PAT` effectively across contexts.
-3. Verified `fetchGithubRepoFiles` correctly uses the token in the `Authorization` header by successfully fetching `pmndrs/react-three-fiber`.
+1. Removing the vertical max-height limit and adding a drag handle for horizontal panes.
+2. Hardening the z.AI chunk streaming parser.
+3. Fetching and committing natively to GitHub's REST API.
 
 ## Next Steps
-- Execute `/gsd-new-milestone` to start the next project phase.
+- Complete phase tasks and verify implementations.

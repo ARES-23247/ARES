@@ -39,22 +39,22 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 4.6 (RAG Knowledge Base Pipeline)** — Built incremental site content indexer with Workers AI embeddings and Cloudflare Vectorize. Added admin reindex controls.
 - ✓ **Milestone 4.8 (Simulation Playground UI Fixes)** — Resolved Monaco editor rendering failure by updating CSP to allow jsdelivr and blob web workers.
 - ✓ **Milestone 5.1 (IDE Experience)** — Overhauled the simulation playground's z.AI assistant to stream markdown-fenced code blocks directly into the Monaco Editor. Migrated simulation template storage to a hybrid architecture bridging official GitHub team templates with Cloudflare D1 custom saves.
+- ✓ **Milestone 5.3 (GitHub Rate Limits)** — Fixed GitHub indexer Forbidden errors by configuring `GITHUB_PAT` and verifying external RAG fetches.
 
 ### Active
 - None
 
-## Current Milestone: v5.3
+## Current Milestone: v5.4
 
-**Goal:** Address GitHub Rate limits ("Forbidden" errors) by injecting GITHUB_PAT authentication into the Vectorize RAG knowledge base indexing pipeline.
+**Goal:** Migrate the Simulation Sandbox entirely to the GitHub API, enhance UX with a vertical drag resizer, and harden the AI chunk parser against malformed code outputs using `?raw` vite imports.
 
 ## Current State
 
 <details>
-<summary>v5.2 Shipped Features</summary>
+<summary>v5.3 Shipped Features</summary>
 
-- Re-engineered Document Revision tracking by injecting manual AST snapshots into Cloudflare D1.
-- Abstracted the Document Version History panel to a React Portal to resolve deep Z-index layout conflicts.
-- Built a native debouncer hook for the internal Notes area to prevent dataloss when switching views.
+- Addressed GitHub REST API Forbidden errors in the `fetchGithubRepoFiles` pipeline.
+- Synchronized `GITHUB_PAT` environment variables across local `.dev.vars` and Cloudflare configuration to allow authenticated RAG indexing of `ARES-23247` and external dependencies.
 </details>
 
 <details>

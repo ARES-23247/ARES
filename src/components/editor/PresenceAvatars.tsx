@@ -37,7 +37,7 @@ export default function PresenceAvatars() {
           </div>
         )}
       </div>
-      <span className="text-[10px] font-bold text-ares-cyan uppercase tracking-wider">
+      <span className="text-xs font-bold text-ares-cyan uppercase tracking-wider">
         {currentUserCount} {currentUserCount === 1 ? 'Editor' : 'Editors'}
       </span>
     </div>
