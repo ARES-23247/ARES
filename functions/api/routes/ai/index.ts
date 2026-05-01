@@ -186,7 +186,7 @@ aiRouter.post("/sim-playground", async (c) => {
   const { systemPrompt, messages, imageUrl } = body;
 
   const hasZai = !!c.env.Z_AI_API_KEY;
-  if (!hasZai) return c.json({ error: "AI service not configured." }, 500);
+  if (!hasZai && !c.env.AI) return c.json({ error: "AI service not configured." }, 500);
 
   if (imageUrl && imageUrl.startsWith('data:image')) {
     const lastMsg = messages[messages.length - 1];
@@ -214,51 +214,106 @@ aiRouter.post("/sim-playground", async (c) => {
 
   return streamSSE(c, async (stream) => {
     try {
-      const zaiRes = await fetch("https://api.z.ai/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": c.env.Z_AI_API_KEY!,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "zai-5.1",
-          max_tokens: 128000,
-          system: systemPrompt,
-          messages: messages,
-          stream: true
-        })
-      });
+      if (hasZai) {
+        const zaiRes = await fetch("https://api.z.ai/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": c.env.Z_AI_API_KEY!,
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: "zai-5.1",
+            max_tokens: 128000,
+            system: systemPrompt,
+            messages: messages,
+            stream: true
+          })
+        });
 
-      if (!zaiRes.ok) {
-        console.error("z.ai sim error:", await zaiRes.text());
+        if (zaiRes.ok && zaiRes.body) {
+          const reader = zaiRes.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const dataStr = line.slice(6).trim();
+                if (dataStr === "[DONE]") continue;
+                try {
+                  const data = JSON.parse(dataStr);
+                  if (data.type === "content_block_delta" && data.delta?.text) {
+                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
+                  }
+                } catch (_e) { /* ignore */ }
+              }
+            }
+          }
+          return; // Successfully streamed z.ai, exit
+        } else {
+          const errBody = await zaiRes.text().catch(() => "");
+          console.error("z.ai sim error, falling back to Workers AI:", zaiRes.status, errBody);
+        }
+      }
+
+      // ── Fallback: Cloudflare Workers AI (Llama 3.1) ──
+      if (!c.env.AI) {
+        await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI service unavailable]" }) });
         return;
       }
+
+      console.log("[Sim IDE] Falling back to Workers AI (Llama 3.1)");
+
+      // Normalize images back out for Llama 3.1, which may not support Vision in the standard instruct route
+      const cleanMessages = messages.map((m: any) => {
+        if (Array.isArray(m.content)) {
+          const textPart = m.content.find((p: any) => p.type === "text");
+          return { role: m.role, content: textPart ? textPart.text : "" };
+        }
+        return m;
+      });
       
-      if (zaiRes.body) {
-        const reader = zaiRes.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+      const aiStream = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...cleanMessages
+        ],
+        max_tokens: 4096,
+        stream: true
+      }) as ReadableStream;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      const reader = aiStream.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const dataStr = line.slice(6).trim();
-              if (dataStr === "[DONE]") continue;
-              try {
-                const data = JSON.parse(dataStr);
-                if (data.type === "content_block_delta" && data.delta?.text) {
-                  await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
-                }
-              } catch (_e) { /* ignore */ }
-            }
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === "[DONE]") continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+              const text = data.response || "";
+              if (text) {
+                await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
+              }
+            } catch (_e) { /* ignore */ }
           }
         }
       }
@@ -282,52 +337,97 @@ aiRouter.post("/editor-chat", async (c) => {
 
   return streamSSE(c, async (stream) => {
     try {
-      const zaiRes = await fetch("https://api.z.ai/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": c.env.Z_AI_API_KEY!,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "zai-5.1",
-          max_tokens: 8192,
-          system: finalSystemPrompt,
-          messages: messages,
-          stream: true
-        })
-      });
+      if (hasZai) {
+        const zaiRes = await fetch("https://api.z.ai/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": c.env.Z_AI_API_KEY!,
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: "zai-5.1",
+            max_tokens: 8192,
+            system: finalSystemPrompt,
+            messages: messages,
+            stream: true
+          })
+        });
 
-      if (!zaiRes.ok) {
-        console.error("z.ai editor chat error:", await zaiRes.text());
-        await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI processing error. Please try again.]" }) });
+        if (zaiRes.ok && zaiRes.body) {
+          const reader = zaiRes.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const dataStr = line.slice(6).trim();
+                if (dataStr === "[DONE]") continue;
+                try {
+                  const data = JSON.parse(dataStr);
+                  if (data.type === "content_block_delta" && data.delta?.text) {
+                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
+                  }
+                } catch (_e) { /* ignore */ }
+              }
+            }
+          }
+          return; // Successfully streamed z.ai, exit streamSSE callback
+        } else {
+          const errBody = await zaiRes.text().catch(() => "");
+          console.error("z.ai editor chat error, falling back to Workers AI:", zaiRes.status, errBody);
+        }
+      }
+
+      // ── Fallback: Cloudflare Workers AI (Llama 3.1) ──
+      if (!c.env.AI) {
+        await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI service unavailable]" }) });
         return;
       }
+
+      console.log("[Editor Chat] Falling back to Workers AI (Llama 3.1)");
       
-      if (zaiRes.body) {
-        const reader = zaiRes.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+      const aiStream = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        messages: [
+          { role: "system", content: finalSystemPrompt },
+          ...messages
+        ],
+        max_tokens: 4096,
+        stream: true
+      }) as ReadableStream;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      const reader = aiStream.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const dataStr = line.slice(6).trim();
-              if (dataStr === "[DONE]") continue;
-              try {
-                const data = JSON.parse(dataStr);
-                if (data.type === "content_block_delta" && data.delta?.text) {
-                  await stream.writeSSE({ data: JSON.stringify({ chunk: data.delta.text }) });
-                }
-              } catch (_e) { /* ignore */ }
-            }
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === "[DONE]") continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+              const text = data.response || "";
+              if (text) {
+                await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
+              }
+            } catch (_e) { /* ignore */ }
           }
         }
       }
