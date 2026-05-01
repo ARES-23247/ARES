@@ -40,3 +40,13 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 82 to break down)
+
+### Phase 83: fix e2e errors.
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 82
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 83 to break down)
