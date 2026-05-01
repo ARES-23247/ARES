@@ -45,6 +45,13 @@ interface SavedSim {
   type?: string;
 }
 
+interface GithubSim {
+  id: string;
+  name: string;
+  path: string;
+  requiresContext: boolean;
+}
+
 export default function SimulationPlayground() {
   const [files, setFiles] = useState<Record<string, string>>(SIM_TEMPLATES["Blank Canvas"]);
   const [activeFile, setActiveFile] = useState("SimComponent.tsx");
@@ -58,6 +65,9 @@ export default function SimulationPlayground() {
   const [savedSims, setSavedSims] = useState<SavedSim[]>([]);
   const [showLibrary, setShowLibrary] = useState(false);
   const [isLoadingSims, setIsLoadingSims] = useState(false);
+  
+  const [githubSims, setGithubSims] = useState<GithubSim[]>([]);
+  const [isLoadingGithubSims, setIsLoadingGithubSims] = useState(false);
   
   // Telemetry State
   const [telemetry, setTelemetry] = useState<Record<string, {time: number, value: number}[]>>({});
@@ -245,6 +255,21 @@ export default function SimulationPlayground() {
     }
   };
 
+  const fetchGithubSims = async () => {
+    setIsLoadingGithubSims(true);
+    try {
+      const res = await fetch("https://raw.githubusercontent.com/ARES-23247/ARESWEB/main/src/sims/simRegistry.json");
+      if (res.ok) {
+        const data = await res.json() as { simulators: GithubSim[] };
+        setGithubSims(data.simulators || []);
+      }
+    } catch (e) {
+      console.error("[SimPlayground] Failed to fetch github sims:", e);
+    } finally {
+      setIsLoadingGithubSims(false);
+    }
+  };
+
   const handleLoadSim = async (id: string) => {
     try {
       const res = await fetch(`/api/simulations/${id}`);
@@ -293,6 +318,42 @@ export default function SimulationPlayground() {
     }
   };
 
+  const handleLoadGithubSim = async (sim: GithubSim) => {
+    try {
+      const filename = sim.path.replace('./', '') + '.tsx';
+      const res = await fetch(`https://raw.githubusercontent.com/ARES-23247/ARESWEB/main/src/sims/${filename}`);
+      if (!res.ok) throw new Error("Not found");
+      const code = await res.text();
+      
+      const parsedFiles = { [filename]: code };
+      
+      setFiles(parsedFiles);
+      setActiveFile(filename);
+      setSimName(sim.name);
+      setSimId(null);
+      compileCode(parsedFiles);
+      setShowLibrary(false);
+      
+      const storedChat = localStorage.getItem(`sim_chat_new`);
+      if (storedChat) {
+        try { setChatMessages(JSON.parse(storedChat)); } catch { setChatMessages([DEFAULT_MESSAGE]); }
+      } else {
+        setChatMessages([DEFAULT_MESSAGE]);
+      }
+      
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("simId");
+      window.history.replaceState({}, "", newUrl.toString());
+
+      const { toast } = await import("sonner");
+      toast.success(`Loaded Official Sim: ${sim.name}`);
+    } catch (e) {
+      console.error("[SimPlayground] GitHub Load failed:", e);
+      const { toast } = await import("sonner");
+      toast.error(`Failed to load ${sim.name} from GitHub`);
+    }
+  };
+
   const _handleDeleteSim = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Delete this simulation?")) return;
@@ -312,7 +373,10 @@ export default function SimulationPlayground() {
   };
 
   const handleToggleLibrary = () => {
-    if (!showLibrary) fetchSavedSims();
+    if (!showLibrary) {
+      fetchSavedSims();
+      fetchGithubSims();
+    }
     setShowLibrary(prev => !prev);
   };
 
@@ -530,7 +594,7 @@ USER REQUEST: ${msg}`;
             {showLibrary && (
               <div className="absolute top-full right-0 mt-1 w-72 bg-[#161b22] border border-white/10 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
                 <div className="p-2 border-b border-white/10 flex items-center justify-between">
-                  <span className="text-white/50 text-[10px] uppercase tracking-wider font-bold">GitHub Repository Sims</span>
+                  <span className="text-white/50 text-[10px] uppercase tracking-wider font-bold">My Saved Sims</span>
                   <button onClick={handleReset} className="text-emerald-400 hover:text-emerald-300 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
                     <Plus className="w-3 h-3" /> New
                   </button>
@@ -550,6 +614,32 @@ USER REQUEST: ${msg}`;
                         <div className="min-w-0">
                           <div className={`text-sm truncate ${simId === sim.id ? 'text-ares-gold' : 'text-white/80'}`}>{sim.name}</div>
                           <div className="text-[10px] text-white/30">{new Date(sim.updated_at || sim.created_at).toLocaleDateString()}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </>
+                )}
+                
+                <div className="p-2 border-y border-white/10 flex items-center justify-between mt-2 bg-black/20">
+                  <span className="text-white/50 text-[10px] uppercase tracking-wider font-bold">Official GitHub Sims</span>
+                </div>
+                {isLoadingGithubSims ? (
+                  <div className="p-4 text-center text-white/30 text-xs"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>
+                ) : githubSims.length === 0 ? (
+                  <div className="p-4 text-center text-white/30 text-xs">Failed to load from GitHub</div>
+                ) : (
+                  <>
+                    {githubSims.map(sim => (
+                      <button
+                        key={sim.id}
+                        onClick={() => handleLoadGithubSim(sim)}
+                        className="w-full text-left px-3 py-2 hover:bg-white/5 flex items-center justify-between group transition-colors border-0 bg-transparent"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm truncate text-white/80 group-hover:text-white transition-colors flex items-center gap-2">
+                            {sim.name}
+                          </div>
+                          <div className="text-[10px] text-white/30 font-mono mt-0.5">{sim.path}.tsx</div>
                         </div>
                       </button>
                     ))}
