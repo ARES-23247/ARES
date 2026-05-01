@@ -128,7 +128,7 @@ export default function TaskEditDrawer({ task, onClose, onSave, onDelete }: Task
       <motion.div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="drawer-title"
+        aria-labelledby="modal-title"
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
