@@ -2,6 +2,7 @@
 
 ## Milestones
 
+- ✅ **v5.1 IDE Experience** — Phases 66, 69 (shipped 2026-05-01)
 - ✅ **v4.7 Gap Closure (v4.6 Tech Debt)** — Phases 51-55 (shipped 2026-04-30)
 - ✅ **v4.6 RAG Knowledge Base Pipeline** — Phases 49-50 (shipped 2026-04-30)
 - ✅ **v4.5 AI Workers Migration & Copilot Expansion** — Phases 47-48 (shipped 2026-04-30)
@@ -14,10 +15,7 @@
 
 - [x] **Phase 68: Knowledge Base Expansion** — Enhance the RAG chatbot to ingest and query external FTC resources and the ARESLIB GitHub codebase, expanding its context beyond the internal D1 database.
 
-### 🚀 v5.1 IDE Experience (Phases 66, 69) — IN PROGRESS
-
-- [x] **Phase 66: Streaming Code Generation (IDE-like Experience)** — Overhaul the simulation playground's z.AI assistant to stream markdown-fenced code blocks directly into the Monaco Editor character-by-character, replacing the fragile all-at-once JSON payload mechanism.
-- [ ] **Phase 69: Hybrid Simulation Storage Architecture** — Move from hardcoded `SimTemplates.ts` to a hybrid approach: fetching official team templates directly from GitHub while allowing users to save and share custom simulations in the Cloudflare D1 database.
+### ✅ v5.1 IDE Experience (Phases 66, 69) — SHIPPED 2026-05-01
 
 ### ✅ v5.0 Tech Debt (Phases 65, 67) — SHIPPED 2026-04-30
 
