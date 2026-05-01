@@ -10,13 +10,13 @@ interface EditorChatSidebarProps {
 }
 
 interface ChatMessage {
-  role: "user" | "ai";
+  role: "user" | "assistant";
   content: string;
 }
 
 export default function EditorChatSidebar({ editor, onClose }: EditorChatSidebarProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { role: "ai", content: "Hi! I'm your editor assistant. I can see your document. How can I help you write or format this?" }
+    { role: "assistant", content: "Hi! I'm your editor assistant. I can see your document. How can I help you write or format this?" }
   ]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -61,7 +61,7 @@ If you provide text that the user should insert into their document, format it i
       const decoder = new TextDecoder();
       let aiResponse = "";
 
-      setChatMessages([...newMessages, { role: "ai", content: "" }]);
+      setChatMessages([...newMessages, { role: "assistant", content: "" }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -78,7 +78,7 @@ If you provide text that the user should insert into their document, format it i
                 aiResponse += data.chunk;
                 setChatMessages(prev => {
                   const updated = [...prev];
-                  updated[updated.length - 1] = { role: "ai", content: aiResponse };
+                  updated[updated.length - 1] = { role: "assistant", content: aiResponse };
                   return updated;
                 });
               }
@@ -88,9 +88,8 @@ If you provide text that the user should insert into their document, format it i
           }
         }
       }
-    } catch (e) {
-      console.error(e);
-      setChatMessages(prev => [...prev, { role: "ai", content: "Error connecting to AI. Please try again." }]);
+    } catch (_e) {
+      setChatMessages(prev => [...prev, { role: "assistant", content: "Error connecting to AI. Please try again." }]);
     } finally {
       setIsChatLoading(false);
       chatInputRef.current?.focus();

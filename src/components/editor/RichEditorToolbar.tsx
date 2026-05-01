@@ -417,9 +417,9 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
             </div>
           )}
         </div>
-        {isChatOpen && (
+        <div className={isChatOpen ? "block" : "hidden"}>
           <EditorChatSidebar editor={editor} onClose={() => setIsChatOpen(false)} />
-        )}
+        </div>
       </div>
 
       {/* ===== Modals ===== */}

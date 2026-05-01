@@ -699,7 +699,7 @@ async function saveHistory(db: Kysely<DB>, sessionId: string | undefined, histor
   try {
     await db.insertInto("chat_sessions").values({
       id: sessionId,
-      user_id: null as any,
+      user_id: "anonymous",
       history: JSON.stringify(updatedHistory)
     }).onConflict((oc) => oc.column("id").doUpdateSet({
       history: JSON.stringify(updatedHistory),
