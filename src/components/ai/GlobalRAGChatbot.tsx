@@ -67,7 +67,17 @@ export function GlobalRAGChatbot() {
         body: JSON.stringify({ query: userMessage, turnstileToken, sessionId }),
       });
 
-      if (!res.ok) throw new Error("Failed to reach AI");
+      if (!res.ok) {
+        const errText = await res.text();
+        let errMsg = "Failed to reach AI";
+        try {
+          const parsed = JSON.parse(errText);
+          if (parsed.error) errMsg = parsed.error;
+        } catch (_e) {
+          // Ignore JSON parse error, fallback to default error message
+        }
+        throw new Error(errMsg);
+      }
 
       setMessages(prev => [...prev, { role: "ai", content: "" }]);
 
@@ -100,12 +110,15 @@ export function GlobalRAGChatbot() {
           }
         }
       }
-    } catch (_e) {
-      toast.error("Failed to communicate with z.ai");
+    } catch (e: unknown) {
+      const err = e as Error;
+      toast.error(err.message || "Failed to communicate with z.ai");
     } finally {
       setIsLoading(false);
     }
   };
+
+  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
   return (
     <>
@@ -152,7 +165,7 @@ export function GlobalRAGChatbot() {
 
         <div className="p-3 border-t border-zinc-700 bg-zinc-800/50">
           <div className="mb-2 flex justify-center transform scale-75 origin-left">
-            <Turnstile siteKey="1x00000000000000000000AA" onSuccess={setTurnstileToken} />
+            <Turnstile siteKey={siteKey} onSuccess={setTurnstileToken} />
           </div>
           <form onSubmit={handleSubmit} className="flex items-center space-x-2">
             <input
