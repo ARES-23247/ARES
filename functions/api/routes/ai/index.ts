@@ -300,6 +300,7 @@ aiRouter.post("/editor-chat", async (c) => {
 
       if (!zaiRes.ok) {
         console.error("z.ai editor chat error:", await zaiRes.text());
+        await stream.writeSSE({ data: JSON.stringify({ chunk: "\n[AI processing error. Please try again.]" }) });
         return;
       }
       

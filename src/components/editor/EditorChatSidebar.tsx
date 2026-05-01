@@ -46,7 +46,9 @@ When asked to write or rewrite text, provide clear, concise, and professional re
 If you provide text that the user should insert into their document, format it in a markdown code block so they can easily use the "Insert" button.`;
 
     try {
-      const apiMessages = newMessages.map(m => ({ role: m.role, content: m.content }));
+      const apiMessages = newMessages
+        .filter((m, i) => !(i === 0 && m.role === "assistant"))
+        .map(m => ({ role: m.role, content: m.content }));
 
       const res = await fetch("/api/ai/editor-chat", {
         method: "POST",
