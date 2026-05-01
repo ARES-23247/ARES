@@ -55,9 +55,9 @@ export async function fetchGithubRepoFiles(
     });
 
     // 4. Fetch the raw contents concurrently (with a small concurrency limit if needed, 
-    // but for Cloudflare Workers, we might just do a `Promise.all` for a small subset or sequential chunks to avoid hitting subrequest limits).
-    // Let's cap it to 50 files for safety.
-    const filesToFetch = targetFiles.slice(0, 50);
+    // Let's cap it to 15 files to avoid exceeding the 50 subrequests limit in Cloudflare Workers.
+    // (15 blob requests + 2 GitHub API calls + 3 Vectorize batches = 20 subrequests per repo index invocation)
+    const filesToFetch = targetFiles.slice(0, 15);
     const files: GitHubFile[] = [];
 
     for (const file of filesToFetch) {

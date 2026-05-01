@@ -573,16 +573,18 @@ aiRouter.post("/reindex", ensureAdmin, persistentRateLimitMiddleware(5, 600), as
   });
 });
 
-aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(5, 600), async (c) => {
+aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(50, 600), async (c) => {
   if (!c.env.VECTORIZE_DB) {
     return c.json({ error: "Vectorize DB binding not configured" }, 500);
   }
 
+  const body = await c.req.json().catch(() => ({}));
+  const sourceId = body.sourceId as string | undefined;
+
   const db = c.get("db") as Kysely<DB>;
   const { indexExternalResources } = await import("./indexer");
-  // Assuming env.GITHUB_PAT is mapped if configured
   const githubPat = (c.env as any).GITHUB_PAT;
-  const result = await indexExternalResources(db, c.env.AI as any, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat, c.env.ARES_KV);
+  const result = await indexExternalResources(db, c.env.AI as any, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat, c.env.ARES_KV, sourceId);
 
   return c.json({
     success: true,

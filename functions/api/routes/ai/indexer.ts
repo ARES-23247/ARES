@@ -284,15 +284,21 @@ export async function indexExternalResources(
   vectorize: VectorizeIndex,
   zaiApiKey?: string,
   githubPat?: string,
-  kv?: KVNamespace
+  kv?: KVNamespace,
+  sourceId?: string
 ): Promise<{ indexed: number; skipped: number; errors: string[] }> {
   const documents: IndexableDocument[] = [];
   const errors: string[] = [];
 
-  const sources = await db.selectFrom("external_knowledge_sources")
+  let query = db.selectFrom("external_knowledge_sources")
     .selectAll()
-    .where("status", "=", "active")
-    .execute();
+    .where("status", "=", "active");
+
+  if (sourceId) {
+    query = query.where("id", "=", sourceId);
+  }
+
+  const sources = await query.execute();
 
   for (const source of sources) {
     if (source.type === "github") {

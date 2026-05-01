@@ -62,27 +62,43 @@ export default function ExternalSourcesManager() {
 
   const handleSync = async () => {
     setIsSyncing(true);
-    try {
-      const res = await fetch("/api/ai/reindex-external", { method: "POST" });
-      const data = await res.json() as { success?: boolean; indexed?: number; errors?: string[]; error?: string };
-      if (res.ok && data.success) {
-        toast.success(`External sync complete: ${data.indexed} documents updated.`);
-        if (data.errors && data.errors.length > 0) {
-          toast.warning(`${data.errors.length} indexing errors encountered.`);
-          setSyncErrors(data.errors);
+    setSyncErrors(null);
+    let totalIndexed = 0;
+    const allErrors: string[] = [];
+
+    for (const src of sources) {
+      try {
+        const res = await fetch("/api/ai/reindex-external", { 
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sourceId: src.id })
+        });
+        const data = await res.json() as { success?: boolean; indexed?: number; errors?: string[]; error?: string };
+        
+        if (res.ok && data.success) {
+          if (data.indexed) totalIndexed += data.indexed;
+          if (data.errors && data.errors.length > 0) {
+            allErrors.push(...data.errors);
+          }
         } else {
-          setSyncErrors(null);
+          allErrors.push(`Sync failed for ${src.url} (HTTP ${res.status}): ${data.error || "Unknown error"}`);
         }
-        queryClient.invalidateQueries({ queryKey: ["external-sources"] });
-        queryClient.invalidateQueries({ queryKey: ["ai-status"] });
-      } else {
-        toast.error(data.error || `Sync failed (HTTP ${res.status})`);
+      } catch (e) {
+        allErrors.push(`Network request failed for ${src.url}: ${e}`);
       }
-    } catch (e) {
-      toast.error(`Sync request failed: ${e}`);
-    } finally {
-      setIsSyncing(false);
     }
+
+    if (allErrors.length > 0) {
+      toast.warning(`${allErrors.length} indexing errors encountered.`);
+      setSyncErrors(allErrors);
+    } else {
+      toast.success(`External sync complete: ${totalIndexed} documents updated.`);
+      setSyncErrors(null);
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ["external-sources"] });
+    queryClient.invalidateQueries({ queryKey: ["ai-status"] });
+    setIsSyncing(false);
   };
 
   return (
