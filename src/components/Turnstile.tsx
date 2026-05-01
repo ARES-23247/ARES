@@ -5,7 +5,7 @@ import { siteConfig } from "../site.config";
 declare global {
   interface Window {
     ARES_E2E_BYPASS?: boolean;
-    turnstile?: any;
+    turnstile?: unknown;
   }
 }
 

@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 
 interface Dyn4jEngineProps {
-  initialState: any;
-  onStateChange: (state: any) => void;
+  initialState?: unknown;
+  onStateChange: (state: Record<string, unknown>) => void;
 }
 
-export const Dyn4jEngine: React.FC<Dyn4jEngineProps> = ({ initialState, onStateChange }) => {
+export const Dyn4jEngine: React.FC<Dyn4jEngineProps> = ({ onStateChange }) => {
   useEffect(() => {
     // Stub for Dyn4j telemetry/physics simulation connection.
     // In a real scenario, this would connect to the existing AdvantageScope

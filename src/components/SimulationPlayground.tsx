@@ -293,7 +293,7 @@ export default function SimulationPlayground() {
     }
   };
 
-  const handleDeleteSim = async (id: string, e: React.MouseEvent) => {
+  const _handleDeleteSim = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Delete this simulation?")) return;
     try {

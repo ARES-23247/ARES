@@ -24,8 +24,7 @@ simulationsRouter.get("/", async (c) => {
     const registryText = await ghRes.text();
     const registry = JSON.parse(registryText);
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const githubSims = registry.simulators.map((s: any) => ({
+    const githubSims = registry.simulators.map((s: { id: string; name: string }) => ({
       id: `github:${s.id}`,
       name: s.name,
       author_id: "ARES-23247",

@@ -2,11 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import Matter from 'matter-js';
 
 interface MatterEngineProps {
-  initialState: any;
-  onStateChange: (state: any) => void;
+  initialState?: unknown;
+  onStateChange: (state: Record<string, unknown>) => void;
 }
 
-export const MatterEngine: React.FC<MatterEngineProps> = ({ initialState, onStateChange }) => {
+export const MatterEngine: React.FC<MatterEngineProps> = ({ onStateChange }) => {
   const sceneRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Matter.Engine | null>(null);
   const renderRef = useRef<Matter.Render | null>(null);
@@ -77,8 +77,8 @@ export const MatterEngine: React.FC<MatterEngineProps> = ({ initialState, onStat
       if (render.canvas) {
         render.canvas.remove();
       }
-      render.canvas = null as any;
-      render.context = null as any;
+      render.canvas = null as unknown as HTMLCanvasElement;
+      render.context = null as unknown as CanvasRenderingContext2D;
       render.textures = {};
     };
   }, [onStateChange]);
