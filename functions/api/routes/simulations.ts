@@ -1,112 +1,87 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, persistentRateLimitMiddleware } from "../middleware";
+import { AppEnv } from "../middleware";
 
 export const simulationsRouter = new Hono<AppEnv>();
 
-// List all simulations from D1
+// List all simulations from GitHub
 simulationsRouter.get("/", async (c) => {
   try {
     const db = c.get("db");
-    const results = await db.selectFrom("simulations")
-      .select(["id", "name", "author_id", "is_public", "created_at", "updated_at"])
-      .orderBy("updated_at", "desc")
-      .execute();
+    const config = await db.selectFrom("settings").selectAll().execute();
+    const patSetting = config.find(s => s.key === "GITHUB_PAT");
+    const pat = patSetting?.value || c.env.GITHUB_PAT;
+    const headers: Record<string, string> = {
+      "User-Agent": "ARES-Cloudflare-Worker",
+      "Accept": "application/vnd.github.v3.raw"
+    };
+    if (pat) headers["Authorization"] = `Bearer ${pat}`;
 
-    const formattedSims = results.map(s => ({
-      ...s,
-      type: "d1"
-    }));
-
-    return c.json({ simulations: formattedSims });
-  } catch (e) {
-    console.error("[Simulations] List error:", e);
-    return c.json({ error: "Failed to list simulations from database" }, 500);
-  }
-});
-
-// Get a single simulation file by id
-simulationsRouter.get("/:id", async (c) => {
-  const id = c.req.param("id");
-  try {
-    const db = c.get("db");
-    const sim = await db.selectFrom("simulations")
-      .selectAll()
-      .where("id", "=", id)
-      .executeTakeFirst();
-
-    if (!sim) {
-      return c.json({ error: "Simulation not found in database" }, 404);
+    const ghRes = await fetch(`https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/simRegistry.json`, { headers });
+    if (!ghRes.ok) {
+       return c.json({ simulations: [] });
     }
     
+    const registryText = await ghRes.text();
+    const registry = JSON.parse(registryText);
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const githubSims = registry.simulators.map((s: any) => ({
+      id: `github:${s.id}`,
+      name: s.name,
+      author_id: "ARES-23247",
+      is_public: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      type: "github"
+    }));
+
+    return c.json({ simulations: githubSims });
+  } catch (e) {
+    console.error("[Simulations] List error:", e);
+    return c.json({ error: "Failed to list simulations from GitHub" }, 500);
+  }
+});
+
+// Get a single simulation file by id from GitHub
+simulationsRouter.get("/:id", async (c) => {
+  const id = c.req.param("id");
+
+  if (!id.startsWith("github:")) {
+    return c.json({ error: "Simulation not found" }, 404);
+  }
+
+  const simId = id.replace("github:", "");
+  try {
+    const db = c.get("db");
+    const config = await db.selectFrom("settings").selectAll().execute();
+    const patSetting = config.find(s => s.key === "GITHUB_PAT");
+    const pat = patSetting?.value || c.env.GITHUB_PAT;
+    const headers: Record<string, string> = {
+      "User-Agent": "ARES-Cloudflare-Worker",
+      "Accept": "application/vnd.github.v3.raw"
+    };
+    if (pat) headers["Authorization"] = `Bearer ${pat}`;
+
+    const ghRes = await fetch(`https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/${simId}.tsx`, { headers });
+    if (!ghRes.ok) {
+      return c.json({ error: "Simulation not found in GitHub" }, 404);
+    }
+    
+    const code = await ghRes.text();
     return c.json({
       simulation: {
-        id: sim.id,
-        name: sim.name,
-        type: "d1",
-        files: JSON.parse(sim.files),
-        author_id: sim.author_id,
-        is_public: !!sim.is_public,
-        created_at: sim.created_at,
-        updated_at: sim.updated_at
+        id: id,
+        name: simId,
+        type: "github",
+        files: { [`${simId}.tsx`]: code },
+        author_id: "ARES-23247",
+        is_public: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     });
-  } catch (e) {
-    console.error("[Simulations] Get error:", e);
-    return c.json({ error: "Failed to get simulation from database" }, 500);
-  }
-});
-
-// Commit a simulation file to D1
-simulationsRouter.post("/", persistentRateLimitMiddleware(10, 60), ensureAdmin, async (c) => {
-  const body = await c.req.json();
-  const { id, name, files } = body as { 
-    id?: string; 
-    name?: string; 
-    files?: Record<string, string>;
-  };
-
-  if (!name || !files || Object.keys(files).length === 0) {
-    return c.json({ error: "Name and files are required" }, 400);
-  }
-
-  try {
-    const db = c.get("db");
-    const session = c.get("sessionUser");
-    const authorId = session?.id || "admin"; // Fallback to admin if session doesn't populate properly
-    
-    const finalId = id || crypto.randomUUID();
-
-    await db.insertInto("simulations")
-      .values({
-        id: finalId,
-        name: name,
-        files: JSON.stringify(files),
-        author_id: authorId,
-        is_public: 1
-      })
-      .onConflict((oc) => oc.column('id').doUpdateSet({
-        name: name,
-        files: JSON.stringify(files),
-        updated_at: new Date().toISOString()
-      }))
-      .execute();
-
-    return c.json({ success: true, id: finalId });
-  } catch (e) {
-    console.error("[Simulations] Save error:", e);
-    return c.json({ error: "Failed to save simulation to database" }, 500);
-  }
-});
-
-// Delete a simulation from D1
-simulationsRouter.delete("/:id", ensureAdmin, async (c) => {
-  const id = c.req.param("id") as string;
-  try {
-    const db = c.get("db");
-    await db.deleteFrom("simulations").where("id", "=", id).execute();
-    return c.json({ success: true });
-  } catch (e) {
-    console.error("[Simulations] Delete error:", e);
-    return c.json({ error: "Failed to delete simulation from database" }, 500);
+  } catch (ghErr) {
+    console.error("[Simulations] GitHub get error:", ghErr);
+    return c.json({ error: "Failed to get simulation from GitHub" }, 500);
   }
 });

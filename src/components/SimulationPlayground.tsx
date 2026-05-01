@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
 import { loader } from "@monaco-editor/react";
 
@@ -502,8 +503,8 @@ USER REQUEST: ${msg}`;
     }
   };
 
-  return (
-    <div className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col p-4 md:p-6" : "flex flex-col h-[calc(100vh-80px)]"}>
+  const content = (
+    <div className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col p-4 md:p-6 overflow-hidden w-full h-full" : "flex flex-col h-[calc(100vh-80px)]"}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-obsidian">
         <div className="flex items-center gap-2 flex-1">
@@ -539,25 +540,20 @@ USER REQUEST: ${msg}`;
                 ) : savedSims.length === 0 ? (
                   <div className="p-4 text-center text-white/30 text-xs">No saved simulations yet</div>
                 ) : (
-                  savedSims.map(sim => (
-                    <button
-                      key={sim.id}
-                      onClick={() => handleLoadSim(sim.id)}
-                      className={`w-full text-left px-3 py-2 hover:bg-white/5 flex items-center justify-between group transition-colors border-0 bg-transparent ${simId === sim.id ? 'bg-ares-gold/10 border-l-2 border-l-ares-gold' : ''}`}
-                    >
-                      <div className="min-w-0">
-                        <div className={`text-sm truncate ${simId === sim.id ? 'text-ares-gold' : 'text-white/80'}`}>{sim.name}</div>
-                        <div className="text-[10px] text-white/30">{new Date(sim.updated_at || sim.created_at).toLocaleDateString()}</div>
-                      </div>
+                  <>
+                    {savedSims.map(sim => (
                       <button
-                        onClick={(e) => handleDeleteSim(sim.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded text-red-400 transition-all border-0 bg-transparent"
-                        aria-label={`Delete ${sim.name}`}
+                        key={sim.id}
+                        onClick={() => handleLoadSim(sim.id)}
+                        className={`w-full text-left px-3 py-2 hover:bg-white/5 flex items-center justify-between group transition-colors border-0 bg-transparent ${simId === sim.id ? 'bg-ares-gold/10 border-l-2 border-l-ares-gold' : ''}`}
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <div className="min-w-0">
+                          <div className={`text-sm truncate ${simId === sim.id ? 'text-ares-gold' : 'text-white/80'}`}>{sim.name}</div>
+                          <div className="text-[10px] text-white/30">{new Date(sim.updated_at || sim.created_at).toLocaleDateString()}</div>
+                        </div>
                       </button>
-                    </button>
-                  ))
+                    ))}
+                  </>
                 )}
               </div>
             )}
@@ -816,4 +812,6 @@ USER REQUEST: ${msg}`;
       </div>
     </div>
   );
+
+  return isFullscreen ? createPortal(content, document.body) : content;
 }
