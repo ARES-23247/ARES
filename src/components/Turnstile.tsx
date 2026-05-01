@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 import { siteConfig } from "../site.config";
 
 // Extend Window type for E2E tests
@@ -16,6 +16,10 @@ interface TurnstileProps {
   className?: string;
 }
 
+export interface TurnstileRef {
+  reset: () => void;
+}
+
 /**
  * Cloudflare Turnstile widget — invisible CAPTCHA alternative.
  * Renders the challenge and calls `onVerify` with a token when solved.
@@ -24,12 +28,27 @@ interface TurnstileProps {
  * Usage:
  * ```tsx
  * const [turnstileToken, setTurnstileToken] = useState("");
- * <Turnstile onVerify={setTurnstileToken} theme="dark" />
+ * const turnstileRef = useRef<TurnstileRef>(null);
+ * <Turnstile ref={turnstileRef} onVerify={setTurnstileToken} theme="dark" />
  * ```
  */
-export default function Turnstile({ onVerify, onExpire, theme = "dark", size = "normal", className }: TurnstileProps) {
+const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(({ onVerify, onExpire, theme = "dark", size = "normal", className }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.reset(widgetIdRef.current);
+      } else {
+        // If bypassed, fire again
+        const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        if (isLocal || window.ARES_E2E_BYPASS) {
+          setTimeout(() => onVerify("test-bypass-token"), 200);
+        }
+      }
+    }
+  }));
 
   const renderWidget = useCallback(() => {
     if (!containerRef.current || !window.turnstile || widgetIdRef.current) return;
@@ -85,4 +104,8 @@ export default function Turnstile({ onVerify, onExpire, theme = "dark", size = "
   }, [renderWidget, onVerify]);
 
   return <div ref={containerRef} className={className} />;
-}
+});
+
+Turnstile.displayName = "Turnstile";
+
+export default Turnstile;

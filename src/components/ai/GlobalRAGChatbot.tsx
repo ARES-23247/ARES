@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Send, Bot, ShieldAlert } from "lucide-react";
-import { Turnstile, TurnstileInstance } from "@marsidev/react-turnstile";
+import Turnstile, { TurnstileRef } from "../Turnstile";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { v4 as uuidv4 } from "uuid";
@@ -12,7 +12,7 @@ export function GlobalRAGChatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const turnstileRef = useRef<TurnstileInstance>(null);
+  const turnstileRef = useRef<TurnstileRef>(null);
   const [sessionId] = useState(() => {
     if (typeof window !== "undefined") {
       const existing = sessionStorage.getItem("ares_rag_session");
@@ -126,7 +126,6 @@ export function GlobalRAGChatbot() {
     }
   };
 
-  const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
   return (
     <>
@@ -173,7 +172,7 @@ export function GlobalRAGChatbot() {
 
         <div className="p-3 border-t border-zinc-700 bg-zinc-800/50">
           <div className="mb-2 flex justify-center transform scale-75 origin-left">
-            <Turnstile ref={turnstileRef} siteKey={siteKey} onSuccess={setTurnstileToken} />
+            <Turnstile ref={turnstileRef} onVerify={setTurnstileToken} theme="dark" />
           </div>
           <form onSubmit={handleSubmit} className="flex items-center space-x-2">
             <input

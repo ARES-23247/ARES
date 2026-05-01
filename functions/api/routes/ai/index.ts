@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, persistentRateLimitMiddleware } from "../../middleware";
+import { AppEnv, ensureAdmin, persistentRateLimitMiddleware, verifyTurnstile } from "../../middleware";
 import { streamSSE } from "hono/streaming";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -582,21 +582,10 @@ aiRouter.post("/rag-chatbot", persistentRateLimitMiddleware(15, 60), async (c) =
 
   // Validate Turnstile
   if (c.env.TURNSTILE_SECRET_KEY) {
-    const formData = new URLSearchParams();
-    formData.append('secret', c.env.TURNSTILE_SECRET_KEY);
-    formData.append('response', turnstileToken);
-    
-    try {
-      const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-        body: formData,
-        method: 'POST',
-      });
-      const outcome = await result.json() as any;
-      if (!outcome.success) {
-        return c.json({ error: "Turnstile validation failed" }, 403);
-      }
-    } catch (_err) {
-      return c.json({ error: "Turnstile validation failed due to network error" }, 500);
+    const ip = c.req.header("CF-Connecting-IP") || "unknown";
+    const validTurnstile = await verifyTurnstile(turnstileToken, c.env.TURNSTILE_SECRET_KEY, ip);
+    if (!validTurnstile) {
+      return c.json({ error: "Turnstile validation failed" }, 403);
     }
   }
 
