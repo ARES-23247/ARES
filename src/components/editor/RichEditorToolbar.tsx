@@ -11,6 +11,7 @@ import { EditorContent } from "@tiptap/react";
 import { toast } from "sonner";
 import mammoth from "mammoth";
 import { compressImage } from "../../utils/imageProcessor";
+import { Maximize, Minimize } from "lucide-react";
 import AssetPickerModal from "../AssetPickerModal";
 import SimPickerModal from "../SimPickerModal";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -130,6 +131,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSimPickerOpen, setIsSimPickerOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"Saved ✓" | "Saving...">("Saved ✓");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
@@ -210,9 +212,9 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
   // Components Btn and Sep moved outside.
 
   return (
-    <>
+    <div className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col p-4 md:p-6 overflow-hidden w-full h-full" : "w-full flex flex-col"}>
       {/* ===== FLOATING TOOLBAR ===== */}
-      <div className="flex flex-wrap items-center gap-1 bg-obsidian/95 backdrop-blur-md border border-white/10 ares-cut-sm p-2 z-50 w-full mb-0 sticky top-[72px] shadow-lg">
+      <div className={`flex flex-wrap items-center gap-1 bg-obsidian/95 backdrop-blur-md border border-white/10 ares-cut-sm p-2 w-full mb-0 shadow-lg ${isFullscreen ? "sticky top-0 z-50" : "sticky top-[72px] z-50"}`}>
         <div className="flex-1 flex flex-wrap items-center gap-1 overflow-x-auto">
           {/* Undo / Redo */}
           <Btn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} ariaLabel="Undo">↶</Btn>
@@ -374,6 +376,15 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
         >
           Export .JSON
         </button>
+
+        <button
+          type="button"
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          aria-label="Toggle Fullscreen"
+          className="px-3 py-2 ares-cut-sm transition-all border border-white/10 text-white/50 hover:bg-white/10 hover:text-white shadow-sm ml-1"
+        >
+          {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+        </button>
         </div>
         
         {/* Presence Avatars (Right Aligned) */}
@@ -405,8 +416,8 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
       )}
 
       {/* ===== EDITOR CONTENT AREA WITH CHAT SIDEBAR ===== */}
-      <div className="flex w-full">
-        <div className="flex-1 bg-ares-black border-x border-b border-white/10 rounded-b-xl overflow-hidden shadow-inner min-w-0 min-h-[400px] relative">
+      <div className={`flex w-full ${isFullscreen ? "flex-1 min-h-0" : ""}`}>
+        <div className="flex-1 bg-ares-black border-x border-b border-white/10 rounded-b-xl overflow-y-auto shadow-inner min-w-0 min-h-[400px] relative">
           <EditorContent
             editor={editor}
             className="h-full p-4 md:p-6 pb-12"
@@ -448,6 +459,6 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
           setIsSimPickerOpen(false);
         }}
       />
-    </>
+    </div>
   );
 }

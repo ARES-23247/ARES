@@ -9,6 +9,7 @@
 - [x] **Phase 76:** Complete Migration to GitHub Storage
 - [x] **Phase 77:** Simulation IDE Hotfixes & GLM-5.1 Integration
 - [x] **Phase 78:** AI Chatbot Memory & Editor Integration
+- [x] **Phase 79:** Editor Fullscreen Maximize Toggle
 
 ---
 *Roadmap generated for ARESWEB. Prior phases (1-73) are archived in completed milestones.*
