@@ -217,3 +217,10 @@ input:-webkit-autofill:active {
     break-inside: avoid;
   }
 }
+
+/* Reposition Liveblocks Watermark to avoid overlapping the chat sidebar */
+a[href="https://liveblocks.io"] {
+  left: 24px !important;
+  right: auto !important;
+  bottom: 20px !important;
+}
