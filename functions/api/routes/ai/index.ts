@@ -92,7 +92,7 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
           },
           body: JSON.stringify({
             model: "zai-5.1",
-            max_tokens: 4096,
+            max_tokens: 8192,
             system: systemPrompt,
             messages: [{ role: "user", content: userContent }],
             stream: true
@@ -432,7 +432,7 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
           },
           body: JSON.stringify({
             model: "zai-5.1",
-            max_tokens: 4096,
+            max_tokens: 8192,
             system: systemPrompt,
             messages,
             stream: true
