@@ -528,7 +528,7 @@ aiRouter.post("/suggest", persistentRateLimitMiddleware(30, 60), ensureAdmin, as
 
 // ── RAG Chatbot Endpoint ──────────────────────────────────────────────────
 
-aiRouter.post("/rag-chatbot", async (c) => {
+aiRouter.post("/rag-chatbot", persistentRateLimitMiddleware(15, 60), async (c) => {
   const body = await c.req.json();
   const { query, turnstileToken, sessionId } = body;
 
@@ -542,10 +542,24 @@ aiRouter.post("/rag-chatbot", async (c) => {
     return c.json({ error: "AI service not configured" }, 500);
   }
 
-  // Validate Turnstile (Mock validation for now)
-  const isBot = false;
-  if (isBot) {
-    return c.json({ error: "Turnstile validation failed" }, 403);
+  // Validate Turnstile
+  if (c.env.TURNSTILE_SECRET_KEY) {
+    const formData = new URLSearchParams();
+    formData.append('secret', c.env.TURNSTILE_SECRET_KEY);
+    formData.append('response', turnstileToken);
+    
+    try {
+      const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        body: formData,
+        method: 'POST',
+      });
+      const outcome = await result.json() as any;
+      if (!outcome.success) {
+        return c.json({ error: "Turnstile validation failed" }, 403);
+      }
+    } catch (err) {
+      return c.json({ error: "Turnstile validation failed due to network error" }, 500);
+    }
   }
 
   const safeQuery = scrubPII(query);
