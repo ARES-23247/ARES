@@ -18,7 +18,7 @@ const taskHandlers = {
       let q = db.selectFrom("tasks as t")
         .leftJoin("user_profiles as cp", "t.created_by", "cp.user_id")
         .select([
-          "t.id", "t.title", "t.description", "t.status", "t.priority",
+          "t.id", "t.title", "t.description", "t.status", "t.priority", "t.subteam",
           "t.sort_order", "t.created_by", "t.due_date",
           "t.created_at", "t.updated_at",
           "cp.nickname as creator_name",
@@ -54,6 +54,7 @@ const taskHandlers = {
           description: r.description || null,
           status: String(r.status || "todo"),
           priority: String(r.priority || "normal"),
+          subteam: r.subteam ? String(r.subteam) : null,
           sort_order: Number(r.sort_order || 0),
           assignees,
           created_by: String(r.created_by),
@@ -90,6 +91,7 @@ const taskHandlers = {
           description: body.description || null,
           status: body.status || "todo",
           priority: body.priority || "normal",
+          subteam: body.subteam || null,
           sort_order: 0,
           created_by: user.id,
           due_date: body.due_date || null,
@@ -130,6 +132,7 @@ const taskHandlers = {
         description: body.description || null,
         status: body.status || "todo",
         priority: body.priority || "normal",
+        subteam: body.subteam || null,
         sort_order: 0,
         assignees: assigneeProfiles,
         created_by: user.id,
@@ -241,6 +244,7 @@ const taskHandlers = {
       if (body.description !== undefined) updates.description = body.description;
       if (body.status !== undefined) updates.status = body.status;
       if (body.priority !== undefined) updates.priority = body.priority;
+      if (body.subteam !== undefined) updates.subteam = body.subteam;
       if (body.due_date !== undefined) updates.due_date = body.due_date;
       if (body.sort_order !== undefined) updates.sort_order = body.sort_order;
 

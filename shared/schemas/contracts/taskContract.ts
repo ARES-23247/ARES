@@ -19,6 +19,7 @@ export const taskSchema = z.object({
   due_date: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
+  subteam: z.string().nullable().optional(),
   // Legacy fields for backward compatibility
   assigned_to: z.string().nullable().optional(),
   assignee_name: z.string().nullable().optional(),
@@ -45,6 +46,7 @@ export const taskContract = c.router({
       description: z.string().max(10000).optional(),
       status: z.enum(["todo", "in_progress", "done", "blocked"]).optional(),
       priority: z.enum(["low", "normal", "high", "urgent"]).optional(),
+      subteam: z.string().nullable().optional(),
       assignees: z.array(z.string()).optional(),
       due_date: z.string().optional(),
     }),
@@ -81,6 +83,7 @@ export const taskContract = c.router({
       description: z.string().max(10000).nullable().optional(),
       status: z.enum(["todo", "in_progress", "done", "blocked"]).optional(),
       priority: z.enum(["low", "normal", "high", "urgent"]).optional(),
+      subteam: z.string().nullable().optional(),
       assignees: z.array(z.string()).optional(),
       due_date: z.string().nullable().optional(),
       sort_order: z.number().optional(),

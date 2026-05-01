@@ -8,7 +8,7 @@ import { api } from "../../api/client";
 import type { TaskItem } from "./ProjectBoardKanban";
 import ZulipThreadViewer from "../events/ZulipThreadViewer";
 
-interface TaskEditModalProps {
+interface TaskEditDrawerProps {
   task: TaskItem;
   onClose: () => void;
   onSave: (id: string, updates: Partial<TaskItem>) => Promise<void>;
@@ -29,11 +29,16 @@ const PRIORITY_OPTIONS = [
   { value: "urgent", label: "Urgent", color: "bg-ares-red/20 text-ares-red" },
 ];
 
-export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskEditModalProps) {
+const SUBTEAMS = [
+  "Hardware", "Software", "Electrical", "Business", "Outreach", "Strategy"
+];
+
+export default function TaskEditDrawer({ task, onClose, onSave, onDelete }: TaskEditDrawerProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [status, setStatus] = useState(task.status);
   const [priority, setPriority] = useState(task.priority);
+  const [subteam, setSubteam] = useState(task.subteam || "");
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task.assignees?.map(a => a.id) || []);
   const [dueDate, setDueDate] = useState(task.due_date || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -77,6 +82,7 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
       if (description !== (task.description || "")) updates.description = description || null;
       if (status !== task.status) updates.status = status;
       if (priority !== task.priority) updates.priority = priority;
+      if (subteam !== (task.subteam || "")) updates.subteam = subteam || null;
       if (dueDate !== (task.due_date || "")) updates.due_date = dueDate || null;
       
       // Compare arrays for equality
@@ -108,7 +114,7 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
   const currentAssignees = teamMembers.filter((m: { id: string }) => assigneeIds.includes(m.id));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -118,19 +124,19 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {/* Drawer */}
       <motion.div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        transition={{ duration: 0.2 }}
-        className="relative w-full max-w-xl bg-obsidian border border-white/10 ares-cut shadow-2xl shadow-black/50 max-h-[85vh] overflow-y-auto"
+        aria-labelledby="drawer-title"
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="relative w-full max-w-md h-full bg-obsidian border-l border-white/10 shadow-2xl flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/5">
+        <div className="flex-shrink-0 flex items-center justify-between p-5 border-b border-white/5">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-ares-cyan/10 ares-cut-sm border border-ares-cyan/20">
               <Flag size={16} className="text-ares-cyan" />
@@ -154,8 +160,7 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
           </div>
         </div>
 
-        {/* Body */}
-        <div className="p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
           {/* Title */}
           <div>
             <label htmlFor="modal-title-input" className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
@@ -235,6 +240,23 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Subteam Selection */}
+          <div>
+            <span className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
+              Subteam
+            </span>
+            <select
+              value={subteam}
+              onChange={(e) => setSubteam(e.target.value)}
+              className="w-full bg-ares-gray-dark/50 border border-white/10 text-white text-sm px-3 py-2.5 ares-cut-sm outline-none focus:border-ares-cyan/50 transition-colors"
+            >
+              <option value="">No Subteam</option>
+              {SUBTEAMS.map(team => (
+                <option key={team} value={team}>{team}</option>
+              ))}
+            </select>
           </div>
 
           {/* Assignees + Due Date row */}
@@ -330,7 +352,7 @@ export default function TaskEditModal({ task, onClose, onSave, onDelete }: TaskE
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-5 border-t border-white/5">
+        <div className="flex-shrink-0 flex items-center justify-between p-5 border-t border-white/5 bg-obsidian">
           <div>
             {confirmDelete ? (
               <div className="flex items-center gap-2">

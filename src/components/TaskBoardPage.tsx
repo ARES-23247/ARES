@@ -4,6 +4,7 @@ import ProjectBoardKanban from "./command/ProjectBoardKanban";
 import type { TaskItem } from "./command/ProjectBoardKanban";
 import { api } from "../api/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { RoomProvider, ClientSideSuspense } from "@liveblocks/react";
 
 interface TaskListResponse {
   status: number;
@@ -14,6 +15,8 @@ interface TaskListResponse {
 export default function TaskBoardPage() {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // -- Queries --------------------------------------------------------
   const queryKey = ["tasks", "list", {}];
@@ -47,8 +50,6 @@ export default function TaskBoardPage() {
         queryClient.setQueryData(queryKey, context.previousTasks);
       }
     },
-    // We remove invalidateQueries onSettled because Cloudflare D1 replication lag
-    // causes immediate refetches to return stale data, reverting the optimistic update.
   });
 
   const deleteMutation = api.tasks.delete.useMutation({
@@ -105,7 +106,6 @@ export default function TaskBoardPage() {
         body: { title }
       });
       if (res.status === 200 && res.body.success && res.body.task) {
-        // Manually inject new task to avoid D1 replication lag on refetch
         queryClient.setQueryData(queryKey, (old: TaskListResponse | undefined) => {
           if (!old?.body?.tasks) return old;
           return { ...old, body: { ...old.body, tasks: [res.body.task, ...old.body.tasks] } };
@@ -130,10 +130,10 @@ export default function TaskBoardPage() {
     reorderMutation.mutate({ body: { items } });
   };
 
-  return (
-    <div className="space-y-6">
+  const boardContent = (
+    <div className={isFullscreen ? "fixed inset-0 z-50 bg-obsidian p-6 overflow-y-auto" : "space-y-6"}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-black text-white flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-ares-cyan/20 to-ares-gold/20 ares-cut-sm border border-white/10">
@@ -145,9 +145,14 @@ export default function TaskBoardPage() {
             Native D1-powered project management kanban
           </p>
         </div>
+        <button
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="px-4 py-2 bg-ares-gray-dark/50 hover:bg-white/10 text-white font-bold text-sm ares-cut-sm border border-white/10 transition-colors"
+        >
+          {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+        </button>
       </div>
 
-      {/* Native Task Board – Kanban View */}
       <ProjectBoardKanban
         tasks={tasks}
         isLoading={isTasksLoading}
@@ -159,5 +164,13 @@ export default function TaskBoardPage() {
         onRefresh={() => queryClient.invalidateQueries({ queryKey })}
       />
     </div>
+  );
+
+  return (
+    <RoomProvider id="room-tasks-global" initialPresence={{ cursor: null }}>
+      <ClientSideSuspense fallback={<div className="py-20 text-center text-ares-gray">Connecting to realtime...</div>}>
+        {boardContent}
+      </ClientSideSuspense>
+    </RoomProvider>
   );
 }

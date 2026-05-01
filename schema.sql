@@ -460,6 +460,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     description TEXT,
     status TEXT DEFAULT 'todo',
     priority TEXT DEFAULT 'normal',
+    subteam TEXT,
     sort_order INTEGER DEFAULT 0,
     created_by TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
     due_date TEXT,
