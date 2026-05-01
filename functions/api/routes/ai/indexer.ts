@@ -331,7 +331,7 @@ export async function indexExternalResources(
           const chunks = chunkText(file.content, 1000, 100);
           for (const chunk of chunks) {
             documents.push({
-              id: `${source.id.substring(0, 8)}_${file.sha.substring(0, 8)}_${chunk.index}`,
+              id: `${String(source.id).substring(0, 8)}_${String(file.sha).substring(0, 8)}_${chunk.index}`,
               text: `${source.url} (${file.path}):\n${chunk.text}`,
               metadata: { type: "github", path: file.path, source: source.url }
             });
