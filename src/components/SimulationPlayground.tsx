@@ -43,8 +43,8 @@ interface SavedSim {
 }
 
 export default function SimulationPlayground() {
-  const [files, setFiles] = useState<Record<string, string>>(SIM_TEMPLATES["Default (Robot Arm)"]);
-  const [activeFile, setActiveFile] = useState("SimComponent.jsx");
+  const [files, setFiles] = useState<Record<string, string>>(SIM_TEMPLATES["Blank Canvas"]);
+  const [activeFile, setActiveFile] = useState("SimComponent.tsx");
   const [compiledFiles, setCompiledFiles] = useState<Record<string, string>>({});
   const [compileError, setCompileError] = useState<string | null>(null);
   const [isCompiling, setIsCompiling] = useState(false);
@@ -94,7 +94,7 @@ export default function SimulationPlayground() {
       const compiled: Record<string, string> = {};
       for (const [filename, content] of Object.entries(sourceFiles)) {
         const result = babel.transform(content, {
-          presets: ["env", "react", "typescript"],
+          presets: ["env", "react", ["typescript", { isTSX: true, allExtensions: true }]],
           filename: filename,
         });
         compiled[filename] = result.code || "";
@@ -205,10 +205,10 @@ export default function SimulationPlayground() {
   };
 
   const handleReset = () => {
-    setFiles(SIM_TEMPLATES["Default (Robot Arm)"]);
-    setActiveFile("SimComponent.jsx");
+    setFiles(SIM_TEMPLATES["Blank Canvas"]);
+    setActiveFile("SimComponent.tsx");
     setTelemetry({});
-    compileCode(SIM_TEMPLATES["Default (Robot Arm)"]);
+    compileCode(SIM_TEMPLATES["Blank Canvas"]);
     setSimId(null);
     setSimName("Untitled Simulation");
   };
@@ -353,6 +353,7 @@ USER REQUEST: ${msg}`;
       const decoder = new TextDecoder();
       let buffer = "";
       
+      const initialFiles = { ...files };
       let finalFiles: Record<string, string> = {};
 
       while (true) {
@@ -399,7 +400,7 @@ USER REQUEST: ${msg}`;
                 
                 if (Object.keys(newFiles).length > 0) {
                   finalFiles = newFiles;
-                  setFiles(prev => ({ ...prev, ...newFiles }));
+                  setFiles({ ...initialFiles, ...newFiles });
                 }
               }
             } catch { /* ignore */ }
@@ -439,6 +440,7 @@ ${reply}`;
               const fixReader = fixRes.body.getReader();
               const fixDecoder = new TextDecoder();
               let fixBuffer = "";
+              const initialFixFiles = { ...fullFiles };
               let finalFixFiles: Record<string, string> = {};
 
               while (true) {
@@ -483,7 +485,7 @@ ${reply}`;
                         }
                         if (Object.keys(fNewFiles).length > 0) {
                           finalFixFiles = fNewFiles;
-                          setFiles(prev => ({ ...prev, ...fNewFiles }));
+                          setFiles({ ...initialFixFiles, ...fNewFiles });
                         }
                       }
                     } catch { /* ignore */ }
