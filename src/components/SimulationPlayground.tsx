@@ -9,7 +9,7 @@ loader.config({
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 const SimPreviewFrame = lazy(() => import("./editor/SimPreviewFrame"));
-import { FileSidebar } from "./editor/FileSidebar";
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
 import { SIM_TEMPLATES } from "./editor/SimTemplates";
 import { TelemetryPanel } from "./editor/TelemetryPanel";
 
@@ -72,13 +72,6 @@ export default function SimulationPlayground() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Pane resize state
-  const [codePaneWidth, setCodePaneWidth] = useState(60); // percent
-  const [topPaneHeight, setTopPaneHeight] = useState(50); // percent
-  const isDraggingRef = useRef<"code" | "top" | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -316,10 +309,7 @@ RULES:
 - Use React.useState, React.useEffect, etc. (React is a global, don't import it)
 - Use standard ARESWEB UI classes: sim-container, sim-title, sim-label, sim-value, sim-slider, sim-canvas, sim-btn, sim-grid, sim-flex
 - Use Vite-style raw typescript format (.tsx).
-- DO NOT use JSON. When modifying code, output the COMPLETE updated files using markdown code blocks with the filename in the language tag. Example:
-\`\`\`tsx:MySim.tsx
-<code here>
-\`\`\`
+- When modifying or generating code, output the COMPLETE updated files using markdown code blocks with the EXACT existing filename in the language tag (e.g. \`\`\`tsx:SimComponent.tsx). Do NOT create new filenames unless explicitly requested. Overwrite the existing files!
 - Output ONLY the markdown code blocks. No explanations outside of code comments.
 
 EXAMPLES OF REAL ARESWEB SIMULATIONS:
@@ -332,7 +322,7 @@ ${ArmKgSimRaw}
 ${ElevatorPidSimRaw}
 \`\`\`
 
-CURRENT FILES:
+CURRENT FILES (Overwrite these by matching the filename exactly!):
 \`\`\`json
 ${JSON.stringify(files, null, 2)}
 \`\`\`
@@ -551,50 +541,8 @@ ${reply}`;
     }
   };
 
-  // ── Resize handlers ──
-  const handleMouseDown = (pane: "code" | "top") => (e: React.MouseEvent) => {
-    e.preventDefault();
-    isDraggingRef.current = pane;
-    document.body.style.cursor = pane === "code" ? "col-resize" : "row-resize";
-    document.body.style.userSelect = "none";
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      
-      if (isDraggingRef.current === "code" && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const pct = ((e.clientX - rect.left) / rect.width) * 100;
-        const clamped = Math.max(25, Math.min(80, pct));
-        setCodePaneWidth(clamped);
-      }
-      
-      if (isDraggingRef.current === "top" && wrapperRef.current) {
-        const rect = wrapperRef.current.getBoundingClientRect();
-        // Since wrapperRef contains the header (approx 50px), we account for it roughly
-        const pct = ((e.clientY - rect.top) / rect.height) * 100;
-        const clamped = Math.max(20, Math.min(80, pct));
-        setTopPaneHeight(clamped);
-      }
-    };
-
-    const handleMouseUp = () => {
-      isDraggingRef.current = null;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)]" ref={wrapperRef}>
+    <div className="flex flex-col h-[calc(100vh-80px)]">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-obsidian">
         <div className="flex items-center gap-2 flex-1">
@@ -696,183 +644,201 @@ ${reply}`;
 
       {/* Layout Split: Top/Bottom */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Top Row: Code & Chat */}
-        <div ref={containerRef} style={{ height: `${topPaneHeight}%` }} className="flex min-h-0 border-b border-white/10 relative z-10">
-          {/* ── Code Editor & Files Pane ── */}
-          <div style={{ width: `${codePaneWidth}%` }} className="flex flex-col min-h-0 min-w-0 border-r border-white/5">
-          <div className="px-3 py-1.5 border-b border-white/10 bg-[#1e1e1e] flex items-center justify-between">
-            <div className="flex gap-2 items-center">
-              <span className="text-white/40 text-xs font-mono">{activeFile}</span>
-              {isCompiling && <Loader2 className="w-3 h-3 animate-spin text-ares-gold" />}
-            </div>
-          </div>
-          <div className="flex-1 flex min-h-0">
-            {/* File Explorer Sidebar */}
-            <FileSidebar
-              files={files}
-              activeFile={activeFile}
-              onActiveFileChange={setActiveFile}
-              onFilesChange={setFiles}
-              onCompile={compileCode}
-            />
-            
-            {/* Monaco Editor */}
-            <div className="flex-1 min-h-0 min-w-0 relative bg-[#1e1e1e]">
-              <Suspense fallback={<textarea className="w-full h-full bg-[#1e1e1e] text-white/80 text-sm font-mono p-4 resize-none border-0 outline-none" value={files[activeFile] || ''} readOnly placeholder="Loading code editor..." />}>
-                <MonacoEditor
-                  height="100%"
-                  language="javascript"
-                  theme="vs-dark"
-                  path={`file:///${activeFile}`}
-                  value={files[activeFile] || ''}
-                  onChange={handleCodeChange}
-                  onMount={handleEditorDidMount}
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 13,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    padding: { top: 12 },
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    tabSize: 2,
-                    wordWrap: "on",
-                    lineNumbers: "on",
-                    renderLineHighlight: "gutter",
-                    bracketPairColorization: { enabled: true },
-                    guides: { indentation: true },
-                  }}
-                />
-              </Suspense>
-            </div>
-          </div>
-        </div>
+        <PanelGroup orientation="vertical">
+          <Panel defaultSize={50} minSize={20}>
+            {/* Top Row: Code & Chat */}
+            <PanelGroup orientation="horizontal">
+              {/* ── Code Editor Pane ── */}
+              <Panel defaultSize={60} minSize={25} className="flex flex-col border-r border-white/5">
+                {/* Tabs Header */}
+                <div className="flex items-center overflow-x-auto border-b border-white/10 bg-[#1e1e1e] scrollbar-none shrink-0">
+                  {Object.keys(files).map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setActiveFile(f)}
+                      className={`group flex items-center gap-2 px-4 py-2 text-xs font-mono border-r border-white/5 transition-colors min-w-[120px] max-w-[200px] shrink-0 ${activeFile === f ? 'bg-[#1e1e1e] text-ares-gold border-t-2 border-t-ares-gold relative z-10' : 'bg-[#252526] text-white/40 hover:bg-[#2d2d2d] hover:text-white/80 border-t-2 border-t-transparent shadow-[inset_0_-1px_0_rgba(255,255,255,0.1)]'}`}
+                    >
+                      <span className="truncate flex-1 text-left">{f}</span>
+                      {f !== 'SimComponent.tsx' && (
+                        <button type="button" onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete ${f}?`)) {
+                            const nf = { ...files };
+                            delete nf[f];
+                            setFiles(nf);
+                            if (activeFile === f) setActiveFile('SimComponent.tsx');
+                          }
+                        }} className="opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded p-0.5 transition-all text-white/40 hover:text-red-400">
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const name = prompt("Filename (e.g. Utils.tsx):");
+                      if (name && !files[name]) {
+                        setFiles(prev => ({ ...prev, [name]: "// new file\n" }));
+                        setActiveFile(name);
+                      }
+                    }}
+                    className="px-3 py-2 text-white/40 hover:text-white/80 hover:bg-white/5 transition-colors shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                  {isCompiling && <div className="ml-auto pr-3"><Loader2 className="w-3 h-3 animate-spin text-ares-gold" /></div>}
+                </div>
+                
+                <div className="flex-1 flex min-h-0 bg-[#1e1e1e]">
+                  {/* Monaco Editor */}
+                  <div className="flex-1 min-h-0 min-w-0 relative">
+                    <Suspense fallback={<textarea className="w-full h-full bg-[#1e1e1e] text-white/80 text-sm font-mono p-4 resize-none border-0 outline-none" value={files[activeFile] || ''} readOnly placeholder="Loading code editor..." />}>
+                      <MonacoEditor
+                        height="100%"
+                        language="javascript"
+                        theme="vs-dark"
+                        path={`file:///${activeFile}`}
+                        value={files[activeFile] || ''}
+                        onChange={handleCodeChange}
+                        onMount={handleEditorDidMount}
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 13,
+                          fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                          padding: { top: 12 },
+                          scrollBeyondLastLine: false,
+                          automaticLayout: true,
+                          tabSize: 2,
+                          wordWrap: "on",
+                          lineNumbers: "on",
+                          renderLineHighlight: "gutter",
+                          bracketPairColorization: { enabled: true },
+                          guides: { indentation: true },
+                        }}
+                      />
+                    </Suspense>
+                  </div>
+                </div>
+              </Panel>
 
-        {/* ── Resize Handle: Code ↔ Chat ── */}
-        <button
-          type="button"
-          aria-label="Resize code and chat panes"
-          onMouseDown={handleMouseDown("code")}
-          className="w-1.5 bg-white/5 hover:bg-ares-gold/30 cursor-col-resize flex items-center justify-center transition-colors group border-0 p-0"
-        >
-          <GripVertical className="w-3 h-3 text-white/20 group-hover:text-ares-gold/60" />
-        </button>
+              {/* ── Resize Handle: Code ↔ Chat ── */}
+              <PanelResizeHandle className="w-1.5 bg-white/5 hover:bg-ares-gold/30 flex items-center justify-center transition-colors group">
+                <GripVertical className="w-3 h-3 text-white/20 group-hover:text-ares-gold/60" />
+              </PanelResizeHandle>
 
-        {/* ── z.AI Chat Pane ── */}
-        <div style={{ width: `${100 - codePaneWidth}%` }} className="flex flex-col min-h-0 min-w-0 border-l border-white/5">
-          <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d0f14] flex items-center justify-between">
-            <span className="text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-              z.AI Assistant
-            </span>
-            <button
-              onClick={() => setChatMessages([chatMessages[0]])}
-              title="Clear chat"
-              className="p-1 text-white/20 hover:text-white/50 transition-colors"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
-          </div>
+              {/* ── z.AI Chat Pane ── */}
+              <Panel minSize={20} className="flex flex-col min-h-0 min-w-0 bg-[#0d0f14]">
+                <div className="px-3 py-1.5 border-b border-white/10 flex items-center justify-between shrink-0">
+                  <span className="text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                    z.AI Assistant
+                  </span>
+                  <button
+                    onClick={() => setChatMessages([chatMessages[0]])}
+                    title="Clear chat"
+                    className="p-1 text-white/20 hover:text-white/50 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-[#0a0c10] scrollbar-thin scrollbar-thumb-white/10">
-            {chatMessages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[90%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-indigo-600/20 text-indigo-200 border border-indigo-500/20"
-                      : "bg-white/5 text-white/80 border border-white/5"
-                  }`}
-                >
-                  {msg.content.includes("function SimComponent") ? (
-                    <div>
-                      <p className="text-xs text-ares-gold font-bold mb-1">✅ Code applied to editor</p>
-                      <pre className="text-[11px] text-white/50 max-h-24 overflow-hidden">{msg.content.slice(0, 200)}...</pre>
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-[#0a0c10] scrollbar-thin scrollbar-thumb-white/10">
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className={`max-w-[90%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
+                          msg.role === "user"
+                            ? "bg-indigo-600/20 text-indigo-200 border border-indigo-500/20"
+                            : "bg-white/5 text-white/80 border border-white/5"
+                        }`}
+                      >
+                        {msg.content.includes("function SimComponent") ? (
+                          <div>
+                            <p className="text-xs text-ares-gold font-bold mb-1">✅ Code applied to editor</p>
+                            <pre className="text-[11px] text-white/50 max-h-24 overflow-hidden">{msg.content.slice(0, 200)}...</pre>
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  ))}
+                  {isChatLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-white/5 border border-white/5 rounded-lg px-3 py-2 flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                        <span className="text-xs text-white/40">Generating...</span>
+                      </div>
+                    </div>
                   )}
+                  <div ref={chatEndRef} />
                 </div>
-              </div>
-            ))}
-            {isChatLoading && (
-              <div className="flex justify-start">
-                <div className="bg-white/5 border border-white/5 rounded-lg px-3 py-2 flex items-center gap-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-                  <span className="text-xs text-white/40">Generating...</span>
+
+                {/* Input */}
+                <div className="p-2 border-t border-white/10 flex flex-col gap-2 shrink-0">
+                  {attachedImage && (
+                    <div className="relative inline-block w-24 h-24 border border-ares-gold/30 rounded-md overflow-hidden bg-black/50 ml-1">
+                      <img src={attachedImage} alt="Context" className="w-full h-full object-contain" />
+                      <button onClick={() => setAttachedImage(null)} className="absolute top-1 right-1 bg-black/70 rounded-full p-1 hover:bg-black text-white/80 transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const iframe = document.querySelector('iframe');
+                        if (iframe && iframe.contentWindow) {
+                          iframe.contentWindow.postMessage({ type: 'ARES_REQUEST_SCREENSHOT' }, '*');
+                        }
+                      }}
+                      className="p-2 bg-zinc-800 text-zinc-400 border border-zinc-700 rounded-md hover:bg-zinc-700 transition-colors"
+                      title="Capture screenshot"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                    <textarea
+                      ref={chatInputRef}
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      onKeyDown={handleChatKeyDown}
+                      placeholder="Describe your simulation..."
+                      rows={2}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none resize-none"
+                    />
+                    <button
+                      onClick={handleChatSend}
+                      disabled={isChatLoading || !chatInput.trim()}
+                      className="self-end px-3 py-2 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-md hover:bg-indigo-600/30 transition-colors disabled:opacity-30"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
+              </Panel>
+            </PanelGroup>
+          </Panel>
 
-          {/* Input */}
-          <div className="p-2 border-t border-white/10 bg-[#0d0f14] flex flex-col gap-2">
-            {attachedImage && (
-              <div className="relative inline-block w-24 h-24 border border-ares-gold/30 rounded-md overflow-hidden bg-black/50 ml-1">
-                <img src={attachedImage} alt="Context" className="w-full h-full object-contain" />
-                <button onClick={() => setAttachedImage(null)} className="absolute top-1 right-1 bg-black/70 rounded-full p-1 hover:bg-black text-white/80 transition-colors">
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const iframe = document.querySelector('iframe');
-                  if (iframe && iframe.contentWindow) {
-                    iframe.contentWindow.postMessage({ type: 'ARES_REQUEST_SCREENSHOT' }, '*');
-                  }
-                }}
-                className="p-2 bg-zinc-800 text-zinc-400 border border-zinc-700 rounded-md hover:bg-zinc-700 transition-colors"
-                title="Capture screenshot"
-              >
-                <Camera className="w-4 h-4" />
-              </button>
-              <textarea
-                ref={chatInputRef}
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onKeyDown={handleChatKeyDown}
-                placeholder="Describe your simulation..."
-                rows={2}
-                className="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none resize-none"
-              />
-              <button
-                onClick={handleChatSend}
-                disabled={isChatLoading || !chatInput.trim()}
-                className="self-end px-3 py-2 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-md hover:bg-indigo-600/30 transition-colors disabled:opacity-30"
-              >
-                <Send className="w-4 h-4" />
-              </button>
+          {/* ── Resize Handle: Top ↔ Bottom ── */}
+          <PanelResizeHandle className="h-1.5 w-full bg-white/5 hover:bg-ares-gold/30 flex items-center justify-center transition-colors z-20" />
+
+          {/* ── Live Preview Pane ── */}
+          <Panel defaultSize={50} minSize={20} className="flex flex-col min-w-0 bg-[#0d1117] z-0">
+            <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d1117] flex items-center gap-2 shrink-0">
+              <span className="text-white/40 text-xs font-mono">Live Preview</span>
+              <div className={`w-2 h-2 rounded-full ${compileError ? 'bg-red-500' : 'bg-emerald-500'}`} />
             </div>
-          </div>
-        </div>
-        </div>
-
-        {/* ── Resize Handle: Top ↔ Bottom ── */}
-        <button
-          type="button"
-          aria-label="Resize vertical panes"
-          onMouseDown={handleMouseDown("top")}
-          className="h-1.5 w-full bg-white/5 hover:bg-ares-gold/30 cursor-row-resize flex items-center justify-center transition-colors border-0 p-0 z-20"
-        />
-
-        {/* ── Live Preview Pane ── */}
-        <div style={{ height: `${100 - topPaneHeight}%` }} className="flex flex-col min-w-0 bg-[#0d1117] z-0">
-          <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d1117] flex items-center gap-2">
-            <span className="text-white/40 text-xs font-mono">Live Preview</span>
-            <div className={`w-2 h-2 rounded-full ${compileError ? 'bg-red-500' : 'bg-emerald-500'}`} />
-          </div>
-          <div className="flex-1 min-h-0 relative flex flex-col">
-            <div className="flex-1 min-h-0">
-              <Suspense fallback={<div className="flex items-center justify-center h-full bg-[#0d1117] text-white/40 text-sm">Loading preview...</div>}>
-                <SimPreviewFrame compiledFiles={compiledFiles} compileError={compileError} />
-              </Suspense>
+            <div className="flex-1 min-h-0 relative flex flex-col">
+              <div className="flex-1 min-h-0">
+                <Suspense fallback={<div className="flex items-center justify-center h-full bg-[#0d1117] text-white/40 text-sm">Loading preview...</div>}>
+                  <SimPreviewFrame compiledFiles={compiledFiles} compileError={compileError} />
+                </Suspense>
+              </div>
+              <TelemetryPanel data={telemetry} />
             </div>
-            <TelemetryPanel data={telemetry} />
-          </div>
-        </div>
+          </Panel>
+        </PanelGroup>
       </div>
     </div>
   );
