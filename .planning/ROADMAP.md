@@ -7,6 +7,7 @@
 - [x] **Phase 74:** Simulation Sandbox UX Enhancements
 - [x] **Phase 75:** Sim Maker Stream Hardening & Few-Shot Context
 - [x] **Phase 76:** Complete Migration to GitHub Storage
+- [x] **Phase 77:** Simulation IDE Hotfixes & GLM-5.1 Integration
 
 ---
 *Roadmap generated for ARESWEB. Prior phases (1-73) are archived in completed milestones.*
