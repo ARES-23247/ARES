@@ -43,17 +43,19 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 ### Active
 - None
 
-## Current Milestone: v5.2 Document Revision UX
+## Current Milestone: None
 
-**Goal:** Ensure every document revision and publication is accurately recorded and accessible, while resolving UI overlap issues.
-
-**Target features:**
-- **Revision Recording:** Fix the storage mechanism to correctly record every revision/publication for docs, blogs, and events.
-- **History Tab UI:** Make the history tab closable to prevent overlapping with the header/navbar.
-
-
+**Goal:** *Run `/gsd-new-milestone` to define the next objective.*
 
 ## Current State
+
+<details>
+<summary>v5.2 Shipped Features</summary>
+
+- Re-engineered Document Revision tracking by injecting manual AST snapshots into Cloudflare D1.
+- Abstracted the Document Version History panel to a React Portal to resolve deep Z-index layout conflicts.
+- Built a native debouncer hook for the internal Notes area to prevent dataloss when switching views.
+</details>
 
 <details>
 <summary>v5.1 Shipped Features</summary>

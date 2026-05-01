@@ -1,21 +1,21 @@
 ---
 milestone: v5.2
 name: Document Revision UX
-status: planning
+status: complete
 progress:
-  phases_total: 0
-  phases_completed: 0
-  tasks_total: 0
-  tasks_completed: 0
+  phases_total: 1
+  phases_completed: 1
+  tasks_total: 1
+  tasks_completed: 1
 ---
 
 # Project State
 
 ## Current Context
 - **Milestone:** v5.2 (Document Revision UX)
-- **Phase:** Not started (defining requirements)
-- **Status:** Defining requirements
-- **Next Step:** Generate roadmap and transition to Phase 1.
+- **Phase:** 70-history-ui-revision-tracking-fixes
+- **Status:** Completed
+- **Next Step:** Complete milestone.
 
 ## Accumulated Context
 
