@@ -557,7 +557,7 @@ aiRouter.post("/rag-chatbot", persistentRateLimitMiddleware(15, 60), async (c) =
       if (!outcome.success) {
         return c.json({ error: "Turnstile validation failed" }, 403);
       }
-    } catch (err) {
+    } catch (_err) {
       return c.json({ error: "Turnstile validation failed due to network error" }, 500);
     }
   }
