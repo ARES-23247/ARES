@@ -534,7 +534,7 @@ USER REQUEST: ${msg}`;
                     if (confirm(`Load template "${templateName}"? This will overwrite your current files.`)) {
                       setFiles(SIM_TEMPLATES[templateName]);
                       compileCode(SIM_TEMPLATES[templateName]);
-                      setActiveFile('SimComponent.jsx');
+                      setActiveFile(Object.keys(SIM_TEMPLATES[templateName])[0]);
                     }
                   }}
                   className="w-full text-left px-3 py-2 text-xs text-white/80 hover:bg-white/10 transition-colors border-b border-white/5 last:border-0"
@@ -578,17 +578,27 @@ USER REQUEST: ${msg}`;
                     <button
                       key={f}
                       onClick={() => setActiveFile(f)}
+                      onDoubleClick={() => {
+                        const newName = prompt(`Rename ${f} to:`, f);
+                        if (newName && newName !== f && !files[newName]) {
+                          const nf = { ...files };
+                          nf[newName] = nf[f];
+                          delete nf[f];
+                          setFiles(nf);
+                          if (activeFile === f) setActiveFile(newName);
+                        }
+                      }}
                       className={`group flex items-center gap-2 px-4 py-2 text-xs font-mono border-r border-white/5 transition-colors min-w-[120px] max-w-[200px] shrink-0 ${activeFile === f ? 'bg-[#1e1e1e] text-ares-gold border-t-2 border-t-ares-gold relative z-10' : 'bg-[#252526] text-white/40 hover:bg-[#2d2d2d] hover:text-white/80 border-t-2 border-t-transparent shadow-[inset_0_-1px_0_rgba(255,255,255,0.1)]'}`}
                     >
-                      <span className="truncate flex-1 text-left">{f}</span>
-                      {f !== 'SimComponent.tsx' && (
+                      <span className="truncate flex-1 text-left" title="Double-click to rename">{f}</span>
+                      {Object.keys(files).length > 1 && (
                         <button type="button" onClick={(e) => {
                           e.stopPropagation();
                           if (confirm(`Delete ${f}?`)) {
                             const nf = { ...files };
                             delete nf[f];
                             setFiles(nf);
-                            if (activeFile === f) setActiveFile('SimComponent.tsx');
+                            if (activeFile === f) setActiveFile(Object.keys(nf)[0]);
                           }
                         }} className="opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded p-0.5 transition-all text-white/40 hover:text-red-400">
                           <X className="w-3 h-3" />
