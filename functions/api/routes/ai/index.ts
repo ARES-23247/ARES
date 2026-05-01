@@ -90,53 +90,64 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
           ];
         }
 
-        const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "GLM-5.1",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userContent }
-            ],
-            stream: true,
-            max_tokens: 8192
-          })
-        });
+        try {
+          const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "GLM-5.1",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userContent }
+              ],
+              stream: true,
+              max_tokens: 4096
+            })
+          });
 
-        if (!zaiRes.ok) {
-          console.error("z.ai copilot error:", await zaiRes.text());
-          // Fall through to Workers AI fallback
-        } else if (zaiRes.body) {
-          const reader = zaiRes.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
+          const contentType = zaiRes.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const errData = await zaiRes.json() as any;
+            throw new Error(errData.error?.message || JSON.stringify(errData));
+          }
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+          if (!zaiRes.ok) {
+            throw new Error(await zaiRes.text());
+          }
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
+          if (zaiRes.body) {
+            const reader = zaiRes.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
 
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const dataStr = line.slice(6).trim();
-                if (dataStr === "[DONE]") continue;
-                try {
-                  const data = JSON.parse(dataStr);
-                  if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
-                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
-                  }
-                } catch (_e) { /* ignore */ }
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() || "";
+
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  const dataStr = line.slice(6).trim();
+                  if (dataStr === "[DONE]") continue;
+                  try {
+                    const data = JSON.parse(dataStr);
+                    if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                      await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
+                    }
+                  } catch (_e) { /* ignore */ }
+                }
               }
             }
+            return; // z.ai succeeded, done
           }
-          return; // z.ai succeeded, done
+        } catch (zaiErr) {
+          console.error("z.ai copilot error:", zaiErr);
         }
       }
 
@@ -225,55 +236,65 @@ aiRouter.post("/sim-playground", async (c) => {
     try {
       if (hasZai) {
         for (let attempt = 0; attempt < 2; attempt++) {
-          const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
-            },
-            body: JSON.stringify({
-              model: "GLM-5.1",
-              messages: [
-                { role: "system", content: systemPrompt },
-                ...messages
-              ],
-              stream: true,
-              max_tokens: 8192
-            })
-          });
+          try {
+            const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
+              },
+              body: JSON.stringify({
+                model: "GLM-5.1",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  ...messages
+                ],
+                stream: true,
+                max_tokens: 8192
+              })
+            });
 
-          if (zaiRes.ok && zaiRes.body) {
-            const reader = zaiRes.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = "";
+            const contentType = zaiRes.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+              const errData = await zaiRes.json() as any;
+              throw new Error(errData.error?.message || JSON.stringify(errData));
+            }
 
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
+            if (!zaiRes.ok) throw new Error(await zaiRes.text());
 
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split("\n");
-              buffer = lines.pop() || "";
+            if (zaiRes.body) {
+              const reader = zaiRes.body.getReader();
+              const decoder = new TextDecoder();
+              let buffer = "";
 
-              for (const line of lines) {
-                if (line.startsWith("data: ")) {
-                  const dataStr = line.slice(6).trim();
-                  if (dataStr === "[DONE]") continue;
-                  try {
-                    const data = JSON.parse(dataStr);
-                    if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
-                      await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
-                    }
-                  } catch (_e) { /* ignore */ }
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop() || "";
+
+                for (const line of lines) {
+                  if (line.startsWith("data: ")) {
+                    const dataStr = line.slice(6).trim();
+                    if (dataStr === "[DONE]") continue;
+                    try {
+                      const data = JSON.parse(dataStr);
+                      if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                        await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
+                      }
+                    } catch (_e) { /* ignore */ }
+                  }
                 }
               }
+              return; // Successfully streamed z.ai, exit
             }
-            return; // Successfully streamed z.ai, exit
-          } else {
-            lastZaiError = await zaiRes.text().catch(() => "");
-            console.error(`z.ai sim error (attempt ${attempt + 1}):`, zaiRes.status, lastZaiError);
-            if (zaiRes.status !== 429 && zaiRes.status !== 502 && zaiRes.status !== 503) {
-              break; // Do not retry client errors (like 400 Bad Request)
+          } catch (zaiErr: any) {
+            lastZaiError = zaiErr.message || String(zaiErr);
+            console.error(`z.ai sim error (attempt ${attempt + 1}):`, lastZaiError);
+            if (!lastZaiError.includes("Rate limit") && !lastZaiError.includes("502") && !lastZaiError.includes("503")) {
+              break; // Do not retry client errors
             }
           }
           
@@ -358,53 +379,64 @@ aiRouter.post("/editor-chat", async (c) => {
   return streamSSE(c, async (stream) => {
     try {
       if (hasZai) {
-        const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "GLM-5.1",
-            messages: [
-              { role: "system", content: finalSystemPrompt },
-              ...messages
-            ],
-            stream: true,
-            max_tokens: 8192
-          })
-        });
+        try {
+          const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "GLM-5.1",
+              messages: [
+                { role: "system", content: finalSystemPrompt },
+                ...messages
+              ],
+              stream: true,
+              max_tokens: 4096
+            })
+          });
 
-        if (zaiRes.ok && zaiRes.body) {
-          const reader = zaiRes.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
+          const contentType = zaiRes.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const errData = await zaiRes.json() as any;
+            throw new Error(errData.error?.message || JSON.stringify(errData));
+          }
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+          if (!zaiRes.ok) {
+            throw new Error(await zaiRes.text());
+          }
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
+          if (zaiRes.body) {
+            const reader = zaiRes.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
 
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const dataStr = line.slice(6).trim();
-                if (dataStr === "[DONE]") continue;
-                try {
-                  const data = JSON.parse(dataStr);
-                  if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
-                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
-                  }
-                } catch (_e) { /* ignore */ }
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() || "";
+
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  const dataStr = line.slice(6).trim();
+                  if (dataStr === "[DONE]") continue;
+                  try {
+                    const data = JSON.parse(dataStr);
+                    if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                      await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
+                    }
+                  } catch (_e) { /* ignore */ }
+                }
               }
             }
+            return; // Successfully streamed z.ai, exit streamSSE callback
           }
-          return; // Successfully streamed z.ai, exit streamSSE callback
-        } else {
-          const errBody = await zaiRes.text().catch(() => "");
-          console.error("z.ai editor chat error, falling back to Workers AI:", zaiRes.status, errBody);
+        } catch (zaiErr) {
+          console.error("z.ai editor chat error, falling back to Workers AI:", zaiErr);
         }
       }
 
@@ -483,26 +515,32 @@ aiRouter.post("/suggest", persistentRateLimitMiddleware(30, 60), ensureAdmin, as
   try {
     // ── Premium path: z.ai ──
     if (hasZai) {
-      const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "GLM-5.1",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: safeContext }
-          ],
-          max_tokens: 100
-        })
-      });
+      try {
+        const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "GLM-5.1",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: safeContext }
+            ],
+            max_tokens: 100
+          })
+        });
 
-      if (zaiRes.ok) {
-        const data = await zaiRes.json() as { choices?: { message?: { content?: string } }[] };
+        if (!zaiRes.ok) throw new Error(await zaiRes.text());
+        
+        const data = await zaiRes.json() as any;
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+        
         const suggestion = data.choices?.[0]?.message?.content?.trim() || "";
         return c.json({ suggestion });
+      } catch (zaiErr) {
+        console.error("z.ai suggest error, falling back:", zaiErr);
       }
     }
 
@@ -717,57 +755,68 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
       if (hasZai) {
         console.log("[RAG] Using z.ai (GLM-5.1) — Z_AI_API_KEY present");
         await stream.writeSSE({ data: JSON.stringify({ model: "GLM-5.1" }) });
-        const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "GLM-5.1",
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...messages
-            ],
-            stream: true,
-            max_tokens: 8192
-          })
-        });
+        try {
+          const zaiRes = await fetch("https://api.z.ai/api/coding/paas/v4/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${c.env.Z_AI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "GLM-5.1",
+              messages: [
+                { role: "system", content: systemPrompt },
+                ...messages
+              ],
+              stream: true,
+              max_tokens: 4096
+            })
+          });
 
-        if (zaiRes.ok && zaiRes.body) {
-          const reader = zaiRes.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const dataStr = line.slice(6).trim();
-                if (dataStr === "[DONE]") continue;
-                try {
-                  const data = JSON.parse(dataStr);
-                  if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
-                    accumulatedText += data.choices[0].delta.content;
-                    await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
-                  }
-                } catch (_e) { /* ignore */ }
-              }
-            }
+          const contentType = zaiRes.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const errData = await zaiRes.json() as any;
+            throw new Error(errData.error?.message || JSON.stringify(errData));
           }
 
-          // z.ai succeeded — save history and return
-          await saveHistory(db, sessionId, historyMessages, safeQuery, accumulatedText);
-          return;
-        } else {
-          const errBody = await zaiRes.text().catch(() => "");
-          console.error("[RAG] z.ai error, falling back to Workers AI:", zaiRes.status, errBody);
+          if (!zaiRes.ok) {
+            throw new Error(await zaiRes.text());
+          }
+
+          if (zaiRes.body) {
+            const reader = zaiRes.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() || "";
+
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  const dataStr = line.slice(6).trim();
+                  if (dataStr === "[DONE]") continue;
+                  try {
+                    const data = JSON.parse(dataStr);
+                    if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                      accumulatedText += data.choices[0].delta.content;
+                      await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
+                    }
+                  } catch (_e) { /* ignore */ }
+                }
+              }
+            }
+
+            // z.ai succeeded — save history and return
+            await saveHistory(db, sessionId, historyMessages, safeQuery, accumulatedText);
+            return;
+          }
+        } catch (zaiErr) {
+          console.error("[RAG] z.ai error, falling back to Workers AI:", zaiErr);
         }
       }
 
