@@ -26,7 +26,7 @@ export function GlobalRAGChatbot() {
     if (sessionId && messages.length === 0) {
       fetch(`/api/ai/chat-session/${sessionId}`)
         .then(res => res.json())
-        .then(data => {
+        .then((data: any) => {
           if (data && data.messages && data.messages.length > 0) {
             setMessages(data.messages.map((m: any) => ({
               role: m.role === "assistant" ? "ai" : m.role,
