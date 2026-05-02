@@ -44,13 +44,13 @@ Plans:
 
 ### Phase 83: fix e2e errors.
 
-**Goal:** [To be planned]
+**Goal:** Resolve the End-to-End (E2E) errors identified in the Playwright suite.
 **Requirements**: TBD
 **Depends on:** Phase 82
-**Plans:** 0 plans
+**Plans:** 1 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 83 to break down)
+- [x] 83-01: Fix e2e errors
 
 ### Phase 84: make recurring calendar events
 
