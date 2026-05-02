@@ -101,3 +101,13 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 88 to break down)
+
+## Backlog
+
+### Phase 999.80: Follow-up — Phase 80 incomplete plans (BACKLOG)
+
+**Goal:** Resolve plans that ran without producing summaries during Phase 80 execution
+**Source phase:** 80
+**Deferred at:** 2026-05-02 during /gsd-next advancement to Phase 88
+**Plans:**
+- [ ] 80-01: github-loading (ran, no SUMMARY.md)
