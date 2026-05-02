@@ -681,3 +681,47 @@ CREATE TABLE simulations (
 
 CREATE INDEX IF NOT EXISTS idx_simulations_author ON simulations(author_id);
 CREATE INDEX IF NOT EXISTS idx_simulations_public ON simulations(is_public);
+
+
+CREATE TABLE IF NOT EXISTS entity_links (
+    id TEXT PRIMARY KEY,
+    source_type TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    target_type TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    link_type TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_entity_links_source ON entity_links(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_entity_links_target ON entity_links(target_type, target_id);
+
+CREATE TABLE IF NOT EXISTS finance_transactions (
+    id TEXT PRIMARY KEY,
+    amount REAL NOT NULL,
+    type TEXT NOT NULL,
+    category TEXT NOT NULL,
+    date TEXT NOT NULL,
+    description TEXT,
+    receipt_url TEXT,
+    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL,
+    logged_by TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_finance_tx_season ON finance_transactions(season_id);
+
+CREATE TABLE IF NOT EXISTS sponsorship_pipeline (
+    id TEXT PRIMARY KEY,
+    company_name TEXT NOT NULL,
+    contact_person TEXT,
+    status TEXT NOT NULL,
+    estimated_value REAL DEFAULT 0,
+    season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL,
+    notes TEXT,
+    zulip_message_id TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_sponsorship_season ON sponsorship_pipeline(season_id);
+
+CREATE TABLE IF NOT EXISTS sponsorship_assignments (
+    sponsorship_id TEXT NOT NULL REFERENCES sponsorship_pipeline(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+    PRIMARY KEY (sponsorship_id, user_id)
+);

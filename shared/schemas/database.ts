@@ -182,6 +182,15 @@ export interface DocumentHistory {
   room_id: string;
 }
 
+export interface EntityLinks {
+  id: string | null;
+  link_type: string | null;
+  source_id: string;
+  source_type: string;
+  target_id: string;
+  target_type: string;
+}
+
 export interface Events {
   category: Generated<string | null>;
   content_draft: string | null;
@@ -268,6 +277,18 @@ export interface ExternalKnowledgeSources {
   status: Generated<string | null>;
   type: string;
   url: string;
+}
+
+export interface FinanceTransactions {
+  amount: number;
+  category: string;
+  date: string;
+  description: string | null;
+  id: string | null;
+  logged_by: string | null;
+  receipt_url: string | null;
+  season_id: number | null;
+  type: string;
 }
 
 export interface Inquiries {
@@ -521,6 +542,23 @@ export interface Sponsors {
   website_url: string | null;
 }
 
+export interface SponsorshipAssignments {
+  sponsorship_id: string;
+  user_id: string;
+}
+
+export interface SponsorshipPipeline {
+  company_name: string;
+  contact_person: string | null;
+  created_at: Generated<string | null>;
+  estimated_value: Generated<number | null>;
+  id: string | null;
+  notes: string | null;
+  season_id: number | null;
+  status: string;
+  zulip_message_id: string | null;
+}
+
 export interface SponsorTokens {
   created_at: Generated<string | null>;
   created_by: string | null;
@@ -674,6 +712,7 @@ export interface DB {
   docs_history: DocsHistory;
   document_contributors: DocumentContributors;
   document_history: DocumentHistory;
+  entity_links: EntityLinks;
   event_signups: EventSignups;
   events: Events;
   events_fts: EventsFts;
@@ -683,6 +722,7 @@ export interface DB {
   events_fts_docsize: EventsFtsDocsize;
   events_fts_idx: EventsFtsIdx;
   external_knowledge_sources: ExternalKnowledgeSources;
+  finance_transactions: FinanceTransactions;
   inquiries: Inquiries;
   judge_access_codes: JudgeAccessCodes;
   locations: Locations;
@@ -709,6 +749,8 @@ export interface DB {
   sponsor_metrics: SponsorMetrics;
   sponsor_tokens: SponsorTokens;
   sponsors: Sponsors;
+  sponsorship_assignments: SponsorshipAssignments;
+  sponsorship_pipeline: SponsorshipPipeline;
   task_assignments: TaskAssignments;
   tasks: Tasks;
   user: User;
