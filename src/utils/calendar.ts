@@ -3,6 +3,7 @@ export const downloadICS = (event: {
   date_start: string;
   date_end?: string | null;
   location?: string | null;
+  location_address?: string | null;
 }) => {
   if (!event) return;
   const startStr = new Date(event.date_start).toISOString().replace(/-|:|\.\d+/g, '');
@@ -15,6 +16,11 @@ export const downloadICS = (event: {
     endStr = end.toISOString().replace(/-|:|\.\d+/g, '');
   }
 
+  const locationParts = [];
+  if (event.location) locationParts.push(event.location);
+  if (event.location_address) locationParts.push(event.location_address);
+  const locationString = locationParts.join(', ').replace(/,/g, '\\,');
+
   const icsData = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -22,7 +28,7 @@ export const downloadICS = (event: {
     `DTSTART:${startStr}`,
     `DTEND:${endStr}`,
     `SUMMARY:${event.title}`,
-    `LOCATION:${event.location || ''}`,
+    `LOCATION:${locationString}`,
     'END:VEVENT',
     'END:VCALENDAR'
   ].join('\r\n');
