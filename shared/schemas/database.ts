@@ -52,33 +52,6 @@ export interface Awards {
   title: string;
 }
 
-export interface AwardsFts {
-  description: string | null;
-  event_name: string | null;
-  title: string | null;
-}
-
-export interface AwardsFtsConfig {
-  k: string;
-  v: string | null;
-}
-
-export interface AwardsFtsData {
-  block: Uint8Array | null;
-  id: Generated<number | null>;
-}
-
-export interface AwardsFtsDocsize {
-  id: Generated<number | null>;
-  sz: Uint8Array | null;
-}
-
-export interface AwardsFtsIdx {
-  pgno: string | null;
-  segid: string;
-  term: string;
-}
-
 export interface Badges {
   color_theme: Generated<string | null>;
   created_at: Generated<string | null>;
@@ -112,11 +85,6 @@ export interface D1Migrations {
   applied_at: Generated<string>;
   id: Generated<number | null>;
   name: string | null;
-}
-
-export interface DietaryCategories {
-  category: string;
-  restriction: string | null;
 }
 
 export interface Docs {
@@ -214,19 +182,8 @@ export interface DocumentHistory {
   room_id: string;
 }
 
-export interface EntityLinks {
-  created_at: Generated<string | null>;
-  id: string | null;
-  link_type: Generated<string | null>;
-  source_id: string;
-  source_type: string;
-  target_id: string;
-  target_type: string;
-}
-
 export interface Events {
   category: Generated<string | null>;
-  cf_email: string | null;
   content_draft: string | null;
   cover_image: string | null;
   date_end: string | null;
@@ -240,15 +197,15 @@ export interface Events {
   location: string | null;
   meeting_notes: string | null;
   published_at: string | null;
+  recurring_exception: Generated<number | null>;
+  recurring_group_id: string | null;
   revision_of: string | null;
+  rrule: string | null;
   season_id: number | null;
   status: Generated<string | null>;
   tba_event_key: string | null;
   title: string;
   updated_at: Generated<string | null>;
-  recurring_group_id: string | null;
-  rrule: string | null;
-  recurring_exception: Generated<number | null>;
 }
 
 export interface EventsFts {
@@ -313,23 +270,11 @@ export interface ExternalKnowledgeSources {
   url: string;
 }
 
-export interface FinanceTransactions {
-  amount: number;
-  category: string;
-  created_at: Generated<string | null>;
-  date: string;
-  description: string | null;
-  id: string | null;
-  logged_by: string | null;
-  receipt_url: string | null;
-  season_id: number | null;
-  type: string;
-}
-
 export interface Inquiries {
   created_at: Generated<string | null>;
   email: string;
   id: string | null;
+  is_deleted: Generated<number | null>;
   metadata: string | null;
   name: string;
   notes: string | null;
@@ -352,17 +297,6 @@ export interface Locations {
   is_deleted: Generated<number | null>;
   maps_url: string | null;
   name: string;
-}
-
-export interface MatchStrategy {
-  created_at: Generated<string | null>;
-  event_id: string;
-  id: string | null;
-  match_number: number;
-  our_role: string | null;
-  partner_team: string | null;
-  post_match_result: string | null;
-  strategy_notes: string | null;
 }
 
 export interface MediaTags {
@@ -400,36 +334,8 @@ export interface Orders {
   updated_at: Generated<string | null>;
 }
 
-export interface OutreachFts {
-  impact_summary: string | null;
-  location: string | null;
-  title: string | null;
-}
-
-export interface OutreachFtsConfig {
-  k: string;
-  v: string | null;
-}
-
-export interface OutreachFtsData {
-  block: Uint8Array | null;
-  id: Generated<number | null>;
-}
-
-export interface OutreachFtsDocsize {
-  id: Generated<number | null>;
-  sz: Uint8Array | null;
-}
-
-export interface OutreachFtsIdx {
-  pgno: string | null;
-  segid: string;
-  term: string;
-}
-
 export interface OutreachLogs {
   cf_email: string | null;
-  core_values: string | null;
   created_at: Generated<string | null>;
   date: string;
   hours: number | null;
@@ -453,22 +359,6 @@ export interface PageAnalytics {
   referrer: string | null;
   timestamp: Generated<string | null>;
   user_agent: string | null;
-}
-
-export interface PitScouting {
-  can_help_with: string | null;
-  created_at: Generated<string | null>;
-  drive_train: string | null;
-  event_id: string;
-  id: string | null;
-  image_url: string | null;
-  needs_help_with: string | null;
-  notes: string | null;
-  scoring_capabilities: string | null;
-  scouted_by: string | null;
-  team_name: string | null;
-  team_number: string;
-  updated_at: Generated<string | null>;
 }
 
 export interface PointsLedger {
@@ -567,17 +457,6 @@ export interface RateLimits {
   ip: string | null;
 }
 
-export interface SeasonGoals {
-  category: string;
-  created_at: Generated<string | null>;
-  current_value: Generated<number | null>;
-  id: string | null;
-  notes: string | null;
-  season_id: number;
-  target_value: number;
-  updated_at: Generated<string | null>;
-}
-
 export interface Seasons {
   album_cover: string | null;
   album_url: string | null;
@@ -640,25 +519,6 @@ export interface Sponsors {
   name: string;
   tier: string;
   website_url: string | null;
-}
-
-export interface SponsorshipAssignments {
-  sponsorship_id: string;
-  user_id: string;
-}
-
-export interface SponsorshipPipeline {
-  company_name: string;
-  contact_person: string | null;
-  created_at: Generated<string | null>;
-  estimated_value: Generated<number | null>;
-  id: string | null;
-  notes: string | null;
-  season_id: number | null;
-  sponsor_id: string | null;
-  status: Generated<string>;
-  updated_at: Generated<string | null>;
-  zulip_message_id: string | null;
 }
 
 export interface SponsorTokens {
@@ -799,16 +659,10 @@ export interface DB {
   account: Account;
   audit_log: AuditLog;
   awards: Awards;
-  awards_fts: AwardsFts;
-  awards_fts_config: AwardsFtsConfig;
-  awards_fts_data: AwardsFtsData;
-  awards_fts_docsize: AwardsFtsDocsize;
-  awards_fts_idx: AwardsFtsIdx;
   badges: Badges;
   chat_sessions: ChatSessions;
   comments: Comments;
   d1_migrations: D1Migrations;
-  dietary_categories: DietaryCategories;
   docs: Docs;
   docs_feedback: DocsFeedback;
   docs_fts: DocsFts;
@@ -820,7 +674,6 @@ export interface DB {
   docs_history: DocsHistory;
   document_contributors: DocumentContributors;
   document_history: DocumentHistory;
-  entity_links: EntityLinks;
   event_signups: EventSignups;
   events: Events;
   events_fts: EventsFts;
@@ -830,22 +683,14 @@ export interface DB {
   events_fts_docsize: EventsFtsDocsize;
   events_fts_idx: EventsFtsIdx;
   external_knowledge_sources: ExternalKnowledgeSources;
-  finance_transactions: FinanceTransactions;
   inquiries: Inquiries;
   judge_access_codes: JudgeAccessCodes;
   locations: Locations;
-  match_strategy: MatchStrategy;
   media_tags: MediaTags;
   notifications: Notifications;
   orders: Orders;
-  outreach_fts: OutreachFts;
-  outreach_fts_config: OutreachFtsConfig;
-  outreach_fts_data: OutreachFtsData;
-  outreach_fts_docsize: OutreachFtsDocsize;
-  outreach_fts_idx: OutreachFtsIdx;
   outreach_logs: OutreachLogs;
   page_analytics: PageAnalytics;
-  pit_scouting: PitScouting;
   points_ledger: PointsLedger;
   posts: Posts;
   posts_fts: PostsFts;
@@ -857,7 +702,6 @@ export interface DB {
   posts_history: PostsHistory;
   products: Products;
   rate_limits: RateLimits;
-  season_goals: SeasonGoals;
   seasons: Seasons;
   session: Session;
   settings: Settings;
@@ -865,8 +709,6 @@ export interface DB {
   sponsor_metrics: SponsorMetrics;
   sponsor_tokens: SponsorTokens;
   sponsors: Sponsors;
-  sponsorship_assignments: SponsorshipAssignments;
-  sponsorship_pipeline: SponsorshipPipeline;
   task_assignments: TaskAssignments;
   tasks: Tasks;
   user: User;

@@ -60,10 +60,10 @@ Plans:
 **Plans:** 1 plans
 
 Plans:
-- [ ] 84-01: Schema Update for Recurrence
-- [ ] 84-02: Update Event Contracts
-- [ ] 84-03: Backend Route for Recurring Event Generation
-- [ ] 84-04: UI Implementation
+- [x] 84-01: Schema Update for Recurrence
+- [x] 84-02: Update Event Contracts
+- [x] 84-03: Backend Route for Recurring Event Generation
+- [x] 84-04: UI Implementation
 
 ### Phase 85: Upgrade Simulation Playground IDE
 
@@ -73,7 +73,7 @@ Plans:
 **Plans:** 0 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 85 to break down)
+- [x] 85-01: Implement Monaco IDE Upgrades
 
 ### Phase 86: I get a Network error when I try to publish a recurrent event.
 
