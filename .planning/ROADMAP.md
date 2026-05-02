@@ -34,13 +34,13 @@ Plans:
 
 ### Phase 82: Science Corner & Sandbox Expansion
 
-**Goal:** [To be planned]
+**Goal:** Implement standalone public-facing Science Corner with hybrid simulation engines and state persistence.
 **Requirements**: TBD
 **Depends on:** Phase 81
-**Plans:** 0 plans
+**Plans:** 1 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 82 to break down)
+- [x] 82-01: Implement Science Corner Sandbox
 
 ### Phase 83: fix e2e errors.
 
