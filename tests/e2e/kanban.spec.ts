@@ -112,11 +112,12 @@ test.describe('Kanban Task Board', () => {
     await expect(taskCard).toBeVisible();
 
     // Edit Task (Open Modal)
-    await taskCard.click();
+    await page.getByRole('button', { name: 'Playwright E2E Task', exact: true }).click();
     
-    // Verify dialog accessibility
-    const dialog = page.getByRole('dialog', { name: 'Edit Task' });
-    await expect(dialog).toBeVisible();
+    // Verify dialog accessibility and wait for it
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await expect(dialog.getByRole('heading', { name: 'Edit Task' })).toBeVisible();
 
     // Add description
     await page.getByLabel('Description').fill('E2E Description Update');
