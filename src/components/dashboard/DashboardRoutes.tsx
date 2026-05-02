@@ -67,7 +67,7 @@ export default function DashboardRoutes({
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { isAdmin, canSeeInquiries, canSeeLogistics, canSeeTasks } = permissions;
+  const { isAdmin, canSeeInquiries, canSeeLogistics, canSeeTasks, canSeeSimulations } = permissions;
 
   const routes = useMemo(() => (
     <Routes location={location}>
@@ -100,9 +100,9 @@ export default function DashboardRoutes({
       <Route path="tasks/:taskId" element={canSeeTasks ? <TaskDetailPage /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="mass_email" element={isAdmin ? <MassEmailComposer /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="store_orders" element={isAdmin ? <StoreOrders /> : <div className="text-center py-20">Access Denied</div>} />
-      <Route path="simulations" element={isAdmin ? <SimulationPlayground /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="simulations" element={canSeeSimulations ? <SimulationPlayground /> : <div className="text-center py-20">Access Denied</div>} />
     </Routes>
-  ), [location, session?.user?.role, notifications, navigate, isAdmin, canSeeInquiries, canSeeLogistics, canSeeTasks, stats]);
+  ), [location, session?.user?.role, notifications, navigate, isAdmin, canSeeInquiries, canSeeLogistics, canSeeTasks, canSeeSimulations, stats]);
 
   return (
     <div className="flex-1 w-full relative flex flex-col">

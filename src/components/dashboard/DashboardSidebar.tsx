@@ -91,7 +91,7 @@ export default function DashboardSidebar({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
 
-  const { isAuthorized, canSeeInquiries, isAdmin, canSeeLogistics, canSeeTasks, role, memberType } = permissions;
+  const { isAuthorized, canSeeInquiries, isAdmin, canSeeLogistics, canSeeTasks, canSeeSimulations, role, memberType } = permissions;
   const { pendingInquiriesCount, pendingPostsCount, pendingEventsCount, pendingDocsCount } = notifications;
 
   return (
@@ -193,6 +193,7 @@ export default function DashboardSidebar({
                 <NavButton tab="tasks" icon={LayoutDashboard} label="Kanban Tasks" currentPath={location.pathname} />
                 <NavButton tab="outreach" icon={Target} label="Outreach Tracker" currentPath={location.pathname} />
                 <NavButton tab="locations" icon={MapPin} label="Meeting Locations" currentPath={location.pathname} />
+                {canSeeSimulations && <NavButton tab="simulations" icon={Sparkles} label="Sim Playground" currentPath={location.pathname} />}
               </div>
             </div>
           )}
@@ -207,7 +208,6 @@ export default function DashboardSidebar({
                 <NavButton tab="event" icon={Calendar} label={location.pathname.includes("/dashboard/event/") ? "Edit Event (Active)" : "New Event"} currentPath={location.pathname} />
                 <NavButton tab="docs" icon={Book} label={location.pathname.includes("/dashboard/docs/") ? "Edit Doc (Active)" : "New Document"} currentPath={location.pathname} />
                 <NavButton tab="seasons" icon={History} label={location.pathname.includes("/dashboard/seasons/") ? "Edit Legacy (Active)" : "Forge Legacy"} currentPath={location.pathname} />
-                {isAdmin && <NavButton tab="simulations" icon={Sparkles} label="Sim Playground" currentPath={location.pathname} />}
               </div>
             </div>
           )}

@@ -26,6 +26,7 @@ export interface DashboardPermissions {
   canSeeInquiries: boolean;
   canSeeLogistics: boolean;
   canSeeTasks: boolean;
+  canSeeSimulations: boolean;
 }
 
 export function useDashboardSession() {
@@ -61,6 +62,7 @@ export function useDashboardSession() {
     const canSeeInquiries = !isUnverified;
     const canSeeLogistics = isAdmin || ["parent", "coach", "mentor"].includes(memberType);
     const canSeeTasks = !isUnverified;
+    const canSeeSimulations = !isUnverified;
 
     return {
       role,
@@ -71,6 +73,7 @@ export function useDashboardSession() {
       canSeeInquiries,
       canSeeLogistics,
       canSeeTasks,
+      canSeeSimulations,
     };
   }, [session]);
 
