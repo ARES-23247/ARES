@@ -30,8 +30,6 @@ const PRIORITY_OPTIONS = [
   { value: "urgent", label: "Urgent", color: "bg-ares-red/20 text-ares-red" },
 ];
 
-const SUBTEAMS = KANBAN_SUBTEAMS;
-
 export default function TaskEditDrawer({ task, onClose, onSave, onDelete }: TaskEditDrawerProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
@@ -252,7 +250,7 @@ export default function TaskEditDrawer({ task, onClose, onSave, onDelete }: Task
               className="w-full bg-ares-gray-dark/50 border border-white/10 text-white text-sm px-3 py-2.5 ares-cut-sm outline-none focus:border-ares-cyan/50 transition-colors"
             >
               <option value="">No Subteam</option>
-              {SUBTEAMS.map(team => (
+              {KANBAN_SUBTEAMS.map(team => (
                 <option key={team} value={team}>{team}</option>
               ))}
             </select>

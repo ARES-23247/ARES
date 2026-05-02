@@ -56,6 +56,10 @@ test.describe('Kanban Task Board', () => {
       path: '/'
     }]);
 
+    await page.addInitScript(() => {
+      (window as any).__PLAYWRIGHT_TEST__ = true;
+    });
+
     // In-memory tasks store for the mock session
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockTasks: any[] = [];

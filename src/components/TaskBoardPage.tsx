@@ -212,6 +212,12 @@ export default function TaskBoardPage() {
     </div>
   );
 
+  // Bypass Liveblocks realtime connections during E2E testing
+  const isE2E = typeof window !== "undefined" && (window as any).__PLAYWRIGHT_TEST__;
+  if (isE2E) {
+    return boardContent;
+  }
+
   return (
     <RoomProvider id="room-tasks-global" initialPresence={{ cursor: null }}>
       <ClientSideSuspense fallback={<div className="py-20 text-center text-ares-gray">Connecting to realtime...</div>}>
