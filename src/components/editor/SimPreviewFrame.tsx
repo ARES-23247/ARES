@@ -141,6 +141,19 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       return true;
     };
     
+    ['log', 'warn', 'error', 'info'].forEach(level => {
+      const original = console[level];
+      console[level] = function(...args) {
+        parent.postMessage({
+          type: 'sim-console',
+          level,
+          args: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)),
+          timestamp: Date.now()
+        }, '*');
+        original.apply(console, args);
+      };
+    });
+    
     // Now that scripts are loaded, populate the virtual modules with the global exports
     window.__virtualModules["areslib"] = {
       exports: {
