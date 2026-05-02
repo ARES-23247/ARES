@@ -50,3 +50,13 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 83 to break down)
+
+### Phase 84: make recurring calendar events
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 83
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 84 to break down)
