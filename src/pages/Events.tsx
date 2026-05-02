@@ -18,6 +18,7 @@ import { CalendarSubscriptionBanner } from "../components/calendar/CalendarSubsc
 export default function Events() {
   const [view, setView] = useState<"month" | "agenda">("month");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [showAllPast, setShowAllPast] = useState(false);
 
   const { data: eventsRes, isLoading } = api.events.getEvents.useQuery(["events"], {});
 
@@ -216,7 +217,7 @@ export default function Events() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {upcomingPractices.map(evt => <EventCard key={evt.id} event={evt} isPast={false} />)}
+                  {upcomingPractices.slice(0, 12).map(evt => <EventCard key={evt.id} event={evt} isPast={false} />)}
                 </div>
               </div>
             )}
@@ -233,7 +234,7 @@ export default function Events() {
                       <div className="h-px flex-1 bg-gradient-to-r from-ares-gold/30 to-transparent"></div>
                     </div>
                     <div className="flex flex-col gap-4">
-                      {pastOutreach.map(evt => <EventCard key={evt.id} event={evt} isPast={true} />)}
+                      {(showAllPast ? pastOutreach : pastOutreach.slice(0, 3)).map(evt => <EventCard key={evt.id} event={evt} isPast={true} />)}
                     </div>
                   </div>
                 )}
@@ -245,8 +246,29 @@ export default function Events() {
                       <div className="h-px flex-1 bg-gradient-to-r from-ares-red/30 to-transparent"></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {pastPractices.map(evt => <EventCard key={evt.id} event={evt} isPast={true} />)}
+                      {(showAllPast ? pastPractices : pastPractices.slice(0, 6)).map(evt => <EventCard key={evt.id} event={evt} isPast={true} />)}
                     </div>
+                  </div>
+                )}
+
+                {(!showAllPast && (pastOutreach.length > 3 || pastPractices.length > 6)) && (
+                  <div className="mt-8 flex justify-center">
+                    <button 
+                      onClick={() => setShowAllPast(true)}
+                      className="px-6 py-2 border border-white/20 text-white/70 hover:text-white hover:bg-white/10 transition-colors uppercase tracking-widest text-sm font-bold"
+                    >
+                      Show All Past Events
+                    </button>
+                  </div>
+                )}
+                {showAllPast && (
+                  <div className="mt-8 flex justify-center">
+                    <button 
+                      onClick={() => setShowAllPast(false)}
+                      className="px-6 py-2 border border-white/20 text-white/70 hover:text-white hover:bg-white/10 transition-colors uppercase tracking-widest text-sm font-bold"
+                    >
+                      Show Less
+                    </button>
                   </div>
                 )}
               </div>
