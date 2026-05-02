@@ -73,10 +73,11 @@ Plans:
 
 ### Phase 86: I get a Network error when I try to publish a recurrent event.
 
-**Goal:** [To be planned]
+**Goal:** Resolve the 500 "Write failed" database error when saving recurring events.
 **Requirements**: TBD
 **Depends on:** Phase 85
-**Plans:** 0 plans
+**Plans:** 1 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 86 to break down)
+- [x] Fix D1 variable offset limit by chunking database inserts.
+- [x] Remove erroneous `cf_email` mapping to align with `events` table schema.
