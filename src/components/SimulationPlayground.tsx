@@ -776,7 +776,7 @@ USER REQUEST: ${msg}`;
         const { toast } = await import("sonner");
         toast.success("Saved simulation!");
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(() => ({})) as Record<string, any>;
         const { toast } = await import("sonner");
         toast.error(`Save failed: ${errData.error || res.statusText}`);
       }
