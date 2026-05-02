@@ -749,6 +749,7 @@ describe("Hono Backend - Events Router", () => {
   });
 
   it("DELETE /admin/:id - handles gcal delete", async () => {
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", recurring_group_id: null, date_start: "2026-01-01" });
     mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", gcal_event_id: "gcal-1", category: "internal" });
     const { deleteEventFromGcal } = await import("../../../utils/gcalSync");
     const res = await testApp.request("/admin/1", {

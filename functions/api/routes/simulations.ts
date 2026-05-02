@@ -88,8 +88,8 @@ simulationsRouter.get("/:id", async (c) => {
 // Save simulation to GitHub
 simulationsRouter.post("/", async (c) => {
   try {
-    const session = c.get("session");
-    if (!session?.user) {
+    const sessionUser = c.get("sessionUser");
+    if (!sessionUser) {
       return c.json({ error: "Unauthorized" }, 401);
     }
     
@@ -139,7 +139,7 @@ simulationsRouter.post("/", async (c) => {
     let sha: string | undefined;
     const getRes = await fetch(url, { headers });
     if (getRes.ok) {
-      const getJson = await getRes.json();
+      const getJson = (await getRes.json()) as any;
       sha = getJson.sha;
     }
     
@@ -164,7 +164,7 @@ simulationsRouter.post("/", async (c) => {
       const regUrl = `https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/simRegistry.json`;
       const regGetRes = await fetch(regUrl, { headers });
       if (regGetRes.ok) {
-        const regJson = await regGetRes.json();
+        const regJson = (await regGetRes.json()) as any;
         const regSha = regJson.sha;
         const regContentStr = decodeURIComponent(escape(atob(regJson.content)));
         try {
@@ -206,8 +206,8 @@ simulationsRouter.post("/", async (c) => {
 // Delete simulation from GitHub
 simulationsRouter.delete("/:id", async (c) => {
   try {
-    const session = c.get("session");
-    if (!session?.user) {
+    const sessionUser = c.get("sessionUser");
+    if (!sessionUser) {
       return c.json({ error: "Unauthorized" }, 401);
     }
     
@@ -240,7 +240,7 @@ simulationsRouter.delete("/:id", async (c) => {
     let sha: string | undefined;
     const getRes = await fetch(url, { headers });
     if (getRes.ok) {
-      const getJson = await getRes.json();
+      const getJson = (await getRes.json()) as any;
       sha = getJson.sha;
     }
     
@@ -263,7 +263,7 @@ simulationsRouter.delete("/:id", async (c) => {
     const regUrl = `https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/simRegistry.json`;
     const regGetRes = await fetch(regUrl, { headers });
     if (regGetRes.ok) {
-      const regJson = await regGetRes.json();
+      const regJson = (await regGetRes.json()) as any;
       const regSha = regJson.sha;
       const regContentStr = decodeURIComponent(escape(atob(regJson.content)));
       try {

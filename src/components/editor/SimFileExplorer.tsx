@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, ReactNode } from "react";
 import { Folder, File, FileCode, Plus, FolderPlus, Trash2, Edit2, ChevronRight, ChevronDown } from "lucide-react";
 
 interface SimFileExplorerProps {
@@ -105,7 +105,7 @@ export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: 
     }
   };
 
-  const renderNode = (node: FileNode, level: number = 0) => {
+  const renderNode = (node: FileNode, level: number = 0): ReactNode => {
     if (node.name === "root") {
       return Object.values(node.children || {}).sort((a,b) => {
         if (a.type === b.type) return a.name.localeCompare(b.name);
