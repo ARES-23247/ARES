@@ -90,6 +90,11 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
   const [recurringGroupId, setRecurringGroupId] = useState<string | null>(null);
   const [updateMode, setUpdateMode] = useState<"single" | "following">("single");
 
+  const [rruleFreq, setRruleFreq] = useState("");
+  const [limitType, setLimitType] = useState<"none" | "count" | "date">("none");
+  const [limitCount, setLimitCount] = useState("");
+  const [limitDate, setLimitDate] = useState("");
+
   const { data: locations = [] } = useQuery<LocationRow[]>({
     queryKey: ["locations"],
     queryFn: async () => {
@@ -142,8 +147,30 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
         publishedAt: event.published_at || "",
         seasonId: event.season_id ? Number(event.season_id) : undefined,
         socials: (eventRes.body as unknown as { socials?: Record<string, boolean> })?.socials || {},
-        rrule: event.rrule || ""
       });
+
+      // Parse rrule
+      let parsedFreq = "";
+      let parsedLimitType: "none" | "count" | "date" = "none";
+      let parsedLimitCount = "";
+      let parsedLimitDate = "";
+
+      if (event.rrule) {
+        const parts = event.rrule.split(';');
+        parts.forEach((p: string) => {
+          if (p.startsWith('FREQ=')) parsedFreq = p;
+          else if (p.startsWith('COUNT=')) { parsedLimitType = "count"; parsedLimitCount = p.substring(6); }
+          else if (p.startsWith('UNTIL=')) { 
+            parsedLimitType = "date"; 
+            const dStr = p.substring(6); 
+            if (dStr.length >= 8) parsedLimitDate = `${dStr.substring(0,4)}-${dStr.substring(4,6)}-${dStr.substring(6,8)}`;
+          }
+        });
+      }
+      setRruleFreq(parsedFreq);
+      setLimitType(parsedLimitType);
+      setLimitCount(parsedLimitCount);
+      setLimitDate(parsedLimitDate);
 
       setRecurringGroupId(event.recurring_group_id || null);
 
@@ -216,8 +243,15 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
   });
 
   const onFormSubmit = (data: EventPayload, isDraft = false) => {
+    let finalRrule = rruleFreq;
+    if (finalRrule && limitType === 'count' && limitCount) {
+      finalRrule += `;COUNT=${limitCount}`;
+    } else if (finalRrule && limitType === 'date' && limitDate) {
+      finalRrule += `;UNTIL=${limitDate.replace(/-/g, '')}T000000Z`;
+    }
+
     const finalDescription = editor ? JSON.stringify(editor.getJSON()) : data.description;
-    const payload = { ...data, description: finalDescription, meetingNotes: "", isDraft, updateMode };
+    const payload = { ...data, description: finalDescription, meetingNotes: "", isDraft, updateMode, rrule: finalRrule };
     if (editId) {
       updateMutation.mutate({ params: { id: editId }, body: payload });
     } else {
@@ -399,7 +433,15 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
           <label htmlFor="event-rrule" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Repeats</label>
           <select
             id="event-rrule"
-            {...register("rrule")}
+            value={rruleFreq}
+            onChange={(e) => {
+              setRruleFreq(e.target.value);
+              if (!e.target.value) {
+                setLimitType("none");
+                setLimitCount("");
+                setLimitDate("");
+              }
+            }}
             className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none"
           >
             <option value="">Never</option>
@@ -409,6 +451,50 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
           </select>
         </div>
       </div>
+
+      {rruleFreq && (
+        <div className="flex flex-col md:flex-row gap-4 p-4 border border-white/10 bg-black/20 ares-cut-sm mb-4">
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Recurrence Limit</label>
+            <select
+              value={limitType}
+              onChange={(e) => setLimitType(e.target.value as "none" | "count" | "date")}
+              className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none"
+            >
+              <option value="none">Forever (Max 52 instances)</option>
+              <option value="count">End after X occurrences</option>
+              <option value="date">End by specific date</option>
+            </select>
+          </div>
+          
+          {limitType === 'count' && (
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Number of Occurrences</label>
+              <input
+                type="number"
+                min="1"
+                max="52"
+                value={limitCount}
+                onChange={(e) => setLimitCount(e.target.value)}
+                className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner"
+                placeholder="e.g. 10"
+              />
+            </div>
+          )}
+          
+          {limitType === 'date' && (
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">End Date</label>
+              <input
+                type="date"
+                value={limitDate}
+                onChange={(e) => setLimitDate(e.target.value)}
+                className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner [&::-webkit-calendar-picker-indicator]:invert"
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <EventPotluckVolunteerFlags 
         isPotluck={formValues.isPotluck || false} 
