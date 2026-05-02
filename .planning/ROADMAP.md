@@ -1,6 +1,6 @@
-# Proposed Roadmap
+﻿# Proposed Roadmap
 
-**3 phases** | **4 requirements mapped** | All covered ✓
+**3 phases** | **4 requirements mapped** | All covered âœ“
 
 ## Milestone v5.5
 
@@ -94,20 +94,21 @@ Plans:
 
 ### Phase 88: Refactor recurring events: fix calendar overflow, add repeat frequency limits, and support individual instance deletion
 
-**Goal:** [To be planned]
+**Goal:** Fix calendar overflow, add repeat limits, allow individual deletion
 **Requirements**: TBD
 **Depends on:** Phase 87
-**Plans:** 0 plans
+**Plans:** 1 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 88 to break down)
+- [x] 88-01: Verify implemented components
 
 ## Backlog
 
-### Phase 999.80: Follow-up � Phase 80 incomplete plans (BACKLOG)
+### Phase 999.80: Follow-up — Phase 80 incomplete plans (BACKLOG)
 
 **Goal:** Resolve plans that ran without producing summaries during Phase 80 execution
 **Source phase:** 80
 **Deferred at:** 2026-05-02 during /gsd-next advancement to Phase 88
 **Plans:**
 - [ ] 80-01: github-loading (ran, no SUMMARY.md)
+
