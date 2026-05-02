@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
 milestone: v5.6
-milestone_name: Fix Simulation Playground Saving
+milestone_name: "Planning next milestone"
 status: planning
-last_updated: "2026-05-02T11:45:14.872Z"
+last_updated: "2026-05-02T13:43:00.000Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 0
@@ -15,15 +15,16 @@ progress:
 
 # System State
 
-**Current Milestone**: v5.5 (Simulation GitHub Loading Fix)
-**Current Phase**: Phase 81
+**Current Milestone**: v5.6 (Planning)
+**Current Phase**: Not started
 **Status**: in_progress
 
 ## Context
 
-ARESWEB has completed Milestone v5.4. The Simulation Playground storage has been successfully migrated to GitHub, the editor supports dynamic streaming via AI, and the IDE reliably handles multi-file simulation dependencies. The Rich Text Editor now supports a persistent chat sidebar and fullscreen mode. Recent fixes include resolving a layout regression where the footer overlapped the fullscreen editor, integrating a "Fix Grammar" feature into the AI Copilot menu, and repositioning the Global RAG Chatbot toggle into the main Navbar. The project is now starting Milestone v5.5.
+ARESWEB has completed Milestone v5.5 (Kanban, Science Corner & Recurring Events). 
+This milestone introduced the official GitHub simulation loading feature, a massive expansion to the Science Corner sandbox with hybrid engine wrappers (Matter.js & Dyn4j), robust end-to-end (e2e) tests for authentication, and recurring calendar events with frequency limiters. Additionally, it unified the Kanban Subteams and delivered an automated Zulip User Auditor inside the Admin Dashboard.
 
-**Hotfix / Infrastructure Update:** The ARESWEB AI infrastructure has been successfully migrated to Zhipu AI's GLM-5.1 model. Rate limiting and Turnstile siteverify protections were added to public AI endpoints. A robust `try/catch` JSON error detection and fallback path to Cloudflare Workers AI (Llama 3.1) was implemented across all 5 AI routes (`/rag-chatbot`, `/liveblocks-copilot`, `/editor-chat`, `/suggest`, and `/sim-playground`) to ensure stability during Z.AI network interruptions. The RAG Chatbot Turnstile implementation was unified with the project's internal `Turnstile.tsx` wrapper to ensure single-use token recycling and support local development bypasses via the shared `verifyTurnstile` security middleware.
+The project is now starting Milestone v5.6.
 
 ## Current Focus
 
@@ -31,20 +32,14 @@ ARESWEB has completed Milestone v5.4. The Simulation Playground storage has been
 
 ## Next Steps
 
-- Define features and requirements for Milestone v5.5 and create the corresponding phases.
+- Define features and requirements for Milestone v5.6 and create the corresponding phases.
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
-- Milestone v5.4 completed and archived.
-- Out-of-band Phase completed: Migrated all AI endpoints to GLM-5.1 with comprehensive fallback error handling and Turnstile protection.
-- Phase 83 added: fix e2e errors.
-- Phase 84 added: make recurring calendar events
-- Phase 86 added and completed (off-protocol): Fixed network error during recurring event publication by resolving D1 variable limits and invalid schema mappings. Added Monte Hall simulation to registry.
-- Phase 87 added: fix up the science corner. Add a link in the footer. The science corner sims do not work. Also is there an admin interface to put sims/lessons in the sicence corner. I would like things to be more like documents/blogs with both text and embedded sims. I am not sure it needs to have seperate storage as we can use the regular sims. Should be integrate the science corner better with our sims (give the sims better access to the physics engines?) I would like help brainstorming
-- Phase 88 added: Refactor recurring events: fix calendar overflow, add repeat frequency limits, and support individual instance deletion
-- Phase 89 added: the kanban cards still aren't showing up
+- Milestone v5.5 completed and archived into `.planning/milestones/v5.5-ROADMAP.md`.
+- All Phase directories (80-89) archived into `.planning/milestones/v5.5-phases/`.
 
 ## Current Position
 
