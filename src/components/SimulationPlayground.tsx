@@ -762,6 +762,7 @@ USER REQUEST: ${msg}`;
       const res = await fetch("/api/simulations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name: simName, files: files, ...(simId ? { id: simId } : {}) }),
       });
       if (res.ok) {
@@ -774,9 +775,15 @@ USER REQUEST: ${msg}`;
         }
         const { toast } = await import("sonner");
         toast.success("Saved simulation!");
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        const { toast } = await import("sonner");
+        toast.error(`Save failed: ${errData.error || res.statusText}`);
       }
     } catch (e) {
       console.error("[SimPlayground] Save failed:", e);
+      const { toast } = await import("sonner");
+      toast.error("Network error while saving simulation");
     } finally {
       setIsSaving(false);
     }

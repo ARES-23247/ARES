@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv } from "../middleware";
+import { AppEnv, ensureAuth } from "../middleware";
 
 export const simulationsRouter = new Hono<AppEnv>();
 
@@ -86,7 +86,7 @@ simulationsRouter.get("/:id", async (c) => {
 });
 
 // Save simulation to GitHub
-simulationsRouter.post("/", async (c) => {
+simulationsRouter.post("/", ensureAuth, async (c) => {
   try {
     const sessionUser = c.get("sessionUser");
     if (!sessionUser) {
