@@ -26,10 +26,11 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 80
-**Plans:** 0 plans
+**Plans:** 1 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 81 to break down)
+- [x] 81-01: Update TaskBoardPage and Database Schema
+- [x] 81-02: Liveblocks integration and TaskEditDrawer
 
 ### Phase 82: Science Corner & Sandbox Expansion
 
