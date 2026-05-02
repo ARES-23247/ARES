@@ -122,6 +122,7 @@ export default function Footer() {
 
           <div className="flex gap-8 items-center border-l border-marble/10 pl-8 h-4">
             <Link to="/privacy" className="hover:text-white transition-colors whitespace-nowrap">Privacy</Link>
+            <Link to="/science-corner" className="hover:text-white transition-colors whitespace-nowrap">Science Corner</Link>
             <Link to="/docs" className="hover:opacity-80 transition-colors flex items-center whitespace-nowrap shadow-sm ares-cut-sm overflow-hidden group">
               <span className="bg-ares-red px-2 py-0.5 text-[9px] font-heading font-bold uppercase text-white tracking-wider border-r border-white/10">ARES</span>
               <span className="bg-white/10 text-white font-heading font-medium px-2 py-0.5 text-[9px] uppercase tracking-widest group-hover:bg-white/20 transition-colors">Lib</span>

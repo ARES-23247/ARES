@@ -11,6 +11,7 @@ import { CodeBlock } from "./CodeBlock";
 const SwerveSimulator = lazy(() => import("../../sims/SwerveSim"));
 const SOTMSimulator = lazy(() => import("../../sims/SotmSim"));
 const ConfigVisualizer = lazy(() => import("../docs/ConfigVisualizer"));
+const SimulationPlayground = lazy(() => import("../../components/SimulationPlayground"));
 const CodePlayground = lazy(() => import("../docs/CodePlayground"));
 const ScreenshotGallery = lazy(() => import("../docs/ScreenshotGallery"));
 const FaultSim = lazy(() => import("../../sims/FaultSim"));
@@ -94,13 +95,15 @@ function DocsMarkdownRenderer({ content }: DocsMarkdownRendererProps) {
             "screenshotgallery", "faultsim", "physicssim", "sysidsim", "visionsim", 
             "zeroallocationsim", "fieldvisualizer", "troubleshootingwizard", 
             "performancedashboard", "armkgsim", "autosim", "elevatorpidsim", 
-            "flywheelkvsim", "interactivetutorial", "powersheddingsim", "statemachinesim"
+            "flywheelkvsim", "interactivetutorial", "powersheddingsim", "statemachinesim",
+            "simulationplayground"
           ]
         }]
       ]}
       components={{
         // @ts-expect-error -- Custom component injection
         swervesimulator: () => <LazyWrap><SwerveSimulator /></LazyWrap>,
+        simulationplayground: () => <LazyWrap><SimulationPlayground /></LazyWrap>,
         sotmsimulator: () => <LazyWrap><SOTMSimulator /></LazyWrap>,
         configvisualizer: () => <LazyWrap><ConfigVisualizer /></LazyWrap>,
         codeplayground: () => <LazyWrap><CodePlayground /></LazyWrap>,

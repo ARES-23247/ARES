@@ -1,4 +1,4 @@
-﻿# Proposed Roadmap
+# Proposed Roadmap
 
 **3 phases** | **4 requirements mapped** | All covered âœ“
 
@@ -84,13 +84,13 @@ Plans:
 
 ### Phase 87: fix up the science corner. Add a link in the footer. The science corner sims do not work. Also is there an admin interface to put sims/lessons in the sicence corner. I would like things to be more like documents/blogs with both text and embedded sims. I am not sure it needs to have seperate storage as we can use the regular sims. Should be integrate the science corner better with our sims (give the sims better access to the physics engines?) I would like help brainstorming
 
-**Goal:** [To be planned]
+**Goal:** Fix up Science Corner (Footer link, embeddable sims via Markdown/Tiptap)
 **Requirements**: TBD
 **Depends on:** Phase 86
-**Plans:** 0 plans
+**Plans:** 1 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 87 to break down)
+- [x] 87-01: Implement Science Corner fixes
 
 ### Phase 88: Refactor recurring events: fix calendar overflow, add repeat frequency limits, and support individual instance deletion
 
