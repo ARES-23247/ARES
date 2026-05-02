@@ -141,8 +141,8 @@ const zulipHandlers = {
         return { status: 500 as const, body: { success: false, error: "Failed to fetch Zulip users" } as any };
       }
 
-      const zulipData = await zulipRes.json() as { members: Array<{ email: string }> };
-      const zulipEmails = new Set(zulipData.members.map(m => m.email.toLowerCase()));
+      const zulipData = await zulipRes.json() as { members: Array<{ email: string; delivery_email?: string }> };
+      const zulipEmails = new Set(zulipData.members.map(m => (m.delivery_email || m.email).toLowerCase()));
 
       const db = c.get("db") as import("kysely").Kysely<import("../../../shared/schemas/database").DB>;
       const aresUsers = await db.selectFrom("user").select("email").execute();
@@ -173,23 +173,16 @@ const zulipHandlers = {
       const baseUrl = config.ZULIP_URL || "https://aresfirst.zulipchat.com";
 
       // Fetch default streams to add the users to
-      const streamsRes = await fetch(`${baseUrl}/api/v1/streams?include_default=true`, {
+      const streamsRes = await fetch(`${baseUrl}/api/v1/default_streams`, {
         method: "GET",
         headers: { "Authorization": authHeader }
       });
 
       let streamIds: number[] = [];
       if (streamsRes.ok) {
-        const streamsData = await streamsRes.json() as { streams?: Array<{ stream_id: number; is_default?: boolean }> };
-        // Zulip API doesn't strictly filter by default in the response, we must check is_default (or just rely on the API returning defaults if include_default=true).
-        // To be safe, we'll try to find streams marked as default or just pass [] if include_realm_default_subscriptions works.
-        // Actually, stream_ids is required by the API. Let's pass the IDs of default streams if available.
-        streamIds = (streamsData.streams || [])
-          .filter(s => s.is_default !== false)
-          .map(s => s.stream_id);
+        const streamsData = await streamsRes.json() as { default_streams?: Array<{ stream_id: number }> };
+        streamIds = (streamsData.default_streams || []).map(s => s.stream_id);
       }
-      
-      // If we couldn't fetch streams, fallback to empty array. The `include_realm_default_subscriptions` boolean should do the heavy lifting.
       
       const params = new URLSearchParams();
       params.append("invitee_emails", emails.join(","));
