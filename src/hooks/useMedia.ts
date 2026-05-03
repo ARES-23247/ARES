@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { toast } from "sonner";
+import { compressImage } from "../utils/imageProcessor";
 
 export interface R2MediaItem {
   key: string;
@@ -45,15 +46,22 @@ export function useMedia() {
   const bulkUpload = async (files: File[]) => {
     let successCount = 0;
     for (const file of files) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", selectedFolderFilter === "All" ? "Library" : selectedFolderFilter);
-      
       try {
-        await uploadMutation.mutateAsync({ body: formData as unknown as never });
-        successCount++;
+        const { blob: compressedBlob, ext } = await compressImage(file);
+        const formData = new FormData();
+        formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ext));
+        formData.append("folder", selectedFolderFilter === "All" ? "Library" : selectedFolderFilter);
+        
+        const res = await uploadMutation.mutateAsync({ body: formData as unknown as never });
+        if (res.status === 200) {
+          successCount++;
+        } else {
+          console.error("Upload API error", res.body);
+          toast.error(`Upload failed for ${file.name}: ${(res.body as any)?.error || "Unknown error"}`);
+        }
       } catch (err) {
         console.error("Upload error for file", file.name, err);
+        toast.error(`Upload failed for ${file.name}`);
       }
     }
     if (successCount > 0) toast.success(`Uploaded ${successCount} assets`);

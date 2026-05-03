@@ -3,24 +3,26 @@ import { UseMutationResult } from "@tanstack/react-query";
 interface AssetUploaderProps {
   activeFolder: string;
   setActiveFolder: (folder: string) => void;
-  uploadMutation: UseMutationResult<void, Error, File[], unknown>;
+  onUpload: (files: File[]) => Promise<void>;
+  isUploading: boolean;
   uploadProgress: { current: number; total: number } | null;
 }
 
 export default function AssetUploader({
   activeFolder,
   setActiveFolder,
-  uploadMutation,
+  onUpload,
+  isUploading,
   uploadProgress
 }: AssetUploaderProps) {
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    uploadMutation.mutate(files, {
-      onSettled: () => {
-        e.target.value = "";
-      }
-    });
+    try {
+      await onUpload(files);
+    } finally {
+      e.target.value = "";
+    }
   };
 
   return (
@@ -35,13 +37,13 @@ export default function AssetUploader({
       <label
         htmlFor="asset-upload-input"
         className={`px-6 py-3 ares-cut font-bold uppercase tracking-widest text-xs cursor-pointer transition-all flex items-center gap-2 focus-within:ring-2 focus-within:ring-ares-gold ${
-          uploadMutation.isPending
+          isUploading
             ? "bg-white/5 text-marble/40 pointer-events-none"
             : "bg-ares-gold text-obsidian hover:bg-ares-gold/80 shadow-lg"
         }`}
       >
-        {uploadMutation.isPending 
-          ? `Uploading ${uploadProgress?.current} / ${uploadProgress?.total}` 
+        {isUploading 
+          ? `Uploading ${uploadProgress?.current || ""} / ${uploadProgress?.total || ""}` 
           : "Upload Bulk"}
         <input
           id="asset-upload-input"

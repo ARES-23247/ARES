@@ -39,7 +39,8 @@ export default function AssetManager() {
           <AssetUploader 
             activeFolder={selectedFolderFilter === "All" ? "" : selectedFolderFilter}
             setActiveFolder={setSelectedFolderFilter}
-            uploadMutation={{ isPending: isUploading, mutate: uploadAssets } as unknown as UseMutationResult<void, Error, File[], unknown>}
+            onUpload={uploadAssets}
+            isUploading={isUploading}
             uploadProgress={null}
           />
         </div>
