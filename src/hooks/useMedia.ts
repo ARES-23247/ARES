@@ -47,24 +47,31 @@ export function useMedia() {
     let successCount = 0;
     for (const file of files) {
       try {
+        console.info(`[useMedia] Processing "${file.name}" (${file.type}, ${(file.size / 1024).toFixed(1)}KB)…`);
         const { blob: compressedBlob, ext } = await compressImage(file);
+        const fileName = file.name.replace(/\.[^/.]+$/, ext);
+        console.info(`[useMedia] Compressed → "${fileName}" (${(compressedBlob.size / 1024).toFixed(1)}KB)`);
+
         const formData = new FormData();
-        formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ext));
+        formData.append("file", compressedBlob, fileName);
         formData.append("folder", selectedFolderFilter === "All" ? "Library" : selectedFolderFilter);
         
         const res = await uploadMutation.mutateAsync({ body: formData as unknown as never });
         if (res.status === 200) {
           successCount++;
         } else {
-          console.error("Upload API error", res.body);
-          toast.error(`Upload failed for ${file.name}: ${(res.body as { error?: string })?.error || "Unknown error"}`);
+          const errBody = res.body as { error?: string };
+          const detail = errBody?.error || JSON.stringify(res.body);
+          console.error(`[useMedia] Upload API returned ${res.status} for "${file.name}":`, res.body);
+          toast.error(`"${file.name}" failed (HTTP ${res.status}): ${detail}`);
         }
       } catch (err) {
-        console.error("Upload error for file", file.name, err);
-        toast.error(`Upload failed for ${file.name}`);
+        const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        console.error(`[useMedia] Exception uploading "${file.name}":`, err);
+        toast.error(`"${file.name}" failed: ${msg}`);
       }
     }
-    if (successCount > 0) toast.success(`Uploaded ${successCount} assets`);
+    if (successCount > 0) toast.success(`Uploaded ${successCount} asset${successCount > 1 ? "s" : ""}`);
   };
 
   const syndicateMutation = api.media.syndicate.useMutation({

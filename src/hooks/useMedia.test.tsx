@@ -161,6 +161,7 @@ describe("useMedia hook", () => {
   });
 
   it("should execute bulkUpload successfully", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => {});
     const { result } = renderHook(() => useMedia(), { wrapper });
     
     // Create dummy files
@@ -179,9 +180,11 @@ describe("useMedia hook", () => {
     
     act(() => uploadMutationOptions.onError(new Error("Upload failed msg")));
     expect(toast.error).toHaveBeenCalledWith("Upload failed msg");
+    vi.restoreAllMocks();
   });
 
   it("should handle bulkUpload errors gracefully", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => {});
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     
     // Mock mutateAsync to reject
@@ -199,10 +202,12 @@ describe("useMedia hook", () => {
     });
     
     // It should not call success toast because successCount is 0
-    expect(toast.success).not.toHaveBeenCalledWith("Uploaded 1 assets");
+    expect(toast.success).not.toHaveBeenCalled();
     expect(consoleErrorSpy).toHaveBeenCalled();
+    // Verbose error toast should include error name and message
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Network Error"));
     
-    consoleErrorSpy.mockRestore();
+    vi.restoreAllMocks();
   });
 
   it("should filter assets by selectedFolderFilter", () => {

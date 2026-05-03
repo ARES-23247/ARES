@@ -57,6 +57,7 @@ export const mediaContract = c.router({
   upload: {
     method: "POST",
     path: "/admin/upload",
+    contentType: "multipart/form-data",
     body: c.type<FormData>(),
     responses: {
       200: z.object({
