@@ -4,26 +4,17 @@
 
 - ✅ **v5.4** — Simulation Sandbox & GitHub Storage Migration (Shipped 2026-05-02)
 - ✅ **v5.5** — Kanban, Science Corner & Recurring Events (Shipped 2026-05-02)
-- 🚧 **v5.6** — [To Be Defined] (In Progress)
+- ✅ **v5.6** — Stability & Polish (Shipped 2026-05-03)
 
 ## Phases
 
-### 🚧 v5.6 — Stability & Polish (In Progress)
+<details>
+<summary>✅ v5.6 Stability & Polish (Phases 1-5) — SHIPPED 2026-05-03</summary>
 
-| #  | Phase                                                    | Status  |
-| -- | -------------------------------------------------------- | ------- |
-| 1  | Fix media uploader (ts-rest FormData contract)           | ✅ Done |
-| 2  | Bypass ts-rest-hono broken multipart parser (server-side) | ✅ Done |
-| 3  | Fix delete/move for R2 keys with slashes                 | ✅ Done |
-| 4  | Repair Calendar — push missing events to GCal            | ✅ Done |
-| 5  | Fix Zulip audit & batched invite flow                    | ✅ Done |
+- [x] Phase 1: Fix media uploader (ts-rest FormData contract) — completed 2026-05-03
+- [x] Phase 2: Bypass ts-rest-hono broken multipart parser — completed 2026-05-03
+- [x] Phase 3: Fix delete/move wildcard routing — completed 2026-05-03
+- [x] Phase 4: Repair Calendar endpoint — completed 2026-05-03
+- [x] Phase 5: Fix Zulip audit & batched invites — completed 2026-05-03
 
-## Progress
-
-| Phase                                                   | Milestone | Plans Complete | Status    | Completed  |
-| ------------------------------------------------------- | --------- | -------------- | --------- | ---------- |
-| 1 — Fix media uploader (ts-rest FormData)               | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
-| 2 — Bypass ts-rest-hono multipart parser                | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
-| 3 — Fix delete/move wildcard routing                    | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
-| 4 — Repair Calendar endpoint                            | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
-| 5 — Fix Zulip audit & batched invites                   | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
+</details>
