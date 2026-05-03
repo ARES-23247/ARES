@@ -11,9 +11,9 @@
 
 ### Phase 6: Performance
 **Goal:** Code splitting & lazy loading
-- [ ] PERF-01: Implement lazy loading
-- [ ] PERF-02: Apply code splitting
-- [ ] PERF-03: Integrate bundle analyzer
+- [x] PERF-01: Implement lazy loading
+- [x] PERF-02: Apply code splitting
+- [x] PERF-03: Integrate bundle analyzer
 
 ### Phase 7: Testing
 **Goal:** E2E coverage & unit tests
