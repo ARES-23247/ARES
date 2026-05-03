@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useMedia } from "./useMedia";
@@ -6,6 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { api } from "../api/client";
 import { toast } from "sonner";
+
+// Mock the imageProcessor
+vi.mock("../utils/imageProcessor", () => ({
+  compressImage: vi.fn().mockImplementation(async (file: File) => ({ blob: file, ext: "png" }))
+}));
 
 // Mock the API client
 vi.mock("../api/client", () => ({
@@ -60,7 +65,7 @@ describe("useMedia hook", () => {
     // Capture the options passed to useMutation
     (api.media.upload.useMutation as any).mockImplementation((options: any) => {
       uploadMutationOptions = options;
-      return { mutateAsync: vi.fn().mockResolvedValue({}), isPending: false };
+      return { mutateAsync: vi.fn().mockResolvedValue({ status: 200, body: {} }), isPending: false };
     });
     (api.media.delete.useMutation as any).mockImplementation((options: any) => {
       deleteMutationOptions = options;
