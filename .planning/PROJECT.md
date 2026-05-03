@@ -43,21 +43,31 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 5.4 (Simulation Sandbox)** — Migrated Simulation Sandbox entirely to GitHub API, added fullscreen IDE mode.
 - ✓ **Milestone 5.5 (Kanban, Science & Events)** — Kanban subteams, expanded Science Corner engine wrappers, robust E2E auth tests, and recurring calendar events.
 - ✓ **Milestone 5.6 (Stability & Polish)** — Infrastructure bug fixes for media uploads (bypassed ts-rest parser), calendar repair endpoint, and Zulip audit stabilization.
+- ✓ **Milestone 5.7 (Platform Maturity)** — Stabilized Zulip audit, finalized repair endpoints, established unit and E2E coverage for major testing gaps, and executed performance optimization (lazy-loading, chunking).
 
 ### Active
 - None
 
-## Current Milestone: v5.7 Platform Maturity
+## Current Milestone: v5.8 Feature Expansion
 
-**Goal:** Harden the ARESWEB platform with performance optimization, comprehensive testing, targeted feature expansion, and observability infrastructure.
+**Goal:** Expand core features such as recurring event sync and admin pagination.
 
 **Target features:**
-- **Performance** — Code splitting for chunks >1MB (editor, monaco-vim, babel, markdown, media), lazy route loading, bundle analysis
-- **Testing** — E2E coverage for calendar repair, Zulip audit, media upload/delete; unit test gaps for new handlers
-- **Feature Expansion** — User-requested improvements surfaced during v5.6 triage (recurring event GCal sync, improved admin dashboards)
-- **Analytics & Monitoring** — Error tracking, API latency observability, usage metrics dashboard
+- **Recurring GCal Sync:** Expand the `admin/sync` tools to handle recurring event rules properly in bidirectional mode.
+- **Admin Dashboard Pagination:** Resolve load times for users/events tabs by introducing cursor pagination.
+- **Monitoring:** Add robust Sentry logging and API latency metrics.
 
 ## Current State
+
+<details>
+<summary>v5.7 Shipped Features</summary>
+
+- Scaffolded and completed the testing suite for Calendar (/repair) and Media (/multipart) handlers with 100% unit coverage.
+- Validated Zulip API audit and invitation endpoints in `zulip.test.ts`.
+- Developed Playwright E2E test coverage for the Dashboard’s critical workflows, including Calendar repair and Zulip audit UIs.
+- Delivered lazy-loaded routing, React Suspense, and Vite code-splitting chunks to heavily optimize dashboard payload size.
+</details>
+
 
 <details>
 <summary>v5.6 Shipped Features</summary>
@@ -278,4 +288,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-03 after v5.6 milestone completion*
+*Last updated: 2026-05-03 after v5.7 milestone completion*
