@@ -107,6 +107,12 @@
       "name": "Battleship",
       "path": "./battleship",
       "requiresContext": false
+    },
+    {
+      "id": "BeeSim",
+      "name": "Bee Game",
+      "path": "./BeeSim",
+      "requiresContext": false
     }
   ]
 }
