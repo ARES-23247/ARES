@@ -60,6 +60,26 @@ export default function EventManagerTab({
     }
   });
 
+  const repairGcalMutation = api.events.repairCalendar.useMutation({
+    onSuccess: (res: { status: number; body: { success?: boolean; pushed?: number; failed?: number; errors?: string[] } }) => {
+      if (res.status === 200 && res.body.success) {
+        queryClient.invalidateQueries({ queryKey: ["admin_events"] });
+        const msg = `Repair Complete! Pushed ${res.body.pushed || 0} events to GCal.`;
+        if (res.body.failed) {
+          toast.warning(`${msg} (${res.body.failed} failed)`);
+          console.warn("[RepairCalendar] Errors:", res.body.errors);
+        } else {
+          toast.success(msg);
+        }
+      } else {
+        toast.error("Repair failed");
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Repair failed");
+    }
+  });
+
   const localApproveMutation = api.events.approveEvent.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin_events"] });
@@ -126,13 +146,22 @@ export default function EventManagerTab({
       }
       headerActions={
         view !== 'trash' && view !== 'pending' ? (
-          <button 
-            onClick={() => syncGcalMutation.mutate({ body: {} })}
-            disabled={syncGcalMutation.isPending}
-            className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
-          >
-            {syncGcalMutation.isPending ? "SYNCING..." : "SYNC GCAL"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => syncGcalMutation.mutate({ body: {} })}
+              disabled={syncGcalMutation.isPending}
+              className="text-xs font-bold text-ares-cyan bg-ares-cyan/10 hover:bg-ares-cyan/20 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan"
+            >
+              {syncGcalMutation.isPending ? "SYNCING..." : "SYNC GCAL"}
+            </button>
+            <button 
+              onClick={() => repairGcalMutation.mutate({ body: {} })}
+              disabled={repairGcalMutation.isPending}
+              className="text-xs font-bold text-ares-gold bg-ares-gold/10 hover:bg-ares-gold/20 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-gold"
+            >
+              {repairGcalMutation.isPending ? "REPAIRING..." : "REPAIR GCAL"}
+            </button>
+          </div>
         ) : undefined
       }
       getItemId={(e) => e.id}

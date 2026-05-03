@@ -125,12 +125,15 @@ const zulipHandlers = {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
-        return { status: 500 as const, body: { success: false, error: "Zulip not configured." } as any };
+        return { status: 500 as const, body: { success: false, error: "Zulip not configured. Set ZULIP_BOT_EMAIL and ZULIP_API_KEY in settings." } as any };
       }
 
       const credentials = `${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`;
       const authHeader = "Basic " + btoa(unescape(encodeURIComponent(credentials)));
-      const url = `${config.ZULIP_URL || "https://aresfirst.zulipchat.com"}/api/v1/users?client_gravatar=false`;
+      const baseUrl = config.ZULIP_URL || "https://aresfirst.zulipchat.com";
+      const url = `${baseUrl}/api/v1/users?client_gravatar=false`;
+
+      console.log(`[Zulip:Audit] Fetching users from ${baseUrl}`);
 
       const zulipRes = await fetch(url, {
         method: "GET",
@@ -138,21 +141,40 @@ const zulipHandlers = {
       });
 
       if (!zulipRes.ok) {
-        return { status: 500 as const, body: { success: false, error: "Failed to fetch Zulip users" } as any };
+        const errText = await zulipRes.text().catch(() => "(no body)");
+        console.error(`[Zulip:Audit] Failed to fetch users: ${zulipRes.status} — ${errText}`);
+        return { status: 500 as const, body: { success: false, error: `Zulip API returned ${zulipRes.status}: ${errText.slice(0, 200)}` } as any };
       }
 
-      const zulipData = await zulipRes.json() as { members: Array<{ email: string; delivery_email?: string }> };
-      const zulipEmails = new Set(zulipData.members.map(m => (m.delivery_email || m.email).toLowerCase()));
+      const zulipData = await zulipRes.json() as { members: Array<{ email: string; delivery_email?: string | null; is_bot?: boolean; is_active?: boolean }> };
+      
+      if (!zulipData.members || !Array.isArray(zulipData.members)) {
+        console.error("[Zulip:Audit] No members array in response:", JSON.stringify(zulipData).slice(0, 500));
+        return { status: 500 as const, body: { success: false, error: "Zulip returned invalid data — no members array" } as any };
+      }
+
+      // Collect all known Zulip emails (delivery_email takes priority over email,
+      // but may be null if the bot lacks admin privileges)
+      const zulipEmails = new Set(
+        zulipData.members
+          .filter(m => m.is_active !== false && !m.is_bot)
+          .map(m => (m.delivery_email || m.email).toLowerCase())
+      );
+
+      console.log(`[Zulip:Audit] Found ${zulipEmails.size} active non-bot Zulip users`);
 
       const db = c.get("db") as import("kysely").Kysely<import("../../../shared/schemas/database").DB>;
-      const aresUsers = await db.selectFrom("user").select("email").execute();
+      const aresUsers = await db.selectFrom("user").select("email").where("role", "!=", "unverified").execute();
       
       const missingEmails = aresUsers
         .map(u => u.email)
         .filter(email => email && !zulipEmails.has(email.toLowerCase()));
 
+      console.log(`[Zulip:Audit] ${aresUsers.length} ARES users, ${missingEmails.length} missing from Zulip`);
+
       return { status: 200 as const, body: { success: true, missingEmails } as any };
     } catch (err) {
+      console.error("[Zulip:Audit] Unexpected error:", err);
       return { status: 500 as const, body: { success: false, error: (err as Error).message } as any };
     }
   },
@@ -183,41 +205,63 @@ const zulipHandlers = {
         const streamsData = await streamsRes.json() as { default_streams?: Array<{ stream_id: number }> };
         streamIds = (streamsData.default_streams || []).map(s => s.stream_id);
       }
-      
-      const params = new URLSearchParams();
-      params.append("invitee_emails", emails.join(","));
-      params.append("stream_ids", JSON.stringify(streamIds));
-      params.append("include_realm_default_subscriptions", "true");
-      params.append("invite_as", "400"); // Member
 
-      const inviteRes = await fetch(`${baseUrl}/api/v1/invites`, {
-        method: "POST",
-        headers: { 
-          "Authorization": authHeader,
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: params
-      });
+      // Send invites in batches of 10 to avoid Zulip rate limits and partial failures
+      const BATCH_SIZE = 10;
+      let totalInvited = 0;
+      const allErrors: string[] = [];
 
-      if (!inviteRes.ok) {
-        const errText = await inviteRes.text();
-        console.error("Zulip Invite Error:", errText);
-        
+      for (let i = 0; i < emails.length; i += BATCH_SIZE) {
+        const batch = emails.slice(i, i + BATCH_SIZE);
+        const params = new URLSearchParams();
+        params.append("invitee_emails", batch.join(","));
+        params.append("stream_ids", JSON.stringify(streamIds));
+        params.append("include_realm_default_subscriptions", "true");
+        params.append("invite_as", "400"); // Member
+
         try {
-          const errJson = JSON.parse(errText);
-          if (errJson.result === "error" && errJson.sent_invitations === true) {
-            // Partial success: Some users already had accounts, but others were invited.
-            return { status: 200 as const, body: { success: true, invitedCount: emails.length } as any };
+          const inviteRes = await fetch(`${baseUrl}/api/v1/invites`, {
+            method: "POST",
+            headers: { 
+              "Authorization": authHeader,
+              "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: params
+          });
+
+          const resText = await inviteRes.text();
+          
+          if (inviteRes.ok) {
+            totalInvited += batch.length;
+          } else {
+            console.error(`[Zulip:Invite] Batch ${i / BATCH_SIZE + 1} error (${inviteRes.status}):`, resText);
+            
+            try {
+              const errJson = JSON.parse(resText);
+              if (errJson.sent_invitations === true) {
+                // Partial success — some users already had accounts
+                totalInvited += batch.length;
+              } else {
+                allErrors.push(errJson.msg || resText.slice(0, 200));
+              }
+            } catch {
+              allErrors.push(`HTTP ${inviteRes.status}: ${resText.slice(0, 200)}`);
+            }
           }
-        } catch (_e) {
-          // Not a JSON error or couldn't parse
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(`[Zulip:Invite] Batch ${i / BATCH_SIZE + 1} fetch error:`, msg);
+          allErrors.push(msg);
         }
-        
-        return { status: 500 as const, body: { success: false, error: errText } as any };
       }
 
-      return { status: 200 as const, body: { success: true, invitedCount: emails.length } as any };
+      if (allErrors.length > 0 && totalInvited === 0) {
+        return { status: 500 as const, body: { success: false, error: allErrors.join("; ") } as any };
+      }
+
+      return { status: 200 as const, body: { success: true, invitedCount: totalInvited } as any };
     } catch (err) {
+      console.error("[Zulip:Invite] Unexpected error:", err);
       return { status: 500 as const, body: { success: false, error: (err as Error).message } as any };
     }
   },

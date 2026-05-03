@@ -897,4 +897,84 @@ export const eventHandlers: any = {
       return { status: 502 as const, body: { error: String(err) } };
     }
   },
+  repairCalendar: async (_input: any, c: any) => {
+    try {
+      const db = c.get("db") as Kysely<DB>;
+      const dbSettings = await getDbSettings(c);
+      const gcalEmail = dbSettings["GCAL_SERVICE_ACCOUNT_EMAIL"];
+      const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
+
+      if (!gcalEmail || !gcalKey) {
+        return { status: 500 as const, body: { success: false, error: "GCal service account not configured" } } as any;
+      }
+
+      // Find all published, non-deleted events that are missing a gcal_event_id
+      const missing = await db.selectFrom("events")
+        .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "gcal_event_id", "meeting_notes"])
+        .where("is_deleted", "=", 0)
+        .where("status", "=", "published")
+        .where((eb) => eb.or([
+          eb("gcal_event_id", "is", null),
+          eb("gcal_event_id", "=", ""),
+        ]))
+        .execute();
+
+      console.log(`[Events:RepairCalendar] Found ${missing.length} events missing from GCal`);
+
+      let pushed = 0;
+      let failed = 0;
+      const errors: string[] = [];
+
+      for (const event of missing) {
+        const cat = event.category || "internal";
+        const calKey = `CALENDAR_ID_${cat.toUpperCase()}`;
+        const calId = dbSettings[calKey] || dbSettings["CALENDAR_ID"];
+
+        if (!calId) {
+          errors.push(`${event.title}: No calendar ID configured for category "${cat}"`);
+          failed++;
+          continue;
+        }
+
+        try {
+          const gcalId = await pushEventToGcal(
+            {
+              id: event.id as string,
+              title: event.title,
+              date_start: event.date_start,
+              date_end: event.date_end || undefined,
+              location: event.location || undefined,
+              description: event.description || undefined,
+              cover_image: event.cover_image || undefined,
+              meeting_notes: event.meeting_notes || undefined,
+            },
+            {
+              email: gcalEmail as string,
+              privateKey: gcalKey as string,
+              calendarId: calId as string,
+            }
+          );
+
+          if (gcalId) {
+            await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", event.id).execute();
+            pushed++;
+          } else {
+            errors.push(`${event.title}: GCal returned no ID`);
+            failed++;
+          }
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(`[Events:RepairCalendar] Failed to push "${event.title}":`, msg);
+          errors.push(`${event.title}: ${msg}`);
+          failed++;
+        }
+      }
+
+      console.log(`[Events:RepairCalendar] Complete — pushed: ${pushed}, failed: ${failed}`);
+      return { status: 200 as const, body: { success: true, pushed, failed, errors: errors.length > 0 ? errors : undefined } };
+    } catch (e) {
+      console.error("[Events:RepairCalendar] Error", e);
+      return { status: 500 as const, body: { success: false, error: "Repair failed" } } as any;
+    }
+  },
 };

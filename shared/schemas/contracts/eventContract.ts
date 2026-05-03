@@ -139,6 +139,16 @@ export const eventContract = c.router({
     },
     summary: "Sync events from Google Calendar",
   },
+  repairCalendar: {
+    method: "POST",
+    path: "/admin/repair-calendar",
+    body: c.noBody(),
+    responses: {
+      200: z.object({ success: z.boolean(), pushed: z.number(), failed: z.number(), errors: z.array(z.string()).optional() }),
+      500: z.object({ success: z.boolean(), error: z.string() }),
+    },
+    summary: "Push all published events missing from GCal",
+  },
   approveEvent: {
     method: "POST",
     path: "/admin/:id/approve",
