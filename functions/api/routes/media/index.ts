@@ -89,6 +89,28 @@ mediaRouter.post("/admin/upload", async (c) => {
   }
 });
 
+// ─── Raw delete route ──────────────────────────────────────────────────
+// R2 keys contain slashes (e.g. "Library/image.png"). The ts-rest contract
+// uses `:key` which only matches a single path segment, breaking delete
+// for any file inside a folder.
+mediaRouter.delete("/admin/:key{.+$}", async (c) => {
+  const key = decodeURIComponent(c.req.param("key"));
+  try {
+    if (c.env.ARES_STORAGE) {
+      await c.env.ARES_STORAGE.delete(key);
+    }
+    const db = c.get("db") as Kysely<DB>;
+    await db.deleteFrom("media_tags").where("key", "=", key).execute();
+    if (c.executionCtx) {
+      c.executionCtx.waitUntil(logAuditAction(c, "media_delete", "media", key));
+    }
+    return c.json({ success: true }, 200);
+  } catch (e) {
+    console.error("[Media:Delete] Error", e);
+    return c.json({ error: "Delete failed" }, 500);
+  }
+});
+
 createHonoEndpoints(mediaContract, mediaTsRestRouter, mediaRouter);
 
 // GET /media/:key — Serve raw object from R2 (Must be after createHonoEndpoints to avoid catching /admin)

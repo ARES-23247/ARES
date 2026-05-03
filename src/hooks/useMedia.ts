@@ -113,14 +113,14 @@ export function useMedia() {
     setSyndicateCaption,
     deleteAsset: (key: string) => {
        if (confirm("Permanently purge this asset from R2?")) {
-         deleteMutation.mutate({ params: { key }, body: {} } as unknown as never);
+         deleteMutation.mutate({ params: { key: encodeURIComponent(key) }, body: {} } as unknown as never);
        }
     },
     isDeleting: deleteMutation.isPending,
     uploadAssets: bulkUpload,
     isUploading: uploadMutation.isPending,
     syndicateMutation,
-    moveAsset: (key: string, newFolder: string) => moveMutation.mutate({ params: { key }, body: { folder: newFolder } } as unknown as never),
+    moveAsset: (key: string, newFolder: string) => moveMutation.mutate({ params: { key: encodeURIComponent(key) }, body: { folder: newFolder } } as unknown as never),
     isMoving: moveMutation.isPending
   };
 }
