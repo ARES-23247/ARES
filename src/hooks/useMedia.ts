@@ -57,7 +57,7 @@ export function useMedia() {
           successCount++;
         } else {
           console.error("Upload API error", res.body);
-          toast.error(`Upload failed for ${file.name}: ${(res.body as any)?.error || "Unknown error"}`);
+          toast.error(`Upload failed for ${file.name}: ${(res.body as { error?: string })?.error || "Unknown error"}`);
         }
       } catch (err) {
         console.error("Upload error for file", file.name, err);
