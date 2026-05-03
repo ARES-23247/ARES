@@ -29,6 +29,9 @@ describe("Hono Backend - /zulip Router", () => {
     testApp = new Hono<any>();
     testApp.use("*", async (c: any, next: any) => {
       c.set("executionCtx", mockExecutionContext);
+      if (c.env && c.env.db) {
+        c.set("db", c.env.db);
+      }
       await next();
     });
     testApp.route("/", zulipRouter);
@@ -192,5 +195,79 @@ describe("Hono Backend - /zulip Router", () => {
 
     const res = await testApp.request("/presence", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
+  });
+
+  it("GET /invites/audit - handles missing config", async () => {
+    vi.mocked(getSocialConfig).mockResolvedValueOnce({});
+    const res = await testApp.request("/invites/audit", {}, {}, mockExecutionContext);
+    expect(res.status).toBe(500);
+  });
+
+  it("GET /invites/audit - fetches users and returns missing emails", async () => {
+    vi.mocked(getSocialConfig).mockResolvedValueOnce({
+      ZULIP_BOT_EMAIL: "bot@test.com",
+      ZULIP_API_KEY: "key123",
+      ZULIP_URL: "https://test.zulip.com"
+    } as any);
+
+    fetchMock.mockResolvedValueOnce({ 
+      ok: true, 
+      json: async () => ({ 
+        members: [
+          { email: "user1@test.com", is_bot: false, is_active: true },
+          { email: "user2@test.com", is_bot: false, is_active: true }
+        ] 
+      }) 
+    });
+
+    const mockDb = {
+      selectFrom: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      execute: vi.fn().mockResolvedValue([
+        { email: "user1@test.com" },
+        { email: "user3@test.com" }
+      ])
+    };
+
+    const res = await testApp.request("/invites/audit", {}, { db: mockDb }, mockExecutionContext);
+    if (res.status === 500) {
+      console.log(await res.text());
+    }
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.success).toBe(true);
+    expect(body.missingEmails).toEqual(["user3@test.com"]);
+  });
+
+  it("POST /invites/send - handles batch sending successfully", async () => {
+    vi.mocked(getSocialConfig).mockResolvedValueOnce({
+      ZULIP_BOT_EMAIL: "bot@test.com",
+      ZULIP_API_KEY: "key123",
+      ZULIP_URL: "https://test.zulip.com"
+    } as any);
+
+    // Mock streams response
+    fetchMock.mockResolvedValueOnce({ 
+      ok: true, 
+      json: async () => ({ default_streams: [{ stream_id: 1 }] }) 
+    });
+
+    // Mock invite batch response
+    fetchMock.mockResolvedValueOnce({ 
+      ok: true, 
+      text: async () => JSON.stringify({ result: "success" }) 
+    });
+
+    const res = await testApp.request("/invites/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emails: ["newuser@test.com"] })
+    }, {}, mockExecutionContext);
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.success).toBe(true);
+    expect(body.invitedCount).toBe(1);
   });
 });
