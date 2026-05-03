@@ -40,18 +40,45 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 4.8 (Simulation Playground UI Fixes)** — Resolved Monaco editor rendering failure by updating CSP to allow jsdelivr and blob web workers.
 - ✓ **Milestone 5.1 (IDE Experience)** — Overhauled the simulation playground's z.AI assistant to stream markdown-fenced code blocks directly into the Monaco Editor. Migrated simulation template storage to a hybrid architecture bridging official GitHub team templates with Cloudflare D1 custom saves.
 - ✓ **Milestone 5.3 (GitHub Rate Limits)** — Fixed GitHub indexer Forbidden errors by configuring `GITHUB_PAT` and verifying external RAG fetches.
+- ✓ **Milestone 5.4 (Simulation Sandbox)** — Migrated Simulation Sandbox entirely to GitHub API, added fullscreen IDE mode.
+- ✓ **Milestone 5.5 (Kanban, Science & Events)** — Kanban subteams, expanded Science Corner engine wrappers, robust E2E auth tests, and recurring calendar events.
+- ✓ **Milestone 5.6 (Stability & Polish)** — Infrastructure bug fixes for media uploads (bypassed ts-rest parser), calendar repair endpoint, and Zulip audit stabilization.
 
 ### Active
 - None
 
-## Current Milestone: v5.5
+## Current Milestone: v5.7 Platform Maturity
 
-**Goal:** Fix the Simulation Playground menu so it can load existing simulations from the GitHub repository.
+**Goal:** Harden the ARESWEB platform with performance optimization, comprehensive testing, targeted feature expansion, and observability infrastructure.
 
 **Target features:**
-- Simulation menu loads from GitHub
+- **Performance** — Code splitting for chunks >1MB (editor, monaco-vim, babel, markdown, media), lazy route loading, bundle analysis
+- **Testing** — E2E coverage for calendar repair, Zulip audit, media upload/delete; unit test gaps for new handlers
+- **Feature Expansion** — User-requested improvements surfaced during v5.6 triage (recurring event GCal sync, improved admin dashboards)
+- **Analytics & Monitoring** — Error tracking, API latency observability, usage metrics dashboard
 
 ## Current State
+
+<details>
+<summary>v5.6 Shipped Features</summary>
+
+- Fixed media uploader silent failures by adding `contentType: "multipart/form-data"` to the ts-rest contract
+- Bypassed ts-rest-hono's broken multipart parser with a raw Hono POST route for uploads
+- Fixed R2 delete/move for keys containing slashes using a wildcard regex route
+- Built a "Repair Calendar" admin endpoint to bulk-push missing events to Google Calendar
+- Stabilized Zulip audit with bot/inactive filtering and batched invite flow with partial failure resilience
+</details>
+
+<details>
+<summary>v5.5 Shipped Features</summary>
+
+- Fixed the Simulation Playground menu so it can load existing simulations from the GitHub repository.
+- Expanded the Science Corner sandbox with hybrid engine wrappers (Matter.js & Dyn4j).
+- Built robust end-to-end (e2e) tests for authentication.
+- Implemented recurring calendar events with frequency limiters.
+- Unified Kanban Subteams.
+- Delivered an automated Zulip User Auditor inside the Admin Dashboard.
+</details>
 
 <details>
 <summary>v5.4 Shipped Features</summary>
@@ -251,4 +278,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-30 after v4.7 milestone completion*
+*Last updated: 2026-05-03 after v5.6 milestone completion*
