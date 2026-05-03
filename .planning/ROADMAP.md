@@ -2,32 +2,24 @@
 
 ## Milestones
 
-- ✅ **v5.4** — Simulation Sandbox & GitHub Storage Migration (Shipped 2026-05-02)
 - ✅ **v5.5** — Kanban, Science Corner & Recurring Events (Shipped 2026-05-02)
 - ✅ **v5.6** — Stability & Polish (Shipped 2026-05-03)
-- 🚧 **v5.7** — Platform Maturity (In Progress)
+- ✅ **v5.7** — Platform Maturity (Shipped 2026-05-03)
+- 🚧 **v5.8** — Feature Expansion (In Progress)
 
 ## Phases
 
-### Phase 6: Performance
-**Goal:** Code splitting & lazy loading
-- [x] PERF-01: Implement lazy loading
-- [x] PERF-02: Apply code splitting
-- [x] PERF-03: Integrate bundle analyzer
+### Phase 1: Recurring GCal Sync
+**Goal:** Establish bidirectional sync for recurring events
+- [ ] SYNC-01: Implement recurrence rule parsing
+- [ ] SYNC-02: Enhance /admin/sync for recurring instances
 
-### Phase 7: Testing
-**Goal:** E2E coverage & unit tests
-- [ ] TEST-01: Playwright E2E for Calendar
-- [ ] TEST-02: Playwright E2E for Zulip
-- [ ] TEST-03: Playwright E2E for Media
-- [ ] TEST-04: 100% unit test coverage for new handlers
+### Phase 2: Admin Pagination
+**Goal:** Handle large datasets gracefully
+- [ ] ADMIN-01: Cursor pagination for Users table
+- [ ] ADMIN-02: Cursor pagination for Events table
 
-### Phase 8: Feature Expansion
-**Goal:** Recurring GCal sync & admin lists
-- [ ] FEAT-01: Recurring event GCal sync
-- [ ] FEAT-02: Admin dashboard pagination
-
-### Phase 9: Analytics & Monitoring
+### Phase 3: Analytics & Monitoring
 **Goal:** Error tracking & observability
 - [ ] MON-01: Sentry integration
 - [ ] MON-02: API latency logging
