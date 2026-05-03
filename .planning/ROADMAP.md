@@ -8,12 +8,14 @@
 
 ## Phases
 
-### 🚧 v5.6 [To Be Defined] (In Progress)
+### 🚧 v5.6 — Stability & Polish (In Progress)
 
-*(No phases planned yet)*
+| #  | Phase                                          | Status |
+| -- | ---------------------------------------------- | ------ |
+| 1  | Fix media uploader (ts-rest FormData contract)  | ✅ Done |
 
 ## Progress
 
-| Phase             | Milestone | Plans Complete | Status      | Completed  |
-| ----------------- | --------- | -------------- | ----------- | ---------- |
-| (Pending Planning)| v5.6      | 0/0            | Not started | -          |
+| Phase                                         | Milestone | Plans Complete | Status    | Completed  |
+| --------------------------------------------- | --------- | -------------- | --------- | ---------- |
+| 1 — Fix media uploader (ts-rest FormData)      | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
