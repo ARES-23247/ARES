@@ -54,7 +54,7 @@ export const statusConfig: Record<string, { bg: string; text: string; border: st
   todo:        { bg: "bg-ares-gray-dark/60",   text: "text-white/60", border: "border-ares-gray/30", icon: Circle,        label: "Todo" },
   in_progress: { bg: "bg-ares-cyan/10",        text: "text-ares-cyan", border: "border-ares-cyan/30", icon: Clock,         label: "In Progress" },
   done:        { bg: "bg-ares-gold/10",        text: "text-ares-gold", border: "border-ares-gold/30", icon: CheckCircle2,  label: "Done" },
-  blocked:     { bg: "bg-ares-red/10",         text: "text-ares-red",  border: "border-ares-red/30",  icon: AlertTriangle, label: "Blocked" },
+  blocked:     { bg: "bg-ares-red/10",         text: "text-ares-red",  border: "border-ares-red/30",  icon: AlertTriangle, label: "Parked" },
 };
 
 export const priorityBadge: Record<string, string> = {

@@ -15,6 +15,7 @@ interface RosterMember {
   attended_events: number;
   manual_prep_hours: number;
   event_volunteer_hours: number;
+  avatar: string | null;
 }
 
 interface EnrichedRosterMember extends RosterMember {
@@ -179,7 +180,7 @@ export default function MemberImpactOverview() {
                 <tr key={m.user_id} className="border-b border-white/5 hover:bg-white/10 transition-colors">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
-                      <img src={`https://api.dicebear.com/9.x/bottts/svg?seed=${m.user_id}`} alt="avatar" className="w-8 h-8 ares-cut-sm bg-obsidian" />
+                      <img src={m.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${m.user_id}`} alt="avatar" className="w-8 h-8 ares-cut-sm bg-obsidian" />
                       <span className="font-bold text-white tracking-tight">{m.display_name}</span>
                     </div>
                   </td>

@@ -122,10 +122,11 @@ const pointsHandlers = {
           "p.last_name",
           "p.nickname",
           "p.member_type",
+          "u.image as avatar",
           (eb) => eb.fn.coalesce(eb.fn.sum("pl.points_delta"), sql<number>`0`).as("points_balance")
         ])
         .where("p.show_on_about", "=", 1)
-        .groupBy(["u.id", "u.name", "p.last_name", "p.nickname", "p.member_type"])
+        .groupBy(["u.id", "u.name", "p.last_name", "p.nickname", "p.member_type", "u.image"])
         .having((eb) => eb.fn.coalesce(eb.fn.sum("pl.points_delta"), sql<number>`0`), ">", 0)
         .orderBy("points_balance", "desc")
         .limit(50)
@@ -139,7 +140,8 @@ const pointsHandlers = {
           last_name: isMinor ? null : (r.last_name || null),
           nickname: r.nickname || null,
           member_type: String(r.member_type || "student"),
-          points_balance: Number(r.points_balance)
+          points_balance: Number(r.points_balance),
+          avatar: r.avatar ? String(r.avatar) : null
         };
       });
 

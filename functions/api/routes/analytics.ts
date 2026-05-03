@@ -117,6 +117,7 @@ const analyticsHandlers = {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user_profiles as u")
+        .innerJoin("user as auth_user", "auth_user.id", "u.user_id")
         .leftJoin("event_signups as s", "u.user_id", "s.user_id")
         .leftJoin("events as e", (join) => join
           .onRef("s.event_id", "=", "e.id")
@@ -127,6 +128,7 @@ const analyticsHandlers = {
           "u.user_id",
           "u.nickname",
           "u.member_type",
+          "auth_user.image as avatar",
           (eb) => eb.fn.sum(eb.case().when("s.attended", "=", 1).then(1).else(0).end()).as("attended_events"),
           (eb) => eb.fn.coalesce(eb.fn.sum(eb.case().when("s.attended", "=", 1).then("s.prep_hours").else(0).end()), sql`0`).as("manual_prep_hours"),
           (eb) => eb.fn.coalesce(
@@ -138,7 +140,7 @@ const analyticsHandlers = {
             ), sql`0`
           ).as("event_volunteer_hours")
         ])
-        .groupBy(["u.user_id", "u.nickname", "u.member_type"])
+        .groupBy(["u.user_id", "u.nickname", "u.member_type", "auth_user.image"])
         .orderBy("u.nickname", "asc")
         .execute();
 
@@ -148,7 +150,8 @@ const analyticsHandlers = {
         member_type: r.member_type || null,
         attended_events: Number(r.attended_events || 0),
         manual_prep_hours: Number(r.manual_prep_hours || 0),
-        event_volunteer_hours: Number(r.event_volunteer_hours || 0)
+        event_volunteer_hours: Number(r.event_volunteer_hours || 0),
+        avatar: r.avatar ? String(r.avatar) : null
       }));
 
       return { status: 200 as const, body: { roster } as any };
@@ -168,10 +171,11 @@ const analyticsHandlers = {
           "p.last_name",
           "p.nickname",
           "p.member_type",
+          "u.image as avatar",
           (eb) => eb.fn.count("ub.id").as("badge_count")
         ])
         .where("p.show_on_about", "=", 1)
-        .groupBy(["u.id", "u.name", "p.last_name", "p.nickname", "p.member_type"])
+        .groupBy(["u.id", "u.name", "p.last_name", "p.nickname", "p.member_type", "u.image"])
         .orderBy("badge_count", "desc")
         .limit(50)
         .execute();
@@ -184,7 +188,8 @@ const analyticsHandlers = {
           last_name: isMinor ? null : (r.last_name || null),
           nickname: r.nickname || null,
           member_type: String(r.member_type || "student"),
-          badge_count: Number(r.badge_count)
+          badge_count: Number(r.badge_count),
+          avatar: r.avatar ? String(r.avatar) : null
         };
       });
 

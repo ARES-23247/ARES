@@ -26,6 +26,7 @@ export const PointsLeaderboardEntrySchema = z.object({
   nickname: z.string().nullable(),
   member_type: z.string(),
   points_balance: z.number(),
+  avatar: z.string().nullable().optional(),
 });
 
 export type PointsTransaction = z.infer<typeof PointsTransactionSchema>;

@@ -14,7 +14,7 @@ const STATUS_OPTIONS = [
   { value: "todo", label: "Todo", icon: Circle, color: "text-white/60", bg: "bg-ares-gray-dark/60", border: "border-ares-gray/30" },
   { value: "in_progress", label: "In Progress", icon: Clock, color: "text-ares-cyan", bg: "bg-ares-cyan/10", border: "border-ares-cyan/30" },
   { value: "done", label: "Done", icon: CheckCircle2, color: "text-ares-gold", bg: "bg-ares-gold/10", border: "border-ares-gold/30" },
-  { value: "blocked", label: "Blocked", icon: AlertTriangle, color: "text-ares-red", bg: "bg-ares-red/10", border: "border-ares-red/30" },
+  { value: "blocked", label: "Parked", icon: AlertTriangle, color: "text-ares-red", bg: "bg-ares-red/10", border: "border-ares-red/30" },
 ];
 
 const PRIORITY_OPTIONS = [

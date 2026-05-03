@@ -29,6 +29,7 @@ export const rosterStatSchema = z.object({
   attended_events: z.number(),
   manual_prep_hours: z.number(),
   event_volunteer_hours: z.number(),
+  avatar: z.string().nullable().optional(),
 });
 
 export const leaderboardEntrySchema = z.object({
@@ -38,6 +39,7 @@ export const leaderboardEntrySchema = z.object({
   nickname: z.string().nullable(),
   member_type: z.string(),
   badge_count: z.number(),
+  avatar: z.string().nullable().optional(),
 });
 
 export const analyticsContract = c.router({

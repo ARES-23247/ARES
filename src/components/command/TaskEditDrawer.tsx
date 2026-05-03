@@ -20,7 +20,7 @@ const STATUS_OPTIONS = [
   { value: "todo", label: "Todo", icon: Circle, color: "text-white/60" },
   { value: "in_progress", label: "In Progress", icon: Clock, color: "text-ares-cyan" },
   { value: "done", label: "Done", icon: CheckCircle2, color: "text-ares-gold" },
-  { value: "blocked", label: "Blocked", icon: AlertTriangle, color: "text-ares-red" },
+  { value: "blocked", label: "Parked", icon: AlertTriangle, color: "text-ares-red" },
 ];
 
 const PRIORITY_OPTIONS = [

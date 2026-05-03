@@ -40,7 +40,7 @@ describe("ProjectBoardKanban Component", () => {
     expect(screen.getAllByText("Todo").length).toBeGreaterThan(0);
     expect(screen.getAllByText("In Progress").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Done").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Blocked").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Parked").length).toBeGreaterThan(0);
   });
 
   it("renders tasks with assignees", () => {

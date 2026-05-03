@@ -12,6 +12,7 @@ interface LeaderboardUser {
   nickname: string;
   member_type: string;
   points_balance: number;
+  avatar: string | null;
 }
 
 export default function Leaderboard() {
@@ -103,7 +104,7 @@ export default function Leaderboard() {
                 >
                   <Link to={`/profile/${user.user_id}`} className="group relative z-10 flex flex-col items-center mb-4 transition-transform hover:-translate-y-2">
                     <div className={`w-20 h-20 rounded-full border-4 ${border} bg-obsidian overflow-hidden mb-3 relative`}>
-                      <img src={`https://api.dicebear.com/9.x/bottts/svg?seed=${user.user_id}`} alt="Avatar" className="w-full h-full object-cover" />
+                      <img src={user.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${user.user_id}`} alt="Avatar" className="w-full h-full object-cover" />
                       <div className={`absolute -bottom-2 -right-2 bg-obsidian rounded-full p-1 border-2 ${border}`}>
                          <Icon size={14} className={color} />
                       </div>
@@ -152,7 +153,7 @@ export default function Leaderboard() {
                       <td className="py-4">
                         <Link to={`/profile/${user.user_id}`} className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-ares-gray-dark shrink-0 overflow-hidden border border-white/10 group-hover:border-white/60 transition-colors">
-                            <img src={`https://api.dicebear.com/9.x/bottts/svg?seed=${user.user_id}`} alt="Avatar" className="w-full h-full object-cover" />
+                            <img src={user.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${user.user_id}`} alt="Avatar" className="w-full h-full object-cover" />
                           </div>
                           <div>
                             <p className="text-white font-bold group-hover:text-white transition-colors">
