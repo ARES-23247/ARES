@@ -2,6 +2,7 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import { visualizer } from "rollup-plugin-visualizer";
 import path from "path";
 
 export default defineConfig({
@@ -27,6 +28,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    visualizer({ emitFile: true, filename: "stats.html" }),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -137,6 +139,19 @@ export default defineConfig({
           // Media processing: heic2any is 1.3MB alone
           if (normalizedId.includes("node_modules/heic2any")) {
             return "media";
+          }
+
+          // Monaco Editor
+          if (normalizedId.includes("node_modules/monaco-editor") || normalizedId.includes("node_modules/@monaco-editor")) {
+            return "monaco";
+          }
+          if (normalizedId.includes("node_modules/monaco-vim")) {
+            return "monaco-vim";
+          }
+
+          // Babel for in-browser transpilation
+          if (normalizedId.includes("node_modules/@babel/")) {
+            return "babel";
           }
 
           // Document import
