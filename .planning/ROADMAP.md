@@ -15,6 +15,8 @@
 | 1  | Fix media uploader (ts-rest FormData contract)           | ✅ Done |
 | 2  | Bypass ts-rest-hono broken multipart parser (server-side) | ✅ Done |
 | 3  | Fix delete/move for R2 keys with slashes                 | ✅ Done |
+| 4  | Repair Calendar — push missing events to GCal            | ✅ Done |
+| 5  | Fix Zulip audit & batched invite flow                    | ✅ Done |
 
 ## Progress
 
@@ -23,3 +25,5 @@
 | 1 — Fix media uploader (ts-rest FormData)               | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
 | 2 — Bypass ts-rest-hono multipart parser                | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
 | 3 — Fix delete/move wildcard routing                    | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
+| 4 — Repair Calendar endpoint                            | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |
+| 5 — Fix Zulip audit & batched invites                   | v5.6      | 1/1            | ✅ Done    | 2026-05-03 |

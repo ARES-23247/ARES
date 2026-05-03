@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v5.6
 milestone_name: "Stability & Polish"
 status: in_progress
-last_updated: "2026-05-03T21:33:00.000Z"
+last_updated: "2026-05-03T22:14:00.000Z"
 last_activity: 2026-05-03
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
+  total_phases: 5
+  completed_phases: 5
+  total_plans: 5
+  completed_plans: 5
   percent: 100
 ---
 
 # System State
 
 **Current Milestone**: v5.6 — Stability & Polish (In Progress)
-**Current Phase**: Phases 1–3 completed
+**Current Phase**: Phases 1–5 completed
 **Status**: in_progress
 
 ## Context
@@ -31,6 +31,8 @@ Milestone v5.6 focuses on stability, polish, and bug fixes.
 1. ✅ Phase 1: Fix media uploader — completed 2026-05-03
 2. ✅ Phase 2: Bypass ts-rest-hono multipart parser — completed 2026-05-03
 3. ✅ Phase 3: Fix delete/move wildcard routing — completed 2026-05-03
+4. ✅ Phase 4: Repair Calendar endpoint — completed 2026-05-03
+5. ✅ Phase 5: Fix Zulip audit & batched invites — completed 2026-05-03
 
 ## Completed Phases
 
@@ -53,13 +55,28 @@ Milestone v5.6 focuses on stability, polish, and bug fixes.
 - **Files changed**: `functions/api/routes/media/index.ts`, `src/hooks/useMedia.ts`
 - **Commit**: `d82ac50`
 
+### Phase 4 — Repair Calendar — push missing events to GCal
+- **Problem**: Many published events in D1 were missing `gcal_event_id` because they were created before GCal sync was wired up, or only the first instance of recurring events was pushed.
+- **Fix**: Added `POST /events/admin/repair-calendar` endpoint that queries all published, non-deleted events with null/empty `gcal_event_id`, iterates through each, pushes to the correct Google Calendar (based on category → calendar ID mapping), and updates D1 with the returned ID. Returns `{ pushed, failed, errors[] }` for full diagnostic visibility.
+- **UI**: Added a gold "REPAIR GCAL" button next to the existing "SYNC GCAL" button in the Event Manager tab.
+- **Files changed**: `shared/schemas/contracts/eventContract.ts`, `functions/api/routes/events/handlers.ts`, `src/components/ContentManager/EventManagerTab.tsx`
+- **Commit**: `a8f2080`
+
+### Phase 5 — Fix Zulip audit & batched invite flow
+- **Problem**: Zulip audit returned generic "Failed to fetch users" on any error. The audit included bots and inactive users in the comparison, inflating the "missing" list. Invites were all-or-nothing — one "already has account" error killed the entire batch.
+- **Fix**:
+  - **Audit**: Filters out bots (`is_bot`) and inactive users (`is_active: false`), handles `delivery_email: null` gracefully, excludes unverified ARES users, surfaces actual HTTP status and error body from Zulip API.
+  - **Invite**: Switched to batched invites (10 at a time). Each batch processes independently — partial failures (e.g., "already has account") don't block remaining batches. Reports aggregate `invitedCount`.
+- **Files changed**: `functions/api/routes/zulip.ts`
+- **Commit**: `a8f2080`
+
 ## Next Steps
 
 - Define additional phases for v5.6 or begin planning the next milestone.
 
 ## Current Position
 
-Phase: 3 (completed)
+Phase: 5 (completed)
 Plan: —
 Status: Awaiting next phase
-Last activity: 2026-05-03 — Fixed delete/move wildcard routing for R2 keys
+Last activity: 2026-05-03 — Repair calendar endpoint + Zulip audit fix
