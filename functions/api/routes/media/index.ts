@@ -2,8 +2,10 @@
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { mediaContract } from "../../../../shared/schemas/contracts/mediaContract";
-import { AppEnv, ensureAdmin, getSessionUser } from "../../middleware";
-import { mediaHandlers } from "./handlers";
+import { AppEnv, ensureAdmin, getSessionUser, logAuditAction } from "../../middleware";
+import { mediaHandlers, isValidImage } from "./handlers";
+import { Kysely } from "kysely";
+import { DB } from "../../../../shared/schemas/database";
 
 const s = initServer<AppEnv>();
 const mediaRouter = new Hono<AppEnv>();
@@ -13,6 +15,79 @@ const mediaTsRestRouter = s.router(mediaContract, mediaHandlers);
 // Protections
 mediaRouter.use("/admin/*", ensureAdmin);
 mediaRouter.use("/admin", ensureAdmin);
+
+// ─── Raw upload route ──────────────────────────────────────────────────
+// ts-rest-hono's body parser does an exact Content-Type match against
+// "multipart/form-data", but browsers send "multipart/form-data; boundary=..."
+// which fails the match. We register a raw Hono handler first so it takes
+// priority over the ts-rest generated one.
+mediaRouter.post("/admin/upload", async (c) => {
+  try {
+    const parsed = await c.req.parseBody();
+    const file = parsed["file"];
+    const folder = (parsed["folder"] as string) || "Library";
+
+    if (!file || !(file instanceof File)) {
+      return c.json({ error: "No file uploaded" }, 400);
+    }
+
+    const isLarge = file.size > 10 * 1024 * 1024;
+    let buffer: ArrayBuffer | null = null;
+    let headerBuffer: ArrayBuffer;
+
+    if (!isLarge) {
+      buffer = await file.arrayBuffer();
+      headerBuffer = buffer.slice(0, 1024);
+    } else {
+      headerBuffer = await file.slice(0, 1024).arrayBuffer();
+    }
+
+    if (!isValidImage(headerBuffer)) {
+      return c.json({ error: "Invalid file type. Only standard images are supported." }, 400);
+    }
+
+    const key = folder ? `${folder}/${file.name}` : file.name;
+    if (c.env.ARES_STORAGE) {
+      if (isLarge) {
+        await c.env.ARES_STORAGE.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
+      } else {
+        await c.env.ARES_STORAGE.put(key, buffer!, { httpMetadata: { contentType: file.type } });
+      }
+    }
+
+    let altText = "ARES 23247 Team Media Image";
+    const isAiSupported = ["image/jpeg", "image/png"].includes(file.type);
+    if (isAiSupported && !isLarge && c.env.AI && (buffer || file.size < 2.5 * 1024 * 1024)) {
+      try {
+        if (!buffer) buffer = await file.arrayBuffer();
+        const uint8 = new Uint8Array(buffer);
+        const aiRes = await c.env.AI.run('@cf/llava-1.5-7b-hf', { prompt: 'Describe for screen reader', image: uint8 as any }) as { description?: string };
+        if (aiRes?.description) altText = String(aiRes.description).trim();
+      } catch (err) {
+        console.error("[Media:Upload] AI Error", err);
+      }
+    }
+
+    const db = c.get("db") as Kysely<DB>;
+    await db.insertInto("media_tags")
+      .values({ key, folder, tags: altText })
+      .onConflict(oc => oc.column("key").doUpdateSet({ folder, tags: altText }))
+      .execute();
+
+    if (c.executionCtx) {
+      c.executionCtx.waitUntil(logAuditAction(c, "media_upload", "media", key, `Uploaded to ${folder}`));
+
+      if (typeof caches !== 'undefined') {
+        c.executionCtx.waitUntil((caches as any).default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
+      }
+    }
+
+    return c.json({ success: true, key, url: `/api/media/${key}`, altText }, 200);
+  } catch (err) {
+    console.error("[Media:Upload] Error", err);
+    return c.json({ error: "Upload failed" }, 500);
+  }
+});
 
 createHonoEndpoints(mediaContract, mediaTsRestRouter, mediaRouter);
 
