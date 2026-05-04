@@ -143,7 +143,7 @@ settingsRouter.get("/admin/backup", async (c: Context<AppEnv>) => {
     const backupPromises = SAFE_TABLES.map(async (tableName) => {
       try {
         const cols = TABLE_COLUMNS[tableName];
-        let q: any = (db.selectFrom as any)(tableName);
+        let q: any = db.selectFrom(tableName as any);
         if (cols) {
           q = q.select(cols);
         } else {
