@@ -2,7 +2,7 @@ import { Suspense, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, History, Activity,
-  User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert, Mail, DollarSign, Package, Sparkles,
+  User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert, Mail, DollarSign, Package, Sparkles, Crosshair,
   type LucideIcon
 } from "lucide-react";
 import { signOut } from "../../utils/auth-client";
@@ -198,6 +198,7 @@ export default function DashboardSidebar({
                 <NavButton tab="outreach" icon={Target} label="Outreach Tracker" currentPath={location.pathname} />
                 <NavButton tab="locations" icon={MapPin} label="Meeting Locations" currentPath={location.pathname} />
                 {canSeeSimulations && <NavButton tab="simulations" icon={Sparkles} label="Sim Playground" currentPath={location.pathname} />}
+                <NavButton tab="scouting" icon={Crosshair} label="FTC Scout" currentPath={location.pathname} />
               </div>
             </div>
           )}
