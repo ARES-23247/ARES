@@ -46,10 +46,11 @@ export const outreachHandlers: any = {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("outreach_logs")
         .select([
-          "id", "title", "date", "location", 
-          "hours as hours_logged", "people_reached as reach_count", 
+          "id", "title", "date", "location",
+          "hours as hours_logged", "people_reached as reach_count",
           "students_count", "impact_summary as description", "season_id",
-          "is_mentoring", "mentored_team_number", "event_id"
+          "is_mentoring", "mentored_team_number", "event_id",
+          "mentor_count", "mentor_hours"
         ])
         .where("is_deleted", "=", 0)
         .orderBy("date", "desc")
@@ -71,7 +72,9 @@ export const outreachHandlers: any = {
         mentored_team_number: r.mentored_team_number || null,
         season_id: r.season_id ? Number(r.season_id) : null,
         is_dynamic: !!r.event_id,
-        event_id: r.event_id || null
+        event_id: r.event_id || null,
+        mentor_count: Number(r.mentor_count || 0),
+        mentor_hours: Number(r.mentor_hours || 0)
       }));
 
       const combined = [...logs, ...volunteerEvents].sort(
@@ -89,10 +92,11 @@ export const outreachHandlers: any = {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("outreach_logs")
         .select([
-          "id", "title", "date", "location", 
-          "hours as hours_logged", "people_reached as reach_count", 
+          "id", "title", "date", "location",
+          "hours as hours_logged", "people_reached as reach_count",
           "students_count", "impact_summary as description", "season_id",
-          "is_mentoring", "mentored_team_number", "event_id"
+          "is_mentoring", "mentored_team_number", "event_id",
+          "mentor_count", "mentor_hours"
         ])
         .where("is_deleted", "=", 0)
         .orderBy("date", "desc")
@@ -114,7 +118,9 @@ export const outreachHandlers: any = {
         mentored_team_number: r.mentored_team_number || null,
         season_id: r.season_id ? Number(r.season_id) : null,
         is_dynamic: !!r.event_id,
-        event_id: r.event_id || null
+        event_id: r.event_id || null,
+        mentor_count: Number(r.mentor_count || 0),
+        mentor_hours: Number(r.mentor_hours || 0)
       }));
 
       const combined = [...logs, ...volunteerEvents].sort(
@@ -149,6 +155,8 @@ export const outreachHandlers: any = {
             mentored_team_number: body.mentored_team_number,
             season_id: body.season_id,
             event_id: body.event_id,
+            mentor_count: body.mentor_count || 0,
+            mentor_hours: body.mentor_hours || 0,
           })
           .where("id", "=", body.id as any)
           .execute();
@@ -167,6 +175,8 @@ export const outreachHandlers: any = {
             mentored_team_number: body.mentored_team_number,
             season_id: body.season_id,
             event_id: body.event_id,
+            mentor_count: body.mentor_count || 0,
+            mentor_hours: body.mentor_hours || 0,
           })
           .executeTakeFirst();
         result = inserted.insertId?.toString() || "new";

@@ -380,6 +380,8 @@ export interface OutreachLogs {
   is_mentoring: Generated<number | null>;
   location: string | null;
   mentored_team_number: string | null;
+  mentor_count: number | null;
+  mentor_hours: number | null;
   metadata: string | null;
   people_reached: number | null;
   season_id: number | null;
