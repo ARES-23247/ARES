@@ -77,7 +77,8 @@ function ConnectedEditorRoom({
       }
 
       // Create a new provider instance to reconnect
-      const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+      const wsUrl = `wss://${host}/party/${roomId}`;
+      const newProvider = new YPartyKitProvider(wsUrl, roomId, ydoc, { isPrefixedUrl: true });
       providerRef.current = newProvider;
       // Track this provider for cleanup (WR-06)
       providersRef.current.add(newProvider);
@@ -126,12 +127,17 @@ function ConnectedEditorRoom({
       providerRef.current.destroy();
     }
 
-    const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+    // y-partykit constructs URLs as host/roomname, but PartyKit expects /party/roomname
+    // Build the full URL with the correct prefix
+    const wsUrl = `wss://${host}/party/${roomId}`;
+    console.log(`[CollaborativeEditor] Creating provider for room "${roomId}" with URL "${wsUrl}"`);
+    const newProvider = new YPartyKitProvider(wsUrl, roomId, ydoc, { isPrefixedUrl: true });
     providerRef.current = newProvider;
     // Track this provider for cleanup (WR-06)
     allProviders.add(newProvider);
 
     newProvider.on("synced", (synced: boolean) => {
+      console.log(`[CollaborativeEditor] Synced event: ${synced} for room "${roomId}"`);
       if (synced) {
         // Capture timeout reference to avoid race condition (CR-07)
         const timeout = timeoutRef.current;
@@ -157,6 +163,11 @@ function ConnectedEditorRoom({
       setIsSynced(false);
       setTimedOut(true);
       attemptReconnect();
+    });
+
+    // Track connection errors
+    newProvider.on("connection-error", (err: any) => {
+      console.error(`[CollaborativeEditor] Connection error for room "${roomId}":`, err);
     });
 
     // Bypass sync wait in Playwright tests
@@ -201,7 +212,8 @@ function ConnectedEditorRoom({
         providerRef.current.destroy();
       }
 
-      const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+      const wsUrl = `wss://${host}/party/${roomId}`;
+      const newProvider = new YPartyKitProvider(wsUrl, roomId, ydoc, { isPrefixedUrl: true });
       providerRef.current = newProvider;
       // Track this provider for cleanup (WR-06)
       providersRef.current.add(newProvider);
