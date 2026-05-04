@@ -26,8 +26,8 @@
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 12. Outreach Fixes | v6.3 | 0 | Pending | - |
-| 13. Interactive Tools | v6.3 | 0 | Pending | - |
+| 12. Outreach Fixes | v6.3 | 1 | ✅ Complete | 2026-05-04 |
+| 13. Interactive Tools | v6.3 | 0 | 🚧 Active | - |
 
 ## Backlog
 
