@@ -119,6 +119,12 @@
       "name": "Untitled Simulation",
       "path": "./UntitledSimulation",
       "requiresContext": false
+    },
+    {
+      "id": "TheGreatBeeAdventure",
+      "name": "The Great Bee Adventure",
+      "path": "./TheGreatBeeAdventure",
+      "requiresContext": false
     }
   ]
 }
