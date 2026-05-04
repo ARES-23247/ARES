@@ -150,10 +150,14 @@ export default function AdminUsers() {
         setShowZulipAudit(false);
         setAuditResult(null);
       } else if (data.status === 500) {
-        toast.error(`Invite failed: ${data.body.error}`);
+        const errorMsg = data.body.error || "Unknown error";
+        toast.error(`Invite failed: ${errorMsg}`, { duration: 10000 });
       }
     },
-    onError: (err: Error) => toast.error(err.message || "Network error during invite")
+    onError: (err: Error) => {
+      const errorMsg = err.message || "Unknown network error";
+      toast.error(`Network error: ${errorMsg}`, { duration: 10000 });
+    }
   });
 
   const columns = useMemo(() => [
