@@ -54,9 +54,15 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 
 (None currently active)
 
-## Current Milestone: None
+## Current Milestone: v6.3 Outreach & Impact Logging Restoration
 
-**Goal:** Run `/gsd-new-milestone` to define the next milestone.
+**Goal:** Restore functionality to the Outreach section so users can successfully log impact and alter existing events, and expand interactive tools.
+
+**Target features:**
+- Fix Outreach log persistence (ensure `api.outreach.save` works correctly).
+- Implement editing/altering capabilities for Outreach events (especially for synced "Dynamic" events).
+- Ensure impact metrics (Reach, Hours) aggregate correctly.
+- Interactive Tools Expansion (telemetry dashboard viewers, scouting data visualizers, kinematics calculators).
 
 ## Current State
 
