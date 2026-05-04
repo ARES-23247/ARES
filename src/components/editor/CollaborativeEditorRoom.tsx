@@ -77,8 +77,7 @@ function ConnectedEditorRoom({
       }
 
       // Create a new provider instance to reconnect
-      const wsUrl = `wss://${host}/party/${roomId}`;
-      const newProvider = new YPartyKitProvider(wsUrl, roomId, ydoc, { isPrefixedUrl: true });
+      const newProvider = new YPartyKitProvider(host, roomId, ydoc);
       providerRef.current = newProvider;
       // Track this provider for cleanup (WR-06)
       providersRef.current.add(newProvider);
@@ -127,11 +126,8 @@ function ConnectedEditorRoom({
       providerRef.current.destroy();
     }
 
-    // y-partykit constructs URLs as host/roomname, but PartyKit expects /party/roomname
-    // Build the full URL with the correct prefix
-    const wsUrl = `wss://${host}/party/${roomId}`;
-    console.log(`[CollaborativeEditor] Creating provider for room "${roomId}" with URL "${wsUrl}"`);
-    const newProvider = new YPartyKitProvider(wsUrl, roomId, ydoc, { isPrefixedUrl: true });
+    console.log(`[CollaborativeEditor] Creating provider for room "${roomId}" with host "${host}"`);
+    const newProvider = new YPartyKitProvider(host, roomId, ydoc);
     providerRef.current = newProvider;
     // Track this provider for cleanup (WR-06)
     allProviders.add(newProvider);
@@ -212,8 +208,7 @@ function ConnectedEditorRoom({
         providerRef.current.destroy();
       }
 
-      const wsUrl = `wss://${host}/party/${roomId}`;
-      const newProvider = new YPartyKitProvider(wsUrl, roomId, ydoc, { isPrefixedUrl: true });
+      const newProvider = new YPartyKitProvider(host, roomId, ydoc);
       providerRef.current = newProvider;
       // Track this provider for cleanup (WR-06)
       providersRef.current.add(newProvider);
@@ -344,13 +339,16 @@ export function CollaborativeEditorRoom({
   onDocLoaded?: (ydoc: Y.Doc) => void;
 }) {
   const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
+  // y-partykit constructs URLs as host/roomname, but PartyKit expects /party/roomname
+  // We work around this by including /party/ in the host value
   const host = useMemo(() => {
     if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
       return "dummy-host-for-playwright";
     }
     const hostValue = import.meta.env.VITE_PARTYKIT_HOST || "";
-    console.log("[CollaborativeEditor] PartyKit host:", hostValue || "(NOT SET - using standalone mode)");
-    return hostValue;
+    const finalHost = hostValue ? `${hostValue}/party` : "";
+    console.log("[CollaborativeEditor] PartyKit host:", finalHost || "(NOT SET - using standalone mode)");
+    return finalHost;
   }, []);
 
   const stableOnDocLoaded = useCallback((doc: Y.Doc) => {
