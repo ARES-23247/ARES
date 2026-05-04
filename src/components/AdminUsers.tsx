@@ -132,24 +132,28 @@ export default function AdminUsers() {
   };
 
   const auditMutation = api.zulip.auditMissingUsers.useMutation({
-    onSuccess: (data: { body: { missingEmails?: string[] } }) => {
-      if (data.body?.missingEmails) {
+    onSuccess: (data: any) => {
+      if (data.status === 200) {
         setAuditResult(data.body.missingEmails);
         setShowZulipAudit(true);
-      } else {
-        toast.error("Failed to parse audit results.");
+      } else if (data.status === 500) {
+        toast.error(`Audit failed: ${data.body.error}`);
       }
     },
-    onError: (err: Error) => toast.error(err.message || "Audit failed")
+    onError: (err: Error) => toast.error(err.message || "Network error during audit")
   });
 
   const inviteMutation = api.zulip.inviteUsers.useMutation({
-    onSuccess: (data: { body: { invitedCount?: number } }) => {
-      toast.success(`Successfully invited ${data.body?.invitedCount || 0} users!`);
-      setShowZulipAudit(false);
-      setAuditResult(null);
+    onSuccess: (data: any) => {
+      if (data.status === 200) {
+        toast.success(`Successfully invited ${data.body.invitedCount} users!`);
+        setShowZulipAudit(false);
+        setAuditResult(null);
+      } else if (data.status === 500) {
+        toast.error(`Invite failed: ${data.body.error}`);
+      }
     },
-    onError: (err: Error) => toast.error(err.message || "Invite failed")
+    onError: (err: Error) => toast.error(err.message || "Network error during invite")
   });
 
   const columns = useMemo(() => [
