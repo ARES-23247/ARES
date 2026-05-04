@@ -144,22 +144,24 @@ function ConnectedEditorRoom({
         }
       });
 
-      // If this attempt fails, the setReconnectAttempt will trigger the next one via useEffect
+      // If this attempt fails, schedule the next attempt directly (CR-02, CR-06)
       newProvider.on("connection-error", () => {
-        setReconnectAttempt(prev => prev + 1);
-        if (reconnectAttempt + 1 >= MAX_RECONNECT_ATTEMPTS) {
-          setIsReconnecting(false);
-        }
+        setReconnectAttempt(prev => {
+          const next = prev + 1;
+          if (next >= MAX_RECONNECT_ATTEMPTS) {
+            setIsReconnecting(false);
+            return next;
+          }
+          // Schedule next attempt directly to avoid infinite loop
+          const nextDelay = RECONNECT_DELAYS[next];
+          reconnectTimeoutRef.current = setTimeout(() => {
+            attemptReconnect();
+          }, nextDelay);
+          return next;
+        });
       });
     }, delay);
-  }, [reconnectAttempt, roomId, host, ydoc, onDocLoaded]);
-
-  // Effect to handle automatic reconnection attempts when reconnectAttempt increments
-  useEffect(() => {
-    if (reconnectAttempt > 0 && reconnectAttempt < MAX_RECONNECT_ATTEMPTS && isReconnecting) {
-      attemptReconnect();
-    }
-  }, [reconnectAttempt, isReconnecting, attemptReconnect]);
+  }, [roomId, host, ydoc, onDocLoaded]);
 
   /** Manual reconnect handler for user-triggered reconnection */
   const handleManualReconnect = useCallback(() => {
@@ -189,12 +191,19 @@ function ConnectedEditorRoom({
       });
 
       newProvider.on("connection-error", () => {
-        setReconnectAttempt(prev => prev + 1);
-        if (1 < MAX_RECONNECT_ATTEMPTS) {
-          attemptReconnect();
-        } else {
-          setIsReconnecting(false);
-        }
+        setReconnectAttempt(prev => {
+          const next = prev + 1;
+          if (next >= MAX_RECONNECT_ATTEMPTS) {
+            setIsReconnecting(false);
+            return next;
+          }
+          // Schedule next attempt directly
+          const nextDelay = RECONNECT_DELAYS[next];
+          reconnectTimeoutRef.current = setTimeout(() => {
+            attemptReconnect();
+          }, nextDelay);
+          return next;
+        });
       });
     }, delay);
   }, [roomId, host, ydoc, onDocLoaded, attemptReconnect]);
