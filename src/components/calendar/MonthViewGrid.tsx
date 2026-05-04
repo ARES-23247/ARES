@@ -56,7 +56,7 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="py-3 text-center text-xs font-bold uppercase tracking-widest text-marble/60"
+            className="py-3 text-center text-xs font-bold uppercase tracking-widest text-zinc-400"
           >
             {day}
           </div>
@@ -74,14 +74,16 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
             <div
               key={day.toISOString()}
               className={`min-h-[120px] p-2 border-r border-b border-white/5 transition-colors ${
-                !isCurrentMonth ? "bg-black/40 opacity-50" : "bg-transparent"
+                !isCurrentMonth ? "bg-black/40" : "bg-transparent"
               } ${idx % 7 === 6 ? "border-r-0" : ""} hover:bg-white/5`}
             >
               <div className="flex justify-between items-start mb-2">
                 <span
                   className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full ${
                     isCurrentDay
-                      ? "bg-ares-red text-white"
+                      ? "bg-[#A30000] text-white"
+                      : !isCurrentMonth
+                      ? "text-zinc-500"
                       : "text-marble"
                   }`}
                 >

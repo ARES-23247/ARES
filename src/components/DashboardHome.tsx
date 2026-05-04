@@ -22,8 +22,9 @@ export default function DashboardHome({ stats: prefetchedStats }: { stats?: unkn
     docs: 0,
   };
    
-  // @ts-expect-error - BetterAuth session typing
-  const firstName = session?.user?.first_name || session?.user?.name || "ARES Member";
+  const firstName = session?.user?.nickname || session?.user?.first_name 
+    ? (session?.user?.nickname || `${session.user.first_name} ${session.user.last_name || ''}`.trim())
+    : ((session?.user?.name as string) || "ARES Member");
 
   const startTour = () => {
     const driverObj = driver({

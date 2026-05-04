@@ -144,7 +144,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-3xl font-black text-white mb-1">
-                {profile.first_name && profile.last_name ? `${profile.first_name} "${profile.nickname}" ${profile.last_name}` : (profile.nickname || "ARES Member")}
+                {profile.first_name && profile.last_name ? `${profile.first_name} "${profile.nickname}" ${profile.last_name}` : (profile.nickname || profile.first_name || "ARES Member")}
               </h1>
               {profile.pronouns && <p className="text-marble text-sm mb-3">{profile.pronouns}</p>}
               <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-4">

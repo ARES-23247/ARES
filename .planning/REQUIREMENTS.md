@@ -1,6 +1,6 @@
 # Milestone v6.0 Requirements
 
-**Status:** Active (75% complete)
+**Status:** Complete ✅
 **Theme:** Real-Time Collaboration Infrastructure
 
 ## Requirements
@@ -23,13 +23,18 @@
 - [x] **FIX-05**: Add event version history backend endpoint (GET/PATCH on `/api/events/admin/:id/history`) and re-enable the history button in EventEditor.
 
 ### Integration Verification (INT)
-- [ ] **INT-01**: Verify that all four editor surfaces (Docs, Blog, Events, Tasks) display "Live" status badge when connected.
-- [ ] **INT-02**: Test multi-user concurrent editing in at least one editor (two browser tabs editing the same document).
-- [ ] **INT-03**: Validate that document changes persist across page reloads via D1 snapshot sync.
+- [x] **INT-01**: Verify that all four editor surfaces (Docs, Blog, Events, Tasks) display "Live" status badge when connected.
+  - Verified via E2E tests (tests/e2e/collaboration.spec.ts:31-50)
+- [x] **INT-02**: Test multi-user concurrent editing in at least one editor (two browser tabs editing the same document).
+  - Verified via E2E tests (tests/e2e/collaboration.spec.ts:52-76)
+- [x] **INT-03**: Validate that document changes persist across page reloads via D1 snapshot sync.
+  - Verified via E2E tests (tests/e2e/collaboration.spec.ts:78-96)
 
 ### Resilience (RES)
-- [ ] **RES-01**: Confirm standalone fallback works when PartyKit server is unreachable (editor loads with "Offline" badge).
-- [ ] **RES-02**: Add reconnection logic — if PartyKit recovers mid-session, attempt to re-sync without page reload.
+- [x] **RES-01**: Confirm standalone fallback works when PartyKit server is unreachable (editor loads with "Offline" badge).
+  - Implemented (src/components/editor/CollaborativeEditorRoom.tsx:238)
+- [x] **RES-02**: Add reconnection logic — if PartyKit recovers mid-session, attempt to re-sync without page reload.
+  - Implemented with exponential backoff (src/components/editor/CollaborativeEditorRoom.tsx:110-179)
 
 ### Deferred Items (from prior milestones)
 - [ ] **DEF-01**: Media manager E2E testing (TEST-03 from v5.7).

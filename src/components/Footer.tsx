@@ -121,11 +121,13 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-white/10 flex flex-col xl:flex-row justify-between items-center gap-10">
         <div className="flex flex-col items-center xl:items-start gap-2">
-          <p className="text-marble text-[10px] font-bold uppercase tracking-[0.25em] opacity-80">
-            © {mounted ? new Date().getFullYear() : "2026"} <span className="text-ares-red">ARES</span> 23247. All Rights Reserved.
+          <p className="text-marble text-[10px] font-bold uppercase tracking-[0.25em]">
+            <span className="opacity-80">© {mounted ? new Date().getFullYear() : "2026"} </span>
+            <span className="bg-ares-red text-white px-1.5 py-0.5 rounded-sm font-black mx-1 inline-block shadow-sm">ARES</span> 
+            <span className="opacity-80">23247. All Rights Reserved.</span>
           </p>
-          <p className="text-marble/40 text-[8px] uppercase tracking-widest">
-            Made with <span className="text-ares-red">♥</span> in West Virginia • Proudly part of the Mountaineer Community
+          <p className="text-marble/60 text-[8px] uppercase tracking-widest">
+            Made with <span className="text-[#ff6b81]">♥</span> in Morgantown, West Virginia
           </p>
         </div>
         
@@ -149,11 +151,11 @@ export default function Footer() {
           <Link to="/tech-stack" className="hover:text-ares-gold transition-colors">Tech Stack</Link>
           <Link to="/sponsors" className="hover:text-ares-red transition-colors">Support ARES</Link>
           
-          <div className="flex gap-4 items-center opacity-40 px-2">
-            <a href="https://wave.webaim.org/" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity" title="Validated by WAVE">
+          <div className="flex gap-4 items-center px-2">
+            <a href="https://wave.webaim.org/" target="_blank" rel="noopener noreferrer" className="opacity-50 hover:opacity-100 transition-opacity" title="Validated by WAVE">
               <img src="https://wave.webaim.org/img/wavelogo.svg" alt="WAVE" className="h-3 grayscale hover:grayscale-0 transition-all" />
             </a>
-            <span className="text-[7px] border border-white/20 px-1 rounded">PA11Y CI</span>
+            <span className="text-[7px] border border-white/30 text-marble/80 px-1 rounded">PA11Y CI</span>
           </div>
         </div>
       </div>

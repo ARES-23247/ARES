@@ -161,7 +161,11 @@ export default function DashboardSidebar({
               </div>
             </button>
             <div className="flex flex-col min-w-0">
-              <span className="text-white text-sm font-bold truncate tracking-tight">{(session?.user?.name as string) || "ARES Member"}</span>
+              <span className="text-white text-sm font-bold truncate tracking-tight">
+                {session?.user?.nickname || session?.user?.first_name 
+                  ? (session?.user?.nickname || `${session.user.first_name} ${session.user.last_name || ''}`.trim())
+                  : ((session?.user?.name as string) || "ARES Member")}
+              </span>
               <div className="flex flex-col gap-1">
                 <span className="text-ares-gold text-xs font-black uppercase tracking-widest truncate">
                   {role} • {memberType}

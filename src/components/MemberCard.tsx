@@ -5,6 +5,8 @@ import { BrandLogo } from "./BrandLogo";
 export interface TeamMember {
   user_id: string;
   nickname: string;
+  first_name?: string;
+  last_name?: string;
   avatar: string;
   pronouns?: string;
   subteams?: string;
@@ -32,7 +34,7 @@ export function MemberCard({ member }: { member: TeamMember }) {
           />
         </div>
         <h4 className="text-white font-bold text-base mb-0.5 group-hover:text-ares-red transition-colors">
-          {member.nickname || "ARES Member"}
+          {member.nickname || member.first_name || "ARES Member"}
         </h4>
         {member.pronouns && (
           <p className="text-marble/40 text-xs mb-2">{member.pronouns}</p>

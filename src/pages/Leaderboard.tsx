@@ -40,9 +40,6 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen bg-obsidian text-marble py-24 relative overflow-hidden">
       <SEO title="Team Leaderboard — ARES 23247" description="The most engaged students and mentors on Team ARES 23247." />
-      
-      {/* Ambient Lighting */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-ares-gold/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-5xl mx-auto px-6 relative z-10">
         <Link to="/" className="inline-flex items-center gap-2 text-white hover:text-white text-xs font-bold uppercase tracking-widest mb-12 transition-colors bg-obsidian px-3 py-1.5 ares-cut-sm border border-white/10 shadow-lg">
@@ -63,8 +60,7 @@ export default function Leaderboard() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4"
           >
-            Team <span aria-hidden="true" className="text-ares-gold">Leaderboard</span>
-            <span className="sr-only">Leaderboard</span>
+            Team <span className="text-ares-gold">Leaderboard</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
