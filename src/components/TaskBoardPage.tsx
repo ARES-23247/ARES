@@ -14,6 +14,10 @@ interface TaskListResponse {
   headers: Headers;
 }
 
+export interface TaskNode extends TaskItem {
+  subRows?: TaskNode[];
+}
+
 export default function TaskBoardPage() {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
@@ -21,15 +25,36 @@ export default function TaskBoardPage() {
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
 
   // -- Queries --------------------------------------------------------
-  const queryKey = ["tasks", "list", { parent_id: "null" }];
+  const queryKey = ["tasks", "list"];
   const { data: tasksRes, isLoading: isTasksLoading } = api.tasks.list.useQuery(
     queryKey,
-    { query: { parent_id: "null" } },
+    { query: {} },
     { refetchInterval: 30000 }
   );
 
   const tasksBody = tasksRes?.status === 200 ? tasksRes.body : null;
   const tasks = tasksBody?.tasks || [];
+
+  // Build tree for table view
+  const buildTaskTree = (flatTasks: TaskItem[]): TaskNode[] => {
+    const taskMap = new Map<string, TaskNode>();
+    flatTasks.forEach(t => taskMap.set(t.id, { ...t, subRows: [] }));
+    
+    const rootTasks: TaskNode[] = [];
+    flatTasks.forEach(t => {
+      const node = taskMap.get(t.id)!;
+      if (t.parent_id && taskMap.has(t.parent_id)) {
+        taskMap.get(t.parent_id)!.subRows!.push(node);
+      } else {
+        rootTasks.push(node);
+      }
+    });
+    
+    return rootTasks;
+  };
+
+  const rootTasks = tasks.filter((t: TaskItem) => !t.parent_id);
+  const taskTree = buildTaskTree(tasks);
 
   // -- Mutations ------------------------------------------------------
   const updateMutation = api.tasks.update.useMutation({
@@ -114,8 +139,8 @@ export default function TaskBoardPage() {
   const [subteamFilter, setSubteamFilter] = useState<string | null>(null);
 
   const filteredTasks = subteamFilter 
-    ? tasks.filter((t: TaskItem) => t.subteam?.toLowerCase() === subteamFilter.toLowerCase())
-    : tasks;
+    ? rootTasks.filter((t: TaskItem) => t.subteam?.toLowerCase() === subteamFilter.toLowerCase())
+    : rootTasks;
 
   const handleCreateTaskWithSubteam = async (title: string) => {
     setIsCreating(true);
@@ -216,26 +241,28 @@ export default function TaskBoardPage() {
       </div>
       {/* Main Board Content */}
       <div className={`flex-1 relative ${isFullscreen ? "px-6 pb-6 overflow-hidden flex flex-col" : "min-h-[600px]"}`}>
-        {viewMode === "kanban" ? (
-          <ProjectBoardKanban
-            tasks={filteredTasks}
-            isLoading={isTasksLoading}
-            onCreateTask={handleCreateTaskWithSubteam}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            onReorder={handleReorder}
-            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["tasks", "list"] })}
-            isCreating={isCreating}
-          />
-        ) : (
-          <TaskTableView
-            tasks={filteredTasks}
-            onRowClick={(_task) => {
-              // Future: Open task details modal when clicking a row
-            }}
-          />
-        )}
-      </div>
+          {viewMode === "kanban" ? (
+            <ProjectBoardKanban
+              tasks={filteredTasks}
+              isLoading={isTasksLoading}
+              onCreateTask={handleCreateTaskWithSubteam}
+              onUpdateTask={handleUpdateTask}
+              onDeleteTask={handleDeleteTask}
+              onReorder={handleReorder}
+              isCreating={isCreating}
+              onRefresh={() => queryClient.invalidateQueries({ queryKey: ["tasks", "list"] })}
+            />
+          ) : (
+            <div className="w-full h-full pb-4">
+              <TaskTableView 
+                tasks={taskTree} 
+                onRowClick={(t) => {
+                  // If we need to open modal for task from table
+                }}
+              />
+            </div>
+          )}
+        </div>
     </div>
   );
 

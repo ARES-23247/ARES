@@ -5,18 +5,21 @@ import {
   getSortedRowModel,
   flexRender,
   createColumnHelper,
-  SortingState
+  SortingState,
+  ExpandedState,
+  getExpandedRowModel
 } from "@tanstack/react-table";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight, ChevronDown } from "lucide-react";
 import type { TaskItem } from "../command/ProjectBoardKanban";
+import type { TaskNode } from "../TaskBoardPage";
 import { statusConfig, priorityBadge } from "../command/ProjectBoardKanban";
 
 interface TaskTableViewProps {
-  tasks: TaskItem[];
-  onRowClick?: (task: TaskItem) => void;
+  tasks: TaskNode[];
+  onRowClick?: (task: TaskNode) => void;
 }
 
-const columnHelper = createColumnHelper<TaskItem>();
+const columnHelper = createColumnHelper<TaskNode>();
 
 const columns = [
   columnHelper.accessor("id", {
@@ -26,11 +29,31 @@ const columns = [
   }),
   columnHelper.accessor("title", {
     header: "Title",
-    cell: info => (
-      <div className="font-medium text-white/90 max-w-xs md:max-w-md truncate" title={info.getValue()}>
-        {info.getValue()}
-      </div>
-    ),
+    cell: info => {
+      const row = info.row;
+      return (
+        <div 
+          className="flex items-center gap-2 font-medium text-white/90 max-w-xs md:max-w-md truncate" 
+          title={info.getValue()}
+          style={{ paddingLeft: `${row.depth * 1.5}rem` }}
+        >
+          {row.getCanExpand() ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                row.toggleExpanded();
+              }}
+              className="p-0.5 hover:bg-white/10 rounded flex-shrink-0 text-ares-gray"
+            >
+              {row.getIsExpanded() ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+          ) : (
+            <span className="w-[18px] inline-block flex-shrink-0" />
+          )}
+          <span className="truncate">{info.getValue()}</span>
+        </div>
+      );
+    },
   }),
   columnHelper.accessor("status", {
     header: "Status",
@@ -95,6 +118,7 @@ const columns = [
 
 export function TaskTableView({ tasks, onRowClick }: TaskTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table API is not yet React Compiler compatible
   const table = useReactTable({
@@ -102,10 +126,14 @@ export function TaskTableView({ tasks, onRowClick }: TaskTableViewProps) {
     columns,
     state: {
       sorting,
+      expanded,
     },
     onSortingChange: setSorting,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getSubRows: row => row.subRows,
   });
 
   return (

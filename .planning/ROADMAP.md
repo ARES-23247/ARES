@@ -24,7 +24,8 @@
 3. Access is strictly gated to administrative roles
 
 ### Phase 11: Sub-task UI Polish
-**Goal:** Refine the Kanban and Task modal UI to elegantly render nested sub-tasks with clear visual hierarchies.
+**Status**: `Completed` (2026-05-04)
+- **Goal**: Refine Kanban and Task modal UI for rendering nested sub-tasks with clear visual hierarchy.
 **Requirements:** TSK-01, TSK-02
 **Success Criteria:**
 1. Monday.com table view visually indents or groups sub-tasks under parents
