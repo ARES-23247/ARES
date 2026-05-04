@@ -11,8 +11,8 @@
 
 ### Phase 1: Recurring GCal Sync
 **Goal:** Establish bidirectional sync for recurring events
-- [ ] SYNC-01: Implement recurrence rule parsing
-- [ ] SYNC-02: Enhance /admin/sync for recurring instances
+- [x] SYNC-01: Implement recurrence rule parsing
+- [x] SYNC-02: Enhance /admin/sync for recurring instances
 
 ### Phase 2: Admin Pagination
 **Goal:** Handle large datasets gracefully
@@ -24,3 +24,11 @@
 - [ ] MON-01: Sentry integration
 - [ ] MON-02: API latency logging
 - [ ] MON-03: Usage metrics dashboard
+
+### Phase 4: PartyKit Realtime Migration
+**Goal:** Migrate collaborative editing from Liveblocks to self-hosted PartyKit
+- [ ] PKIT-01: Scaffold PartyKit standalone worker & Yjs DO setup
+- [ ] PKIT-02: Replace `@liveblocks/yjs` with `y-partykit` in frontend
+- [ ] PKIT-03: Implement Tiptap provider & auth mechanisms
+- [ ] PKIT-04: Adapt snapshot persistence to D1 directly via PartyKit
+- [ ] PKIT-05: Remove Liveblocks dependencies and webhooks

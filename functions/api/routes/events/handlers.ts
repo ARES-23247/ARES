@@ -740,7 +740,10 @@ export const eventHandlers: any = {
               description: ev.description,
               gcal_event_id: ev.gcal_event_id,
               status: 'published' as const,
-              category: cal.category
+              category: cal.category,
+              recurrence_rule: ev.recurrence_rule || null,
+              parent_event_id: ev.parent_gcal_id || null,
+              original_start_time: ev.original_start_time || null
             }));
 
             await db.insertInto("events")
@@ -751,7 +754,10 @@ export const eventHandlers: any = {
                 date_end: sql`excluded.date_end`,
                 location: sql`excluded.location`,
                 description: sql`excluded.description`,
-                category: sql`excluded.category`
+                category: sql`excluded.category`,
+                recurrence_rule: sql`excluded.recurrence_rule`,
+                parent_event_id: sql`excluded.parent_event_id`,
+                original_start_time: sql`excluded.original_start_time`
               }))
               .execute();
           }
