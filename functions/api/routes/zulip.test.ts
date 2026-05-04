@@ -222,6 +222,9 @@ describe("Hono Backend - /zulip Router", () => {
           { email: "user2@test.com", is_bot: false, is_active: true }
         ] 
       }) 
+    }).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ members: [] })
     });
 
     const mockDb = {
