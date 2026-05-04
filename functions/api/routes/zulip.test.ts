@@ -218,8 +218,8 @@ describe("Hono Backend - /zulip Router", () => {
       ok: true, 
       json: async () => ({ 
         members: [
-          { email: "user1@test.com", is_bot: false, is_active: true },
-          { email: "user2@test.com", is_bot: false, is_active: true }
+          { email: "alice@test.com", is_bot: false, is_active: true },
+          { email: "bob@test.com", is_bot: false, is_active: true }
         ] 
       }) 
     }).mockResolvedValueOnce({
@@ -232,8 +232,8 @@ describe("Hono Backend - /zulip Router", () => {
       select: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       execute: vi.fn().mockResolvedValue([
-        { email: "user1@test.com" },
-        { email: "user3@test.com" }
+        { email: "alice@test.com" },
+        { email: "charlie@test.com" }
       ])
     };
 
@@ -244,7 +244,7 @@ describe("Hono Backend - /zulip Router", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as any;
     expect(body.success).toBe(true);
-    expect(body.missingEmails).toEqual(["user3@test.com"]);
+    expect(body.missingEmails).toEqual(["charlie@test.com"]);
   });
 
   it("POST /invites/send - handles batch sending successfully", async () => {
