@@ -32,7 +32,7 @@ import { CollaborativeEditorRoom, useCollaborativeEditor } from "./editor/Collab
 import VersionHistorySidebar from "./editor/VersionHistorySidebar";
 import ZulipThread from "./ZulipThread";
 
-function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userRole?: string | unknown, roomId?: string | null }) {
+function EventEditorInner({ editId, userRole, roomId: _roomId }: { editId?: string, userRole?: string | unknown, roomId?: string | null }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const modal = useModal();
@@ -299,8 +299,8 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
   if (isLoading) return <div className="flex items-center justify-center py-20"><RefreshCw className="animate-spin text-ares-red" size={32} /></div>;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full relative h-full">
-      <div className="flex flex-col gap-6 flex-1 min-w-0">
+    <div className="flex flex-col gap-6 w-full relative h-full">
+      <div>
       <div>
         <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
           {editId ? "Edit Event" : "Publish Event"}
@@ -604,15 +604,6 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
         />
       )}
       </div>
-
-      {editId && eventRes?.body?.event && (
-        <div className="w-full xl:w-96 flex-shrink-0 flex flex-col gap-6">
-          <ZulipThread 
-            stream={(eventRes.body.event as Record<string, unknown>).zulip_stream as string || "events"} 
-            topic={(eventRes.body.event as Record<string, unknown>).zulip_topic as string || `Event: ${(eventRes.body.event as Record<string, unknown>).title as string}`} 
-          />
-        </div>
-      )}
     </div>
   );
 }

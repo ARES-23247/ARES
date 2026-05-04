@@ -8,6 +8,10 @@ vi.mock("../middleware", async (importOriginal) => {
   return {
     ...actual,
     ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
+    ensureAuth: async (c: any, next: () => Promise<void>) => {
+      c.set("sessionUser", { id: "test-user", email: "test@test.com", name: "Test User", nickname: "TestNick", image: null, role: "admin", member_type: "mentor" });
+      return next();
+    },
     getSocialConfig: vi.fn(),
   };
 });
@@ -104,7 +108,7 @@ describe("Hono Backend - /zulip Router", () => {
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    expect(sendZulipMessage).toHaveBeenCalledWith(expect.anything(), "general", "test", "hello", "stream");
+    expect(sendZulipMessage).toHaveBeenCalledWith(expect.anything(), "general", "test", "**TestNick** (via ARES Web):\n\nhello", "stream");
   });
 
   it("POST /message - handles send failure", async () => {

@@ -11,30 +11,6 @@
 
 ## Phases
 
-### Phase 06: PartyKit Production Deployment ✅
-**Goal:** Deploy the PartyKit Yjs collaboration server and wire `VITE_PARTYKIT_HOST` into Cloudflare Pages.
-
-**Requires:** PK-01, PK-02, PK-04
-
-**Plans:**
-- [x] 06-1: Create D1 migration for `document_snapshots` table
-- [x] 06-2: Deploy PartyKit server to production (`npx partykit deploy`)
-- [x] 06-3: Set `VITE_PARTYKIT_HOST` environment variable via `.env.production`
-
----
-
-### Phase 06.5: Editor UI & Zulip Fixes ✅
-**Goal:** Fix editor toolbar overlap in TaskDetailsModal, auto-create Zulip threads, fix version history, and attribute Zulip replies to actual users.
-
-**Plans:**
-- [x] 06.5-1: Replace full RichEditorToolbar with CompactEditorToolbar in TaskDetailsModal
-- [x] 06.5-2: Auto-initialize Zulip thread for tasks without explicit stream/topic
-- [x] 06.5-3: Fix VersionHistorySidebar using stale /api/liveblocks/history URL
-- [x] 06.5-4: Attribute Zulip web replies to logged-in user instead of bot
-- [x] 06.5-5: Add event version history backend endpoint + re-enable history button
-
----
-
 ### Phase 07: Integration Verification & Resilience
 **Goal:** Validate real-time collaboration across all editor surfaces and add reconnection logic.
 
