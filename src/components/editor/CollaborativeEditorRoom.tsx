@@ -22,6 +22,10 @@ export function useCollaborativeEditor() {
 
 /** Connection timeout in milliseconds before falling back to standalone mode */
 const CONNECT_TIMEOUT_MS = 5000;
+/** Exponential backoff delays for reconnection attempts (ms) */
+const RECONNECT_DELAYS = [5000, 10000, 20000, 40000, 60000] as const;
+/** Maximum number of reconnection attempts before showing manual reconnect button */
+const MAX_RECONNECT_ATTEMPTS = RECONNECT_DELAYS.length;
 
 /**
  * Inner component that handles the PartyKit connection lifecycle.
@@ -46,6 +50,11 @@ function ConnectedEditorRoom({
   const [timedOut, setTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Reconnection state
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const newProvider = new YPartyKitProvider(host, roomId, ydoc);
 
@@ -59,6 +68,14 @@ function ConnectedEditorRoom({
       if (synced) {
         onDocLoaded?.(ydoc);
       }
+    });
+
+    // Track disconnection for auto-reconnect
+    newProvider.on("connection-close", () => {
+      console.warn(`[CollaborativeEditor] Connection closed for room "${roomId}". Attempting reconnect...`);
+      setIsSynced(false);
+      setTimedOut(true);
+      attemptReconnect();
     });
 
     // Bypass sync wait in Playwright tests
@@ -81,10 +98,85 @@ function ConnectedEditorRoom({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       newProvider.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, host]);
+
+  /** Attempt to reconnect with exponential backoff */
+  const attemptReconnect = useCallback(() => {
+    if (reconnectAttempt >= MAX_RECONNECT_ATTEMPTS) {
+      setIsReconnecting(false);
+      return;
+    }
+
+    setIsReconnecting(true);
+    const delay = RECONNECT_DELAYS[reconnectAttempt];
+
+    console.warn(`[CollaborativeEditor] Reconnection attempt ${reconnectAttempt + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      // Create a new provider instance to reconnect
+      const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+
+      newProvider.on("synced", (synced: boolean) => {
+        if (synced) {
+          console.log(`[CollaborativeEditor] Reconnected successfully on attempt ${reconnectAttempt + 1}`);
+          setIsSynced(true);
+          setTimedOut(false);
+          setIsReconnecting(false);
+          setReconnectAttempt(0); // Reset on success
+          setProvider(newProvider);
+          onDocLoaded?.(ydoc);
+        }
+      });
+
+      // If this attempt fails, trigger the next one
+      newProvider.on("connection-error", () => {
+        setReconnectAttempt(prev => prev + 1);
+        if (reconnectAttempt + 1 < MAX_RECONNECT_ATTEMPTS) {
+          attemptReconnect();
+        } else {
+          setIsReconnecting(false);
+        }
+      });
+    }, delay);
+  }, [reconnectAttempt, roomId, host, ydoc, onDocLoaded]);
+
+  /** Manual reconnect handler for user-triggered reconnection */
+  const handleManualReconnect = useCallback(() => {
+    setReconnectAttempt(0);
+    setIsReconnecting(true);
+    // Trigger reconnection with reset attempt count
+    const delay = RECONNECT_DELAYS[0];
+    reconnectTimeoutRef.current = setTimeout(() => {
+      const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+
+      newProvider.on("synced", (synced: boolean) => {
+        if (synced) {
+          console.log(`[CollaborativeEditor] Manual reconnect successful`);
+          setIsSynced(true);
+          setTimedOut(false);
+          setIsReconnecting(false);
+          setReconnectAttempt(0);
+          setProvider(newProvider);
+          onDocLoaded?.(ydoc);
+        }
+      });
+
+      newProvider.on("connection-error", () => {
+        setReconnectAttempt(prev => prev + 1);
+        if (1 < MAX_RECONNECT_ATTEMPTS) {
+          attemptReconnect();
+        } else {
+          setIsReconnecting(false);
+        }
+      });
+    }, delay);
+  }, [roomId, host, ydoc, onDocLoaded, attemptReconnect]);
 
   const isCollaborative = isSynced && !timedOut;
 
@@ -102,24 +194,62 @@ function ConnectedEditorRoom({
   return (
     <CollaborativeEditorContext.Provider value={{ ydoc, provider, isCollaborative }}>
       <div className="relative">
-        <StatusBadge isCollaborative={isCollaborative} />
+        <StatusBadge
+          isCollaborative={isCollaborative}
+          isReconnecting={isReconnecting}
+          reconnectAttempt={reconnectAttempt}
+          maxAttempts={MAX_RECONNECT_ATTEMPTS}
+          onManualReconnect={handleManualReconnect}
+        />
         {children}
       </div>
     </CollaborativeEditorContext.Provider>
   );
 }
 
-function StatusBadge({ isCollaborative }: { isCollaborative: boolean }) {
+function StatusBadge({
+  isCollaborative,
+  isReconnecting,
+  reconnectAttempt,
+  maxAttempts,
+  onManualReconnect,
+}: {
+  isCollaborative: boolean;
+  isReconnecting?: boolean;
+  reconnectAttempt?: number;
+  maxAttempts?: number;
+  onManualReconnect?: () => void;
+}) {
+  const hasExceededAttempts = reconnectAttempt !== undefined && maxAttempts !== undefined && reconnectAttempt >= maxAttempts;
+
+  if (isCollaborative) {
+    return (
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <Wifi size={10} /> Live
+      </div>
+    );
+  }
+
+  // Offline state
   return (
-    <div className={`absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium ${
-      isCollaborative
-        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-    }`}>
-      {isCollaborative ? (
-        <><Wifi size={10} /> Live</>
-      ) : (
-        <><WifiOff size={10} /> Offline</>
+    <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        <WifiOff size={10} /> Offline
+        {!isCollaborative && <span className="text-amber-300/80 text-[9px] ml-1">(Changes not saved)</span>}
+      </div>
+      {isReconnecting && (
+        <span className="text-[9px] text-amber-400/80 animate-pulse">
+          Reconnecting... ({reconnectAttempt}/{maxAttempts})
+        </span>
+      )}
+      {hasExceededAttempts && onManualReconnect && (
+        <button
+          onClick={onManualReconnect}
+          className="text-[9px] text-ares-cyan hover:text-ares-cyan/80 underline underline-offset-1 cursor-pointer"
+          type="button"
+        >
+          Reconnect
+        </button>
       )}
     </div>
   );
