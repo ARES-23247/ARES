@@ -304,6 +304,7 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
           roomId={roomId}
           editor={editor}
           onClose={() => setIsHistoryOpen(false)}
+          historyUrl={editSlug ? `/api/docs/admin/${editSlug}/history` : undefined}
         />
       )}
       </div>

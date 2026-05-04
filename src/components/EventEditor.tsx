@@ -574,7 +574,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
           publishText={userRole === "author" ? "SUBMIT FOR REVIEW" : "PUBLISH EVENT"}
           userRole={userRole}
           roundedClass="ares-cut"
-          onShowHistory={roomId && editor ? () => setIsHistoryOpen(true) : undefined}
+          onShowHistory={undefined} // No event history API yet
           extraControls={
             <SocialSyndicationGrid 
               availableSocials={availableSocials}

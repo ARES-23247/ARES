@@ -13,7 +13,7 @@ import ZulipThread from "../ZulipThread";
 import { CollaborativeEditorRoom, useCollaborativeEditor } from "../editor/CollaborativeEditorRoom";
 import { useRichEditor } from "../editor/useRichEditor";
 import { EditorContent } from "@tiptap/react";
-import RichEditorToolbar from "../editor/RichEditorToolbar";
+import type { Editor } from "@tiptap/react";
 
 interface TaskDetailsModalProps {
   task: TaskItem;
@@ -36,6 +36,25 @@ const PRIORITY_OPTIONS = [
   { value: "high", label: "High", color: "bg-ares-bronze/30 text-ares-bronze" },
   { value: "urgent", label: "Urgent", color: "bg-ares-red/20 text-ares-red" },
 ];
+
+// Compact toolbar for the task modal – only essential formatting buttons, no import/export/fullscreen/editor-content
+function CompactEditorToolbar({ editor }: { editor: Editor }) {
+  return (
+    <div className="flex flex-wrap items-center gap-0.5 bg-obsidian/95 border-b border-white/10 p-1.5 w-full">
+      <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={`px-2 py-1 text-xs font-bold ares-cut-sm transition-all ${editor.isActive("bold") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>B</button>
+      <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={`px-2 py-1 text-xs italic ares-cut-sm transition-all ${editor.isActive("italic") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>I</button>
+      <button type="button" onClick={() => editor.chain().focus().toggleStrike().run()} className={`px-2 py-1 text-xs line-through ares-cut-sm transition-all ${editor.isActive("strike") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>S</button>
+      <div className="w-px h-4 bg-white/10 mx-0.5" />
+      <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`px-2 py-1 text-xs font-bold ares-cut-sm transition-all ${editor.isActive("heading", { level: 2 }) ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>H2</button>
+      <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`px-2 py-1 text-xs ares-cut-sm transition-all ${editor.isActive("bulletList") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>• List</button>
+      <button type="button" onClick={() => editor.chain().focus().toggleTaskList().run()} className={`px-2 py-1 text-xs ares-cut-sm transition-all ${editor.isActive("taskList") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>☑</button>
+      <div className="w-px h-4 bg-white/10 mx-0.5" />
+      <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={`px-2 py-1 text-xs font-mono ares-cut-sm transition-all ${editor.isActive("codeBlock") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>{"<>"}</button>
+      <button type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`px-2 py-1 text-xs ares-cut-sm transition-all ${editor.isActive("blockquote") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>&quot;</button>
+      <button type="button" onClick={() => editor.chain().focus().setHorizontalRule().run()} className="px-2 py-1 text-xs ares-cut-sm transition-all text-marble/40 hover:bg-ares-gray-dark hover:text-white">―</button>
+    </div>
+  );
+}
 
 // Inner Editor that connects to PartyKit
 function TaskEditorInner({ initialContent, onDescriptionChange }: { initialContent: string; onDescriptionChange: (content: string) => void }) {
@@ -77,8 +96,8 @@ function TaskEditorInner({ initialContent, onDescriptionChange }: { initialConte
   }, [editor, onDescriptionChange]);
 
   return (
-    <div className="flex flex-col border border-white/10 ares-cut-sm bg-black/40 overflow-hidden flex-1 min-h-[400px]">
-      {editor && <RichEditorToolbar editor={editor} />}
+    <div className="flex flex-col border border-white/10 ares-cut-sm bg-black/40 overflow-hidden flex-1 min-h-[250px]">
+      {editor && <CompactEditorToolbar editor={editor} />}
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-obsidian">
         <EditorContent editor={editor} className="prose prose-sm prose-invert max-w-none focus:outline-none" />
       </div>
@@ -476,21 +495,13 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete, onTa
 
               {/* Zulip Thread */}
               <div className="flex-1 min-h-[400px] border-t border-white/5 bg-obsidian flex flex-col">
-                {task.zulip_stream && task.zulip_topic ? (
-                  <div className="flex-1 overflow-hidden">
-                    <ZulipThread 
-                      stream={task.zulip_stream} 
-                      topic={task.zulip_topic} 
-                      className="m-0 border-none bg-transparent shadow-none max-h-none h-full"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center flex-1 p-6 text-center text-ares-gray opacity-50">
-                    <AlertTriangle size={32} className="mb-2" />
-                    <p className="text-xs font-bold uppercase tracking-wider">Discussion Offline</p>
-                    <p className="text-[10px] mt-1">Zulip thread not initialized for this task.</p>
-                  </div>
-                )}
+                <div className="flex-1 overflow-hidden">
+                  <ZulipThread 
+                    stream={task.zulip_stream || "tasks"} 
+                    topic={task.zulip_topic || `Task: ${task.title}`} 
+                    className="m-0 border-none bg-transparent shadow-none max-h-none h-full"
+                  />
+                </div>
               </div>
             </div>
           </div>

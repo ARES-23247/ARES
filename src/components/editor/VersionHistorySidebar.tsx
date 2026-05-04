@@ -21,6 +21,8 @@ interface VersionHistorySidebarProps {
   roomId: string;
   editor: Editor;
   onClose: () => void;
+  /** Override the API URL used to fetch version history. Defaults to `/api/docs/admin/${roomId}/history` */
+  historyUrl?: string;
 }
 
 function ReadOnlyPreview({ content }: { content: string }) {
@@ -41,14 +43,16 @@ function ReadOnlyPreview({ content }: { content: string }) {
   return <EditorContent editor={previewEditor} />;
 }
 
-export default function VersionHistorySidebar({ roomId, editor, onClose }: VersionHistorySidebarProps) {
+export default function VersionHistorySidebar({ roomId, editor, onClose, historyUrl }: VersionHistorySidebarProps) {
   const modal = useModal();
   const [previewContent, setPreviewContent] = useState<string | null>(null);
+
+  const resolvedUrl = historyUrl || `/api/docs/admin/${roomId}/history`;
 
   const { data: history = [], isLoading, isError } = useQuery<HistorySnapshot[]>({
     queryKey: ["document_history", roomId],
     queryFn: async () => {
-      const res = await fetch(`/api/liveblocks/history/${roomId}`);
+      const res = await fetch(resolvedUrl);
       if (!res.ok) throw new Error("Failed to fetch history");
       const data = await res.json() as { history?: HistorySnapshot[] };
       return data.history || [];

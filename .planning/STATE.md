@@ -1,61 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v5.9
-milestone_name: Trello Parity & Zulip Sync
-status: Complete
-last_updated: "2026-05-04T14:34:00.000Z"
+milestone: v6.0
+milestone_name: Real-Time Collaboration Infrastructure
+status: active
+last_updated: "2026-05-04T14:56:00.000Z"
 last_activity: 2026-05-04
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 6
+  completed_plans: 0
+  percent: 0
 ---
 
 # System State
 
-**Current Milestone**: v5.9 — Trello Parity & Zulip Sync (Complete)
-**Status**: shipped
-
-## Project Reference
-
-See: .planning/PROJECT.md (updated 2026-05-04)
-
-**Core value:** Championship-grade FIRST Robotics team portal
-**Current focus:** Milestone v5.9 shipped — ready for next milestone
-
-## Completed Milestones
-
-- v5.9 — Trello Parity & Zulip Sync (Shipped 2026-05-04)
-- v5.8 — Feature Expansion (Shipped 2026-05-04)
-- v5.7 — Platform Maturity (Shipped 2026-05-03)
-- v5.6 — Stability & Polish (Shipped 2026-05-03)
-- v5.5 — Kanban, Science Corner & Recurring Events (Shipped 2026-05-02)
-
-## Last Activity
-
-2026-05-04 — Milestone v5.9 archived
-2026-05-04 — HOTFIX: Resolved blockers in Kanban TaskDetailsModal:
-- Added `document_snapshots` migration (0014) for PartyKit persistence.
-- Fixed collaborative editor to seed existing content from the database.
-- Implemented subtask navigation and refined Zulip thread layout.
+**Current Milestone**: v6.0 — Real-Time Collaboration Infrastructure
+**Status**: active
 
 ## Current Position
 
-Phase: All Phases Complete
+Phase: 06 — PartyKit Production Deployment
 Plan: —
-Status: Milestone Shipped
-Last activity: 2026-05-04 — Milestone v5.9 archived
+Status: Not started
+Last activity: 2026-05-04 — Milestone v6.0 initialized
 
 ## Deferred Items
 
-Items acknowledged and deferred at milestone close on 2026-05-04:
-
-| Category | Item | Status |
+| Category | Item | Source |
 |----------|------|--------|
-| todo | audit-portfolio-pages.md | open |
-| todo | curate-initial-experiments.md | open |
-| todo | review-docs-page.md | open |
-| requirement | TEST-03 (media manager E2E) | deferred |
-| requirement | MON-03 (usage metrics dashboard) | deferred |
+| requirement | TEST-03 (media manager E2E) | v5.7 |
+| requirement | MON-03 (usage metrics dashboard) | v5.7 |
+| todo | audit-portfolio-pages.md | v5.9 |
+| todo | curate-initial-experiments.md | v5.9 |
+| todo | review-docs-page.md | v5.9 |

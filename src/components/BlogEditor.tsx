@@ -317,6 +317,7 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
           roomId={roomId}
           editor={editor}
           onClose={() => setIsHistoryOpen(false)}
+          historyUrl={editSlug ? `/api/posts/admin/${editSlug}/history` : undefined}
         />
       )}
       </div>
