@@ -16,8 +16,8 @@
 
 ### Phase 2: Admin Pagination
 **Goal:** Handle large datasets gracefully
-- [ ] ADMIN-01: Cursor pagination for Users table
-- [ ] ADMIN-02: Cursor pagination for Events table
+- [x] ADMIN-01: Cursor pagination for Users table
+- [x] ADMIN-02: Cursor pagination for Events table
 
 ### Phase 3: Analytics & Monitoring
 **Goal:** Error tracking & observability
