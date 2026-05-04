@@ -136,41 +136,63 @@ const zulipHandlers = {
       const credentials = `${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`;
       const authHeader = "Basic " + btoa(unescape(encodeURIComponent(credentials)));
       const baseUrl = config.ZULIP_URL || "https://aresfirst.zulipchat.com";
-      const url = `${baseUrl}/api/v1/users?client_gravatar=false`;
 
-      console.log(`[Zulip:Audit] Fetching users from ${baseUrl}`);
+      console.log(`[Zulip:Audit] Fetching all users from ${baseUrl}`);
 
-      const zulipRes = await fetch(url, {
-        method: "GET",
-        headers: { "Authorization": authHeader }
-      });
+      // Fetch all users with pagination - Zulip API returns max 100 per page
+      const zulipEmails = new Set<string>();
+      let page = 1;
+      const maxPages = 10; // Safety limit: up to 1000 users
+      let hasMore = true;
 
-      if (!zulipRes.ok) {
-        const errText = await zulipRes.text().catch(() => "(no body)");
-        console.error(`[Zulip:Audit] Failed to fetch users: ${zulipRes.status} — ${errText}`);
-        return { status: 500 as const, body: { success: false, error: `Zulip API returned ${zulipRes.status}: ${errText.slice(0, 200)}` } as any };
+      while (hasMore && page <= maxPages) {
+        const url = new URL(`${baseUrl}/api/v1/users`);
+        url.searchParams.append("client_gravatar", "false");
+        url.searchParams.append("page", String(page));
+
+        console.log(`[Zulip:Audit] Fetching page ${page}...`);
+
+        const zulipRes = await fetch(url.toString(), {
+          method: "GET",
+          headers: { "Authorization": authHeader }
+        });
+
+        if (!zulipRes.ok) {
+          const errText = await zulipRes.text().catch(() => "(no body)");
+          console.error(`[Zulip:Audit] Failed to fetch users page ${page}: ${zulipRes.status} — ${errText}`);
+          return { status: 500 as const, body: { success: false, error: `Zulip API returned ${zulipRes.status}: ${errText.slice(0, 200)}` } as any };
+        }
+
+        const zulipData = await zulipRes.json() as { members: Array<{ email: string; delivery_email?: string | null; is_bot?: boolean; is_active?: boolean }> };
+
+        if (!zulipData.members || !Array.isArray(zulipData.members)) {
+          console.error("[Zulip:Audit] No members array in response:", JSON.stringify(zulipData).slice(0, 500));
+          return { status: 500 as const, body: { success: false, error: "Zulip returned invalid data — no members array" } as any };
+        }
+
+        // Add emails from this page
+        const beforeSize = zulipEmails.size;
+        for (const m of zulipData.members) {
+          if (m.is_active !== false && !m.is_bot) {
+            const email = (m.delivery_email || m.email).toLowerCase();
+            zulipEmails.add(email);
+          }
+        }
+        console.log(`[Zulip:Audit] Page ${page}: added ${zulipEmails.size - beforeSize} emails (total: ${zulipEmails.size})`);
+
+        // Check if there are more pages
+        if (zulipData.members.length === 0) {
+          hasMore = false;
+        } else {
+          page++;
+        }
       }
 
-      const zulipData = await zulipRes.json() as { members: Array<{ email: string; delivery_email?: string | null; is_bot?: boolean; is_active?: boolean }> };
-      
-      if (!zulipData.members || !Array.isArray(zulipData.members)) {
-        console.error("[Zulip:Audit] No members array in response:", JSON.stringify(zulipData).slice(0, 500));
-        return { status: 500 as const, body: { success: false, error: "Zulip returned invalid data — no members array" } as any };
-      }
-
-      // Collect all known Zulip emails (delivery_email takes priority over email,
-      // but may be null if the bot lacks admin privileges)
-      const zulipEmails = new Set(
-        zulipData.members
-          .filter(m => m.is_active !== false && !m.is_bot)
-          .map(m => (m.delivery_email || m.email).toLowerCase())
-      );
-
-      console.log(`[Zulip:Audit] Found ${zulipEmails.size} active non-bot Zulip users`);
+      console.log(`[Zulip:Audit] Total: ${zulipEmails.size} active non-bot Zulip users`);
 
       const db = c.get("db") as import("kysely").Kysely<import("../../../shared/schemas/database").DB>;
       const aresUsers = await db.selectFrom("user").select("email").where("role", "!=", "unverified").execute();
-      
+
       const missingEmails = aresUsers
         .map(u => u.email)
         .filter(email => email && !zulipEmails.has(email.toLowerCase()));
