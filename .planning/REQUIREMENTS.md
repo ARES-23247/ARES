@@ -14,12 +14,18 @@
 
 ---
 
-## Future Requirements
-*(None currently identified)*
-
 ## Out of Scope
 - Migrating non-document content types (like calendar events or tasks) into these hubs.
 - Automatic or AI-based categorization of documents into these hubs (relies purely on manual checkbox selection).
 
 ## Traceability
-*(To be populated by roadmap)*
+
+| Requirement | Phase |
+|-------------|-------|
+| DOCS-01 | Phase 14: Data Schema & Document Editor Updates |
+| DOCS-02 | Phase 14: Data Schema & Document Editor Updates |
+| MATH-01 | Phase 15: Math Corner Foundation & Hub Integrations |
+| MATH-02 | Phase 15: Math Corner Foundation & Hub Integrations |
+| SCI-01 | Phase 15: Math Corner Foundation & Hub Integrations |
+| ARES-01 | Phase 15: Math Corner Foundation & Hub Integrations |
+
