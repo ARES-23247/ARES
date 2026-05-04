@@ -58,16 +58,18 @@ export default class YjsServer implements Party.Server {
             // Convert to base64 for D1 BLOB storage
             const base64 = btoa(String.fromCharCode(...state));
 
-            await db
-              .prepare(`
-                INSERT INTO document_snapshots (room_id, state, updated_at)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(room_id) DO UPDATE SET
-                  state = excluded.state,
-                  updated_at = CURRENT_TIMESTAMP
-              `)
-              .bind(this.room.id, base64)
-              .run();
+            await (
+              db
+                .prepare(`
+                  INSERT INTO document_snapshots (room_id, state, updated_at)
+                  VALUES (?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(room_id) DO UPDATE SET
+                    state = excluded.state,
+                    updated_at = CURRENT_TIMESTAMP
+                `)
+                .bind(this.room.id, base64)
+                .run()
+            );
           } catch (err) {
             console.error(`[PartyKit] Failed to save snapshot for room ${this.room.id}:`, err);
           }
