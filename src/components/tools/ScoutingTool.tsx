@@ -466,6 +466,7 @@ function markdownToHtml(md: string): string {
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/^- (.+)$/gm, "<li>$1</li>")
     .replace(/^(?!<[hlu]|<li)(.+)$/gm, "<p>$1</p>");
+  // eslint-disable-next-line security/detect-unsafe-regex
   html = html.replace(/(<li>.*?<\/li>\n?)+/gs, (match) => `<ul>${match}</ul>`);
   return html;
 }

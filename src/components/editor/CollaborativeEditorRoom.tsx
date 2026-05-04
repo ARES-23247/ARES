@@ -258,6 +258,7 @@ function ConnectedEditorRoom({
           reconnectAttempt={reconnectAttempt}
           maxAttempts={MAX_RECONNECT_ATTEMPTS}
           onManualReconnect={handleManualReconnect}
+          host={host}
         />
         {children}
       </div>
@@ -271,12 +272,14 @@ function StatusBadge({
   reconnectAttempt,
   maxAttempts,
   onManualReconnect,
+  host,
 }: {
   isCollaborative: boolean;
   isReconnecting?: boolean;
   reconnectAttempt?: number;
   maxAttempts?: number;
   onManualReconnect?: () => void;
+  host?: string;
 }) {
   const hasExceededAttempts = reconnectAttempt !== undefined && maxAttempts !== undefined && reconnectAttempt >= maxAttempts;
 
@@ -309,6 +312,12 @@ function StatusBadge({
           Reconnect
         </button>
       )}
+      {/* Show host for debugging */}
+      {host && (
+        <span className="text-[8px] text-marble/40 max-w-[150px] truncate" title={host}>
+          {host}
+        </span>
+      )}
     </div>
   );
 }
@@ -327,7 +336,9 @@ export function CollaborativeEditorRoom({
     if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
       return "dummy-host-for-playwright";
     }
-    return import.meta.env.VITE_PARTYKIT_HOST || "";
+    const hostValue = import.meta.env.VITE_PARTYKIT_HOST || "";
+    console.log("[CollaborativeEditor] PartyKit host:", hostValue || "(NOT SET - using standalone mode)");
+    return hostValue;
   }, []);
 
   const stableOnDocLoaded = useCallback((doc: Y.Doc) => {
@@ -336,6 +347,7 @@ export function CollaborativeEditorRoom({
 
   // No PartyKit host configured — render standalone immediately
   if (!host) {
+    console.warn("[CollaborativeEditor] VITE_PARTYKIT_HOST is not set! Collaborative editing will be disabled.");
     return (
       <CollaborativeEditorContext.Provider value={{ ydoc, provider: undefined, isCollaborative: false }}>
         <div className="relative">

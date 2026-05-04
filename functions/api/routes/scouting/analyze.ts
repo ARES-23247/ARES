@@ -115,7 +115,6 @@ analyzeRouter.post("/", ensureAuth, async (c) => {
       return c.json({ error: `AI analysis failed (${zaiRes.status})`, details: errText }, 502);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = (await zaiRes.json()) as any;
     if (data.error) {
       return c.json({ error: data.error.message || "AI returned an error" }, 502);

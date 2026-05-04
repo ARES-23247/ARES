@@ -14,8 +14,9 @@ export default class YjsServer implements Party.Server {
 
   async onConnect(conn: Party.Connection) {
     // Validate room ID format to prevent potential abuse (CR-09)
+    // Allow colons for namespaced rooms like "blog:post-slug" or "docs:page-name"
     const roomId = this.room.id;
-    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(roomId)) {
+    if (!/^[a-zA-Z0-9_:-]{1,100}$/.test(roomId)) {
       throw new Error(`Invalid room_id format: ${roomId}`);
     }
 

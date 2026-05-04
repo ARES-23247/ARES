@@ -51,6 +51,7 @@ export default function EventSelector({ onEventSelect, selectedEventKey }: Event
   }, [seasonKey]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEvents();
   }, [fetchEvents]);
 
@@ -70,10 +71,11 @@ export default function EventSelector({ onEventSelect, selectedEventKey }: Event
     <div className="space-y-3">
       {/* Season Selector */}
       <div className="flex items-center gap-3">
-        <label className="text-xs font-black uppercase tracking-widest text-marble/60 shrink-0">
+        <label htmlFor="season-select" className="text-xs font-black uppercase tracking-widest text-marble/60 shrink-0">
           Season
         </label>
         <select
+          id="season-select"
           value={seasonKey}
           onChange={(e) => setSeasonKey(e.target.value)}
           className="flex-1 bg-obsidian border border-white/10 text-marble text-sm font-semibold px-3 py-2 ares-cut-sm focus:border-ares-cyan/50 focus:outline-none transition-colors"
@@ -96,7 +98,8 @@ export default function EventSelector({ onEventSelect, selectedEventKey }: Event
 
       {/* Event Search / Dropdown */}
       <div className="relative">
-        <div
+        <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full flex items-center gap-2 bg-obsidian border px-3 py-2.5 ares-cut-sm cursor-pointer transition-colors ${
             isOpen ? "border-ares-cyan/50" : "border-white/10 hover:border-white/20"
@@ -116,7 +119,7 @@ export default function EventSelector({ onEventSelect, selectedEventKey }: Event
             size={14}
             className={`text-marble/40 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
           />
-        </div>
+        </button>
 
         {isOpen && (
           <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-obsidian border border-white/10 ares-cut-sm shadow-2xl max-h-80 overflow-hidden flex flex-col">
@@ -128,7 +131,6 @@ export default function EventSelector({ onEventSelect, selectedEventKey }: Event
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search events by name, city..."
                 className="w-full bg-white/5 border border-white/10 text-marble text-sm px-3 py-1.5 ares-cut-sm focus:border-ares-cyan/40 focus:outline-none"
-                autoFocus
               />
             </div>
 

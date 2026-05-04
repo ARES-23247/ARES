@@ -193,6 +193,7 @@ function markdownToHtml(md: string): string {
     .replace(/^(?!<[hlu]|<li)(.+)$/gm, '<p>$1</p>');
 
   // Wrap consecutive <li> in <ul>
+  // eslint-disable-next-line security/detect-unsafe-regex
   html = html.replace(/(<li>.*?<\/li>\n?)+/gs, (match) => `<ul>${match}</ul>`);
 
   return html;
