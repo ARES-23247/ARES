@@ -17,6 +17,8 @@ export const outreachSchema = z.object({
   season_id: z.coerce.number().nullable().optional(),
   is_dynamic: z.boolean().optional(),
   event_id: z.string().nullable().optional(),
+  mentor_count: z.number().optional(),
+  mentor_hours: z.number().optional(),
 });
 
 export const outreachContract = c.router({

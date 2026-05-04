@@ -2,7 +2,7 @@ import React, { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode, forwardR
 
 interface SharedProps {
   label: string;
-  focusColor?: "ares-red" | "ares-gold" | "ares-cyan";
+  focusColor?: "ares-red" | "ares-gold" | "ares-cyan" | "ares-bronze";
   fullWidth?: boolean;
   error?: string;
 }
@@ -18,7 +18,8 @@ export const DashboardInput = forwardRef<HTMLInputElement, SharedProps & InputHT
   const colorMap = {
     "ares-red": "focus:border-ares-red",
     "ares-gold": "focus:border-ares-gold",
-    "ares-cyan": "focus:border-ares-cyan"
+    "ares-cyan": "focus:border-ares-cyan",
+    "ares-bronze": "focus:border-ares-bronze"
   };
 
   return (
@@ -49,7 +50,8 @@ export const DashboardTextarea = forwardRef<HTMLTextAreaElement, SharedProps & T
   const colorMap = {
     "ares-red": "focus:border-ares-red",
     "ares-gold": "focus:border-ares-gold",
-    "ares-cyan": "focus:border-ares-cyan"
+    "ares-cyan": "focus:border-ares-cyan",
+    "ares-bronze": "focus:border-ares-bronze"
   };
 
   return (
