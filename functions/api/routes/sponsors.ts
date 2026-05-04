@@ -51,11 +51,11 @@ const sponsorHandlers = {
 
       if (!sponsorRow) return { status: 403 as const, body: { error: "Sponsor not found" } };
 
-      const metricsRow = await (db.selectFrom("sponsor_metrics")
+      const metricsRow = await (db.selectFrom("sponsor_metrics") as any)
         .select(["id", "sponsor_id", "metric_key", "metric_value", "date"])
         .where("sponsor_id", "=", sponsor_id)
         .orderBy("created_at", "asc")
-        .execute() as Promise<any>);
+        .execute();
 
       const sponsor = { 
         ...sponsorRow, 
@@ -141,11 +141,11 @@ const sponsorHandlers = {
   getAdminTokens: async (_: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db");
-      const results = await (db.selectFrom("sponsor_tokens as t")
+      const results = await (db.selectFrom("sponsor_tokens as t") as any)
         .innerJoin("sponsors as s", "t.sponsor_id", "s.id")
         .select(["t.id", "t.token", "t.sponsor_id", "t.created_at", "t.last_used"])
         .orderBy("t.created_at", "desc")
-        .execute() as Promise<any>);
+        .execute();
       
             const tokens = results.map((t: any) => ({
         ...t,
