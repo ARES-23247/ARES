@@ -149,7 +149,7 @@ test.describe('Media Manager - Advanced Scenarios', () => {
       return await navigator.clipboard.readText();
     });
     expect(clipboardText).toContain('/api/media/Gallery/test-asset.png');
-    expect(clipboardText).toContain('localhost');
+    expect(clipboardText).toMatch(/^http:\/\/(localhost|127\.0\.0\.1)/);
 
     // Wait for the button to revert back to "Copy URL" after 2 seconds
     await page.waitForTimeout(2500);
