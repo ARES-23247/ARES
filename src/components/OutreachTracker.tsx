@@ -5,7 +5,7 @@ import DashboardEmptyState from "./dashboard/DashboardEmptyState";
 import DashboardLoadingGrid from "./dashboard/DashboardLoadingGrid";
 import { DashboardInput, DashboardTextarea, DashboardSubmitButton } from "./dashboard/DashboardFormInputs";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, MapPin, Users, Clock, Target, Calendar, CheckCircle, XCircle, Save } from "lucide-react";
+import { Plus, Trash2, MapPin, Users, Clock, Target, Calendar, CheckCircle, XCircle, Save, Pencil } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api/client";
 import SeasonPicker from "./SeasonPicker";
@@ -69,7 +69,19 @@ export default function OutreachTracker() {
         toast.success("Impact record synchronized.");
         queryClient.invalidateQueries({ queryKey: ["admin-outreach"] });
         setIsAdding(false);
-        reset();
+        reset({
+          title: "",
+          date: new Date().toISOString().split('T')[0],
+          location: "",
+          students_count: 0,
+          hours_logged: 0,
+          reach_count: 0,
+          description: "",
+          is_mentoring: false,
+          mentored_team_number: "",
+          season_id: null,
+          id: undefined
+        });
       } else {
         toast.error("Failed to save impact record.");
       }
@@ -86,8 +98,7 @@ export default function OutreachTracker() {
   });
 
   const onFormSubmit = (data: z.infer<typeof outreachFormSchema>) => {
-    const finalId = data.id || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + data.date;
-    saveMutation.mutate({ body: { ...data, id: finalId } as unknown as never });
+    saveMutation.mutate({ body: data as unknown as never });
   };
 
   const totals = useMemo(() => logs.reduce((acc: { hours: number; mentoringHours: number; reach: number; students: number; events: number }, l: OutreachLog) => ({
@@ -281,13 +292,38 @@ export default function OutreachTracker() {
                   <span className="text-xs font-bold text-ares-gold uppercase tracking-widest text-center leading-tight">Synced<br/>Event</span>
                 </div>
               ) : (
-                <button
-                  onClick={() => { if(confirm("Purge this impact record?")) deleteMutation.mutate({ params: { id: log.id }, body: null }); }}
-                  title="Purge this impact record"
-                  className="p-3 text-marble/40 hover:text-ares-red transition-colors bg-white/5 ares-cut opacity-0 group-hover:opacity-100"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => {
+                      setIsAdding(true);
+                      reset({
+                        id: log.id,
+                        title: log.title,
+                        date: log.date,
+                        location: log.location || "",
+                        students_count: log.students_count || 0,
+                        hours_logged: log.hours_logged || 0,
+                        reach_count: log.reach_count || 0,
+                        description: log.description || "",
+                        is_mentoring: !!log.is_mentoring,
+                        mentored_team_number: log.mentored_team_number || "",
+                        season_id: log.season_id || null
+                      });
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    title="Edit this impact record"
+                    className="p-3 text-marble/40 hover:text-ares-cyan transition-colors bg-white/5 ares-cut"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
+                    onClick={() => { if(confirm("Purge this impact record?")) deleteMutation.mutate({ params: { id: log.id }, body: null }); }}
+                    title="Purge this impact record"
+                    className="p-3 text-marble/40 hover:text-ares-red transition-colors bg-white/5 ares-cut"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               )}
             </div>
           </div>
