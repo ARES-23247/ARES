@@ -213,15 +213,20 @@ const zulipHandlers = {
 
       console.log(`[Zulip:Audit] ${aresUsers.length} ARES users, ${missingEmails.length} missing from Zulip`);
 
-      // Debug: Log sample emails for comparison
-      if (missingEmails.length > 0) {
-        const sampleZulip = Array.from(zulipEmails).slice(0, 5);
-        const sampleMissing = missingEmails.slice(0, 5);
-        console.log(`[Zulip:Audit] DEBUG - Sample Zulip emails:`, sampleZulip.join(", "));
-        console.log(`[Zulip:Audit] DEBUG - Sample missing ARES emails:`, sampleMissing.join(", "));
-      }
+      // Debug: Include sample emails in response for troubleshooting
+      const sampleZulip = Array.from(zulipEmails).slice(0, 10);
+      const sampleMissing = missingEmails.slice(0, 10);
 
-      return { status: 200 as const, body: { success: true, missingEmails } as any };
+      return { status: 200 as const, body: {
+        success: true,
+        missingEmails,
+        debug: {
+          totalZulipUsers: zulipEmails.size,
+          totalAresUsers: aresUsers.length,
+          sampleZulipEmails: sampleZulip,
+          sampleMissingEmails: sampleMissing
+        }
+      } as any };
     } catch (err) {
       console.error("[Zulip:Audit] Unexpected error:", err);
       return { status: 500 as const, body: { success: false, error: (err as Error).message } as any };
