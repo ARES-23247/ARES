@@ -8,7 +8,7 @@ import { initServer } from "ts-rest-hono";
 
 const _s = initServer<AppEnv>();
 
-async function fetchVolunteerEvents(db: Kysely<DB>) {
+async function fetchVolunteerEvents(db: Kysely<DB>, existingEventIds: string[]) {
   try {
     const results = await db.selectFrom("events")
       .select(["id", "title", "date_start as date", "location", "season_id"])
@@ -17,8 +17,10 @@ async function fetchVolunteerEvents(db: Kysely<DB>) {
       .where("status", "=", "published")
       .orderBy("date_start", "desc")
       .execute();
+      
+    const filteredResults = results.filter(r => !existingEventIds.includes(String(r.id)));
     
-    return results.map((r) => ({
+    return filteredResults.map((r) => ({
       id: String(r.id),
       title: r.title,
       date: r.date,
@@ -30,7 +32,8 @@ async function fetchVolunteerEvents(db: Kysely<DB>) {
       is_mentoring: false,
       mentored_team_number: null,
       season_id: r.season_id ? Number(r.season_id) : null,
-      is_dynamic: true
+      is_dynamic: true,
+      event_id: String(r.id)
     }));
   } catch {
     return [];
@@ -46,13 +49,14 @@ export const outreachHandlers: any = {
           "id", "title", "date", "location", 
           "hours as hours_logged", "people_reached as reach_count", 
           "students_count", "impact_summary as description", "season_id",
-          "is_mentoring", "mentored_team_number"
+          "is_mentoring", "mentored_team_number", "event_id"
         ])
         .where("is_deleted", "=", 0)
         .orderBy("date", "desc")
         .execute();
       
-      const volunteerEvents = await fetchVolunteerEvents(db);
+      const existingEventIds = results.filter(r => r.event_id).map(r => String(r.event_id));
+      const volunteerEvents = await fetchVolunteerEvents(db, existingEventIds);
       
       const logs = results.map(r => ({
         id: String(r.id),
@@ -66,7 +70,8 @@ export const outreachHandlers: any = {
         is_mentoring: !!r.is_mentoring,
         mentored_team_number: r.mentored_team_number || null,
         season_id: r.season_id ? Number(r.season_id) : null,
-        is_dynamic: false
+        is_dynamic: !!r.event_id,
+        event_id: r.event_id || null
       }));
 
       const combined = [...logs, ...volunteerEvents].sort(
@@ -87,13 +92,14 @@ export const outreachHandlers: any = {
           "id", "title", "date", "location", 
           "hours as hours_logged", "people_reached as reach_count", 
           "students_count", "impact_summary as description", "season_id",
-          "is_mentoring", "mentored_team_number"
+          "is_mentoring", "mentored_team_number", "event_id"
         ])
         .where("is_deleted", "=", 0)
         .orderBy("date", "desc")
         .execute();
       
-      const volunteerEvents = await fetchVolunteerEvents(db);
+      const existingEventIds = results.filter(r => r.event_id).map(r => String(r.event_id));
+      const volunteerEvents = await fetchVolunteerEvents(db, existingEventIds);
       
       const logs = results.map(r => ({
         id: String(r.id),
@@ -107,7 +113,8 @@ export const outreachHandlers: any = {
         is_mentoring: !!r.is_mentoring,
         mentored_team_number: r.mentored_team_number || null,
         season_id: r.season_id ? Number(r.season_id) : null,
-        is_dynamic: false
+        is_dynamic: !!r.event_id,
+        event_id: r.event_id || null
       }));
 
       const combined = [...logs, ...volunteerEvents].sort(
@@ -141,6 +148,7 @@ export const outreachHandlers: any = {
             is_mentoring: body.is_mentoring ? 1 : 0,
             mentored_team_number: body.mentored_team_number,
             season_id: body.season_id,
+            event_id: body.event_id,
           })
           .where("id", "=", body.id as any)
           .execute();
@@ -158,6 +166,7 @@ export const outreachHandlers: any = {
             is_mentoring: body.is_mentoring ? 1 : 0,
             mentored_team_number: body.mentored_team_number,
             season_id: body.season_id,
+            event_id: body.event_id,
           })
           .executeTakeFirst();
         result = inserted.insertId?.toString() || "new";

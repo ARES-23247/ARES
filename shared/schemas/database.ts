@@ -372,6 +372,7 @@ export interface OutreachLogs {
   cf_email: string | null;
   created_at: Generated<string | null>;
   date: string;
+  event_id: string | null;
   hours: number | null;
   id: Generated<number | null>;
   impact_summary: string | null;

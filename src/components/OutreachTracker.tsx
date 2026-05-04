@@ -17,6 +17,7 @@ import { z } from "zod";
 
 const outreachFormSchema = outreachSchema.omit({ id: true }).extend({
   id: z.string().optional(),
+  event_id: z.string().nullable().optional(),
 });
 
 type OutreachFormValues = z.infer<typeof outreachFormSchema>;
@@ -34,6 +35,7 @@ interface OutreachLog {
   mentored_team_number?: string | null;
   season_id?: number | null;
   is_dynamic?: boolean;
+  event_id?: string | null;
 }
 
 export default function OutreachTracker() {
@@ -52,7 +54,8 @@ export default function OutreachTracker() {
       description: "",
       is_mentoring: false,
       mentored_team_number: "",
-      season_id: null
+      season_id: null,
+      event_id: null
     }
   });
 
@@ -80,7 +83,8 @@ export default function OutreachTracker() {
           is_mentoring: false,
           mentored_team_number: "",
           season_id: null,
-          id: undefined
+          id: undefined,
+          event_id: null
         });
       } else {
         toast.error("Failed to save impact record.");
@@ -98,7 +102,16 @@ export default function OutreachTracker() {
   });
 
   const onFormSubmit = (data: z.infer<typeof outreachFormSchema>) => {
-    saveMutation.mutate({ body: data as unknown as never });
+    const cleanData = {
+      ...data,
+      students_count: data.students_count || 0,
+      hours_logged: data.hours_logged || 0,
+      reach_count: data.reach_count || 0,
+      description: data.description === "" ? null : data.description,
+      location: data.location === "" ? null : data.location,
+      mentored_team_number: data.mentored_team_number === "" ? null : data.mentored_team_number,
+    };
+    saveMutation.mutate({ body: cleanData as unknown as never });
   };
 
   const totals = useMemo(() => logs.reduce((acc: { hours: number; mentoringHours: number; reach: number; students: number; events: number }, l: OutreachLog) => ({
@@ -287,35 +300,42 @@ export default function OutreachTracker() {
                 <span className="text-lg font-black text-white">{(log.hours_logged || 0).toFixed(1)}</span>
               </div>
               
-              {log.is_dynamic ? (
+              {log.is_dynamic && !log.event_id && (
                 <div className="flex items-center px-3 py-1 bg-ares-gold/10 border border-ares-gold/20 ares-cut-sm">
                   <span className="text-xs font-bold text-ares-gold uppercase tracking-widest text-center leading-tight">Synced<br/>Event</span>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => {
-                      setIsAdding(true);
-                      reset({
-                        id: log.id,
-                        title: log.title,
-                        date: log.date,
-                        location: log.location || "",
-                        students_count: log.students_count || 0,
-                        hours_logged: log.hours_logged || 0,
-                        reach_count: log.reach_count || 0,
-                        description: log.description || "",
-                        is_mentoring: !!log.is_mentoring,
-                        mentored_team_number: log.mentored_team_number || "",
-                        season_id: log.season_id || null
-                      });
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    title="Edit this impact record"
-                    className="p-3 text-marble/40 hover:text-ares-cyan transition-colors bg-white/5 ares-cut"
-                  >
-                    <Pencil size={18} />
-                  </button>
+              )}
+              {log.is_dynamic && log.event_id && (
+                <div className="flex items-center px-3 py-1 bg-ares-cyan/10 border border-ares-cyan/20 ares-cut-sm">
+                  <span className="text-xs font-bold text-ares-cyan uppercase tracking-widest text-center leading-tight">Synced<br/>& Edited</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => {
+                    setIsAdding(true);
+                    reset({
+                      id: (log.is_dynamic && !log.event_id) ? undefined : log.id,
+                      event_id: log.is_dynamic ? (log.event_id || log.id) : null,
+                      title: log.title,
+                      date: log.date.split('T')[0],
+                      location: log.location || "",
+                      students_count: log.students_count || 0,
+                      hours_logged: log.hours_logged || 0,
+                      reach_count: log.reach_count || 0,
+                      description: log.description || "",
+                      is_mentoring: !!log.is_mentoring,
+                      mentored_team_number: log.mentored_team_number || "",
+                      season_id: log.season_id || null
+                    });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  title="Edit this impact record"
+                  className="p-3 text-marble/40 hover:text-ares-cyan transition-colors bg-white/5 ares-cut"
+                >
+                  <Pencil size={18} />
+                </button>
+                {(!log.is_dynamic || log.event_id) && (
                   <button
                     onClick={() => { if(confirm("Purge this impact record?")) deleteMutation.mutate({ params: { id: log.id }, body: null }); }}
                     title="Purge this impact record"
@@ -323,8 +343,8 @@ export default function OutreachTracker() {
                   >
                     <Trash2 size={18} />
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         ))}
