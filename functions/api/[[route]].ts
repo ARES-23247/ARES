@@ -89,26 +89,36 @@ apiRouter.use("*", async (c, next) => {
   const start = Date.now();
   await next();
   const latency = Date.now() - start;
-  
-  // Skip polling routes and static assets to preserve DB quota
-  if (!c.req.path.includes("polling")) {
+
+  // Skip polling routes, static assets, and OPTIONS to preserve DB quota
+  if (!c.req.path.includes("polling") && c.req.method !== "OPTIONS" && !c.req.path.startsWith("/assets")) {
     const user = c.get("sessionUser") as SessionUser | undefined;
     const db = c.get("db") as Kysely<DB>;
     if (db) {
       c.executionCtx.waitUntil(
-        db.insertInto("usage_metrics")
-          .values({
-            id: crypto.randomUUID(),
-            endpoint: c.req.path,
-            method: c.req.method,
-            status_code: c.res.status,
-            latency_ms: latency,
-            user_id: user?.id || null,
-            cf_ray: c.req.header("cf-ray") || null,
-            cf_ip: c.req.header("cf-connecting-ip") || null
-          })
-          .execute()
-          .catch(err => console.error("Metrics logging failed", err))
+        (async () => {
+          try {
+            await db.insertInto("usage_metrics")
+              .values({
+                id: crypto.randomUUID(),
+                endpoint: c.req.path,
+                method: c.req.method,
+                status_code: c.res.status,
+                latency_ms: latency,
+                user_id: user?.id || null,
+                cf_ray: c.req.header("cf-ray") || null,
+                cf_ip: c.req.header("cf-connecting-ip") || null
+              })
+              .execute();
+          } catch (err) {
+            // Silently fail - metrics shouldn't break the app
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            // Only log DB errors (not "table does not exist" spam)
+            if (!errorMsg.includes("no such table") && !errorMsg.includes("does not exist")) {
+              console.error("[UsageMetrics] Log failed:", errorMsg);
+            }
+          }
+        })()
       );
     }
   }

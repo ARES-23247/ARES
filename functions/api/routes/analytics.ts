@@ -273,11 +273,13 @@ const analyticsHandlers = {
         .executeTakeFirst();
 
       const [apiCount, latencyData] = await Promise.all([
+        // Gracefully handle if usage_metrics table doesn't exist yet
         db.selectFrom("usage_metrics")
           .select((eb) => eb.fn.count("id").as("total"))
-          .executeTakeFirst(),
+          .executeTakeFirst()
+          .catch(() => ({ total: 0 })),
         sql<{ date: string, avg_latency: number }>`
-          SELECT 
+          SELECT
             date(timestamp, 'localtime') as date,
             AVG(latency_ms) as avg_latency
           FROM usage_metrics
@@ -285,6 +287,7 @@ const analyticsHandlers = {
           GROUP BY date(timestamp, 'localtime')
           ORDER BY date ASC
         `.execute(db)
+          .catch(() => ({ rows: [] }))
       ]);
 
       const summary = {
