@@ -156,8 +156,10 @@ async function fetchJSON<T>(url: string): Promise<T> {
 
 export const scoutingApi = {
   // ── TOA Endpoints ────────────────────────────────────────────────
-  getTeam: (teamNumber: number) =>
-    fetchJSON<TOATeam>(`${BASE}/toa/team/${teamNumber}`),
+  getTeam: async (teamNumber: number): Promise<TOATeam> => {
+    const res = await fetchJSON<TOATeam | TOATeam[]>(`${BASE}/toa/team/${teamNumber}`);
+    return Array.isArray(res) ? res[0] : res;
+  },
 
   getTeamResults: (teamNumber: number, seasonKey: string) =>
     fetchJSON<unknown>(`${BASE}/toa/team/${teamNumber}/results/${seasonKey}`),
