@@ -150,6 +150,10 @@ export default function Navbar() {
                 <BookOpen size={14} className="text-ares-cyan group-hover/item:scale-110 transition-transform" />
                 Science Corner
               </Link>
+              <Link to="/math-corner" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item focus-visible:outline-none focus-visible:bg-white/10">
+                <BookOpen size={14} className="text-purple-400 group-hover/item:scale-110 transition-transform" />
+                Math Corner
+              </Link>
             </div>
           </div>
 
@@ -312,6 +316,7 @@ export default function Navbar() {
           <Link to="/events" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">CALENDAR</Link>
           <Link to="/blog" onClick={() => setOpen(false)} className="text-xl font-black italic tracking-tighter text-ares-gold">TEAM BLOG</Link>
           <Link to="/science-corner" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SCIENCE CORNER</Link>
+          <Link to="/math-corner" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">MATH CORNER</Link>
           <Link to="/store" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">STORE</Link>
           <Link to="/sponsors" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SUPPORT US</Link>
         </div>

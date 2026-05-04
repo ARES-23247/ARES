@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import DocsMarkdownRenderer from '../components/docs/DocsMarkdownRenderer';
 import { api } from '../api/client';
 
-export default function ScienceCornerLesson() {
+export default function MathCornerLesson() {
   const { id } = useParams<{ id: string }>();
   const { data: docRes, isLoading } = api.docs.getDoc.useQuery(
     ["doc", id],
@@ -17,18 +17,18 @@ export default function ScienceCornerLesson() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
-        <div className="w-10 h-10 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  if (!doc || doc.display_in_science_corner !== 1) {
+  if (!doc || doc.display_in_math_corner !== 1) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white px-4">
         <h1 className="text-4xl font-bold mb-4">Lesson Not Found</h1>
-        <p className="text-slate-400 mb-8">The experiment you are looking for does not exist.</p>
-        <Link to="/science-corner" className="px-6 py-2 bg-blue-600 rounded-md hover:bg-blue-700 transition-colors">
-          Return to Science Corner
+        <p className="text-slate-400 mb-8">The lesson you are looking for does not exist.</p>
+        <Link to="/math-corner" className="px-6 py-2 bg-purple-600 rounded-md hover:bg-purple-700 transition-colors">
+          Return to Math Corner
         </Link>
       </div>
     );
@@ -38,7 +38,7 @@ export default function ScienceCornerLesson() {
     <div className="min-h-screen bg-slate-950 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
         <Link 
-          to="/science-corner" 
+          to="/math-corner" 
           className="text-slate-400 hover:text-white transition-colors flex items-center text-sm font-medium"
         >
           <span className="mr-2">←</span> Back to Library
