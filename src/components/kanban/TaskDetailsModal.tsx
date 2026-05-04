@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Save, Trash2, Calendar, User, AlertTriangle, Flag,
-  CheckCircle2, Circle, Clock, Plus, Layout
+  CheckCircle2, Circle, Clock, Plus, Layout, Layers
 } from "lucide-react";
 import { api } from "../../api/client";
+import { useQueryClient } from "@tanstack/react-query";
 import type { TaskItem } from "../command/ProjectBoardKanban";
 import { KANBAN_SUBTEAMS } from "../command/ProjectBoardKanban";
 import ZulipThread from "../ZulipThread";
@@ -80,12 +81,28 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const [timeSpentSeconds, setTimeSpentSeconds] = useState(task.time_spent_seconds || 0);
+
+  const queryClient = useQueryClient();
+  const createSubtaskMutation = api.tasks.create.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", "subtasks", task.id] });
+    }
+  });
+
   const { data: usersRes } = api.users.getUsers.useQuery(
     ["team-members-for-tasks"],
     {},
     { staleTime: 60000 }
   );
   const teamMembers = usersRes?.status === 200 ? usersRes.body.users : [];
+
+  const { data: subtasksRes } = api.tasks.list.useQuery(
+    ["tasks", "subtasks", task.id],
+    { query: { parent_id: task.id } },
+    { staleTime: 10000 }
+  );
+  const subtasks = subtasksRes?.status === 200 ? subtasksRes.body.tasks : [];
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -122,6 +139,10 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
       
       if (hasAssigneeChange) {
         updates.assignees = assigneeIds as unknown as { id: string }[];
+      }
+      
+      if (timeSpentSeconds !== (task.time_spent_seconds || 0)) {
+        updates.time_spent_seconds = timeSpentSeconds;
       }
 
       if (Object.keys(updates).length > 0) {
@@ -196,6 +217,62 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
               <CollaborativeEditorRoom roomId={`task-${task.id}`}>
                 <TaskEditorInner task={task} onDescriptionChange={setDescription} />
               </CollaborativeEditorRoom>
+            </div>
+            
+            {/* Subtasks */}
+            <div className="flex flex-col gap-3 mt-6 border-t border-white/5 pt-6">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-ares-gray uppercase tracking-widest flex items-center gap-2">
+                  <Layers size={14} className="text-ares-cyan" /> Subtasks
+                </label>
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                {subtasks.length === 0 ? (
+                  <div className="text-center p-4 border border-dashed border-white/10 ares-cut-sm bg-white/5">
+                    <p className="text-sm text-ares-gray">No subtasks found.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {subtasks.map((st: TaskItem) => (
+                      <div key={st.id} className="flex items-center justify-between p-3 border border-white/5 bg-black/40 hover:bg-white/5 ares-cut-sm transition-colors cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <span className={`w-2 h-2 rounded-full ${st.status === "done" ? "bg-ares-gold" : "bg-ares-cyan"}`} />
+                          <span className={`text-sm font-bold ${st.status === "done" ? "text-ares-gray line-through" : "text-white"}`}>
+                            {st.title}
+                          </span>
+                        </div>
+                        <span className="text-xs text-ares-gray uppercase tracking-wider">{st.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="text"
+                    id="new-subtask-input"
+                    placeholder="Add a new subtask..."
+                    className="flex-1 bg-black/40 border border-white/10 text-white text-sm px-3 py-2.5 ares-cut-sm outline-none focus:border-ares-cyan/50 transition-colors"
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                        const title = e.currentTarget.value.trim();
+                        e.currentTarget.value = "";
+                        e.currentTarget.disabled = true;
+                        try {
+                          await createSubtaskMutation.mutateAsync({
+                            body: { title, parent_id: task.id }
+                          });
+                        } catch (err) {
+                          console.error("Failed to create subtask:", err);
+                        } finally {
+                          e.currentTarget.disabled = false;
+                          e.currentTarget.focus();
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -334,6 +411,41 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
                       : "border-white/10 text-white focus:border-ares-cyan/50"
                   }`}
                 />
+              </div>
+              {/* Time Logged */}
+              <div>
+                <label className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
+                  <Clock size={10} className="inline mr-1 text-ares-gold" />
+                  Time Logged (Hours:Minutes)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="HH"
+                    value={Math.floor(timeSpentSeconds / 3600) || ""}
+                    onChange={(e) => {
+                      const h = parseInt(e.target.value) || 0;
+                      const m = Math.floor((timeSpentSeconds % 3600) / 60);
+                      setTimeSpentSeconds(h * 3600 + m * 60);
+                    }}
+                    className="w-16 bg-ares-gray-dark/50 border border-white/10 text-white text-sm px-2 py-2 ares-cut-sm outline-none focus:border-ares-gold/50 text-center transition-colors"
+                  />
+                  <span className="text-ares-gray font-bold">:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    placeholder="MM"
+                    value={Math.floor((timeSpentSeconds % 3600) / 60) || ""}
+                    onChange={(e) => {
+                      const h = Math.floor(timeSpentSeconds / 3600);
+                      const m = parseInt(e.target.value) || 0;
+                      setTimeSpentSeconds(h * 3600 + m * 60);
+                    }}
+                    className="w-16 bg-ares-gray-dark/50 border border-white/10 text-white text-sm px-2 py-2 ares-cut-sm outline-none focus:border-ares-gold/50 text-center transition-colors"
+                  />
+                </div>
               </div>
             </div>
 

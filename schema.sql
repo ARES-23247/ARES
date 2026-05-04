@@ -1,5 +1,5 @@
--- ── Platform Settings ──────────────────────────────────────────────────────
--- ── Better Auth Core Tables ──────────────────────────────────────────────
+﻿-- â”€â”€ Platform Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- â”€â”€ Better Auth Core Tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS user (
     id TEXT PRIMARY KEY,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS verification (
 );
 
 
--- ── Content: Blog Posts ──────────────────────────────────────────────────
+-- â”€â”€ Content: Blog Posts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS posts (
     slug TEXT PRIMARY KEY,
@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS posts (
     published_at TEXT,
     is_portfolio INTEGER DEFAULT 0,
     season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL,
-    zulip_stream TEXT,
-    zulip_topic TEXT,
+
+
     updated_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_posts_season ON posts(season_id);
@@ -95,7 +95,7 @@ CREATE INDEX IF NOT EXISTS idx_posts_history_slug ON posts_history(slug);
 CREATE INDEX IF NOT EXISTS idx_posts_history_season ON posts_history(season_id);
 
 
--- ── Content: Events ──────────────────────────────────────────────────────
+-- â”€â”€ Content: Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS events (
     id TEXT PRIMARY KEY,
@@ -116,13 +116,13 @@ CREATE TABLE IF NOT EXISTS events (
     revision_of TEXT,
     published_at TEXT,
     meeting_notes TEXT,
-    zulip_stream TEXT,
-    zulip_topic TEXT,
+
+
     season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_events_season ON events(season_id);
 
--- ── Seasons ──────────────────────────────────────────────────────────────
+-- â”€â”€ Seasons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS seasons (
     start_year INTEGER PRIMARY KEY, -- e.g. 2025
@@ -158,7 +158,7 @@ CREATE INDEX IF NOT EXISTS idx_signups_event ON event_signups(event_id);
 CREATE INDEX IF NOT EXISTS idx_signups_user ON event_signups(user_id);
 
 
--- ── Content: Documentation ───────────────────────────────────────────────
+-- â”€â”€ Content: Documentation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS docs (
     slug TEXT PRIMARY KEY,
@@ -174,8 +174,8 @@ CREATE TABLE IF NOT EXISTS docs (
     status TEXT DEFAULT 'published',
     is_portfolio INTEGER DEFAULT 0,
     is_executive_summary INTEGER DEFAULT 0,
-    zulip_stream TEXT,
-    zulip_topic TEXT,
+
+
     revision_of TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_docs_category ON docs(category);
@@ -221,7 +221,7 @@ CREATE TABLE IF NOT EXISTS docs_feedback (
 CREATE INDEX IF NOT EXISTS idx_docs_feedback_slug ON docs_feedback(slug);
 
 
--- ── User Profiles ────────────────────────────────────────────────────────
+-- â”€â”€ User Profiles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS user_profiles (
     user_id TEXT PRIMARY KEY REFERENCES user(id) ON DELETE CASCADE,
@@ -259,7 +259,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 );
 
 
--- ── Gamification: Badges ─────────────────────────────────────────────────
+-- â”€â”€ Gamification: Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS badges (
     id TEXT PRIMARY KEY,
@@ -281,7 +281,7 @@ CREATE TABLE IF NOT EXISTS user_badges (
 CREATE INDEX IF NOT EXISTS idx_user_badges_user ON user_badges(user_id);
 
 
--- ── Sponsors ─────────────────────────────────────────────────────────────
+-- â”€â”€ Sponsors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS sponsors (
     id TEXT PRIMARY KEY,
@@ -313,7 +313,7 @@ CREATE TABLE IF NOT EXISTS sponsor_tokens (
 CREATE INDEX IF NOT EXISTS idx_sponsor_tokens_sponsor ON sponsor_tokens(sponsor_id);
 
 
--- ── Inquiries (Contact Form) ───────────────────────────────────────────
+-- â”€â”€ Inquiries (Contact Form) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS inquiries (
     id TEXT PRIMARY KEY,
@@ -331,7 +331,7 @@ CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);
 CREATE INDEX IF NOT EXISTS idx_inquiries_created ON inquiries(created_at);
 
 
--- ── Locations ────────────────────────────────────────────────────────────
+-- â”€â”€ Locations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS locations (
     id TEXT PRIMARY KEY,
@@ -342,7 +342,7 @@ CREATE TABLE IF NOT EXISTS locations (
 );
 
 
--- ── Awards ───────────────────────────────────────────────────────────────
+-- â”€â”€ Awards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS awards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -360,7 +360,7 @@ CREATE INDEX IF NOT EXISTS idx_awards_season ON awards(season_id);
 CREATE INDEX IF NOT EXISTS idx_awards_date ON awards(date);
 
 
--- ── Outreach ─────────────────────────────────────────────────────────────
+-- â”€â”€ Outreach â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS outreach_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -384,7 +384,7 @@ CREATE INDEX IF NOT EXISTS idx_outreach_season ON outreach_logs(season_id);
 CREATE INDEX IF NOT EXISTS idx_outreach_date ON outreach_logs(date);
 
 
--- ── Comments ─────────────────────────────────────────────────────────────
+-- â”€â”€ Comments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS comments (
     id TEXT PRIMARY KEY,
@@ -402,7 +402,7 @@ CREATE INDEX IF NOT EXISTS idx_comments_user ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_created ON comments(created_at);
 
 
--- ── Notifications ────────────────────────────────────────────────────────
+-- â”€â”€ Notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS notifications (
     id TEXT PRIMARY KEY,
@@ -417,7 +417,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 
 
--- ── Analytics ────────────────────────────────────────────────────────────
+-- â”€â”€ Analytics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS page_analytics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -432,7 +432,7 @@ CREATE INDEX IF NOT EXISTS idx_page_analytics_timestamp ON page_analytics(timest
 CREATE INDEX IF NOT EXISTS idx_analytics_path_time ON page_analytics(path, timestamp);
 
 
--- ── Media ────────────────────────────────────────────────────────────────
+-- â”€â”€ Media â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS media_tags (
     key TEXT PRIMARY KEY,
@@ -441,9 +441,9 @@ CREATE TABLE IF NOT EXISTS media_tags (
 );
 
 
--- ── Platform Settings ────────────────────────────────────────────────────
+-- â”€â”€ Platform Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
--- ── Judge Access Codes ───────────────────────────────────────────────────
+-- â”€â”€ Judge Access Codes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS judge_access_codes (
     id TEXT PRIMARY KEY,
@@ -462,7 +462,7 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 
--- ── Tasks (Native Kanban Board) ──────────────────────────────────────
+-- â”€â”€ Tasks (Native Kanban Board) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
@@ -475,8 +475,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     assigned_to TEXT,
     created_by TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
     due_date TEXT,
-    zulip_stream TEXT,
-    zulip_topic TEXT,
+
+
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );
@@ -493,7 +493,7 @@ CREATE TABLE IF NOT EXISTS task_assignments (
 CREATE INDEX IF NOT EXISTS idx_task_assignments_user ON task_assignments(user_id);
 
 
--- ── Audit Log ────────────────────────────────────────────────────────────
+-- â”€â”€ Audit Log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS audit_log (
     id TEXT PRIMARY KEY,
@@ -508,7 +508,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(actor);
 CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action);
 
 
--- ── Full-Text Search (FTS5) Virtual Tables + Sync Triggers ───────────────
+-- â”€â”€ Full-Text Search (FTS5) Virtual Tables + Sync Triggers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE VIRTUAL TABLE IF NOT EXISTS docs_fts USING fts5(
     slug UNINDEXED, title, category, description, content,
@@ -592,7 +592,7 @@ CREATE TRIGGER IF NOT EXISTS user_profiles_fts_update AFTER UPDATE ON user_profi
 END;
 
 
--- ── E-Commerce Store ───────────────────────────────────────────────────────
+-- â”€â”€ E-Commerce Store â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS products (
     id TEXT PRIMARY KEY,
@@ -657,7 +657,7 @@ CREATE INDEX IF NOT EXISTS idx_docs_category_sort ON docs(category, sort_order);
 CREATE INDEX IF NOT EXISTS idx_docs_history_slug_created ON docs_history(slug, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_outreach_date_desc ON outreach_logs(date DESC);
 
--- ── AI Integrations ──────────────────────────────────────────────────────
+-- â”€â”€ AI Integrations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 CREATE TABLE IF NOT EXISTS chat_sessions (
     id TEXT PRIMARY KEY,

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Layout } from "lucide-react";
 import ProjectBoardKanban from "./command/ProjectBoardKanban";
+import { TaskTableView } from "./kanban/TaskTableView";
 import type { TaskItem } from "./command/ProjectBoardKanban";
 import { KANBAN_SUBTEAMS } from "./command/ProjectBoardKanban";
 import { api } from "../api/client";
@@ -16,14 +17,14 @@ interface TaskListResponse {
 export default function TaskBoardPage() {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
-
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
 
   // -- Queries --------------------------------------------------------
-  const queryKey = ["tasks", "list", {}];
+  const queryKey = ["tasks", "list", { parent_id: "null" }];
   const { data: tasksRes, isLoading: isTasksLoading } = api.tasks.list.useQuery(
     queryKey,
-    {},
+    { query: { parent_id: "null" } },
     { refetchInterval: 30000 }
   );
 
@@ -166,12 +167,28 @@ export default function TaskBoardPage() {
             Native D1-powered project management kanban
           </p>
         </div>
-        <button
-          onClick={() => setIsFullscreen(!isFullscreen)}
-          className="px-4 py-2 bg-ares-gray-dark/50 hover:bg-white/10 text-white font-bold text-sm ares-cut-sm border border-white/10 transition-colors"
-        >
-          {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex bg-black/40 ares-cut-sm border border-white/10 p-1">
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${viewMode === "kanban" ? "bg-ares-cyan/20 text-ares-cyan" : "text-ares-gray hover:text-white"}`}
+            >
+              Kanban
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${viewMode === "table" ? "bg-ares-cyan/20 text-ares-cyan" : "text-ares-gray hover:text-white"}`}
+            >
+              Table
+            </button>
+          </div>
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="px-4 py-2 bg-ares-gray-dark/50 hover:bg-white/10 text-white font-bold text-sm ares-cut-sm border border-white/10 transition-colors"
+          >
+            {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+          </button>
+        </div>
       </div>
 
       {/* Sub Boards Filter */}
@@ -196,18 +213,28 @@ export default function TaskBoardPage() {
           </button>
         ))}
       </div>
-
-      <div className={isFullscreen ? "flex-1 overflow-y-auto p-6 pt-2" : ""}>
-        <ProjectBoardKanban
-          tasks={filteredTasks}
-          isLoading={isTasksLoading}
-          isCreating={isCreating}
-          onCreateTask={handleCreateTaskWithSubteam}
-          onUpdateTask={handleUpdateTask}
-          onDeleteTask={handleDeleteTask}
-          onReorder={handleReorder}
-          onRefresh={() => queryClient.invalidateQueries({ queryKey })}
-        />
+      {/* Main Board Content */}
+      <div className={`flex-1 relative ${isFullscreen ? "px-6 pb-6 overflow-hidden flex flex-col" : "min-h-[600px]"}`}>
+        {viewMode === "kanban" ? (
+          <ProjectBoardKanban
+            tasks={filteredTasks}
+            isLoading={isTasksLoading}
+            onCreateTask={handleCreateTaskWithSubteam}
+            onUpdateTask={handleUpdateTask}
+            onDeleteTask={handleDeleteTask}
+            onReorder={handleReorder}
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["tasks", "list"] })}
+            isCreating={isCreating}
+          />
+        ) : (
+          <TaskTableView 
+            tasks={filteredTasks}
+            onRowClick={(task) => {
+              // Future: Open task details modal when clicking a row
+              console.log("Row clicked:", task.id);
+            }}
+          />
+        )}
       </div>
     </div>
   );

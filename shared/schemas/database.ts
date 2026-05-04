@@ -81,6 +81,12 @@ export interface Comments {
   zulip_message_id: string | null;
 }
 
+export interface D1Migrations {
+  applied_at: Generated<string>;
+  id: Generated<number | null>;
+  name: string | null;
+}
+
 export interface Docs {
   category: string;
   cf_email: string | null;
@@ -96,6 +102,8 @@ export interface Docs {
   status: Generated<string | null>;
   title: string;
   updated_at: Generated<string | null>;
+  zulip_stream: string | null;
+  zulip_topic: string | null;
 }
 
 export interface DocsFeedback {
@@ -199,12 +207,21 @@ export interface Events {
   is_volunteer: Generated<number | null>;
   location: string | null;
   meeting_notes: string | null;
+  original_start_time: string | null;
+  parent_event_id: string | null;
   published_at: string | null;
+  recurrence_rule: string | null;
+  recurring_exception: Generated<number | null>;
+  recurring_group_id: string | null;
   revision_of: string | null;
+  rrule: string | null;
   season_id: number | null;
   status: Generated<string | null>;
   tba_event_key: string | null;
   title: string;
+  updated_at: Generated<string | null>;
+  zulip_stream: string | null;
+  zulip_topic: string | null;
 }
 
 export interface EventsFts {
@@ -256,6 +273,17 @@ export interface EventSignups {
   notes: string | null;
   prep_hours: Generated<number | null>;
   user_id: string;
+}
+
+export interface ExternalKnowledgeSources {
+  branch: string | null;
+  created_at: Generated<string | null>;
+  id: string | null;
+  last_indexed_at: string | null;
+  last_indexed_sha: string | null;
+  status: Generated<string | null>;
+  type: string;
+  url: string;
 }
 
 export interface FinanceTransactions {
@@ -361,6 +389,15 @@ export interface PageAnalytics {
   user_agent: string | null;
 }
 
+export interface PointsLedger {
+  created_at: Generated<string | null>;
+  created_by: string;
+  id: string | null;
+  points_delta: number;
+  reason: string;
+  user_id: string;
+}
+
 export interface Posts {
   ast: string;
   author: string | null;
@@ -378,6 +415,8 @@ export interface Posts {
   thumbnail: string | null;
   title: string;
   updated_at: Generated<string | null>;
+  zulip_stream: string | null;
+  zulip_topic: string | null;
 }
 
 export interface PostsFts {
@@ -439,6 +478,7 @@ export interface Products {
   image_url: string | null;
   name: string;
   price_cents: number;
+  stock_count: Generated<number | null>;
 }
 
 export interface RateLimits {
@@ -547,10 +587,12 @@ export interface Tasks {
   description: string | null;
   due_date: string | null;
   id: string | null;
+  parent_id: string | null;
   priority: Generated<string | null>;
   sort_order: Generated<number | null>;
   status: Generated<string | null>;
   subteam: string | null;
+  time_spent_seconds: Generated<number | null>;
   title: string;
   updated_at: Generated<string | null>;
   zulip_stream: string | null;
@@ -671,6 +713,7 @@ export interface DB {
   badges: Badges;
   chat_sessions: ChatSessions;
   comments: Comments;
+  d1_migrations: D1Migrations;
   docs: Docs;
   docs_feedback: DocsFeedback;
   docs_fts: DocsFts;
@@ -691,6 +734,7 @@ export interface DB {
   events_fts_data: EventsFtsData;
   events_fts_docsize: EventsFtsDocsize;
   events_fts_idx: EventsFtsIdx;
+  external_knowledge_sources: ExternalKnowledgeSources;
   finance_transactions: FinanceTransactions;
   inquiries: Inquiries;
   judge_access_codes: JudgeAccessCodes;
@@ -700,6 +744,7 @@ export interface DB {
   orders: Orders;
   outreach_logs: OutreachLogs;
   page_analytics: PageAnalytics;
+  points_ledger: PointsLedger;
   posts: Posts;
   posts_fts: PostsFts;
   posts_fts_config: PostsFtsConfig;

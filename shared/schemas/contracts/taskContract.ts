@@ -25,6 +25,8 @@ export const taskSchema = z.object({
   // Legacy fields for backward compatibility
   assigned_to: z.string().nullable().optional(),
   assignee_name: z.string().nullable().optional(),
+  parent_id: z.string().nullable().optional(),
+  time_spent_seconds: z.number().nullable().optional(),
 });
 
 export const taskContract = c.router({
@@ -33,6 +35,7 @@ export const taskContract = c.router({
     path: "/",
     query: z.object({
       status: z.string().optional(),
+      parent_id: z.string().optional(),
     }).optional(),
     responses: {
       200: z.object({ tasks: z.array(taskSchema) }),
@@ -51,6 +54,8 @@ export const taskContract = c.router({
       subteam: z.string().nullable().optional(),
       assignees: z.array(z.string()).optional(),
       due_date: z.string().optional(),
+      parent_id: z.string().nullable().optional(),
+      time_spent_seconds: z.number().optional(),
     }),
     responses: {
       200: z.object({ success: z.boolean(), task: taskSchema }),
@@ -89,6 +94,8 @@ export const taskContract = c.router({
       assignees: z.array(z.string()).optional(),
       due_date: z.string().nullable().optional(),
       sort_order: z.number().optional(),
+      parent_id: z.string().nullable().optional(),
+      time_spent_seconds: z.number().optional(),
     }),
     responses: {
       200: z.object({ success: z.boolean() }),

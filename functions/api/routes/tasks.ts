@@ -21,6 +21,7 @@ const taskHandlers = {
           "t.id", "t.title", "t.description", "t.status", "t.priority", "t.subteam",
           "t.sort_order", "t.created_by", "t.due_date",
           "t.zulip_stream", "t.zulip_topic",
+          "t.parent_id", "t.time_spent_seconds",
           "t.created_at", "t.updated_at",
           "cp.nickname as creator_name",
           // Aggregate assignees using a subquery and JSON aggregation
@@ -35,6 +36,14 @@ const taskHandlers = {
 
       if (query?.status) {
         q = q.where("t.status", "=", query.status);
+      }
+      
+      if (query?.parent_id !== undefined) {
+        if (query.parent_id === "null") {
+          q = q.where("t.parent_id", "is", null);
+        } else {
+          q = q.where("t.parent_id", "=", query.parent_id);
+        }
       }
 
       const results = await q.execute();
@@ -63,6 +72,8 @@ const taskHandlers = {
           due_date: r.due_date || null,
           zulip_stream: r.zulip_stream ? String(r.zulip_stream) : null,
           zulip_topic: r.zulip_topic ? String(r.zulip_topic) : null,
+          parent_id: r.parent_id ? String(r.parent_id) : null,
+          time_spent_seconds: r.time_spent_seconds ? Number(r.time_spent_seconds) : 0,
           created_at: String(r.created_at),
           updated_at: String(r.updated_at),
           // Backward compatibility
@@ -100,6 +111,8 @@ const taskHandlers = {
           due_date: body.due_date || null,
           zulip_stream: "kanban",
           zulip_topic: `Task-${id.split("-")[0]}: ${body.title}`,
+          parent_id: body.parent_id || null,
+          time_spent_seconds: body.time_spent_seconds || 0,
           created_at: now,
           updated_at: now,
         })
@@ -145,6 +158,8 @@ const taskHandlers = {
         due_date: body.due_date || null,
         zulip_stream: "kanban",
         zulip_topic: `Task-${id.split("-")[0]}: ${body.title}`,
+        parent_id: body.parent_id || null,
+        time_spent_seconds: body.time_spent_seconds || 0,
         created_at: now,
         updated_at: now,
         assigned_to: body.assignees?.[0] || null,
@@ -254,6 +269,8 @@ const taskHandlers = {
       if (body.subteam !== undefined) updates.subteam = body.subteam;
       if (body.due_date !== undefined) updates.due_date = body.due_date;
       if (body.sort_order !== undefined) updates.sort_order = body.sort_order;
+      if (body.parent_id !== undefined) updates.parent_id = body.parent_id;
+      if (body.time_spent_seconds !== undefined) updates.time_spent_seconds = body.time_spent_seconds;
 
       await db.updateTable("tasks")
         .set(updates)

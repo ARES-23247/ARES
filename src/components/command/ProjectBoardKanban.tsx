@@ -22,6 +22,8 @@ export interface TaskItem {
   due_date: string | null;
   zulip_stream?: string | null;
   zulip_topic?: string | null;
+  parent_id?: string | null;
+  time_spent_seconds?: number | null;
   created_at: string;
   updated_at: string;
   assigned_to?: string | null;

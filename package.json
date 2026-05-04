@@ -208,5 +208,8 @@
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.4",
     "wrangler": "^4.83.0"
+  },
+  "overrides": {
+    "undici": "^6.25.0"
   }
 }
