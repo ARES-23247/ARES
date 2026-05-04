@@ -21,6 +21,7 @@
 
 - [x] Phase 14: Data Schema & Document Editor Updates (1 plans)
 - [x] Phase 15: Math Corner Foundation & Hub Integrations (2 plans)
+- [ ] Phase 16: Save AI Scouting Analyses (1 plans)
 
 ## Progress
 
@@ -50,6 +51,14 @@
 3. Science Corner dynamically fetches and renders documents with `display_in_science_corner`.
 4. Areslib dynamically fetches and renders documents with `display_in_areslib`.
 5. A single document can successfully appear in multiple hubs simultaneously.
+
+### Phase 16: Save AI Scouting Analyses
+**Goal:** Implement persistence for AI scouting analyses so previous results can be retrieved without regenerating.
+**Requirements:** None explicitly defined in requirements yet.
+**Success criteria:**
+1. Database migration creates `scouting_analyses` table.
+2. Analytics API endpoint allows saving and fetching.
+3. UI presents saved analyses as viewable history cards.
 
 ## Backlog
 

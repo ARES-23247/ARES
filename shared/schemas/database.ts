@@ -745,6 +745,19 @@ export interface Verification {
   value: string;
 }
 
+export interface ScoutingAnalyses {
+  created_at: Generated<string | null>;
+  created_by: string;
+  event_key: string | null;
+  id: string;
+  markdown: string;
+  mode: string;
+  model: string;
+  season_key: string;
+  team_number: number | null;
+  tokens_used: number | null;
+}
+
 export interface DB {
   _cf_METADATA: _CfMETADATA;
   account: Account;
@@ -796,6 +809,7 @@ export interface DB {
   posts_history: PostsHistory;
   products: Products;
   rate_limits: RateLimits;
+  scouting_analyses: ScoutingAnalyses;
   seasons: Seasons;
   session: Session;
   settings: Settings;

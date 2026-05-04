@@ -27,6 +27,7 @@ const ElevatorPidSim = lazy(() => import('../sims/ElevatorPidSim'));
 const FlywheelKvSim = lazy(() => import('../sims/FlywheelKvSim'));
 const PowerSheddingSim = lazy(() => import('../sims/PowerSheddingSim'));
 const StateMachineSim = lazy(() => import('../sims/StateMachineSim'));
+const MonteHall = lazy(() => import('../sims/MonteHall').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load MonteHall</div> })));
 const SimulationPlayground = lazy(() => import('./SimulationPlayground').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load SimulationPlayground</div> })));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,6 +53,7 @@ const ComponentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   FlywheelKvSim,
   PowerSheddingSim,
   StateMachineSim,
+  MonteHall,
   SimulationPlayground,
   Mermaid: lazy(() => Promise.resolve({ default: () => <div className="p-4 border border-white/10 bg-ares-gray-dark rounded text-ares-gray text-sm font-mono">[Mermaid Diagram]</div> })),
   HomeCoreValues: lazy(() => Promise.resolve({ default: () => <div className="p-4 border border-white/10 bg-ares-gray-dark rounded text-ares-gray text-sm font-mono">[Core Values Component]</div> }))

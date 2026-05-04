@@ -7,13 +7,19 @@ import { Link as LinkIcon } from "lucide-react";
 import TiptapRenderer from "../TiptapRenderer";
 import { CodeBlock } from "./CodeBlock";
 
+// ── Lazy-loaded Non-Sim Components ─────────────────────────────────────
+const ConfigVisualizer = lazy(() => import("./ConfigVisualizer"));
+const SimulationPlayground = lazy(() => import("../SimulationPlayground"));
+const CodePlayground = lazy(() => import("./CodePlayground"));
+const ScreenshotGallery = lazy(() => import("./ScreenshotGallery"));
+const InteractiveTutorial = lazy(() => import("../InteractiveTutorial"));
+
 // ── Lazy-loaded Simulators ───────────────────────────────────────────
+// IMPORTANT: When adding a new sim to simRegistry.json, add a lazy import here
+// and add it to SIM_COMPONENTS below. The sim ID (lowercased) will be the
+// tag name used in markdown (e.g., <SwerveSimulator /> becomes <swervesimulator />)
 const SwerveSimulator = lazy(() => import("../../sims/SwerveSim"));
 const SOTMSimulator = lazy(() => import("../../sims/SotmSim"));
-const ConfigVisualizer = lazy(() => import("../docs/ConfigVisualizer"));
-const SimulationPlayground = lazy(() => import("../../components/SimulationPlayground"));
-const CodePlayground = lazy(() => import("../docs/CodePlayground"));
-const ScreenshotGallery = lazy(() => import("../docs/ScreenshotGallery"));
 const FaultSim = lazy(() => import("../../sims/FaultSim"));
 const PhysicsSim = lazy(() => import("../../sims/PhysicsSim"));
 const SysIdSim = lazy(() => import("../../sims/SysIdSim"));
@@ -26,14 +32,41 @@ const ArmKgSim = lazy(() => import("../../sims/ArmKgSim"));
 const AutoSim = lazy(() => import("../../sims/AutoSim"));
 const ElevatorPidSim = lazy(() => import("../../sims/ElevatorPidSim"));
 const FlywheelKvSim = lazy(() => import("../../sims/FlywheelKvSim"));
-const InteractiveTutorial = lazy(() => import("../InteractiveTutorial"));
 const PowerSheddingSim = lazy(() => import("../../sims/PowerSheddingSim"));
 const StateMachineSim = lazy(() => import("../../sims/StateMachineSim"));
-// Additional sims
 const BeeSim = lazy(() => import("../../sims/BeeSim"));
 const TheGreatBeeAdventure = lazy(() => import("../../sims/TheGreatBeeAdventure"));
 const UntitledSimulation = lazy(() => import("../../sims/UntitledSimulation"));
 const Battleship = lazy(() => import("../../sims/battleship"));
+
+// ── Sim Component Registry ───────────────────────────────────────────────
+// Maps sim component IDs to their lazy-loaded components
+// Tag names are lowercased versions of the component IDs
+const SIM_COMPONENTS: Record<string, React.ComponentType> = {
+  swervesimulator: SwerveSimulator,
+  sotmsimulator: SOTMSimulator,
+  faultsim: FaultSim,
+  physicssim: PhysicsSim,
+  sysidsim: SysIdSim,
+  visionsim: VisionSim,
+  zeroallocationsim: ZeroAllocationSim,
+  fieldvisualizer: FieldVisualizer,
+  troubleshootingwizard: TroubleshootingWizard,
+  performancedashboard: PerformanceDashboard,
+  armkgsim: ArmKgSim,
+  autosim: AutoSim,
+  elevatorpidsim: ElevatorPidSim,
+  flywheelkvsim: FlywheelKvSim,
+  powersheddingsim: PowerSheddingSim,
+  statemachinesim: StateMachineSim,
+  beesim: BeeSim,
+  thegreatbeeadventure: TheGreatBeeAdventure,
+  untitledsimulation: UntitledSimulation,
+  battleship: Battleship,
+};
+
+// Generate tag names and component mappings from SIM_COMPONENTS
+const SIM_TAG_NAMES = Object.keys(SIM_COMPONENTS);
 
 function SimLoader() {
   return (
@@ -68,73 +101,38 @@ function validateUrl(url?: string): string | undefined {
   }
 }
 
-function DocsMarkdownRenderer({ content }: DocsMarkdownRendererProps) {
-  let tiptapNode = null;
-  // Check if it's Tiptap JSON
-  try {
-    const trimmed = content.trim();
-    if (trimmed.startsWith("{")) {
-      const parsed = JSON.parse(trimmed);
-      if (parsed.type === "doc") {
-        tiptapNode = parsed;
-      }
-    }
-  } catch {
-    // Not JSON, treat as Markdown
-  }
-
-  if (tiptapNode) {
-    return <TiptapRenderer node={tiptapNode} />;
-  }
-
+export default memo(function DocsMarkdownRenderer({ content }: DocsMarkdownRendererProps) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[
-        rehypeRaw, 
+        rehypeRaw,
         [rehypeSanitize, {
           ...defaultSchema,
           tagNames: [
             ...(defaultSchema.tagNames || []),
-            "swervesimulator", "sotmsimulator", "configvisualizer", "codeplayground",
-            "screenshotgallery", "faultsim", "physicssim", "sysidsim", "visionsim",
-            "zeroallocationsim", "fieldvisualizer", "troubleshootingwizard",
-            "performancedashboard", "armkgsim", "autosim", "elevatorpidsim",
-            "flywheelkvsim", "interactivetutorial", "powersheddingsim", "statemachinesim",
-            "simulationplayground",
-            "beesim", "thegreatbeeadventure", "untitledsimulation", "battleship"
+            // Non-sim components
+            "configvisualizer", "simulationplayground", "codeplayground",
+            "screenshotgallery", "interactivetutorial",
+            // All sims from SIM_COMPONENTS (auto-populated)
+            ...SIM_TAG_NAMES
           ]
         }]
       ]}
       components={{
-        // @ts-expect-error -- Custom component injection
-        swervesimulator: () => <LazyWrap><SwerveSimulator /></LazyWrap>,
-        simulationplayground: () => <LazyWrap><SimulationPlayground /></LazyWrap>,
-        sotmsimulator: () => <LazyWrap><SOTMSimulator /></LazyWrap>,
+        // Non-sim components
         configvisualizer: () => <LazyWrap><ConfigVisualizer /></LazyWrap>,
+        simulationplayground: () => <LazyWrap><SimulationPlayground /></LazyWrap>,
         codeplayground: () => <LazyWrap><CodePlayground /></LazyWrap>,
         screenshotgallery: () => <LazyWrap><ScreenshotGallery /></LazyWrap>,
-        faultsim: () => <LazyWrap><FaultSim /></LazyWrap>,
-        physicssim: () => <LazyWrap><PhysicsSim /></LazyWrap>,
-        sysidsim: () => <LazyWrap><SysIdSim /></LazyWrap>,
-        visionsim: () => <LazyWrap><VisionSim /></LazyWrap>,
-        zeroallocationsim: () => <LazyWrap><ZeroAllocationSim /></LazyWrap>,
-        fieldvisualizer: () => <LazyWrap><FieldVisualizer /></LazyWrap>,
-        // @ts-expect-error -- Custom component injection
-        troubleshootingwizard: () => <LazyWrap><TroubleshootingWizard /></LazyWrap>,
-        performancedashboard: () => <LazyWrap><PerformanceDashboard /></LazyWrap>,
-        armkgsim: () => <LazyWrap><ArmKgSim /></LazyWrap>,
-        autosim: () => <LazyWrap><AutoSim /></LazyWrap>,
-        elevatorpidsim: () => <LazyWrap><ElevatorPidSim /></LazyWrap>,
-        flywheelkvsim: () => <LazyWrap><FlywheelKvSim /></LazyWrap>,
-        // @ts-expect-error -- Custom component injection
         interactivetutorial: () => <LazyWrap><InteractiveTutorial /></LazyWrap>,
-        powersheddingsim: () => <LazyWrap><PowerSheddingSim /></LazyWrap>,
-        statemachinesim: () => <LazyWrap><StateMachineSim /></LazyWrap>,
-        beesim: () => <LazyWrap><BeeSim /></LazyWrap>,
-        thegreatbeeadventure: () => <LazyWrap><TheGreatBeeAdventure /></LazyWrap>,
-        untitledsimulation: () => <LazyWrap><UntitledSimulation /></LazyWrap>,
-        battleship: () => <LazyWrap><Battleship /></LazyWrap>,
+        // All sims from SIM_COMPONENTS (auto-populated)
+        ...Object.fromEntries(
+          SIM_TAG_NAMES.map(tag => [tag, () => {
+            const SimComponent = SIM_COMPONENTS[tag];
+            return <LazyWrap><SimComponent /></LazyWrap>;
+          }])
+        ),
         h1: ({ children }) => <h1 className="text-3xl font-bold font-heading mt-10 mb-4 text-white border-b border-white/10 pb-2">{children}</h1>,
         h2: ({ children }) => {
           const text = String(children);
@@ -160,53 +158,71 @@ function DocsMarkdownRenderer({ content }: DocsMarkdownRendererProps) {
             </h3>
           );
         },
-        h4: ({ children }) => <h4 className="text-lg font-bold mt-4 mb-2 text-white">{children}</h4>,
-        p: ({ children }) => <p className="text-white/80 leading-relaxed mb-4">{children}</p>,
+        h4: ({ children }) => <h4 className="text-lg font-bold font-heading mt-4 mb-2 text-marble">{children}</h4>,
+        p: ({ children }) => <p className="my-4 leading-relaxed text-marble/90">{children}</p>,
         a: ({ href, children }) => {
-          const safeHref = validateUrl(href);
+          const safeUrl = validateUrl(href);
+          if (!safeUrl) return <span>{children}</span>;
           return (
-            <a href={safeHref} className="text-ares-gold hover:text-white underline underline-offset-2 transition-colors" target={href?.startsWith("http") ? "_blank" : undefined} rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}>
+            <a
+              href={safeUrl}
+              className="text-ares-cyan hover:text-ares-cyan/80 underline underline-offset-2"
+              target={href?.startsWith("http") ? "_blank" : undefined}
+              rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
+            >
               {children}
             </a>
           );
         },
-        ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-4 text-white/70 ml-2">{children}</ul>,
-        ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-4 text-white/70 ml-2">{children}</ol>,
-        li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-        blockquote: ({ children }) => (
-          <blockquote className="border-l-4 border-ares-red/60 bg-ares-red/5 px-4 py-3 my-4 text-white italic">{children}</blockquote>
-        ),
-        code: ({ className, children, ...props }) => {
-          const match = /language-(\w+)/.exec(className || '');
-          const isInline = !match;
-          if (isInline) {
-            return <code className="bg-ares-red/10 text-ares-gold px-1.5 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>;
+        ul: ({ children }) => <ul className="my-4 ml-6 list-disc space-y-2 text-marble/90 marker:text-ares-red">{children}</ul>,
+        ol: ({ children }) => <ol className="my-4 ml-6 list-decimal space-y-2 text-marble/90 marker:text-ares-red">{children}</ol>,
+        li: ({ children }) => <li className="ml-2">{children}</li>,
+        code: ({ className, children }) => {
+          // Inline code (no className) vs code block (has language className)
+          if (!className) {
+            return <code className="px-1.5 py-0.5 bg-white/5 text-ares-cyan font-mono text-sm rounded border border-white/10">{children}</code>;
           }
-          return (
-            <CodeBlock language={match[1]} value={String(children).replace(/\n$/, '')} {...props} />
-          );
+          // Code blocks are handled by CodeBlock component
+          return <code className={className}>{children}</code>;
         },
-        table: ({ children }) => (
-          <div className="overflow-x-auto my-4">
-            <table className="w-full border-collapse border border-white/10 text-sm">{children}</table>
-          </div>
+        pre: ({ children }) => {
+          // If child is a code element with className, use CodeBlock component
+          if (React.Children.toArray(children).some((child) => {
+            if (typeof child === "object" && child && "type" in child && child.type === "code") {
+              const props = child.props as { className?: string };
+              return props.className?.startsWith("language-");
+            }
+            return false;
+          })) {
+            return <>{children}</>;
+          }
+          return <pre className="bg-obsidian border border-white/10 rounded-lg p-4 overflow-x-auto">{children}</pre>;
+        },
+        blockquote: ({ children }) => (
+          <blockquote className="border-l-4 border-ares-gold/50 pl-4 py-2 my-4 italic text-marble/70 bg-white/5">
+            {children}
+          </blockquote>
         ),
-        th: ({ children }) => <th className="border border-white/10 bg-ares-red/10 px-4 py-2 text-left font-bold text-ares-gold">{children}</th>,
-        td: ({ children }) => <td className="border border-white/10 px-4 py-2 text-white/70">{children}</td>,
-        hr: () => <hr className="border-white/10 my-8" />,
-        img: ({ src, alt }) => {
-          const safeSrc = validateUrl(src);
-          return (
-            <img src={safeSrc} alt={alt || "ARESLib documentation image"} className="ares-cut-sm border border-white/10 my-4 max-w-full" />
-          );
-        },
-        strong: ({ children }) => <strong className="text-white font-bold">{children}</strong>,
-        em: ({ children }) => <em className="text-ares-gold/80">{children}</em>,
+        table: ({ children }) => <div className="overflow-x-auto my-6"><table className="min-w-full divide-y divide-white/10 border border-white/10">{children}</table></div>,
+        thead: ({ children }) => <thead className="bg-white/5">{children}</thead>,
+        tbody: ({ children }) => <tbody className="divide-y divide-white/5">{children}</tbody>,
+        tr: ({ children }) => <tr className="hover:bg-white/3">{children}</tr>,
+        th: ({ children }) => <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-white">{children}</th>,
+        td: ({ children }) => <td className="px-4 py-3 text-sm text-marble/80">{children}</td>,
+        hr: () => <hr className="my-8 border-t border-white/10" />,
+        strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
+        em: ({ children }) => <em className="italic text-marble/80">{children}</em>,
+        img: ({ src, alt }) => (
+          <img
+            src={src}
+            alt={alt || ""}
+            className="my-6 rounded-lg border border-white/10 max-w-full h-auto"
+            loading="lazy"
+          />
+        ),
       }}
     >
       {content}
     </ReactMarkdown>
   );
-}
-
-export default memo(DocsMarkdownRenderer);
+});
