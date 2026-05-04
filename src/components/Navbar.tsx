@@ -1,11 +1,8 @@
- 
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Search, LayoutDashboard, LogIn, Bell, Check, X, ChevronDown, Users, Trophy, BookOpen, ShoppingBag } from "lucide-react";
+import { Search, LayoutDashboard, LogIn, Bell, Check, X, ChevronDown, Users, Trophy, BookOpen, ShoppingBag, Calendar as CalendarIcon } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-
 
 import { GreekMeander } from "./GreekMeander";
 import { api } from "../api/client";
@@ -16,6 +13,7 @@ import { useUIStore } from "../store/uiStore";
 export default function Navbar() {
   const { setSidebarOpen } = useUIStore();
   const [open, setOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { session, isPending, permissions } = useDashboardSession();
@@ -23,12 +21,11 @@ export default function Navbar() {
   const isSignedIn = !isPending && session?.authenticated;
   const userImage = session?.user?.image;
    
-  // Unused permissions omitted to satisfy ESLint
-  
   const { notifications, unreadCount } = useMergedNotifications(session, permissions);
   
   const [showNotifs, setShowNotifs] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const navbarRef = useRef<HTMLElement>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -36,9 +33,25 @@ export default function Navbar() {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setShowNotifs(false);
       }
+      if (navbarRef.current && !navbarRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle Escape key to close everything
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setActiveDropdown(null);
+        setShowNotifs(false);
+        setOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const markAllRead = api.notifications.markAllAsRead.useMutation({
@@ -59,8 +72,12 @@ export default function Navbar() {
     }
   });
 
+  const toggleDropdown = (name: string) => {
+    setActiveDropdown(activeDropdown === name ? null : name);
+  };
+
   return (
-    <nav role="navigation" aria-label="Main Navigation" className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 pt-4 pb-4 transition-all duration-500 overflow-visible border-t-4 border-ares-bronze">
+    <nav ref={navbarRef} role="navigation" aria-label="Main Navigation" className="fixed top-0 left-0 w-full z-50 bg-obsidian/85 backdrop-blur-xl shadow-2xl px-6 pt-4 pb-4 transition-all duration-500 overflow-visible border-t-4 border-ares-bronze">
       <a 
         href="#main-content" 
         className="sr-only focus:not-sr-only focus:absolute focus:top-24 focus:left-6 bg-ares-red text-white px-6 py-3 ares-cut-sm font-bold z-modal shadow-2xl border border-white/20 transition-all"
@@ -81,57 +98,66 @@ export default function Navbar() {
 
         <div className="hidden md:flex items-center gap-6 text-sm font-bold uppercase tracking-widest">
           {/* Team Dropdown */}
-          <div className="relative group py-2">
-            <button className="flex items-center gap-1.5 text-marble hover:text-ares-gold transition-all duration-300 focus-visible:outline-none">
-              Team <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+          <div className="relative py-2">
+            <button 
+              onClick={() => toggleDropdown("team")}
+              onMouseEnter={() => setActiveDropdown("team")}
+              aria-haspopup="true"
+              aria-expanded={activeDropdown === "team"}
+              className={`flex items-center gap-1.5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1 ${activeDropdown === "team" ? "text-ares-gold" : "text-marble hover:text-ares-gold"}`}
+            >
+              Team <ChevronDown size={14} className={`transition-transform duration-300 ${activeDropdown === "team" ? "rotate-180" : ""}`} />
             </button>
-            <div className="absolute top-[calc(100%-4px)] left-0 w-48 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-50 rounded-lg p-1">
-              <Link to="/about" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+            <div 
+              className={`absolute top-[calc(100%-4px)] left-0 w-48 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-lg p-1 transition-all duration-300 z-50 ${activeDropdown === "team" ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"}`}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
+              <Link to="/about" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
                 <Users size={14} className="text-ares-cyan group-hover/item:scale-110 transition-transform" />
                 Who We Are
               </Link>
-              <Link to="/outreach" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+              <Link to="/seasons" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+                <Trophy size={14} className="text-ares-gold group-hover/item:scale-110 transition-transform" />
+                Seasons
+              </Link>
+              <Link to="/outreach" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
                 <Users size={14} className="text-ares-red group-hover/item:scale-110 transition-transform" />
                 Our Impact
               </Link>
             </div>
           </div>
 
-          {/* Competition Dropdown */}
-          <div className="relative group py-2">
-            <button className="flex items-center gap-1.5 text-marble hover:text-ares-gold transition-all duration-300 focus-visible:outline-none">
-              Compete <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
-            </button>
-            <div className="absolute top-[calc(100%-4px)] left-0 w-48 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-50 rounded-lg p-1">
-              <Link to="/seasons" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
-                <Trophy size={14} className="text-ares-gold group-hover/item:scale-110 transition-transform" />
-                Seasons
-              </Link>
-              <Link to="/events" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
-                <Trophy size={14} className="text-ares-red group-hover/item:scale-110 transition-transform" />
-                Schedule
-              </Link>
-            </div>
-          </div>
+          <Link to="/events" className="flex items-center gap-2 text-marble hover:text-ares-gold transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
+            <CalendarIcon size={14} /> Calendar
+          </Link>
 
           {/* Resources Dropdown */}
-          <div className="relative group py-2">
-            <button className="flex items-center gap-1.5 text-marble hover:text-ares-gold transition-all duration-300 focus-visible:outline-none">
-              Content <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+          <div className="relative py-2">
+            <button 
+              onClick={() => toggleDropdown("content")}
+              onMouseEnter={() => setActiveDropdown("content")}
+              aria-haspopup="true"
+              aria-expanded={activeDropdown === "content"}
+              className={`flex items-center gap-1.5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1 ${activeDropdown === "content" ? "text-ares-gold" : "text-marble hover:text-ares-gold"}`}
+            >
+              Content <ChevronDown size={14} className={`transition-transform duration-300 ${activeDropdown === "content" ? "rotate-180" : ""}`} />
             </button>
-            <div className="absolute top-[calc(100%-4px)] left-0 w-56 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-50 rounded-lg p-1">
-              <Link to="/blog" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+            <div 
+              className={`absolute top-[calc(100%-4px)] left-0 w-56 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-lg p-1 transition-all duration-300 z-50 ${activeDropdown === "content" ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"}`}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
+              <Link to="/blog" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
                 <BookOpen size={14} className="text-ares-gold group-hover/item:scale-110 transition-transform" />
                 Team Blog
               </Link>
-              <Link to="/science-corner" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+              <Link to="/science-corner" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
                 <BookOpen size={14} className="text-ares-cyan group-hover/item:scale-110 transition-transform" />
                 Science Corner
               </Link>
             </div>
           </div>
 
-          <Link to="/store" className="flex items-center gap-2 text-marble hover:text-ares-gold transition-colors py-2">
+          <Link to="/store" className="flex items-center gap-2 text-marble hover:text-ares-gold transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
             <ShoppingBag size={14} /> Store
           </Link>
 
@@ -287,7 +313,7 @@ export default function Navbar() {
           <Link to="/about" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">WHO WE ARE</Link>
           <Link to="/seasons" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SEASONS</Link>
           <Link to="/outreach" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">OUTREACH</Link>
-          <Link to="/events" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">EVENTS</Link>
+          <Link to="/events" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">CALENDAR</Link>
           <Link to="/blog" onClick={() => setOpen(false)} className="text-xl font-black italic tracking-tighter text-ares-gold">TEAM BLOG</Link>
           <Link to="/science-corner" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SCIENCE CORNER</Link>
           <Link to="/store" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">STORE</Link>
