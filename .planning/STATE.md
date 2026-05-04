@@ -36,6 +36,10 @@ See: .planning/PROJECT.md (updated 2026-05-04)
 ## Last Activity
 
 2026-05-04 — Milestone v5.9 archived
+2026-05-04 — HOTFIX: Resolved blockers in Kanban TaskDetailsModal:
+- Added `document_snapshots` migration (0014) for PartyKit persistence.
+- Fixed collaborative editor to seed existing content from the database.
+- Implemented subtask navigation and refined Zulip thread layout.
 
 ## Current Position
 

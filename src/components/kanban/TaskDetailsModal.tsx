@@ -20,6 +20,7 @@ interface TaskDetailsModalProps {
   onClose: () => void;
   onSave: (id: string, updates: Partial<TaskItem>) => Promise<void>;
   onDelete: (id: string) => void;
+  onTaskClick?: (task: TaskItem) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -37,7 +38,7 @@ const PRIORITY_OPTIONS = [
 ];
 
 // Inner Editor that connects to PartyKit
-function TaskEditorInner({ onDescriptionChange }: { onDescriptionChange: (content: string) => void }) {
+function TaskEditorInner({ initialContent, onDescriptionChange }: { initialContent: string; onDescriptionChange: (content: string) => void }) {
   const { ydoc, provider } = useCollaborativeEditor();
   const editor = useRichEditor({
     placeholder: "<p>Write a detailed task description...</p>",
@@ -45,6 +46,23 @@ function TaskEditorInner({ onDescriptionChange }: { onDescriptionChange: (conten
     provider,
     yfield: 'default'
   });
+
+  // Seed the editor with initial content if the ydoc is empty
+  useEffect(() => {
+    if (!editor || !initialContent) return;
+
+    // In collaborative mode, avoid overwriting active live edits with the static DB snapshot.
+    // We only inject the DB snapshot if the YDoc is currently empty (e.g. first user joining a new session).
+    const shouldSetContent = !ydoc || ydoc.getXmlFragment("default").length === 0;
+
+    if (shouldSetContent) {
+      try {
+        editor.commands.setContent(JSON.parse(initialContent));
+      } catch {
+        editor.commands.setContent(initialContent);
+      }
+    }
+  }, [editor, initialContent, ydoc]);
 
   // Sync back to parent when editor changes
   useEffect(() => {
@@ -68,7 +86,7 @@ function TaskEditorInner({ onDescriptionChange }: { onDescriptionChange: (conten
   );
 }
 
-export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: TaskDetailsModalProps) {
+export default function TaskDetailsModal({ task, onClose, onSave, onDelete, onTaskClick }: TaskDetailsModalProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [status, setStatus] = useState(task.status);
@@ -215,7 +233,10 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
                 <Flag size={14} /> Description
               </div>
               <CollaborativeEditorRoom roomId={`task-${task.id}`}>
-                <TaskEditorInner onDescriptionChange={setDescription} />
+                <TaskEditorInner 
+                  initialContent={task.description || ""} 
+                  onDescriptionChange={setDescription} 
+                />
               </CollaborativeEditorRoom>
             </div>
             
@@ -235,10 +256,14 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
                 ) : (
                   <div className="flex flex-col gap-2">
                     {subtasks.map((st: TaskItem) => (
-                      <div key={st.id} className="flex items-center justify-between p-3 border border-white/5 bg-black/40 hover:bg-white/5 ares-cut-sm transition-colors cursor-pointer">
+                      <div 
+                        key={st.id} 
+                        onClick={() => onTaskClick?.(st)}
+                        className="flex items-center justify-between p-3 border border-white/5 bg-black/40 hover:bg-white/5 ares-cut-sm transition-colors cursor-pointer group"
+                      >
                         <div className="flex items-center gap-3">
                           <span className={`w-2 h-2 rounded-full ${st.status === "done" ? "bg-ares-gold" : "bg-ares-cyan"}`} />
-                          <span className={`text-sm font-bold ${st.status === "done" ? "text-ares-gray line-through" : "text-white"}`}>
+                          <span className={`text-sm font-bold group-hover:text-ares-cyan transition-colors ${st.status === "done" ? "text-ares-gray line-through" : "text-white"}`}>
                             {st.title}
                           </span>
                         </div>
@@ -278,7 +303,7 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
 
           {/* Right Column: Meta & Zulip */}
           <div className="w-full lg:w-96 flex flex-col shrink-0 bg-black/20 overflow-y-auto custom-scrollbar">
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 flex flex-col">
               {/* Status */}
               <div>
                 <span className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">Status</span>
@@ -413,7 +438,7 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
                 />
               </div>
               {/* Time Logged */}
-              <div>
+              <div className="mb-4">
                 <div className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
                   <Clock size={10} className="inline mr-1 text-ares-gold" />
                   Time Logged (Hours:Minutes)
@@ -447,20 +472,25 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Zulip Thread */}
-            <div className="flex-1 min-h-[300px] border-t border-white/5 bg-obsidian">
-              {task.zulip_stream && task.zulip_topic ? (
-                <div className="h-full px-4 pt-0">
-                  <ZulipThread stream={task.zulip_stream} topic={task.zulip_topic} />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full p-6 text-center text-ares-gray opacity-50">
-                  <AlertTriangle size={32} className="mb-2" />
-                  <p className="text-xs">Zulip thread not initialized for this task.</p>
-                </div>
-              )}
+              {/* Zulip Thread */}
+              <div className="flex-1 min-h-[400px] border-t border-white/5 bg-obsidian flex flex-col">
+                {task.zulip_stream && task.zulip_topic ? (
+                  <div className="flex-1 overflow-hidden">
+                    <ZulipThread 
+                      stream={task.zulip_stream} 
+                      topic={task.zulip_topic} 
+                      className="m-0 border-none bg-transparent shadow-none max-h-none h-full"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center flex-1 p-6 text-center text-ares-gray opacity-50">
+                    <AlertTriangle size={32} className="mb-2" />
+                    <p className="text-xs font-bold uppercase tracking-wider">Discussion Offline</p>
+                    <p className="text-[10px] mt-1">Zulip thread not initialized for this task.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -175,6 +175,7 @@ export default function ProjectBoardKanban({
             onClose={() => setEditingTask(null)}
             onSave={onUpdateTask}
             onDelete={onDeleteTask}
+            onTaskClick={(t) => setEditingTask(t)}
           />
         )}
       </AnimatePresence>

@@ -15,9 +15,10 @@ interface ZulipMessage {
 interface ZulipThreadProps {
   stream: string;
   topic: string;
+  className?: string;
 }
 
-export default function ZulipThread({ stream, topic }: ZulipThreadProps) {
+export default function ZulipThread({ stream, topic, className }: ZulipThreadProps) {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
 
@@ -60,7 +61,7 @@ export default function ZulipThread({ stream, topic }: ZulipThreadProps) {
 
   if (isLoading) {
     return (
-      <div className="my-8 border border-white/10 rounded-lg p-6 bg-black/40 glass-card animate-pulse">
+      <div className={`border border-white/10 rounded-lg p-6 bg-black/40 glass-card animate-pulse ${className || "my-8"}`}>
         <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
           <MessageSquare className="text-ares-gray" size={20} />
           <h3 className="font-heading font-bold text-ares-gray">Zulip Thread: {topic}</h3>
@@ -74,7 +75,7 @@ export default function ZulipThread({ stream, topic }: ZulipThreadProps) {
   }
 
   return (
-    <div className="my-8 border border-white/10 rounded-lg bg-black/40 glass-card overflow-hidden flex flex-col max-h-[600px]">
+    <div className={`border border-white/10 rounded-lg bg-black/40 glass-card overflow-hidden flex flex-col max-h-[600px] ${className || "my-8"}`}>
       <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5 shrink-0">
         <div className="flex items-center gap-3">
           <MessageSquare className="text-ares-cyan" size={20} />
