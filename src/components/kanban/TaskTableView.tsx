@@ -96,7 +96,7 @@ const columns = [
 export function TaskTableView({ tasks, onRowClick }: TaskTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  // eslint-disable-next-line react-hooks/incompatible-library
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table API is not yet React Compiler compatible
   const table = useReactTable({
     data: tasks,
     columns,
