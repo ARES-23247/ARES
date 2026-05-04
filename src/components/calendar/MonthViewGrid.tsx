@@ -83,7 +83,7 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
                     isCurrentDay
                       ? "bg-[#A30000] text-white"
                       : !isCurrentMonth
-                      ? "text-zinc-500"
+                      ? "text-zinc-400"
                       : "text-marble"
                   }`}
                 >

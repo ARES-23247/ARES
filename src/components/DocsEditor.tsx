@@ -162,7 +162,7 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
   if (isLoading) return <div className="flex items-center justify-center py-20"><RefreshCw className="animate-spin text-ares-red" size={32} /></div>;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full relative h-full">
+    <div className="flex flex-col gap-6 w-full relative h-full">
       <div className="flex flex-col gap-6 flex-1 min-w-0">
       <div>
         <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
@@ -310,7 +310,7 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
       </div>
 
       {editSlug && docRes?.body?.doc && (
-        <div className="w-full xl:w-96 flex-shrink-0 flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-6 mt-6">
           <ZulipThread 
             stream={(docRes.body.doc as Record<string, unknown>).zulip_stream as string || "documents"} 
             topic={(docRes.body.doc as Record<string, unknown>).zulip_topic as string || `Doc: ${(docRes.body.doc as Record<string, unknown>).title as string}`} 

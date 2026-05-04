@@ -207,7 +207,7 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
   if (!editor) return <div className="text-marble animate-pulse font-mono tracking-widest text-sm">Booting Editor System...</div>;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 w-full relative h-full">
+    <div className="flex flex-col gap-6 w-full relative h-full">
       <div className="flex flex-col gap-6 flex-1 min-w-0">
       <div>
         <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
@@ -323,7 +323,7 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
       </div>
 
       {editSlug && postRes?.body?.post && (
-        <div className="w-full xl:w-96 flex-shrink-0 flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-6 mt-6">
           <ZulipThread 
             stream={postRes.body.post.zulip_stream || "blog"} 
             topic={postRes.body.post.zulip_topic || `Blog: ${postRes.body.post.title}`} 
