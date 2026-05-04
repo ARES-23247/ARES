@@ -48,19 +48,43 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 5.9 (Trello Parity & Zulip Sync)** — Monday.com-style task modals with embedded PartyKit collaborative editing and ZulipThread integration. Fixed critical tasks API 404 and calendar list view bugs.
 
 ### Active
-- None
+- [ ] Media manager E2E testing
+- [ ] Usage metrics admin dashboard
+- [ ] Sub-task UI polish and nested task rendering
 
-## Current Milestone: v5.9 Shipped
+## Current Milestone: v6.2 Metrics, Testing & UI Polish
 
-**Status:** v5.9 (Trello Parity & Zulip Sync) shipped 2026-05-04. Ready for next milestone.
+**Goal:** Deliver deferred E2E testing and metrics features, and polish the nested task UI.
 
-**Shipped features:**
+**Target features:**
+- Media manager E2E Playwright coverage
+- Admin dashboard for monitoring usage metrics
+- Polish sub-task rendering and task details UI
+
+## Current State
+
+<details>
+<summary>v6.1 Shipped Features</summary>
+
+- Type Safety for Kysely dynamic table names and Cloudflare AI instances
+- Zulip API authorization hardening with `ensureAuth` middleware
+</details>
+
+<details>
+<summary>v6.0 Shipped Features</summary>
+
+- Real-Time Collaboration Infrastructure using PartyKit
+- D1 document snapshot persistence and exponential backoff
+</details>
+
+<details>
+<summary>v5.9 Shipped Features</summary>
+
 - **Task ↔ Zulip:** Auto-create Zulip topics when tasks are created/moved, embedded thread in modal.
 - **Collaborative Task Editing:** PartyKit-backed real-time description editing in TaskDetailsModal.
 - **Monday.com Parity:** TableView toggle, subtasks (parent_id), time tracking fields.
 - **Bug Fixes:** ts-rest trailing slash, calendar month filter, optimistic cache handling.
-
-## Current State
+</details>
 
 <details>
 <summary>v5.7 Shipped Features</summary>
@@ -261,9 +285,7 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 </details>
 
 ## Next Milestone Goals
-1. Media manager E2E testing (deferred TEST-03).
-2. Usage metrics admin dashboard (deferred MON-03).
-3. Sub-task UI polish and nested task rendering.
+- TBD during v6.2 completion.
 
 ## Key Decisions
 
