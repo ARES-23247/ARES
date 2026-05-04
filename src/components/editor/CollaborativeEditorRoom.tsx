@@ -294,11 +294,11 @@ function StatusBadge({
     <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
       <div className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
         <WifiOff size={10} /> Offline
-        {!isCollaborative && <span className="text-amber-300/80 text-[9px] ml-1">(Changes not saved)</span>}
+        {!isCollaborative && <span className="text-amber-300/80 text-[9px] ml-1">(Local only)</span>}
       </div>
       {isReconnecting && (
         <span className="text-[9px] text-amber-400/80 animate-pulse">
-          Reconnecting... ({reconnectAttempt}/{maxAttempts})
+          Reconnecting... ({(reconnectAttempt ?? 0) + 1}/{maxAttempts})
         </span>
       )}
       {hasExceededAttempts && onManualReconnect && (
