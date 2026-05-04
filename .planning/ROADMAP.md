@@ -6,8 +6,16 @@
 - ✅ **v5.6** — Stability & Polish (Shipped 2026-05-03)
 - ✅ **v5.7** — Platform Maturity (Shipped 2026-05-03)
 - ✅ **v5.8** — Feature Expansion (Shipped 2026-05-04)
+- 🚧 **v5.9** — Trello Parity & Zulip Sync (In Progress)
 
 ## Phases
+
+### Phase 5: Trello Parity & Zulip Sync
+**Goal:** Map Kanban tasks to Zulip topics and embed collaborative descriptions
+- [ ] TASK-01: Update database schema and migrations
+- [ ] TASK-02: Backend API updates for Zulip topic creation
+- [ ] TASK-03: Enhance ZulipThread with a message composer
+- [ ] TASK-04: Implement TaskDetailsModal with embedded PartyKit Editor and Zulip Thread
 
 ### Phase 1: Recurring GCal Sync
 **Goal:** Establish bidirectional sync for recurring events

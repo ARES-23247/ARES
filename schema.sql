@@ -469,6 +469,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     assigned_to TEXT,
     created_by TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
     due_date TEXT,
+    zulip_stream TEXT,
+    zulip_topic TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );

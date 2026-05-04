@@ -20,6 +20,7 @@ const taskHandlers = {
         .select([
           "t.id", "t.title", "t.description", "t.status", "t.priority", "t.subteam",
           "t.sort_order", "t.created_by", "t.due_date",
+          "t.zulip_stream", "t.zulip_topic",
           "t.created_at", "t.updated_at",
           "cp.nickname as creator_name",
           // Aggregate assignees using a subquery and JSON aggregation
@@ -60,6 +61,8 @@ const taskHandlers = {
           created_by: String(r.created_by),
           creator_name: r.creator_name || null,
           due_date: r.due_date || null,
+          zulip_stream: r.zulip_stream ? String(r.zulip_stream) : null,
+          zulip_topic: r.zulip_topic ? String(r.zulip_topic) : null,
           created_at: String(r.created_at),
           updated_at: String(r.updated_at),
           // Backward compatibility
@@ -95,6 +98,8 @@ const taskHandlers = {
           sort_order: 0,
           created_by: user.id,
           due_date: body.due_date || null,
+          zulip_stream: "kanban",
+          zulip_topic: `Task-${id.split("-")[0]}: ${body.title}`,
           created_at: now,
           updated_at: now,
         })
@@ -138,6 +143,8 @@ const taskHandlers = {
         created_by: user.id,
         creator_name: user.nickname || user.name || null,
         due_date: body.due_date || null,
+        zulip_stream: "kanban",
+        zulip_topic: `Task-${id.split("-")[0]}: ${body.title}`,
         created_at: now,
         updated_at: now,
         assigned_to: body.assignees?.[0] || null,
@@ -175,7 +182,7 @@ const taskHandlers = {
             ``,
             `[Open Task Board](${taskUrl})`,
           ].filter(Boolean).join("\n");
-          await sendZulipMessage(env, "kanban", body.title, threadContent);
+          await sendZulipMessage(env, "kanban", `Task-${id.split("-")[0]}: ${body.title}`, threadContent);
         } catch (e) {
           console.error("[Tasks:ZulipThread] Error creating discussion thread", e);
         }

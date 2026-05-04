@@ -20,6 +20,8 @@ export const taskSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
   subteam: z.string().nullable().optional(),
+  zulip_stream: z.string().nullable().optional(),
+  zulip_topic: z.string().nullable().optional(),
   // Legacy fields for backward compatibility
   assigned_to: z.string().nullable().optional(),
   assignee_name: z.string().nullable().optional(),

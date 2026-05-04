@@ -5,7 +5,7 @@ import {
   CheckCircle2, Circle, Clock, AlertTriangle
 } from "lucide-react";
 import { SortableTaskCard } from "./kanban/SortableTaskCard";
-import TaskEditDrawer from "./TaskEditDrawer";
+import TaskDetailsModal from "../kanban/TaskDetailsModal";
 import { GenericKanbanBoard } from "../kanban/GenericKanbanBoard";
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -166,7 +166,7 @@ export default function ProjectBoardKanban({
 
       <AnimatePresence>
         {editingTask && (
-          <TaskEditDrawer
+          <TaskDetailsModal
             task={editingTask}
             onClose={() => setEditingTask(null)}
             onSave={onUpdateTask}
