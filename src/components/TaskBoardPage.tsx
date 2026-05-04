@@ -254,9 +254,9 @@ export default function TaskBoardPage() {
             />
           ) : (
             <div className="w-full h-full pb-4">
-              <TaskTableView 
-                tasks={taskTree} 
-                onRowClick={(t) => {
+              <TaskTableView
+                tasks={taskTree}
+                onRowClick={(_t) => {
                   // If we need to open modal for task from table
                 }}
               />

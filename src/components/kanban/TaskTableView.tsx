@@ -10,7 +10,6 @@ import {
   getExpandedRowModel
 } from "@tanstack/react-table";
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight, ChevronDown } from "lucide-react";
-import type { TaskItem } from "../command/ProjectBoardKanban";
 import type { TaskNode } from "../TaskBoardPage";
 import { statusConfig, priorityBadge } from "../command/ProjectBoardKanban";
 
