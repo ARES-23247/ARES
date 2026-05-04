@@ -48,7 +48,14 @@ export default class YjsServer implements Party.Server {
           }
           return null;
         } catch (err) {
-          console.error(`[PartyKit] Failed to load snapshot for room ${this.room.id}:`, err);
+          // Log detailed error context for monitoring/debugging (CR-10)
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          console.error(`[PartyKit] Failed to load snapshot for room ${this.room.id}:`, {
+            error: errorMsg,
+            roomId: this.room.id,
+            timestamp: new Date().toISOString(),
+          });
+          // Return null to allow document to start empty - log for monitoring
           return null;
         }
       },
@@ -81,7 +88,13 @@ export default class YjsServer implements Party.Server {
                 .run()
             );
           } catch (err) {
-            console.error(`[PartyKit] Failed to save snapshot for room ${this.room.id}:`, err);
+            // Log detailed error context for monitoring/debugging (CR-10)
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            console.error(`[PartyKit] Failed to save snapshot for room ${this.room.id}:`, {
+              error: errorMsg,
+              roomId: this.room.id,
+              timestamp: new Date().toISOString(),
+            });
           }
         },
       },
