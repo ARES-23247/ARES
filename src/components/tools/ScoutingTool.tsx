@@ -6,7 +6,7 @@ import TeamAnalysisCard from "./TeamAnalysisCard";
 
 type Tab = "team" | "event" | "analysis";
 
-const SEASON_KEY = "2425";
+const SEASON_KEY = "25-26";
 
 export default function ScoutingTool() {
   const [activeTab, setActiveTab] = useState<Tab>("team");

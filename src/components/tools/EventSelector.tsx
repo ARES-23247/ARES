@@ -20,14 +20,15 @@ interface TOAEvent {
 }
 
 const SEASONS = [
-  { key: "2425", label: "2024–2025 (INTO THE DEEP)" },
-  { key: "2324", label: "2023–2024 (CENTERSTAGE)" },
-  { key: "2223", label: "2022–2023 (POWERPLAY)" },
-  { key: "2122", label: "2021–2022 (FREIGHT FRENZY)" },
+  { key: "25-26", label: "2025–2026 (INTO THE DEEP)" },
+  { key: "24-25", label: "2024–2025 (INTO THE DEEP)" },
+  { key: "23-24", label: "2023–2024 (CENTERSTAGE)" },
+  { key: "22-23", label: "2022–2023 (POWERPLAY)" },
+  { key: "21-22", label: "2021–2022 (FREIGHT FRENZY)" },
 ];
 
 export default function EventSelector({ onEventSelect, selectedEventKey }: EventSelectorProps) {
-  const [seasonKey, setSeasonKey] = useState("2425");
+  const [seasonKey, setSeasonKey] = useState("25-26");
   const [events, setEvents] = useState<TOAEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
