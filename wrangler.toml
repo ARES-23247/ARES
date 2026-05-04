@@ -18,10 +18,11 @@ id = "d7be46d8eb9049b78c32791b31c17301"
 preview_id = "228df7ca14b7464b92d5dbe1516ba94c"
 
 # PartyKit D1 binding for document snapshot persistence
+# Shares the main D1 database for document snapshots (WR-05)
 [[partykit_d1_databases]]
 binding = "PK_DB"
 database_name = "ares-db"
-database_id = "24d5e2b3-5ad5-4e17-9c73-76b9a0030d16"
+database_id = "24d5e2b3-5ad5-4e17-9c73-76b9a0030d16"  # Shared with main DB binding
 
 # DEV_BYPASS removed from production config (security audit item #1).
 # For local development, use: wrangler dev --var DEV_BYPASS:true
