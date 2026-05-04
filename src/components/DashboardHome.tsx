@@ -22,8 +22,9 @@ export default function DashboardHome({ stats: prefetchedStats }: { stats?: unkn
     docs: 0,
   };
    
-  const firstName = session?.user?.nickname || session?.user?.first_name 
-    ? (session?.user?.nickname || `${session.user.first_name} ${session.user.last_name || ''}`.trim())
+  const userProfile = session?.user as unknown as { nickname?: string; first_name?: string; last_name?: string };
+  const firstName = userProfile?.nickname || userProfile?.first_name 
+    ? (userProfile?.nickname || `${userProfile.first_name} ${userProfile.last_name || ''}`.trim())
     : ((session?.user?.name as string) || "ARES Member");
 
   const startTour = () => {

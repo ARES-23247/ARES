@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { GreekMeander } from "./GreekMeander";
 import { siteConfig } from "../site.config";
-import { Mail, Users, Calendar, BookOpen, ShoppingBag, Globe, ShieldCheck } from "lucide-react";
+import { Mail, Users, Calendar, BookOpen, ShoppingBag, Globe, ShieldCheck, Heart } from "lucide-react";
 
 export default function Footer() {
   const [mounted, setMounted] = useState(false);
@@ -148,8 +148,14 @@ export default function Footer() {
           
           <div className="h-4 w-px bg-white/10 hidden md:block"></div>
 
-          <Link to="/tech-stack" className="hover:text-ares-gold transition-colors">Tech Stack</Link>
-          <Link to="/sponsors" className="hover:text-ares-red transition-colors">Support ARES</Link>
+          <Link to="/tech-stack" className="hover:text-ares-gold transition-colors mr-2">Tech Stack</Link>
+          <Link 
+            to="/sponsors" 
+            className="bg-ares-red hover:bg-red-700 text-white px-4 py-2 font-black tracking-widest transition-all shadow-lg shadow-ares-red/20 flex items-center gap-2 ares-cut-sm hover:-translate-y-0.5 mx-2"
+          >
+            <Heart size={12} className="fill-current" />
+            SUPPORT ARES
+          </Link>
           
           <div className="flex gap-4 items-center px-2">
             <a href="https://wave.webaim.org/" target="_blank" rel="noopener noreferrer" className="opacity-50 hover:opacity-100 transition-opacity" title="Validated by WAVE">

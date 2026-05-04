@@ -57,6 +57,67 @@ function ConnectedEditorRoom({
   const [isReconnecting, setIsReconnecting] = useState(false);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const attemptReconnectRef = useRef<() => void>();
+
+  /** Attempt to reconnect with exponential backoff */
+  const attemptReconnect = useCallback(() => {
+    if (reconnectAttempt >= MAX_RECONNECT_ATTEMPTS) {
+      setIsReconnecting(false);
+      return;
+    }
+
+    setIsReconnecting(true);
+    const delay = RECONNECT_DELAYS[reconnectAttempt];
+
+    console.warn(`[CollaborativeEditor] Reconnection attempt ${reconnectAttempt + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      // Destroy any existing provider before creating a new one (CR-01)
+      if (providerRef.current) {
+        providerRef.current.destroy();
+      }
+
+      // Create a new provider instance to reconnect
+      const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+      providerRef.current = newProvider;
+      // Track this provider for cleanup (WR-06)
+      providersRef.current.add(newProvider);
+
+      newProvider.on("synced", (synced: boolean) => {
+        if (synced) {
+          console.log(`[CollaborativeEditor] Reconnected successfully on attempt ${reconnectAttempt + 1}`);
+          setIsSynced(true);
+          setTimedOut(false);
+          setIsReconnecting(false);
+          setReconnectAttempt(0); // Reset on success
+          setProvider(newProvider);
+          onDocLoaded?.(ydoc);
+        }
+      });
+
+      // If this attempt fails, schedule the next attempt directly (CR-02, CR-06)
+      newProvider.on("connection-error", () => {
+        setReconnectAttempt(prev => {
+          const next = prev + 1;
+          if (next >= MAX_RECONNECT_ATTEMPTS) {
+            setIsReconnecting(false);
+            return next;
+          }
+          // Schedule next attempt directly to avoid infinite loop
+          const nextDelay = RECONNECT_DELAYS[next];
+          reconnectTimeoutRef.current = setTimeout(() => {
+            attemptReconnectRef.current?.();
+          }, nextDelay);
+          return next;
+        });
+      });
+    }, delay);
+  }, [roomId, host, ydoc, onDocLoaded, reconnectAttempt]);
+
+  useEffect(() => {
+    attemptReconnectRef.current = attemptReconnect;
+  }, [attemptReconnect]);
+
   useEffect(() => {
     // Capture providers ref for cleanup to avoid stale closure warning
     const allProviders = providersRef.current;
@@ -127,62 +188,7 @@ function ConnectedEditorRoom({
       allProviders.forEach(p => p.destroy());
       allProviders.clear();
     };
-  }, [roomId, host, ydoc, onDocLoaded]);
-
-  /** Attempt to reconnect with exponential backoff */
-  const attemptReconnect = useCallback(() => {
-    if (reconnectAttempt >= MAX_RECONNECT_ATTEMPTS) {
-      setIsReconnecting(false);
-      return;
-    }
-
-    setIsReconnecting(true);
-    const delay = RECONNECT_DELAYS[reconnectAttempt];
-
-    console.warn(`[CollaborativeEditor] Reconnection attempt ${reconnectAttempt + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
-
-    reconnectTimeoutRef.current = setTimeout(() => {
-      // Destroy any existing provider before creating a new one (CR-01)
-      if (providerRef.current) {
-        providerRef.current.destroy();
-      }
-
-      // Create a new provider instance to reconnect
-      const newProvider = new YPartyKitProvider(host, roomId, ydoc);
-      providerRef.current = newProvider;
-      // Track this provider for cleanup (WR-06)
-      providersRef.current.add(newProvider);
-
-      newProvider.on("synced", (synced: boolean) => {
-        if (synced) {
-          console.log(`[CollaborativeEditor] Reconnected successfully on attempt ${reconnectAttempt + 1}`);
-          setIsSynced(true);
-          setTimedOut(false);
-          setIsReconnecting(false);
-          setReconnectAttempt(0); // Reset on success
-          setProvider(newProvider);
-          onDocLoaded?.(ydoc);
-        }
-      });
-
-      // If this attempt fails, schedule the next attempt directly (CR-02, CR-06)
-      newProvider.on("connection-error", () => {
-        setReconnectAttempt(prev => {
-          const next = prev + 1;
-          if (next >= MAX_RECONNECT_ATTEMPTS) {
-            setIsReconnecting(false);
-            return next;
-          }
-          // Schedule next attempt directly to avoid infinite loop
-          const nextDelay = RECONNECT_DELAYS[next];
-          reconnectTimeoutRef.current = setTimeout(() => {
-            attemptReconnect();
-          }, nextDelay);
-          return next;
-        });
-      });
-    }, delay);
-  }, [roomId, host, ydoc, onDocLoaded]);
+  }, [roomId, host, ydoc, onDocLoaded, attemptReconnect]);
 
   /** Manual reconnect handler for user-triggered reconnection */
   const handleManualReconnect = useCallback(() => {
