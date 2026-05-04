@@ -292,12 +292,10 @@ function StatusBadge({
 export function CollaborativeEditorRoom({
   roomId,
   children,
-  _initialContent,
   onDocLoaded,
 }: {
   roomId: string;
   children: React.ReactNode;
-  _initialContent?: string;
   onDocLoaded?: (ydoc: Y.Doc) => void;
 }) {
   const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
