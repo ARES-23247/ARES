@@ -17,7 +17,7 @@
 **Requires:** DEF-01, DEF-02, INV-01
 **Depends on:** Phase 07
 
-**Plans:** 3 plans
-- [ ] 08-01: Media manager E2E testing (DEF-01)
-- [ ] 08-02: Usage metrics admin dashboard (DEF-02)
+**Plans:** 2/3 plans executed
+- [x] 08-01: Media manager E2E testing (DEF-01)
+- [x] 08-02: Usage metrics admin dashboard (DEF-02)
 - [ ] 08-03: Zulip account sync investigation (INV-01)
