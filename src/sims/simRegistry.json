@@ -113,6 +113,12 @@
       "name": "Bee Game",
       "path": "./BeeSim",
       "requiresContext": false
+    },
+    {
+      "id": "UntitledSimulation",
+      "name": "Untitled Simulation",
+      "path": "./UntitledSimulation",
+      "requiresContext": false
     }
   ]
 }
