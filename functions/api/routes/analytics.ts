@@ -272,6 +272,21 @@ const analyticsHandlers = {
         .select((eb) => eb.fn.count("key").as("total"))
         .executeTakeFirst();
 
+      const [apiCount, latencyData] = await Promise.all([
+        db.selectFrom("usage_metrics")
+          .select((eb) => eb.fn.count("id").as("total"))
+          .executeTakeFirst(),
+        sql<{ date: string, avg_latency: number }>`
+          SELECT 
+            date(timestamp, 'localtime') as date,
+            AVG(latency_ms) as avg_latency
+          FROM usage_metrics
+          WHERE timestamp >= datetime('now', '-30 days')
+          GROUP BY date(timestamp, 'localtime')
+          ORDER BY date ASC
+        `.execute(db)
+      ]);
+
       const summary = {
         totalPageViews: Number(totalViews?.total || 0),
         uniqueVisitors: Number(uniqueVisitors?.unique || 0),
@@ -290,10 +305,14 @@ const analyticsHandlers = {
           pageViews: Number(a.pageViews),
           uniqueVisitors: Number(a.uniqueVisitors),
         })) || [],
+        latency: latencyData.rows?.map(l => ({
+          date: String(l.date),
+          avg_latency: Number(l.avg_latency)
+        })) || [],
         resourceUsage: {
           totalAssets: Number(assetsCount?.total || 0),
           totalStorage: 0, // R2 storage would require external API
-          apiCalls: Number(totalViews?.total || 0), // Approximate
+          apiCalls: Number(apiCount?.total || 0),
         },
       };
 

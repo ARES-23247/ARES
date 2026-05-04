@@ -184,6 +184,12 @@ export interface DocumentHistory {
   room_id: string;
 }
 
+export interface DocumentSnapshots {
+  room_id: string | null;
+  state: string;
+  updated_at: string;
+}
+
 export interface EntityLinks {
   id: string | null;
   link_type: string | null;
@@ -599,6 +605,18 @@ export interface Tasks {
   zulip_topic: string | null;
 }
 
+export interface UsageMetrics {
+  cf_ip: string | null;
+  cf_ray: string | null;
+  endpoint: string;
+  id: string | null;
+  latency_ms: number;
+  method: string;
+  status_code: number;
+  timestamp: Generated<string | null>;
+  user_id: string | null;
+}
+
 export interface User {
   createdAt: number;
   email: string;
@@ -725,6 +743,7 @@ export interface DB {
   docs_history: DocsHistory;
   document_contributors: DocumentContributors;
   document_history: DocumentHistory;
+  document_snapshots: DocumentSnapshots;
   entity_links: EntityLinks;
   event_signups: EventSignups;
   events: Events;
@@ -766,6 +785,7 @@ export interface DB {
   sponsorship_pipeline: SponsorshipPipeline;
   task_assignments: TaskAssignments;
   tasks: Tasks;
+  usage_metrics: UsageMetrics;
   user: User;
   user_badges: UserBadges;
   user_profiles: UserProfiles;

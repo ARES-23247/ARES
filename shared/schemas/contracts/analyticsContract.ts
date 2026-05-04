@@ -157,6 +157,10 @@ export const analyticsContract = c.router({
             pageViews: z.number(),
             uniqueVisitors: z.number(),
           })),
+          latency: z.array(z.object({
+            date: z.string(),
+            avg_latency: z.number(),
+          })).optional(),
           resourceUsage: z.object({
             totalAssets: z.number(),
             totalStorage: z.number(),

@@ -82,6 +82,37 @@ apiRouter.use("*", async (c, next) => {
   c.res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
 });
 
+// ── Usage Metrics Logging (Phase 10) ──
+import { SessionUser } from "./middleware";
+apiRouter.use("*", async (c, next) => {
+  const start = Date.now();
+  await next();
+  const latency = Date.now() - start;
+  
+  // Skip polling routes and static assets to preserve DB quota
+  if (!c.req.path.includes("polling")) {
+    const user = c.get("sessionUser") as SessionUser | undefined;
+    const db = c.get("db") as Kysely<DB>;
+    if (db) {
+      c.executionCtx.waitUntil(
+        db.insertInto("usage_metrics")
+          .values({
+            id: crypto.randomUUID(),
+            endpoint: c.req.path,
+            method: c.req.method,
+            status_code: c.res.status,
+            latency_ms: latency,
+            user_id: user?.id || null,
+            cf_ray: c.req.header("cf-ray") || null,
+            cf_ip: c.req.header("cf-connecting-ip") || null
+          })
+          .execute()
+          .catch(err => console.error("Metrics logging failed", err))
+      );
+    }
+  }
+});
+
 // ── CSRF Protection ──
 apiRouter.use("*", async (c, next) => {
   // Webhooks from external services don't have our origin
