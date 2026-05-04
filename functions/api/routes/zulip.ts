@@ -184,23 +184,10 @@ const zulipHandlers = {
         const beforeSize = zulipEmails.size;
         for (const m of zulipData.members) {
           if (m.is_active !== false && !m.is_bot) {
-            // Try multiple email fields in order of preference:
-            // 1. delivery_email - actual email for notifications (may be null if bot lacks admin)
-            // 2. email - primary email (but may be internal Zulip email for SSO users like user123@aresfirst.zulipchat.com)
-            // 3. Check if it's an internal Zulip email pattern and skip if so
-            let email = (m.delivery_email || m.email || "").toLowerCase();
-
-            // Skip internal Zulip emails (userXXXXXX@*.zulipchat.com or @aresfirst.zulipchat.com)
-            if (email.includes("@zulipchat.com") || email.includes("user") && email.match(/user\d+@/)) {
-              // For SSO users with internal emails, we can't match them without their real email
-              // Log a warning for debugging
-              if (beforeSize === 0 && zulipEmails.size === 0) {
-                console.log(`[Zulip:Audit] Skipping internal Zulip email: ${email}`);
-              }
-              continue;
-            }
-
-            email = normalizeGmail(email);
+            // With admin privileges, delivery_email should contain the real email address
+            // delivery_email is the email Zulip actually uses for notifications
+            // email may be the internal Zulip email for SSO users
+            const email = normalizeGmail((m.delivery_email || m.email || "").toLowerCase());
             zulipEmails.add(email);
           }
         }
@@ -224,14 +211,6 @@ const zulipHandlers = {
         .filter(email => {
           if (!email) return false;
           const normalized = normalizeGmail(email.toLowerCase());
-
-          // If Zulip returned 0 usable emails (all internal), we can't verify sync
-          // Assume all users are synced rather than reporting false positives
-          if (zulipEmails.size === 0) {
-            console.log(`[Zulip:Audit] No real emails found in Zulip (all internal/sso) - cannot verify sync`);
-            return false;
-          }
-
           return !zulipEmails.has(normalized);
         });
 
