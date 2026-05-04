@@ -31,6 +31,7 @@
 - [x] 06.5-2: Auto-initialize Zulip thread for tasks without explicit stream/topic
 - [x] 06.5-3: Fix VersionHistorySidebar using stale /api/liveblocks/history URL
 - [x] 06.5-4: Attribute Zulip web replies to logged-in user instead of bot
+- [x] 06.5-5: Add event version history backend endpoint + re-enable history button
 
 ---
 

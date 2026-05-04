@@ -1,6 +1,6 @@
 # Milestone v6.0 Requirements
 
-**Status:** Active (70% complete)
+**Status:** Active (75% complete)
 **Theme:** Real-Time Collaboration Infrastructure
 
 ## Requirements
@@ -20,6 +20,7 @@
 - [x] **FIX-02**: Auto-create Zulip threads for tasks without explicit stream/topic metadata.
 - [x] **FIX-03**: Fix VersionHistorySidebar fetching from stale `/api/liveblocks/history/` URL — route each editor to its correct backend.
 - [x] **FIX-04**: Attribute Zulip web replies to the authenticated user's nickname instead of the bot identity.
+- [x] **FIX-05**: Add event version history backend endpoint (GET/PATCH on `/api/events/admin/:id/history`) and re-enable the history button in EventEditor.
 
 ### Integration Verification (INT)
 - [ ] **INT-01**: Verify that all four editor surfaces (Docs, Blog, Events, Tasks) display "Live" status badge when connected.
