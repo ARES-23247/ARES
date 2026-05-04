@@ -23,6 +23,9 @@ interface DocData {
   description: string;
   is_portfolio: number;
   is_executive_summary: number;
+  display_in_areslib?: number;
+  display_in_math_corner?: number;
+  display_in_science_corner?: number;
   content: string;
 }
 
@@ -56,6 +59,9 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
       isPortfolio: false,
       isExecutiveSummary: false,
       isDraft: false,
+      displayInAreslib: true,
+      displayInMathCorner: false,
+      displayInScienceCorner: false,
       content: "{}"
     }
   });
@@ -84,6 +90,9 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
         description: doc.description || "",
         isPortfolio: !!doc.is_portfolio,
         isExecutiveSummary: !!doc.is_executive_summary,
+        displayInAreslib: doc.display_in_areslib === undefined ? true : !!doc.display_in_areslib,
+        displayInMathCorner: !!doc.display_in_math_corner,
+        displayInScienceCorner: !!doc.display_in_science_corner,
         content: doc.content || "{}"
       });
       
@@ -256,6 +265,44 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
           <div>
             <label htmlFor="isExecSummaryToggle" className="block text-sm font-bold text-white group-hover:text-ares-gold transition-colors cursor-pointer">Executive Summary Flag</label>
             <span className="block text-xs text-white/60">Mark as the primary seasonal overview for rapid judging.</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-2 mb-2">
+        <h3 className="text-sm font-bold text-ares-gold uppercase tracking-wider border-b border-white/10 pb-2 mb-4">Hub Visibility Controls</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 ares-cut-sm bg-obsidian/50 border border-white/5">
+          <div className="flex items-center gap-3 cursor-pointer group">
+            <input 
+              id="displayAreslibToggle" type="checkbox" 
+              {...register("displayInAreslib")} 
+              className="w-5 h-5 rounded border-white/10 bg-black text-ares-cyan focus:ring-ares-cyan"
+            />
+            <div>
+              <label htmlFor="displayAreslibToggle" className="block text-sm font-bold text-white group-hover:text-ares-cyan transition-colors cursor-pointer">Main Library (ARESLib)</label>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 cursor-pointer group">
+            <input 
+              id="displayMathToggle" type="checkbox" 
+              {...register("displayInMathCorner")} 
+              className="w-5 h-5 rounded border-white/10 bg-black text-ares-cyan focus:ring-ares-cyan"
+            />
+            <div>
+              <label htmlFor="displayMathToggle" className="block text-sm font-bold text-white group-hover:text-ares-cyan transition-colors cursor-pointer">Math Corner</label>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 cursor-pointer group">
+            <input 
+              id="displayScienceToggle" type="checkbox" 
+              {...register("displayInScienceCorner")} 
+              className="w-5 h-5 rounded border-white/10 bg-black text-ares-cyan focus:ring-ares-cyan"
+            />
+            <div>
+              <label htmlFor="displayScienceToggle" className="block text-sm font-bold text-white group-hover:text-ares-cyan transition-colors cursor-pointer">Science Corner</label>
+            </div>
           </div>
         </div>
       </div>
