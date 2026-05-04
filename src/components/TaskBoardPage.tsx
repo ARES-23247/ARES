@@ -128,8 +128,9 @@ export default function TaskBoardPage() {
       });
       if (res.status === 200 && res.body.success && res.body.task) {
         queryClient.setQueryData(queryKey, (old: TaskListResponse | undefined) => {
-          if (!old?.body?.tasks) return old;
-          return { ...old, body: { ...old.body, tasks: [res.body.task, ...old.body.tasks] } };
+          const existingTasks = old?.body?.tasks || [];
+          const updated = { status: 200, body: { tasks: [res.body.task, ...existingTasks] }, headers: old?.headers ?? new Headers() };
+          return updated as TaskListResponse;
         });
         queryClient.invalidateQueries({ queryKey: ["tasks", "list"] });
       }

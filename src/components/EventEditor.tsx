@@ -607,8 +607,8 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
       {editId && eventRes?.body?.event && (
         <div className="w-full xl:w-96 flex-shrink-0 flex flex-col gap-6">
           <ZulipThread 
-            stream={(eventRes.body.event as any).zulip_stream || "events"} 
-            topic={(eventRes.body.event as any).zulip_topic || `Event: ${(eventRes.body.event as any).title}`} 
+            stream={(eventRes.body.event as Record<string, unknown>).zulip_stream as string || "events"} 
+            topic={(eventRes.body.event as Record<string, unknown>).zulip_topic as string || `Event: ${(eventRes.body.event as Record<string, unknown>).title as string}`} 
           />
         </div>
       )}

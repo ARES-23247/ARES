@@ -311,8 +311,8 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
       {editSlug && docRes?.body?.doc && (
         <div className="w-full xl:w-96 flex-shrink-0 flex flex-col gap-6">
           <ZulipThread 
-            stream={(docRes.body.doc as any).zulip_stream || "documents"} 
-            topic={(docRes.body.doc as any).zulip_topic || `Doc: ${(docRes.body.doc as any).title}`} 
+            stream={(docRes.body.doc as Record<string, unknown>).zulip_stream as string || "documents"} 
+            topic={(docRes.body.doc as Record<string, unknown>).zulip_topic as string || `Doc: ${(docRes.body.doc as Record<string, unknown>).title as string}`} 
           />
         </div>
       )}

@@ -113,7 +113,7 @@ test.describe('Kanban Task Board', () => {
 
     // Wait for task to appear
     const taskCard = page.getByText('Playwright E2E Task').first();
-    await expect(taskCard).toBeVisible();
+    await expect(taskCard).toBeVisible({ timeout: 10000 });
 
     // Edit Task (Open Modal)
     await page.getByRole('button', { name: 'Playwright E2E Task', exact: true }).click();

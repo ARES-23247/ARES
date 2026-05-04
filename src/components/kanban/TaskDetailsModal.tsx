@@ -37,7 +37,7 @@ const PRIORITY_OPTIONS = [
 ];
 
 // Inner Editor that connects to PartyKit
-function TaskEditorInner({ task, onDescriptionChange }: { task: TaskItem, onDescriptionChange: (content: string) => void }) {
+function TaskEditorInner({ onDescriptionChange }: { onDescriptionChange: (content: string) => void }) {
   const { ydoc, provider } = useCollaborativeEditor();
   const editor = useRichEditor({
     placeholder: "<p>Write a detailed task description...</p>",
@@ -211,20 +211,20 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
           {/* Left Column: Editor & Main Info */}
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar border-r border-white/5">
             <div className="flex flex-col flex-1 gap-2">
-              <label className="text-xs font-bold text-ares-gray uppercase tracking-widest flex items-center gap-2">
+              <div className="text-xs font-bold text-ares-gray uppercase tracking-widest flex items-center gap-2">
                 <Flag size={14} /> Description
-              </label>
+              </div>
               <CollaborativeEditorRoom roomId={`task-${task.id}`}>
-                <TaskEditorInner task={task} onDescriptionChange={setDescription} />
+                <TaskEditorInner onDescriptionChange={setDescription} />
               </CollaborativeEditorRoom>
             </div>
             
             {/* Subtasks */}
             <div className="flex flex-col gap-3 mt-6 border-t border-white/5 pt-6">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-ares-gray uppercase tracking-widest flex items-center gap-2">
+                <div className="text-xs font-bold text-ares-gray uppercase tracking-widest flex items-center gap-2">
                   <Layers size={14} className="text-ares-cyan" /> Subtasks
-                </label>
+                </div>
               </div>
               
               <div className="flex flex-col gap-2">
@@ -414,10 +414,10 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete }: Ta
               </div>
               {/* Time Logged */}
               <div>
-                <label className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
+                <div className="text-[10px] font-black text-ares-gray uppercase tracking-widest mb-1.5 block">
                   <Clock size={10} className="inline mr-1 text-ares-gold" />
                   Time Logged (Hours:Minutes)
-                </label>
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
