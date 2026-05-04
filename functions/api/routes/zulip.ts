@@ -65,11 +65,16 @@ const zulipHandlers = {
         return { status: 500 as const, body: { success: false, error: "Zulip not configured." } as any };
       }
 
+      // Attribute message to the logged-in ARES user instead of showing as "ARES Bot"
+      const sessionUser = c.get("sessionUser") as { nickname?: string; name?: string; email?: string } | undefined;
+      const senderName = sessionUser?.nickname || sessionUser?.name || "ARES Member";
+      const attributedContent = `**${senderName}** (via ARES Web):\n\n${body.content}`;
+
       const res = await sendZulipMessage(
         { ZULIP_EMAIL: config.ZULIP_BOT_EMAIL, ZULIP_API_KEY: config.ZULIP_API_KEY, ZULIP_URL: config.ZULIP_URL },
         body.stream,
         body.topic,
-        body.content,
+        attributedContent,
         "stream"
       );
 
