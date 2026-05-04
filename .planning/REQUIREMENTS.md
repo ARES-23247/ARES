@@ -10,7 +10,7 @@
   - Deployed to `aresweb-partykit.thehomelessguy.partykit.dev`
 - [x] **PK-02**: Create `document_snapshots` D1 migration for YDoc state persistence (room_id, state BLOB, updated_at).
   - Applied migration 0014, table added to schema.sql
-- [ ] **PK-03**: Bind the deployed PartyKit D1 database to the ARES D1 instance for shared document state.
+- [x] **PK-03**: Bind the deployed PartyKit D1 database to the ARES D1 instance for shared document state.
   - **DEFERRED** — Managed PartyKit doesn't support D1 bindings. Requires cloud-prem deployment. Moved to Phase 07-3.
 - [x] **PK-04**: Set `VITE_PARTYKIT_HOST` in Cloudflare Pages environment variables for production builds.
   - Set via `.env.production` file, baked in at Vite build time

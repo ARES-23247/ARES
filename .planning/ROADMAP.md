@@ -18,6 +18,6 @@
 **Depends on:** Phase 06
 
 **Plans:** 3 plans
-- [ ] 07-01: Multi-user Playwright tests for collaboration (INT-01/02/03)
-- [ ] 07-02: Reconnection logic with exponential backoff (RES-01/02)
-- [ ] 07-03: Cloud-prem PartyKit deployment with D1 persistence (PK-03)
+- [x] 07-01: Multi-user Playwright tests for collaboration (INT-01/02/03)
+- [x] 07-02: Reconnection logic with exponential backoff (RES-01/02)
+- [x] 07-03: Cloud-prem PartyKit deployment with D1 persistence (PK-03)
