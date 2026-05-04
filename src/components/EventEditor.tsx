@@ -574,7 +574,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
           publishText={userRole === "author" ? "SUBMIT FOR REVIEW" : "PUBLISH EVENT"}
           userRole={userRole}
           roundedClass="ares-cut"
-          onShowHistory={undefined} // No event history API yet
+          onShowHistory={() => setIsHistoryOpen(true)}
           extraControls={
             <SocialSyndicationGrid 
               availableSocials={availableSocials}
@@ -595,11 +595,12 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
         }}
       />
 
-      {isHistoryOpen && roomId && editor && (
+      {isHistoryOpen && editId && editor && (
         <VersionHistorySidebar 
-          roomId={roomId}
+          roomId={`event_${editId}`}
           editor={editor}
           onClose={() => setIsHistoryOpen(false)}
+          historyUrl={`/api/events/admin/${editId}/history`}
         />
       )}
       </div>
