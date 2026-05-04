@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { X, Send, Bot, ShieldAlert } from "lucide-react";
+import { X, Send, Bot, ShieldAlert, RefreshCw } from "lucide-react";
 import Turnstile, { TurnstileRef } from "../Turnstile";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -129,36 +129,100 @@ export function GlobalRAGChatbot() {
 
   return (
     <>
-      <div 
-        className={`fixed top-20 right-6 w-96 h-[32rem] bg-zinc-900 border border-zinc-700 shadow-2xl rounded-2xl flex flex-col transition-all origin-top-right z-[100] overflow-hidden ${isChatbotOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}
+      {/* Floating Trigger Button */}
+      <button
+        onClick={() => setChatbotOpen(!isChatbotOpen)}
+        className={`fixed bottom-8 right-8 z-[110] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 group overflow-hidden ${
+          isChatbotOpen 
+            ? "bg-ares-red rotate-90 scale-90" 
+            : "bg-indigo-600 hover:bg-indigo-500"
+        }`}
+        aria-label={isChatbotOpen ? "Close AI Assistant" : "Open AI Assistant"}
       >
-        <div className="flex items-center justify-between p-4 bg-zinc-800 border-b border-zinc-700">
-          <div className="flex items-center space-x-2">
-            <Bot className="w-5 h-5 text-indigo-400" />
-            <div className="font-bold text-zinc-100">ARES Knowledge Bot</div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        {isChatbotOpen ? (
+          <X className="w-6 h-6 text-white" />
+        ) : (
+          <div className="relative">
+            <Bot className="w-7 h-7 text-white" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-ares-cyan rounded-full border-2 border-indigo-600 animate-pulse" />
           </div>
-          <button onClick={() => setChatbotOpen(false)} aria-label="Close AI Assistant" className="text-zinc-400 hover:text-white transition-colors">
+        )}
+      </button>
+
+      {/* Chat Window */}
+      <div 
+        className={`fixed bottom-24 right-8 w-[24rem] h-[36rem] bg-zinc-900 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl flex flex-col transition-all duration-500 origin-bottom-right z-[100] overflow-hidden ${
+          isChatbotOpen 
+            ? 'translate-y-0 scale-100 opacity-100' 
+            : 'translate-y-10 scale-90 opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="flex items-center justify-between p-4 bg-zinc-800/80 backdrop-blur-md border-b border-white/10">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-indigo-500/10 rounded-lg">
+              <Bot className="w-5 h-5 text-indigo-400" />
+            </div>
+            <div>
+              <div className="font-bold text-zinc-100 text-sm">ARES Intelligence</div>
+              <div className="text-[10px] text-emerald-400 flex items-center gap-1 uppercase tracking-widest font-black">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Online
+              </div>
+            </div>
+          </div>
+          <button 
+            onClick={() => setChatbotOpen(false)} 
+            aria-label="Close AI Assistant" 
+            className="text-zinc-400 hover:text-white p-1.5 hover:bg-white/5 rounded-lg transition-all"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 p-4 overflow-y-auto space-y-4">
+        <div className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-zinc-700">
           {messages.length === 0 && (
-            <div className="text-center text-zinc-400 mt-10">
-              <Bot className="w-12 h-12 mx-auto mb-3 text-zinc-700" />
-              <p>Ask me anything about ARES 23247 rules, code, or schedule.</p>
-              <div className="flex items-center justify-center space-x-1 mt-4 text-xs text-yellow-600/60">
+            <div className="text-center text-zinc-400 mt-12 px-6">
+              <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/5">
+                <Bot className="w-8 h-8 text-indigo-400/50" />
+              </div>
+              <h4 className="text-zinc-100 font-bold mb-2">How can I help you?</h4>
+              <p className="text-xs leading-relaxed text-zinc-400">Ask me anything about ARES 23247 engineering standards, software rules, or the team schedule.</p>
+              
+              <div className="grid grid-cols-1 gap-2 mt-8">
+                {["What are the CAD rules?", "Explain the game strategy", "When is the next meeting?"].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => {
+                      setInput(q);
+                      // Trigger a small delay to feel more natural
+                      setTimeout(() => {
+                        const form = document.querySelector('form');
+                        if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                      }, 100);
+                    }}
+                    className="text-left px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] text-zinc-300 transition-all hover:border-indigo-500/30"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-center space-x-1 mt-8 text-[10px] text-zinc-600 font-medium uppercase tracking-widest">
                 <ShieldAlert className="w-3 h-3" />
-                <span>All PII is scrubbed before transmission.</span>
+                <span>Zero PII Retained</span>
               </div>
             </div>
           )}
           
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-3 rounded-2xl ${m.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-zinc-800 text-zinc-200 rounded-bl-none border border-zinc-700'}`}>
+              <div className={`max-w-[85%] p-3.5 rounded-2xl text-sm ${
+                m.role === 'user' 
+                  ? 'bg-indigo-600 text-white rounded-br-none shadow-lg' 
+                  : 'bg-zinc-800 text-zinc-200 rounded-bl-none border border-white/5 shadow-md'
+              }`}>
                 {m.role === 'ai' ? (
-                  <div className="prose prose-invert prose-sm max-w-none">
+                  <div className="prose prose-invert prose-xs max-w-none prose-p:leading-relaxed prose-pre:bg-black/30">
                     <ReactMarkdown>{m.content}</ReactMarkdown>
                   </div>
                 ) : (
@@ -170,27 +234,29 @@ export function GlobalRAGChatbot() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-3 border-t border-zinc-700 bg-zinc-800/50">
-          <div className="mb-2 flex justify-center transform scale-75 origin-left">
+        <div className="p-4 border-t border-white/10 bg-zinc-800/50 backdrop-blur-sm">
+          <div className="mb-3 flex justify-center transform scale-75 origin-left">
             <Turnstile ref={turnstileRef} onVerify={setTurnstileToken} theme="dark" />
           </div>
-          <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={isLoading || !turnstileToken}
-              placeholder={turnstileToken ? "Ask a question..." : "Verifying connection..."}
-              aria-label="Ask ARES Knowledge Bot a question"
-              className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-            />
+          <form onSubmit={handleSubmit} className="flex items-center gap-2">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isLoading || !turnstileToken}
+                placeholder={turnstileToken ? "Type your message..." : "Verifying..."}
+                aria-label="Ask ARES Knowledge Bot a question"
+                className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all disabled:opacity-50"
+              />
+            </div>
             <button
               type="submit"
               aria-label="Send message"
               disabled={isLoading || !turnstileToken || !input.trim()}
-              className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 transition-colors"
+              className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:bg-zinc-700 transition-all flex items-center justify-center shadow-lg shadow-indigo-600/20"
             >
-              {isLoading ? <Bot className="w-5 h-5 animate-pulse" /> : <Send className="w-5 h-5" />}
+              {isLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </button>
           </form>
         </div>

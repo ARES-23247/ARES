@@ -1,7 +1,7 @@
  
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Search, LayoutDashboard, LogIn, Bell, Check, X } from "lucide-react";
+import { Search, LayoutDashboard, LogIn, Bell, Check, X, ChevronDown, Users, Trophy, BookOpen, ShoppingBag } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -79,17 +79,65 @@ export default function Navbar() {
           ARES <span className="bg-ares-red text-white px-2 py-0.5 ares-cut-sm shadow-inner font-bold">23247</span>
         </button>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-bold uppercase tracking-widest">
-          <Link to="/about" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">About</Link>
-          <Link to="/seasons" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Seasons</Link>
-          <Link to="/outreach" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Outreach</Link>
-          <Link to="/events" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Events</Link>
-          <Link to="/blog" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Blog</Link>
-          <Link to="/science-corner" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Science Corner</Link>
-          <Link to="/store" className="text-marble hover:text-ares-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-2 py-1">Store</Link>
-          <Link to="/docs" aria-label="ARES Documentation Library" className="h-9 hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-xl group border border-white/5 bg-white/5">
-            <span className="bg-ares-red h-full px-3 flex items-center text-xs font-heading font-black uppercase text-white tracking-[0.15em] border-r border-white/10 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.2)]">ARES</span>
-            <span className="text-white h-full px-3 flex items-center text-xs font-heading font-bold uppercase tracking-[0.2em] group-hover:bg-white/10 transition-colors">LIB</span>
+        <div className="hidden md:flex items-center gap-6 text-sm font-bold uppercase tracking-widest">
+          {/* Team Dropdown */}
+          <div className="relative group py-2">
+            <button className="flex items-center gap-1.5 text-marble hover:text-ares-gold transition-all duration-300 focus-visible:outline-none">
+              Team <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+            </button>
+            <div className="absolute top-[calc(100%-4px)] left-0 w-48 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-50 rounded-lg p-1">
+              <Link to="/about" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+                <Users size={14} className="text-ares-cyan group-hover/item:scale-110 transition-transform" />
+                Who We Are
+              </Link>
+              <Link to="/outreach" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+                <Users size={14} className="text-ares-red group-hover/item:scale-110 transition-transform" />
+                Our Impact
+              </Link>
+            </div>
+          </div>
+
+          {/* Competition Dropdown */}
+          <div className="relative group py-2">
+            <button className="flex items-center gap-1.5 text-marble hover:text-ares-gold transition-all duration-300 focus-visible:outline-none">
+              Compete <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+            </button>
+            <div className="absolute top-[calc(100%-4px)] left-0 w-48 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-50 rounded-lg p-1">
+              <Link to="/seasons" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+                <Trophy size={14} className="text-ares-gold group-hover/item:scale-110 transition-transform" />
+                Seasons
+              </Link>
+              <Link to="/events" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+                <Trophy size={14} className="text-ares-red group-hover/item:scale-110 transition-transform" />
+                Schedule
+              </Link>
+            </div>
+          </div>
+
+          {/* Resources Dropdown */}
+          <div className="relative group py-2">
+            <button className="flex items-center gap-1.5 text-marble hover:text-ares-gold transition-all duration-300 focus-visible:outline-none">
+              Content <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+            </button>
+            <div className="absolute top-[calc(100%-4px)] left-0 w-56 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-50 rounded-lg p-1">
+              <Link to="/blog" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+                <BookOpen size={14} className="text-ares-gold group-hover/item:scale-110 transition-transform" />
+                Team Blog
+              </Link>
+              <Link to="/science-corner" className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item">
+                <BookOpen size={14} className="text-ares-cyan group-hover/item:scale-110 transition-transform" />
+                Science Corner
+              </Link>
+            </div>
+          </div>
+
+          <Link to="/store" className="flex items-center gap-2 text-marble hover:text-ares-gold transition-colors py-2">
+            <ShoppingBag size={14} /> Store
+          </Link>
+
+          <Link to="/docs" aria-label="ARES Documentation Library" className="h-9 hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-xl group/lib border border-white/5 bg-white/5">
+            <span className="bg-ares-red h-full px-3 flex items-center text-[10px] font-heading font-black uppercase text-white tracking-[0.15em] border-r border-white/10 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.2)]">ARES</span>
+            <span className="text-white h-full px-3 flex items-center text-[10px] font-heading font-bold uppercase tracking-[0.2em] group-hover/lib:bg-white/10 transition-colors">LIB</span>
           </Link>
         </div>
 
