@@ -586,7 +586,9 @@ export interface Tasks {
   status: Generated<string | null>;
   subteam: string | null;
   title: string;
-  updated_at: Generated<string | null>;
+  updated_at: string;
+  zulip_stream?: string | null;
+  zulip_topic?: string | null;
 }
 
 export interface User {

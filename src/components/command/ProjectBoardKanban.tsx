@@ -19,7 +19,9 @@ export interface TaskItem {
   assignees: { id: string; nickname?: string | null }[];
   created_by: string;
   creator_name?: string | null;
-  due_date?: string | null;
+  due_date: string | null;
+  zulip_stream?: string | null;
+  zulip_topic?: string | null;
   created_at: string;
   updated_at: string;
   assigned_to?: string | null;
