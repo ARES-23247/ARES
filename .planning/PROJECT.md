@@ -44,18 +44,21 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 5.5 (Kanban, Science & Events)** — Kanban subteams, expanded Science Corner engine wrappers, robust E2E auth tests, and recurring calendar events.
 - ✓ **Milestone 5.6 (Stability & Polish)** — Infrastructure bug fixes for media uploads (bypassed ts-rest parser), calendar repair endpoint, and Zulip audit stabilization.
 - ✓ **Milestone 5.7 (Platform Maturity)** — Stabilized Zulip audit, finalized repair endpoints, established unit and E2E coverage for major testing gaps, and executed performance optimization (lazy-loading, chunking).
+- ✓ **Milestone 5.8 (Feature Expansion)** — Recurring GCal sync, admin cursor pagination, Sentry integration, API latency middleware, and PartyKit collab migration.
+- ✓ **Milestone 5.9 (Trello Parity & Zulip Sync)** — Monday.com-style task modals with embedded PartyKit collaborative editing and ZulipThread integration. Fixed critical tasks API 404 and calendar list view bugs.
 
 ### Active
 - None
 
-## Current Milestone: v5.8 Feature Expansion
+## Current Milestone: v5.9 Shipped
 
-**Goal:** Expand core features such as recurring event sync and admin pagination.
+**Status:** v5.9 (Trello Parity & Zulip Sync) shipped 2026-05-04. Ready for next milestone.
 
-**Target features:**
-- **Recurring GCal Sync:** Expand the `admin/sync` tools to handle recurring event rules properly in bidirectional mode.
-- **Admin Dashboard Pagination:** Resolve load times for users/events tabs by introducing cursor pagination.
-- **Monitoring:** Add robust Sentry logging and API latency metrics.
+**Shipped features:**
+- **Task ↔ Zulip:** Auto-create Zulip topics when tasks are created/moved, embedded thread in modal.
+- **Collaborative Task Editing:** PartyKit-backed real-time description editing in TaskDetailsModal.
+- **Monday.com Parity:** TableView toggle, subtasks (parent_id), time tracking fields.
+- **Bug Fixes:** ts-rest trailing slash, calendar month filter, optimistic cache handling.
 
 ## Current State
 
@@ -258,9 +261,9 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 </details>
 
 ## Next Milestone Goals
-1. Add `GITHUB_PAT` secrets configuration via `.dev.vars` and Cloudflare Secrets.
-2. Confirm indexing succeeds for all referenced external documentation sites.
-3. Validate Vectorize batch size limits.
+1. Media manager E2E testing (deferred TEST-03).
+2. Usage metrics admin dashboard (deferred MON-03).
+3. Sub-task UI polish and nested task rendering.
 
 ## Key Decisions
 
@@ -288,4 +291,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-03 after v5.7 milestone completion*
+*Last updated: 2026-05-04 after v5.9 milestone completion*
