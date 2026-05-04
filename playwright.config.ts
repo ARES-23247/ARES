@@ -27,16 +27,9 @@ export default defineConfig({
         reuseExistingServer: false,
         timeout: 120 * 1000,
       }
-    : [
-        {
-          command: 'cross-env MODE=test npm run dev',
-          url: 'http://localhost:5173',
-          reuseExistingServer: true,
-        },
-        {
-          command: WRANGLER_COMMAND,
-          url: 'http://127.0.0.1:8788',
-          reuseExistingServer: true,
-        }
-      ],
+    : {
+        command: 'cross-env MODE=test npm run dev',
+        url: 'http://localhost:5173',
+        reuseExistingServer: true,
+      },
 });

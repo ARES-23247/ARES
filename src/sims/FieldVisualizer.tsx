@@ -234,7 +234,7 @@ export default function FieldVisualizer({
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
       60,
-      canvasRef.current.clientWidth / canvasRef.current.clientHeight,
+      currentCanvas.clientWidth / currentCanvas.clientHeight,
       0.1,
       1000
     );
@@ -242,9 +242,9 @@ export default function FieldVisualizer({
 
     // Renderer setup
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(canvasRef.current.clientWidth, canvasRef.current.clientHeight);
+    renderer.setSize(currentCanvas.clientWidth, currentCanvas.clientHeight);
     renderer.shadowMap.enabled = true;
-    canvasRef.current.appendChild(renderer.domElement);
+    currentCanvas.appendChild(renderer.domElement);
 
     // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -282,9 +282,9 @@ export default function FieldVisualizer({
 
     // Handle resize
     const handleResize = () => {
-      if (!canvasRef.current) return;
-      const width = canvasRef.current.clientWidth;
-      const height = canvasRef.current.clientHeight;
+      if (!currentCanvas) return;
+      const width = currentCanvas.clientWidth;
+      const height = currentCanvas.clientHeight;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);

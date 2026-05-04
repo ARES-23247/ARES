@@ -74,7 +74,7 @@ export const getEditorExtensions = (lowlight: unknown, ydoc?: Y.Doc, provider?: 
   SlashCommands.configure({
     suggestion: {
       render: () => suggestionRenderer(CommandsList),
-    },
+    } as any,
   }),
   Mention.configure({
     HTMLAttributes: { class: 'bg-ares-red/10 text-ares-red font-bold py-0.5 px-2 ares-cut-sm border border-ares-red/20' },

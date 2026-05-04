@@ -228,11 +228,10 @@ export default function TaskBoardPage() {
             isCreating={isCreating}
           />
         ) : (
-          <TaskTableView 
+          <TaskTableView
             tasks={filteredTasks}
             onRowClick={(task) => {
               // Future: Open task details modal when clicking a row
-              console.log("Row clicked:", task.id);
             }}
           />
         )}

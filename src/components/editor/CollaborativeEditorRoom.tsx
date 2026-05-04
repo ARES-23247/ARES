@@ -56,8 +56,7 @@ function ConnectedEditorRoom({
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const attemptReconnectRef = useRef<() => void>();
+  const attemptReconnectRef = useRef<(() => void) | undefined>(undefined);
 
   /** Attempt to reconnect with exponential backoff */
   const attemptReconnect = useCallback(() => {

@@ -81,7 +81,7 @@ test.describe('Interactive Systems & Workflows', () => {
     }
   });
 
-  test('Interactive Zulip cards attempt navigation when clicked', async ({ page }) => {
+  test('Interactive Zulip threads render inline and allow replies', async ({ page }) => {
     await page.route('**/api/auth/get-session', async route => {
       await route.fulfill({
         status: 200,
@@ -128,27 +128,31 @@ test.describe('Interactive Systems & Workflows', () => {
       });
     });
 
+    // Mock the POST message route
+    await page.route('**/api/zulip/message', async route => {
+      await route.fulfill({
+        status: 200,
+        json: { success: true, id: 100000 }
+      });
+    });
+
     await page.goto('/events/test-event');
 
     // Ensure the message is rendered
     const msgBlock = page.getByText('This is a test message from Zulip.');
     await expect(msgBlock).toBeVisible({ timeout: 5000 });
 
-    // The message is wrapped in a clickable div. We intercept window.open to prevent actual navigation.
-    await page.evaluate(() => {
-      (window as any)._openedDeepLinks = [];
-      window.open = (url) => {
-        (window as any)._openedDeepLinks.push(url);
-        return null;
-      };
-    });
-
-    // Click the message
-    await msgBlock.click();
-
-    // Verify window.open was called with the deep link
-    const openedLinks = await page.evaluate(() => (window as any)._openedDeepLinks);
-    expect(openedLinks).toContain('https://aresfirst.zulipchat.com/#narrow/stream/events/topic/Event.3A.20Zulip.20E2E.20Event/near/99999');
+    // The component is now an embedded thread, test the reply functionality
+    const replyInput = page.getByPlaceholder('Reply to #events > Event: Zulip E2E Event...');
+    await expect(replyInput).toBeVisible();
+    await replyInput.fill('This is a test reply');
+    
+    // Instead of explicitly waiting for button enabled state, we can just press enter on the input
+    // because Playwright might be racing with React state updates for the disabled property.
+    await replyInput.press('Enter');
+    
+    // Verify the input clears (onSuccess handler)
+    await expect(replyInput).toHaveValue('');
   });
 });
 
