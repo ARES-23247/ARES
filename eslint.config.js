@@ -21,7 +21,8 @@ export default ts.config(
       "*.mjs", // Ignore ESM utility scripts at root
       "scratch/**", // Ignore scratch directory
       "public/vendor/**", // Ignore vendored third-party UMD bundles (React, ReactDOM)
-      "src/components/editor/physics/**" // Migrated from .eslintignore
+      "src/components/editor/physics/**", // Migrated from .eslintignore
+      "migrations/**/*.sql", // Ignore SQL migration files
     ],
   },
   js.configs.recommended,

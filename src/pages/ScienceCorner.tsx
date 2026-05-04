@@ -12,7 +12,7 @@ export default function ScienceCorner() {
 
   const lessons = useMemo(() => {
     if (allDocsRes?.status !== 200) return [];
-    return allDocsRes.body.docs.filter((doc: DocRecord) => doc.category === "Science Corner");
+    return allDocsRes.body.docs.filter((doc: DocRecord) => doc.display_in_science_corner === 1);
   }, [allDocsRes]);
 
   return (

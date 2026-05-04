@@ -15,6 +15,9 @@ export interface DocRecord {
   cf_email?: string;
   original_author_nickname?: string;
   original_author_avatar?: string;
+  display_in_areslib?: number;
+  display_in_math_corner?: number;
+  display_in_science_corner?: number;
 }
 
 export interface Contributor {
@@ -51,7 +54,8 @@ export function useDocs(slug: string | undefined) {
 
   const { data: allDocsRes } = api.docs.getDocs.useQuery(["docs-list"], {});
   const allDocs = useMemo(() => {
-    return allDocsRes?.status === 200 ? allDocsRes.body.docs : [];
+    if (allDocsRes?.status !== 200) return [];
+    return allDocsRes.body.docs.filter((doc: DocRecord) => doc.display_in_areslib === 1);
   }, [allDocsRes]);
 
   const ObjectQuery = api.docs.getDoc.useQuery(

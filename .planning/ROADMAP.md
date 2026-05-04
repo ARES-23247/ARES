@@ -19,7 +19,7 @@
 
 ### 🚧 v6.4 Science & Math Corner Expansion (In Progress)
 
-- [ ] Phase 14: Data Schema & Document Editor Updates (1 plans)
+- [x] Phase 14: Data Schema & Document Editor Updates (1 plans)
 - [ ] Phase 15: Math Corner Foundation & Hub Integrations (2 plans)
 
 ## Progress
@@ -28,7 +28,7 @@
 |-------|-----------|----------------|--------|-----------|
 | 12. Outreach & Impact Logging Fixes | v6.3 | 1/1 | Complete | 2026-05-04 |
 | 13. Interactive Tools Foundation | v6.3 | 2/2 | Complete | 2026-05-04 |
-| 14. Data Schema & Document Editor Updates | v6.4 | 0/1 | Not started | - |
+| 14. Data Schema & Document Editor Updates | v6.4 | 1/1 | Complete | 2026-05-04 |
 | 15. Math Corner Foundation & Hub Integrations | v6.4 | 0/2 | Not started | - |
 
 ## Phase Details
