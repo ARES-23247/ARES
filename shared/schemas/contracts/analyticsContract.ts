@@ -134,6 +134,42 @@ export const analyticsContract = c.router({
       500: z.object({ error: z.string() }),
     },
   },
+  getUsageMetrics: {
+    method: "GET",
+    path: "/admin/usage-metrics",
+    responses: {
+      200: z.object({
+        summary: z.object({
+          totalPageViews: z.number(),
+          uniqueVisitors: z.number(),
+          avgSessionDuration: z.number(),
+          topPages: z.array(z.object({
+            path: z.string(),
+            views: z.number(),
+            uniqueVisitors: z.number(),
+          })),
+          topReferrers: z.array(z.object({
+            referrer: z.string(),
+            visits: z.number(),
+          })),
+          userActivity: z.array(z.object({
+            date: z.string(),
+            pageViews: z.number(),
+            uniqueVisitors: z.number(),
+          })),
+          resourceUsage: z.object({
+            totalAssets: z.number(),
+            totalStorage: z.number(),
+            apiCalls: z.number(),
+          }),
+        }),
+      }),
+      401: z.object({ error: z.string() }),
+      403: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
+    },
+    summary: "Get detailed usage metrics for admin dashboard",
+  },
   search: {
     method: "GET",
     path: "/search",
