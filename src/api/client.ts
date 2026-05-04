@@ -9,9 +9,8 @@ export const api = initQueryClient(apiContract, {
   api: async (args) => {
     // ts-rest appends trailing slashes for root contract paths (path: "/"),
     // e.g. /api/events/ instead of /api/events, causing Hono 404s.
-    const normalizedPath = args.path.length > 1 && args.path.endsWith("/")
-      ? args.path.replace(/\/+$/, "")
-      : args.path;
+    // Also handles /api/tasks/?parent_id=null → /api/tasks?parent_id=null
+    const normalizedPath = args.path.replace(/\/+(\?|$)/, '$1');
     
     // Don't set Content-Type for FormData — the browser must auto-generate
     // the multipart/form-data boundary. For all other requests, use JSON.
