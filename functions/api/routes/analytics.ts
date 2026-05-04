@@ -231,6 +231,78 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch stats" } as any };
     }
   },
+  getUsageMetrics: async (_: any, c: Context<AppEnv>) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      // Page views summary
+      const [totalViews, uniqueVisitors, topPagesData, referrersData, activityData] = await Promise.all([
+        db.selectFrom("page_analytics")
+          .select((eb) => eb.fn.count("path").as("total"))
+          .executeTakeFirst(),
+        sql<{ unique: number }>`SELECT COUNT(DISTINCT user_agent) as unique FROM page_analytics`.execute(db).then(r => r.rows[0]),
+        db.selectFrom("page_analytics")
+          .select(["path", (eb) => eb.fn.count("path").as("views")])
+          .groupBy("path")
+          .orderBy("views", "desc")
+          .limit(10)
+          .execute(),
+        db.selectFrom("page_analytics")
+          .select(["referrer", (eb) => eb.fn.count("referrer").as("visits")])
+          .where("referrer", "!=", "")
+          .groupBy("referrer")
+          .orderBy("visits", "desc")
+          .limit(10)
+          .execute(),
+        // Last 30 days activity
+        sql<{ date: string, pageViews: number, uniqueVisitors: number }>`
+          SELECT
+            date(timestamp, 'localtime') as date,
+            COUNT(*) as pageViews,
+            COUNT(DISTINCT user_agent) as uniqueVisitors
+          FROM page_analytics
+          WHERE timestamp >= datetime('now', '-30 days')
+          GROUP BY date(timestamp, 'localtime')
+          ORDER BY date DESC
+          LIMIT 30
+        `.execute(db)
+      ]);
+
+      // Resource usage from media tags (R2 assets tracked in media_tags)
+      const assetsCount = await db.selectFrom("media_tags")
+        .select((eb) => eb.fn.count("key").as("total"))
+        .executeTakeFirst();
+
+      const summary = {
+        totalPageViews: Number(totalViews?.total || 0),
+        uniqueVisitors: Number(uniqueVisitors?.unique || 0),
+        avgSessionDuration: 0, // Placeholder - requires session tracking
+        topPages: topPagesData.map(p => ({
+          path: String(p.path),
+          views: Number(p.views),
+          uniqueVisitors: 0, // Simplified - would require additional query
+        })),
+        topReferrers: referrersData.map(r => ({
+          referrer: String(r.referrer),
+          visits: Number(r.visits),
+        })),
+        userActivity: activityData.rows?.map(a => ({
+          date: String(a.date),
+          pageViews: Number(a.pageViews),
+          uniqueVisitors: Number(a.uniqueVisitors),
+        })) || [],
+        resourceUsage: {
+          totalAssets: Number(assetsCount?.total || 0),
+          totalStorage: 0, // R2 storage would require external API
+          apiCalls: Number(totalViews?.total || 0), // Approximate
+        },
+      };
+
+      return { status: 200 as const, body: { summary } as any };
+    } catch (err) {
+      console.error("[Analytics] Usage metrics error:", err);
+      return { status: 500 as const, body: { error: "Failed to fetch usage metrics" } as any };
+    }
+  },
   search: async ({ query }: { query: any }, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     const { q } = query;
