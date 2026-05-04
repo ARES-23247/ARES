@@ -1,12 +1,12 @@
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/no-explicit-any -- PartyKit provider types are incomplete */
 import React, { useEffect, useState, createContext, useContext, useRef, useMemo, useCallback } from "react";
-import YPartyKitProvider from "y-partykit/provider";
+import YPartyKitProvider, { WebsocketProvider } from "y-partykit/provider";
 import * as Y from "yjs";
 import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 
 interface CollaborativeEditorContextType {
   ydoc: Y.Doc | undefined;
-  provider: any | undefined;
+  provider: WebsocketProvider | undefined;
   isCollaborative: boolean;
 }
 
@@ -44,11 +44,11 @@ function ConnectedEditorRoom({
   children: React.ReactNode;
   onDocLoaded?: (ydoc: Y.Doc) => void;
 }) {
-  const [provider, setProvider] = useState<any>(undefined);
+  const [provider, setProvider] = useState<WebsocketProvider | undefined>(undefined);
   const [isSynced, setIsSynced] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const providerRef = useRef<any>(null);
+  const providerRef = useRef<WebsocketProvider | null>(null);
 
   // Reconnection state
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
