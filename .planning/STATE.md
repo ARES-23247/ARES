@@ -32,7 +32,8 @@ Last activity: 2026-05-04
 | 06 | - | PartyKit Production Deployment | `0dc2c0e`, `6b0604a` |
 | 06.5 | - | Editor UI & Zulip Fixes | `0dc2c0e`, `30e17a8` |
 | 07 | 03 | PartyKit D1 Snapshot Persistence | `f2618f8` |
-| 08 | 01 | Media Manager E2E Testing | `96ae0b9`, `7acce7e` |
+| 08 | 01 | Media Manager E2E Testing | `96ae0b9`, `7acce7e`, `a5ac018` |
+| 08 | - | Accessibility & Layout Fixes (Ad-hoc) | `ec2e66a`, `2dfffca` |
 
 ## Key Decisions
 

@@ -1,5 +1,7 @@
 {
+  "$schema": "https://www.partykit.io/schema.json",
   "name": "aresweb-partykit",
   "main": "server.ts",
-  "compatibilityDate": "2026-05-04"
+  "compatibilityDate": "2026-05-04",
+  "vars": {}
 }
