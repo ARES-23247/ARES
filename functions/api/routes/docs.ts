@@ -165,6 +165,8 @@ const docTsRestRouter: any = s.router(docContract as any, {
             "docs.is_deleted",
             "docs.status",
             "docs.revision_of",
+            "docs.zulip_stream",
+            "docs.zulip_topic",
             "p.nickname as original_author_nickname",
             "u.image as original_author_avatar"
           ])
@@ -273,7 +275,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       let row;
       try {
         row = await db.selectFrom("docs")
-          .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
+          .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of", "zulip_stream", "zulip_topic"])
           .where("slug", "=", slug)
           .executeTakeFirst();
       } catch (_e) {
@@ -359,7 +361,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
               is_portfolio: isPortfolio ? 1 : 0,
               is_executive_summary: isExecutiveSummary ? 1 : 0,
               status: "pending",
-              revision_of: slug
+              revision_of: slug,
+              zulip_stream: "documents",
+              zulip_topic: `Doc: ${title || "Untitled"}`
             })
             .execute();
 
@@ -389,7 +393,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             is_portfolio: isPortfolio ? 1 : 0,
             is_executive_summary: isExecutiveSummary ? 1 : 0,
             status,
-            content_draft: null
+            content_draft: null,
+            zulip_stream: "documents",
+            zulip_topic: `Doc: ${title || "Untitled"}`
           })
           .onConflict((oc) => oc.column("slug").doUpdateSet({
             title: title || "",
@@ -402,7 +408,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             is_portfolio: isPortfolio ? 1 : 0,
             is_executive_summary: isExecutiveSummary ? 1 : 0,
             status,
-            content_draft: null
+            content_draft: null,
+            zulip_stream: "documents",
+            zulip_topic: `Doc: ${title || "Untitled"}`
           }))
           .execute();
 

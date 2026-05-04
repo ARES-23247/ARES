@@ -127,6 +127,8 @@ const postTsRestRouterObj: any = {
           "posts.author",
           "posts.season_id",
           "posts.published_at",
+          "posts.zulip_stream",
+          "posts.zulip_topic",
           "uP.nickname as author_nickname",
           "u.image as author_avatar"
         ])
@@ -208,7 +210,7 @@ const postTsRestRouterObj: any = {
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("posts")
-        .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "status", "revision_of", "published_at", "season_id", "author"])
+        .select(["slug", "title", "date", "snippet", "thumbnail", "ast", "is_deleted", "status", "revision_of", "published_at", "season_id", "author", "zulip_stream", "zulip_topic"])
         .where("slug", "=", slug)
         .executeTakeFirst();
 
@@ -287,7 +289,9 @@ const postTsRestRouterObj: any = {
           cf_email: email,
           status,
           published_at: body.publishedAt || null,
-          season_id: body.seasonId ? Number(body.seasonId) : null
+          season_id: body.seasonId ? Number(body.seasonId) : null,
+          zulip_stream: "blog",
+          zulip_topic: `Blog: ${body.title}`
         })
         .execute();
 
@@ -336,7 +340,7 @@ const postTsRestRouterObj: any = {
         try {
           c.executionCtx.waitUntil(sendZulipMessage(
             socialConfig,
-            "announcements",
+            "blog",
             `Blog: ${body.title}`,
             `🚀 **New Blog Post Published:** [${body.title}](${siteConfig.urls.base}/blog/${slug})\n\n${snippet.substring(0, 300)}`
           ).catch(err => {

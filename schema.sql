@@ -71,6 +71,8 @@ CREATE TABLE IF NOT EXISTS posts (
     published_at TEXT,
     is_portfolio INTEGER DEFAULT 0,
     season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL,
+    zulip_stream TEXT,
+    zulip_topic TEXT,
     updated_at TEXT DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_posts_season ON posts(season_id);
@@ -114,6 +116,8 @@ CREATE TABLE IF NOT EXISTS events (
     revision_of TEXT,
     published_at TEXT,
     meeting_notes TEXT,
+    zulip_stream TEXT,
+    zulip_topic TEXT,
     season_id INTEGER REFERENCES seasons(start_year) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_events_season ON events(season_id);
@@ -170,6 +174,8 @@ CREATE TABLE IF NOT EXISTS docs (
     status TEXT DEFAULT 'published',
     is_portfolio INTEGER DEFAULT 0,
     is_executive_summary INTEGER DEFAULT 0,
+    zulip_stream TEXT,
+    zulip_topic TEXT,
     revision_of TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_docs_category ON docs(category);

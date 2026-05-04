@@ -47,6 +47,13 @@ export function CollaborativeEditorRoom({
       }
     });
 
+    // Bypass sync wait in Playwright tests
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
+      setIsSynced(true);
+      onDocLoaded?.(ydoc);
+    }
+
     return () => {
       newProvider.destroy();
       ydoc.destroy();

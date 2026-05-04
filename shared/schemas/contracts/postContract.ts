@@ -16,7 +16,9 @@ export const postResponseSchema = z.object({
   published_at: z.string().nullish(),
   season_id: z.coerce.number().nullish(),
   is_deleted: z.number().nullish(),
-  is_portfolio: z.number().nullish(),
+  is_portfolio: z.number().optional(),
+  zulip_stream: z.string().nullable().optional(),
+  zulip_topic: z.string().nullable().optional()
 });
 
 export const postDetailSchema = postResponseSchema.extend({

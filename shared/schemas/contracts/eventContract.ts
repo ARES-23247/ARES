@@ -19,6 +19,8 @@ export const eventResponseSchema = z.object({
   meeting_notes: z.string().nullish(),
   recurring_group_id: z.string().nullish(),
   rrule: z.string().nullish(),
+  zulip_stream: z.string().nullable().optional(),
+  zulip_topic: z.string().nullable().optional(),
 });
 
 export const eventSignupSchema = z.object({

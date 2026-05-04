@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v5.8
-milestone_name: Feature Expansion
-status: complete
-last_updated: "2026-05-04T03:05:00.000Z"
+milestone: v5.9
+milestone_name: Trello Parity & Zulip Sync
+status: In Progress
+last_updated: "2026-05-04T13:00:00.000Z"
 last_activity: 2026-05-04
 progress:
-  total_phases: 4
-  completed_phases: 4
+  total_phases: 1
+  completed_phases: 1
   total_plans: 4
   completed_plans: 4
   percent: 100
@@ -15,15 +15,15 @@ progress:
 
 # System State
 
-**Current Milestone**: v5.8 — Feature Expansion (Complete)
-**Status**: complete
+**Current Milestone**: v5.9 — Trello Parity & Zulip Sync (In Progress)
+**Status**: in_progress
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-03)
+See: .planning/PROJECT.md (updated 2026-05-04)
 
 **Core value:** Championship-grade FIRST Robotics team portal
-**Current focus:** Milestone v5.8 completed and ready for audit
+**Current focus:** Milestone v5.9: Trello Parity & Zulip Sync
 
 ## Completed Milestones
 
@@ -42,3 +42,13 @@ Phase: All Phases Complete
 Plan: —
 Status: Ready for Audit
 Last activity: 2026-05-04 — Completed Phase 4
+
+## Deferred Items
+
+Items acknowledged and deferred at milestone close on 2026-05-04:
+
+| Category | Item | Status |
+|----------|------|--------|
+| todo | audit-portfolio-pages.md | open |
+| todo | curate-initial-experiments.md | open |
+| todo | review-docs-page.md | open |

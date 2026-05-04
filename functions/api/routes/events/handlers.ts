@@ -116,7 +116,7 @@ export const eventHandlers: any = {
       const user = await getSessionUser(c);
 
       const row = await db.selectFrom("events")
-        .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes"])
+        .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes", "zulip_stream", "zulip_topic"])
         .where("id", "=", id)
         .where("is_deleted", "=", 0)
         .where("status", "=", "published")
@@ -166,7 +166,7 @@ export const eventHandlers: any = {
       let results;
       try {
         results = await baseQuery
-          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes"])
+          .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes", "zulip_stream", "zulip_topic"])
           .execute();
       } catch (_e) {
         results = await baseQuery
@@ -288,7 +288,8 @@ export const eventHandlers: any = {
                 is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0, tba_event_key: tbaEventKey || null,
                 published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
                 recurring_group_id: recurringGroupId, rrule: body.rrule, recurring_exception: 0,
-                recurrence_rule: recurrenceRule || body.rrule || null, parent_event_id: parentEventId || null, original_start_time: originalStartTime || null
+                recurrence_rule: recurrenceRule || body.rrule || null, parent_event_id: parentEventId || null, original_start_time: originalStartTime || null,
+                zulip_stream: "events", zulip_topic: `Event: ${title || "Untitled"}`
              };
           });
         } catch(e) {
@@ -304,7 +305,8 @@ export const eventHandlers: any = {
             is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0, tba_event_key: tbaEventKey || null,
             published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
             recurring_group_id: null, rrule: null, recurring_exception: 0,
-            recurrence_rule: recurrenceRule || body.rrule || null, parent_event_id: parentEventId || null, original_start_time: originalStartTime || null
+            recurrence_rule: recurrenceRule || body.rrule || null, parent_event_id: parentEventId || null, original_start_time: originalStartTime || null,
+            zulip_stream: "events", zulip_topic: `Event: ${title || "Untitled"}`
         });
       }
 
@@ -382,7 +384,8 @@ export const eventHandlers: any = {
             location: location || "", description: description || "", cover_image: coverImage || "",
             tba_event_key: tbaEventKey || null, status: 'pending',
             is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
-            revision_of: id, published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null
+            revision_of: id, published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
+            zulip_stream: "events", zulip_topic: `Event: ${title || "Untitled"}`
           })
           .execute();
         return { status: 200 as const, body: { success: true, id: revId } };

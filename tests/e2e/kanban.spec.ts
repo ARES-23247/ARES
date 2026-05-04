@@ -121,10 +121,12 @@ test.describe('Kanban Task Board', () => {
     // Verify dialog accessibility and wait for it
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible({ timeout: 10000 });
-    await expect(dialog.getByRole('heading', { name: 'Edit Task' })).toBeVisible();
+    await expect(dialog.getByPlaceholder('Task title...')).toBeVisible();
 
-    // Add description
-    await page.getByLabel('Description').fill('E2E Description Update');
+    // Add description using the rich text editor
+    const editor = dialog.locator('.ProseMirror');
+    await expect(editor).toBeVisible();
+    await editor.fill('E2E Description Update');
     await page.getByRole('button', { name: 'Save Changes' }).click();
     await expect(dialog).not.toBeVisible();
 

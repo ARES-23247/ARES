@@ -12,6 +12,8 @@ export const docResponseSchema = z.object({
   description: z.string().nullish(),
   is_portfolio: z.number().nullish(),
   is_executive_summary: z.number().nullish(),
+  zulip_stream: z.string().nullable().optional(),
+  zulip_topic: z.string().nullable().optional(),
   is_deleted: z.number().nullish(),
   status: z.string().nullish(),
   revision_of: z.string().nullish(),
