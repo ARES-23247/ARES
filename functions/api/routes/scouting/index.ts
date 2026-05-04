@@ -10,12 +10,12 @@ import analyzeRouter from "./analyze";
 
 const scoutingRouter = new Hono<AppEnv>();
 
-// All scouting routes require authentication to protect API keys and AI costs
-scoutingRouter.use("/*", ensureAuth);
-
-// Sub-route mounting
+// Public routes: TOA and FTC Events data are publicly available
 scoutingRouter.route("/toa", toaProxy);
 scoutingRouter.route("/ftcevents", ftcEventsProxy);
+
+// AI analysis requires authentication to protect AI costs
+scoutingRouter.use("/analyze/*", ensureAuth);
 scoutingRouter.route("/analyze", analyzeRouter);
 
 export default scoutingRouter;
