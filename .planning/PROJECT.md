@@ -54,12 +54,14 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 
 (None currently active)
 
-## Current Milestone: v6.4
+## Current Milestone: v6.4 Science & Math Corner Expansion
 
-**Goal:** (To be determined)
+**Goal:** Expand the interactive learning ecosystem by introducing a Math Corner and enabling dynamic document publishing across specific functional areas.
 
 **Target features:**
-- (To be determined)
+- Create a new "Math Corner" section in the application.
+- Modify the existing Document/Docs data schema to include 3 visibility checkboxes: `Display in areslib`, `Display in Math Corner`, and `Display in Science Corner`.
+- Update the UI in `areslib`, `Math Corner`, and `Science Corner` to dynamically fetch and display the associated documents.
 
 ## Current State
 
