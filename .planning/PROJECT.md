@@ -54,17 +54,22 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 
 (None currently active)
 
-## Current Milestone: v6.3 Outreach & Impact Logging Restoration
+## Current Milestone: v6.4
 
-**Goal:** Restore functionality to the Outreach section so users can successfully log impact and alter existing events, and expand interactive tools.
+**Goal:** (To be determined)
 
 **Target features:**
-- Fix Outreach log persistence (ensure `api.outreach.save` works correctly).
-- Implement editing/altering capabilities for Outreach events (especially for synced "Dynamic" events).
-- Ensure impact metrics (Reach, Hours) aggregate correctly.
-- Interactive Tools Expansion (telemetry dashboard viewers, scouting data visualizers, kinematics calculators).
+- (To be determined)
 
 ## Current State
+
+<details>
+<summary>v6.3 Shipped Features</summary>
+
+- Restored full persistence, metrics aggregation, and editing capabilities to the Impact Logging section.
+- Established an embedded architecture framework to support custom utility tools directly within ARESWEB.
+- Integrated FTC Scouting Tool with server-side API proxies for TOA and FTC Events, and an AI-powered analysis endpoint using Z.ai GLM 5.1.
+</details>
 
 <details>
 <summary>v6.2 Shipped Features</summary>
@@ -324,4 +329,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-04 after v6.2 milestone completion*
+*Last updated: 2026-05-04 after v6.3 milestone completion*

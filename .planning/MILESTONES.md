@@ -1,5 +1,15 @@
 # Milestones
 
+## v6.3 Outreach & Impact Logging Restoration (Shipped: 2026-05-04)
+
+**Phases completed:** 1 phases, 2 plans, 0 tasks
+
+**Key accomplishments:**
+
+- (none recorded)
+
+---
+
 | Version | Status | Date | Summary |
 |---------|--------|------|---------|
 | [v6.1](milestones/v6.1-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Deferred Items & Type Safety |
