@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 import DashboardMetricsGrid from "./dashboard/DashboardMetricsGrid";
 import DashboardEmptyState from "./dashboard/DashboardEmptyState";
@@ -65,10 +65,32 @@ export default function OutreachTracker() {
 
   const seasonId = useWatch({ control, name: "season_id" });
   const isMentoring = useWatch({ control, name: "is_mentoring" });
+  const [activeSeasonTab, setActiveSeasonTab] = useState<string>("all");
 
   const { data: outreachData, isLoading } = api.outreach.adminList.useQuery(["admin-outreach"], {});
+  const { data: seasonsRes } = api.seasons.list.useQuery(["seasons-list"], {});
 
-  const logs: OutreachLog[] = useMemo(() => (outreachData?.body as unknown as { logs: OutreachLog[] })?.logs || [], [outreachData]);
+  const allLogs: OutreachLog[] = useMemo(() => (outreachData?.body as unknown as { logs: OutreachLog[] })?.logs || [], [outreachData]);
+
+  interface SeasonInfo { start_year: number; end_year: number; challenge_name: string; }
+  const seasons: SeasonInfo[] = useMemo(() => {
+    const raw = seasonsRes?.status === 200 ? (Array.isArray(seasonsRes.body) ? seasonsRes.body : (seasonsRes.body as unknown as { seasons?: SeasonInfo[] })?.seasons) : [];
+    return (raw || []) as SeasonInfo[];
+  }, [seasonsRes]);
+
+  const seasonTabs = useMemo(() => {
+    const usedSeasons = new Set(allLogs.map(l => l.season_id).filter(Boolean));
+    return seasons.filter(s => usedSeasons.has(s.start_year)).sort((a, b) => b.start_year - a.start_year);
+  }, [allLogs, seasons]);
+
+  const logs = useMemo(() => {
+    if (activeSeasonTab === "all") return allLogs;
+    if (activeSeasonTab === "unlinked") return allLogs.filter(l => !l.season_id);
+    const yr = parseInt(activeSeasonTab);
+    return allLogs.filter(l => l.season_id === yr);
+  }, [allLogs, activeSeasonTab]);
+
+  const handleTabChange = useCallback((tab: string) => setActiveSeasonTab(tab), []);
 
   const saveMutation = api.outreach.save.useMutation({
     onSuccess: (res: { status: number }) => {
@@ -120,7 +142,7 @@ export default function OutreachTracker() {
     saveMutation.mutate({ body: cleanData as unknown as never });
   };
 
-  const totals = useMemo(() => logs.reduce((acc: { hours: number; mentoringHours: number; mentorHours: number; reach: number; students: number; mentors: number; events: number }, l: OutreachLog) => ({
+  const totals = useMemo(() => logs.reduce((acc, l) => ({
     hours: acc.hours + (l.hours_logged || 0),
     mentoringHours: acc.mentoringHours + (l.is_mentoring ? (l.hours_logged || 0) : 0),
     mentorHours: acc.mentorHours + (l.mentor_hours || 0),
@@ -276,6 +298,47 @@ export default function OutreachTracker() {
         )}
       </AnimatePresence>
 
+      {/* Season Tabs */}
+      {seasonTabs.length > 0 && (
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-thin">
+          <button
+            onClick={() => handleTabChange("all")}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-widest ares-cut-sm transition-all whitespace-nowrap ${
+              activeSeasonTab === "all"
+                ? "bg-ares-red text-white shadow-lg shadow-ares-red/20"
+                : "bg-white/5 text-marble/60 hover:text-white hover:bg-white/10 border border-white/5"
+            }`}
+          >
+            All Seasons
+          </button>
+          {seasonTabs.map(s => (
+            <button
+              key={s.start_year}
+              onClick={() => handleTabChange(s.start_year.toString())}
+              className={`px-4 py-2 text-xs font-black uppercase tracking-widest ares-cut-sm transition-all whitespace-nowrap ${
+                activeSeasonTab === s.start_year.toString()
+                  ? "bg-ares-gold text-obsidian shadow-lg shadow-ares-gold/20"
+                  : "bg-white/5 text-marble/60 hover:text-white hover:bg-white/10 border border-white/5"
+              }`}
+            >
+              {s.challenge_name} {s.start_year}-{s.end_year}
+            </button>
+          ))}
+          {allLogs.some(l => !l.season_id) && (
+            <button
+              onClick={() => handleTabChange("unlinked")}
+              className={`px-4 py-2 text-xs font-black uppercase tracking-widest ares-cut-sm transition-all whitespace-nowrap ${
+                activeSeasonTab === "unlinked"
+                  ? "bg-marble/30 text-white"
+                  : "bg-white/5 text-marble/40 hover:text-marble/80 hover:bg-white/10 border border-white/5"
+              }`}
+            >
+              Unlinked
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="space-y-4">
         {isLoading ? (
           <DashboardLoadingGrid count={2} heightClass="h-48" gridClass="grid-cols-1 lg:grid-cols-2" />
@@ -316,27 +379,27 @@ export default function OutreachTracker() {
               </p>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[80px]">
-                <span className="text-xs font-black text-ares-gold uppercase tracking-tighter">Reach</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[70px]">
+                <span className="text-[10px] font-black text-ares-gold uppercase tracking-tighter">Reach</span>
                 <span className="text-lg font-black text-white">{log.reach_count || 0}</span>
               </div>
-              <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[80px]">
-                <span className="text-xs font-black text-ares-cyan uppercase tracking-tighter">Hours</span>
+              <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[70px]">
+                <span className="text-[10px] font-black text-ares-cyan uppercase tracking-tighter">Hours</span>
                 <span className="text-lg font-black text-white">{(log.hours_logged || 0).toFixed(1)}</span>
               </div>
-              {(log.mentor_count || 0) > 0 && (
-                <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[80px]">
-                  <span className="text-xs font-black text-ares-bronze uppercase tracking-tighter">Mentors</span>
-                  <span className="text-lg font-black text-white">{log.mentor_count || 0}</span>
-                </div>
-              )}
-              {(log.mentor_hours || 0) > 0 && (
-                <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[80px]">
-                  <span className="text-xs font-black text-ares-bronze uppercase tracking-tighter">Mentor Hrs</span>
-                  <span className="text-lg font-black text-white">{(log.mentor_hours || 0).toFixed(1)}</span>
-                </div>
-              )}
+              <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[70px]">
+                <span className="text-[10px] font-black text-ares-red uppercase tracking-tighter">Students</span>
+                <span className="text-lg font-black text-white">{log.students_count || 0}</span>
+              </div>
+              <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[70px]">
+                <span className="text-[10px] font-black text-ares-bronze uppercase tracking-tighter">Mentors</span>
+                <span className="text-lg font-black text-white">{log.mentor_count || 0}</span>
+              </div>
+              <div className="flex flex-col items-center px-4 py-2 bg-white/5 ares-cut min-w-[70px]">
+                <span className="text-[10px] font-black text-ares-bronze uppercase tracking-tighter">Mnt Hrs</span>
+                <span className="text-lg font-black text-white">{(log.mentor_hours || 0).toFixed(1)}</span>
+              </div>
               
               {log.is_dynamic && !log.event_id && (
                 <div className="flex items-center px-3 py-1 bg-ares-gold/10 border border-ares-gold/20 ares-cut-sm">
