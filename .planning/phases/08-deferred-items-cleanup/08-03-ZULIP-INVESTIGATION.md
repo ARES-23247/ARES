@@ -194,3 +194,34 @@ Based on the code audit:
 - The bot must have admin privileges to fetch `delivery_email` (otherwise falls back to `email`)
 - Default streams are automatically included in invitations
 - Batch size of 10 prevents rate limit issues
+
+---
+
+## Production Audit Results
+
+**Date:** 2026-05-04
+**Auditor:** David Huss (ARES admin)
+**Status:** ⚠️ Issues Found
+
+### Audit Findings
+
+| Metric | Expected | Actual | Status |
+|--------|----------|--------|--------|
+| Missing users | 0 | 19 | ⚠️ False positives |
+| Invites sent | N/A | Failed | ⚠️ |
+
+### Problem
+
+Users with existing Zulip accounts are showing as "missing" from the audit. The audit compares ARES database emails against Zulip member emails, and mismatches occur when users registered with different emails in each system.
+
+### Root Cause
+
+1. **Email mismatch:** User may have `personal@gmail.com` in Zulip but `school@gmail.com` in ARES
+2. **Bot permissions:** May lack admin to see `delivery_email`, falls back to `email`
+3. **No manual linking:** Users cannot manually link their accounts
+
+### Recommendations
+
+1. **Short-term:** Add debug mode to audit showing sample comparisons
+2. **Long-term:** Add "link existing Zulip account" feature for users to manually link accounts
+3. **Investigate:** Check bot permissions in Zulip (needs admin for full visibility)
