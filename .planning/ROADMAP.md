@@ -5,7 +5,7 @@
 - ✅ **v6.1** — Deferred Items & Type Safety (Shipped 2026-05-04)
 - ✅ **v6.2** — Metrics, Testing & UI Polish (Shipped 2026-05-04)
 - ✅ **v6.3** — Outreach & Impact Logging Restoration (Shipped 2026-05-04)
-- 🚧 **v6.4** — Science & Math Corner Expansion (In Progress)
+- ✅ **v6.4** — Science & Math Corner Expansion (Shipped 2026-05-04)
 
 ## Phases
 
@@ -17,11 +17,14 @@
 
 </details>
 
-### 🚧 v6.4 Science & Math Corner Expansion (In Progress)
+<details>
+<summary>✅ v6.4 Science & Math Corner Expansion (Phases 14-16) — SHIPPED 2026-05-04</summary>
 
-- [x] Phase 14: Data Schema & Document Editor Updates (1 plans)
-- [x] Phase 15: Math Corner Foundation & Hub Integrations (2 plans)
-- [ ] Phase 16: Save AI Scouting Analyses (1 plans)
+- [x] Phase 14: Data Schema & Document Editor Updates (1 plans) — completed 2026-05-04
+- [x] Phase 15: Math Corner Foundation & Hub Integrations (2 plans) — completed 2026-05-04
+- [x] Phase 16: Save AI Scouting Analyses (1 plans) — completed 2026-05-04
+
+</details>
 
 ## Progress
 

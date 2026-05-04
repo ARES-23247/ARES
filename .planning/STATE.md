@@ -40,6 +40,10 @@ Last activity: 2026-05-04 — Milestone v6.4 started
 | - | - | fix(deploy): inject VITE_PARTYKIT_HOST for collab editing | `bc8196a` |
 | 13 | 01 | Tool registry, scouting API proxies, AI analysis endpoint | `c7afbca` |
 | 13 | 02 | FTC Scouting Tool UI with AI analysis integration | `03c6b82` |
+| 14 | 01 | Data Schema & Document Editor Updates | - |
+| 15 | 01 | Math Corner Foundation | - |
+| 15 | 02 | Math Corner Hub Integrations | - |
+| 16 | 01 | Save AI Scouting Analyses | - |
 
 ## Key Decisions
 

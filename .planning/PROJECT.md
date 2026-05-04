@@ -49,21 +49,27 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 
 - ✓ **Milestone 6.1 (Deferred Items & Type Safety)** — Type Safety for Kysely dynamic table names and Cloudflare AI instances. Zulip API authorization hardening with `ensureAuth` middleware.
 - ✓ **Milestone 6.2 (Metrics, Testing & UI Polish)** — Delivered deferred E2E testing for media manager, built an admin dashboard for platform usage metrics, and polished nested sub-task rendering UI in Kanbans and tables.
+- ✓ **Milestone 6.3 (Outreach Restoration)** — Restored Impact Logging and built FTC Scouting endpoints.
+- ✓ **Milestone 6.4 (Science & Math Expansion)** — Introduced Math Corner UI, added universal document visibility fields, and added persistence to AI Scouting Analyses.
 
 ### Active
 
 (None currently active)
 
-## Current Milestone: v6.4 Science & Math Corner Expansion
+## Current Milestone: TBD
 
-**Goal:** Expand the interactive learning ecosystem by introducing a Math Corner and enabling dynamic document publishing across specific functional areas.
-
-**Target features:**
-- Create a new "Math Corner" section in the application.
-- Modify the existing Document/Docs data schema to include 3 visibility checkboxes: `Display in areslib`, `Display in Math Corner`, and `Display in Science Corner`.
-- Update the UI in `areslib`, `Math Corner`, and `Science Corner` to dynamically fetch and display the associated documents.
+**Goal:** Pending planning.
 
 ## Current State
+
+<details>
+<summary>v6.4 Shipped Features</summary>
+
+- Math Corner section built and styled consistently with Science Corner.
+- Expanded Document D1 schema and UI to support universal visibility toggles (`display_in_areslib`, `display_in_math_corner`, `display_in_science_corner`).
+- Math Corner, Science Corner, and areslib dynamically query documents based on new visibility flags.
+- AI Scouting Analysis endpoints updated with D1 persistence to store historical predictions and reduce z.ai requests.
+</details>
 
 <details>
 <summary>v6.3 Shipped Features</summary>
