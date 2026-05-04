@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Real-Time Collaboration Infrastructure
 status: verifying
-last_updated: "2026-05-04T18:05:32.636Z"
+last_updated: "2026-05-04T18:03:36Z"
 last_activity: 2026-05-04
 progress:
   total_phases: 1
@@ -20,17 +20,10 @@ progress:
 
 ## Current Position
 
-Phase: 07 (Integration Verification & Resilience) — COMPLETE
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Phase: 08 (Deferred Items Cleanup)
+Plan: 1 of 3 (08-01: Media Manager E2E Testing)
+Status: Plan complete — awaiting next plan
 Last activity: 2026-05-04
-
-## Completed This Session
-
-| Phase | Description | Commits |
-|-------|-------------|---------|
-| 06 | PartyKit Production Deployment | `0dc2c0e`, `6b0604a` |
-| 06.5 | Editor UI & Zulip Fixes | `0dc2c0e`, `30e17a8` |
 
 ## Completed This Session
 
@@ -39,20 +32,22 @@ Last activity: 2026-05-04
 | 06 | - | PartyKit Production Deployment | `0dc2c0e`, `6b0604a` |
 | 06.5 | - | Editor UI & Zulip Fixes | `0dc2c0e`, `30e17a8` |
 | 07 | 03 | PartyKit D1 Snapshot Persistence | `f2618f8` |
+| 08 | 01 | Media Manager E2E Testing | `96ae0b9`, `7acce7e` |
 
 ## Key Decisions
 
 - **D1 shared database:** PartyKit uses same ares-db as main app via separate PK_DB binding (simplifies backup, avoids duplication)
 - **Base64 state encoding:** YDoc Uint8Array encoded as base64 for D1 BLOB storage
 - **Snapshot persistence mode:** Full state saved on last client disconnect with 1-second debounce
+- **E2E auth mocking pattern:** Mock /api/auth/get-session and /profile/me with admin user, add better-auth.session_token cookie, set __PLAYWRIGHT_TEST__ flag (from kanban.spec.ts)
 
 ## Deferred Items
 
-| Category | Item | Source |
-|----------|------|--------|
-| requirement | TEST-03 (media manager E2E) | v5.7 |
-| requirement | MON-03 (usage metrics dashboard) | v5.7 |
-| todo | audit-portfolio-pages.md | v5.9 |
-| todo | curate-initial-experiments.md | v5.9 |
-| todo | review-docs-page.md | v5.9 |
-| investigation | Zulip account sync with aresfirst.org | v6.0 — user-reported |
+| Category | Item | Source | Status |
+|----------|------|--------|--------|
+| requirement | TEST-03 (media manager E2E) | v5.7 | COMPLETE - 08-01 |
+| requirement | MON-03 (usage metrics dashboard) | v5.7 | In progress - 08-02 |
+| todo | audit-portfolio-pages.md | v5.9 | Pending |
+| todo | curate-initial-experiments.md | v5.9 | Pending |
+| todo | review-docs-page.md | v5.9 | Pending |
+| investigation | Zulip account sync with aresfirst.org | v6.0 — user-reported | Pending - 08-03 |
