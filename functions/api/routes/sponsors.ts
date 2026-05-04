@@ -143,7 +143,7 @@ const sponsorHandlers = {
       const db = c.get("db");
       const results = await db.selectFrom("sponsor_tokens as t")
         .innerJoin("sponsors as s", "t.sponsor_id", "s.id")
-        .select(["t.id", "t.token", "t.sponsor_id", "t.created_at", "t.last_used"])
+        .select(["t.id", "t.token", "t.sponsor_id", "t.created_at", "t.last_used"] as any)
         .orderBy("t.created_at", "desc")
         .execute();
       
@@ -164,7 +164,7 @@ const sponsorHandlers = {
       const { sponsor_id } = body;
       const token = crypto.randomUUID();
       const id = crypto.randomUUID();
-      await db.insertInto("sponsor_tokens").values({ id, token, sponsor_id }).execute();
+      await db.insertInto("sponsor_tokens").values({ id, token, sponsor_id } as any).execute();
 
                   c.executionCtx.waitUntil(logAuditAction(c, "GENERATE_TOKEN", "sponsor_tokens", token, `Generated token for ${sponsor_id}`));
       

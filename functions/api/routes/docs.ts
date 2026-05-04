@@ -313,7 +313,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
 
       await db.updateTable("docs").set({ is_deleted: 1 }).where("slug", "=", slug).execute();
       c.executionCtx?.waitUntil?.(logAuditAction(c, "DELETE_DOC", "docs", slug, JSON.stringify(existing)));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Delete] Error", e);
@@ -446,7 +446,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           }));
         }
 
-        triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
+        triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
         return { status: 200 as const, body: { success: true, slug } };
     } catch (e) {
       console.error("[Docs:Save] Error", e);
