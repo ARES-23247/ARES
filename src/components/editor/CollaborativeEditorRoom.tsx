@@ -65,9 +65,13 @@ function ConnectedEditorRoom({
     providerRef.current = newProvider;
 
     newProvider.on("synced", (synced: boolean) => {
-      if (synced && timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
+      if (synced) {
+        // Capture timeout reference to avoid race condition (CR-07)
+        const timeout = timeoutRef.current;
+        if (timeout) {
+          clearTimeout(timeout);
+          timeoutRef.current = null;
+        }
       }
       setIsSynced(synced);
       setProvider(newProvider);
@@ -108,7 +112,7 @@ function ConnectedEditorRoom({
       }
       newProvider.destroy();
     };
-  }, [roomId, host]);
+  }, [roomId, host, ydoc, onDocLoaded]);
 
   /** Attempt to reconnect with exponential backoff */
   const attemptReconnect = useCallback(() => {
