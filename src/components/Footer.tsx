@@ -33,7 +33,6 @@ export default function Footer() {
             </p>
           </div>
           <p className="text-marble text-base leading-relaxed max-w-md border-l-2 border-ares-bronze/30 pl-6">
-            We are proud members of the <a href="https://MARSFIRST.org" target="_blank" rel="noopener noreferrer" className="text-white font-bold hover:text-ares-red transition-colors italic">MARS Family</a>. 
             Based in Morgantown, WV, we are engineering the next generation of Mountaineer innovators through the mission of <a href="https://www.firstinspires.org/" target="_blank" rel="noopener noreferrer" className="text-white hover:text-ares-red transition-colors underline decoration-ares-red/30 underline-offset-4 font-bold"><em>FIRST</em>®</a>.
           </p>
         </div>
@@ -94,41 +93,42 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 mt-20 pt-8 border-t border-marble/10 flex flex-col lg:flex-row justify-between items-center gap-8">
-        <p className="text-marble text-xs font-bold uppercase tracking-[0.2em] whitespace-nowrap">
-          © {mounted ? new Date().getFullYear() : "2025"} <span className="bg-ares-red text-white px-1 ares-cut-sm">ARES</span> 23247. Proudly part of the <a href="https://MARSFIRST.org" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-ares-red/30">MARS Family</a>.
+      <div className="max-w-7xl mx-auto px-6 mt-20 pt-8 border-t border-marble/10 flex flex-col xl:flex-row justify-between items-center gap-10">
+        <p className="text-marble text-[10px] font-bold uppercase tracking-[0.25em] opacity-80">
+          © {mounted ? new Date().getFullYear() : "2025"} <span className="text-ares-red">ARES</span> 23247. All Rights Reserved.
         </p>
         
-        <div className="flex flex-wrap items-center justify-center lg:justify-end gap-x-8 gap-y-4 text-xs font-bold uppercase tracking-[0.2em] text-marble">
-          <Link to="/accessibility" className="hover:text-white transition-colors flex items-center gap-2 group whitespace-nowrap">
-            <svg className="w-3.5 h-3.5 text-ares-red group-hover:animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-[10px] font-bold uppercase tracking-[0.2em] text-marble">
+          <Link to="/accessibility" className="hover:text-ares-red transition-colors flex items-center gap-2 group">
+            <div className="w-5 h-5 rounded-full border border-ares-red/30 flex items-center justify-center group-hover:border-ares-red transition-colors">
+              <svg className="w-2.5 h-2.5 text-ares-red" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
             Accessibility
           </Link>
-          
-          <div className="flex gap-4 items-center border-l border-marble/10 pl-8 h-4">
-            <a href="https://wave.webaim.org/" target="_blank" rel="noopener noreferrer" className="opacity-50 hover:opacity-100 transition-opacity" title="Validated by WAVE Web Accessibility Evaluation Tool">
-              <img src="https://wave.webaim.org/img/wavelogo.svg" alt="WAVE Logo" className="h-3.5" />
+
+          <div className="flex gap-4 items-center opacity-40 px-2">
+            <a href="https://wave.webaim.org/" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity" title="Validated by WAVE">
+              <img src="https://wave.webaim.org/img/wavelogo.svg" alt="WAVE" className="h-3 grayscale hover:grayscale-0 transition-all" />
             </a>
-            <a href="https://pa11y.org/" target="_blank" rel="noopener noreferrer" className="opacity-60 hover:opacity-100 transition-opacity flex items-center font-bold text-[9px] gap-1 text-white" title="pa11y CI Integrated">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/>
-              </svg>
+            <a href="https://pa11y.org/" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity flex items-center font-bold text-[8px] gap-1 text-white" title="pa11y CI">
               <span>PA11Y</span>
             </a>
           </div>
+          
+          <div className="h-4 w-px bg-marble/10 hidden md:block"></div>
 
-          <div className="flex gap-8 items-center border-l border-marble/10 pl-8 h-4">
-            <Link to="/privacy" className="hover:text-white transition-colors whitespace-nowrap">Privacy</Link>
-            <Link to="/science-corner" className="hover:text-white transition-colors whitespace-nowrap">Science Corner</Link>
-            <Link to="/docs" className="hover:opacity-80 transition-colors flex items-center whitespace-nowrap shadow-sm ares-cut-sm overflow-hidden group">
-              <span className="bg-ares-red px-2 py-0.5 text-[9px] font-heading font-bold uppercase text-white tracking-wider border-r border-white/10">ARES</span>
-              <span className="bg-white/10 text-white font-heading font-medium px-2 py-0.5 text-[9px] uppercase tracking-widest group-hover:bg-white/20 transition-colors">Lib</span>
-            </Link>
-            <Link to="/sponsors" className="hover:text-white transition-colors whitespace-nowrap">Support Us</Link>
-          </div>
+          <Link to="/privacy" className="hover:text-ares-red transition-colors">Privacy</Link>
+          <Link to="/science-corner" className="hover:text-ares-red transition-colors">Science</Link>
+          
+          <Link to="/docs" className="hover:opacity-80 transition-colors flex items-center shadow-sm ares-cut-sm overflow-hidden group border border-white/5">
+            <span className="bg-ares-red px-2 py-0.5 text-[8px] font-heading font-bold uppercase text-white tracking-wider">ARES</span>
+            <span className="bg-white/5 text-white font-heading font-medium px-2 py-0.5 text-[8px] uppercase tracking-widest group-hover:bg-white/10 transition-colors">Lib</span>
+          </Link>
+          
+          <Link to="/sponsors" className="hover:text-ares-red transition-colors">Support Us</Link>
         </div>
       </div>
     </footer>
