@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Context } from "hono";
+import type { Context } from "hono";
 import { AppEnv  } from "../middleware";
 import { siteConfig } from "../../utils/site.config";
 
@@ -8,7 +8,7 @@ export const sitemapRouter = new Hono<AppEnv>();
 // SEC-DoW: Cache sitemap to prevent repeated D1 queries from bots/crawlers
 let sitemapCache: { xml: string; expiresAt: number } | null = null;
 
-sitemapRouter.get(".xml", async (c: any) => {
+sitemapRouter.get(".xml", async (c: Context<AppEnv>) => {
   const db = c.get("db");
   try {
     const now = Date.now();

@@ -121,7 +121,7 @@ const settingsTsRestRouter = s.router(settingsContract, settingsHandlers as any)
 settingsRouter.use("/admin/*", ensureAdmin);
 
 // Backup route remains manual as it's a file export
-settingsRouter.get("/admin/backup", async (c: any) => {
+settingsRouter.get("/admin/backup", async (c: Context<AppEnv>) => {
   const db = c.get("db");
   try {
     const SAFE_TABLES = [

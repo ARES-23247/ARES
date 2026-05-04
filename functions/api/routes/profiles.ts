@@ -248,7 +248,7 @@ profilesRouter.use("/team-roster", rateLimitMiddleware(100, 60));
 profilesRouter.use("/:userId", rateLimitMiddleware(100, 60));
 
 profilesRouter.use("/update-me", persistentRateLimitMiddleware(10, 60));
-profilesRouter.put("/avatar", persistentRateLimitMiddleware(15, 60), async (c: any) => {
+profilesRouter.put("/avatar", persistentRateLimitMiddleware(15, 60), async (c: Context<AppEnv>) => {
   try {
     const body = await c.req.json();
     const { image } = body;

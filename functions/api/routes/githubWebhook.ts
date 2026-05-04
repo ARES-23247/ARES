@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Context } from "hono";
+import type { Context } from "hono";
 import { AppEnv  } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
@@ -38,7 +38,7 @@ async function verifyGitHubSignature(
 }
 
 // ── POST /webhooks/github — Receive GitHub webhook events ────────────
-githubWebhookRouter.post("/", async (c: any) => {
+githubWebhookRouter.post("/", async (c: Context<AppEnv>) => {
   const secret = c.env.GITHUB_WEBHOOK_SECRET;
   const rawBody = await c.req.text();
 
