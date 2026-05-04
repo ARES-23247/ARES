@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v6.3
 milestone_name: Outreach & Impact Logging Restoration
 status: active
-last_updated: "2026-05-04T21:10:00.000Z"
-last_activity: 2026-05-04 — Phase 12 shipped, advancing to Phase 13
+last_updated: "2026-05-04T22:07:00.000Z"
+last_activity: 2026-05-04 — CI fix, outreach UI enhancements, collab editing fix
 progress:
   total_phases: 2
   completed_phases: 1
@@ -22,7 +22,7 @@ progress:
 Phase: 13 — Interactive Tools Foundation
 Plan: —
 Status: Needs discussion
-Last activity: 2026-05-04 — Phase 12 shipped, advancing to Phase 13
+Last activity: 2026-05-04 — CI fix, outreach UI enhancements, collab editing fix
 
 ## Completed This Session
 
@@ -34,6 +34,9 @@ Last activity: 2026-05-04 — Phase 12 shipped, advancing to Phase 13
 | 08 | 01 | Media Manager E2E Testing | `96ae0b9`, `7acce7e`, `a5ac018` |
 | 08 | - | Accessibility & Layout Fixes (Ad-hoc) | `ec2e66a`, `2dfffca` |
 | 09 | 01 | Media Manager & Zulip E2E Testing | `a70449d` |
+| - | - | fix(footer): replace malformed TikTok/Bluesky SVGs (CI fix) | `e09257b` |
+| - | - | feat(outreach): season tabs + always-visible card stats | `5f62735` |
+| - | - | fix(deploy): inject VITE_PARTYKIT_HOST for collab editing | `bc8196a` |
 
 ## Key Decisions
 
@@ -41,11 +44,15 @@ Last activity: 2026-05-04 — Phase 12 shipped, advancing to Phase 13
 - **Base64 state encoding:** YDoc Uint8Array encoded as base64 for D1 BLOB storage
 - **Snapshot persistence mode:** Full state saved on last client disconnect with 1-second debounce
 - **E2E auth mocking pattern:** Mock /api/auth/get-session and /profile/me with admin user, add better-auth.session_token cookie, set __PLAYWRIGHT_TEST__ flag (from kanban.spec.ts)
+- **Social queue architecture:** Scheduled posts stored in `social_queue` table with cron worker processing; integrated with existing `dispatchSocials` utility
+- **PartyKit build injection:** VITE_PARTYKIT_HOST must be explicitly set in deploy.yml build step (Vite doesn't reliably read .env.production in CI)
+- **Outreach season tabs:** Client-side filtering via season_id; tabs auto-populate from seasons that have linked logs
 
 ## Deferred Items
 
 | Category | Item | Source | Status |
 |----------|------|--------|--------|
+| requirement | Social Media Manager | Ad-hoc request | COMPLETE - needs GSD documentation |
 | requirement | TEST-03 (media manager E2E) | v5.7 | COMPLETE - 08-01 |
 | requirement | MON-03 (usage metrics dashboard) | v5.7 | In progress - 08-02 |
 | todo | audit-portfolio-pages.md | v5.9 | Pending |
