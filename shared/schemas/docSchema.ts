@@ -10,6 +10,9 @@ export const docSchema = z.object({
   isPortfolio: z.boolean().default(false),
   isExecutiveSummary: z.boolean().default(false),
   isDraft: z.boolean().optional(),
+  displayInAreslib: z.boolean().default(false),
+  displayInMathCorner: z.boolean().default(false),
+  displayInScienceCorner: z.boolean().default(false),
 });
 
 export type DocPayload = z.infer<typeof docSchema>;

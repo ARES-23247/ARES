@@ -20,7 +20,8 @@ interface TOAEvent {
 }
 
 const SEASONS = [
-  { key: "25-26", label: "2025–2026 (INTO THE DEEP)" },
+  { key: "26-27", label: "2026–2027 (BIOBUZZ)" },
+  { key: "25-26", label: "2025–2026 (DECODE)" },
   { key: "24-25", label: "2024–2025 (INTO THE DEEP)" },
   { key: "23-24", label: "2023–2024 (CENTERSTAGE)" },
   { key: "22-23", label: "2022–2023 (POWERPLAY)" },

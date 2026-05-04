@@ -174,8 +174,9 @@ CREATE TABLE IF NOT EXISTS docs (
     status TEXT DEFAULT 'published',
     is_portfolio INTEGER DEFAULT 0,
     is_executive_summary INTEGER DEFAULT 0,
-
-
+    display_in_areslib INTEGER DEFAULT 0,
+    display_in_math_corner INTEGER DEFAULT 0,
+    display_in_science_corner INTEGER DEFAULT 0,
     revision_of TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_docs_category ON docs(category);

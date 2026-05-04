@@ -64,6 +64,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             "docs.is_deleted",
             "docs.status",
             "docs.revision_of",
+            "docs.display_in_areslib",
+            "docs.display_in_math_corner",
+            "docs.display_in_science_corner",
             "p.nickname as original_author_nickname",
             "u.image as original_author_avatar"
           ])
@@ -84,6 +87,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             "docs.description",
             "docs.is_portfolio",
             "docs.is_executive_summary",
+            "docs.display_in_areslib",
+            "docs.display_in_math_corner",
+            "docs.display_in_science_corner",
             "p.nickname as original_author_nickname",
             "u.image as original_author_avatar"
           ])
@@ -98,6 +104,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
         is_portfolio: Number(d.is_portfolio || 0),
         is_executive_summary: Number(d.is_executive_summary || 0),
         is_deleted: Number(d.is_deleted || 0),
+        display_in_areslib: Number(d.display_in_areslib || 0),
+        display_in_math_corner: Number(d.display_in_math_corner || 0),
+        display_in_science_corner: Number(d.display_in_science_corner || 0),
         original_author_nickname: d.original_author_nickname || undefined,
         original_author_avatar: d.original_author_avatar || undefined
       }));
@@ -167,6 +176,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             "docs.revision_of",
             "docs.zulip_stream",
             "docs.zulip_topic",
+            "docs.display_in_areslib",
+            "docs.display_in_math_corner",
+            "docs.display_in_science_corner",
             "p.nickname as original_author_nickname",
             "u.image as original_author_avatar"
           ])
@@ -187,6 +199,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             "docs.updated_at",
             "docs.is_portfolio",
             "docs.is_executive_summary",
+            "docs.display_in_areslib",
+            "docs.display_in_math_corner",
+            "docs.display_in_science_corner",
             "p.nickname as original_author_nickname",
             "u.image as original_author_avatar"
           ])
@@ -221,6 +236,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             is_portfolio: Number(row.is_portfolio || 0),
             is_executive_summary: Number(row.is_executive_summary || 0),
             is_deleted: Number(row.is_deleted || 0),
+            display_in_areslib: Number(row.display_in_areslib || 0),
+            display_in_math_corner: Number(row.display_in_math_corner || 0),
+            display_in_science_corner: Number(row.display_in_science_corner || 0),
             updated_at: row.updated_at || undefined,
             original_author_nickname: row.original_author_nickname || undefined,
             original_author_avatar: row.original_author_avatar || undefined
@@ -240,13 +258,13 @@ const docTsRestRouter: any = s.router(docContract as any, {
       let results;
       try {
         results = await db.selectFrom("docs")
-          .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of"])
+          .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of", "display_in_areslib", "display_in_math_corner", "display_in_science_corner"])
           .orderBy("category")
           .orderBy("sort_order", "asc")
           .execute();
       } catch (_e) {
         results = await db.selectFrom("docs")
-          .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary"])
+          .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary", "display_in_areslib", "display_in_math_corner", "display_in_science_corner"])
           .orderBy("category")
           .orderBy("sort_order", "asc")
           .execute() as any[];
@@ -259,7 +277,10 @@ const docTsRestRouter: any = s.router(docContract as any, {
         sort_order: Number(d.sort_order || 0),
         is_portfolio: Number(d.is_portfolio || 0),
         is_executive_summary: Number(d.is_executive_summary || 0),
-        is_deleted: Number(d.is_deleted || 0)
+        is_deleted: Number(d.is_deleted || 0),
+        display_in_areslib: Number(d.display_in_areslib || 0),
+        display_in_math_corner: Number(d.display_in_math_corner || 0),
+        display_in_science_corner: Number(d.display_in_science_corner || 0)
       }));
 
       return { status: 200 as const, body: { docs: docs as any[] } };
@@ -275,12 +296,12 @@ const docTsRestRouter: any = s.router(docContract as any, {
       let row;
       try {
         row = await db.selectFrom("docs")
-          .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of", "zulip_stream", "zulip_topic"])
+          .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "is_deleted", "status", "revision_of", "zulip_stream", "zulip_topic", "display_in_areslib", "display_in_math_corner", "display_in_science_corner"])
           .where("slug", "=", slug)
           .executeTakeFirst();
       } catch (_e) {
         row = await db.selectFrom("docs")
-          .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary"])
+          .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "display_in_areslib", "display_in_math_corner", "display_in_science_corner"])
           .where("slug", "=", slug)
           .executeTakeFirst() as any;
       }
@@ -295,7 +316,10 @@ const docTsRestRouter: any = s.router(docContract as any, {
             sort_order: Number(row.sort_order || 0),
             is_portfolio: Number(row.is_portfolio || 0),
             is_executive_summary: Number(row.is_executive_summary || 0),
-            is_deleted: Number(row.is_deleted || 0)
+            is_deleted: Number(row.is_deleted || 0),
+            display_in_areslib: Number(row.display_in_areslib || 0),
+            display_in_math_corner: Number(row.display_in_math_corner || 0),
+            display_in_science_corner: Number(row.display_in_science_corner || 0)
           } 
         } as any
       };
@@ -323,7 +347,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
     saveDoc: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = body;
+      const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft, displayInAreslib, displayInMathCorner, displayInScienceCorner } = body;
       const user = await getSessionUser(c);
       const email = user?.email || "anonymous_admin";
 
@@ -360,6 +384,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
               updated_at: new Date().toISOString(),
               is_portfolio: isPortfolio ? 1 : 0,
               is_executive_summary: isExecutiveSummary ? 1 : 0,
+              display_in_areslib: displayInAreslib ? 1 : 0,
+              display_in_math_corner: displayInMathCorner ? 1 : 0,
+              display_in_science_corner: displayInScienceCorner ? 1 : 0,
               status: "pending",
               revision_of: slug,
               zulip_stream: "documents",
@@ -392,6 +419,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             updated_at: new Date().toISOString(),
             is_portfolio: isPortfolio ? 1 : 0,
             is_executive_summary: isExecutiveSummary ? 1 : 0,
+            display_in_areslib: displayInAreslib ? 1 : 0,
+            display_in_math_corner: displayInMathCorner ? 1 : 0,
+            display_in_science_corner: displayInScienceCorner ? 1 : 0,
             status,
             content_draft: null,
             zulip_stream: "documents",
@@ -407,6 +437,9 @@ const docTsRestRouter: any = s.router(docContract as any, {
             updated_at: new Date().toISOString(),
             is_portfolio: isPortfolio ? 1 : 0,
             is_executive_summary: isExecutiveSummary ? 1 : 0,
+            display_in_areslib: displayInAreslib ? 1 : 0,
+            display_in_math_corner: displayInMathCorner ? 1 : 0,
+            display_in_science_corner: displayInScienceCorner ? 1 : 0,
             status,
             content_draft: null,
             zulip_stream: "documents",
