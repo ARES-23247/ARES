@@ -41,6 +41,7 @@ import gcRouter from "./routes/internal/gc";
 import storeHandler from "./routes/store";
 import pointsRouter from "./routes/points";
 import aiRouter from "./routes/ai/index";
+import socialQueueRouter from "./routes/socialQueue";
 
 import { logger } from "hono/logger";
 import { sentry } from "@hono/sentry";
@@ -187,6 +188,7 @@ apiRouter.route("/tasks", tasksRouter);
 apiRouter.route("/store", storeHandler);
 apiRouter.route("/points", pointsRouter);
 apiRouter.route("/ai", aiRouter);
+apiRouter.route("/social-queue", socialQueueRouter);
 
 import { simulationsRouter } from "./routes/simulations";
 apiRouter.route("/simulations", simulationsRouter);
@@ -307,6 +309,87 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
       .limit(100)
     )
     .execute();
+
+  // Process scheduled social media posts
+  const now = new Date().toISOString();
+  const pendingPosts = await db.selectFrom("social_queue")
+    .selectAll()
+    .where("status", "=", "pending")
+    .where("scheduled_for", "<=", now)
+    .execute();
+
+  if (pendingPosts.length > 0) {
+    console.log(`[Cron] Processing ${pendingPosts.length} scheduled social posts`);
+
+    // Fetch social settings from database
+    const settings = await db.selectFrom("settings").selectAll().execute();
+    const settingsMap = settings.reduce((acc, s) => {
+      if (s.key) {
+        acc[s.key] = s.value;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+
+    const socialConfig = {
+      DISCORD_WEBHOOK_URL: env.DISCORD_WEBHOOK_URL || settingsMap["DISCORD_WEBHOOK_URL"],
+      MAKE_WEBHOOK_URL: settingsMap["MAKE_WEBHOOK_URL"],
+      BLUESKY_HANDLE: settingsMap["BLUESKY_HANDLE"],
+      BLUESKY_APP_PASSWORD: settingsMap["BLUESKY_APP_PASSWORD"],
+      SLACK_WEBHOOK_URL: settingsMap["SLACK_WEBHOOK_URL"],
+      TEAMS_WEBHOOK_URL: settingsMap["TEAMS_WEBHOOK_URL"],
+      GCHAT_WEBHOOK_URL: settingsMap["GCHAT_WEBHOOK_URL"],
+      FACEBOOK_PAGE_ID: settingsMap["FACEBOOK_PAGE_ID"],
+      FACEBOOK_ACCESS_TOKEN: settingsMap["FACEBOOK_ACCESS_TOKEN"],
+      TWITTER_API_KEY: settingsMap["TWITTER_API_KEY"],
+      TWITTER_API_SECRET: settingsMap["TWITTER_API_SECRET"],
+      TWITTER_ACCESS_TOKEN: settingsMap["TWITTER_ACCESS_TOKEN"],
+      TWITTER_ACCESS_SECRET: settingsMap["TWITTER_ACCESS_SECRET"],
+    };
+
+    const { dispatchSocials } = await import("../utils/socialSync");
+
+    for (const post of pendingPosts) {
+      try {
+        await db.updateTable("social_queue")
+          .set({ status: "processing" })
+          .where("id", "=", post.id)
+          .execute();
+
+        const platforms = JSON.parse(post.platforms);
+
+        await dispatchSocials(
+          db,
+          {
+            title: post.linked_type ? "ARES Content Update" : "ARES Social Post",
+            url: post.linked_type ? `https://aresfirst.org/${post.linked_type}/${post.linked_id}` : "https://aresfirst.org",
+            snippet: post.content,
+            thumbnail: post.media_urls ? JSON.parse(post.media_urls)?.[0] : undefined,
+          },
+          socialConfig,
+          platforms
+        );
+
+        await db.updateTable("social_queue")
+          .set({
+            status: "sent",
+            sent_at: now,
+          })
+          .where("id", "=", post.id)
+          .execute();
+
+        console.log(`[Cron] Sent social post ${post.id}`);
+      } catch (error) {
+        console.error(`[Cron] Failed to send social post ${post.id}:`, error);
+        await db.updateTable("social_queue")
+          .set({
+            status: "failed",
+            error_message: String(error),
+          })
+          .where("id", "=", post.id)
+          .execute();
+      }
+    }
+  }
 
   // Re-index site content for the RAG chatbot knowledge base
   // CRITICAL: Must use dynamic import() — static import pulls AI bindings into every request

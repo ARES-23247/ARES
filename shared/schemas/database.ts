@@ -522,6 +522,22 @@ export interface Session {
   userId: string;
 }
 
+export interface SocialQueue {
+  analytics: Generated<string | null>;
+  content: string;
+  created_at: Generated<string | null>;
+  created_by: string | null;
+  error_message: Generated<string | null>;
+  id: string;
+  linked_id: Generated<string | null>;
+  linked_type: Generated<string | null>;
+  media_urls: Generated<string | null>;
+  platforms: string;
+  scheduled_for: string;
+  sent_at: Generated<string | null>;
+  status: string;
+}
+
 export interface Settings {
   key: string | null;
   updated_at: Generated<string | null>;
@@ -779,6 +795,7 @@ export interface DB {
   session: Session;
   settings: Settings;
   simulations: Simulations;
+  social_queue: SocialQueue;
   sponsor_metrics: SponsorMetrics;
   sponsor_tokens: SponsorTokens;
   sponsors: Sponsors;
