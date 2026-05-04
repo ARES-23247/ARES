@@ -33,6 +33,7 @@ Last activity: 2026-05-04 — Milestone v6.2 started
 | 07 | 03 | PartyKit D1 Snapshot Persistence | `f2618f8` |
 | 08 | 01 | Media Manager E2E Testing | `96ae0b9`, `7acce7e`, `a5ac018` |
 | 08 | - | Accessibility & Layout Fixes (Ad-hoc) | `ec2e66a`, `2dfffca` |
+| 09 | 01 | Media Manager & Zulip E2E Testing | `a70449d` |
 
 ## Key Decisions
 
