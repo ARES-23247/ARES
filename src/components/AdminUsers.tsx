@@ -132,7 +132,7 @@ export default function AdminUsers() {
   };
 
   const auditMutation = api.zulip.auditMissingUsers.useMutation({
-    onSuccess: (data: any) => {
+    onSuccess: (data: { status: 200; body: { success: boolean; missingEmails: string[] } } | { status: 500; body: { success: boolean; error: string } }) => {
       if (data.status === 200) {
         setAuditResult(data.body.missingEmails);
         setShowZulipAudit(true);
@@ -144,7 +144,7 @@ export default function AdminUsers() {
   });
 
   const inviteMutation = api.zulip.inviteUsers.useMutation({
-    onSuccess: (data: any) => {
+    onSuccess: (data: { status: 200; body: { success: boolean; invitedCount: number } } | { status: 500; body: { success: boolean; error: string } }) => {
       if (data.status === 200) {
         toast.success(`Successfully invited ${data.body.invitedCount} users!`);
         setShowZulipAudit(false);

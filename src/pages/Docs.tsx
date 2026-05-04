@@ -10,7 +10,7 @@ import DocsTableOfContents from "../components/docs/DocsTableOfContents";
 import AutonomousLogicDiagram from "../components/docs/AutonomousLogicDiagram";
 import { api } from "../api/client";
 import { useModal } from "../contexts/ModalContext";
-import ZulipThreadViewer from "../components/events/ZulipThreadViewer";
+import ZulipThread from "../components/ZulipThread";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDocs } from "../hooks/useDocs";
 import { ContributorStack } from "../components/ui/ContributorStack";
@@ -281,7 +281,7 @@ export default function Docs() {
               </div>
 
               {/* ── Documentation Discussion ───────────────────────────── */}
-              {slug && session && <ZulipThreadViewer stream="announcements" topic={`Doc: ${currentDoc.title}`} label="Documentation Discussion" />}
+              {slug && session && <ZulipThread stream="announcements" topic={`Doc: ${currentDoc.title}`} />}
             </motion.article>
           )}
         </main>

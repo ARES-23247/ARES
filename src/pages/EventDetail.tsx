@@ -5,7 +5,7 @@ import { format, isBefore } from "date-fns";
 import { motion } from "framer-motion";
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import EventSignups from "../components/EventSignups";
-import ZulipThreadViewer from "../components/events/ZulipThreadViewer";
+import ZulipThread from "../components/ZulipThread";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { api } from "../api/client";
 import SEO from "../components/SEO";
@@ -200,7 +200,7 @@ export default function EventDetail() {
           
           {session && (
             <div className="mt-12">
-              <ZulipThreadViewer stream={event.zulip_stream || "events"} topic={event.zulip_topic || `Event: ${event.title}`} label="Event Discussion" />
+              <ZulipThread stream={event.zulip_stream || "events"} topic={event.zulip_topic || `Event: ${event.title}`} />
             </div>
           )}
         </motion.article>

@@ -7,7 +7,7 @@ import {
 import { api } from "../../api/client";
 import type { TaskItem } from "./ProjectBoardKanban";
 import { KANBAN_SUBTEAMS } from "./ProjectBoardKanban";
-import ZulipThreadViewer from "../events/ZulipThreadViewer";
+import ZulipThread from "../ZulipThread";
 
 interface TaskEditDrawerProps {
   task: TaskItem;
@@ -344,7 +344,7 @@ export default function TaskEditDrawer({ task, onClose, onSave, onDelete }: Task
 
           {/* Task Discussion Thread */}
           <div className="border-t border-white/5 pt-4">
-            <ZulipThreadViewer stream="kanban" topic={task.title} label="Task Discussion" />
+            <ZulipThread stream="kanban" topic={task.title} />
           </div>
         </div>
 

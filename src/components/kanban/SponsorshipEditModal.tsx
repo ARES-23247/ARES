@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Building, DollarSign, Type, AlignLeft, User, CheckCircle2, Plus } from "lucide-react";
 import { api } from "../../api/client";
-import ZulipThreadViewer from "../events/ZulipThreadViewer";
+import ZulipThread from "../ZulipThread";
 
 interface PipelineItem {
   id?: string;
@@ -237,7 +237,7 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
           </div>
 
           <div className="border-t border-white/5 pt-4">
-            <ZulipThreadViewer stream="finance" topic={companyName || "New Sponsorship"} label="Sponsorship Discussion" />
+            <ZulipThread stream="finance" topic={companyName || "New Sponsorship"} />
           </div>
         </div>
 
