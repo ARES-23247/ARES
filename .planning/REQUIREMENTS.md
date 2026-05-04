@@ -18,11 +18,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IMPACT-01 | | Pending |
-| IMPACT-02 | | Pending |
-| IMPACT-03 | | Pending |
-| IMPACT-04 | | Pending |
-| TOOL-01 | | Pending |
+| IMPACT-01 | Phase 12 | Pending |
+| IMPACT-02 | Phase 12 | Pending |
+| IMPACT-03 | Phase 12 | Pending |
+| IMPACT-04 | Phase 12 | Pending |
+| TOOL-01 | Phase 13 | Pending |
 
 ---
 *Requirements defined: 2026-05-04*

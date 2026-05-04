@@ -1,22 +1,35 @@
-# Roadmap: ARESWEB
-
 ## Milestones
 
 - ✅ **v6.1** — Deferred Items & Type Safety (Shipped 2026-05-04)
 - ✅ **v6.2** — Metrics, Testing & UI Polish (Shipped 2026-05-04)
-  *See [milestones/v6.2-ROADMAP.md](milestones/v6.2-ROADMAP.md) for full phase details.*
+- 🚧 **v6.3** — Outreach & Impact Logging Restoration (In Progress)
 
 ## Phases
 
-(No active phases. Run `/gsd-new-milestone` to begin next cycle.)
+### Phase 12: Outreach & Impact Logging Fixes
+**Goal:** Restore full persistence, metrics aggregation, and editing capabilities to the Impact Logging section.
+**Requirements:** IMPACT-01, IMPACT-02, IMPACT-03, IMPACT-04
+**Success Criteria:**
+1. A new outreach log successfully saves to the database and appears in the list.
+2. Users can click to edit existing manually created events and save changes.
+3. Users can add metadata/context or edit synced "dynamic" events (e.g. from calendar sync).
+4. The metrics grid properly calculates and updates total hours, reach, and events based on the database.
+
+### Phase 13: Interactive Tools Foundation
+**Goal:** Establish an embedded architecture framework to support custom utility tools (like kinematics or scouting) directly within ARESWEB.
+**Requirements:** TOOL-01
+**Success Criteria:**
+1. A new interactive tools section or extensible component wrapper is built into the portal.
+2. Framework supports rendering isolated logic (e.g. standalone React components for telemetry or plotting).
 
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| - | - | - | - | - |
+| 12. Outreach Fixes | v6.3 | 0 | Pending | - |
+| 13. Interactive Tools | v6.3 | 0 | Pending | - |
 
 ## Backlog
 
-- **999.1** Investigate Zulip account email syncing mismatches
-- **999.2** 3D Hardware Visualizer (RobotViewer) headless WebGL optimization
+- [999.1] Investigation of Zulip account email syncing
+- [999.2] 3D Hardware Visualizer (RobotViewer) headless WebGL optimization
