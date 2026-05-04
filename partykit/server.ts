@@ -12,6 +12,14 @@ import { onConnect } from "y-partykit";
 export default class YjsServer implements Party.Server {
   constructor(public room: Party.Room) {}
 
+  onRequest(req: Party.Request) {
+    // Return health check for HTTP requests
+    if (req.method === "GET") {
+      return new Response("OK", { status: 200 });
+    }
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
   async onConnect(conn: Party.Connection) {
     // Validate room ID format to prevent potential abuse (CR-09)
     const roomId = this.room.id;

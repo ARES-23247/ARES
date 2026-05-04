@@ -47,21 +47,26 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 5.8 (Feature Expansion)** — Recurring GCal sync, admin cursor pagination, Sentry integration, API latency middleware, and PartyKit collab migration.
 - ✓ **Milestone 5.9 (Trello Parity & Zulip Sync)** — Monday.com-style task modals with embedded PartyKit collaborative editing and ZulipThread integration. Fixed critical tasks API 404 and calendar list view bugs.
 
+- ✓ **Milestone 6.1 (Deferred Items & Type Safety)** — Type Safety for Kysely dynamic table names and Cloudflare AI instances. Zulip API authorization hardening with `ensureAuth` middleware.
+- ✓ **Milestone 6.2 (Metrics, Testing & UI Polish)** — Delivered deferred E2E testing for media manager, built an admin dashboard for platform usage metrics, and polished nested sub-task rendering UI in Kanbans and tables.
+
 ### Active
-- [ ] Media manager E2E testing
-- [ ] Usage metrics admin dashboard
-- [ ] Sub-task UI polish and nested task rendering
 
-## Current Milestone: v6.2 Metrics, Testing & UI Polish
+(None currently active)
 
-**Goal:** Deliver deferred E2E testing and metrics features, and polish the nested task UI.
+## Current Milestone: None
 
-**Target features:**
-- Media manager E2E Playwright coverage
-- Admin dashboard for monitoring usage metrics
-- Polish sub-task rendering and task details UI
+**Goal:** Run `/gsd-new-milestone` to define the next milestone.
 
 ## Current State
+
+<details>
+<summary>v6.2 Shipped Features</summary>
+
+- Media manager E2E Playwright coverage
+- Admin dashboard for monitoring usage metrics
+- Polished sub-task rendering and task details UI
+</details>
 
 <details>
 <summary>v6.1 Shipped Features</summary>
@@ -313,4 +318,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-04 after v5.9 milestone completion*
+*Last updated: 2026-05-04 after v6.2 milestone completion*
