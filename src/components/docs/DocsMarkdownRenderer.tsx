@@ -29,6 +29,11 @@ const FlywheelKvSim = lazy(() => import("../../sims/FlywheelKvSim"));
 const InteractiveTutorial = lazy(() => import("../InteractiveTutorial"));
 const PowerSheddingSim = lazy(() => import("../../sims/PowerSheddingSim"));
 const StateMachineSim = lazy(() => import("../../sims/StateMachineSim"));
+// Additional sims
+const BeeSim = lazy(() => import("../../sims/BeeSim"));
+const TheGreatBeeAdventure = lazy(() => import("../../sims/TheGreatBeeAdventure"));
+const UntitledSimulation = lazy(() => import("../../sims/UntitledSimulation"));
+const Battleship = lazy(() => import("../../sims/battleship"));
 
 function SimLoader() {
   return (
@@ -90,13 +95,14 @@ function DocsMarkdownRenderer({ content }: DocsMarkdownRendererProps) {
         [rehypeSanitize, {
           ...defaultSchema,
           tagNames: [
-            ...(defaultSchema.tagNames || []), 
-            "swervesimulator", "sotmsimulator", "configvisualizer", "codeplayground", 
-            "screenshotgallery", "faultsim", "physicssim", "sysidsim", "visionsim", 
-            "zeroallocationsim", "fieldvisualizer", "troubleshootingwizard", 
-            "performancedashboard", "armkgsim", "autosim", "elevatorpidsim", 
+            ...(defaultSchema.tagNames || []),
+            "swervesimulator", "sotmsimulator", "configvisualizer", "codeplayground",
+            "screenshotgallery", "faultsim", "physicssim", "sysidsim", "visionsim",
+            "zeroallocationsim", "fieldvisualizer", "troubleshootingwizard",
+            "performancedashboard", "armkgsim", "autosim", "elevatorpidsim",
             "flywheelkvsim", "interactivetutorial", "powersheddingsim", "statemachinesim",
-            "simulationplayground"
+            "simulationplayground",
+            "beesim", "thegreatbeeadventure", "untitledsimulation", "battleship"
           ]
         }]
       ]}
@@ -125,6 +131,10 @@ function DocsMarkdownRenderer({ content }: DocsMarkdownRendererProps) {
         interactivetutorial: () => <LazyWrap><InteractiveTutorial /></LazyWrap>,
         powersheddingsim: () => <LazyWrap><PowerSheddingSim /></LazyWrap>,
         statemachinesim: () => <LazyWrap><StateMachineSim /></LazyWrap>,
+        beesim: () => <LazyWrap><BeeSim /></LazyWrap>,
+        thegreatbeeadventure: () => <LazyWrap><TheGreatBeeAdventure /></LazyWrap>,
+        untitledsimulation: () => <LazyWrap><UntitledSimulation /></LazyWrap>,
+        battleship: () => <LazyWrap><Battleship /></LazyWrap>,
         h1: ({ children }) => <h1 className="text-3xl font-bold font-heading mt-10 mb-4 text-white border-b border-white/10 pb-2">{children}</h1>,
         h2: ({ children }) => {
           const text = String(children);
