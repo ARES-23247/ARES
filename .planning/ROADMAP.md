@@ -7,17 +7,17 @@
 - ✅ **v5.7** — Platform Maturity (Shipped 2026-05-03)
 - ✅ [v5.8](milestones/v5.8-ROADMAP.md) — Feature Expansion (Shipped 2026-05-04)
 - ✅ [v5.9](milestones/v5.9-ROADMAP.md) — Trello Parity & Zulip Sync (Shipped 2026-05-04)
-- 🚧 **v6.0** — Real-Time Collaboration Infrastructure (Active)
+- ✅ [v6.0](milestones/v6.0-ROADMAP.md) — Real-Time Collaboration Infrastructure (Shipped 2026-05-04)
 
 ## Phases
 
-### Phase 07: Integration Verification & Resilience
-**Goal:** Validate real-time collaboration across all editor surfaces and add reconnection logic.
+### Phase 08: Deferred Items Cleanup
+**Goal:** Complete deferred items from prior milestones and investigate Zulip account sync.
 
-**Requires:** INT-01, INT-02, INT-03, RES-01, RES-02
-**Depends on:** Phase 06
+**Requires:** DEF-01, DEF-02, INV-01
+**Depends on:** Phase 07
 
 **Plans:** 3 plans
-- [x] 07-01: Multi-user Playwright tests for collaboration (INT-01/02/03)
-- [x] 07-02: Reconnection logic with exponential backoff (RES-01/02)
-- [x] 07-03: Cloud-prem PartyKit deployment with D1 persistence (PK-03)
+- [ ] 08-01: Media manager E2E testing (DEF-01)
+- [ ] 08-02: Usage metrics admin dashboard (DEF-02)
+- [ ] 08-03: Zulip account sync investigation (INV-01)
