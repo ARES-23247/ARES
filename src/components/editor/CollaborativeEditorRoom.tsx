@@ -49,6 +49,8 @@ function ConnectedEditorRoom({
   const [timedOut, setTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
+  // Track all providers for cleanup on unmount (WR-06)
+  const providersRef = useRef<Set<WebsocketProvider>>(new Set());
 
   // Reconnection state
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
@@ -56,6 +58,9 @@ function ConnectedEditorRoom({
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // Capture providers ref for cleanup to avoid stale closure warning
+    const allProviders = providersRef.current;
+
     // Destroy any existing provider before creating a new one (CR-01)
     if (providerRef.current) {
       providerRef.current.destroy();
@@ -63,6 +68,8 @@ function ConnectedEditorRoom({
 
     const newProvider = new YPartyKitProvider(host, roomId, ydoc);
     providerRef.current = newProvider;
+    // Track this provider for cleanup (WR-06)
+    allProviders.add(newProvider);
 
     newProvider.on("synced", (synced: boolean) => {
       if (synced) {
@@ -111,6 +118,9 @@ function ConnectedEditorRoom({
         clearTimeout(reconnectTimeoutRef.current);
       }
       newProvider.destroy();
+      // Destroy all providers that may have been created during reconnection (WR-06)
+      allProviders.forEach(p => p.destroy());
+      allProviders.clear();
     };
   }, [roomId, host, ydoc, onDocLoaded]);
 
@@ -135,6 +145,8 @@ function ConnectedEditorRoom({
       // Create a new provider instance to reconnect
       const newProvider = new YPartyKitProvider(host, roomId, ydoc);
       providerRef.current = newProvider;
+      // Track this provider for cleanup (WR-06)
+      providersRef.current.add(newProvider);
 
       newProvider.on("synced", (synced: boolean) => {
         if (synced) {
@@ -181,6 +193,8 @@ function ConnectedEditorRoom({
 
       const newProvider = new YPartyKitProvider(host, roomId, ydoc);
       providerRef.current = newProvider;
+      // Track this provider for cleanup (WR-06)
+      providersRef.current.add(newProvider);
 
       newProvider.on("synced", (synced: boolean) => {
         if (synced) {
