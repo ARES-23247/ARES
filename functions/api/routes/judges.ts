@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -23,7 +24,7 @@ function sanitizeJudgeContent(content: string): string {
 
 const portfolioCache = new Map<string, { data: any; expiresAt: number }>();
 const judgesTsRestRouter: any = s.router(judgeContract as any, {
-    login: async ({ body }: { body: any }, c: any) => {
+    login: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const { checkPersistentRateLimit } = await import("../middleware/security");
     const db = c.get("db") as Kysely<DB>;
@@ -55,7 +56,7 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
       return { status: 500 as const, body: { error: "Login failed" } };
     }
   },
-    portfolio: async ({ headers }: { headers: any }, c: any) => {
+    portfolio: async ({ headers }: { headers: any }, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const code = headers["x-judge-code"];
@@ -134,7 +135,7 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
       return { status: 500 as const, body: { error: "Portfolio fetch failed" } };
     }
   },
-    listCodes: async (_: any, c: any) => {
+    listCodes: async (_: any, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("judge_access_codes")
@@ -153,7 +154,7 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
       return { status: 500 as const, body: { error: "Failed to fetch codes" } };
     }
   },
-    createCode: async ({ body }: { body: any }, c: any) => {
+    createCode: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const { label, expiresAt } = body;
@@ -175,7 +176,7 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
       return { status: 500 as const, body: { error: "Create failed" } };
     }
   },
-    deleteCode: async ({ params }: { params: any }, c: any) => {
+    deleteCode: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       await db.deleteFrom("judge_access_codes").where("id", "=", params.id).execute();

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -24,7 +25,7 @@ const s = initServer<AppEnv>();
 
 
 const postTsRestRouterObj: any = {
-  getPosts: async (input: any, c: any) => {
+  getPosts: async (input: any, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -107,7 +108,7 @@ const postTsRestRouterObj: any = {
       return { status: 200, body: { posts: [] } }; // Graceful degradation
     }
   },
-  getPost: async (input: any, c: any) => {
+  getPost: async (input: any, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -167,7 +168,7 @@ const postTsRestRouterObj: any = {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  getAdminPosts: async (input: any, c: any) => {
+  getAdminPosts: async (input: any, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -204,7 +205,7 @@ const postTsRestRouterObj: any = {
       return { status: 200, body: { posts: [] } };
     }
   },
-  getAdminPost: async (input: any, c: any) => {
+  getAdminPost: async (input: any, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -233,7 +234,7 @@ const postTsRestRouterObj: any = {
       return { status: 404, body: { error: "Database error" } };
     }
   },
-  savePost: async (input: any, c: any) => {
+  savePost: async (input: any, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -378,7 +379,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  updatePost: async (input: any, c: any) => {
+  updatePost: async (input: any, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     try {
@@ -447,7 +448,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async (input: any, c: any) => {
+  deletePost: async (input: any, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -461,7 +462,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undeletePost: async (input: any, c: any) => {
+  undeletePost: async (input: any, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -474,7 +475,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Undelete failed" } };
     }
   },
-  purgePost: async (input: any, c: any) => {
+  purgePost: async (input: any, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -503,7 +504,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-  approvePost: async (input: any, c: any) => {
+  approvePost: async (input: any, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -515,7 +516,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async (input: any, c: any) => {
+  rejectPost: async (input: any, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     const { reason } = body;
@@ -544,7 +545,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async (input: any, c: any) => {
+  getPostHistory: async (input: any, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -559,7 +560,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Failed to fetch history" } };
     }
   },
-  restorePostHistory: async (input: any, c: any) => {
+  restorePostHistory: async (input: any, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug, id } = params;
     const user = await getSessionUser(c);
@@ -567,7 +568,7 @@ const postTsRestRouterObj: any = {
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async (input: any, c: any) => {
+  repushSocials: async (input: any, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     const { socials } = body;

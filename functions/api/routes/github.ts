@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, getSocialConfig } from "../middleware";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem } from "../../utils/githubProjects";
@@ -15,7 +16,7 @@ interface WeekData {
 }
 
 const githubHandlers = {
-  getBoard: async (_: any, c: any) => {
+  getBoard: async (_: any, c: Context<AppEnv>) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
@@ -42,7 +43,7 @@ const githubHandlers = {
       return { status: 200 as const, body: { success: false, board: [] as any[] } };
     }
   },
-  createItem: async ({ body }: { body: any }, c: any) => {
+  createItem: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
@@ -58,7 +59,7 @@ const githubHandlers = {
       return { status: 500 as const, body: { error: "Failed to create project item" } as any };
     }
   },
-  getActivity: async (_: any, c: any) => {
+  getActivity: async (_: any, c: Context<AppEnv>) => {
     const org = siteConfig.urls.githubOrg;
     const cacheUrl = new URL(c.req.url);
     const cacheKey = new Request(cacheUrl.toString(), c.req.raw);

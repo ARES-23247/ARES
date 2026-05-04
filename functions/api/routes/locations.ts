@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -9,7 +10,7 @@ const s = initServer<AppEnv>();
 export const locationsRouter = new Hono<AppEnv>();
 
 const locationsTsRestRouter: any = s.router(locationContract as any, {
-    list: async (_: any, c: any) => {
+    list: async (_: any, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -30,7 +31,7 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
       return { status: 500 as const, body: { error: "Failed to fetch locations" } as any };
     }
   },
-    adminList: async (_: any, c: any) => {
+    adminList: async (_: any, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -50,7 +51,7 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
       return { status: 500 as const, body: { error: "Failed to fetch locations" } as any };
     }
   },
-    save: async ({ body }: { body: any }, c: any) => {
+    save: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const id = body.id || crypto.randomUUID();
@@ -78,7 +79,7 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
       return { status: 500 as const, body: { error: "Failed to save location", success: false } as any };
     }
   },
-    delete: async ({ params }: { params: any }, c: any) => {
+    delete: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       await db.updateTable("locations")

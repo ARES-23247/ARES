@@ -10,7 +10,7 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 const s = initServer<AppEnv>();
 
 const badgesTsRestRouterObj: any = {
-  list: async (_input: any, c: any) => {
+  list: async (_input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -34,7 +34,7 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to fetch badges" } };
     }
   },
-  create: async (input: any, c: any) => {
+  create: async (input: any, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -54,7 +54,7 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to create badge" } };
     }
   },
-  grant: async (input: any, c: any) => {
+  grant: async (input: any, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -117,7 +117,7 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to award badge" } };
     }
   },
-  revoke: async (input: any, c: any) => {
+  revoke: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -132,7 +132,7 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to revoke badge" } };
     }
   },
-  delete: async (input: any, c: any) => {
+  delete: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -143,7 +143,7 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to delete badge definition" } };
     }
   },
-  leaderboard: async (_input: any, c: any) => {
+  leaderboard: async (_input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db

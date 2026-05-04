@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
@@ -9,7 +10,7 @@ const s = initServer<AppEnv>();
 export const awardsRouter = new Hono<AppEnv>();
 
 const awardsTsRestRouter: any = s.router(awardContract as any, {
-    getAwards: async ({ query }: { query: any }, c: any) => {
+    getAwards: async ({ query }: { query: any }, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = query;
@@ -40,7 +41,7 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       return { status: 500 as const, body: { error: "Failed to fetch awards" } as any };
     }
   },
-    saveAward: async ({ body }: { body: any }, c: any) => {
+    saveAward: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const { id, title, year, event_name, description, image_url, season_id } = body;
@@ -97,7 +98,7 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       return { status: 500 as const, body: { error: "Failed to save award", success: false } as any };
     }
   },
-    deleteAward: async ({ params, body: _body }: { params: any, body: any }, c: any) => {
+    deleteAward: async ({ params, body: _body }: { params: any, body: any }, c: Context<AppEnv>) => {
 
     try {
                   const db = c.get("db") as Kysely<DB>;

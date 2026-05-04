@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -10,7 +11,7 @@ const financeRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
 const financeTsRestRouterObj: any = {
-  getSummary: async (input: any, c: any) => {
+  getSummary: async (input: any, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -58,7 +59,7 @@ const financeTsRestRouterObj: any = {
     }
   },
 
-  listPipeline: async (input: any, c: any) => {
+  listPipeline: async (input: any, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -91,7 +92,7 @@ const financeTsRestRouterObj: any = {
     }
   },
 
-  savePipeline: async (input: any, c: any) => {
+  savePipeline: async (input: any, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -187,7 +188,7 @@ const financeTsRestRouterObj: any = {
     }
   },
 
-  deletePipeline: async (input: any, c: any) => {
+  deletePipeline: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input || {};
       const id = params?.id || c.req?.param("id") || new URL(c.req.raw.url).pathname.split("/").pop();
@@ -200,7 +201,7 @@ const financeTsRestRouterObj: any = {
     }
   },
 
-  listTransactions: async (input: any, c: any) => {
+  listTransactions: async (input: any, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -227,7 +228,7 @@ const financeTsRestRouterObj: any = {
     }
   },
 
-  saveTransaction: async (input: any, c: any) => {
+  saveTransaction: async (input: any, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -260,7 +261,7 @@ const financeTsRestRouterObj: any = {
     }
   },
 
-  deleteTransaction: async (input: any, c: any) => {
+  deleteTransaction: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input || {};
       const id = params?.id || c.req?.param("id") || new URL(c.req.raw.url).pathname.split("/").pop();

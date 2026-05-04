@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { communicationsContract } from "../../../shared/schemas/contracts/communicationsContract";
 import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError } from "../middleware";
@@ -10,7 +11,7 @@ export const communicationsRouter = new Hono<AppEnv>();
 communicationsRouter.use("/*", ensureAdmin);
 
 const handlers = {
-  getStats: async (_args: any, c: any) => {
+  getStats: async (_args: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as any;
       if (!db) {
@@ -26,7 +27,7 @@ const handlers = {
     }
   },
 
-  sendMassEmail: async ({ body }: { body: any }, c: any) => {
+  sendMassEmail: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
       const socialConfig = await getSocialConfig(c);
       

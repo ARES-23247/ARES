@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { AppEnv, getSessionUser, persistentRateLimitMiddleware } from "../middleware";
 import { getAuth } from "../../utils/auth";
 

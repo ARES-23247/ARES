@@ -45,7 +45,7 @@ async function pruneDocHistory(c: Context<AppEnv>, slug: string, limit = 10) {
 }
 
 const docTsRestRouter: any = s.router(docContract as any, {
-  getDocs: async (_: any, c: any) => {
+  getDocs: async (_: any, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       let results;
@@ -108,7 +108,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Failed to fetch documents" } as any };
     }
   },
-  searchDocs: async ({ query }: { query: any }, c: any) => {
+  searchDocs: async ({ query }: { query: any }, c: Context<AppEnv>) => {
     const { q } = query;
             if (!q || q.length < 3) return { status: 200 as const, body: { results: [] } };
     try {
@@ -144,7 +144,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Search failed" } as any };
     }
   },
-    getDoc: async ({ params }: { params: any }, c: any) => {
+    getDoc: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const { slug } = params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -234,7 +234,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
     }
   },
 
-    adminList: async (_: any, c: any) => {
+    adminList: async (_: any, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       let results;
@@ -268,7 +268,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Failed to fetch docs" } as any };
     }
   },
-    adminDetail: async ({ params }: { params: any }, c: any) => {
+    adminDetail: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const { slug } = params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -304,7 +304,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Database error" } as any };
     }
   },
-    deleteDoc: async ({ params }: { params: any }, c: any) => {
+    deleteDoc: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -320,7 +320,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Delete failed" } as any };
     }
   },
-    saveDoc: async ({ body }: { body: any }, c: any) => {
+    saveDoc: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft } = body;
@@ -454,7 +454,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
     }
 
   },
-    updateSort: async ({ params, body }: { params: any, body: any }, c: any) => {
+    updateSort: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
     const { slug } = params;
             const { sortOrder } = body;
     try {
@@ -466,7 +466,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Sort update failed" } as any };
     }
   },
-    submitFeedback: async ({ params, body }: { params: any, body: any }, c: any) => {
+    submitFeedback: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
     const { slug } = params;
             const { isHelpful, comment, turnstileToken } = body;
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
@@ -487,7 +487,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Feedback failed" } as any };
     }
   },
-    getHistory: async ({ params }: { params: any }, c: any) => {
+    getHistory: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const { slug } = params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -509,7 +509,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Failed to fetch history" } as any };
     }
   },
-    restoreHistory: async ({ params, id }: { params: any, id: any }, c: any) => {
+    restoreHistory: async ({ params, id }: { params: any, id: any }, c: Context<AppEnv>) => {
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -561,7 +561,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Restore failed" } as any };
     }
   },
-    approveDoc: async ({ params }: { params: any }, c: any) => {
+    approveDoc: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const { slug } = params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -603,7 +603,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Approve failed" } as any };
     }
   },
-    rejectDoc: async ({ params, body }: { params: any, body: any }, c: any) => {
+    rejectDoc: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
     const { slug } = params;
             const { reason } = body;
     try {
@@ -620,7 +620,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Reject failed" } as any };
     }
   },
-    undeleteDoc: async ({ params }: { params: any }, c: any) => {
+    undeleteDoc: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const { slug } = params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -631,7 +631,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
       return { status: 500 as const, body: { error: "Undelete failed" } as any };
     }
   },
-    purgeDoc: async ({ params }: { params: any }, c: any) => {
+    purgeDoc: async ({ params }: { params: any }, c: Context<AppEnv>) => {
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;

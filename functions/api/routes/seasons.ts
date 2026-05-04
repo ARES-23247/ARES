@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { seasonContract } from "../../../shared/schemas/contracts/seasonContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
@@ -11,7 +12,7 @@ const _s = initServer<AppEnv>();
 
 
 const seasonsTsRestRouterObj: any = {
-  list: async (_input: any, c: any) => {
+  list: async (_input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -35,7 +36,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch seasons" } };
     }
   },
-  adminList: async (_input: any, c: any) => {
+  adminList: async (_input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -57,7 +58,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to list seasons" } };
     }
   },
-  adminDetail: async (input: any, c: any) => {
+  adminDetail: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -86,7 +87,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch season" } };
     }
   },
-  getDetail: async (input: any, c: any) => {
+  getDetail: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -124,7 +125,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch season details" } };
     }
   },
-  save: async (input: any, c: any) => {
+  save: async (input: any, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -188,7 +189,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Save failed" } };
     }
   },
-  delete: async (input: any, c: any) => {
+  delete: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -205,7 +206,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-  undelete: async (input: any, c: any) => {
+  undelete: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -221,7 +222,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Restore failed" } };
     }
   },
-  purge: async (input: any, c: any) => {
+  purge: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;

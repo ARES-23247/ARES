@@ -329,5 +329,6 @@ const zulipTsRestRouter = s.router(zulipContract, zulipHandlers as any);
 zulipRouter.use("/presence", ensureAdmin);
 zulipRouter.use("/invites/*", ensureAdmin);
 zulipRouter.use("/message", ensureAuth);
+zulipRouter.use("/topic", ensureAuth);
 createHonoEndpoints(zulipContract, zulipTsRestRouter, zulipRouter);
 export default zulipRouter;

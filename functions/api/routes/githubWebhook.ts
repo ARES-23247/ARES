@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { AppEnv  } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 

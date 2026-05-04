@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints } from "ts-rest-hono";
@@ -8,7 +9,7 @@ import { AppEnv, ensureAuth, logAuditAction } from "../middleware";
 export const entitiesRouter = new Hono<AppEnv>();
 
 const entityHandlers = {
-  getLinks: async ({ query }: any, c: any) => {
+  getLinks: async ({ query }: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { type, id } = query;
@@ -72,7 +73,7 @@ const entityHandlers = {
     }
   },
 
-  saveLink: async ({ body }: any, c: any) => {
+  saveLink: async ({ body }: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = crypto.randomUUID();
@@ -96,7 +97,7 @@ const entityHandlers = {
     }
   },
 
-  deleteLink: async ({ params }: any, c: any) => {
+  deleteLink: async ({ params }: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("entity_links").where("id", "=", params.id).execute();
