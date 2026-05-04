@@ -11,6 +11,16 @@ import { Context } from "hono";
 import { z } from "zod";
 import { zulipPresenceSchema } from "../../../shared/schemas/contracts/zulipContract";
 
+// Normalize Gmail addresses by removing dots (john.doe@gmail.com -> johndoe@gmail.com)
+// Gmail ignores dots in the local part, so these are the same address
+function normalizeGmail(email: string): string {
+  if (!email.endsWith("@gmail.com") && !email.endsWith("@googlemail.com")) {
+    return email;
+  }
+  const [local, domain] = email.split("@");
+  return `${local.replace(/\./g, "")}@${domain}`;
+}
+
 const zulipHandlers = {
   getPresence: async (_: any, c: Context<AppEnv>) => {
     try {
@@ -174,7 +184,7 @@ const zulipHandlers = {
         const beforeSize = zulipEmails.size;
         for (const m of zulipData.members) {
           if (m.is_active !== false && !m.is_bot) {
-            const email = (m.delivery_email || m.email).toLowerCase();
+            const email = normalizeGmail((m.delivery_email || m.email).toLowerCase());
             zulipEmails.add(email);
           }
         }
@@ -195,9 +205,21 @@ const zulipHandlers = {
 
       const missingEmails = aresUsers
         .map(u => u.email)
-        .filter(email => email && !zulipEmails.has(email.toLowerCase()));
+        .filter(email => {
+          if (!email) return false;
+          const normalized = normalizeGmail(email.toLowerCase());
+          return !zulipEmails.has(normalized);
+        });
 
       console.log(`[Zulip:Audit] ${aresUsers.length} ARES users, ${missingEmails.length} missing from Zulip`);
+
+      // Debug: Log sample emails for comparison
+      if (missingEmails.length > 0) {
+        const sampleZulip = Array.from(zulipEmails).slice(0, 5);
+        const sampleMissing = missingEmails.slice(0, 5);
+        console.log(`[Zulip:Audit] DEBUG - Sample Zulip emails:`, sampleZulip.join(", "));
+        console.log(`[Zulip:Audit] DEBUG - Sample missing ARES emails:`, sampleMissing.join(", "));
+      }
 
       return { status: 200 as const, body: { success: true, missingEmails } as any };
     } catch (err) {
