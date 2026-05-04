@@ -45,6 +45,7 @@ export type Bindings = {
   ARES_KV?: KVNamespace;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
+  SENTRY_DSN?: string;
 };
 
 export type Variables = {

@@ -43,7 +43,18 @@ import storeHandler from "./routes/store";
 import pointsRouter from "./routes/points";
 import aiRouter from "./routes/ai/index";
 
+import { logger } from "hono/logger";
+import { sentry } from "@hono/sentry";
+
 const app = new Hono<AppEnv>();
+
+app.use("*", logger());
+app.use("*", async (c, next) => {
+  if (c.env.SENTRY_DSN) {
+    return sentry({ dsn: c.env.SENTRY_DSN })(c, next);
+  }
+  await next();
+});
 
 // ── 2. Isolate-Memory Rate Limiting (Fast reject) ────────────────────
 app.use("*", async (c, next) => {

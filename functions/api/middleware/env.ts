@@ -19,6 +19,7 @@ export function getValidatedEnv(runtimeEnv: Record<string, unknown>) {
       DEV_BYPASS: z.string().optional(),
       LIVEBLOCKS_SECRET_KEY: z.string().min(1, "Liveblocks Secret is required"),
       CRON_SECRET: z.string().optional(),
+      SENTRY_DSN: z.string().optional(),
     },
     clientPrefix: "PUBLIC_",
     client: {},
