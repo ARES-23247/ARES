@@ -17,7 +17,7 @@
 **Requires:** INT-01, INT-02, INT-03, RES-01, RES-02
 **Depends on:** Phase 06
 
-**Plans:**
-- [ ] 07-1: Multi-tab collab testing across Docs/Blog/Events/Tasks editors
-- [ ] 07-2: Standalone fallback and reconnection resilience testing
-- [ ] 07-3: D1 cloud-prem deployment for PartyKit snapshot persistence (PK-03 deferred)
+**Plans:** 3 plans
+- [ ] 07-01: Multi-user Playwright tests for collaboration (INT-01/02/03)
+- [ ] 07-02: Reconnection logic with exponential backoff (RES-01/02)
+- [ ] 07-03: Cloud-prem PartyKit deployment with D1 persistence (PK-03)
