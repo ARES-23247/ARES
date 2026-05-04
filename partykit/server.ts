@@ -29,8 +29,12 @@ export default class YjsServer implements Party.Server {
             .first<{ state: string }>();
 
           if (result?.state) {
-            // Decode base64 to Uint8Array
-            const binary = Uint8Array.from(atob(result.state), c => c.charCodeAt(0));
+            // Decode base64 to Uint8Array (loop-based for large documents)
+            const binaryStr = atob(result.state);
+            const binary = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) {
+              binary[i] = binaryStr.charCodeAt(i);
+            }
             // Create a new Y.Doc and apply the state
             const doc = new Y.Doc();
             Y.applyUpdate(doc, binary);
@@ -55,8 +59,8 @@ export default class YjsServer implements Party.Server {
           try {
             // Encode document state as Uint8Array
             const state = Y.encodeStateAsUpdate(doc);
-            // Convert to base64 for D1 BLOB storage
-            const base64 = btoa(String.fromCharCode(...state));
+            // Convert to base64 for D1 BLOB storage (loop-based for large documents)
+            const base64 = btoa(String.fromCharCode.apply(null, Array.from(state)));
 
             await (
               db
