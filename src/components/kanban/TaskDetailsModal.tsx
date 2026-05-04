@@ -256,10 +256,11 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete, onTa
                 ) : (
                   <div className="flex flex-col gap-2">
                     {subtasks.map((st: TaskItem) => (
-                      <div 
+                      <button 
                         key={st.id} 
+                        type="button"
                         onClick={() => onTaskClick?.(st)}
-                        className="flex items-center justify-between p-3 border border-white/5 bg-black/40 hover:bg-white/5 ares-cut-sm transition-colors cursor-pointer group"
+                        className="flex items-center justify-between p-3 border border-white/5 bg-black/40 hover:bg-white/5 ares-cut-sm transition-colors cursor-pointer group w-full text-left"
                       >
                         <div className="flex items-center gap-3">
                           <span className={`w-2 h-2 rounded-full ${st.status === "done" ? "bg-ares-gold" : "bg-ares-cyan"}`} />
@@ -268,7 +269,7 @@ export default function TaskDetailsModal({ task, onClose, onSave, onDelete, onTa
                           </span>
                         </div>
                         <span className="text-xs text-ares-gray uppercase tracking-wider">{st.status}</span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
