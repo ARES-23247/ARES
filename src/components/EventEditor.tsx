@@ -32,7 +32,7 @@ import { CollaborativeEditorRoom, useCollaborativeEditor } from "./editor/Collab
 import VersionHistorySidebar from "./editor/VersionHistorySidebar";
 import ZulipThread from "./ZulipThread";
 
-function EventEditorInner({ editId, userRole, roomId: _roomId }: { editId?: string, userRole?: string | unknown, roomId?: string | null }) {
+function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: string | unknown, roomId?: string | null }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const modal = useModal();

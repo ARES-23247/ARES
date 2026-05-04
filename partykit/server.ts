@@ -13,7 +13,7 @@ import * as Y from "yjs";
  */
 
 export default class YjsServer implements Party.Server {
-  constructor(public room: Party.Room, public env: any) {}
+  constructor(public room: Party.Room, public env: Env) {}
 
   async onConnect(conn: Party.Connection) {
     // Initialize D1 snapshot persistence

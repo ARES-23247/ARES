@@ -12,7 +12,8 @@ export const siteConfig = {
     zulip: "https://aresfirst.zulipchat.com",
     bluesky: "ares23247.bsky.social",
     tiktok: "ares.robotics.23247",
-    onshape: "https://cad.onshape.com/documents?nodeId=681f8b6764dc7e001a56cb6e&resourceType=resourcecompanyowner"
+    onshape: "https://cad.onshape.com/documents?nodeId=681f8b6764dc7e001a56cb6e&resourceType=resourcecompanyowner",
+    toa: "https://theorangealliance.org/teams/23247"
   },
   contact: {
     email: "contact@aresfirst.org",
