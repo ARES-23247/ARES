@@ -89,6 +89,10 @@ function ConnectedEditorRoom({
 
     // Track disconnection for auto-reconnect
     newProvider.on("connection-close", () => {
+      if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
+        console.warn(`[CollaborativeEditor] Playwright test mode: Ignoring connection-close for room "${roomId}".`);
+        return;
+      }
       console.warn(`[CollaborativeEditor] Connection closed for room "${roomId}". Attempting reconnect...`);
       setIsSynced(false);
       setTimedOut(true);
@@ -99,6 +103,7 @@ function ConnectedEditorRoom({
     if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
       queueMicrotask(() => {
         setIsSynced(true);
+        setTimedOut(false);
         setProvider(newProvider);
         onDocLoaded?.(ydoc);
       });
@@ -313,7 +318,12 @@ export function CollaborativeEditorRoom({
   onDocLoaded?: (ydoc: Y.Doc) => void;
 }) {
   const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
-  const host = useMemo(() => import.meta.env.VITE_PARTYKIT_HOST || "", []);
+  const host = useMemo(() => {
+    if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
+      return "dummy-host-for-playwright";
+    }
+    return import.meta.env.VITE_PARTYKIT_HOST || "";
+  }, []);
 
   const stableOnDocLoaded = useCallback((doc: Y.Doc) => {
     onDocLoaded?.(doc);

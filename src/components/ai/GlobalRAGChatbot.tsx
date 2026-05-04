@@ -207,7 +207,7 @@ export function GlobalRAGChatbot() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-center space-x-1 mt-8 text-[10px] text-zinc-400 font-medium uppercase tracking-widest">
+              <div className="flex items-center justify-center space-x-1 mt-8 text-[10px] text-white font-medium uppercase tracking-widest">
                 <ShieldAlert className="w-3 h-3" />
                 <span>Zero PII Retained</span>
               </div>

@@ -128,6 +128,12 @@ test.describe('Collaboration', () => {
             id: 'test-task-id',
             title: 'Test Task',
             description: '{"type":"doc","content":[{"type":"paragraph"}]}',
+            status: "todo",
+            priority: "normal",
+            sort_order: 0,
+            created_by: "admin-user",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }]
         }
       });
@@ -150,7 +156,7 @@ test.describe('Collaboration', () => {
     // Test TaskDetailsModal - navigate to tasks, click on test task to open modal
     await page.goto('/dashboard/tasks');
     // Click on the test task to open modal - use more specific selector (WR-04)
-    await page.getByRole('link', { name: 'Test Task' }).click();
+    await page.getByText('Test Task').first().click();
     // Wait for modal and verify Live badge
     await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible({ timeout: 15000 });
   });

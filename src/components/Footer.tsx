@@ -127,7 +127,7 @@ export default function Footer() {
             <span className="opacity-80">23247. All Rights Reserved.</span>
           </p>
           <p className="text-marble/60 text-[8px] uppercase tracking-widest">
-            Made with <span className="text-[#ff6b81]">♥</span> in Morgantown, West Virginia
+            Made with <span className="text-white">♥</span> in Morgantown, West Virginia
           </p>
         </div>
         

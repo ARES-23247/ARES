@@ -58,9 +58,9 @@ export default function Leaderboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4"
+            className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4 text-white"
           >
-            Team <span className="text-ares-gold">Leaderboard</span>
+            Team Leaderboard
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
