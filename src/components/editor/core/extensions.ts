@@ -74,6 +74,7 @@ export const getEditorExtensions = (lowlight: unknown, ydoc?: Y.Doc, provider?: 
   SlashCommands.configure({
     suggestion: {
       render: () => suggestionRenderer(CommandsList),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tiptap Suggestion type doesn't match our renderer
     } as any,
   }),
   Mention.configure({

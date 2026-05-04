@@ -230,7 +230,7 @@ export default function TaskBoardPage() {
         ) : (
           <TaskTableView
             tasks={filteredTasks}
-            onRowClick={(task) => {
+            onRowClick={(_task) => {
               // Future: Open task details modal when clicking a row
             }}
           />

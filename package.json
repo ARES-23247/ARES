@@ -149,7 +149,7 @@
     "tiptap-extension-global-drag-handle": "^0.1.18",
     "tiptap-extension-mermaid": "^0.0.0",
     "ts-rest-hono": "^0.5.0",
-    "unenv": "^1.10.0",
+    "unenv": "2.0.0-rc.24",
     "uuid": "^14.0.0",
     "vaul": "^1.1.2",
     "y-partykit": "^0.0.33",
