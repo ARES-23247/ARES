@@ -34,6 +34,8 @@ jobs:
 
       - name: Build with Vite
         run: npm run build
+        env:
+          VITE_PARTYKIT_HOST: aresweb-partykit.thehomelessguy.partykit.dev
 
       - name: Check Pending D1 Migrations
         uses: cloudflare/wrangler-action@v3
