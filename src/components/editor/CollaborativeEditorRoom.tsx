@@ -48,6 +48,7 @@ function ConnectedEditorRoom({
   const [isSynced, setIsSynced] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const providerRef = useRef<any>(null);
 
   // Reconnection state
   const [reconnectAttempt, setReconnectAttempt] = useState(0);
@@ -55,7 +56,13 @@ function ConnectedEditorRoom({
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // Destroy any existing provider before creating a new one (CR-01)
+    if (providerRef.current) {
+      providerRef.current.destroy();
+    }
+
     const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+    providerRef.current = newProvider;
 
     newProvider.on("synced", (synced: boolean) => {
       if (synced && timeoutRef.current) {
@@ -116,8 +123,14 @@ function ConnectedEditorRoom({
     console.warn(`[CollaborativeEditor] Reconnection attempt ${reconnectAttempt + 1}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
 
     reconnectTimeoutRef.current = setTimeout(() => {
+      // Destroy any existing provider before creating a new one (CR-01)
+      if (providerRef.current) {
+        providerRef.current.destroy();
+      }
+
       // Create a new provider instance to reconnect
       const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+      providerRef.current = newProvider;
 
       newProvider.on("synced", (synced: boolean) => {
         if (synced) {
@@ -155,7 +168,13 @@ function ConnectedEditorRoom({
     // Trigger reconnection with reset attempt count
     const delay = RECONNECT_DELAYS[0];
     reconnectTimeoutRef.current = setTimeout(() => {
+      // Destroy any existing provider before creating a new one (CR-01)
+      if (providerRef.current) {
+        providerRef.current.destroy();
+      }
+
       const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+      providerRef.current = newProvider;
 
       newProvider.on("synced", (synced: boolean) => {
         if (synced) {
