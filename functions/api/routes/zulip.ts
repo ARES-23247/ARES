@@ -268,6 +268,8 @@ const zulipHandlers = {
       let totalInvited = 0;
       const allErrors: string[] = [];
 
+      console.log(`[Zulip:Invite] Starting invite for ${emails.length} emails to ${baseUrl}`);
+
       for (let i = 0; i < emails.length; i += BATCH_SIZE) {
         const batch = emails.slice(i, i + BATCH_SIZE);
         const params = new URLSearchParams();
@@ -277,22 +279,29 @@ const zulipHandlers = {
         params.append("invite_as", "400"); // Member
 
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
           const inviteRes = await fetch(`${baseUrl}/api/v1/invites`, {
             method: "POST",
-            headers: { 
+            headers: {
               "Authorization": authHeader,
               "Content-Type": "application/x-www-form-urlencoded"
             },
-            body: params
+            body: params,
+            signal: controller.signal
           });
 
+          clearTimeout(timeoutId);
           const resText = await inviteRes.text();
-          
+
+          console.log(`[Zulip:Invite] Batch ${i / BATCH_SIZE + 1} response: ${inviteRes.status}`);
+
           if (inviteRes.ok) {
             totalInvited += batch.length;
           } else {
             console.error(`[Zulip:Invite] Batch ${i / BATCH_SIZE + 1} error (${inviteRes.status}):`, resText);
-            
+
             try {
               const errJson = JSON.parse(resText);
               if (errJson.sent_invitations === true) {
@@ -308,7 +317,14 @@ const zulipHandlers = {
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           console.error(`[Zulip:Invite] Batch ${i / BATCH_SIZE + 1} fetch error:`, msg);
-          allErrors.push(msg);
+          // Provide more helpful error message for common failures
+          if (msg.includes("fetch failed") || msg.includes("ECONNREFUSED") || msg.includes("network") || msg.includes("ENOTFOUND")) {
+            allErrors.push(`Network error connecting to Zulip (${baseUrl}). Check URL, DNS, and firewall.`);
+          } else if (msg.includes("aborted")) {
+            allErrors.push(`Request timeout after 30 seconds. Zulip may be slow or unreachable.`);
+          } else {
+            allErrors.push(msg);
+          }
         }
       }
 
