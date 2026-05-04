@@ -1,22 +1,39 @@
 import { useEffect, useState } from "react";
 import { useCollaborativeEditor } from "./CollaborativeEditorRoom";
 
+interface AwarenessState {
+  user?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  [x: string]: unknown;
+}
+
+interface PresenceUser {
+  connectionId: string;
+  info: {
+    name: string;
+    avatar?: string;
+  };
+}
+
 export default function PresenceAvatars() {
   const { provider } = useCollaborativeEditor();
-  const [others, setOthers] = useState<any[]>([]);
+  const [others, setOthers] = useState<PresenceUser[]>([]);
 
   useEffect(() => {
     if (!provider || !provider.awareness) return;
 
     const updatePresence = () => {
-      const states = Array.from(provider.awareness.getStates().values());
+      const states = Array.from(provider.awareness.getStates().values()) as AwarenessState[];
       // Filter out ourselves if we want, or just show all connected users
-      const allOthers = states.filter((state: any) => state.user);
-      setOthers(allOthers.map((s: any) => ({
-        connectionId: s.user.id || Math.random().toString(),
+      const allOthers = states.filter((state) => state.user);
+      setOthers(allOthers.map((s) => ({
+        connectionId: s.user!.id || Math.random().toString(),
         info: {
-          name: s.user.name,
-          avatar: s.user.avatar,
+          name: s.user!.name,
+          avatar: s.user!.avatar,
         }
       })));
     };

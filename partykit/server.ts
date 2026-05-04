@@ -5,7 +5,7 @@ import * as Y from "yjs";
 export default class YjsServer implements Party.Server {
   constructor(public room: Party.Room) {}
 
-  async onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
+  async onConnect(conn: Party.Connection) {
     // Basic y-partykit setup
     await onConnect(conn, this.room, {
       persist: true, // We can hook into persistence below

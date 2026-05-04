@@ -12,7 +12,7 @@ test.describe('Calendar Repair API Integration', () => {
     await page.goto('/');
   });
 
-  test('POST /api/events/admin/sync triggers calendar repair', async ({ request, page }) => {
+  test('POST /api/events/admin/sync triggers calendar repair', async ({ page }) => {
     // We mock the auth endpoint for any internal checks, though request uses the cookie
     await page.route('**/api/auth/get-session', async route => {
       await route.fulfill({

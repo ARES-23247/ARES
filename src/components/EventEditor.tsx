@@ -134,7 +134,6 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
 
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDeleted(event.is_deleted === 1);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsException(event.recurring_exception === 1);
       reset({
         title: event.title || "",

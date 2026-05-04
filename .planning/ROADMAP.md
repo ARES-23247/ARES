@@ -5,7 +5,7 @@
 - ✅ **v5.5** — Kanban, Science Corner & Recurring Events (Shipped 2026-05-02)
 - ✅ **v5.6** — Stability & Polish (Shipped 2026-05-03)
 - ✅ **v5.7** — Platform Maturity (Shipped 2026-05-03)
-- 🚧 **v5.8** — Feature Expansion (In Progress)
+- ✅ **v5.8** — Feature Expansion (Shipped 2026-05-04)
 
 ## Phases
 

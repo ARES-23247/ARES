@@ -135,7 +135,7 @@ function prepareGcalPayload(event: ARES_Event) {
   const cleanDescription = parseAstToText(event.description || "");
   const notesText = event.meeting_notes ? `\n\n--- Meeting Notes ---\n${event.meeting_notes}` : "";
 
-  const result: any = {
+  const result: Record<string, unknown> = {
     summary: event.title,
     location: event.location || "",
     description: cleanDescription + notesText,

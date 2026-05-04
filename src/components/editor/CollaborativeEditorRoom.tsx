@@ -21,12 +21,12 @@ export function useCollaborativeEditor() {
 export function CollaborativeEditorRoom({
   roomId,
   children,
-  initialContent,
+  _initialContent,
   onDocLoaded,
 }: {
   roomId: string;
   children: React.ReactNode;
-  initialContent?: string;
+  _initialContent?: string;
   onDocLoaded?: (ydoc: Y.Doc) => void;
 }) {
   const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
@@ -37,6 +37,7 @@ export function CollaborativeEditorRoom({
     // Determine host: dev vs production
     const host = import.meta.env.VITE_PARTYKIT_HOST || "localhost:1999";
     const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProvider(newProvider);
 
     newProvider.on("synced", (synced: boolean) => {

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 
-type CellState = 'empty' | 'ship' | 'hit' | 'miss' | 'sunk';
+
 type Orientation = 'horizontal' | 'vertical';
 type GamePhase = 'placing' | 'playing' | 'gameover';
 
@@ -103,6 +103,28 @@ function createAi(): AiState {
   return { mode: 'hunt', targets: [], hitStack: [] };
 }
 
+// Check if a set of hits sinks a specific ship
+function checkShipSunk(ship: PlacedShip, hits: Set<string>): boolean {
+  return ship.cells.every(c => hits.has(`${c.row},${c.col}`));
+}
+
+// Get all currently sunk ships for a side
+function getSunkShips(ships: PlacedShip[], hits: Set<string>): PlacedShip[] {
+  return ships.filter(s => checkShipSunk(s, hits));
+}
+
+// Get all sunk cells
+function getSunkCellSet(ships: PlacedShip[], hits: Set<string>): Set<string> {
+  const sunk = getSunkShips(ships, hits);
+  const cells = new Set<string>();
+  for (const s of sunk) {
+    for (const c of s.cells) {
+      cells.add(`${c.row},${c.col}`);
+    }
+  }
+  return cells;
+}
+
 export default function SimComponent() {
   // Player state
   const [placedShips, setPlacedShips] = useState<PlacedShip[]>([]);
@@ -148,6 +170,7 @@ export default function SimComponent() {
   // Initialize opponent ships
   useEffect(() => {
     const ships = generateRandomShips();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpponentShips(ships);
     setOpponentGrid(buildGridFromShips(ships));
   }, []);
@@ -177,27 +200,6 @@ export default function SimComponent() {
     [placedShips]
   );
 
-  // Check if a set of hits sinks a specific ship
-  function checkShipSunk(ship: PlacedShip, hits: Set<string>): boolean {
-    return ship.cells.every(c => hits.has(`${c.row},${c.col}`));
-  }
-
-  // Get all currently sunk ships for a side
-  function getSunkShips(ships: PlacedShip[], hits: Set<string>): PlacedShip[] {
-    return ships.filter(s => checkShipSunk(s, hits));
-  }
-
-  // Get all sunk cells
-  function getSunkCellSet(ships: PlacedShip[], hits: Set<string>): Set<string> {
-    const sunk = getSunkShips(ships, hits);
-    const cells = new Set<string>();
-    for (const s of sunk) {
-      for (const c of s.cells) {
-        cells.add(`${c.row},${c.col}`);
-      }
-    }
-    return cells;
-  }
 
   // Handle placing a ship
   const handlePlaceShip = useCallback(
@@ -247,60 +249,6 @@ export default function SimComponent() {
     setPhase('playing');
     setMessage('Ships randomly placed! Fire on the enemy grid!');
   }, []);
-
-  // Player fires at opponent
-  const handleFire = useCallback(
-    (row: number, col: number) => {
-      if (phase !== 'playing' || isComputerTurn) return;
-      const key = `${row},${col}`;
-      if (playerHitsRef.current.has(key) || playerMissesRef.current.has(key)) return;
-
-      const newHits = new Set(playerHitsRef.current);
-      const newMisses = new Set(playerMissesRef.current);
-      const isHit = opponentGrid[row][col] !== '';
-
-      if (isHit) {
-        newHits.add(key);
-      } else {
-        newMisses.add(key);
-      }
-      setPlayerHits(newHits);
-      setPlayerMisses(newMisses);
-
-      // Check for sunk ships
-      const sunk = getSunkShips(opponentShips, newHits);
-      const sunkNames = sunk.map(s => s.def.name);
-      setOpponentSunkShips(sunkNames);
-      setOpponentSunkCells(getSunkCellSet(opponentShips, newHits));
-
-      // Check for game over
-      if (sunk.length === SHIPS.length) {
-        setPhase('gameover');
-        setWinner('player');
-        setMessage('🎉 Victory! You sank the entire enemy fleet!');
-        return;
-      }
-
-      const justSunk = sunk.find(
-        s => s.cells.every(c => newHits.has(`${c.row},${c.col}`)) && !opponentSunkShips.includes(s.def.name)
-      );
-      if (isHit && justSunk) {
-        setMessage(`💥 Hit! You sank their ${justSunk.def.name}!`);
-      } else if (isHit) {
-        setMessage('💥 Hit!');
-      } else {
-        setMessage('💨 Miss.');
-      }
-
-      // Computer's turn
-      setIsComputerTurn(true);
-      setTimeout(() => {
-        doComputerTurn();
-        setIsComputerTurn(false);
-      }, 700);
-    },
-    [phase, isComputerTurn, opponentGrid, opponentShips, opponentSunkShips]
-  );
 
   // Computer AI turn
   const doComputerTurn = useCallback(() => {
@@ -402,6 +350,62 @@ export default function SimComponent() {
       setMessage('Your turn — fire on the enemy grid!');
     }
   }, []);
+
+  // Player fires at opponent
+  const handleFire = useCallback(
+    (row: number, col: number) => {
+      if (phase !== 'playing' || isComputerTurn) return;
+      const key = `${row},${col}`;
+      if (playerHitsRef.current.has(key) || playerMissesRef.current.has(key)) return;
+
+      const newHits = new Set(playerHitsRef.current);
+      const newMisses = new Set(playerMissesRef.current);
+      const isHit = opponentGrid[row][col] !== '';
+
+      if (isHit) {
+        newHits.add(key);
+      } else {
+        newMisses.add(key);
+      }
+      setPlayerHits(newHits);
+      setPlayerMisses(newMisses);
+
+      // Check for sunk ships
+      const sunk = getSunkShips(opponentShips, newHits);
+      const sunkNames = sunk.map(s => s.def.name);
+      setOpponentSunkShips(sunkNames);
+      setOpponentSunkCells(getSunkCellSet(opponentShips, newHits));
+
+      // Check for game over
+      if (sunk.length === SHIPS.length) {
+        setPhase('gameover');
+        setWinner('player');
+        setMessage('🎉 Victory! You sank the entire enemy fleet!');
+        return;
+      }
+
+      const justSunk = sunk.find(
+        s => s.cells.every(c => newHits.has(`${c.row},${c.col}`)) && !opponentSunkShips.includes(s.def.name)
+      );
+      if (isHit && justSunk) {
+        setMessage(`💥 Hit! You sank their ${justSunk.def.name}!`);
+      } else if (isHit) {
+        setMessage('💥 Hit!');
+      } else {
+        setMessage('💨 Miss.');
+      }
+
+      // Computer's turn
+      setIsComputerTurn(true);
+      setTimeout(() => {
+        doComputerTurn();
+        setIsComputerTurn(false);
+      }, 700);
+    },
+    [phase, isComputerTurn, opponentGrid, opponentShips, opponentSunkShips, doComputerTurn]
+  );
+
+
 
   // Reset
   const handleReset = useCallback(() => {
@@ -561,6 +565,14 @@ export default function SimComponent() {
                 return (
                   <div
                     key={ci}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        if (boardType === 'player' && phase === 'placing') handlePlaceShip(ri, ci);
+                        else if (boardType === 'opponent' && phase === 'playing') handleFire(ri, ci);
+                      }
+                    }}
                     onClick={() => {
                       if (boardType === 'player' && phase === 'placing') handlePlaceShip(ri, ci);
                       else if (boardType === 'opponent' && phase === 'playing') handleFire(ri, ci);
@@ -596,7 +608,7 @@ export default function SimComponent() {
     );
   };
 
-  const playerShipCount = placedShips.length;
+
   const opponentShipsSunk = opponentSunkShips.length;
   const playerShipsSunk = playerSunkShips.length;
 

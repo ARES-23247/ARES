@@ -243,7 +243,7 @@ export default function SimComponent() {
   const [bees, setBees] = useState<Bee[]>([]);
   const [particles, setParticles] = useState<PollenParticle[]>([]);
   const [score, setScore] = useState(0);
-  const [totalPollinated, setTotalPollinated] = useState(0);
+  const [_totalPollinated, setTotalPollinated] = useState(0);
   const [mode, setMode] = useState<'idle' | 'playing' | 'won'>('idle');
   const [beeCount, setBeeCount] = useState(3);
   const [flowerCount, setFlowerCount] = useState(12);
@@ -658,7 +658,7 @@ export default function SimComponent() {
         }}>
           <strong style={{ color: '#fbbf24' }}>🌻 How Pollination Works:</strong> Bees visit flowers to collect nectar and pollen.
           Pollen grains stick to their fuzzy bodies. When the bee visits <em>another flower of a different type</em>,
-          some of that pollen transfers to the new flower's stigma, cross-pollinating it so it can produce seeds and fruit.
+          some of that pollen transfers to the new flower&apos;s stigma, cross-pollinating it so it can produce seeds and fruit.
           <br /><br />
           <strong style={{ color: 'var(--ares-cyan)' }}>🎮 How to Play:</strong> Bees automatically fly between flowers.
           They pick up pollen (yellow particles) from flowers, then pollinate different-type flowers they visit next.
