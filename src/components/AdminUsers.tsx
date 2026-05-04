@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { RefreshCw, Shield, Trash2, ChevronDown, Edit3, X, Search, ChevronUp, MessageSquare, Zap, Users, Mail } from "lucide-react";
 import ProfileEditor from "./ProfileEditor";
 import { api } from "../api/client";
@@ -40,9 +40,33 @@ export default function AdminUsers() {
   const [auditResult, setAuditResult] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError } = api.users.getUsers.useQuery(["admin_users"], {});
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
-  const users = (data?.body?.users || []) as User[];
+  const { data, isLoading, isError, isFetching } = api.users.getUsers.useQuery(
+    ["admin_users", cursor], 
+    { query: { limit: 100, cursor: cursor || undefined } }
+  );
+
+  const rawBody = data?.body as unknown as { users: unknown[], nextCursor?: string | null };
+  const nextCursor = rawBody?.nextCursor || null;
+  const rawUsers = rawBody?.users as User[] | undefined;
+  
+  const users = useMemo(() => rawUsers || [], [rawUsers]);
+  
+  useEffect(() => {
+    if (users.length > 0) {
+      if (cursor) {
+        setAllUsers(prev => {
+          const newIds = new Set(users.map(u => u.id));
+          const filtered = prev.filter(u => !newIds.has(u.id));
+          return [...filtered, ...users];
+        });
+      } else {
+        setAllUsers(users);
+      }
+    }
+  }, [users, cursor]);
 
   const patchMutation = api.users.patchUser.useMutation({
     onSuccess: () => {
@@ -230,7 +254,7 @@ export default function AdminUsers() {
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: users,
+    data: allUsers,
     columns,
     state: {
       sorting,
@@ -325,6 +349,18 @@ export default function AdminUsers() {
           </tbody>
         </table>
       </div>
+      
+      {nextCursor && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => setCursor(nextCursor)}
+            disabled={isFetching}
+            className="px-6 py-2 bg-obsidian border border-white/10 text-marble/60 hover:text-white hover:border-ares-red/50 ares-cut transition-all disabled:opacity-50"
+          >
+            {isFetching ? "Loading..." : "Load More Users"}
+          </button>
+        </div>
+      )}
 
       {editUserId && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-center items-center p-4 sm:p-8 overflow-y-auto">

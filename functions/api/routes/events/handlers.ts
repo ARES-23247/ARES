@@ -155,21 +155,22 @@ export const eventHandlers: any = {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
-      const { limit = 100, offset = 0 } = query;
+      const { limit = 100, cursor } = query;
+      
+      let baseQuery = db.selectFrom("events").orderBy("date_start", "desc").limit(Number(limit) || 100);
+      
+      if (cursor) {
+        baseQuery = baseQuery.where("date_start", "<", cursor);
+      }
+      
       let results;
       try {
-        results = await db.selectFrom("events")
+        results = await baseQuery
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes"])
-          .orderBy("date_start", "desc")
-          .limit(Number(limit) || 100)
-          .offset(Number(offset) || 0)
           .execute();
       } catch (_e) {
-        results = await db.selectFrom("events")
+        results = await baseQuery
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
-          .orderBy("date_start", "desc")
-          .limit(Number(limit) || 100)
-          .offset(Number(offset) || 0)
           .execute() as any[];
       }
       
@@ -184,7 +185,9 @@ export const eventHandlers: any = {
         meeting_notes: (e as any).meeting_notes || null
       }));
 
-      return { status: 200 as const, body: { events, lastSyncedAt: lastSyncRow?.value || null } };
+      const nextCursor = results.length === (Number(limit) || 100) ? results[results.length - 1].date_start : null;
+
+      return { status: 200 as const, body: { events, lastSyncedAt: lastSyncRow?.value || null, nextCursor } };
     } catch (e) {
       console.error("[Events:AdminList] Error", e);
       return { status: 500 as const, body: { error: "Failed to fetch events" } } as any;

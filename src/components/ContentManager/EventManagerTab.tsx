@@ -1,4 +1,4 @@
-
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { Radio, Calendar } from "lucide-react";
 import { toast } from "sonner";
@@ -26,12 +26,36 @@ export default function EventManagerTab({
 }: EventManagerTabProps) {
   const queryClient = useQueryClient();
 
-  const { data: eventsData, isLoading, isError } = api.events.getAdminEvents.useQuery(["admin_events"], {
-    query: { limit: 100, offset: 0 }
-  });
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [allEvents, setAllEvents] = useState<EventItem[]>([]);
 
-  const rawBody = (eventsData as unknown as { body: { events: unknown[] } })?.body;
-  const events = eventsData?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.events) ? rawBody.events : [])) as unknown as EventItem[] : [];
+  const { data: eventsData, isLoading, isError, isFetching } = api.events.getAdminEvents.useQuery(
+    ["admin_events", cursor],
+    { query: { limit: 100, cursor: cursor || undefined } }
+  );
+
+  const rawBody = (eventsData as unknown as { body: { events: unknown[], nextCursor?: string | null } })?.body;
+  const events = useMemo(() => {
+    const raw = eventsData?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.events) ? rawBody.events : [])) as unknown as EventItem[] : undefined;
+    return raw || [];
+  }, [eventsData?.status, rawBody]);
+  const nextCursor = rawBody?.nextCursor || null;
+
+  useEffect(() => {
+    if (events.length > 0) {
+      if (cursor) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAllEvents(prev => {
+          const newIds = new Set(events.map(e => e.id));
+          const filtered = prev.filter(e => !newIds.has(e.id));
+          return [...filtered, ...events];
+        });
+      } else {
+        setAllEvents(events);
+      }
+    }
+  }, [events, cursor]);
+
   const lastSyncedAt = eventsData?.status === 200 ? eventsData.body.lastSyncedAt : null;
 
   const deleteMutation = api.events.deleteEvent.useMutation({
@@ -112,7 +136,7 @@ export default function EventManagerTab({
     }
   });
 
-  const lifecycleFiltered = events.filter(e => {
+  const lifecycleFiltered = allEvents.filter(e => {
     const isDeleted = Number(e.is_deleted) === 1;
     if (view === 'trash') return isDeleted;
     if (view === 'pending') return !isDeleted && (e.status === 'pending' || e.status === 'rejected' || e.status === 'draft');
@@ -124,9 +148,10 @@ export default function EventManagerTab({
                    (view === 'internal' || view === 'outreach' || view === 'external') ? lifecycleFiltered.filter(e => e.category === view) : lifecycleFiltered;
 
   return (
+    <>
     <GenericManagerList
       items={filtered}
-      rawCount={events.length}
+      rawCount={allEvents.length}
       view={view}
       isLoading={isLoading}
       isError={isError}
@@ -200,5 +225,18 @@ export default function EventManagerTab({
       confirmId={confirmId}
       setConfirmId={setConfirmId}
     />
+    
+    {nextCursor && (
+      <div className="flex justify-center mt-6">
+        <button
+          onClick={() => setCursor(nextCursor)}
+          disabled={isFetching}
+          className="px-6 py-2 bg-obsidian border border-white/10 text-marble/60 hover:text-white hover:border-ares-red/50 ares-cut transition-all disabled:opacity-50"
+        >
+          {isFetching ? "Loading..." : "Load More Events"}
+        </button>
+      </div>
+    )}
+    </>
   );
 }

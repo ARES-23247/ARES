@@ -209,7 +209,8 @@ export async function logSystemError(
 export function parsePagination(c: Context<AppEnv>, defaultLimit = 50, maxLimit = 200) {
   const limit = Math.min(Number(c.req.query("limit") || String(defaultLimit)), maxLimit);
   const offset = Math.max(Number(c.req.query("offset") || "0"), 0);
-  return { limit, offset };
+  const cursor = c.req.query("cursor") || null;
+  return { limit, offset, cursor };
 }
 
 // ── Centralized Settings Fetch ──────────────────────────────

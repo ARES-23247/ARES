@@ -14,17 +14,22 @@ const userHandlers = {
   getUsers: async ({ query: _query }: { query: any }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      const { limit, offset } = parsePagination(c, 50, 100);
-      const results = await db.selectFrom("user as u")
+      const { limit, cursor } = parsePagination(c, 50, 100);
+      
+      let query = db.selectFrom("user as u")
         .leftJoin("user_profiles as p", "u.id", "p.user_id")
         .select([
           "u.id", "u.name", "u.email", "u.emailVerified", "u.image", "u.role", "u.createdAt", "u.updatedAt",
           "p.nickname", "p.member_type"
         ])
         .orderBy("u.createdAt", "desc")
-        .limit(limit)
-        .offset(offset)
-        .execute();
+        .limit(limit);
+
+      if (cursor) {
+        query = query.where("u.createdAt", "<", Number(cursor));
+      }
+
+      const results = await query.execute();
 
       const users = results.map((u) => {
         return {
@@ -41,7 +46,9 @@ const userHandlers = {
         };
       });
 
-      return { status: 200 as const, body: { users } as any };
+      const nextCursor = results.length === limit ? String(results[results.length - 1].createdAt) : null;
+
+      return { status: 200 as const, body: { users, nextCursor } as any };
     } catch {
       return { status: 500 as const, body: { error: "Database error" } as any };
     }

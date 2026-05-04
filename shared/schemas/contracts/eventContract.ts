@@ -52,12 +52,13 @@ export const eventContract = c.router({
     path: "/admin/list",
     query: z.object({
       limit: z.coerce.number().optional(),
-      offset: z.coerce.number().optional(),
+      cursor: z.string().optional(),
     }),
     responses: {
       200: z.object({
         events: z.array(eventResponseSchema),
         lastSyncedAt: z.string().nullable(),
+        nextCursor: z.string().nullable().optional(),
       }),
     },
     summary: "Get all events (admin view)",

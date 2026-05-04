@@ -22,11 +22,12 @@ export const userContract = c.router({
     path: "/admin/list",
     query: z.object({
       limit: z.coerce.number().optional(),
-      offset: z.coerce.number().optional(),
+      cursor: z.string().optional(),
     }),
     responses: {
       200: z.object({
         users: z.array(userResponseSchema),
+        nextCursor: z.string().nullable().optional(),
       }),
     },
     summary: "Get all users (admin only)",
