@@ -25,10 +25,10 @@
 - [x] MON-02: API latency logging
 - [x] MON-03: Usage metrics dashboard
 
-### Phase 4: PartyKit Realtime Migration
+### ✅ Phase 4: PartyKit Realtime Migration
 **Goal:** Migrate collaborative editing from Liveblocks to self-hosted PartyKit
-- [ ] PKIT-01: Scaffold PartyKit standalone worker & Yjs DO setup
-- [ ] PKIT-02: Replace `@liveblocks/yjs` with `y-partykit` in frontend
-- [ ] PKIT-03: Implement Tiptap provider & auth mechanisms
-- [ ] PKIT-04: Adapt snapshot persistence to D1 directly via PartyKit
-- [ ] PKIT-05: Remove Liveblocks dependencies and webhooks
+- [x] PKIT-01: Scaffold PartyKit standalone worker & Yjs DO setup
+- [x] PKIT-02: Replace `@liveblocks/yjs` with `y-partykit` in frontend
+- [x] PKIT-03: Implement Tiptap provider & auth mechanisms
+- [x] PKIT-04: Adapt snapshot persistence to D1 directly via PartyKit
+- [x] PKIT-05: Remove Liveblocks dependencies and webhooks

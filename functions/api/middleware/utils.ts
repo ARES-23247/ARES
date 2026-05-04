@@ -39,9 +39,7 @@ export type Bindings = {
   RESEND_API_KEY?: string;
   DEV_BYPASS?: string;
   TURNSTILE_SECRET_KEY?: string;
-  LIVEBLOCKS_SECRET_KEY: string;
   CRON_SECRET?: string;
-  LIVEBLOCKS_WEBHOOK_SECRET?: string;
   ARES_KV?: KVNamespace;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;

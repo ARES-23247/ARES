@@ -1,7 +1,34 @@
-import { useOthers } from "@liveblocks/react/suspense";
+import { useEffect, useState } from "react";
+import { useCollaborativeEditor } from "./CollaborativeEditorRoom";
 
 export default function PresenceAvatars() {
-  const others = useOthers();
+  const { provider } = useCollaborativeEditor();
+  const [others, setOthers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!provider || !provider.awareness) return;
+
+    const updatePresence = () => {
+      const states = Array.from(provider.awareness.getStates().values());
+      // Filter out ourselves if we want, or just show all connected users
+      const allOthers = states.filter((state: any) => state.user);
+      setOthers(allOthers.map((s: any) => ({
+        connectionId: s.user.id || Math.random().toString(),
+        info: {
+          name: s.user.name,
+          avatar: s.user.avatar,
+        }
+      })));
+    };
+
+    provider.awareness.on("change", updatePresence);
+    updatePresence();
+
+    return () => {
+      provider.awareness.off("change", updatePresence);
+    };
+  }, [provider]);
+
   const currentUserCount = others.length;
 
   if (currentUserCount === 0) return null;

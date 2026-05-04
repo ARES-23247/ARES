@@ -1,7 +1,5 @@
 import React, { useEffect, useState, createContext, useContext } from "react";
-import { RoomProvider, useRoom } from "@liveblocks/react/suspense";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import YPartyKitProvider from "y-partykit/provider";
 import * as Y from "yjs";
 import { RefreshCw } from "lucide-react";
 
@@ -20,49 +18,6 @@ export function useCollaborativeEditor() {
   return useContext(CollaborativeEditorContext);
 }
 
-function CollaborativeEditorInner({
-  children,
-  onDocLoaded,
-}: {
-  children: React.ReactNode;
-  initialContent?: string;
-  onDocLoaded?: (ydoc: Y.Doc) => void;
-}) {
-  const room = useRoom();
-  const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
-  const [provider] = useState<LiveblocksYjsProvider>(() => new LiveblocksYjsProvider(room, ydoc));
-
-  const [isSynced, setIsSynced] = useState(false);
-
-  useEffect(() => {
-    provider.on("synced", (synced: boolean) => {
-      setIsSynced(synced);
-      if (synced) {
-        onDocLoaded?.(ydoc);
-      }
-    });
-
-    return () => {
-      ydoc.destroy();
-      provider.destroy();
-    };
-  }, [provider, ydoc, onDocLoaded]);
-
-  if (!isSynced) {
-    return (
-      <div className="flex items-center justify-center py-20 bg-ares-black border-x border-b border-white/10 rounded-b-xl min-h-[400px]">
-        <RefreshCw className="animate-spin text-ares-red" size={32} />
-      </div>
-    );
-  }
-
-  return (
-    <CollaborativeEditorContext.Provider value={{ ydoc, provider }}>
-      {children}
-    </CollaborativeEditorContext.Provider>
-  );
-}
-
 export function CollaborativeEditorRoom({
   roomId,
   children,
@@ -74,19 +29,40 @@ export function CollaborativeEditorRoom({
   initialContent?: string;
   onDocLoaded?: (ydoc: Y.Doc) => void;
 }) {
+  const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
+  const [provider, setProvider] = useState<YPartyKitProvider | null>(null);
+  const [isSynced, setIsSynced] = useState(false);
+
+  useEffect(() => {
+    // Determine host: dev vs production
+    const host = import.meta.env.VITE_PARTYKIT_HOST || "localhost:1999";
+    const newProvider = new YPartyKitProvider(host, roomId, ydoc);
+    setProvider(newProvider);
+
+    newProvider.on("synced", (synced: boolean) => {
+      setIsSynced(synced);
+      if (synced) {
+        onDocLoaded?.(ydoc);
+      }
+    });
+
+    return () => {
+      newProvider.destroy();
+      ydoc.destroy();
+    };
+  }, [roomId, ydoc, onDocLoaded]);
+
+  if (!isSynced || !provider) {
+    return (
+      <div className="flex items-center justify-center py-20 bg-ares-black border-x border-b border-white/10 rounded-b-xl min-h-[400px]">
+        <RefreshCw className="animate-spin text-ares-red" size={32} />
+      </div>
+    );
+  }
+
   return (
-    <RoomProvider id={roomId} initialPresence={{ cursor: null }}>
-      <ClientSideSuspense
-        fallback={
-          <div className="flex items-center justify-center py-20 bg-ares-black border-x border-b border-white/10 rounded-b-xl min-h-[400px]">
-            <RefreshCw className="animate-spin text-ares-red" size={32} />
-          </div>
-        }
-      >
-        <CollaborativeEditorInner initialContent={initialContent} onDocLoaded={onDocLoaded}>
-          {children}
-        </CollaborativeEditorInner>
-      </ClientSideSuspense>
-    </RoomProvider>
+    <CollaborativeEditorContext.Provider value={{ ydoc, provider }}>
+      {children}
+    </CollaborativeEditorContext.Provider>
   );
 }

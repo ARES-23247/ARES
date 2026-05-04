@@ -5,7 +5,7 @@ import type { TaskItem } from "./command/ProjectBoardKanban";
 import { KANBAN_SUBTEAMS } from "./command/ProjectBoardKanban";
 import { api } from "../api/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { RoomProvider, ClientSideSuspense } from "@liveblocks/react";
+
 
 interface TaskListResponse {
   status: number;
@@ -218,11 +218,6 @@ export default function TaskBoardPage() {
     return boardContent;
   }
 
-  return (
-    <RoomProvider id="room-tasks-global" initialPresence={{ cursor: null }}>
-      <ClientSideSuspense fallback={<div className="py-20 text-center text-ares-gray">Connecting to realtime...</div>}>
-        {boardContent}
-      </ClientSideSuspense>
-    </RoomProvider>
-  );
+  // TODO: Add PartySocket room connection for awareness
+  return boardContent;
 }

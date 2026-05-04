@@ -1,0 +1,7 @@
+{
+  "name": "aresweb-partykit",
+  "main": "server.ts",
+  "d1Databases": {
+    "DB": "ARES_D1"
+  }
+}
