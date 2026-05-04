@@ -1,7 +1,5 @@
 {
   "name": "aresweb-partykit",
   "main": "server.ts",
-  "d1Databases": {
-    "DB": "ARES_D1"
-  }
+  "compatibilityDate": "2026-05-04"
 }
