@@ -2,6 +2,11 @@
 
 | Version | Status | Date | Summary |
 |---------|--------|------|---------|
+| [v6.1](milestones/v6.1-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Deferred Items & Type Safety |
+| [v6.0](milestones/v6.0-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Real-Time Collaboration Infrastructure |
+| [v5.9](milestones/v5.9-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Trello Parity & Zulip Sync |
+| [v5.8](milestones/v5.8-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Feature Expansion |
+| [v5.7](milestones/v5.7-ROADMAP.md) | ✅ SHIPPED | 2026-05-03 | Platform Maturity |
 | [v5.6](milestones/v5.6-ROADMAP.md) | ✅ SHIPPED | 2026-05-03 | Stability & Polish |
 | [v5.5](milestones/v5.5-ROADMAP.md) | ✅ SHIPPED | 2026-05-02 | Kanban, Science Corner & Recurring Events |
 | [v5.4](milestones/v5.4-ROADMAP.md) | ✅ SHIPPED | 2026-05-02 | Simulation Sandbox & GitHub Storage Migration |
