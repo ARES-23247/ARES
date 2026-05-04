@@ -10,7 +10,7 @@
 
 ## Phases
 
-### ✅ Phase 5: Trello Parity & Zulip Sync
+### Phase 05: Trello Parity & Zulip Sync
 **Goal:** Map Kanban tasks to Zulip topics and embed collaborative descriptions
 - [x] TASK-01: Update database schema and migrations
 - [x] TASK-02: Backend API updates for Zulip topic creation

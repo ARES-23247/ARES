@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { addMonths, subMonths, format, addHours } from "date-fns";
+import { addMonths, subMonths, format, addHours, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, List } from "lucide-react";
 import SEO from "../components/SEO";
 import { api } from "../api/client";
@@ -47,12 +47,30 @@ export default function Events() {
         type = e.category;
       }
 
+      // Extract plain text from Tiptap ProseMirror JSON AST if description is JSON
+      let description = e.description || "";
+      if (description.startsWith("{")) {
+        try {
+          const ast = JSON.parse(description);
+          const extractText = (node: Record<string, unknown>): string => {
+            if (node.type === "text" && typeof node.text === "string") return node.text;
+            if (Array.isArray(node.content)) {
+              return (node.content as Record<string, unknown>[]).map(extractText).join("");
+            }
+            return "";
+          };
+          description = extractText(ast).trim();
+        } catch {
+          // Not valid JSON — use raw string as-is
+        }
+      }
+
       return {
         id: e.id,
         title: e.title,
         start,
         end,
-        description: e.description || "",
+        description,
         location: e.location || "",
         type,
         isException: e.recurring_exception === 1
@@ -169,7 +187,12 @@ export default function Events() {
                 {view === "month" ? (
                   <MonthViewGrid currentDate={currentDate} events={mappedEvents} />
                 ) : (
-                  <AgendaViewList events={mappedEvents} />
+                  <AgendaViewList events={mappedEvents.filter(e =>
+                    isWithinInterval(e.start, {
+                      start: startOfMonth(currentDate),
+                      end: endOfMonth(currentDate),
+                    })
+                  )} />
                 )}
               </div>
 

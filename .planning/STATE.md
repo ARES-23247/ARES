@@ -34,14 +34,14 @@ See: .planning/PROJECT.md (updated 2026-05-04)
 
 ## Last Activity
 
-2026-05-04 — Completed Phase 4 (PartyKit Realtime Migration)
+2026-05-04 — Completed Phase 5 (Trello Parity & Zulip Sync)
 
 ## Current Position
 
 Phase: All Phases Complete
 Plan: —
 Status: Ready for Audit
-Last activity: 2026-05-04 — Completed Phase 4
+Last activity: 2026-05-04 — Completed Phase 5
 
 ## Deferred Items
 
