@@ -44,6 +44,9 @@ export type Bindings = {
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   SENTRY_DSN?: string;
+  TOA_API_KEY?: string;
+  FTC_EVENTS_USERNAME?: string;
+  FTC_EVENTS_API_KEY?: string;
 };
 
 export type Variables = {
