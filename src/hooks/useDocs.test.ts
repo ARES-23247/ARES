@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useDocs } from "./useDocs";
@@ -34,14 +34,14 @@ describe("useDocs hook", () => {
 
     vi.mocked(api.docs.getDocs.useQuery).mockReturnValue({
       data: { status: 200, body: { docs: [
-        { slug: "getting-started", title: "Getting Started", category: "Getting Started" },
-        { slug: "api-ref", title: "API Ref", category: "Reference" },
-        { slug: "other", title: "Other", category: "Uncategorized" }
+        { slug: "getting-started", title: "Getting Started", category: "Getting Started", display_in_areslib: 1 },
+        { slug: "api-ref", title: "API Ref", category: "Reference", display_in_areslib: 1 },
+        { slug: "other", title: "Other", category: "Uncategorized", display_in_areslib: 1 }
       ]}}
     } as any);
 
     vi.mocked(api.docs.getDoc.useQuery).mockReturnValue({
-      data: { status: 200, body: { doc: { slug: "getting-started", title: "Getting Started", category: "Getting Started" }, contributors: [] }},
+      data: { status: 200, body: { doc: { slug: "getting-started", title: "Getting Started", category: "Getting Started", display_in_areslib: 1 }, contributors: [] }},
       isLoading: false
     } as any);
 

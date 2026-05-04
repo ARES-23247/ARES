@@ -104,6 +104,9 @@ export interface Docs {
   updated_at: Generated<string | null>;
   zulip_stream: string | null;
   zulip_topic: string | null;
+  display_in_areslib: Generated<number | null>;
+  display_in_math_corner: Generated<number | null>;
+  display_in_science_corner: Generated<number | null>;
 }
 
 export interface DocsFeedback {
