@@ -149,8 +149,8 @@ test.describe('Collaboration', () => {
 
     // Test TaskDetailsModal - navigate to tasks, click on test task to open modal
     await page.goto('/dashboard/tasks');
-    // Click on the test task to open modal
-    await page.getByText('Test Task').first().click();
+    // Click on the test task to open modal - use more specific selector (WR-04)
+    await page.getByRole('link', { name: 'Test Task' }).click();
     // Wait for modal and verify Live badge
     await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible({ timeout: 15000 });
   });
