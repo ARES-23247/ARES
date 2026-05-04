@@ -17,7 +17,7 @@ import { DB } from "../../../../shared/schemas/database";
 export function triggerBackgroundReindex(
   executionCtx: ExecutionContext,
   db: Kysely<DB>,
-  ai: Ai | undefined,
+  ai: any,
   vectorize: VectorizeIndex | undefined,
   kv?: KVNamespace
 ): void {
@@ -40,7 +40,7 @@ export function triggerBackgroundReindex(
 export function triggerExternalReindex(
   executionCtx: ExecutionContext,
   db: Kysely<DB>,
-  ai: Ai | undefined,
+  ai: any,
   vectorize: VectorizeIndex | undefined,
   zaiApiKey?: string,
   githubPat?: string,
