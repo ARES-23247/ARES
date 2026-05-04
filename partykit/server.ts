@@ -16,6 +16,12 @@ export default class YjsServer implements Party.Server {
   constructor(public room: Party.Room, public env: Env) {}
 
   async onConnect(conn: Party.Connection) {
+    // Validate room ID format to prevent potential abuse (CR-09)
+    const roomId = this.room.id;
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(roomId)) {
+      throw new Error(`Invalid room_id format: ${roomId}`);
+    }
+
     // Initialize D1 snapshot persistence
     const db = this.env.PK_DB as D1Database;
 
