@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v6.3
 milestone_name: Outreach & Impact Logging Restoration
 status: active
-last_updated: "2026-05-04T22:20:00.000Z"
-last_activity: 2026-05-04 — Phase 13 discussed and planned (2 plans)
+last_updated: "2026-05-04T22:30:00.000Z"
+last_activity: 2026-05-04 — Phase 13 executed (2/2 plans complete)
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 2
-  completed_plans: 0
+  completed_plans: 2
 ---
 
 # System State
@@ -21,8 +21,8 @@ progress:
 
 Phase: 13 — Interactive Tools Foundation
 Plan: 13-01 (wave 1), 13-02 (wave 2)
-Status: Ready for execution
-Last activity: 2026-05-04 — Phase 13 discussed and planned (2 plans)
+Status: ✅ Complete
+Last activity: 2026-05-04 — Phase 13 executed (2/2 plans complete)
 
 ## Completed This Session
 
@@ -37,6 +37,8 @@ Last activity: 2026-05-04 — Phase 13 discussed and planned (2 plans)
 | - | - | fix(footer): replace malformed TikTok/Bluesky SVGs (CI fix) | `e09257b` |
 | - | - | feat(outreach): season tabs + always-visible card stats | `5f62735` |
 | - | - | fix(deploy): inject VITE_PARTYKIT_HOST for collab editing | `bc8196a` |
+| 13 | 01 | Tool registry, scouting API proxies, AI analysis endpoint | `c7afbca` |
+| 13 | 02 | FTC Scouting Tool UI with AI analysis integration | `03c6b82` |
 
 ## Key Decisions
 
@@ -47,6 +49,8 @@ Last activity: 2026-05-04 — Phase 13 discussed and planned (2 plans)
 - **Social queue architecture:** Scheduled posts stored in `social_queue` table with cron worker processing; integrated with existing `dispatchSocials` utility
 - **PartyKit build injection:** VITE_PARTYKIT_HOST must be explicitly set in deploy.yml build step (Vite doesn't reliably read .env.production in CI)
 - **Outreach season tabs:** Client-side filtering via season_id; tabs auto-populate from seasons that have linked logs
+- **Scouting API architecture:** Server-side proxy pattern (TOA/FTC Events) prevents client API key leakage; tool registry with isPublic flag for access control
+- **AI scouting analysis:** Three modes (team_analysis, match_prediction, event_overview) using Z.ai GLM 5.1 with structured system prompts
 
 ## Deferred Items
 
