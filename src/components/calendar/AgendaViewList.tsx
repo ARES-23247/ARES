@@ -54,8 +54,13 @@ export const AgendaViewList = ({ events }: AgendaViewListProps) => {
                   event.type === 'internal' ? 'bg-ares-red' : 
                   event.type === 'outreach' ? 'bg-ares-gold' : 'bg-ares-cyan'
                 }`} />
-                <h4 className="text-xl font-bold text-white leading-tight">
+                <h4 className="text-xl font-bold text-white leading-tight flex items-center gap-2">
                   {event.title}
+                  {event.isException && (
+                    <span className="bg-ares-gold/20 text-ares-gold text-[10px] uppercase px-2 py-0.5 rounded-sm border border-ares-gold/30 flex items-center gap-1" title="This is a modified instance of a recurring series">
+                      Exception
+                    </span>
+                  )}
                 </h4>
               </div>
               

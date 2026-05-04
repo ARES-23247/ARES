@@ -17,6 +17,7 @@ export interface EventItem {
   cover_image: string | null;
   tba_event_key: string | null;
   category: "internal" | "outreach" | "external";
+  recurring_exception?: number;
 }
 
 export const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean }) => {
@@ -73,10 +74,15 @@ export const EventCard = ({ event, isPast }: { event: EventItem; isPast: boolean
         </div>
         
         {/* ACC-F01: Use pseudo-element link to make card clickable without nesting interactive elements */}
-        <h3 className={`text-2xl md:text-3xl font-bold mb-4 ${isPast ? 'text-white' : 'text-white'} group-hover:text-ares-gold transition-colors`}>
+        <h3 className={`text-2xl md:text-3xl font-bold mb-4 flex flex-wrap items-center gap-3 ${isPast ? 'text-white' : 'text-white'} group-hover:text-ares-gold transition-colors`}>
           <Link to={`/events/${event.id}`} className="after:absolute after:inset-0 focus:outline-none">
             {event.title}
           </Link>
+          {event.recurring_exception === 1 && (
+            <span className="bg-ares-gold/20 text-ares-gold text-[10px] md:text-xs uppercase px-2 py-1 rounded-sm border border-ares-gold/30 flex items-center gap-1 z-20 pointer-events-none" title="This is a modified instance of a recurring series">
+              Exception
+            </span>
+          )}
         </h3>
         
         <p className="text-marble text-base leading-relaxed line-clamp-3 relative z-10 pointer-events-none">

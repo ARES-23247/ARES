@@ -8,6 +8,7 @@ export interface CalendarEvent {
   description: string;
   location: string;
   type: "internal" | "outreach" | "external";
+  isException?: boolean;
 }
 
 const today = new Date();

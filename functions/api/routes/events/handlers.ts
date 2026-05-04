@@ -240,7 +240,7 @@ export const eventHandlers: any = {
         }
       }
 
-      const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, socials, isPotluck, isVolunteer, isDraft, publishedAt, seasonId, meetingNotes } = body;
+      const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, socials, isPotluck, isVolunteer, isDraft, publishedAt, seasonId, meetingNotes, recurrenceRule, parentEventId, originalStartTime } = body;
 
       const recent = await db.selectFrom("events")
         .select("id")
@@ -284,7 +284,8 @@ export const eventHandlers: any = {
                 gcal_event_id: null, status,
                 is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0, tba_event_key: tbaEventKey || null,
                 published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
-                recurring_group_id: recurringGroupId, rrule: body.rrule, recurring_exception: 0
+                recurring_group_id: recurringGroupId, rrule: body.rrule, recurring_exception: 0,
+                recurrence_rule: recurrenceRule || body.rrule || null, parent_event_id: parentEventId || null, original_start_time: originalStartTime || null
              };
           });
         } catch(e) {
@@ -299,7 +300,8 @@ export const eventHandlers: any = {
             gcal_event_id: null, status,
             is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0, tba_event_key: tbaEventKey || null,
             published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
-            recurring_group_id: null, rrule: null, recurring_exception: 0
+            recurring_group_id: null, rrule: null, recurring_exception: 0,
+            recurrence_rule: recurrenceRule || body.rrule || null, parent_event_id: parentEventId || null, original_start_time: originalStartTime || null
         });
       }
 
@@ -329,7 +331,7 @@ export const eventHandlers: any = {
             // Pushing all might take a while if there are 52. Let's just push the first one for now, or map them if needed.
             // Since we're keeping it simple, let's just push the first instance to GCal.
             const gcalId = await pushEventToGcal(
-              { id: genId, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, meeting_notes: meetingNotes || undefined },
+              { id: genId, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, meeting_notes: meetingNotes || undefined, recurrence_rule: recurrenceRule || body.rrule || undefined, parent_gcal_id: parentEventId || undefined, original_start_time: originalStartTime || undefined },
               { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
             );
             if (gcalId) {
@@ -363,7 +365,7 @@ export const eventHandlers: any = {
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, isPotluck, isVolunteer, isDraft, publishedAt, seasonId, meetingNotes } = body;
+      const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, isPotluck, isVolunteer, isDraft, publishedAt, seasonId, meetingNotes, recurrenceRule, parentEventId, originalStartTime } = body;
       const cat = category || 'internal';
       
       const user = await getSessionUser(c);
@@ -431,6 +433,7 @@ export const eventHandlers: any = {
             published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
             updated_at: new Date().toISOString(),
             rrule: body.rrule || existing.rrule,
+            recurrence_rule: recurrenceRule || body.rrule || existing.recurrence_rule,
             recurring_exception: 0
           })
           .where("id", "=", id)
@@ -444,7 +447,8 @@ export const eventHandlers: any = {
             is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
             published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
             updated_at: new Date().toISOString(),
-            recurring_exception: existing.recurring_group_id ? 1 : 0
+            recurring_exception: existing.recurring_group_id ? 1 : 0,
+            original_start_time: existing.recurring_group_id && !existing.recurring_exception ? existing.date_start : (originalStartTime || existing.original_start_time)
           })
           .where("id", "=", id)
           .execute();
@@ -472,9 +476,21 @@ export const eventHandlers: any = {
           
           if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
             try {
-              const row = await db.selectFrom("events").select("gcal_event_id").where("id", "=", id).executeTakeFirst();
+              const row = await db.selectFrom("events").select(["gcal_event_id", "original_start_time", "recurring_group_id"]).where("id", "=", id).executeTakeFirst();
+              
+              let parentGcalId = parentEventId;
+              let origStart = originalStartTime || row?.original_start_time;
+
+              if (existing.recurring_group_id && body.updateMode !== "following") {
+                const parent = await db.selectFrom("events").select("gcal_event_id").where("recurring_group_id", "=", existing.recurring_group_id).where("recurring_exception", "=", 0).orderBy("date_start", "asc").executeTakeFirst();
+                if (parent?.gcal_event_id) {
+                  parentGcalId = parent.gcal_event_id;
+                  origStart = origStart || existing.date_start;
+                }
+              }
+
               const gcalId = await pushEventToGcal(
-                { id, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, gcal_event_id: row?.gcal_event_id || undefined, meeting_notes: meetingNotes || undefined },
+                { id, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, gcal_event_id: row?.gcal_event_id || undefined, meeting_notes: meetingNotes || undefined, recurrence_rule: recurrenceRule || body.rrule || existing.recurrence_rule || undefined, parent_gcal_id: parentGcalId || undefined, original_start_time: origStart || undefined },
                 { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
               );
               if (gcalId && gcalId !== row?.gcal_event_id) {
@@ -497,33 +513,56 @@ export const eventHandlers: any = {
     const { id } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      const existing = await db.selectFrom("events").select(["recurring_group_id", "date_start"]).where("id", "=", id).executeTakeFirst();
+      const existing = await db.selectFrom("events").select(["recurring_group_id", "date_start", "recurrence_rule", "parent_event_id", "gcal_event_id", "category"]).where("id", "=", id).executeTakeFirst();
       
+      let gcalAction = "delete";
+      let updatedRrule = existing?.recurrence_rule;
+
       if (body?.deleteMode === "following" && existing?.recurring_group_id) {
         await db.updateTable("events")
           .set({ is_deleted: 1, updated_at: new Date().toISOString() })
           .where("recurring_group_id", "=", existing.recurring_group_id)
           .where("date_start", ">=", existing.date_start)
           .execute();
+          
+        if (existing.recurrence_rule && !existing.parent_event_id) {
+          gcalAction = "update";
+          const d = new Date(existing.date_start);
+          const untilDate = d.toISOString().split("T")[0].replace(/-/g, "") + "T000000Z";
+          updatedRrule = existing.recurrence_rule.includes("UNTIL=") 
+              ? existing.recurrence_rule.replace(/UNTIL=[^;]+/, `UNTIL=${untilDate}`)
+              : `${existing.recurrence_rule};UNTIL=${untilDate}`;
+          
+          await db.updateTable("events").set({ recurrence_rule: updatedRrule }).where("id", "=", id).execute();
+        }
       } else {
         await db.updateTable("events").set({ is_deleted: 1, updated_at: new Date().toISOString() }).where("id", "=", id).execute();
       }
 
       c.executionCtx.waitUntil((async () => {
-        const row = await db.selectFrom("events").select(["gcal_event_id", "category"]).where("id", "=", id).executeTakeFirst();
-        if (row && row.gcal_event_id) {
+        if (existing && existing.gcal_event_id) {
           const socialConfig = await getSocialConfig(c);
-          const cat = row.category || "internal";
+          const cat = existing.category || "internal";
           const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
           const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
           
           if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
             try {
-              await deleteEventFromGcal(row.gcal_event_id, {
-                email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string,
-                privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string,
-                calendarId: calId as string
-              });
+              if (gcalAction === "update" && updatedRrule) {
+                const fullRow = await db.selectFrom("events").selectAll().where("id", "=", id).executeTakeFirst();
+                if (fullRow) {
+                  await pushEventToGcal(
+                    { id: fullRow.id as string, title: fullRow.title, date_start: fullRow.date_start, date_end: fullRow.date_end || undefined, location: fullRow.location || undefined, description: fullRow.description || undefined, cover_image: fullRow.cover_image || undefined, gcal_event_id: fullRow.gcal_event_id || undefined, recurrence_rule: updatedRrule },
+                    { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
+                  );
+                }
+              } else {
+                await deleteEventFromGcal(existing.gcal_event_id, {
+                  email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string,
+                  privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string,
+                  calendarId: calId as string
+                });
+              }
             } catch { /* ignore GCal failure */ }
           }
         }

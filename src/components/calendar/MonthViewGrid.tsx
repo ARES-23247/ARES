@@ -98,6 +98,7 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
                     )}`}
                     title={event.title}
                   >
+                    {event.isException && <span className="font-black mr-1 text-ares-gold bg-black/40 px-1 rounded-sm" title="Exception">!</span>}
                     {format(event.start, "h:mm a")} - {event.title}
                   </Link>
                 ))}
@@ -143,7 +144,10 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
                   title={event.title}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="truncate pr-2">{event.title}</span>
+                    <span className="truncate pr-2">
+                      {event.isException && <span className="font-black mr-1 text-ares-gold bg-black/40 px-1 rounded-sm" title="Exception">!</span>}
+                      {event.title}
+                    </span>
                     <span className="opacity-80 shrink-0 whitespace-nowrap">{format(event.start, "h:mm a")}</span>
                   </div>
                 </Link>

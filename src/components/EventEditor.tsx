@@ -50,6 +50,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
   const { uploadFile, isUploading, setErrorMsg: setUploadError } = useImageUpload();
 
   const [isDeleted, setIsDeleted] = useState(false);
+  const [isException, setIsException] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -133,6 +134,8 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
 
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsDeleted(event.is_deleted === 1);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsException(event.recurring_exception === 1);
       reset({
         title: event.title || "",
         dateStart: formatForInput(event.date_start),
@@ -324,6 +327,16 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
         </div>
       )}
       
+      {isException && (
+        <div className="bg-ares-gold/10 border-l-4 border-ares-gold p-4 mb-6 flex items-start gap-3">
+          <div className="text-ares-gold mt-0.5">ℹ️</div>
+          <div>
+            <h4 className="text-white font-bold text-sm tracking-wide uppercase">Exception Instance</h4>
+            <p className="text-white/80 text-sm mt-1 font-bold">This is a modified instance of a recurring series. Changes will only apply to this specific event.</p>
+          </div>
+        </div>
+      )}
+      
       <div className="flex flex-col md:flex-row gap-4 mt-2">
         <div className="flex-1">
           <label htmlFor="event-title" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Event Title *</label>
@@ -428,31 +441,33 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <label htmlFor="event-rrule" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Repeats</label>
-          <select
-            id="event-rrule"
-            value={rruleFreq}
-            onChange={(e) => {
-              setRruleFreq(e.target.value);
-              if (!e.target.value) {
-                setLimitType("none");
-                setLimitCount("");
-                setLimitDate("");
-              }
-            }}
-            className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none"
-          >
-            <option value="">Never</option>
-            <option value="FREQ=DAILY">Daily</option>
-            <option value="FREQ=WEEKLY">Weekly</option>
-            <option value="FREQ=MONTHLY">Monthly</option>
-          </select>
+      {!isException && (
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <label htmlFor="event-rrule" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Repeats</label>
+            <select
+              id="event-rrule"
+              value={rruleFreq}
+              onChange={(e) => {
+                setRruleFreq(e.target.value);
+                if (!e.target.value) {
+                  setLimitType("none");
+                  setLimitCount("");
+                  setLimitDate("");
+                }
+              }}
+              className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none"
+            >
+              <option value="">Never</option>
+              <option value="FREQ=DAILY">Daily</option>
+              <option value="FREQ=WEEKLY">Weekly</option>
+              <option value="FREQ=MONTHLY">Monthly</option>
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
-      {rruleFreq && (
+      {!isException && rruleFreq && (
         <div className="flex flex-col md:flex-row gap-4 p-4 border border-white/10 bg-black/20 ares-cut-sm mb-4">
           <div className="flex-1">
             <label htmlFor="limitType" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Recurrence Limit</label>
@@ -530,7 +545,7 @@ function EventEditorInner({ editId, userRole, roomId }: { editId?: string, userR
           </div>
         )}
 
-        {recurringGroupId && editId && (
+        {recurringGroupId && editId && !isException && (
           <div className="p-4 bg-obsidian border border-white/10 ares-cut flex items-center justify-between gap-4">
             <div>
               <h4 className="text-white font-bold text-sm tracking-wide">Recurring Event Options</h4>

@@ -54,7 +54,8 @@ export default function Events() {
         end,
         description: e.description || "",
         location: e.location || "",
-        type
+        type,
+        isException: e.recurring_exception === 1
       };
     });
   }, [events]);

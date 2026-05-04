@@ -206,6 +206,9 @@ export interface Events {
   location: string | null;
   meeting_notes: string | null;
   published_at: string | null;
+  recurrence_rule: string | null;
+  parent_event_id: string | null;
+  original_start_time: string | null;
   recurring_exception: Generated<number | null>;
   recurring_group_id: string | null;
   revision_of: string | null;

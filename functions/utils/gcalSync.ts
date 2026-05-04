@@ -17,6 +17,9 @@ export interface ARES_Event {
   cover_image?: string;
   gcal_event_id?: string;
   meeting_notes?: string;
+  recurrence_rule?: string;
+  parent_gcal_id?: string;
+  original_start_time?: string;
 }
 
 /**
@@ -132,13 +135,30 @@ function prepareGcalPayload(event: ARES_Event) {
   const cleanDescription = parseAstToText(event.description || "");
   const notesText = event.meeting_notes ? `\n\n--- Meeting Notes ---\n${event.meeting_notes}` : "";
 
-  return {
+  const result: any = {
     summary: event.title,
     location: event.location || "",
     description: cleanDescription + notesText,
     start: startObj,
     end: endObj,
   };
+
+  if (event.recurrence_rule) {
+    result.recurrence = [`RRULE:${event.recurrence_rule}`];
+  }
+
+  if (event.parent_gcal_id) {
+    result.recurringEventId = event.parent_gcal_id;
+    if (event.original_start_time) {
+      const origHasTime = event.original_start_time.includes("T");
+      const baseOrigStart = origHasTime ? event.original_start_time : `${event.original_start_time.split("T")[0]}T00:00:00Z`;
+      result.originalStartTime = origHasTime
+        ? { dateTime: formatFloatingDateTime(baseOrigStart), timeZone: "America/New_York" }
+        : { date: baseOrigStart.split("T")[0] };
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -217,6 +237,9 @@ export async function pullEventsFromGcal(config: GCalConfig): Promise<ARES_Event
     end?: { dateTime?: string; date?: string };
     location?: string;
     description?: string;
+    recurrence?: string[];
+    recurringEventId?: string;
+    originalStartTime?: { dateTime?: string; date?: string };
   }
 
   const allItems: GCalItem[] = [];
@@ -259,5 +282,8 @@ export async function pullEventsFromGcal(config: GCalConfig): Promise<ARES_Event
     location: item.location || "",
     description: item.description || "",
     gcal_event_id: item.id,
+    recurrence_rule: item.recurrence?.find(r => r.startsWith("RRULE:"))?.replace("RRULE:", "") || undefined,
+    parent_gcal_id: item.recurringEventId || undefined,
+    original_start_time: item.originalStartTime?.dateTime || item.originalStartTime?.date || undefined,
   }));
 }
