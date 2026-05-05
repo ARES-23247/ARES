@@ -6,6 +6,7 @@
 - ✅ **v6.2** — Metrics, Testing & UI Polish (Shipped 2026-05-04)
 - ✅ **v6.3** — Outreach & Impact Logging Restoration (Shipped 2026-05-04)
 - ✅ **v6.4** — Science & Math Corner Expansion (Shipped 2026-05-04)
+- 🚧 **v6.5** — Zulip Sync & Social Media Manager Formalization (In Progress)
 
 ## Phases
 
@@ -25,6 +26,11 @@
 - [x] Phase 16: Save AI Scouting Analyses (1 plans) — completed 2026-05-04
 
 </details>
+
+### 🚧 v6.5 Zulip Sync & Social Media Manager Formalization (In Progress)
+
+- [ ] Phase 17: Zulip Account Sync Investigation & Fix
+- [ ] Phase 18: Social Media Manager Documentation
 
 ## Progress
 
@@ -62,6 +68,21 @@
 1. Database migration creates `scouting_analyses` table.
 2. Analytics API endpoint allows saving and fetching.
 3. UI presents saved analyses as viewable history cards.
+
+### Phase 17: Zulip Account Sync Investigation & Fix
+**Goal:** Investigate the current root cause of Zulip account email synchronization issues and implement a resilient fix.
+**Requirements:** ZULIP-01, ZULIP-02
+**Success criteria:**
+1. Determine why Zulip emails are failing to sync properly.
+2. Fix the synchronization logic to ensure reliable bidirectional parity.
+3. Successfully test the user creation/syncing workflow with Zulip.
+
+### Phase 18: Social Media Manager Documentation
+**Goal:** Formally document the Social Media Manager architecture.
+**Requirements:** SOC-01, SOC-02
+**Success criteria:**
+1. Create necessary GSD `SKILL.md` or contextual documentation artifacts.
+2. Integrate documentation into the official project repository to ensure visibility.
 
 ## Backlog
 

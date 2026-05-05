@@ -202,4 +202,12 @@ export const scoutingApi = {
     }
     return res.json();
   },
+
+  getSavedAnalyses: async (filters: { teamNumber?: number; eventKey?: string }): Promise<(AnalysisResponse & { id: string; created_at: string; mode: string })[]> => {
+    const params = new URLSearchParams();
+    if (filters.teamNumber) params.append("teamNumber", filters.teamNumber.toString());
+    if (filters.eventKey) params.append("eventKey", filters.eventKey);
+    
+    return fetchJSON(`${BASE}/analyses?${params.toString()}`);
+  },
 };

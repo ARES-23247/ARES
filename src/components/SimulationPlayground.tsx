@@ -22,8 +22,8 @@ import prettierPluginBabel from "prettier/plugins/babel";
 import prettierPluginTs from "prettier/plugins/typescript";
 
 // Real production templates for AI context
-import ArmKgSimRaw from "../sims/ArmKgSim.tsx?raw";
-import ElevatorPidSimRaw from "../sims/ElevatorPidSim.tsx?raw";
+import ArmKgSimRaw from "../sims/armkg/index.tsx?raw";
+import ElevatorPidSimRaw from "../sims/elevatorpid/index.tsx?raw";
 
 // Babel standalone for JSX/TSX transpilation
 let Babel: { transform: (code: string, opts: Record<string, unknown>) => { code: string } } | null = null;
@@ -445,11 +445,13 @@ export default function SimulationPlayground() {
 
   const handleLoadGithubSim = async (sim: GithubSim) => {
     try {
-      const filename = sim.path.replace('./', '') + '.tsx';
+      // New folder structure: path is like "./armkg", file is at "armkg/index.tsx"
+      const folder = sim.path.replace('./', '');
+      const filename = `${folder}/index.tsx`;
       const res = await fetch(`https://raw.githubusercontent.com/ARES-23247/ARESWEB/main/src/sims/${filename}`);
       if (!res.ok) throw new Error("Not found");
       const code = await res.text();
-      
+
       const parsedFiles = { [filename]: code };
       
       setFiles(parsedFiles);

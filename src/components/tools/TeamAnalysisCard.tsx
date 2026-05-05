@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Award, TrendingUp, TrendingDown, Target } from "lucide-react";
 import { scoutingApi, type TOATeam, type TOARanking, type AnalysisResponse } from "../../lib/scouting-api";
 
@@ -9,9 +9,32 @@ interface TeamAnalysisCardProps {
 }
 
 export default function TeamAnalysisCard({ team, ranking, seasonKey }: TeamAnalysisCardProps) {
-  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResponse & { created_at?: string } | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadHistory = async () => {
+      try {
+        const history = await scoutingApi.getSavedAnalyses({ teamNumber: team.team_number });
+        if (mounted && history && history.length > 0) {
+          const latest = history.find((a) => a.mode === "team_analysis");
+          if (latest) {
+            setAnalysis(latest);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load analysis history:", err);
+      } finally {
+        if (mounted) setLoadingHistory(false);
+      }
+    };
+    
+    loadHistory();
+    return () => { mounted = false; };
+  }, [team.team_number]);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
@@ -120,7 +143,7 @@ export default function TeamAnalysisCard({ team, ranking, seasonKey }: TeamAnaly
 
       {/* AI Analysis Section */}
       <div className="p-4">
-        {!analysis && !analyzing && (
+        {!analysis && !analyzing && !loadingHistory && (
           <button
             onClick={handleAnalyze}
             className="w-full flex items-center justify-center gap-2 py-3 bg-ares-cyan/10 border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan/20 hover:border-ares-cyan/50 ares-cut-sm transition-all font-bold text-sm uppercase tracking-wider"
@@ -128,6 +151,12 @@ export default function TeamAnalysisCard({ team, ranking, seasonKey }: TeamAnaly
             <Sparkles size={16} />
             Analyze with AI
           </button>
+        )}
+
+        {loadingHistory && !analysis && !analyzing && (
+          <div className="flex justify-center py-4">
+            <RefreshCw size={16} className="animate-spin text-marble/30" />
+          </div>
         )}
 
         {analyzing && (
@@ -153,13 +182,31 @@ export default function TeamAnalysisCard({ team, ranking, seasonKey }: TeamAnaly
 
         {analysis && (
           <div className="bg-black/30 border border-white/5 p-4 ares-cut-sm">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-black text-ares-cyan uppercase tracking-widest">
-                AI Analysis
-              </span>
-              <span className="text-[10px] font-semibold text-marble/30">
-                {analysis.model} {analysis.tokensUsed ? `• ${analysis.tokensUsed} tokens` : ""}
-              </span>
+            <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-ares-cyan uppercase tracking-widest">
+                  AI Analysis
+                </span>
+                {analysis.created_at && (
+                  <span className="text-[10px] text-marble/40 bg-white/5 px-2 py-0.5 rounded-full">
+                    {new Date(analysis.created_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-semibold text-marble/30">
+                  {analysis.model} {analysis.tokensUsed ? `• ${analysis.tokensUsed} tokens` : ""}
+                </span>
+                <button
+                  onClick={handleAnalyze}
+                  disabled={analyzing}
+                  className="flex items-center gap-1 text-[10px] font-bold text-ares-cyan/70 hover:text-ares-cyan uppercase tracking-wider transition-colors disabled:opacity-50"
+                  title="Regenerate Analysis"
+                >
+                  <RefreshCw size={12} className={analyzing ? "animate-spin" : ""} />
+                  Regenerate
+                </button>
+              </div>
             </div>
             <div
               className="prose prose-invert prose-sm max-w-none text-marble/80 

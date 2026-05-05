@@ -7,7 +7,7 @@ import {
   createFieldLayout,
   spawnGamePieces,
   type RobotPosition,
-} from './field/FieldData';
+} from './FieldData';
 
 interface FieldVisualizerProps {
   field?: keyof typeof FIELDS;

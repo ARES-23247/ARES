@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Crosshair, Search, Globe, Sparkles, RefreshCw, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { scoutingApi, type TOATeam, type TOARanking, type AnalysisResponse } from "../../lib/scouting-api";
 import EventSelector from "./EventSelector";
@@ -30,9 +30,38 @@ export default function ScoutingTool() {
   // ── Event Analysis State ──
   const [analysisEventKey, setAnalysisEventKey] = useState<string>("");
   const [analysisEventName, setAnalysisEventName] = useState<string>("");
-  const [eventAnalysis, setEventAnalysis] = useState<AnalysisResponse | null>(null);
+  const [eventAnalysis, setEventAnalysis] = useState<AnalysisResponse & { created_at?: string } | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [loadingEventHistory, setLoadingEventHistory] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!analysisEventKey) {
+      setEventAnalysis(null);
+      return;
+    }
+
+    let mounted = true;
+    const loadHistory = async () => {
+      setLoadingEventHistory(true);
+      try {
+        const history = await scoutingApi.getSavedAnalyses({ eventKey: analysisEventKey });
+        if (mounted && history && history.length > 0) {
+          const latest = history.find((a) => a.mode === "event_overview");
+          if (latest) {
+            setEventAnalysis(latest);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load event analysis history:", err);
+      } finally {
+        if (mounted) setLoadingEventHistory(false);
+      }
+    };
+    
+    loadHistory();
+    return () => { mounted = false; };
+  }, [analysisEventKey]);
 
   // ── Team Search Handler ──
   const handleTeamSearch = useCallback(async () => {
@@ -349,7 +378,7 @@ export default function ScoutingTool() {
             selectedEventKey={analysisEventKey}
           />
 
-          {analysisEventKey && !eventAnalysis && !analysisLoading && (
+          {analysisEventKey && !eventAnalysis && !analysisLoading && !loadingEventHistory && (
             <button
               onClick={handleEventAnalysis}
               className="w-full flex items-center justify-center gap-3 py-4 bg-ares-cyan/10 border border-ares-cyan/30 text-ares-cyan hover:bg-ares-cyan/20 hover:border-ares-cyan/50 ares-cut-sm transition-all font-bold text-sm uppercase tracking-wider"
@@ -357,6 +386,12 @@ export default function ScoutingTool() {
               <Sparkles size={18} />
               Analyze Event with AI
             </button>
+          )}
+
+          {loadingEventHistory && !eventAnalysis && !analysisLoading && (
+            <div className="bg-obsidian border border-white/10 ares-cut p-8 text-center">
+              <RefreshCw size={28} className="animate-spin text-marble/30 mx-auto mb-3" />
+            </div>
           )}
 
           {analysisLoading && (
@@ -379,17 +414,35 @@ export default function ScoutingTool() {
             <div className="bg-obsidian border border-white/10 ares-cut overflow-hidden">
               <div className="p-4 border-b border-white/5 bg-gradient-to-r from-ares-cyan/5 to-transparent flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider">
-                    AI Event Analysis
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-white uppercase tracking-wider">
+                      AI Event Analysis
+                    </h3>
+                    {eventAnalysis.created_at && (
+                      <span className="text-[10px] text-marble/40 bg-white/5 px-2 py-0.5 rounded-full">
+                        {new Date(eventAnalysis.created_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-marble/40 mt-0.5">
                     {analysisEventName}
                   </p>
                 </div>
-                <span className="text-[10px] font-semibold text-marble/30">
-                  {eventAnalysis.model}
-                  {eventAnalysis.tokensUsed ? ` • ${eventAnalysis.tokensUsed} tokens` : ""}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-semibold text-marble/30">
+                    {eventAnalysis.model}
+                    {eventAnalysis.tokensUsed ? ` • ${eventAnalysis.tokensUsed} tokens` : ""}
+                  </span>
+                  <button
+                    onClick={handleEventAnalysis}
+                    disabled={analysisLoading}
+                    className="flex items-center gap-1 text-[10px] font-bold text-ares-cyan/70 hover:text-ares-cyan uppercase tracking-wider transition-colors disabled:opacity-50"
+                    title="Regenerate Analysis"
+                  >
+                    <RefreshCw size={12} className={analysisLoading ? "animate-spin" : ""} />
+                    Regenerate
+                  </button>
+                </div>
               </div>
               <div
                 className="p-6 prose prose-invert prose-sm max-w-none text-marble/80

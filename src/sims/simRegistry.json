@@ -3,103 +3,103 @@
     {
       "id": "ArmKgSim",
       "name": "Arm Kinematics Gravity Model",
-      "path": "./ArmKgSim",
+      "path": "./armkg",
       "requiresContext": false
     },
     {
       "id": "AutoSim",
       "name": "Autonomous Visualizer",
-      "path": "./AutoSim",
+      "path": "./auto",
       "requiresContext": true
     },
     {
       "id": "ElevatorPidSim",
       "name": "Elevator PID Tuning",
-      "path": "./ElevatorPidSim",
+      "path": "./elevatorpid",
       "requiresContext": false
     },
     {
       "id": "FaultSim",
       "name": "Fault Tolerant State Manager",
-      "path": "./FaultSim",
+      "path": "./fault",
       "requiresContext": true
     },
     {
       "id": "FieldVisualizer",
       "name": "PathPlanner Canvas Renderer",
-      "path": "./FieldVisualizer",
+      "path": "./field",
       "requiresContext": true
     },
     {
       "id": "FlywheelKvSim",
       "name": "Flywheel KV Optimization",
-      "path": "./FlywheelKvSim",
+      "path": "./flywheelkv",
       "requiresContext": false
     },
     {
       "id": "MonteHall",
       "name": "Monte Hall Paradox Simulation",
-      "path": "./MonteHall",
+      "path": "./montehall",
       "requiresContext": false
     },
     {
       "id": "PerformanceDashboard",
       "name": "AdvantageScope Telemetry Dashboard",
-      "path": "./PerformanceDashboard",
+      "path": "./performance",
       "requiresContext": true
     },
     {
       "id": "PhysicsSim",
       "name": "Dyn4j Physics Subsystem",
-      "path": "./PhysicsSim",
+      "path": "./physics",
       "requiresContext": true
     },
     {
       "id": "PowerSheddingSim",
       "name": "Brownout Protection Sandbox",
-      "path": "./PowerSheddingSim",
+      "path": "./powershedding",
       "requiresContext": false
     },
     {
       "id": "SotmSim",
       "name": "Shoot-on-the-Move Analytics",
-      "path": "./SotmSim",
+      "path": "./sotm",
       "requiresContext": true
     },
     {
       "id": "StateMachineSim",
       "name": "State Machine Hierarchy Visualizer",
-      "path": "./StateMachineSim",
+      "path": "./statemachine",
       "requiresContext": false
     },
     {
       "id": "SwerveSim",
       "name": "Swerve Kinematics Playground",
-      "path": "./SwerveSim",
+      "path": "./swerve",
       "requiresContext": false
     },
     {
       "id": "SysIdSim",
       "name": "System Identification Optimizer",
-      "path": "./SysIdSim",
+      "path": "./sysid",
       "requiresContext": false
     },
     {
       "id": "TroubleshootingWizard",
       "name": "MARSLib Error Triage Engine",
-      "path": "./TroubleshootingWizard",
+      "path": "./troubleshooting",
       "requiresContext": true
     },
     {
       "id": "VisionSim",
       "name": "PhotonVision Pose Estimator",
-      "path": "./VisionSim",
+      "path": "./vision",
       "requiresContext": true
     },
     {
       "id": "ZeroAllocationSim",
       "name": "Zero Allocation Memory Profiler",
-      "path": "./ZeroAllocationSim",
+      "path": "./zeroallocation",
       "requiresContext": true
     },
     {
@@ -111,19 +111,19 @@
     {
       "id": "BeeSim",
       "name": "Bee Game",
-      "path": "./BeeSim",
+      "path": "./bee",
       "requiresContext": false
     },
     {
       "id": "UntitledSimulation",
       "name": "Untitled Simulation",
-      "path": "./UntitledSimulation",
+      "path": "./untitled",
       "requiresContext": false
     },
     {
       "id": "TheGreatBeeAdventure",
       "name": "The Great Bee Adventure",
-      "path": "./TheGreatBeeAdventure",
+      "path": "./greatbee",
       "requiresContext": false
     }
   ]

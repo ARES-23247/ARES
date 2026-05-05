@@ -74,7 +74,7 @@ const analyzeRouter = new Hono<AppEnv>();
 
 analyzeRouter.post("/", ensureAuth, async (c) => {
   const body = await c.req.json<AnalyzeBody>();
-  const { mode, teamNumber, seasonKey, context } = body;
+  const { mode, teamNumber, eventKey, seasonKey, context } = body;
 
   if (!mode || !SYSTEM_PROMPTS[mode]) {
     return c.json({ error: `Invalid analysis mode: ${mode}. Must be one of: team_analysis, match_prediction, event_overview.` }, 400);
@@ -122,6 +122,28 @@ analyzeRouter.post("/", ensureAuth, async (c) => {
 
     const markdown = data.choices?.[0]?.message?.content || "";
     const tokensUsed = data.usage?.total_tokens;
+
+    // Save to database
+    try {
+      const db = c.get("db");
+      const user = c.get("sessionUser");
+      const id = crypto.randomUUID();
+      
+      await db.insertInto("scouting_analyses").values({
+        id,
+        mode,
+        team_number: teamNumber || null,
+        event_key: eventKey || null,
+        season_key: seasonKey,
+        markdown,
+        model: "GLM-5.1",
+        tokens_used: tokensUsed || 0,
+        created_by: user?.id || "system"
+      }).execute();
+    } catch (dbErr) {
+      console.error("[Scouting Analyze] Failed to persist analysis:", dbErr);
+      // We don't fail the request if saving fails, just log it.
+    }
 
     return c.json({
       markdown,

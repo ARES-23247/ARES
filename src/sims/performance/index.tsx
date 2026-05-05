@@ -3,13 +3,13 @@ import {
   parseWPILog,
   calculatePerformanceMetrics,
   analyzeBottlenecks,
- 
+
   extractTimeSeries,
   type ParsedLog,
   type PerformanceMetrics,
   type BottleneckAnalysis,
-} from './performance/LogParser';
-import './PerformanceDashboard.css';
+} from './LogParser';
+import '../PerformanceDashboard.css';
 
 interface PerformanceDashboardProps {
   className?: string;

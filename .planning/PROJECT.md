@@ -56,9 +56,15 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 
 (None currently active)
 
-## Current Milestone: TBD
+## Current Milestone: v6.5 Zulip Sync & Social Media Manager Formalization
 
-**Goal:** Pending planning.
+**Goal:** Investigate and resolve Zulip account email synchronization issues with `aresfirst.org`, and formalize the previously built Social Media Manager through robust architectural documentation.
+
+**Target features:**
+- Investigate root cause of email synchronization failure between ARESWEB profiles and the Zulip API.
+- Implement a reliable fix ensuring bidirectional email parity.
+- Generate GSD documentation mapping out the Social Media Manager's architecture, including cron jobs, database schemas, and external API integrations.
+- Merge the documentation into the official project repository.
 
 ## Current State
 

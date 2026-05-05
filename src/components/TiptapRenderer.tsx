@@ -9,25 +9,25 @@ const CodePlayground = lazy(() => import('./docs/CodePlayground').catch(() => ({
 const InteractiveTutorial = lazy(() => import('./InteractiveTutorial').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load InteractiveTutorial</div> })));
 // @ts-expect-error -- CoreValueCallout uses named export; catch fallback provides default shape
 const CoreValueCallout = lazy(() => import('./CoreValueCallout').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load CoreValueCallout</div> })));
-const SotmSim = lazy(() => import('../sims/SotmSim'));
-const SwerveSim = lazy(() => import('../sims/SwerveSim'));
+const SotmSim = lazy(() => import('../sims/sotm'));
+const SwerveSim = lazy(() => import('../sims/swerve'));
 const ConfigVisualizer = lazy(() => import('./docs/ConfigVisualizer'));
 const ScreenshotGallery = lazy(() => import('./docs/ScreenshotGallery'));
-const FaultSim = lazy(() => import('../sims/FaultSim'));
-const PhysicsSim = lazy(() => import('../sims/PhysicsSim'));
-const SysIdSim = lazy(() => import('../sims/SysIdSim'));
-const VisionSim = lazy(() => import('../sims/VisionSim'));
-const ZeroAllocationSim = lazy(() => import('../sims/ZeroAllocationSim'));
-const FieldVisualizer = lazy(() => import('../sims/FieldVisualizer'));
-const TroubleshootingWizard = lazy(() => import('../sims/TroubleshootingWizard'));
-const PerformanceDashboard = lazy(() => import('../sims/PerformanceDashboard'));
-const ArmKgSim = lazy(() => import('../sims/ArmKgSim'));
-const AutoSim = lazy(() => import('../sims/AutoSim'));
-const ElevatorPidSim = lazy(() => import('../sims/ElevatorPidSim'));
-const FlywheelKvSim = lazy(() => import('../sims/FlywheelKvSim'));
-const PowerSheddingSim = lazy(() => import('../sims/PowerSheddingSim'));
-const StateMachineSim = lazy(() => import('../sims/StateMachineSim'));
-const MonteHall = lazy(() => import('../sims/MonteHall').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load MonteHall</div> })));
+const FaultSim = lazy(() => import('../sims/fault'));
+const PhysicsSim = lazy(() => import('../sims/physics'));
+const SysIdSim = lazy(() => import('../sims/sysid'));
+const VisionSim = lazy(() => import('../sims/vision'));
+const ZeroAllocationSim = lazy(() => import('../sims/zeroallocation'));
+const FieldVisualizer = lazy(() => import('../sims/field'));
+const TroubleshootingWizard = lazy(() => import('../sims/troubleshooting'));
+const PerformanceDashboard = lazy(() => import('../sims/performance'));
+const ArmKgSim = lazy(() => import('../sims/armkg'));
+const AutoSim = lazy(() => import('../sims/auto'));
+const ElevatorPidSim = lazy(() => import('../sims/elevatorpid'));
+const FlywheelKvSim = lazy(() => import('../sims/flywheelkv'));
+const PowerSheddingSim = lazy(() => import('../sims/powershedding'));
+const StateMachineSim = lazy(() => import('../sims/statemachine'));
+const MonteHall = lazy(() => import('../sims/montehall').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load MonteHall</div> })));
 const SimulationPlayground = lazy(() => import('./SimulationPlayground').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load SimulationPlayground</div> })));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

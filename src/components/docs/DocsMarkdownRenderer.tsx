@@ -1,4 +1,4 @@
-import { memo, lazy, Suspense } from "react";
+import React, { memo, lazy, Suspense } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -14,35 +14,36 @@ const CodePlayground = lazy(() => import("./CodePlayground"));
 const ScreenshotGallery = lazy(() => import("./ScreenshotGallery"));
 const InteractiveTutorial = lazy(() => import("../InteractiveTutorial"));
 
-// ── Lazy-loaded Simulators ───────────────────────────────────────────
-// IMPORTANT: When adding a new sim to simRegistry.json, add a lazy import here
-// and add it to SIM_COMPONENTS below. The sim ID (lowercased) will be the
-// tag name used in markdown (e.g., <SwerveSimulator /> becomes <swervesimulator />)
-const SwerveSimulator = lazy(() => import("../../sims/SwerveSim"));
-const SOTMSimulator = lazy(() => import("../../sims/SotmSim"));
-const FaultSim = lazy(() => import("../../sims/FaultSim"));
-const PhysicsSim = lazy(() => import("../../sims/PhysicsSim"));
-const SysIdSim = lazy(() => import("../../sims/SysIdSim"));
-const VisionSim = lazy(() => import("../../sims/VisionSim"));
-const ZeroAllocationSim = lazy(() => import("../../sims/ZeroAllocationSim"));
-const FieldVisualizer = lazy(() => import("../../sims/FieldVisualizer"));
-const TroubleshootingWizard = lazy(() => import("../../sims/TroubleshootingWizard"));
-const PerformanceDashboard = lazy(() => import("../../sims/PerformanceDashboard"));
-const ArmKgSim = lazy(() => import("../../sims/ArmKgSim"));
-const AutoSim = lazy(() => import("../../sims/AutoSim"));
-const ElevatorPidSim = lazy(() => import("../../sims/ElevatorPidSim"));
-const FlywheelKvSim = lazy(() => import("../../sims/FlywheelKvSim"));
-const PowerSheddingSim = lazy(() => import("../../sims/PowerSheddingSim"));
-const StateMachineSim = lazy(() => import("../../sims/StateMachineSim"));
-const BeeSim = lazy(() => import("../../sims/BeeSim"));
-const TheGreatBeeAdventure = lazy(() => import("../../sims/TheGreatBeeAdventure"));
-const UntitledSimulation = lazy(() => import("../../sims/UntitledSimulation"));
+// ── Lazy-loaded Simulators (New Folder Structure) ────────────────────
+// Each sim is now in its own subfolder with an index.tsx export
+// IMPORTANT: When adding a new sim, create a folder in src/sims/ with index.tsx
+// and add the lazy import and SIM_COMPONENTS entry here.
+const SwerveSimulator = lazy(() => import("../../sims/swerve"));
+const SOTMSimulator = lazy(() => import("../../sims/sotm"));
+const FaultSim = lazy(() => import("../../sims/fault"));
+const PhysicsSim = lazy(() => import("../../sims/physics"));
+const SysIdSim = lazy(() => import("../../sims/sysid"));
+const VisionSim = lazy(() => import("../../sims/vision"));
+const ZeroAllocationSim = lazy(() => import("../../sims/zeroallocation"));
+const FieldVisualizer = lazy(() => import("../../sims/field"));
+const TroubleshootingWizard = lazy(() => import("../../sims/troubleshooting"));
+const PerformanceDashboard = lazy(() => import("../../sims/performance"));
+const ArmKgSim = lazy(() => import("../../sims/armkg"));
+const AutoSim = lazy(() => import("../../sims/auto"));
+const ElevatorPidSim = lazy(() => import("../../sims/elevatorpid"));
+const FlywheelKvSim = lazy(() => import("../../sims/flywheelkv"));
+const PowerSheddingSim = lazy(() => import("../../sims/powershedding"));
+const StateMachineSim = lazy(() => import("../../sims/statemachine"));
+const BeeSim = lazy(() => import("../../sims/bee"));
+const TheGreatBeeAdventure = lazy(() => import("../../sims/greatbee"));
+const UntitledSimulation = lazy(() => import("../../sims/untitled"));
 const Battleship = lazy(() => import("../../sims/battleship"));
+const MonteHall = lazy(() => import("../../sims/montehall"));
 
 // ── Sim Component Registry ───────────────────────────────────────────────
 // Maps sim component IDs to their lazy-loaded components
 // Tag names are lowercased versions of the component IDs
-const SIM_COMPONENTS: Record<string, React.ComponentType> = {
+const SIM_COMPONENTS: Record<string, React.ComponentType<any>> = {
   swervesimulator: SwerveSimulator,
   sotmsimulator: SOTMSimulator,
   faultsim: FaultSim,
@@ -120,11 +121,15 @@ export default memo(function DocsMarkdownRenderer({ content }: DocsMarkdownRende
         }]
       ]}
       components={{
-        // Non-sim components
+        // @ts-expect-error Custom component tag names
         configvisualizer: () => <LazyWrap><ConfigVisualizer /></LazyWrap>,
+        // @ts-expect-error Custom component tag names
         simulationplayground: () => <LazyWrap><SimulationPlayground /></LazyWrap>,
+        // @ts-expect-error Custom component tag names
         codeplayground: () => <LazyWrap><CodePlayground /></LazyWrap>,
+        // @ts-expect-error Custom component tag names
         screenshotgallery: () => <LazyWrap><ScreenshotGallery /></LazyWrap>,
+        // @ts-expect-error Custom component tag names
         interactivetutorial: () => <LazyWrap><InteractiveTutorial /></LazyWrap>,
         // All sims from SIM_COMPONENTS (auto-populated)
         ...Object.fromEntries(

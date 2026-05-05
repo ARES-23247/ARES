@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './TroubleshootingWizard.css';
+import '../TroubleshootingWizard.css';
 
 export interface TroubleshootingStep {
   id: string;
