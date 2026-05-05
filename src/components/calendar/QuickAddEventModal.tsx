@@ -121,10 +121,7 @@ export function QuickAddEventModal({
     setIsSubmitting(true);
 
     try {
-      // Use custom location if "CUSTOM" is selected, otherwise use the selected location
-      const locationValue = formData.location === "CUSTOM"
-        ? formData.customLocation
-        : formData.location;
+      const locationValue = formData.location === "CUSTOM" ? undefined : formData.location;
 
       const result = await api.events.saveEvent.mutate({
         body: {
