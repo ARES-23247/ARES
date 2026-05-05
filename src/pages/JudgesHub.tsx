@@ -60,24 +60,24 @@ export default function JudgesHub() {
         body: { code, turnstileToken }
       });
       if (res.status === 200 && res.body.success) {
-        localStorage.setItem("ares_judge_code", code);
+        sessionStorage.setItem("ares_judge_code", code);
         setIsAuthenticated(true);
         fetchPortfolio(code);
       } else {
         const body = res.body as { error?: string };
         setError(body?.error || "Invalid access code.");
-        localStorage.removeItem("ares_judge_code");
+        sessionStorage.removeItem("ares_judge_code");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error. Please try again.");
-      localStorage.removeItem("ares_judge_code");
+      sessionStorage.removeItem("ares_judge_code");
     } finally {
       setIsLoading(false);
     }
   }, [fetchPortfolio, turnstileToken]);
 
   useEffect(() => {
-    const savedCode = localStorage.getItem("ares_judge_code");
+    const savedCode = sessionStorage.getItem("ares_judge_code");
     if (savedCode) {
       setTimeout(() => {
         handleLogin(savedCode);
@@ -86,7 +86,7 @@ export default function JudgesHub() {
   }, [handleLogin]);
 
   const logout = () => {
-    localStorage.removeItem("ares_judge_code");
+    sessionStorage.removeItem("ares_judge_code");
     setIsAuthenticated(false);
     setPortfolio(null);
     setAccessCode("");
