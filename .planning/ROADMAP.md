@@ -1,4 +1,4 @@
-# Milestone Roadmap
+﻿# Milestone Roadmap
 
 ## Current Overview
 
@@ -14,6 +14,7 @@
 | 17 | v6.5 | 1/1 | Complete | 2026-05-04 |
 | 18 | v6.5 | 1/1 | Complete | 2026-05-04 |
 | 19 | v6.5 | 1/1 | Complete | 2026-05-04 |
+| 20 | v6.5 | 1/1 | Complete | 2026-05-04 |
 
 ## Phase Details
 
@@ -32,3 +33,8 @@
 **Status:** Complete
 **Commits:** `9cb94af`, `7bcaaa0`
 **Summary:** Moved 21 sims to subfolders, created auto-generation script, added admin UI at `/dashboard/sims`
+
+### Phase 20: v6.5 Infrastructure Stabilization & PWA Audit
+**Goal:** Stabilize PWA rendering, resolve accessibility regressions, fix Tiptap JSON AST rendering in Docs, and remove unsupported edge functions.
+**Status:** Complete
+**Commits:** `dbc4cb1`, `c0d40f5`, `05c858c`
