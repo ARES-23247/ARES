@@ -1,10 +1,14 @@
- 
+
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import { MockKysely, TestEnv } from "../../../src/test/types";
+import { createMockDoc } from "../../../src/test/factories/contentFactory";
+import { createMockUser } from "../../../src/test/factories/userFactory";
 
-const mockUser = { id: "1", email: "admin@test.com", role: "admin" };
+const mockUser = createMockUser({ id: "1", email: "admin@test.com", role: "admin" });
 let authBypass = true;
 
 // Mock middleware
@@ -12,11 +16,11 @@ vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (c: any, next: () => Promise<void>) => {
+    ensureAdmin: async (c: Context<TestEnv>, next: () => Promise<void>) => {
       if (authBypass) return next();
       return c.json({ error: "Forbidden" }, 403);
     },
-    ensureAuth: async (c: any, next: () => Promise<void>) => {
+    ensureAuth: async (c: Context<TestEnv>, next: () => Promise<void>) => {
       if (authBypass) return next();
       return c.json({ error: "Unauthorized" }, 401);
     },
@@ -36,11 +40,11 @@ vi.mock("../../utils/zulipSync", () => ({
 import docsRouter from "./docs";
 
 describe("Hono Backend - /docs Router", () => {
-  
-  
-   
-  let mockDb: any;
-  let testApp: Hono<any>;
+
+
+
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -77,8 +81,8 @@ describe("Hono Backend - /docs Router", () => {
       }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
       await next();
     });
@@ -156,7 +160,15 @@ describe("Hono Backend - /docs Router", () => {
   it("POST /admin/save - save doc as non-admin", async () => {
     // Override getSessionUser for this test
     const { getSessionUser } = await import("../middleware");
-    (getSessionUser as any).mockResolvedValueOnce({ id: "2", email: "user@test.com", role: "member" });
+    vi.mocked(getSessionUser).mockResolvedValueOnce({
+      id: "2",
+      email: "user@test.com",
+      name: null,
+      nickname: "User",
+      image: null,
+      role: "member",
+      member_type: "student",
+    });
     
     mockDb.executeTakeFirst.mockResolvedValueOnce({ slug: "existing-doc", title: "Existing" });
     const res = await testApp.request("/admin/save", {
