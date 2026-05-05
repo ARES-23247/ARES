@@ -356,10 +356,10 @@ export default function SimComponent() {
     (row: number, col: number) => {
       if (phase !== 'playing' || isComputerTurn) return;
       const key = `${row},${col}`;
-      if (playerHitsRef.current.has(key) || playerMissesRef.current.has(key)) return;
+      if (opponentHitsRef.current.has(key) || opponentMissesRef.current.has(key)) return;
 
-      const newHits = new Set(playerHitsRef.current);
-      const newMisses = new Set(playerMissesRef.current);
+      const newHits = new Set(opponentHitsRef.current);
+      const newMisses = new Set(opponentMissesRef.current);
       const isHit = opponentGrid[row][col] !== '';
 
       if (isHit) {
@@ -367,8 +367,8 @@ export default function SimComponent() {
       } else {
         newMisses.add(key);
       }
-      setPlayerHits(newHits);
-      setPlayerMisses(newMisses);
+      setOpponentHits(newHits);
+      setOpponentMisses(newMisses);
 
       // Check for sunk ships
       const sunk = getSunkShips(opponentShips, newHits);

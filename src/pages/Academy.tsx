@@ -106,6 +106,7 @@ export default function Academy() {
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
           onSearchOpen={() => setSearchOpen(true)}
+          basePath="/academy"
         />
 
         <div className="flex-1 flex w-full">

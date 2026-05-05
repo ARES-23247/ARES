@@ -4,12 +4,17 @@ import { z } from "zod";
 
 // GitHub repository configuration
 // Centralized to avoid hardcoded references throughout the codebase
-const GITHUB_REPO = {
-  owner: process.env.GITHUB_REPO_OWNER || 'ARES-23247',
-  repo: process.env.GITHUB_REPO_NAME || 'ARESWEB',
-  branch: process.env.GITHUB_BRANCH || 'main',
-};
-const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}`;
+function getGitHubConfig(c: any) {
+  const owner = c.env.GITHUB_REPO_OWNER || 'ARES-23247';
+  const repo = c.env.GITHUB_REPO_NAME || 'ARESWEB';
+  const branch = c.env.GITHUB_BRANCH || 'main';
+  return {
+    owner,
+    repo,
+    branch,
+    apiBase: `https://api.github.com/repos/${owner}/${repo}`
+  };
+}
 
 // Validation schema for simulation save
 // SECURITY: Enforce limits to prevent DoS via large payloads
@@ -58,6 +63,7 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
 
   try {
     const db = c.get("db");
+    const ghConfig = getGitHubConfig(c);
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find((s: any) => s.key === "GITHUB_PAT");
     const pat = patSetting?.value || c.env.GITHUB_PAT;
@@ -72,7 +78,7 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
 
     // Get the file metadata to check creation
     const path = `src/sims/${simId}.tsx`;
-    const url = `${GITHUB_API_BASE}/commits?path=${path}&per_page=1`;
+    const url = `${ghConfig.apiBase}/commits?path=${path}&per_page=1`;
 
     const res = await fetch(url, { headers });
     if (!res.ok) return false;
@@ -114,6 +120,7 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
 simulationsRouter.get("/", async (c) => {
   try {
     const db = c.get("db");
+    const ghConfig = getGitHubConfig(c);
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
     const pat = patSetting?.value || c.env.GITHUB_PAT;
@@ -128,7 +135,7 @@ simulationsRouter.get("/", async (c) => {
     };
     if (pat) headers["Authorization"] = `Bearer ${pat}`;
 
-    const ghRes = await fetch(`${GITHUB_API_BASE}/contents/src/sims/simRegistry.json`, { headers });
+    const ghRes = await fetch(`${ghConfig.apiBase}/contents/src/sims/simRegistry.json`, { headers });
     if (!ghRes.ok) {
        return c.json({ simulations: [] });
     }
@@ -181,6 +188,7 @@ simulationsRouter.get("/:id", async (c) => {
 
   try {
     const db = c.get("db");
+    const ghConfig = getGitHubConfig(c);
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
     const pat = patSetting?.value || c.env.GITHUB_PAT;
@@ -195,7 +203,7 @@ simulationsRouter.get("/:id", async (c) => {
     };
     if (pat) headers["Authorization"] = `Bearer ${pat}`;
 
-    const ghRes = await fetch(`${GITHUB_API_BASE}/contents/src/sims/${filename}`, { headers });
+    const ghRes = await fetch(`${ghConfig.apiBase}/contents/src/sims/${filename}`, { headers });
     if (!ghRes.ok) {
       return c.json({ error: "Simulation not found in GitHub" }, 404);
     }
@@ -240,6 +248,7 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
     }
 
     const db = c.get("db");
+    const ghConfig = getGitHubConfig(c);
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
     const pat = patSetting?.value || c.env.GITHUB_PAT;
@@ -273,7 +282,7 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
     const base64Content = btoa(unescape(encodeURIComponent(content)));
 
     const path = `src/sims/${filename}`;
-    const url = `${GITHUB_API_BASE}/contents/${path}`;
+    const url = `${ghConfig.apiBase}/contents/${path}`;
 
     let sha: string | undefined;
     const getRes = await fetch(url, { headers });
@@ -306,7 +315,7 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
     // Update registry if new file was created
     // Uses retry logic to handle race conditions from concurrent saves
     if (!sha) {
-      const regUrl = `${GITHUB_API_BASE}/contents/src/sims/simRegistry.json`;
+      const regUrl = `${ghConfig.apiBase}/contents/src/sims/simRegistry.json`;
       const maxRetries = 3;
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -407,6 +416,7 @@ simulationsRouter.delete("/:id", async (c) => {
     const filename = `${simIdStr}.tsx`;
 
     const db = c.get("db");
+    const ghConfig = getGitHubConfig(c);
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
     const pat = patSetting?.value || c.env.GITHUB_PAT;
@@ -423,7 +433,7 @@ simulationsRouter.delete("/:id", async (c) => {
     };
 
     const path = `src/sims/${filename}`;
-    const url = `${GITHUB_API_BASE}/contents/${path}`;
+    const url = `${ghConfig.apiBase}/contents/${path}`;
 
     let sha: string | undefined;
     const getRes = await fetch(url, { headers });
@@ -453,7 +463,7 @@ simulationsRouter.delete("/:id", async (c) => {
     }
     
     // Also remove from registry
-    const regUrl = `${GITHUB_API_BASE}/contents/src/sims/simRegistry.json`;
+    const regUrl = `${ghConfig.apiBase}/contents/src/sims/simRegistry.json`;
     const regGetRes = await fetch(regUrl, { headers });
     if (regGetRes.ok) {
       const regJson = (await regGetRes.json()) as any;

@@ -27,10 +27,10 @@ export default function SimComponent() {
 
   const [history, setHistory] = useState<RoundResult[]>([]);
   const [autoRunning, setAutoRunning] = useState(false);
-  const [autoSpeed, setAutoSpeed] = useState(2); // Default to a slower speed
+  const [autoSpeed, setAutoSpeed] = useState(1); // Default to very slow
   const [autoStrategy, setAutoStrategy] = useState<'switch' | 'stay' | 'both'>('both');
   const autoRef = useRef(false);
-  const speedRef = useRef(2);
+  const speedRef = useRef(1);
   const strategyRef = useRef<'switch' | 'stay' | 'both'>('both');
 
   useEffect(() => { speedRef.current = autoSpeed; }, [autoSpeed]);
@@ -217,8 +217,8 @@ export default function SimComponent() {
         setWon(didWin);
         setPhase('result');
         setMessage(didWin 
-          ? (doSwitch ? '🎉 Auto switched and WON!' : '🎉 Auto stayed and WON!') 
-          : (doSwitch ? '🐐 Auto switched to a goat!' : '🐐 Auto stayed on a goat!')
+          ? (doSwitch ? `🎉 AUTO SWITCHED TO DOOR ${finalDoor + 1} AND WON!` : `🎉 AUTO STAYED ON DOOR ${finalDoor + 1} AND WON!`) 
+          : (doSwitch ? `🐐 AUTO SWITCHED TO DOOR ${finalDoor + 1} (GOAT)` : `🐐 AUTO STAYED ON DOOR ${finalDoor + 1} (GOAT)`)
         );
 
         setHistory(prev => {
@@ -231,8 +231,8 @@ export default function SimComponent() {
           return newHistory.slice(-MAX_HISTORY);
         });
         
-        // Pause longer on result so user can see final choices
-        await new Promise(r => { timeoutId = setTimeout(r, delay * 2); });
+        // Pause much longer on result so user can actually see what happened
+        await new Promise(r => { timeoutId = setTimeout(r, delay * 4); });
       }
     };
 

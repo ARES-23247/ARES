@@ -29,6 +29,7 @@
 
 - [x] **Phase 27: Type Foundation** — Create `shared/types/` with core generics and handler types (completed 2026-05-05)
 - [x] **Phase 28: High-Impact Handlers** — Fix top 4 violation files (~192 any, ~60% of total) (completed 2026-05-05)
+- [x] **Phase 28.1: AI Simulation & Analytics Stabilization** — Fix module resolution and dashboard regressions (completed 2026-05-05)
 - [ ] **Phase 29: Contract Inference** — Full ts-rest contract inference with Zod boundaries
 - [ ] **Phase 30: Test Types** — Mock factories and typed test helpers
 - [ ] **Phase 31: Frontend Components** — React prop interfaces and event handler types
@@ -85,6 +86,29 @@ Plans:
 
 Plans:
 - [x] 28-01-PLAN.md — Eliminate all `any` violations in events/handlers.ts, docs.ts, comments.ts, and sponsors.ts using HandlerInput, HonoContext, and D1Row types from Phase 27 (COMPLETED 2026-05-05)
+
+---
+
+### Phase 28.1: AI Simulation & Analytics Stabilization
+
+**Goal**: Restore and stabilize the AI educational simulations and fix regressions in the analytics dashboard caused by recent metrics integration.
+
+**Depends on**: Discovered urgent work during v6.7 execution
+
+**Success Criteria** (what must be TRUE):
+1. `SimRunner.tsx` correctly resolves kebab-case simulation folders (e.g., `nn-activation`)
+2. `nn-biology` simulation compiles without missing icon errors
+3. `AnalyticsDashboard.tsx` and `useAcademy.ts` compile without TypeScript errors
+4. Analytics backend route handles empty telemetry tables gracefully (no 500 errors)
+5. `npm run generate:sims` updates registry with 29 active simulations
+
+**Plans**: 1/1 planned
+
+**Wave Structure**:
+- Wave 1: 28.1-01 (Stabilization) — autonomous, emergency fix
+
+Plans:
+- [x] PLAN.md — Stabilize AI simulations, fix analytics regressions, and implement backend resilience (COMPLETED 2026-05-05)
 
 ---
 

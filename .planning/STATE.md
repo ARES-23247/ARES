@@ -6,23 +6,23 @@ status: executing
 last_updated: "2026-05-05T14:32:23.617Z"
 last_activity: 2026-05-05
 progress:
-  total_phases: 4
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 4
-  percent: 80
+  total_phases: 5
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 5
+  percent: 83
 ---
 
 # System State
 
 **Current Milestone**: v6.7 — TypeScript Any Elimination
-**Status**: Phase 28 Plan 1 complete, 2 remaining plans
+**Status**: Phase 29 Plan 1 complete, 1 remaining plan
 
 ## Current Position
 
 Phase: 29 (Contract Inference) — EXECUTING
 Plan: 2 of 2
-Next: Phase 29 — Contract Inference
+Next: Phase 30 — Test Types
 Status: Ready to execute
 Last activity: 2026-05-05
 
@@ -67,14 +67,31 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 - b56dfe8: feat(27-02): import types into docs.ts
 - 377d7e1: feat(27-02): import types into sponsors.ts
 
-## Next: Phase 28 — High-Impact Handlers
+## Phase 28 Complete: High-Impact Handlers
 
-Fix top 4 violation files (~192 `any`, ~60% of total):
+### Delivered
 
-- functions/api/routes/events/handlers.ts (77 violations)
-- functions/api/routes/docs.ts (51 violations)
-- functions/api/routes/comments.ts (33 violations)
-- functions/api/routes/sponsors.ts (31 violations)
+- `functions/api/routes/events/handlers.ts`: 77 violations fixed
+- `functions/api/routes/docs.ts`: 51 violations fixed
+- `functions/api/routes/comments.ts`: 33 violations fixed
+- `functions/api/routes/sponsors.ts`: 31 violations fixed
+- Validated shared type adoption across core business logic
+
+---
+
+## Phase 28.1 Complete: AI Simulation & Analytics Stabilization
+
+### Delivered
+
+- `SimRunner.tsx`: Fixed dynamic import path resolution (folder vs id)
+- `nn-biology`: Fixed missing Lucide icon import
+- `AnalyticsDashboard.tsx`: Added explicit types to resolve `implicit any`
+- `useAcademy.ts`: Corrected analytics category to `'doc'`
+- `functions/api/routes/analytics.ts`: Implemented database query resilience
+
+---
+
+## Phase 29 In Progress: Contract Inference (Plan 1/2 Complete)
 
 ## Deferred Items
 
@@ -109,6 +126,6 @@ Fix top 4 violation files (~192 `any`, ~60% of total):
 
 ## Session Continuity
 
-**Last session**: Planned Phase 28 (High-Impact Handlers) — 1 plan verified PASS
-**Next step**: `/gsd-execute-phase 28` — Execute plan to eliminate ~192 violations
-**Plan 28-01**: 5 tasks targeting 4 files (events/handlers.ts: 77, docs.ts: 51, comments.ts: 33, sponsors.ts: 31)
+**Last session**: Completed Phase 28.1 (AI Simulation & Analytics Stabilization) — 1 plan verified PASS
+**Next step**: `/gsd-execute-phase 29` — Execute plan for contract inference
+**Plan 29-01**: Export ts-rest-hono contract inference types and migrate analytics.ts

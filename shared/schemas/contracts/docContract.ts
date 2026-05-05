@@ -17,6 +17,9 @@ export const docResponseSchema = z.object({
   is_deleted: z.number().nullish(),
   status: z.string().nullish(),
   revision_of: z.string().nullish(),
+  display_in_areslib: z.number().nullish(),
+  display_in_math_corner: z.number().nullish(),
+  display_in_science_corner: z.number().nullish(),
   original_author_nickname: z.string().optional(),
   original_author_avatar: z.string().optional(),
 });

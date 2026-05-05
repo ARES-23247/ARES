@@ -19,9 +19,10 @@ interface DocsSidebarProps {
   searchQuery: string;
   onSearchQueryChange: (q: string) => void;
   onSearchOpen: () => void;
+  basePath?: string;
 }
 
-function DocsSidebar({ groupedDocs, currentSlug, onSearchOpen }: DocsSidebarProps) {
+function DocsSidebar({ groupedDocs, currentSlug, onSearchOpen, basePath = "/docs" }: DocsSidebarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [prevSlugs, setPrevSlugs] = useState(groupedDocs.map(([cat]) => cat).join(","));
@@ -91,9 +92,11 @@ function DocsSidebar({ groupedDocs, currentSlug, onSearchOpen }: DocsSidebarProp
         pt-24 pb-8 px-4
       `}>
         <div className="mb-6 px-2">
-          <Link to="/docs" className="flex items-center shadow-lg ares-cut-sm overflow-hidden group w-fit">
+          <Link to={basePath} className="flex items-center shadow-lg ares-cut-sm overflow-hidden group w-fit">
             <span className="bg-ares-red px-3 py-1.5 text-xs font-heading font-bold uppercase text-white tracking-wider border-r border-white/10">ARES</span>
-            <span className="bg-white/10 text-white font-heading font-medium px-3 py-1.5 text-xs uppercase tracking-widest group-hover:bg-white/20 transition-colors">Lib</span>
+            <span className="bg-white/10 text-white font-heading font-medium px-3 py-1.5 text-xs uppercase tracking-widest group-hover:bg-white/20 transition-colors">
+              {basePath.includes("academy") ? "Academy" : "Lib"}
+            </span>
           </Link>
         </div>
 
@@ -127,7 +130,7 @@ function DocsSidebar({ groupedDocs, currentSlug, onSearchOpen }: DocsSidebarProp
                     {docs.map((doc) => (
                       <Link
                         key={doc.slug}
-                        to={`/docs/${doc.slug}`}
+                        to={`${basePath}/${doc.slug}`}
                         className={`block pl-6 pr-2 py-1.5 text-sm ares-cut-sm transition-colors ${
                           currentSlug === doc.slug
                             ? "bg-ares-red/15 text-ares-red font-bold border-l-2 border-ares-red"
