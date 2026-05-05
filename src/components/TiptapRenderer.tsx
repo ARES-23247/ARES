@@ -3,58 +3,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Eye } from "lucide-react";
 import { CodeBlock } from "./docs/CodeBlock";
 import ErrorBoundary from "./ErrorBoundary";
+import { SIM_COMPONENTS } from "./generated/sim-registry";
 
 /* ---------- Lazy Loaded Simulators & Tools ---------- */
 const CodePlayground = lazy(() => import('./docs/CodePlayground').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load CodePlayground</div> })));
 const InteractiveTutorial = lazy(() => import('./InteractiveTutorial').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load InteractiveTutorial</div> })));
 // @ts-expect-error -- CoreValueCallout uses named export; catch fallback provides default shape
 const CoreValueCallout = lazy(() => import('./CoreValueCallout').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load CoreValueCallout</div> })));
-const SotmSim = lazy(() => import('../sims/sotm'));
-const SwerveSim = lazy(() => import('../sims/swerve'));
 const ConfigVisualizer = lazy(() => import('./docs/ConfigVisualizer'));
 const ScreenshotGallery = lazy(() => import('./docs/ScreenshotGallery'));
-const FaultSim = lazy(() => import('../sims/fault'));
-const PhysicsSim = lazy(() => import('../sims/physics'));
-const SysIdSim = lazy(() => import('../sims/sysid'));
-const VisionSim = lazy(() => import('../sims/vision'));
-const ZeroAllocationSim = lazy(() => import('../sims/zeroallocation'));
-const FieldVisualizer = lazy(() => import('../sims/field'));
-const TroubleshootingWizard = lazy(() => import('../sims/troubleshooting'));
-const PerformanceDashboard = lazy(() => import('../sims/performance'));
-const ArmKgSim = lazy(() => import('../sims/armkg'));
-const AutoSim = lazy(() => import('../sims/auto'));
-const ElevatorPidSim = lazy(() => import('../sims/elevatorpid'));
-const FlywheelKvSim = lazy(() => import('../sims/flywheelkv'));
-const PowerSheddingSim = lazy(() => import('../sims/powershedding'));
-const StateMachineSim = lazy(() => import('../sims/statemachine'));
-const MonteHall = lazy(() => import('../sims/montyhall').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load MonteHall</div> })));
 const SimulationPlayground = lazy(() => import('./SimulationPlayground').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load SimulationPlayground</div> })));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ComponentMap: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
+const ComponentMap: Record<string, React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>> = {
   CodePlayground,
   InteractiveTutorial,
   CoreValueCallout,
-  SwerveSim,
-  SotmSim,
   ConfigVisualizer,
   ScreenshotGallery,
-  FaultSim,
-  PhysicsSim,
-  SysIdSim,
-  VisionSim,
-  ZeroAllocationSim,
-  FieldVisualizer,
-  TroubleshootingWizard,
-  PerformanceDashboard,
-  ArmKgSim,
-  AutoSim,
-  ElevatorPidSim,
-  FlywheelKvSim,
-  PowerSheddingSim,
-  StateMachineSim,
-  MonteHall,
   SimulationPlayground,
+  ...SIM_COMPONENTS,
   Mermaid: lazy(() => Promise.resolve({ default: () => <div className="p-4 border border-white/10 bg-ares-gray-dark rounded text-ares-gray text-sm font-mono">[Mermaid Diagram]</div> })),
   HomeCoreValues: lazy(() => Promise.resolve({ default: () => <div className="p-4 border border-white/10 bg-ares-gray-dark rounded text-ares-gray text-sm font-mono">[Core Values Component]</div> }))
 };
