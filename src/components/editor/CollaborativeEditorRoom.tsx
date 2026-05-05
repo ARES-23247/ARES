@@ -151,7 +151,7 @@ function ConnectedEditorRoom({
 
     // Track disconnection for auto-reconnect
     newProvider.on("connection-close", () => {
-      if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
+      if (typeof window !== 'undefined' && window.__PLAYWRIGHT_TEST__) {
         console.warn(`[CollaborativeEditor] Playwright test mode: Ignoring connection-close for room "${roomId}".`);
         return;
       }
@@ -162,12 +162,12 @@ function ConnectedEditorRoom({
     });
 
     // Track connection errors
-    newProvider.on("connection-error", (err: any) => {
+    newProvider.on("connection-error", (err: Error | unknown) => {
       console.error(`[CollaborativeEditor] Connection error for room "${roomId}":`, err);
     });
 
     // Bypass sync wait in Playwright tests
-    if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
+    if (typeof window !== 'undefined' && window.__PLAYWRIGHT_TEST__) {
       queueMicrotask(() => {
         setIsSynced(true);
         setTimedOut(false);
@@ -340,7 +340,7 @@ export function CollaborativeEditorRoom({
 }) {
   const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
   const host = useMemo(() => {
-    if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
+    if (typeof window !== 'undefined' && window.__PLAYWRIGHT_TEST__) {
       return "dummy-host-for-playwright";
     }
     const hostValue = import.meta.env.VITE_PARTYKIT_HOST || "";
