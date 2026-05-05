@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
-import { Kysely } from "kysely";
+import type { MockKysely, TestEnv, MockExecutionContext } from "../../../src/test/types";
+import { mockExecutionContext } from "../../../src/test/utils";
 import { createMockExpressionBuilder } from "../../../src/test/utils";
 
 // Mock middleware BEFORE importing the router
@@ -8,8 +9,8 @@ vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (c: any, next: any) => next(),
-    rateLimitMiddleware: () => (c: any, next: any) => next(),
+    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
+    rateLimitMiddleware: () => (_c: unknown, next: () => Promise<void>) => next(),
     logAuditAction: vi.fn(),
     getSessionUser: vi.fn().mockResolvedValue({ id: "user-123", role: "admin", member_type: "mentor" }),
   };
@@ -18,20 +19,16 @@ vi.mock("../middleware", async (importOriginal) => {
 import financeRouter from "./finance";
 
 const mockEnv = {
-  DB: {} as any,
+  DB: {} as D1Database,
   ARES_STORAGE: {
     delete: vi.fn().mockResolvedValue(undefined),
-  } as any,
+  },
   DEV_BYPASS: "true",
 };
 
-const mockExecutionContext = {
-  waitUntil: vi.fn(),
-} as any;
-
 describe("Hono Backend - /finance Router", () => {
-  let testApp: Hono<any>;
-  let mockDb: any;
+  let testApp: Hono<TestEnv>;
+  let mockDb: MockKysely;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,7 +38,7 @@ describe("Hono Backend - /finance Router", () => {
       selectAll: vi.fn().mockReturnThis(),
       select: vi.fn().mockImplementation((args) => {
         if (Array.isArray(args)) {
-          args.forEach((arg: any) => {
+          args.forEach((arg: unknown) => {
             if (typeof arg === "function") {
               arg(createMockExpressionBuilder());
             }
@@ -61,18 +58,18 @@ describe("Hono Backend - /finance Router", () => {
       deleteFrom: vi.fn().mockReturnThis(),
       transaction: vi.fn().mockReturnThis(),
     };
-    
+
     // Support transaction callback
-    mockDb.execute.mockImplementation(async (cb: any) => {
-      if (typeof cb === 'function') return cb(mockDb);
+    mockDb.execute.mockImplementation(async (cb: unknown) => {
+      if (typeof cb === "function") return cb(mockDb);
       return [];
     });
 
-    testApp = new Hono<any>();
+    testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
-      c.set("db", mockDb as unknown as Kysely<any>);
+      c.set("db", mockDb);
       c.set("executionCtx", mockExecutionContext);
-      c.set("sessionUser", { id: "admin-123", role: "admin", email: "admin@test.com" });
+      c.set("sessionUser", { id: "admin-123", role: "admin", email: "admin@test.com", name: null, member_type: "mentor" });
       await next();
     });
     testApp.route("/", financeRouter);
@@ -300,7 +297,7 @@ describe("Hono Backend - /finance Router", () => {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({})
-      }, mockEnv, null as any); // no executionCtx
+      }, mockEnv, undefined); // no executionCtx
       expect(res.status).toBe(200);
       expect(mockDb.deleteFrom).toHaveBeenCalled();
     });
