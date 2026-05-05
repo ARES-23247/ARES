@@ -51,10 +51,15 @@
 4. Handler input/output types are defined and imported by at least 2 route files
 5. ESLint rule `no-explicit-any` remains disabled for `functions/api/routes/**/*` (temporary)
 
-**Plans**: 1/1 planned
+**Plans**: 2/2 planned
+
+**Wave Structure**:
+- Wave 1: 27-01 (Type Foundation) — autonomous, creates shared/types/
+- Wave 2: 27-02 (Route Adoption) — autonomous, depends on 27-01
 
 Plans:
-- [ ] 27-01-PLAN.md — Create shared/types/ directory with D1Row<T>, HonoContext, handler types, and barrel export
+- [x] 27-01-PLAN.md — Create shared/types/ directory with D1Row<T>, HonoContext, handler types, contracts, utility, and barrel export (COMPLETED 2026-05-05)
+- [ ] 27-02-PLAN.md — Import HandlerInput/HandlerOutput into docs.ts and sponsors.ts to demonstrate type adoption pattern
 
 ---
 
@@ -97,81 +102,3 @@ Plans:
 ---
 
 ### Phase 30: Test Types
-
-**Goal**: Standardize test mocking with type-safe factories while maintaining test flexibility.
-
-**Depends on**: Phase 27 (shared types for factory building)
-
-**Requirements**: Anti-pattern 3 (Over-Typed Test Mocks), Test Files checklist items
-
-**Success Criteria** (what must be TRUE):
-1. Mock factory functions exist for common entities (Task, Post, Sponsor, Event)
-2. All test mocks use `Partial<T>` pattern (no inline objects >10 properties)
-3. `as unknown as T` casts are limited and documented with justification
-4. Test utilities are typed and exported from `test/setup.ts`
-5. All tests pass with no new `any` violations introduced
-
-**Plans**: TBD
-
----
-
-### Phase 31: Frontend Components
-
-**Goal**: Explicit React prop interfaces and proper event handler types for remaining `any` violations in UI code.
-
-**Depends on**: Phase 29 (contract types available for consumption)
-
-**Requirements**: Anti-pattern 1 (Over-Genericizing Types), Frontend checklist items
-
-**Success Criteria** (what must be TRUE):
-1. All React component props have explicit interfaces (not inferred)
-2. Event handlers use proper generics (`ChangeEvent<T>`, `FormEvent<T>`)
-3. External library `any` uses are preserved with eslint-disable comments
-4. PartyKit and Tiptap types remain loose (awaiting upstream stability)
-5. No circular imports between component type files
-
-**Plans**: TBD
-**UI hint**: yes
-
----
-
-### Phase 32: Final Validation
-
-**Goal**: Audit all remaining `any` uses for legitimacy, enable ESLint enforcement, and document justified exceptions.
-
-**Depends on**: Phase 28, 29, 30, 31 (all elimination work complete)
-
-**Requirements**: All anti-patterns, Validation checklist items, Legitimate `any` cases
-
-**Success Criteria** (what must be TRUE):
-1. Total `@typescript-eslint/no-explicit-any` violations < 20 (only legitimate uses)
-2. Each remaining `any` has `eslint-disable-next-line` comment with justification
-3. ESLint `no-explicit-any` rule is enabled across the entire codebase
-4. CI pipeline enforces zero new `any` violations
-5. No circular type dependencies detected in compilation
-6. All 7 validation checklist items are satisfied
-
-**Plans**: TBD
-
----
-
-## Progress
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 27. Type Foundation | 1/1 planned | Planning | - |
-| 28. High-Impact Handlers | 0/4 | Planning | - |
-| 29. Contract Inference | 0/4 | Planning | - |
-| 30. Test Types | 0/4 | Planning | - |
-| 31. Frontend Components | 0/4 | Planning | - |
-| 32. Final Validation | 0/4 | Planning | - |
-
----
-
-### Archived Milestones
-
-- [**v6.6** — TypeScript Strictness](./milestones/v6.6-ROADMAP.md) (Completed: 2026-05-05)
-- [**v6.5** — Zulip Sync & Social Media Formalization](./milestones/v6.5-ROADMAP.md) (Completed: 2026-05-04)
-- [**v6.4** — Web App Architecture](./milestones/v6.4-ROADMAP.md) (Completed: 2026-04-20)
-- [**v6.2** — Frontend Upgrades](./milestones/v6.2-ROADMAP.md) (Completed: 2026-04-05)
-- [**v6.0** — Legacy Rewrite](./milestones/v6.0-ROADMAP.md) (Completed: 2026-03-15)
