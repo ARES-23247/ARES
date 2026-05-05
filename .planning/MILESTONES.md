@@ -1,5 +1,15 @@
 # Milestones
 
+## v6.6 TypeScript Strictness (Shipped: 2026-05-05)
+
+**Phases completed:** 5 phases, 5 plans, 0 tasks
+
+**Key accomplishments:**
+
+- Date:
+
+---
+
 ## v6.3 Outreach & Impact Logging Restoration (Shipped: 2026-05-04)
 
 **Phases completed:** 1 phases, 2 plans, 0 tasks
