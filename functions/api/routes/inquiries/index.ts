@@ -25,7 +25,18 @@ inquiriesRouter.use("/", async (c, next) => {
   return next();
 });
 
-createHonoEndpoints(inquiryContract, inquiriesTsRestRouter, inquiriesRouter);
+createHonoEndpoints(
+  inquiryContract,
+  inquiriesTsRestRouter,
+  inquiriesRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default inquiriesRouter;
 export { purgeOldInquiries } from "./handlers";

@@ -9,6 +9,7 @@ import { sendZulipMessage } from "../../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../../utils/notifications";
 import { buildGitHubConfig, createProjectItem } from "../../../utils/githubProjects";
 import { initServer } from "ts-rest-hono";
+
 const _s = initServer<AppEnv>();
 
 /**
@@ -30,8 +31,8 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
   return { deleted: res.length };
 }
 
-export const inquiryHandlers: any = {
-  list: async (input: any, c: any) => {
+export const inquiryHandlers = {
+  list: async (input, c) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -100,24 +101,24 @@ export const inquiryHandlers: any = {
         
         return {
           id: String(r.id),
-          type: r.type as any,
+          type: r.type,
           name,
           email,
           metadata: metadata || null,
-          status: r.status as any,
+          status: r.status,
           created_at: String(r.created_at),
           zulip_message_id: r.zulip_message_id,
           notes: r.notes
         };
       }));
 
-      return { status: 200 as const, body: { inquiries: inquiries as any[] } };
+      return { status: 200 as const, body: { inquiries } };
     } catch (e) {
       console.error("[Inquiry:List] Error", e);
       return { status: 500 as const, body: { error: "Failed to fetch inquiries" } };
     }
   },
-  submit: async (input: any, c: any) => {
+  submit: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -164,8 +165,8 @@ export const inquiryHandlers: any = {
 
       if (type === "sponsor") {
         let tierStr = "Pending";
-        if (metadata && typeof (metadata as any).level === "string") {
-          tierStr = (metadata as any).level;
+        if (metadata && typeof metadata.level === "string") {
+          tierStr = metadata.level;
           tierStr = tierStr.replace(" Tier Sponsor", "");
         }
         const encryptedSponsorName = await encrypt(name, secret);
@@ -173,7 +174,7 @@ export const inquiryHandlers: any = {
           .values({
             id,
             name: encryptedSponsorName,
-            tier: tierStr as any,
+            tier: tierStr,
             is_active: 0,
           })
           .execute();
@@ -223,7 +224,7 @@ export const inquiryHandlers: any = {
       return { status: 500 as const, body: { error: "Submission failed" } };
     }
   },
-  updateStatus: async (input: any, c: any) => {
+  updateStatus: async (input, c) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -233,13 +234,13 @@ export const inquiryHandlers: any = {
         .execute();
 
       c.executionCtx.waitUntil(logAuditAction(c, "inquiry_status_change", "inquiries", params.id, `Status changed to ${body.status}`));
-      return { status: 200 as const, body: { success: true, status: body.status as any } };
+      return { status: 200 as const, body: { success: true, status: body.status } };
     } catch (err) {
       console.error("[Inquiry:UpdateStatus] Error", err);
       return { status: 500 as const, body: { error: "Update failed" } };
     }
   },
-  updateNotes: async (input: any, c: any) => {
+  updateNotes: async (input, c) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -255,7 +256,7 @@ export const inquiryHandlers: any = {
       return { status: 500 as const, body: { error: "Notes update failed" } };
     }
   },
-  delete: async (input: any, c: any) => {
+  delete: async (input, c) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
