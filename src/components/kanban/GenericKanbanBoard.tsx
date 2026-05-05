@@ -13,10 +13,11 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { DroppableColumn } from "./DroppableColumn";
 import { RefreshCw } from "lucide-react";
+import { type IconComponent } from "../../types/components";
 
 export interface KanbanColumnConfig {
   label: string;
-  icon: React.ElementType<{ size?: number; className?: string }>;
+  icon: IconComponent;
   bg: string;
   text: string;
   border: string;
