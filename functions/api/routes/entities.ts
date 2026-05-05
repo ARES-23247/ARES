@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints } from "ts-rest-hono";
@@ -73,23 +72,23 @@ const entityHandlers = {
     }
   },
 
-  saveLink: async ({ body }: any, c: Context<AppEnv>) => {
+  saveLink: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = crypto.randomUUID();
-      
+
       await db.insertInto("entity_links")
         .values({
           id,
-          source_type: body.source_type,
-          source_id: body.source_id,
-          target_type: body.target_type,
-          target_id: body.target_id,
-          link_type: body.link_type
+          source_type: input.body.source_type,
+          source_id: input.body.source_id,
+          target_type: input.body.target_type,
+          target_id: input.body.target_id,
+          link_type: input.body.link_type
         })
         .execute();
 
-      c.executionCtx.waitUntil(logAuditAction(c, "create_link", "entity_links", id, `Linked ${body.source_type}:${body.source_id} to ${body.target_type}:${body.target_id}`));
+      c.executionCtx.waitUntil(logAuditAction(c, "create_link", "entity_links", id, `Linked ${input.body.source_type}:${input.body.source_id} to ${input.body.target_type}:${input.body.target_id}`));
       return { status: 200 as const, body: { success: true, id } };
     } catch (e) {
       console.error("SAVE_LINK ERROR", e);
@@ -97,11 +96,11 @@ const entityHandlers = {
     }
   },
 
-  deleteLink: async ({ params }: any, c: Context<AppEnv>) => {
+  deleteLink: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      await db.deleteFrom("entity_links").where("id", "=", params.id).execute();
-      c.executionCtx.waitUntil(logAuditAction(c, "delete_link", "entity_links", params.id));
+      await db.deleteFrom("entity_links").where("id", "=", input.params.id).execute();
+      c.executionCtx.waitUntil(logAuditAction(c, "delete_link", "entity_links", input.params.id));
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("DELETE_LINK ERROR", e);
@@ -111,6 +110,17 @@ const entityHandlers = {
 };
 
 entitiesRouter.use("*", ensureAuth);
-createHonoEndpoints(entityContract, entityHandlers as any, entitiesRouter);
+createHonoEndpoints(
+  entityContract,
+  entityHandlers,
+  entitiesRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default entitiesRouter;
