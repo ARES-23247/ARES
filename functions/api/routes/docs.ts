@@ -132,6 +132,12 @@ const docTsRestRouter: any = s.router(docContract as any, {
   searchDocs: async ({ query }: { query: any }, c: Context<AppEnv>) => {
     const { q } = query;
     if (!q || q.length < 3) return { status: 200 as const, body: { results: [] } };
+
+    // WR-18: Limit query length to prevent ReDoS via complex regex patterns
+    if (q.length > 50) {
+      return { status: 400 as const, body: { error: "Query too long (max 50 characters)" } };
+    }
+
     try {
       const now = Date.now();
       const cached = docSearchCache.get(q);
