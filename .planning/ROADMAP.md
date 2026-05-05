@@ -31,7 +31,7 @@
 - [x] **Phase 28: High-Impact Handlers** — Fix top 4 violation files (~192 any, ~60% of total) (completed 2026-05-05)
 - [x] **Phase 28.1: AI Simulation & Analytics Stabilization** — Fix module resolution and dashboard regressions (completed 2026-05-05)
 - [x] **Phase 29: Contract Inference** — Full ts-rest contract inference with Zod boundaries (completed 2026-05-05)
-- [ ] **Phase 29.1: Remaining Route Contract Inference** — Migrate remaining 11 route files to contract inference (4/4 plans ready, 2/4 complete)
+- [x] **Phase 29.1: Remaining Route Contract Inference** — Migrate remaining 11 route files to contract inference (4/4 plans ready, 4/4 complete)
 - [ ] **Phase 30: Test Types** — Mock factories and typed test helpers (8/8 plans ready)
 - [ ] **Phase 31: Frontend Components** — React prop interfaces and event handler types (5/5 plans ready)
 - [ ] **Phase 32: Final Validation** — ESLint enforcement and legitimate use justifications (2/2 plans ready)
@@ -162,10 +162,10 @@ Plans:
 - Wave 2: 29.1-04 (Handler modules) — depends on Wave 1 completion
 
 Plans:
-- [ ] 29.1-01-PLAN.md — Migrate awards.ts, entities.ts, locations.ts, tasks.ts, tba.ts to contract inference
+- [x] 29.1-01-PLAN.md — Migrate awards.ts, entities.ts, locations.ts, tasks.ts, tba.ts to contract inference (COMPLETED 2026-05-05)
 - [x] 29.1-02-PLAN.md — Migrate judges.ts and users.ts to contract inference (COMPLETED 2026-05-05)
-- [ ] 29.1-03-PLAN.md — Migrate posts.ts and zulip.ts to contract inference
-- [ ] 29.1-04-PLAN.md — Migrate handler modules (inquiries/, outreach/, media/) to contract inference
+- [x] 29.1-03-PLAN.md — Migrate posts.ts and zulip.ts to contract inference (COMPLETED 2026-05-05)
+- [x] 29.1-04-PLAN.md — Migrate handler modules (inquiries/, outreach/, media/) to contract inference (COMPLETED 2026-05-05)
 
 ---
 
