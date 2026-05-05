@@ -239,17 +239,27 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
       return c.json({ error: "Failed to upload to GitHub" }, 500);
     }
 
-    // Update registry if new
+    // Update registry if new file was created
+    // Uses retry logic to handle race conditions from concurrent saves
     if (!sha) {
       const regUrl = `https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/simRegistry.json`;
-      const regGetRes = await fetch(regUrl, { headers });
-      if (regGetRes.ok) {
+      const maxRetries = 3;
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const regGetRes = await fetch(regUrl, { headers });
+        if (!regGetRes.ok) {
+          console.warn(`[Simulations] Registry fetch failed on attempt ${attempt + 1}`);
+          break;
+        }
+
         const regJson = (await regGetRes.json()) as any;
         const regSha = regJson.sha;
         const regContentStr = decodeURIComponent(escape(atob(regJson.content)));
+
         try {
           const registry = JSON.parse(regContentStr);
-          
+
+          // Check if already registered (could be added by another concurrent request)
           if (!registry.simulators.some((s: any) => s.id === simIdStr)) {
             registry.simulators.push({
               id: simIdStr,
@@ -257,11 +267,11 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
               path: `./${simIdStr}`,
               requiresContext: false
             });
-            
+
             const newRegContent = JSON.stringify(registry, null, 2);
             const newRegBase64 = btoa(unescape(encodeURIComponent(newRegContent)));
-            
-            await fetch(regUrl, {
+
+            const regPutRes = await fetch(regUrl, {
               method: "PUT",
               headers,
               body: JSON.stringify({
@@ -270,9 +280,29 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
                 sha: regSha
               })
             });
+
+            if (regPutRes.ok) {
+              // Success - break out of retry loop
+              console.log(`[Simulations] Registered ${simIdStr} in simRegistry.json`);
+              break;
+            } else if (regPutRes.status === 409 && attempt < maxRetries - 1) {
+              // Conflict - another request modified the registry, retry with fresh data
+              const backoffMs = 100 * Math.pow(2, attempt);
+              console.warn(`[Simulations] Registry conflict on attempt ${attempt + 1}, retrying in ${backoffMs}ms`);
+              await new Promise(resolve => setTimeout(resolve, backoffMs));
+              continue;
+            } else {
+              console.error("[Simulations] Registry update failed:", await regPutRes.text());
+              break;
+            }
+          } else {
+            // Already registered by another request - no action needed
+            console.log(`[Simulations] ${simIdStr} already registered, skipping`);
+            break;
           }
         } catch (e) {
-          console.error("[Simulations] Registry update failed:", e);
+          console.error("[Simulations] Registry update failed on attempt", attempt + 1, ":", e);
+          if (attempt === maxRetries - 1) throw e;
         }
       }
     }
