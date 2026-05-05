@@ -8,6 +8,14 @@ import { useUIStore } from "../../store/uiStore";
 import { z } from "zod";
 import { STORAGE_KEYS } from "../../utils/storageKeys";
 
+// SEC-WR-08: Zod schema for validating chat session API response
+const chatSessionSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string().max(10000) // Limit message size to prevent DoS
+  }))
+});
+
 export function GlobalRAGChatbot() {
   const { isChatbotOpen, setChatbotOpen } = useUIStore();
   const [messages, setMessages] = useState<{ role: "ai" | "user"; content: string }[]>([]);
@@ -24,14 +32,6 @@ export function GlobalRAGChatbot() {
       return newId;
     }
     return uuidv4();
-  });
-
-  // SEC-WR-08: Zod schema for validating chat session API response
-  const chatSessionSchema = z.object({
-    messages: z.array(z.object({
-      role: z.enum(['user', 'assistant']),
-      content: z.string().max(10000) // Limit message size to prevent DoS
-    }))
   });
 
   useEffect(() => {

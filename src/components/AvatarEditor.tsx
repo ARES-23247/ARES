@@ -110,7 +110,8 @@ export default function AvatarEditor({ currentImage, onClose, onSave }: AvatarEd
   // when users click the randomize button multiple times quickly
   const randomizeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const randomizeAll = () => {
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const randomizeAll = useCallback(() => {
     if (styleMode === "avataaars") {
       setAvaState({
         top: getRandom(AVATAAARS_OPTIONS.top),
@@ -145,7 +146,7 @@ export default function AvatarEditor({ currentImage, onClose, onSave }: AvatarEd
       clearTimeout(randomizeDebounceRef.current);
       randomizeDebounceRef.current = null;
     }
-  };
+  }, [styleMode]);
 
   // Debounced version of randomizeAll for rapid clicks
   const debouncedRandomize = useCallback(() => {

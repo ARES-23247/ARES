@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from "react";
 import { api } from "../api/client";
 import { useDashboardNotifications } from "./useDashboardNotifications";

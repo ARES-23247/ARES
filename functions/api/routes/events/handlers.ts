@@ -16,7 +16,7 @@ const _s = initServer<AppEnv>();
  */
 const sanitizeFtsQuery = (query: string): string => {
   // Remove double quotes, backslashes, and other FTS special chars
-  return query.replace(/["\\\^\*\-\:]/g, ' ').trim().split(/\s+/).filter(Boolean).join(' ');
+  return query.replace(/["\\^*-:]/g, ' ').trim().split(/\s+/).filter(Boolean).join(' ');
 };
 
 export const eventHandlers: any = {
@@ -61,7 +61,7 @@ export const eventHandlers: any = {
           .limit(Number(limit) || 50)
           .offset(Number(offset) || 0)
           .execute();
-      } catch (_e) {
+      } catch {
         // Fallback for older schemas
         results = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
@@ -95,7 +95,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { events } };
     } catch (e) {
       console.error("[Events:List] Error", e);
-      return { status: 500 as const, body: { error: "Failed to fetch events" } } as any;
+      return { status: 500 as const, body: { error: "Failed to fetch events" } };
     }
   },
   getCalendarSettings: async (_input: any, c: any) => {
@@ -115,7 +115,7 @@ export const eventHandlers: any = {
       } };
     } catch (e) {
       console.error("[Events:CalendarSettings] Error", e);
-      return { status: 500 as const, body: { error: "Failed to fetch calendar settings" } } as any;
+      return { status: 500 as const, body: {} };
     }
   },
   getEvent: async (input: any, c: any) => {
@@ -178,7 +178,7 @@ export const eventHandlers: any = {
         results = await baseQuery
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes", "zulip_stream", "zulip_topic"])
           .execute();
-      } catch (_e) {
+      } catch {
         results = await baseQuery
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
           .execute() as any[];
@@ -200,7 +200,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { events, lastSyncedAt: lastSyncRow?.value || null, nextCursor } };
     } catch (e) {
       console.error("[Events:AdminList] Error", e);
-      return { status: 500 as const, body: { error: "Failed to fetch events" } } as any;
+      return { status: 500 as const, body: { error: "Failed to fetch events" } };
     }
   },
   adminDetail: async (input: any, c: any) => {
@@ -214,7 +214,7 @@ export const eventHandlers: any = {
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes"])
           .where("id", "=", id)
           .executeTakeFirst();
-      } catch (_e) {
+      } catch {
         row = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
           .where("id", "=", id)
@@ -238,7 +238,7 @@ export const eventHandlers: any = {
       };
     } catch (e) {
       console.error("[Events:AdminDetail] Error", e);
-      return { status: 500 as const, body: { error: "Database error" } } as any;
+      return { status: 500 as const, body: { error: "Database error" } };
     }
   },
   saveEvent: async (input: any, c: any) => {
@@ -273,25 +273,21 @@ export const eventHandlers: any = {
       const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
       const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
 
-      // CR-02 FIX: Require authentication for event creation
       const user = await getSessionUser(c);
       if (!user) return { status: 401 as const, body: { success: false, error: "Authentication required" } };
       const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
       const recurringGroupId = body.rrule ? crypto.randomUUID() : null;
 
-      // WR-02: Validate RRULE before parsing to prevent ReDoS
       const MAX_RRULE_LENGTH = 200;
       const ALLOWED_RRULE_KEYS = ['FREQ', 'INTERVAL', 'UNTIL', 'COUNT', 'BYDAY', 'BYMONTHDAY', 'BYMONTH', 'BYSETPOS'];
 
       let instances: any[] = [];
       if (body.rrule) {
-        // Validate RRULE length
         if (typeof body.rrule !== 'string' || body.rrule.length > MAX_RRULE_LENGTH) {
           return { status: 400 as const, body: { error: "Invalid recurrence rule: exceeds maximum length" } };
         }
 
-        // Basic validation: ensure rule contains at least one valid RRULE key
         const upperRule = body.rrule.toUpperCase();
         const hasValidKey = ALLOWED_RRULE_KEYS.some(key => upperRule.includes(`${key}=`));
         if (!hasValidKey) {
@@ -300,7 +296,6 @@ export const eventHandlers: any = {
 
         try {
           const rule = rrulestr(body.rrule, { dtstart: new Date(dateStart) });
-          // Cap to 52 instances to prevent infinite generation (1 year of weekly)
           const dates = rule.all((d, i) => i < 52); 
           
           const duration = dateEnd ? new Date(dateEnd).getTime() - new Date(dateStart).getTime() : 0;
@@ -309,7 +304,7 @@ export const eventHandlers: any = {
              const instStart = d.toISOString();
              const instEnd = dateEnd ? new Date(d.getTime() + duration).toISOString() : null;
              return {
-                id: i === 0 ? genId : crypto.randomUUID(), // first instance gets the original genId
+                id: i === 0 ? genId : crypto.randomUUID(), 
                 title: title || "", category: cat, date_start: instStart, date_end: instEnd,
                 location: location || "", description: description || "", cover_image: coverImage || "",
                 gcal_event_id: null, status,
@@ -343,7 +338,6 @@ export const eventHandlers: any = {
         await db.insertInto("events").values(instances.slice(i, i + CHUNK_SIZE)).execute();
       }
 
-      // Push snapshot to collaborative editor history
       if (description) {
         c.executionCtx.waitUntil(
           db.insertInto("document_history")
@@ -360,9 +354,6 @@ export const eventHandlers: any = {
       c.executionCtx.waitUntil((async () => {
         if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
           try {
-            // For MVP, we only push the first instance to gcal or we can push all of them.
-            // Pushing all might take a while if there are 52. Let's just push the first one for now, or map them if needed.
-            // Since we're keeping it simple, let's just push the first instance to GCal.
             const gcalId = await pushEventToGcal(
               { id: genId, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, meeting_notes: meetingNotes || undefined, recurrence_rule: recurrenceRule || body.rrule || undefined, parent_gcal_id: parentEventId || undefined, original_start_time: originalStartTime || undefined },
               { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
@@ -390,7 +381,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true, id: genId } };
     } catch (e: any) {
       console.error("[Events:Save] Error", e);
-      return { status: 500 as const, body: { success: false, error: e.message || "Write failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: e.message || "Write failed" } };
     }
   },
   updateEvent: async (input: any, c: any) => {
@@ -423,14 +414,12 @@ export const eventHandlers: any = {
       if (!existing) return { status: 404 as const, body: { error: "Event not found" } };
 
       if (body.updateMode === "following" && existing.recurring_group_id) {
-        // Delete future non-exception instances
         await db.deleteFrom("events")
           .where("recurring_group_id", "=", existing.recurring_group_id)
           .where("date_start", ">", existing.date_start)
           .where("recurring_exception", "=", 0)
           .execute();
 
-        // Regenerate instances
         if (body.rrule) {
           try {
             const rule = rrulestr(body.rrule, { dtstart: new Date(dateStart) });
@@ -488,7 +477,6 @@ export const eventHandlers: any = {
           .execute();
       }
 
-      // Push snapshot to collaborative editor history
       if (description) {
         c.executionCtx.waitUntil(
           db.insertInto("document_history")
@@ -539,7 +527,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true, id } };
     } catch (e) {
       console.error("[Events:Update] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Update failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
   deleteEvent: async (input: any, c: any) => {
@@ -606,7 +594,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Delete] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Delete failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Delete failed" } };
     }
   },
   approveEvent: async (input: any, c: any) => {
@@ -656,7 +644,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Approve] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Approval failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Approval failed" } };
     }
   },
   rejectEvent: async (input: any, c: any) => {
@@ -668,7 +656,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Reject] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Rejection failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Rejection failed" } };
     }
   },
   undeleteEvent: async (input: any, c: any) => {
@@ -703,7 +691,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Undelete] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Restore failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Restore failed" } };
     }
   },
   purgeEvent: async (input: any, c: any) => {
@@ -736,7 +724,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Purge] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Purge failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Purge failed" } };
     }
   },
   syncEvents: async (_input: any, c: any) => {
@@ -753,7 +741,7 @@ export const eventHandlers: any = {
       ].filter(cal => !!cal.id);
 
       if (!gcalEmail || !gcalKey || calendars.length === 0) {
-        return { status: 500 as const, body: { success: false, error: "GCal config missing" } } as any;
+        return { status: 500 as const, body: { success: false, error: "GCal config missing" } };
       }
 
       let total = 0;
@@ -807,7 +795,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true, count: total } };
     } catch (e) {
       console.error("[Events:Sync] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Sync failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Sync failed" } };
     }
   },
   getSignups: async (input: any, c: any) => {
@@ -860,7 +848,7 @@ export const eventHandlers: any = {
       } };
     } catch (e) {
       console.error("[Events:Signups] Error", e);
-      return { status: 500 as const, body: { error: "Failed to fetch signups" } } as any;
+      return { status: 500 as const, body: { error: "Failed to fetch signups" } };
     }
   },
   submitSignup: async (input: any, c: any) => {
@@ -876,7 +864,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:SubmitSignup] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Signup failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Signup failed" } };
     }
   },
   deleteMySignup: async (input: any, c: any) => {
@@ -889,7 +877,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:DeleteSignup] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Delete failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Delete failed" } };
     }
   },
   updateMyAttendance: async (input: any, c: any) => {
@@ -905,7 +893,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:UpdateMyAttendance] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Update failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
   updateUserAttendance: async (input: any, c: any) => {
@@ -921,7 +909,7 @@ export const eventHandlers: any = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:UpdateUserAttendance] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Update failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
   repushEvent: async (input: any, c: any) => {
@@ -984,10 +972,9 @@ export const eventHandlers: any = {
       const gcalKey = dbSettings["GCAL_PRIVATE_KEY"];
 
       if (!gcalEmail || !gcalKey) {
-        return { status: 500 as const, body: { success: false, error: "GCal service account not configured" } } as any;
+        return { status: 500 as const, body: { success: false, error: "GCal service account not configured" } };
       }
 
-      // Find all published, non-deleted events that are missing a gcal_event_id
       const missing = await db.selectFrom("events")
         .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "gcal_event_id", "meeting_notes"])
         .where("is_deleted", "=", 0)

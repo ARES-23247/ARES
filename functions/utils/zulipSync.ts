@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bindings, logSystemError } from "../api/middleware";
 import pRetry from "p-retry";
 import { z } from "zod";

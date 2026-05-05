@@ -13,7 +13,6 @@ type LocationInput = z.infer<typeof locationSchema>;
 const s = initServer<AppEnv>();
 export const locationsRouter = new Hono<AppEnv>();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const locationsTsRestRouter = s.router(locationContract, {
     list: async (_input: any, c: Context<AppEnv>) => {
     try {
@@ -112,8 +111,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to delete location", success: false } };
     }
   },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any);
+});
 
 locationsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(locationContract, locationsTsRestRouter, locationsRouter);

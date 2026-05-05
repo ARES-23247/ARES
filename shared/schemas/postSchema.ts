@@ -3,7 +3,7 @@ import { z } from "zod";
 // Define a more specific schema for Tiptap AST nodes
 const tiptapNodeSchema: z.ZodType<{
   type?: string;
-  content?: any[];
+  content?: unknown[];
   attrs?: Record<string, unknown>;
   marks?: unknown[];
   text?: string;

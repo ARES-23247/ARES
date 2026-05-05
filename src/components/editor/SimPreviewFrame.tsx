@@ -18,32 +18,32 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
 
   // Build allowed origins allowlist for strict PostMessage validation
-  const allowedOrigins = new Set([
+  const allowedOrigins = useMemo(() => new Set([
     window.location.origin,
     // Production domain - add when deployed
     // 'https://ares-23247.org',
-  ].filter(Boolean));
+  ].filter(Boolean)), []);
 
   // Strict message type validation - only these types are accepted
-  const ALLOWED_MESSAGE_TYPES = new Set([
+  const ALLOWED_MESSAGE_TYPES = useMemo(() => new Set([
     'sim-error',
     'sim-ready',
     'ARES_TELEMETRY',
     'ARES_SCREENSHOT',
     'sim-console',
-  ]);
+  ]), []);
 
   /**
    * Validate and sanitize incoming postMessage data.
    * Returns null if data is invalid, otherwise returns sanitized data.
    */
-  const sanitizeMessageData = (data: unknown): { type: string; [key: string]: unknown } | null => {
+  const sanitizeMessageData = (data: unknown, allowedTypes: Set<string>): { type: string; [key: string]: unknown } | null => {
     if (!data || typeof data !== 'object') return null;
 
     const messageData = data as Record<string, unknown>;
 
     // Validate type field exists and is a string
-    if (typeof messageData.type !== 'string' || !ALLOWED_MESSAGE_TYPES.has(messageData.type)) {
+    if (typeof messageData.type !== 'string' || !allowedTypes.has(messageData.type)) {
       return null;
     }
 
@@ -94,7 +94,7 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
     }
 
     // Sanitize and validate message structure
-    const sanitizedData = sanitizeMessageData(event.data);
+    const sanitizedData = sanitizeMessageData(event.data, ALLOWED_MESSAGE_TYPES);
     if (!sanitizedData) {
       console.warn('SimPreviewFrame: rejected message with invalid structure');
       return;
@@ -110,7 +110,7 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       // ARES_TELEMETRY and sim-console are logged but not processed further
       // ARES_SCREENSHOT is handled by screenshot request handler
     }
-  }, [allowedOrigins]);
+  }, [allowedOrigins, ALLOWED_MESSAGE_TYPES]);
 
   useEffect(() => {
     window.addEventListener("message", handleMessage);

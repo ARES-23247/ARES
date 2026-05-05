@@ -33,16 +33,8 @@ export default function BlogPost() {
   const validatedSlug = validateUrlParam(slug);
   const { data: session } = useSession();
   
-  // Early return if slug is invalid
-  if (!slug || !validatedSlug) {
-    return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white">Invalid post slug format.</div>;
-  }
-
-  const userRole = (session?.user as Record<string, unknown>)?.role || "user";
-  const isEditor = userRole === "admin" || userRole === "author";
-
   const { data: postRes, isLoading, isError } = api.posts.getPost.useQuery(["post", validatedSlug], {
-    params: { slug: validatedSlug },
+    params: { slug: validatedSlug || "" },
   }, {
     enabled: !!validatedSlug,
     retry: false,
@@ -52,9 +44,17 @@ export default function BlogPost() {
 
   useEffect(() => {
     if (post && validatedSlug) {
-      trackPageView(`/blog/${validatedSlug}`, 'blog');
+      trackPageView(`/blog/${validatedSlug}`, "blog");
     }
   }, [post, validatedSlug]);
+
+  // Early return if slug is invalid
+  if (!slug || !validatedSlug) {
+    return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white">Invalid post slug format.</div>;
+  }
+
+  const userRole = (session?.user as Record<string, unknown>)?.role || "user";
+  const isEditor = userRole === "admin" || userRole === "author";
 
   if (isLoading) return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white animate-pulse">Loading post...</div>;
   if (isError || !post) return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white">Post not found.</div>;

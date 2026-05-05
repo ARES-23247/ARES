@@ -119,6 +119,11 @@ export function validateUrlParam(param: string | undefined): string | null {
 export function validateIdParam(param: string | undefined): string | null {
   if (!param) return null;
 
+  // Length limit to prevent DoS before regex execution
+  if (param.length > 128) {
+    return null;
+  }
+
   // Check for UUID format
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (uuidPattern.test(param)) {
@@ -132,7 +137,10 @@ export function validateIdParam(param: string | undefined): string | null {
   }
 
   // Check for slug-like format (alphanumeric with hyphens)
-  const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  // Simplified to avoid catastrophic backtracking (security/detect-unsafe-regex)
+  // Length is capped at 128 above, so this is safe.
+  // eslint-disable-next-line security/detect-unsafe-regex
+  const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
   if (slugPattern.test(param)) {
     return param;
   }

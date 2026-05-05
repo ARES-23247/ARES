@@ -243,7 +243,7 @@ export default function SimComponent() {
       isCancelled = true;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [autoRunning, runAutoBatch, numDoors]);
+  }, [autoRunning, runAutoBatch, numDoors, history.length]);
 
   const getDoorStyle = (index: number): React.CSSProperties => {
     const isPlayerPick = playerPick === index;

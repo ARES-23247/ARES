@@ -20,7 +20,7 @@ export function createJsonStringSchema<T extends z.ZodType>(itemSchema: T) {
     try {
       const parsed = JSON.parse(val);
       return itemSchema.parse(parsed);
-    } catch (e) {
+    } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Invalid JSON format",
@@ -40,7 +40,7 @@ export function createJsonArraySchema<T extends z.ZodType>(itemSchema: T) {
     try {
       const parsed = JSON.parse(val);
       return z.array(itemSchema).parse(parsed);
-    } catch (e) {
+    } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Invalid JSON array format",
@@ -62,8 +62,9 @@ export function createJsonObjectSchema<T extends z.ZodType>(
   return z.string().transform((val, ctx) => {
     try {
       const parsed = JSON.parse(val);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return z.record(keySchema as any, valueSchema).parse(parsed);
-    } catch (e) {
+    } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Invalid JSON object format",

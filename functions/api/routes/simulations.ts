@@ -16,7 +16,7 @@ const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GIT
 const MAX_FILES = 10;
 const MAX_TOTAL_SIZE = 2 * 1024 * 1024; // 2MB total
 const MAX_FILE_SIZE = 500000; // 500KB per file
-const SIM_ID_PATTERN = /^[a-zA-Z0-9_\-\.]+\.(tsx?|jsx?|json)$/;
+const SIM_ID_PATTERN = /^[a-zA-Z0-9_.-]+\.(tsx?|jsx?|json)$/;
 
 const saveSimulationSchema = z.object({
   name: z.string().max(100).optional(),

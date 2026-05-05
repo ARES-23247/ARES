@@ -29,7 +29,7 @@ function setCache(key: string, value: { data: { results: any[] }; expiresAt: num
  */
 const sanitizeFtsQuery = (query: string): string => {
   // Allow only alphanumeric, spaces, hyphens, and periods
-  const cleanQ = (query || "").replace(/[^\w\s\-\.]/g, "").trim();
+  const cleanQ = (query || "").replace(/[^\w\s-.]/g, "").trim();
   if (!cleanQ) return "";
   // Escape double quotes for FTS5 phrase search and use prefix search
   return `"${cleanQ.replace(/"/g, '""')}*`;

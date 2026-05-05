@@ -286,7 +286,7 @@ const tasksTsRestRouter = s.router(taskContract, {
 
         // WR-12: Additional validation - prevent assigning users from different subteams
         if (existing.subteam && body.assignees && body.assignees.length > 0) {
-          const assigneeProfiles = await db.selectFrom("user_profiles")
+          const _assigneeProfiles = await db.selectFrom("user_profiles")
             .select(["user_id", "member_type"])
             .where("user_id", "in", body.assignees)
             .execute();

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DocsMarkdownRenderer from '../components/docs/DocsMarkdownRenderer';
@@ -16,19 +16,18 @@ export default function MathCornerLesson() {
   const doc = docRes?.status === 200 ? docRes.body.doc : null;
 
   // Detect if content is JSON AST or markdown
-  const parsedAst = useMemo(() => {
-    if (!doc?.content) return null;
+  let parsedAst: ASTNode | null = null;
+  if (doc?.content) {
     try {
       const parsed = JSON.parse(doc.content);
       // Check if it has the AST structure
       if (parsed && typeof parsed === 'object' && 'type' in parsed && parsed.type === 'doc') {
-        return parsed as ASTNode;
+        parsedAst = parsed as ASTNode;
       }
     } catch {
       // Not JSON, fall back to markdown
     }
-    return null;
-  }, [doc?.content]);
+  }
 
   if (isLoading) {
     return (

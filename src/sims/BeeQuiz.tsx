@@ -71,22 +71,15 @@ export default function BeeTwentyQuestionsQuiz() {
 
   // ⏱️ TIMER SYSTEM
   useEffect(() => {
-    if (state.showAnswer || finished) return;
-
-    if (state.timeLeft === 0) {
-      setState((prev) => ({
-        ...prev,
-        showAnswer: true,
-        timedOut: true,
-      }));
-      return;
-    }
+    if (state.showAnswer || finished || state.timeLeft <= 0) return;
 
     const timer = setTimeout(() => {
-      setState((prev) => ({
-        ...prev,
-        timeLeft: prev.timeLeft - 1,
-      }));
+      setState((prev) => {
+        if (prev.timeLeft <= 1) {
+          return { ...prev, timeLeft: 0, showAnswer: true, timedOut: true };
+        }
+        return { ...prev, timeLeft: prev.timeLeft - 1 };
+      });
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -200,7 +193,7 @@ export default function BeeTwentyQuestionsQuiz() {
             >
               {state.timedOut ? (
                 <div>
-                  ⏰ Time's Up!
+                  ⏰ Time&apos;s Up!
                   <div style={{ marginTop: 10 }}>
                     Correct answer:{" "}
                     <strong>
@@ -238,6 +231,10 @@ export default function BeeTwentyQuestionsQuiz() {
           <h2>🎉 Twenty Questions Complete!</h2>
           <p>
             Final Score: {state.score} / 20
+          </p>
+
+          <p className="text-slate-400 mb-8">
+            You&apos;ve completed the Bee Knowledge Challenge!
           </p>
 
           {state.score >= 15 ? (

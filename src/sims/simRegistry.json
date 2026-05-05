@@ -125,13 +125,7 @@
       "name": "Zero Allocation Memory Profiler",
       "path": "./zeroallocation",
       "requiresContext": true
-    },
-    {
-      "id": "BeeQuiz",
-      "name": "Bee Quiz",
-      "path": "./BeeQuiz",
-      "requiresContext": false
     }
   ],
-  "_generated": "2026-05-05T01:17:46.997Z"
+  "_generated": "2026-05-05T03:41:53.814Z"
 }
