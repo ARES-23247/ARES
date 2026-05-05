@@ -339,16 +339,13 @@ export function CollaborativeEditorRoom({
   onDocLoaded?: (ydoc: Y.Doc) => void;
 }) {
   const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
-  // y-partykit constructs URLs as host/roomname, but PartyKit expects /party/roomname
-  // We work around this by including /party/ in the host value
   const host = useMemo(() => {
     if (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) {
       return "dummy-host-for-playwright";
     }
     const hostValue = import.meta.env.VITE_PARTYKIT_HOST || "";
-    const finalHost = hostValue ? `${hostValue}/party` : "";
-    console.log("[CollaborativeEditor] PartyKit host:", finalHost || "(NOT SET - using standalone mode)");
-    return finalHost;
+    console.log("[CollaborativeEditor] PartyKit host:", hostValue || "(NOT SET - using standalone mode)");
+    return hostValue;
   }, []);
 
   const stableOnDocLoaded = useCallback((doc: Y.Doc) => {
