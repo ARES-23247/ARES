@@ -24,13 +24,12 @@ authRouter.on(["POST", "GET"], "/*", persistentRateLimitMiddleware(20, 60), asyn
   } catch (error: unknown) {
     const err = error as Error & { status?: number };
     console.error("[Auth Handler] Internal Exception:", err);
-    // Only expose stack traces for localhost in development
-    const isLocalDev = (c.env as any).ENVIRONMENT === "development" &&
-                       (c.req.header("CF-Connecting-IP") === "127.0.0.1" ||
-                        c.req.header("Host")?.includes("localhost"));
+    // Only expose stack traces when explicitly enabled via DEV_BYPASS
+    // Header-based detection (Host, CF-Connecting-IP) is spoofable and unsafe
+    const isDevBypass = c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1";
     return c.json({
       message: err.message || "Internal Server Error during Authentication",
-      stack: isLocalDev ? err.stack : undefined
+      stack: isDevBypass ? err.stack : undefined
     }, 500);
   }
 });
