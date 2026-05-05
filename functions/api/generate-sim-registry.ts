@@ -1,4 +1,3 @@
-import { json } from "../../shared";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -11,19 +10,19 @@ export async function POST() {
       cwd: process.cwd(),
     });
 
-    return json({
+    return Response.json({
       success: true,
       output: stdout,
       error: stderr,
     });
   } catch (error) {
     console.error("Failed to generate sim registry:", error);
-    return json(
+    return Response.json(
       {
         success: false,
         error: (error as Error).message,
       },
-      500
+      { status: 500 }
     );
   }
 }
