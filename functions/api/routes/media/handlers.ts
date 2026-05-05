@@ -146,11 +146,18 @@ export const mediaHandlers: any = {
   upload: async (input: any, c: any) => {
     try {
       const { body } = input;
-      const formData = body as any;
-      const file = formData.file as File;
-      const folder = (formData.folder as string) || "Library";
+      const formData = body as FormData;
+      const file = formData.get("file") as File | null;
+      const folder = formData.get("folder") as string | null;
 
-      if (!file) return { status: 400, body: { error: "No file uploaded" } };
+      // CR-07: Validate FormData structure
+      if (!file || !(file instanceof File)) {
+        return { status: 400, body: { error: "No valid file uploaded" } };
+      }
+
+      if (folder && typeof folder !== 'string') {
+        return { status: 400, body: { error: "Invalid folder name" } };
+      }
 
       // CR-06: Enforce maximum file size to prevent DoS and excessive storage costs
       if (file.size > MAX_FILE_SIZE) {
@@ -178,6 +185,7 @@ export const mediaHandlers: any = {
       }
 
       const key = folder ? `${folder}/${file.name}` : file.name;
+      const finalFolder = folder || "Library";
       if (c.env.ARES_STORAGE) {
         if (isLarge) {
           await c.env.ARES_STORAGE.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
@@ -202,12 +210,12 @@ export const mediaHandlers: any = {
 
       const db = c.get("db") as Kysely<DB>;
       await db.insertInto("media_tags")
-        .values({ key, folder, tags: altText })
-        .onConflict(oc => oc.column("key").doUpdateSet({ folder, tags: altText }))
+        .values({ key, folder: finalFolder, tags: altText })
+        .onConflict(oc => oc.column("key").doUpdateSet({ folder: finalFolder, tags: altText }))
         .execute();
-      
+
       if (c.executionCtx) {
-        c.executionCtx.waitUntil(logAuditAction(c, "media_upload", "media", key, `Uploaded to ${folder}`));
+        c.executionCtx.waitUntil(logAuditAction(c, "media_upload", "media", key, `Uploaded to ${finalFolder}`));
         
         if (typeof caches !== 'undefined') {
           c.executionCtx.waitUntil((caches as any).default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
