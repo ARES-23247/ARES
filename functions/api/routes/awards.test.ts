@@ -62,7 +62,7 @@ describe("Hono Backend - /awards Router", () => {
 
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { awards: unknown };
     expect(body.awards).toBeDefined();
   });
 
@@ -96,7 +96,7 @@ describe("Hono Backend - /awards Router", () => {
     ]);
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { awards: Array<{ image_url: string; season_id: number | null }> };
     expect(body.awards[0].image_url).toBe("trophy");
     expect(body.awards[0].season_id).toBeNull();
   });
@@ -134,7 +134,7 @@ describe("Hono Backend - /awards Router", () => {
       headers: { "Content-Type": "application/json" }
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { id: string | number };
     expect(body.id).toBe("456");
   });
 
@@ -164,7 +164,7 @@ describe("Hono Backend - /awards Router", () => {
       headers: { "Content-Type": "application/json" }
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { id: string | number };
     expect(body.id).toBe("999");
   });
 
