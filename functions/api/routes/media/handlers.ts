@@ -6,6 +6,10 @@ import { DB } from "../../../../shared/schemas/database";
 
 const _s = initServer<AppEnv>();
 
+// Maximum file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+// Maximum file size for AI processing: 2.5MB
+const MAX_FILE_SIZE_FOR_AI = 2.5 * 1024 * 1024;
 
 export function isValidImage(buffer: ArrayBuffer): boolean {
   const arr = new Uint8Array(buffer);
@@ -148,17 +152,27 @@ export const mediaHandlers: any = {
 
       if (!file) return { status: 400, body: { error: "No file uploaded" } };
 
-      const isLarge = file.size > 10 * 1024 * 1024;
+      // CR-06: Enforce maximum file size to prevent DoS and excessive storage costs
+      if (file.size > MAX_FILE_SIZE) {
+        return {
+          status: 413,
+          body: {
+            error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`
+          }
+        };
+      }
+
+      const isLarge = file.size > MAX_FILE_SIZE_FOR_AI;
       let buffer: ArrayBuffer | null = null;
       let headerBuffer: ArrayBuffer;
-      
+
       if (!isLarge) {
         buffer = await file.arrayBuffer();
         headerBuffer = buffer.slice(0, 1024);
       } else {
         headerBuffer = await file.slice(0, 1024).arrayBuffer();
       }
-      
+
       if (!isValidImage(headerBuffer)) {
         return { status: 400, body: { error: "Invalid file type. Only standard images are supported." } };
       }
@@ -174,13 +188,14 @@ export const mediaHandlers: any = {
 
       let altText = "ARES 23247 Team Media Image";
       const isAiSupported = ["image/jpeg", "image/png"].includes(file.type);
-      if (isAiSupported && !isLarge && c.env.AI && (buffer || file.size < 2.5 * 1024 * 1024)) {
+      // CR-06: Use MAX_FILE_SIZE_FOR_AI constant for AI processing threshold
+      if (isAiSupported && !isLarge && c.env.AI) {
         try {
           if (!buffer) buffer = await file.arrayBuffer();
           const uint8 = new Uint8Array(buffer);
           const aiRes = await c.env.AI.run('@cf/llava-1.5-7b-hf', { prompt: 'Describe for screen reader', image: uint8 as any }) as { description?: string };
           if (aiRes?.description) altText = String(aiRes.description).trim();
-        } catch (err) { 
+        } catch (err) {
           console.error("[Media:Upload] AI Error", err);
         }
       }
