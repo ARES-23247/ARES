@@ -1,6 +1,36 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+/**
+ * Task item interface matching the taskSchema from taskContract.
+ * Used for typed mock data in E2E tests.
+ */
+interface TaskItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  priority: string;
+  sort_order: number;
+  assignees?: Array<{
+    id: string;
+    nickname?: string | null;
+  }>;
+  created_by: string;
+  creator_name?: string | null;
+  due_date?: string | null;
+  created_at: string;
+  updated_at: string;
+  subteam?: string | null;
+  zulip_stream?: string | null;
+  zulip_topic?: string | null;
+  // Legacy fields for backward compatibility
+  assigned_to?: string | null;
+  assignee_name?: string | null;
+  parent_id?: string | null;
+  time_spent_seconds?: number | null;
+}
+
 test.describe('Kanban Task Board', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/auth/get-session', async route => {
@@ -61,8 +91,7 @@ test.describe('Kanban Task Board', () => {
     });
 
     // In-memory tasks store for the mock session
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockTasks: any[] = [];
+    const mockTasks: TaskItem[] = [];
 
     // Mock Tasks API
     await page.route('**/api/tasks*', async (route, request) => {
