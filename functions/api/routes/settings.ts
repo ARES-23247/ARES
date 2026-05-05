@@ -2,7 +2,7 @@
 import { Hono, Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings  } from "../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings, rateLimitMiddleware  } from "../middleware";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
 import { z } from "zod";
@@ -156,8 +156,9 @@ const settingsTsRestRouter = s.router(settingsContract, settingsHandlers as any)
 // Admin protection - Apply only to admin routes
 settingsRouter.use("/admin/*", ensureAdmin);
 
+// WR-16: Add rate limiting to backup endpoint to prevent DoS
 // Backup route remains manual as it's a file export
-settingsRouter.get("/admin/backup", async (c: Context<AppEnv>) => {
+settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: Context<AppEnv>) => {
   const db = c.get("db");
   try {
     const SAFE_TABLES = [
