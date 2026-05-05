@@ -22,7 +22,14 @@ import {
 
 const s = initServer<AppEnv>();
 
-
+/**
+ * Sanitize FTS query to prevent SQL injection via SQLite FTS syntax.
+ * Removes special characters that could be used to manipulate FTS queries.
+ */
+const sanitizeFtsQuery = (query: string): string => {
+  // Remove double quotes, backslashes, and other FTS special chars
+  return query.replace(/["\\\^\*\-\:]/g, ' ').trim().split(/\s+/).filter(Boolean).join(' ');
+};
 
 const postTsRestRouterObj: any = {
   getPosts: async (input: any, c: Context<AppEnv>) => {
@@ -32,18 +39,20 @@ const postTsRestRouterObj: any = {
       const { limit = 10, offset = 0, q } = query;
 
       if (q) {
-        const results = await sql<{ 
-          slug: string; 
-          title: string; 
-          date: string | null; 
-          snippet: string | null; 
-          thumbnail: string | null; 
-          status: string; 
-          season_id: number | null; 
-          author: string | null; 
-          author_nickname: string | null; 
-          author_avatar: string | null; 
-          published_at: string | null; 
+        // Sanitize FTS query to prevent SQL injection via SQLite FTS syntax
+        const cleanQ = sanitizeFtsQuery(String(q || ''));
+        const results = await sql<{
+          slug: string;
+          title: string;
+          date: string | null;
+          snippet: string | null;
+          thumbnail: string | null;
+          status: string;
+          season_id: number | null;
+          author: string | null;
+          author_nickname: string | null;
+          author_avatar: string | null;
+          published_at: string | null;
         }>`
           SELECT p.slug, p.title, p.date, p.snippet, p.thumbnail, p.status, p.season_id, p.author,
                   uP.nickname as author_nickname, u.image as author_avatar, p.published_at
@@ -51,9 +60,9 @@ const postTsRestRouterObj: any = {
            JOIN posts p ON f.slug = p.slug
            LEFT JOIN user u ON p.cf_email = u.email
            LEFT JOIN user_profiles uP ON u.id = uP.user_id
-           WHERE p.is_deleted = 0 AND p.status = 'published' AND (p.published_at IS NULL OR datetime(p.published_at) <= datetime('now')) 
-           AND f.posts_fts MATCH ${q}
-           ORDER BY f.rank LIMIT ${limit} OFFSET ${offset}
+           WHERE p.is_deleted = 0 AND p.status = 'published' AND (p.published_at IS NULL OR datetime(p.published_at) <= datetime('now'))
+           AND f.posts_fts MATCH ${cleanQ}
+           ORDER BY f.rank LIMIT ${Number(limit) || 10} OFFSET ${Number(offset) || 0}
         `.execute(db);
         
         const posts = results.rows.map(p => ({
