@@ -3,7 +3,9 @@ import { createPortal } from "react-dom";
 import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
 import { loader } from "@monaco-editor/react";
 
-// Configure Monaco CDN — use unpkg as fallback if jsdelivr is slow
+// Configure Monaco CDN — version pinned for supply chain security
+// Note: @monaco-editor/react doesn't support SRI for worker files.
+// Consider vendoring for maximum security or adding CSP headers.
 loader.config({
   paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs" },
 });

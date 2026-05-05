@@ -1,7 +1,56 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAuth } from "../middleware";
+import { AppEnv, ensureAuth, isAdmin } from "../middleware";
+import { z } from "zod";
+
+// Validation schema for simulation save
+const saveSimulationSchema = z.object({
+  name: z.string().max(100).optional(),
+  files: z.record(z.string(), z.string().max(500000)), // 500KB max per file
+});
 
 export const simulationsRouter = new Hono<AppEnv>();
+
+// Helper: Check if user owns a simulation or is admin
+async function canModifySimulation(c: any, simId: string): Promise<boolean> {
+  const sessionUser = c.get("sessionUser");
+  if (!sessionUser) return false;
+
+  // Admins can modify any simulation
+  if (sessionUser.role === "admin") return true;
+
+  // Check if user is the author by fetching the file's commit history
+  try {
+    const db = c.get("db");
+    const config = await db.selectFrom("settings").selectAll().execute();
+    const patSetting = config.find((s: any) => s.key === "GITHUB_PAT");
+    const pat = patSetting?.value || c.env.GITHUB_PAT;
+
+    if (!pat) return false;
+
+    const headers: Record<string, string> = {
+      "User-Agent": "ARES-Cloudflare-Worker",
+      "Authorization": `Bearer ${pat}`,
+      "Accept": "application/vnd.github.v3+json"
+    };
+
+    // Get the file metadata to check creation
+    const path = `src/sims/${simId}.tsx`;
+    const url = `https://api.github.com/repos/ARES-23247/ARESWEB/commits?path=${path}&per_page=1`;
+
+    const res = await fetch(url, { headers });
+    if (!res.ok) return false;
+
+    const commits = await res.json();
+    if (!commits || commits.length === 0) return false;
+
+    // Check commit author email matches user
+    const authorEmail = commits[0]?.author?.email;
+    return authorEmail === sessionUser.email;
+  } catch {
+    // If we can't verify ownership, be conservative
+    return false;
+  }
+}
 
 // List all simulations from GitHub
 simulationsRouter.get("/", async (c) => {
@@ -92,14 +141,19 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
     if (!sessionUser) {
       return c.json({ error: "Unauthorized" }, 401);
     }
-    
+
     const body = await c.req.json();
-    const { name, files } = body;
-    
-    if (!files || Object.keys(files).length === 0) {
+    const validationResult = saveSimulationSchema.safeParse(body);
+    if (!validationResult.success) {
+      return c.json({ error: "Invalid input: " + validationResult.error.issues.map(i => i.message).join(", ") }, 400);
+    }
+
+    const { name, files } = validationResult.data;
+
+    if (Object.keys(files).length === 0) {
       return c.json({ error: "No files provided" }, 400);
     }
-    
+
     const db = c.get("db");
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
@@ -135,14 +189,19 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
 
     const path = `src/sims/${filename}`;
     const url = `https://api.github.com/repos/ARES-23247/ARESWEB/contents/${path}`;
-    
+
     let sha: string | undefined;
     const getRes = await fetch(url, { headers });
     if (getRes.ok) {
       const getJson = (await getRes.json()) as any;
       sha = getJson.sha;
+      // File exists - check ownership before allowing update
+      if (!(await canModifySimulation(c, simIdStr))) {
+        console.warn(`[Simulations] Unauthorized modification attempt by ${sessionUser.email} on ${simIdStr}`);
+        return c.json({ error: "You can only modify your own simulations" }, 403);
+      }
     }
-    
+
     const putRes = await fetch(url, {
       method: "PUT",
       headers,
@@ -236,15 +295,20 @@ simulationsRouter.delete("/:id", async (c) => {
 
     const path = `src/sims/${simIdStr}.tsx`;
     const url = `https://api.github.com/repos/ARES-23247/ARESWEB/contents/${path}`;
-    
+
     let sha: string | undefined;
     const getRes = await fetch(url, { headers });
     if (getRes.ok) {
       const getJson = (await getRes.json()) as any;
       sha = getJson.sha;
     }
-    
+
     if (sha) {
+      // Check ownership before allowing deletion
+      if (!(await canModifySimulation(c, simIdStr))) {
+        console.warn(`[Simulations] Unauthorized deletion attempt by ${sessionUser.email} on ${simIdStr}`);
+        return c.json({ error: "You can only delete your own simulations" }, 403);
+      }
       const delRes = await fetch(url, {
         method: "DELETE",
         headers,

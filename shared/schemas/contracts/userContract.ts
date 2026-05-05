@@ -3,6 +3,58 @@ import { z } from "zod";
 
 const c = initContract();
 
+// Allowed role values for security
+export const UserRoleEnum = z.enum([
+  "admin",
+  "member",
+  "coach",
+  "mentor",
+  "parent",
+  "alumnus",
+  "sponsor",
+  "guest"
+]);
+
+// Allowed member_type values
+export const MemberTypeEnum = z.enum([
+  "student",
+  "mentor",
+  "coach",
+  "parent",
+  "alumnus",
+  "other"
+]);
+
+// Input validation schemas for API routes
+export const patchUserSchema = z.object({
+  role: UserRoleEnum.optional(),
+  member_type: MemberTypeEnum.optional(),
+});
+
+export const updateUserProfileSchema = z.record(
+  z.string(),
+  z.union([z.string(), z.boolean(), z.array(z.string()), z.null()]).optional()
+).refine(
+  (data) => {
+    // Validate individual field lengths
+    const MAX_BIO_LENGTH = 2000;
+    const MAX_NAME_LENGTH = 100;
+    const MAX_GENERAL_LENGTH = 500;
+
+    if (data.bio && data.bio.length > MAX_BIO_LENGTH) return false;
+    if (data.nickname && data.nickname.length > MAX_NAME_LENGTH) return false;
+    if (data.pronouns && data.pronouns.length > MAX_GENERAL_LENGTH) return false;
+    if (data.favorite_food && data.favorite_food.length > MAX_GENERAL_LENGTH) return false;
+    if (data.dietary_restrictions && data.dietary_restrictions.length > MAX_GENERAL_LENGTH) return false;
+    if (data.favorite_robot_mechanism && data.favorite_robot_mechanism.length > MAX_GENERAL_LENGTH) return false;
+    if (data.pre_match_superstition && data.pre_match_superstition.length > MAX_GENERAL_LENGTH) return false;
+    if (data.leadership_role && data.leadership_role.length > MAX_GENERAL_LENGTH) return false;
+
+    return true;
+  },
+  { message: "One or more fields exceed maximum length" }
+);
+
 export const userResponseSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),

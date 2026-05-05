@@ -90,8 +90,14 @@ const userHandlers = {
   },
   patchUser: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
     try {
+      const { patchUserSchema } = await import("../../../shared/schemas/contracts/userContract");
+      const validationResult = patchUserSchema.safeParse(body);
+      if (!validationResult.success) {
+        return { status: 400 as const, body: { error: "Invalid input: " + validationResult.error.issues.map(i => i.message).join(", ") } as any };
+      }
+
       const db = c.get("db") as Kysely<DB>;
-      const { role, member_type } = body;
+      const { role, member_type } = validationResult.data;
 
       if (role) {
         await db.updateTable("user").set({ role }).where("id", "=", params.id).execute();

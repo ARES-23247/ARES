@@ -60,8 +60,10 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- html2canvas with Subresource Integrity - generate SRI with: openssl dgst -sha384 -binary FILE | openssl base64 -A -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"
+          integrity="sha384-u/KoVFLnMiHwA4ANW0l7jN5JqdV7XFsEZx5G1Semv5f5fZ+kJPbYg/jAvQPsKWwj"
+          crossorigin="anonymous"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
