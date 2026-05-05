@@ -1,7 +1,10 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
-import { loader } from "@monaco-editor/react";
+import { loader, type Monaco } from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
+import type { languages } from "monaco-editor";
+import type { CancellationToken, Position } from "monaco-editor";
 import { logger } from "../utils/logger";
 import { GITHUB_REPO } from "../utils/constants";
 import { useSimulationChat } from "../hooks/useSimulationChat";
@@ -111,42 +114,14 @@ export default function SimulationPlayground() {
 
 
 
-  // Editor Refs - define interfaces for Monaco Editor types
-  interface IMonacoEditor {
-    getValue(): string;
-    getModel(): { updateOptions(options: unknown): void } | null;
-    onDidChangeModelContent(listener: () => void): { dispose(): void };
-    layout(): void;
-    focus(): void;
-    trigger(type: string, source: string): void;
-  }
-
-  interface IMonacoStandalone {
-    editor: {
-      setModelMarkers(model: { updateOptions(options: unknown): void } | null, owner: string, markers: unknown[]): void;
-    };
-    MarkerSeverity: {
-      Error: number;
-      Warning: number;
-      Info: number;
-      Hint: number;
-    };
-    languages: {
-      typescript: {
-        javascriptDefaults: {
-          addExtraLib(content: string, filePath: string): void;
-          setCompilerOptions(options: unknown): void;
-        };
-      };
-    };
-  }
+  // Editor Refs - use Monaco Editor types from @monaco-editor/react
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<Monaco | null>(null);
 
   interface IVimMode {
     dispose(): void;
   }
 
-  const editorRef = useRef<IMonacoEditor | null>(null);
-  const monacoRef = useRef<IMonacoStandalone | null>(null);
   const vimRef = useRef<IVimMode | null>(null);
 
   // ── Compile logic ──
@@ -443,8 +418,10 @@ export default function SimulationPlayground() {
     }
   }, [handleLoadSim]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleEditorDidMount = useCallback(async (editor: any, monaco: any) => {
+  const handleEditorDidMount = useCallback(async (
+    editor: editor.IStandaloneCodeEditor,
+    monaco: Monaco
+  ) => {
     monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
       target: monaco.languages.typescript.ScriptTarget.ESNext,
       allowNonTsExtensions: true,
@@ -489,8 +466,12 @@ export default function SimulationPlayground() {
     
     // Ghost text provider (Manual trigger: user types, but we only show if requested, or just provide it but require Ctrl+Space to trigger)
     monaco.languages.registerInlineCompletionsProvider('javascript', {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      provideInlineCompletions: async (model: any, position: any, context: any, _token: any) => {
+      provideInlineCompletions: async (
+        model: editor.ITextModel,
+        position: Position,
+        context: languages.InlineCompletionContext,
+        _token: CancellationToken
+      ): Promise<languages.InlineCompletions<languages.InlineCompletion>> => {
         // Only trigger if explicitly requested by user (e.g. context.triggerKind === 1 for explicit invoke like Ctrl+Space)
         if (context.triggerKind !== monaco.languages.InlineCompletionTriggerKind.Explicit) {
           return { items: [] };
@@ -539,8 +520,7 @@ export default function SimulationPlayground() {
         } catch {
           return { items: [] };
         }
-      },
-      freeInlineCompletions: () => {}
+      }
     });
   }, []);
 
@@ -548,8 +528,10 @@ export default function SimulationPlayground() {
   useEffect(() => {
     if (isVimMode && editorRef.current) {
       import('monaco-vim').then((vim) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        vimRef.current = vim.initVimMode(editorRef.current as any, document.createElement('div'));
+        // monaco-vim doesn't export proper types, but the editor is IStandaloneCodeEditor
+        if (editorRef.current) {
+          vimRef.current = vim.initVimMode(editorRef.current, document.createElement('div'));
+        }
       });
     } else {
       if (vimRef.current) {
@@ -569,17 +551,22 @@ export default function SimulationPlayground() {
         const line = parseInt(match[1], 10);
         const col = parseInt(match[2], 10);
         const model = editorRef.current.getModel();
-        monacoRef.current.editor.setModelMarkers(model, "babel", [{
-          startLineNumber: line,
-          startColumn: col,
-          endLineNumber: line,
-          endColumn: col + 1,
-          message: compileError,
-          severity: monacoRef.current.MarkerSeverity.Error
-        }]);
+        if (model && monacoRef.current) {
+          monacoRef.current.editor.setModelMarkers(model, "babel", [{
+            startLineNumber: line,
+            startColumn: col,
+            endLineNumber: line,
+            endColumn: col + 1,
+            message: compileError,
+            severity: monacoRef.current.MarkerSeverity.Error
+          }]);
+        }
       }
     } else if (monacoRef.current && editorRef.current) {
-      monacoRef.current.editor.setModelMarkers(editorRef.current.getModel(), "babel", []);
+      const model = editorRef.current.getModel();
+      if (model) {
+        monacoRef.current.editor.setModelMarkers(model, "babel", []);
+      }
     }
   }, [compileError]);
 
