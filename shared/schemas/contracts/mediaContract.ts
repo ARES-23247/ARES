@@ -33,7 +33,7 @@ export const mediaContract = c.router({
       429: z.string(),
       500: z.object({
         error: z.string(),
-        media: z.array(z.any()),
+        media: z.array(assetSchema).optional(),
       }),
     },
     summary: "Get public gallery media",
@@ -49,7 +49,7 @@ export const mediaContract = c.router({
       }),
       500: z.object({
         error: z.string(),
-        media: z.array(z.any()),
+        media: z.array(assetSchema).optional(),
       }),
     },
     summary: "Get all media (admin view)",
