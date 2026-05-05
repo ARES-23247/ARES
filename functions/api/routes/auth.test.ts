@@ -1,6 +1,7 @@
- 
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 import authRouter from "./auth";
 import * as shared from "../middleware";
 import * as authUtils from "../../utils/auth";
@@ -25,13 +26,13 @@ describe("Auth Router", () => {
   describe("GET /auth-check", () => {
     it("should return 200 and user data when authenticated", async () => {
       const mockUser = { id: "u1", email: "test@example.com", name: "Test User", role: "admin", member_type: "mentor" };
-      vi.mocked(shared.getSessionUser).mockResolvedValue(mockUser as any);
+      vi.mocked(shared.getSessionUser).mockResolvedValue(mockUser);
 
       const req = new Request("http://localhost/auth-check");
-      const res = await authRouter.request(req, {}, { DB: {}, DEV_BYPASS: "true" } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {} as D1Database, DEV_BYPASS: "true" }, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { authenticated: boolean; user: typeof mockUser };
       expect(body.authenticated).toBe(true);
       expect(body.user).toEqual(mockUser);
     });
@@ -40,10 +41,10 @@ describe("Auth Router", () => {
       vi.mocked(shared.getSessionUser).mockResolvedValue(null);
 
       const req = new Request("http://localhost/auth-check");
-      const res = await authRouter.request(req, {}, { DB: {}, DEV_BYPASS: "true" } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {} as D1Database, DEV_BYPASS: "true" }, mockExecutionContext);
 
       expect(res.status).toBe(401);
-      const body = await res.json() as any;
+      const body = await res.json() as { authenticated: boolean };
       expect(body.authenticated).toBe(false);
     });
   });
@@ -53,10 +54,10 @@ describe("Auth Router", () => {
       const mockHandler = vi.fn().mockResolvedValue(new Response("auth response", { status: 200 as const }));
       vi.mocked(authUtils.getAuth).mockReturnValue({
         handler: mockHandler,
-      } as any);
+      } as ReturnType<typeof authUtils.getAuth>);
 
       const req = new Request("http://localhost/signin", { method: "POST" });
-      const res = await authRouter.request(req, {}, { DB: {}, BETTER_AUTH_SECRET: "test" } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {} as D1Database, BETTER_AUTH_SECRET: "test" }, mockExecutionContext);
 
       expect(res.status).toBe(200);
       expect(await res.text()).toBe("auth response");
@@ -67,16 +68,16 @@ describe("Auth Router", () => {
       const error = new Error("Auth failed");
       vi.mocked(authUtils.getAuth).mockReturnValue({
         handler: vi.fn().mockRejectedValue(error),
-      } as any);
+      } as ReturnType<typeof authUtils.getAuth>);
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const req = new Request("http://localhost/error", {
         headers: { "Host": "localhost:8080" } // Required for localhost check in auth handler
       });
-      const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "development", DEV_BYPASS: "true" } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {} as D1Database, ENVIRONMENT: "development", DEV_BYPASS: "true" }, mockExecutionContext);
 
       expect(res.status).toBe(500);
-      const body = await res.json() as any;
+      const body = await res.json() as { message: string; stack?: string };
       expect(body.message).toBe("Auth failed");
       expect(body.stack).toBeDefined();
 
@@ -87,14 +88,14 @@ describe("Auth Router", () => {
         const error = new Error("Auth failed");
         vi.mocked(authUtils.getAuth).mockReturnValue({
           handler: vi.fn().mockRejectedValue(error),
-        } as any);
+        } as ReturnType<typeof authUtils.getAuth>);
 
         const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
         const req = new Request("http://localhost/error");
-        const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "production" } as any, mockExecutionContext);
+        const res = await authRouter.request(req, {}, { DB: {} as D1Database, ENVIRONMENT: "production" }, mockExecutionContext);
 
         expect(res.status).toBe(500);
-        const body = await res.json() as any;
+        const body = await res.json() as { message: string; stack?: string };
         expect(body.stack).toBeUndefined();
 
         consoleSpy.mockRestore();
@@ -104,16 +105,16 @@ describe("Auth Router", () => {
       const error = new Error("");
       vi.mocked(authUtils.getAuth).mockReturnValue({
         handler: vi.fn().mockRejectedValue(error),
-      } as any);
+      } as ReturnType<typeof authUtils.getAuth>);
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const req = new Request("http://localhost/error");
-      const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "development", DEV_BYPASS: "true" } as any, mockExecutionContext);
+      const res = await authRouter.request(req, {}, { DB: {} as D1Database, ENVIRONMENT: "development", DEV_BYPASS: "true" }, mockExecutionContext);
 
       expect(res.status).toBe(500);
-      const body = await res.json() as any;
+      const body = await res.json() as { message: string };
       expect(body.message).toBe("Internal Server Error during Authentication");
-      
+
       consoleSpy.mockRestore();
     });
   });
