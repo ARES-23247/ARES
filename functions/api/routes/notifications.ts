@@ -2,7 +2,7 @@ import { AppEnv, getSessionUser, ensureAuth, rateLimitMiddleware, s } from "../m
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { Hono } from "hono";
-import { createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints, type AppRouteInput } from "ts-rest-hono";
 import { notificationContract } from "../../../shared/schemas/contracts/notificationContract";
 
 import type { HonoContext } from "@shared/types/api";
@@ -11,7 +11,7 @@ import type { HonoContext } from "@shared/types/api";
 export const notificationsRouter = new Hono<AppEnv>();
 
 const notificationHandlers = {
-  getNotifications: async (_input, c: HonoContext) => {
+  getNotifications: async (_input: AppRouteInput<typeof notificationContract.getNotifications>, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -45,7 +45,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Fetch failed", notifications: [] } as any };
     }
   },
-  markAsRead: async (input, c: HonoContext) => {
+  markAsRead: async (input: AppRouteInput<typeof notificationContract.markAsRead>, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -66,7 +66,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } as any };
     }
   },
-  markAllAsRead: async (_input, c: HonoContext) => {
+  markAllAsRead: async (_input: AppRouteInput<typeof notificationContract.markAllAsRead>, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -85,7 +85,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } as any };
     }
   },
-  deleteNotification: async (input, c: HonoContext) => {
+  deleteNotification: async (input: AppRouteInput<typeof notificationContract.deleteNotification>, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -105,7 +105,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Delete failed" } as any };
     }
   },
-  getPendingCounts: async (_input, c: HonoContext) => {
+  getPendingCounts: async (_input: AppRouteInput<typeof notificationContract.getPendingCounts>, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -146,7 +146,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Count failed" } as any };
     }
   },
-  getDashboardActionItems: async (_input, c: HonoContext) => {
+  getDashboardActionItems: async (_input: AppRouteInput<typeof notificationContract.getDashboardActionItems>, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);

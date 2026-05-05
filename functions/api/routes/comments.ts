@@ -4,7 +4,7 @@ import { DB } from "../../../shared/schemas/database";
 import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, persistentRateLimitMiddleware, ensureAuth, originIntegrityMiddleware, logAuditAction, s } from "../middleware";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
-import { createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints, type AppRouteInput } from "ts-rest-hono";
 import { commentContract } from "../../../shared/schemas/contracts/commentContract";
 
 import type { HonoContext } from "@shared/types/api";
@@ -15,7 +15,7 @@ export const commentsRouter = new Hono<AppEnv>();
 
 
 const commentHandlers = {
-  list: async (input, c: HonoContext) => {
+  list: async (input: AppRouteInput<typeof commentContract.list>, c: HonoContext) => {
     const { targetType, targetId } = input.params;
     const user = await getSessionUser(c);
     const db = c.get("db") as Kysely<DB>;
@@ -57,7 +57,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch comments" } };
     }
   },
-  submit: async (input, c: HonoContext) => {
+  submit: async (input: AppRouteInput<typeof commentContract.submit>, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) {
       return { status: 401 as const, body: { error: "Unauthorized" } };
@@ -138,7 +138,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to submit comment" } };
     }
   },
-  update: async (input, c: HonoContext) => {
+  update: async (input: AppRouteInput<typeof commentContract.update>, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };
@@ -191,7 +191,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to update comment" } };
     }
   },
-  delete: async (input, c: HonoContext) => {
+  delete: async (input: AppRouteInput<typeof commentContract.delete>, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };

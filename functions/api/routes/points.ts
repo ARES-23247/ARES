@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints, type AppRouteInput } from "ts-rest-hono";
 import { pointsContract } from "../../../shared/schemas/contracts/pointsContract";
 import type { AppEnv } from "../middleware/utils";
 import { s } from "../middleware";
@@ -12,7 +12,7 @@ const app = new Hono<AppEnv>();
 
 
 const pointsHandlers = {
-  getBalance: async (input, c: HonoContext) => {
+  getBalance: async (input: AppRouteInput<typeof pointsContract.getBalance>, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
@@ -43,7 +43,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getHistory: async (input, c: HonoContext) => {
+  getHistory: async (input: AppRouteInput<typeof pointsContract.getHistory>, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {

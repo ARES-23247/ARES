@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints, type AppRouteInput } from "ts-rest-hono";
 import { financeContract } from "../../../shared/schemas/contracts/financeContract";
 import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser, s } from "../middleware";
 import { AppEnv } from "../middleware";
@@ -12,7 +12,7 @@ const financeRouter = new Hono<AppEnv>();
 
 
 const financeTsRestRouterObj = {
-  getSummary: async (input, c: HonoContext) => {
+  getSummary: async (input: AppRouteInput<typeof financeContract.getSummary>, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -62,7 +62,7 @@ const financeTsRestRouterObj = {
     }
   },
 
-  listPipeline: async (input, c: HonoContext) => {
+  listPipeline: async (input: AppRouteInput<typeof financeContract.listPipeline>, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -99,7 +99,7 @@ const financeTsRestRouterObj = {
     }
   },
 
-  savePipeline: async (input, c: HonoContext) => {
+  savePipeline: async (input: AppRouteInput<typeof financeContract.savePipeline>, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;

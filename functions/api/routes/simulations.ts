@@ -24,7 +24,8 @@ function getGitHubConfig(c: Context<AppEnv>) {
 const MAX_FILES = 10;
 const MAX_TOTAL_SIZE = 2 * 1024 * 1024; // 2MB total
 const MAX_FILE_SIZE = 500000; // 500KB per file
-const SIM_ID_PATTERN = /^[a-zA-Z0-9_.-]+\.(tsx?|jsx?|json)$/;
+const SIM_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+const SIM_FILENAME_PATTERN = /^[a-zA-Z0-9_.-]+\.(tsx?|jsx?|json|css)$/;
 
 const saveSimulationSchema = z.object({
   name: z.string().max(100).optional(),
@@ -42,8 +43,8 @@ const saveSimulationSchema = z.object({
 
       // Validate filename patterns to prevent path traversal
       for (const filename of Object.keys(files)) {
-        if (!SIM_ID_PATTERN.test(filename)) {
-          throw new Error(`Invalid filename: ${filename}. Must match ${SIM_ID_PATTERN.source}`);
+        if (!SIM_FILENAME_PATTERN.test(filename)) {
+          throw new Error(`Invalid filename: ${filename}. Must match ${SIM_FILENAME_PATTERN.source}`);
         }
       }
 
@@ -180,8 +181,8 @@ simulationsRouter.get("/:id", async (c: Context<AppEnv>) => {
   const simId = id.replace("github:", "");
 
   // Validate simId format to prevent path traversal and injection
-  // SECURITY: Reject any path separators or special characters
-  if (!SIM_ID_PATTERN.test(simId)) {
+  // SECURITY: Only allow simple alphanumeric folder names
+  if (!/^[a-zA-Z0-9_-]+$/.test(simId)) {
     console.warn(`[Simulations] Invalid simulation ID format: ${simId}`);
     return c.json({ error: "Invalid simulation ID" }, 400);
   }
@@ -192,8 +193,8 @@ simulationsRouter.get("/:id", async (c: Context<AppEnv>) => {
     return c.json({ error: "Invalid simulation ID" }, 400);
   }
 
-  // Enforce .tsx extension explicitly
-  const filename = `${simId}.tsx`;
+  // Sims use folder structure: src/sims/<id>/index.tsx
+  const filePath = `src/sims/${simId}/index.tsx`;
 
   try {
     const db = c.get("db");
@@ -212,9 +213,27 @@ simulationsRouter.get("/:id", async (c: Context<AppEnv>) => {
     };
     if (pat) headers["Authorization"] = `Bearer ${pat}`;
 
-    const ghRes = await fetch(`${ghConfig.apiBase}/contents/src/sims/${filename}`, { headers });
+    const ghRes = await fetch(`${ghConfig.apiBase}/contents/${filePath}`, { headers });
     if (!ghRes.ok) {
-      return c.json({ error: "Simulation not found in GitHub" }, 404);
+      // Fallback: try legacy flat-file format (src/sims/<id>.tsx)
+      const legacyPath = `src/sims/${simId}.tsx`;
+      const legacyRes = await fetch(`${ghConfig.apiBase}/contents/${legacyPath}`, { headers });
+      if (!legacyRes.ok) {
+        return c.json({ error: "Simulation not found in GitHub" }, 404);
+      }
+      const code = await legacyRes.text();
+      return c.json({
+        simulation: {
+          id: id,
+          name: simId,
+          type: "github",
+          files: { [`${simId}.tsx`]: code },
+          author_id: "ARES-23247",
+          is_public: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      });
     }
 
     const code = await ghRes.text();
@@ -223,7 +242,7 @@ simulationsRouter.get("/:id", async (c: Context<AppEnv>) => {
         id: id,
         name: simId,
         type: "github",
-        files: { [filename]: code },
+        files: { "index.tsx": code },
         author_id: "ARES-23247",
         is_public: true,
         created_at: new Date().toISOString(),
