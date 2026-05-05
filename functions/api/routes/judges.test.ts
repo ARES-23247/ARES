@@ -1,4 +1,5 @@
  
+import { TestEnv, MockKysely } from "../../../src/test/types";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
@@ -23,8 +24,8 @@ describe("Hono Backend - /judges Router", () => {
   
   
    
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
   let env: Record<string, unknown>;
 
   beforeEach(() => {
@@ -71,8 +72,8 @@ describe("Hono Backend - /judges Router", () => {
       TURNSTILE_SECRET_KEY: "secret",
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       c.set("user", { id: "1", email: "admin@test.com", role: "admin" });
       await next();
@@ -195,8 +196,8 @@ describe("Hono Backend - /judges Router", () => {
 
   it("GET /admin/codes - list codes", async () => {
     mockDb.execute.mockResolvedValueOnce([
-      { code: "ABC", expires_at: null, label: "Test", created_at: "2024" },
-      { code: "DEF", expires_at: "2025", label: "Test2", created_at: "2024" }
+      { id: "1", code: "ABC", expires_at: null, label: "Test", created_at: "2024" },
+      { id: "2", code: "DEF", expires_at: "2025", label: "Test2", created_at: "2024" }
     ]);
     const res = await testApp.request("/admin/codes", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
