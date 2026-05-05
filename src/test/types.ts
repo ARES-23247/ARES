@@ -102,6 +102,8 @@ export interface MockExecutionContext {
   waitUntil: ReturnType<typeof vi.fn>;
   /** Passes through exceptions to the runtime */
   passThroughOnException: ReturnType<typeof vi.fn>;
+  /** Execution Context Props */
+  props?: Record<string, unknown>;
 }
 
 // ── MockExpressionBuilder ──────────────────────────────────────────────────────

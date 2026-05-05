@@ -16,7 +16,7 @@ import { RefreshCw } from "lucide-react";
 
 export interface KanbanColumnConfig {
   label: string;
-  icon: React.ElementType;
+  icon: React.ElementType<{ size?: number; className?: string }>;
   bg: string;
   text: string;
   border: string;

@@ -25,6 +25,7 @@ vi.mock("../contexts/ModalContext", async (importOriginal) => {
 export const mockExecutionContext: MockExecutionContext = {
   waitUntil: vi.fn((promise: Promise<unknown>) => promise),
   passThroughOnException: vi.fn(),
+  props: {},
 };
 
 /**

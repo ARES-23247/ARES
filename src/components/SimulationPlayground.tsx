@@ -107,7 +107,8 @@ export default function SimulationPlayground() {
   const [isVimMode, setIsVimMode] = useState(false);
   const [isWordWrap, setIsWordWrap] = useState(true);
   const [isMinimap, setIsMinimap] = useState(false);
-  
+  const compileTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
 
 
   // Editor Refs - define interfaces for Monaco Editor types
