@@ -144,12 +144,15 @@ export default function TaskBoardPage() {
 
   // -- Real-Time Presence & Sync --------------------------------------
   const { data: session } = useSession();
-  const [activeUsers, setActiveUsers] = useState<Record<string, { name: string; image?: string; lastSeen: number }>>({});
+  const [activeUsers, setActiveUsers] = useState<Record<string, { userId: string; name: string; image?: string; lastSeen: number; x?: number; y?: number }>>({});
+  const lastCursorSend = React.useRef(0);
+  const boardRef = React.useRef<HTMLDivElement>(null);
   
   const host = import.meta.env.VITE_PARTYKIT_HOST || "";
   const socket = usePartySocket({
     host: host || "dummy", // fallback so it doesn't crash if env missing
     room: "kanban-global",
+    party: "kanban",
     onOpen(e) {
       if (!session?.user) return;
       // Broadcast our presence when we join
@@ -170,7 +173,7 @@ export default function TaskBoardPage() {
           // Track active users
           setActiveUsers((prev) => ({
             ...prev,
-            [msg.userId]: { name: msg.name, image: msg.image, lastSeen: Date.now() }
+            [msg.userId]: { userId: msg.userId, name: msg.name, image: msg.image, lastSeen: Date.now() }
           }));
           // Ping back so they know we are here too
           if (session?.user && msg.userId !== session.user.id) {
@@ -184,8 +187,30 @@ export default function TaskBoardPage() {
         } else if (msg.type === "presence_ack") {
           setActiveUsers((prev) => ({
             ...prev,
-            [msg.userId]: { name: msg.name, image: msg.image, lastSeen: Date.now() }
+            [msg.userId]: { userId: msg.userId, name: msg.name, image: msg.image, lastSeen: Date.now() }
           }));
+        } else if (msg.type === "cursor") {
+          setActiveUsers((prev) => {
+            const user = prev[msg.userId];
+            if (!user) return prev;
+            return {
+              ...prev,
+              [msg.userId]: { ...user, x: msg.x, y: msg.y, lastSeen: Date.now() }
+            };
+          });
+        } else if (msg.type === "task_reordered") {
+          // Optimistic sync for dragging
+          queryClient.setQueryData(queryKey, (old: TaskListResponse | undefined) => {
+            if (!old?.body?.tasks) return old;
+            const newTasks = old.body.tasks.map((task: TaskItem) => {
+              const updatedItem = msg.items.find((i: { id: string; status: string; sort_order: number }) => i.id === task.id);
+              if (updatedItem) {
+                return { ...task, status: updatedItem.status, sort_order: updatedItem.sort_order };
+              }
+              return task;
+            });
+            return { ...old, body: { ...old.body, tasks: newTasks } };
+          });
         }
       } catch (_err) {
         // ignore parse errors
@@ -256,6 +281,9 @@ export default function TaskBoardPage() {
   };
 
   const handleReorder = async (items: { id: string; status: string; sort_order: number }[]) => {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "task_reordered", items }));
+    }
     reorderMutation.mutate({ body: { items } }, {
       onSuccess: () => broadcastTaskUpdate()
     });
@@ -263,8 +291,55 @@ export default function TaskBoardPage() {
 
   const activeUserList = Object.values(activeUsers);
 
+  const userColors = ["#E94B3C", "#2D87BB", "#64C0AB", "#F9A03F", "#9A5B9B"];
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!session?.user) return;
+    if (!boardRef.current) return;
+    const rect = boardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    
+    const now = Date.now();
+    if (now - lastCursorSend.current > 50) {
+      socket.send(JSON.stringify({ type: "cursor", userId: session.user.id, x, y }));
+      lastCursorSend.current = now;
+    }
+  };
+
   const boardContent = (
-    <div className={isFullscreen ? "fixed inset-0 z-50 bg-obsidian overflow-hidden flex flex-col" : "space-y-6 flex flex-col"}>
+    <div 
+      ref={boardRef}
+      onPointerMove={handlePointerMove}
+      className={isFullscreen ? "fixed inset-0 z-50 bg-obsidian overflow-hidden flex flex-col" : "relative space-y-6 flex flex-col"}
+    >
+      {/* Live Cursors layer */}
+      <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+        {activeUserList.map(user => {
+          if (user.x === undefined || user.y === undefined) return null;
+          if (!session?.user || user.userId === session.user.id) return null;
+          
+          let hash = 0;
+          for (let i = 0; i < user.userId.length; i++) hash = user.userId.charCodeAt(i) + ((hash << 5) - hash);
+          const color = userColors[Math.abs(hash) % userColors.length];
+          
+          return (
+            <div 
+              key={user.userId} 
+              className="absolute pointer-events-none transition-all duration-75 ease-linear flex flex-col items-start"
+              style={{ left: `${user.x * 100}%`, top: `${user.y * 100}%` }}
+            >
+              <svg width="18" height="24" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md" style={{ transform: 'rotate(-20deg) scale(1.2)' }}>
+                <path d="M1 1.7V20l6.2-5.4h7L1 1.7z" fill={color} stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
+              </svg>
+              <div className="px-2 py-1 rounded-md text-[10px] font-bold text-white whitespace-nowrap shadow-md" style={{ backgroundColor: color, marginTop: '2px' }}>
+                {user.name}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Header */}
       <div className={`flex items-center justify-between ${isFullscreen ? "p-6 pb-2 shrink-0 border-b border-white/5 bg-obsidian" : "mb-2"}`}>
         <div>
@@ -383,6 +458,5 @@ export default function TaskBoardPage() {
     return boardContent;
   }
 
-  // TODO: Add PartySocket room connection for awareness
   return boardContent;
 }

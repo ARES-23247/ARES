@@ -9,6 +9,8 @@ import { initServer } from "ts-rest-hono";
 import { rrulestr } from 'rrule';
 import type { HandlerInput, HonoContext } from "@shared/types/api";
 
+import type { SocialConfig } from "../../middleware";
+
 
 const _s = initServer<AppEnv>();
 
@@ -19,6 +21,44 @@ const _s = initServer<AppEnv>();
 const sanitizeFtsQuery = (query: string): string => {
   // Remove double quotes, backslashes, and other FTS special chars
   return query.replace(/["\\^*-:]/g, ' ').trim().split(/\s+/).filter(Boolean).join(' ');
+};
+
+type EventSaveBody = {
+  id?: string;
+  title?: string;
+  category?: string;
+  dateStart?: string;
+  dateEnd?: string;
+  location?: string;
+  description?: string;
+  coverImage?: string;
+  tbaEventKey?: string;
+  socials?: string[];
+  isPotluck?: boolean;
+  isVolunteer?: boolean;
+  isDraft?: boolean;
+  publishedAt?: string;
+  seasonId?: number;
+  meetingNotes?: string;
+  recurrenceRule?: string;
+  parentEventId?: string;
+  originalStartTime?: string;
+  rrule?: string;
+  updateMode?: string;
+  deleteMode?: string;
+};
+
+
+
+type SignupBody = {
+  bringing?: string;
+  notes?: string;
+  prep_hours?: number;
+  attended?: boolean;
+};
+
+type SocialsBody = {
+  socials?: string[];
 };
 
 export const eventHandlers = {
@@ -243,7 +283,7 @@ export const eventHandlers = {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  saveEvent: async (input: HandlerInput, c: HonoContext) => {
+  saveEvent: async (input: HandlerInput<EventSaveBody>, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -251,11 +291,15 @@ export const eventHandlers = {
       if (body.id) {
         const existing = await db.selectFrom("events").select("id").where("id", "=", body.id).executeTakeFirst();
         if (existing) {
-          return eventHandlers.updateEvent({ params: { id: body.id }, body: body as any }, c);
+          return eventHandlers.updateEvent({ params: { id: body.id }, body, query: {} }, c);
         }
       }
 
       const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, socials, isPotluck, isVolunteer, isDraft, publishedAt, seasonId, meetingNotes, recurrenceRule, parentEventId, originalStartTime } = body;
+
+      if (!dateStart) {
+        return { status: 400 as const, body: { success: false, error: "dateStart is required" } };
+      }
 
       const recent = await db.selectFrom("events")
         .select("id")
@@ -272,8 +316,8 @@ export const eventHandlers = {
       const genId = crypto.randomUUID();
 
       const socialConfig = await getSocialConfig(c);
-      const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
-      const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
+      const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof SocialConfig;
+      const calId = (socialConfig as Record<string, string | undefined>)[calKey] || socialConfig.CALENDAR_ID;
 
       const user = await getSessionUser(c);
       if (!user) return { status: 401 as const, body: { success: false, error: "Authentication required" } };
@@ -331,13 +375,13 @@ export const eventHandlers = {
              const instStart = d.toISOString();
              const instEnd = dateEnd ? new Date(d.getTime() + duration).toISOString() : null;
              return {
-                id: i === 0 ? genId : crypto.randomUUID(), 
+                id: i === 0 ? genId : crypto.randomUUID(),
                 title: title || "", category: cat, date_start: instStart, date_end: instEnd,
                 location: location || "", description: description || "", cover_image: coverImage || "",
                 gcal_event_id: null, status,
                 is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0, tba_event_key: tbaEventKey || null,
                 published_at: publishedAt || null, season_id: seasonId || null, meeting_notes: meetingNotes || null,
-                recurring_group_id: recurringGroupId, rrule: body.rrule, recurring_exception: 0,
+                recurring_group_id: recurringGroupId, rrule: body.rrule || null, recurring_exception: 0,
                 recurrence_rule: recurrenceRule || body.rrule || null, parent_event_id: parentEventId || null, original_start_time: originalStartTime || null,
                 zulip_stream: "events", zulip_topic: `Event: ${title || "Untitled"}`
              };
@@ -379,11 +423,11 @@ export const eventHandlers = {
       }
 
       c.executionCtx.waitUntil((async () => {
-        if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
+        if (socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL && socialConfig.GCAL_PRIVATE_KEY && calId) {
           try {
             const gcalId = await pushEventToGcal(
               { id: genId, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, meeting_notes: meetingNotes || undefined, recurrence_rule: recurrenceRule || body.rrule || undefined, parent_gcal_id: parentEventId || undefined, original_start_time: originalStartTime || undefined },
-              { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
+              { email: socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL as string, privateKey: socialConfig.GCAL_PRIVATE_KEY as string, calendarId: calId as string }
             );
             if (gcalId) {
               await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", genId).execute();
@@ -394,11 +438,11 @@ export const eventHandlers = {
         if (status === "published") {
           const baseUrl = new URL(c.req.url).origin;
           if (socials) {
-            await dispatchSocials(c.env.DB, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", thumbnail: coverImage || "/gallery_1.png", baseUrl }, socialConfig as any, socials).catch(() => {});
+            await dispatchSocials(c.env.DB, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", thumbnail: coverImage || "/gallery_1.png", baseUrl }, socialConfig, socials).catch(() => {});
           }
           const eventTopic = `Event: ${title}`;
           const eventContent = `📅 **New Event Scheduled**\n\n**Title:** ${title}\n**Location:** ${location || "TBD"}\n\n[View Event](${baseUrl}/events)`;
-          await sendZulipMessage(socialConfig as any, "events", eventTopic, eventContent).catch(() => {});
+          await sendZulipMessage(socialConfig, "events", eventTopic, eventContent).catch(() => {});
         }
       })());
 
@@ -412,7 +456,7 @@ export const eventHandlers = {
       return { status: 500 as const, body: { success: false, error: errorMessage } };
     }
   },
-  updateEvent: async (input: HandlerInput, c: HonoContext) => {
+  updateEvent: async (input: HandlerInput<EventSaveBody>, c: HonoContext) => {
     const { params, body } = input;
     const { id } = params;
     try {
@@ -522,9 +566,9 @@ export const eventHandlers = {
         if (status === "published") {
           const socialConfig = await getSocialConfig(c);
           const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
-          const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
+          const calId = (socialConfig as Record<string, string | undefined>)[calKey] || socialConfig.CALENDAR_ID;
           
-          if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
+          if (socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL && socialConfig.GCAL_PRIVATE_KEY && calId) {
             try {
               const row = await db.selectFrom("events").select(["gcal_event_id", "original_start_time", "recurring_group_id"]).where("id", "=", id).executeTakeFirst();
               
@@ -541,7 +585,7 @@ export const eventHandlers = {
 
               const gcalId = await pushEventToGcal(
                 { id, title: title || "", date_start: dateStart, date_end: dateEnd || undefined, location: location || undefined, description: description || undefined, cover_image: coverImage || undefined, gcal_event_id: row?.gcal_event_id || undefined, meeting_notes: meetingNotes || undefined, recurrence_rule: recurrenceRule || body.rrule || existing.recurrence_rule || undefined, parent_gcal_id: parentGcalId || undefined, original_start_time: origStart || undefined },
-                { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
+                { email: socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL as string, privateKey: socialConfig.GCAL_PRIVATE_KEY as string, calendarId: calId as string }
               );
               if (gcalId && gcalId !== row?.gcal_event_id) {
                 await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", id).execute();
@@ -558,7 +602,7 @@ export const eventHandlers = {
       return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
-  deleteEvent: async (input: HandlerInput, c: HonoContext) => {
+  deleteEvent: async (input: HandlerInput<Pick<EventSaveBody, 'deleteMode'>>, c: HonoContext) => {
     const { params, body } = input;
     const { id } = params;
     try {
@@ -594,24 +638,23 @@ export const eventHandlers = {
           const socialConfig = await getSocialConfig(c);
           const cat = existing.category || "internal";
           const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
-          const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
+          const calId = (socialConfig as Record<string, string | undefined>)[calKey] || socialConfig.CALENDAR_ID;
           
-          if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
+          if (socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL && socialConfig.GCAL_PRIVATE_KEY && calId) {
             try {
               if (gcalAction === "update" && updatedRrule) {
                 const fullRow = await db.selectFrom("events").selectAll().where("id", "=", id).executeTakeFirst();
                 if (fullRow) {
                   await pushEventToGcal(
                     { id: fullRow.id as string, title: fullRow.title, date_start: fullRow.date_start, date_end: fullRow.date_end || undefined, location: fullRow.location || undefined, description: fullRow.description || undefined, cover_image: fullRow.cover_image || undefined, gcal_event_id: fullRow.gcal_event_id || undefined, recurrence_rule: updatedRrule },
-                    { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
+                    { email: socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL as string, privateKey: socialConfig.GCAL_PRIVATE_KEY as string, calendarId: calId as string }
                   );
                 }
               } else {
                 await deleteEventFromGcal(existing.gcal_event_id, {
-                  email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string,
-                  privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string,
-                  calendarId: calId as string
-                });
+                  email: socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL as string,
+                  privateKey: socialConfig.GCAL_PRIVATE_KEY as string,
+                  calendarId: calId                });
               }
             } catch { /* ignore GCal failure */ }
           }
@@ -648,14 +691,14 @@ export const eventHandlers = {
         
         const socialConfig = await getSocialConfig(c);
         const cat = targetRow.category || "internal";
-        const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
-        const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
-        
-        if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
+        const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof SocialConfig;
+        const calId = (socialConfig as Record<string, string | undefined>)[calKey] || socialConfig.CALENDAR_ID;
+
+        if (socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL && socialConfig.GCAL_PRIVATE_KEY && calId) {
           try {
             const gcalId = await pushEventToGcal(
               { id: targetRow.id as string, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined, meeting_notes: targetRow.meeting_notes || undefined },
-              { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
+              { email: socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL, privateKey: socialConfig.GCAL_PRIVATE_KEY, calendarId: calId }
             );
             if (gcalId && gcalId !== targetRow.gcal_event_id) {
               await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", targetRow.id).execute();
@@ -666,7 +709,7 @@ export const eventHandlers = {
         const baseUrl = new URL(c.req.url).origin;
         const eventTopic = `Event: ${targetRow.title}`;
         const eventContent = `📅 **Event Approved & Scheduled**\n\n**Title:** ${targetRow.title}\n**Location:** ${targetRow.location || "TBD"}\n\n[View Event](${baseUrl}/events)`;
-        await sendZulipMessage(socialConfig as any, "events", eventTopic, eventContent).catch(() => {});
+        await sendZulipMessage(socialConfig, "events", eventTopic, eventContent).catch(() => {});
       })());
 
       return { status: 200 as const, body: { success: true } };
@@ -700,14 +743,14 @@ export const eventHandlers = {
         
         const socialConfig = await getSocialConfig(c);
         const cat = targetRow.category || "internal";
-        const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
-        const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
-        
-        if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
+        const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof SocialConfig;
+        const calId = (socialConfig as Record<string, string | undefined>)[calKey] || socialConfig.CALENDAR_ID;
+
+        if (socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL && socialConfig.GCAL_PRIVATE_KEY && calId) {
           try {
             const gcalId = await pushEventToGcal(
               { id: targetRow.id as string, title: targetRow.title, date_start: targetRow.date_start, date_end: targetRow.date_end || undefined, location: targetRow.location || undefined, description: targetRow.description || undefined, cover_image: targetRow.cover_image || undefined, gcal_event_id: targetRow.gcal_event_id || undefined, meeting_notes: targetRow.meeting_notes || undefined },
-              { email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
+              { email: socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL, privateKey: socialConfig.GCAL_PRIVATE_KEY, calendarId: calId }
             );
             if (gcalId && gcalId !== targetRow.gcal_event_id) {
               await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", targetRow.id).execute();
@@ -735,15 +778,14 @@ export const eventHandlers = {
           const socialConfig = await getSocialConfig(c);
           const cat = row.category || "internal";
           const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
-          const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
+          const calId = (socialConfig as Record<string, string | undefined>)[calKey] || socialConfig.CALENDAR_ID;
           
-          if (socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] && socialConfig["GCAL_PRIVATE_KEY"] && calId) {
+          if (socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL && socialConfig.GCAL_PRIVATE_KEY && calId) {
             try {
               await deleteEventFromGcal(row.gcal_event_id, {
-                email: socialConfig["GCAL_SERVICE_ACCOUNT_EMAIL"] as string,
-                privateKey: socialConfig["GCAL_PRIVATE_KEY"] as string,
-                calendarId: calId as string
-              });
+                email: socialConfig.GCAL_SERVICE_ACCOUNT_EMAIL as string,
+                privateKey: socialConfig.GCAL_PRIVATE_KEY as string,
+                calendarId: calId              });
             } catch { /* ignore GCal failure */ }
           }
         }
@@ -879,7 +921,7 @@ export const eventHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch signups" } };
     }
   },
-  submitSignup: async (input: HandlerInput, c: HonoContext) => {
+  submitSignup: async (input: HandlerInput<SignupBody>, c: HonoContext) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -908,7 +950,7 @@ export const eventHandlers = {
       return { status: 500 as const, body: { success: false, error: "Delete failed" } };
     }
   },
-  updateMyAttendance: async (input: HandlerInput, c: HonoContext) => {
+  updateMyAttendance: async (input: HandlerInput<Pick<SignupBody, 'attended'>>, c: HonoContext) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -924,7 +966,7 @@ export const eventHandlers = {
       return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
-  updateUserAttendance: async (input: HandlerInput, c: HonoContext) => {
+  updateUserAttendance: async (input: HandlerInput<Pick<SignupBody, 'attended'>>, c: HonoContext) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -940,7 +982,7 @@ export const eventHandlers = {
       return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
-  repushEvent: async (input: HandlerInput, c: HonoContext) => {
+  repushEvent: async (input: HandlerInput<SocialsBody>, c: HonoContext) => {
     const { params, body } = input;
     const user = await getSessionUser(c);
     if (user?.role !== "admin" && user?.role !== "author") return { status: 401 as const, body: { error: "Unauthorized" } };
@@ -969,14 +1011,14 @@ export const eventHandlers = {
       );
 
       const cat = event.category || "internal";
-      const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof social;
-      const calId = (social as any)[calKey] || (social as any)["CALENDAR_ID"];
-      
-      if (social["GCAL_SERVICE_ACCOUNT_EMAIL"] && social["GCAL_PRIVATE_KEY"] && calId) {
+      const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof SocialConfig;
+      const calId = (social as Record<string, string | undefined>)[calKey] || social.CALENDAR_ID;
+
+      if (social.GCAL_SERVICE_ACCOUNT_EMAIL && social.GCAL_PRIVATE_KEY && calId) {
         try {
           const gcalId = await pushEventToGcal(
             { id: event.id as string, title: event.title, date_start: event.date_start, date_end: event.date_end || undefined, location: event.location || undefined, description: event.description || undefined, cover_image: event.cover_image || undefined, gcal_event_id: event.gcal_event_id || undefined, meeting_notes: event.meeting_notes || undefined },
-            { email: social["GCAL_SERVICE_ACCOUNT_EMAIL"] as string, privateKey: social["GCAL_PRIVATE_KEY"] as string, calendarId: calId as string }
+            { email: social.GCAL_SERVICE_ACCOUNT_EMAIL, privateKey: social.GCAL_PRIVATE_KEY, calendarId: calId }
           );
           if (gcalId && gcalId !== event.gcal_event_id) {
             await db.updateTable("events").set({ gcal_event_id: gcalId }).where("id", "=", event.id).execute();
@@ -992,7 +1034,7 @@ export const eventHandlers = {
       return { status: 502 as const, body: { error: String(err) } };
     }
   },
-  repairCalendar: async (_input: any, c: any) => {
+  repairCalendar: async (_input: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const dbSettings = await getDbSettings(c);

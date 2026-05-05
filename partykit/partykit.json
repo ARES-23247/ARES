@@ -2,6 +2,9 @@
   "$schema": "https://www.partykit.io/schema.json",
   "name": "aresweb-partykit",
   "main": "server.ts",
+  "parties": {
+    "kanban": "kanban-server.ts"
+  },
   "compatibilityDate": "2026-05-04",
   "vars": {}
 }
