@@ -31,6 +31,7 @@ export interface LocationRow {
 import { CollaborativeEditorRoom, useCollaborativeEditor } from "./editor/CollaborativeEditorRoom";
 import VersionHistorySidebar from "./editor/VersionHistorySidebar";
 import ZulipThread from "./ZulipThread";
+import { CreateLocationModal } from "./CreateLocationModal";
 
 function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: string | unknown, roomId?: string | null }) {
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: st
   const [errorMsg, setErrorMsg] = useState("");
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<z.input<typeof eventSchema>>({
     resolver: zodResolver(eventSchema),
@@ -395,7 +397,13 @@ function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: st
           <div className="relative group">
             <select
               id="event-location"
-              {...register("location")}
+              {...register("location", {
+                onChange: (e) => {
+                  if (e.target.value === "CUSTOM") {
+                    setIsLocationModalOpen(true);
+                  }
+                }
+              })}
               className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none pr-10"
             >
               <option value="">-- Select a Venue --</option>
@@ -592,6 +600,27 @@ function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: st
         onSelect={(url) => {
           setValue("coverImage", url);
           setIsCoverPickerOpen(false);
+        }}
+      />
+
+      <CreateLocationModal
+        isOpen={isLocationModalOpen}
+        onClose={() => {
+          setIsLocationModalOpen(false);
+          // If they close without saving, reset dropdown to empty
+          if (formValues.location === "CUSTOM") {
+            setValue("location", "");
+          }
+        }}
+        onSuccess={(newName) => {
+          setIsLocationModalOpen(false);
+          // Add temporary option so it is immediately selectable before query refetch
+          const selectEl = document.getElementById('event-location') as HTMLSelectElement;
+          if (selectEl && !Array.from(selectEl.options).some(opt => opt.value === newName)) {
+            const tempOpt = new Option(newName, newName);
+            selectEl.add(tempOpt, selectEl.options[selectEl.options.length - 1]);
+          }
+          setValue("location", newName);
         }}
       />
 
