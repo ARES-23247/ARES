@@ -15,22 +15,21 @@ progress:
 
 # System State
 
-**Current Milestone**: v6.5 — Zulip Sync & Social Media Manager Formalization
-**Status**: active
+**Current Milestone**: v6.6 — Next Iteration
+**Status**: planning
 
 ## Current Position
 
-Phase: 18. Social Media Manager Documentation
+Phase: 0. Pre-planning
 Plan: —
 Status: Planning
-Last activity: 2026-05-04 — Phase 17 completed
+Last activity: 2026-05-04 — Milestone v6.5 archived
 
 ## Completed This Session
 
 | Phase | Plan | Description | Commits |
 |-------|------|-------------|---------|
-| 17 | 01 | Fix Zulip sync dot-mismatches | `fe4768a` |
-| 18 | - | - | - |
+| - | - | - | - |
 
 ## Key Decisions
 

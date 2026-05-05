@@ -12,6 +12,10 @@
 
 | Version | Status | Date | Summary |
 |---------|--------|------|---------|
+| [v6.5](milestones/v6.5-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Zulip Sync & Social Media Formalization |
+| [v6.4](milestones/v6.4-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Science & Math Corner Expansion |
+| [v6.3](milestones/v6.3-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Interactive Tools & Impact Logging |
+| [v6.2](milestones/v6.2-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Core Workflows Update |
 | [v6.1](milestones/v6.1-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Deferred Items & Type Safety |
 | [v6.0](milestones/v6.0-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Real-Time Collaboration Infrastructure |
 | [v5.9](milestones/v5.9-ROADMAP.md) | ✅ SHIPPED | 2026-05-04 | Trello Parity & Zulip Sync |

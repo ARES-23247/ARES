@@ -51,20 +51,18 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 - ✓ **Milestone 6.2 (Metrics, Testing & UI Polish)** — Delivered deferred E2E testing for media manager, built an admin dashboard for platform usage metrics, and polished nested sub-task rendering UI in Kanbans and tables.
 - ✓ **Milestone 6.3 (Outreach Restoration)** — Restored Impact Logging and built FTC Scouting endpoints.
 - ✓ **Milestone 6.4 (Science & Math Expansion)** — Introduced Math Corner UI, added universal document visibility fields, and added persistence to AI Scouting Analyses.
+- ✓ **Milestone 6.5 (Zulip Sync & Social Media)** — Resolved `aresfirst.org` Google Workspace dot-mismatches and created architectural documentation for the Social Media Manager.
 
 ### Active
 
 (None currently active)
 
-## Current Milestone: v6.5 Zulip Sync & Social Media Manager Formalization
+## Current Milestone: v6.6 Next Iteration
 
-**Goal:** Investigate and resolve Zulip account email synchronization issues with `aresfirst.org`, and formalize the previously built Social Media Manager through robust architectural documentation.
+**Goal:** Determine next steps and roadmap execution items.
 
 **Target features:**
-- Investigate root cause of email synchronization failure between ARESWEB profiles and the Zulip API.
-- Implement a reliable fix ensuring bidirectional email parity.
-- Generate GSD documentation mapping out the Social Media Manager's architecture, including cron jobs, database schemas, and external API integrations.
-- Merge the documentation into the official project repository.
+- Next iteration features will be planned in the upcoming session.
 
 ## Current State
 
