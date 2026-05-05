@@ -3,14 +3,43 @@ import { AppEnv, ensureAuth } from "../middleware";
 import { z } from "zod";
 
 // Validation schema for simulation save
+// SECURITY: Enforce limits to prevent DoS via large payloads
+const MAX_FILES = 10;
+const MAX_TOTAL_SIZE = 2 * 1024 * 1024; // 2MB total
+const MAX_FILE_SIZE = 500000; // 500KB per file
+const SIM_ID_PATTERN = /^[a-zA-Z0-9_\-\.]+\.(tsx?|jsx?|json)$/;
+
 const saveSimulationSchema = z.object({
   name: z.string().max(100).optional(),
-  files: z.record(z.string(), z.string().max(500000)), // 500KB max per file
+  files: z.record(z.string(), z.string().max(MAX_FILE_SIZE)).refine(
+    (files) => {
+      const fileCount = Object.keys(files).length;
+      if (fileCount > MAX_FILES) {
+        throw new Error(`Too many files: ${fileCount} (max ${MAX_FILES})`);
+      }
+
+      const totalSize = Object.values(files).reduce((sum, content) => sum + content.length, 0);
+      if (totalSize > MAX_TOTAL_SIZE) {
+        throw new Error(`Total size too large: ${totalSize} bytes (max ${MAX_TOTAL_SIZE})`);
+      }
+
+      // Validate filename patterns to prevent path traversal
+      for (const filename of Object.keys(files)) {
+        if (!SIM_ID_PATTERN.test(filename)) {
+          throw new Error(`Invalid filename: ${filename}. Must match ${SIM_ID_PATTERN.source}`);
+        }
+      }
+
+      return true;
+    },
+    { message: "Files validation failed" }
+  ),
 });
 
 export const simulationsRouter = new Hono<AppEnv>();
 
 // Helper: Check if user owns a simulation or is admin
+// SECURITY: Uses multiple verification factors to prevent email spoofing
 async function canModifySimulation(c: any, simId: string): Promise<boolean> {
   const sessionUser = c.get("sessionUser");
   if (!sessionUser) return false;
@@ -18,7 +47,6 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
   // Admins can modify any simulation
   if (sessionUser.role === "admin") return true;
 
-  // Check if user is the author by fetching the file's commit history
   try {
     const db = c.get("db");
     const config = await db.selectFrom("settings").selectAll().execute();
@@ -43,11 +71,32 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
     const commits = await res.json() as any[];
     if (!commits || commits.length === 0) return false;
 
-    // Check commit author email matches user
-    const authorEmail = commits[0]?.author?.email;
-    return authorEmail === sessionUser.email;
-  } catch {
+    // Multi-factor ownership verification to prevent spoofing
+    const commit = commits[0];
+    const authorEmail = commit.author?.email;
+    const committerLogin = commit.committer?.login;
+    const verified = commit.commit?.verification?.verified;
+
+    // Primary: email must match
+    if (authorEmail !== sessionUser.email) return false;
+
+    // Secondary: if commit is cryptographically verified, email is trustworthy
+    if (verified) return true;
+
+    // Tertiary: for unverified commits, verify committer identity via GitHub API
+    // This prevents users from setting git config to use someone else's email
+    if (committerLogin && sessionUser.github_login) {
+      if (committerLogin === sessionUser.github_login) {
+        return true;
+      }
+    }
+
+    // If commit is unverified and committer doesn't match session user, reject
+    console.warn(`[Simulations] Rejecting unverified commit by ${authorEmail} (committer: ${committerLogin})`);
+    return false;
+  } catch (err) {
     // If we can't verify ownership, be conservative
+    console.error("[Simulations] Ownership verification error:", err);
     return false;
   }
 }
@@ -104,6 +153,23 @@ simulationsRouter.get("/:id", async (c) => {
   }
 
   const simId = id.replace("github:", "");
+
+  // Validate simId format to prevent path traversal and injection
+  // SECURITY: Reject any path separators or special characters
+  if (!SIM_ID_PATTERN.test(simId)) {
+    console.warn(`[Simulations] Invalid simulation ID format: ${simId}`);
+    return c.json({ error: "Invalid simulation ID" }, 400);
+  }
+
+  // Explicitly check for path traversal attempts
+  if (simId.includes('..') || simId.includes('/') || simId.includes('\\')) {
+    console.warn(`[Simulations] Path traversal attempt blocked: ${simId}`);
+    return c.json({ error: "Invalid simulation ID" }, 400);
+  }
+
+  // Enforce .tsx extension explicitly
+  const filename = `${simId}.tsx`;
+
   try {
     const db = c.get("db");
     const config = await db.selectFrom("settings").selectAll().execute();
@@ -120,18 +186,18 @@ simulationsRouter.get("/:id", async (c) => {
     };
     if (pat) headers["Authorization"] = `Bearer ${pat}`;
 
-    const ghRes = await fetch(`https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/${simId}.tsx`, { headers });
+    const ghRes = await fetch(`https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/${filename}`, { headers });
     if (!ghRes.ok) {
       return c.json({ error: "Simulation not found in GitHub" }, 404);
     }
-    
+
     const code = await ghRes.text();
     return c.json({
       simulation: {
         id: id,
         name: simId,
         type: "github",
-        files: { [`${simId}.tsx`]: code },
+        files: { [filename]: code },
         author_id: "ARES-23247",
         is_public: true,
         created_at: new Date().toISOString(),
@@ -228,17 +294,27 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
       return c.json({ error: "Failed to upload to GitHub" }, 500);
     }
 
-    // Update registry if new
+    // Update registry if new file was created
+    // Uses retry logic to handle race conditions from concurrent saves
     if (!sha) {
       const regUrl = `https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/simRegistry.json`;
-      const regGetRes = await fetch(regUrl, { headers });
-      if (regGetRes.ok) {
+      const maxRetries = 3;
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const regGetRes = await fetch(regUrl, { headers });
+        if (!regGetRes.ok) {
+          console.warn(`[Simulations] Registry fetch failed on attempt ${attempt + 1}`);
+          break;
+        }
+
         const regJson = (await regGetRes.json()) as any;
         const regSha = regJson.sha;
         const regContentStr = decodeURIComponent(escape(atob(regJson.content)));
+
         try {
           const registry = JSON.parse(regContentStr);
-          
+
+          // Check if already registered (could be added by another concurrent request)
           if (!registry.simulators.some((s: any) => s.id === simIdStr)) {
             registry.simulators.push({
               id: simIdStr,
@@ -246,11 +322,11 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
               path: `./${simIdStr}`,
               requiresContext: false
             });
-            
+
             const newRegContent = JSON.stringify(registry, null, 2);
             const newRegBase64 = btoa(unescape(encodeURIComponent(newRegContent)));
-            
-            await fetch(regUrl, {
+
+            const regPutRes = await fetch(regUrl, {
               method: "PUT",
               headers,
               body: JSON.stringify({
@@ -259,9 +335,29 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
                 sha: regSha
               })
             });
+
+            if (regPutRes.ok) {
+              // Success - break out of retry loop
+              console.log(`[Simulations] Registered ${simIdStr} in simRegistry.json`);
+              break;
+            } else if (regPutRes.status === 409 && attempt < maxRetries - 1) {
+              // Conflict - another request modified the registry, retry with fresh data
+              const backoffMs = 100 * Math.pow(2, attempt);
+              console.warn(`[Simulations] Registry conflict on attempt ${attempt + 1}, retrying in ${backoffMs}ms`);
+              await new Promise(resolve => setTimeout(resolve, backoffMs));
+              continue;
+            } else {
+              console.error("[Simulations] Registry update failed:", await regPutRes.text());
+              break;
+            }
+          } else {
+            // Already registered by another request - no action needed
+            console.log(`[Simulations] ${simIdStr} already registered, skipping`);
+            break;
           }
         } catch (e) {
-          console.error("[Simulations] Registry update failed:", e);
+          console.error("[Simulations] Registry update failed on attempt", attempt + 1, ":", e);
+          if (attempt === maxRetries - 1) throw e;
         }
       }
     }
@@ -279,14 +375,28 @@ simulationsRouter.delete("/:id", async (c) => {
     if (!sessionUser) {
       return c.json({ error: "Unauthorized" }, 401);
     }
-    
+
     const id = c.req.param("id");
     if (!id.startsWith("github:")) {
       return c.json({ error: "Not found" }, 404);
     }
-    
+
     const simIdStr = id.replace("github:", "");
-    
+
+    // Validate simId format to prevent path traversal and injection
+    if (!SIM_ID_PATTERN.test(simIdStr)) {
+      console.warn(`[Simulations] Invalid simulation ID format in delete: ${simIdStr}`);
+      return c.json({ error: "Invalid simulation ID" }, 400);
+    }
+
+    // Explicitly check for path traversal attempts
+    if (simIdStr.includes('..') || simIdStr.includes('/') || simIdStr.includes('\\')) {
+      console.warn(`[Simulations] Path traversal attempt blocked in delete: ${simIdStr}`);
+      return c.json({ error: "Invalid simulation ID" }, 400);
+    }
+
+    const filename = `${simIdStr}.tsx`;
+
     const db = c.get("db");
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
@@ -303,7 +413,7 @@ simulationsRouter.delete("/:id", async (c) => {
       "Content-Type": "application/json"
     };
 
-    const path = `src/sims/${simIdStr}.tsx`;
+    const path = `src/sims/${filename}`;
     const url = `https://api.github.com/repos/ARES-23247/ARESWEB/contents/${path}`;
 
     let sha: string | undefined;
@@ -323,11 +433,11 @@ simulationsRouter.delete("/:id", async (c) => {
         method: "DELETE",
         headers,
         body: JSON.stringify({
-          message: `feat(sims): delete ${simIdStr}.tsx via Simulation Playground`,
+          message: `feat(sims): delete ${filename} via Simulation Playground`,
           sha: sha
         })
       });
-      
+
       if (!delRes.ok) {
         console.error("[Simulations] GitHub DELETE error:", await delRes.text());
       }

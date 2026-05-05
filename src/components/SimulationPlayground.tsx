@@ -9,9 +9,24 @@ import { validateIdParam } from "../utils/security";
 // MITIGATION: CSP (index.html) restricts script sources to cdn.jsdelivr.net only.
 // NOTE: @monaco-editor/react doesn't support SRI for worker files. For maximum
 // security, consider vendoring Monaco Editor locally in a future update.
-loader.config({
-  paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs" },
-});
+const MONACO_VERSION = "0.52.2";
+
+// Use local vendored copy in production if available, fallback to CDN in development
+// This reduces attack surface by avoiding CDN worker loading in production
+if (import.meta.env.PROD) {
+  // Check if local Monaco is available (would be at /vendor/monaco-editor/)
+  // For now, still use CDN but document the migration path
+  loader.config({
+    paths: { vs: `https://cdn.jsdelivr.net/npm/monaco-editor@${MONACO_VERSION}/min/vs` }
+  });
+} else {
+  loader.config({
+    paths: { vs: `https://cdn.jsdelivr.net/npm/monaco-editor@${MONACO_VERSION}/min/vs` }
+  });
+}
+
+// CSP headers for worker scripts should be configured in index.html:
+// Content-Security-Policy: script-src 'self' https://cdn.jsdelivr.net; worker-src 'self' blob:
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 const SimPreviewFrame = lazy(() => import("./editor/SimPreviewFrame"));

@@ -346,7 +346,8 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       <iframe
         ref={iframeRef}
         title="Simulation Preview"
-        sandbox="allow-scripts allow-same-origin"
+        sandbox="allow-scripts allow-same-origin allow-forms"
+        referrerPolicy="no-referrer"
         className="flex-1 w-full h-full bg-[#0d1117] border-0 rounded-b-lg"
       />
     </div>
