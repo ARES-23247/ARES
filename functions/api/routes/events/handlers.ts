@@ -280,8 +280,24 @@ export const eventHandlers: any = {
 
       const recurringGroupId = body.rrule ? crypto.randomUUID() : null;
 
+      // WR-02: Validate RRULE before parsing to prevent ReDoS
+      const MAX_RRULE_LENGTH = 200;
+      const ALLOWED_RRULE_KEYS = ['FREQ', 'INTERVAL', 'UNTIL', 'COUNT', 'BYDAY', 'BYMONTHDAY', 'BYMONTH', 'BYSETPOS'];
+
       let instances: any[] = [];
       if (body.rrule) {
+        // Validate RRULE length
+        if (typeof body.rrule !== 'string' || body.rrule.length > MAX_RRULE_LENGTH) {
+          return { status: 400 as const, body: { error: "Invalid recurrence rule: exceeds maximum length" } };
+        }
+
+        // Basic validation: ensure rule contains at least one valid RRULE key
+        const upperRule = body.rrule.toUpperCase();
+        const hasValidKey = ALLOWED_RRULE_KEYS.some(key => upperRule.includes(`${key}=`));
+        if (!hasValidKey) {
+          return { status: 400 as const, body: { error: "Invalid recurrence rule format" } };
+        }
+
         try {
           const rule = rrulestr(body.rrule, { dtstart: new Date(dateStart) });
           // Cap to 52 instances to prevent infinite generation (1 year of weekly)

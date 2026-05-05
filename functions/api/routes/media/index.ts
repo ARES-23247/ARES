@@ -31,6 +31,12 @@ mediaRouter.post("/admin/upload", async (c) => {
       return c.json({ error: "No file uploaded" }, 400);
     }
 
+    // WR-03: Add maximum file size validation (50MB limit)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return c.json({ error: `File too large (max ${MAX_FILE_SIZE / 1024 / 1024}MB)` }, 400);
+    }
+
     const isLarge = file.size > 10 * 1024 * 1024;
     let buffer: ArrayBuffer | null = null;
     let headerBuffer: ArrayBuffer;

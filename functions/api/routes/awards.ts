@@ -49,7 +49,11 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       let finalId: string | undefined = id;
       let exists = false;
       if (id) {
-        const row = await db.selectFrom("awards").select("id").where("id", "=", Number(id) as any).executeTakeFirst();
+        const numericId = Number(id);
+        if (isNaN(numericId) || numericId <= 0) {
+          return { status: 400 as const, body: { error: "Invalid award ID", success: false } };
+        }
+        const row = await db.selectFrom("awards").select("id").where("id", "=", numericId).executeTakeFirst();
         if (row) {
           exists = true;
           finalId = String(row.id);
@@ -83,7 +87,11 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       } as const;
 
       if (exists && finalId) {
-        await db.updateTable("awards").set(values).where("id", "=", Number(finalId) as any).execute();
+        const updateId = Number(finalId);
+        if (isNaN(updateId) || updateId <= 0) {
+          return { status: 400 as const, body: { error: "Invalid award ID for update", success: false } };
+        }
+        await db.updateTable("awards").set(values).where("id", "=", updateId).execute();
         c.executionCtx.waitUntil(logAuditAction(c, "award_updated", "awards", finalId, `Award "${title}" (${year}) updated`));
       } else {
         // Attempt insert with duplicate handling for race condition
@@ -125,7 +133,11 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
 
     try {
                   const db = c.get("db") as Kysely<DB>;
-      await db.updateTable("awards").set({ is_deleted: 1 }).where("id", "=", Number(params.id) as any).execute();
+      const numericId = Number(params.id);
+      if (isNaN(numericId) || numericId <= 0) {
+        return { status: 400 as const, body: { error: "Invalid award ID", success: false } };
+      }
+      await db.updateTable("awards").set({ is_deleted: 1 }).where("id", "=", numericId).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "award_deleted", "awards", params.id, "Award soft-deleted"));
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
