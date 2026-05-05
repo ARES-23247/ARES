@@ -317,7 +317,7 @@ Plans:
 - `src/components/SimulationPlayground.tsx` — Editor UI, Monaco editor instance, file state
 - `src/components/editor/SimPreviewFrame.tsx` — Preview pane (no changes expected)
 
-**Plans**: 0/0 planned — requires `/gsd-plan-phase 33`
+**Plans**: 1/1 planned
 
 Plans:
-- [ ] (Not yet planned)
+- [ ] 33-01-PLAN.md — AI Diff View Implementation (TODO)
