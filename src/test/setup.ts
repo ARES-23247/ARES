@@ -14,8 +14,7 @@ const scrollTo = () => {};
 window.scrollTo = scrollTo;
 
 // Mock Cloudflare-specific globals
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(globalThis as any).caches = {
+(globalThis as unknown as { caches: unknown }).caches = {
   default: {
     match: () => Promise.resolve(undefined),
     put: () => Promise.resolve(undefined),
