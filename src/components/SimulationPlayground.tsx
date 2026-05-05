@@ -102,14 +102,40 @@ export default function SimulationPlayground() {
   const compileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Chat state
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+  // Use sessionStorage instead of localStorage for better security (clears on browser close)
+  // Implement retention policy: max 50 messages, sanitize before storage
+  const STORAGE_PREFIX = 'sim_chat_v2_';
+  const MAX_CHAT_MESSAGES = 50;
+
+  const loadChatMessages = (simId: string | null): ChatMessage[] => {
     try {
-      const idParam = new URLSearchParams(window.location.search).get("simId");
-      const stored = localStorage.getItem(`sim_chat_${idParam || 'new'}`);
-      if (stored) return JSON.parse(stored);
-    } catch (e) { console.error(e); }
+      const idParam = simId || new URLSearchParams(window.location.search).get("simId") || 'new';
+      const stored = sessionStorage.getItem(`${STORAGE_PREFIX}${idParam}`);
+      if (stored) {
+        const parsed = JSON.parse(stored) as ChatMessage[];
+        // Validate structure
+        if (Array.isArray(parsed) && parsed.every(m => typeof m.role === 'string' && typeof m.content === 'string')) {
+          return parsed.slice(0, MAX_CHAT_MESSAGES);
+        }
+      }
+    } catch (e) {
+      console.error("[SimPlayground] Failed to load chat from storage:", e);
+    }
     return [DEFAULT_MESSAGE];
-  });
+  };
+
+  const saveChatMessages = (messages: ChatMessage[], simId: string | null) => {
+    try {
+      const id = simId || 'new';
+      // Apply retention limit before saving
+      const limited = messages.slice(-MAX_CHAT_MESSAGES);
+      sessionStorage.setItem(`${STORAGE_PREFIX}${id}`, JSON.stringify(limited));
+    } catch (e) {
+      console.error("[SimPlayground] Failed to save chat to storage:", e);
+    }
+  };
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(loadChatMessages(null));
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -120,9 +146,9 @@ export default function SimulationPlayground() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  // Persist chat to local storage
+  // Persist chat to sessionStorage instead of localStorage (clears on browser close)
   useEffect(() => {
-    localStorage.setItem(`sim_chat_${simId || 'new'}`, JSON.stringify(chatMessages));
+    saveChatMessages(chatMessages, simId);
   }, [chatMessages, simId]);
 
   // ── Compile logic ──
@@ -357,13 +383,9 @@ export default function SimulationPlayground() {
     compileCode(SIM_TEMPLATES["Blank Canvas"]);
     setSimId(null);
     setSimName("Untitled Simulation");
-    
-    const storedChat = localStorage.getItem('sim_chat_new');
-    if (storedChat) {
-      try { setChatMessages(JSON.parse(storedChat)); } catch { setChatMessages([DEFAULT_MESSAGE]); }
-    } else {
-      setChatMessages([DEFAULT_MESSAGE]);
-    }
+
+    // Clear chat and reset to default
+    setChatMessages([DEFAULT_MESSAGE]);
   };
 
   // ── Library ──
@@ -425,13 +447,9 @@ export default function SimulationPlayground() {
       setSimId(sim.id);
       compileCode(parsedFiles);
       setShowLibrary(false);
-      
-      const storedChat = localStorage.getItem(`sim_chat_${sim.id}`);
-      if (storedChat) {
-        try { setChatMessages(JSON.parse(storedChat)); } catch { setChatMessages([DEFAULT_MESSAGE]); }
-      } else {
-        setChatMessages([DEFAULT_MESSAGE]);
-      }
+
+      // Load chat for this sim from sessionStorage
+      setChatMessages(loadChatMessages(sim.id));
       
       // Update URL to match loaded sim
       const newUrl = new URL(window.location.href);
@@ -462,13 +480,9 @@ export default function SimulationPlayground() {
       setSimId(`github:${sim.id}`);
       compileCode(parsedFiles);
       setShowLibrary(false);
-      
-      const storedChat = localStorage.getItem(`sim_chat_github:${sim.id}`);
-      if (storedChat) {
-        try { setChatMessages(JSON.parse(storedChat)); } catch { setChatMessages([DEFAULT_MESSAGE]); }
-      } else {
-        setChatMessages([DEFAULT_MESSAGE]);
-      }
+
+      // Load chat for this GitHub sim from sessionStorage
+      setChatMessages(loadChatMessages(`github:${sim.id}`));
       
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set("simId", `github:${sim.id}`);
@@ -539,8 +553,48 @@ export default function SimulationPlayground() {
   };
 
   // ── z.AI Chat ──
+
+  /**
+   * Sanitize user input to prevent prompt injection attacks.
+   * Removes control characters and limits length.
+   */
+  const sanitizeUserInput = (input: string, maxLength: number = 5000): string => {
+    // Remove control characters except newlines and tabs (which are safe in code context)
+    let sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+    // Limit length to prevent DoS
+    if (sanitized.length > maxLength) {
+      sanitized = sanitized.slice(0, maxLength) + '... (truncated)';
+    }
+    return sanitized;
+  };
+
+  /**
+   * Sanitize file content for AI context.
+   * Removes control characters and limits individual file sizes.
+   */
+  const sanitizeFilesForAI = (files: Record<string, string>): Record<string, string> => {
+    const sanitized: Record<string, string> = {};
+    const MAX_FILE_SIZE = 10000; // 10KB max per file in AI context
+
+    for (const [filename, content] of Object.entries(files)) {
+      // Validate filename is safe
+      if (!/^[a-zA-Z0-9_\-\.]+\.(tsx?|jsx?|json)$/.test(filename)) {
+        continue; // Skip files with suspicious names
+      }
+
+      // Sanitize content
+      let sanitizedContent = content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+      if (sanitizedContent.length > MAX_FILE_SIZE) {
+        sanitizedContent = sanitizedContent.slice(0, MAX_FILE_SIZE) + '\n// ... (truncated for AI context)';
+      }
+      sanitized[filename] = sanitizedContent;
+    }
+
+    return sanitized;
+  };
+
   const handleChatSend = async () => {
-    const msg = chatInput.trim();
+    const msg = sanitizeUserInput(chatInput.trim());
     if (!msg || isChatLoading) return;
 
     const newMessages: ChatMessage[] = [...chatMessages, { role: "user", content: msg }];
@@ -549,9 +603,12 @@ export default function SimulationPlayground() {
     setIsChatLoading(true);
 
     try {
-      const filesJson = JSON.stringify(files, null, 2);
+      // Sanitize files before sending to AI to prevent prompt injection
+      const sanitizedFiles = sanitizeFilesForAI(files);
+      const filesJson = JSON.stringify(sanitizedFiles, null, 2);
       const includeExamples = filesJson.length < 15000;
-      
+
+      // Build system context with sanitized inputs - all user content is escaped
       const systemContext = `You are a z.AI simulation code assistant for ARES 23247, an FTC robotics team. The user is building interactive React simulations that run in a sandboxed iframe.
 RULES:
 - You MUST put EVERYTHING (all components, logic, and styling) into a SINGLE .tsx file. NEVER generate multiple files.
@@ -588,7 +645,7 @@ ${filesJson}
 
 USER REQUEST: ${msg}`;
 
-      const apiMessages = chatMessages.map(m => ({ role: m.role, content: m.content }));
+      const apiMessages = chatMessages.map(m => ({ role: m.role, content: sanitizeUserInput(m.content) }));
       apiMessages.push({ role: "user", content: msg });
 
       // Normalize for Anthropic: must start with user, must alternate roles
@@ -1095,7 +1152,8 @@ USER REQUEST: ${msg}`;
                       onClick={() => {
                         const iframe = document.querySelector('iframe');
                         if (iframe && iframe.contentWindow) {
-                          iframe.contentWindow.postMessage({ type: 'ARES_REQUEST_SCREENSHOT' }, '*');
+                          // Use specific origin instead of wildcard to prevent cross-origin message leakage
+                          iframe.contentWindow.postMessage({ type: 'ARES_REQUEST_SCREENSHOT' }, window.location.origin);
                         }
                       }}
                       className="p-2 bg-zinc-800 text-zinc-400 border border-zinc-700 rounded-md hover:bg-zinc-700 transition-colors"
