@@ -103,7 +103,13 @@ Plans:
 4. No `as` casts from untrusted external sources remain
 5. Runtime validation errors return proper 400 responses
 
-**Plans**: TBD
+**Plans**: 1/1 planned
+
+**Wave Structure**:
+- Wave 1: 29-01 (Contract Inference) — autonomous, depends on 27-01, 28-01
+
+Plans:
+- [ ] 29-01-PLAN.md — Migrate 15 route files from HandlerInput to AppRouteInput, eliminate all `as any` casts in s.router() calls, enable runtime response validation, export contract types for frontend
 
 ---
 
