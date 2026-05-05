@@ -115,7 +115,7 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<SessionUser | 
         .where("user_id", "=", session.user.id)
         .executeTakeFirst();
 
-      return {
+      const sessionUser = {
         id: session.user.id,
         email: session.user.email,
         name: session.user.name,
@@ -124,7 +124,14 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<SessionUser | 
         role: (session.user as { role?: string }).role || UserRole.UNVERIFIED,
         member_type: profile?.member_type || "student",
       };
+      // WR-02: Cache sessionUser in context so subsequent getSessionUser calls don't re-fetch
+      c.set("sessionUser", sessionUser);
+      return sessionUser;
     }
-  } catch { /* ignore */ }
+  } catch (err) {
+    // WR-04: Log authentication errors instead of silently swallowing them
+    console.error("[Auth] getSessionUser failed:", err);
+    return null;
+  }
   return null;
 }
