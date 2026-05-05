@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { eventContract } from "../../../../shared/schemas/contracts/eventContract";
@@ -7,6 +5,7 @@ import { AppEnv, ensureAdmin, ensureAuth, s } from "../../middleware";
 import { eventHandlers } from "./handlers";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
+import type { HonoContext } from "@shared/types/api";
 
 const eventsRouter = new Hono<AppEnv>();
 
@@ -22,7 +21,7 @@ eventsRouter.use("/admin/*", ensureAdmin);
 eventsRouter.use("/:id/signups", ensureAuth);
 
 // ── Event Version History (plain Hono routes) ────────────────────────
-eventsRouter.get("/admin/:id/history", async (c) => {
+eventsRouter.get("/admin/:id/history", async (c: HonoContext) => {
   try {
     const id = c.req.param("id");
     const db = c.get("db") as Kysely<DB>;
@@ -47,7 +46,7 @@ eventsRouter.get("/admin/:id/history", async (c) => {
   }
 });
 
-eventsRouter.patch("/admin/:id/history/:historyId/restore", async (c) => {
+eventsRouter.patch("/admin/:id/history/:historyId/restore", async (c: HonoContext) => {
   try {
     const id = c.req.param("id");
     const historyId = c.req.param("historyId");

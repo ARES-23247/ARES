@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -8,6 +6,7 @@ import { socialQueueContract, SocialQueuePost } from "../../../shared/schemas/co
 import { AppEnv, getSessionUser, originIntegrityMiddleware } from "../middleware";
 import { nanoid } from "nanoid";
 import { dispatchQueuePost } from "../../utils/socialSync";
+import type { HonoContext } from "@shared/types/api";
 
 const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
   id: String(r.id),
@@ -28,7 +27,7 @@ const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const socialQueueRouterObj: any = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  list: async ({ query }: any, c: any) => {
+  list: async ({ query }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -68,7 +67,7 @@ const socialQueueRouterObj: any = {
   },
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  calendar: async ({ query }: any, c: any) => {
+  calendar: async ({ query }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -98,7 +97,7 @@ const socialQueueRouterObj: any = {
   },
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  create: async ({ body }: any, c: any) => {
+  create: async ({ body }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -144,7 +143,7 @@ const socialQueueRouterObj: any = {
   },
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  update: async ({ params, body }: any, c: any) => {
+  update: async ({ params, body }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -183,7 +182,7 @@ const socialQueueRouterObj: any = {
   },
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete: async ({ params }: any, c: any) => {
+  delete: async ({ params }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -211,7 +210,7 @@ const socialQueueRouterObj: any = {
   },
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sendNow: async ({ params }: any, c: any) => {
+  sendNow: async ({ params }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
       if (!user || user.role !== "admin") {
@@ -251,7 +250,7 @@ const socialQueueRouterObj: any = {
   },
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  analytics: async ({ query }: any, c: any) => {
+  analytics: async ({ query }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
       if (!user || user.role !== "admin") {

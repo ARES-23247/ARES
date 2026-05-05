@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { inquiryContract } from "../../../../shared/schemas/contracts/inquiryContract";
 import { AppEnv, ensureAdmin, turnstileMiddleware, persistentRateLimitMiddleware, s } from "../../middleware";
 import { inquiryHandlers } from "./handlers";
+import type { HonoContext } from "@shared/types/api";
 
 const inquiriesRouter = new Hono<AppEnv>();
 
@@ -31,7 +30,7 @@ createHonoEndpoints(
   inquiriesRouter,
   {
     responseValidation: true,
-    responseValidationErrorHandler: (err, _c) => {
+    responseValidationErrorHandler: (err, _c: HonoContext) => {
       console.error('[Contract] Response validation failed:', err.cause);
       return { error: { message: 'Internal server error' }, status: 500 };
     }

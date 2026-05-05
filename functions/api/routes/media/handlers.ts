@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { AppEnv, getDbSettings, checkPersistentRateLimit, logAuditAction } from "../../middleware";
 import { initServer } from "ts-rest-hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
+import type { HonoContext } from "@shared/types/api";
 
 const _s = initServer<AppEnv>();
 
@@ -107,7 +106,7 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
 }
 
 export const mediaHandlers = {
-  getMedia: async (_input, c) => {
+  getMedia: async (_input, c: HonoContext) => {
     const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
     const ua = c.req.header("user-agent") || "unknown";
     const rl = await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `media_list_${ip}`, ua, 30, 60);
@@ -166,7 +165,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  adminList: async (_input, c) => {
+  adminList: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const [objects, results] = await Promise.all([
@@ -196,7 +195,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  upload: async (input, c) => {
+  upload: async (input, c: HonoContext) => {
     try {
       const { body } = input;
       const formData = body as FormData;
@@ -290,7 +289,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "Upload failed: " + (err.message || String(err)) } };
     }
   },
-  move: async (input, c) => {
+  move: async (input, c: HonoContext) => {
     const { params, body } = input;
     const oldKey = params.key;
     const { folder } = body;
@@ -325,7 +324,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "Move failed" } };
     }
   },
-  delete: async (input, c) => {
+  delete: async (input, c: HonoContext) => {
     const { params } = input;
     try {
       if (c.env.ARES_STORAGE) {
@@ -340,7 +339,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  syndicate: async (input, c) => {
+  syndicate: async (input, c: HonoContext) => {
     try {
       const { body } = input;
       const { key, caption } = body;

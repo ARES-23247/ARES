@@ -145,7 +145,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Update failed: " + (e instanceof Error ? e.message : "Unknown error") } };
     }
   },
-  updateUserProfile: async (input, c) => {
+  updateUserProfile: async (input, c: HonoContext) => {
     try {
       await upsertProfile(c, input.params.id, input.body as Record<string, unknown>);
       return { status: 200 as const, body: { success: true } };
@@ -153,7 +153,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Profile update failed" } };
     }
   },
-  adminGetProfile: async (input, c) => {
+  adminGetProfile: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await db.selectFrom("user").select(["id", "name", "email", "image", "role"]).where("id", "=", input.params.id).executeTakeFirst();
@@ -232,7 +232,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Failed to fetch user profile" } };
     }
   },
-  deleteUser: async (input, c) => {
+  deleteUser: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = input.params.id;

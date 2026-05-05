@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -10,6 +8,7 @@ import { safeJSONStringify } from "../../../utils/json";
 import { sendZulipMessage } from "../../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../../utils/notifications";
 import { buildGitHubConfig, createProjectItem } from "../../../utils/githubProjects";
+import type { HonoContext } from "@shared/types/api";
 
 /**
  * Deletes old inquiries that have been resolved or rejected.
@@ -31,7 +30,7 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
 }
 
 export const inquiryHandlers = {
-  list: async (input, c) => {
+  list: async (input, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -117,7 +116,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch inquiries" } };
     }
   },
-  submit: async (input, c) => {
+  submit: async (input, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -223,7 +222,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Submission failed" } };
     }
   },
-  updateStatus: async (input, c) => {
+  updateStatus: async (input, c: HonoContext) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -239,7 +238,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } };
     }
   },
-  updateNotes: async (input, c) => {
+  updateNotes: async (input, c: HonoContext) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -255,7 +254,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Notes update failed" } };
     }
   },
-  delete: async (input, c) => {
+  delete: async (input, c: HonoContext) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;

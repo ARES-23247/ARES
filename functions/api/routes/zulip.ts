@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { AppEnv, ensureAdmin, ensureAuth, getSocialConfig, s } from "../middleware";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { z } from "zod";
 import { zulipContract } from "../../../shared/schemas/contracts/zulipContract";
+import type { HonoContext } from "@shared/types/api";
 export const zulipRouter = new Hono<AppEnv>();
 
 import { zulipPresenceSchema } from "../../../shared/schemas/contracts/zulipContract";
@@ -13,10 +12,10 @@ import { zulipPresenceSchema } from "../../../shared/schemas/contracts/zulipCont
 // Gmail ignores dots in the local part, so these are the same address
 function normalizeEmail(email: string): string {
   const cleanEmail = email.trim().toLowerCase();
-  const isGoogleBacked = cleanEmail.endsWith("@gmail.com") || 
-                         cleanEmail.endsWith("@googlemail.com") || 
+  const isGoogleBacked = cleanEmail.endsWith("@gmail.com") ||
+                         cleanEmail.endsWith("@googlemail.com") ||
                          cleanEmail.endsWith("@aresfirst.org");
-                         
+
   if (!isGoogleBacked) {
     return cleanEmail;
   }
@@ -25,7 +24,7 @@ function normalizeEmail(email: string): string {
 }
 
 const zulipTsRestRouter = s.router(zulipContract, {
-  getPresence: async (_input, c) => {
+  getPresence: async (_input, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -69,7 +68,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  sendMessage: async (input, c) => {
+  sendMessage: async (input, c: HonoContext) => {
     try {
       const { sendZulipMessage } = await import("../../utils/zulipSync");
       const config = await getSocialConfig(c);
@@ -100,7 +99,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  getTopicMessages: async (input, c) => {
+  getTopicMessages: async (input, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -139,7 +138,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  auditMissingUsers: async (_input, c) => {
+  auditMissingUsers: async (_input, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -238,7 +237,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  inviteUsers: async (input, c) => {
+  inviteUsers: async (input, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
