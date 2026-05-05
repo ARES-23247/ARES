@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -465,7 +463,7 @@ const postTsRestRouterObj = {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("posts").set({ is_deleted: 1, status: "draft", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_POST", "posts", slug));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- System Boundary Type: Cloudflare AI binding
       triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB);
       return { status: 200, body: { success: true } };
     } catch (e) {

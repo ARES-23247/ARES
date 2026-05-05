@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { AppEnv, getSessionUser, sanitizeProfileForPublic, persistentRateLimitMiddleware, rateLimitMiddleware, ensureAuth, s } from "../middleware";
 import { getAuth } from "../../utils/auth";
@@ -9,13 +7,12 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { profileContract, updateUserProfileSchema } from "../../../shared/schemas/contracts/userContract";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-
 import type { HonoContext } from "@shared/types/api";
 
 
 export const profilesRouter = new Hono<AppEnv>();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler type inference
 const profileHandlers: any = {
   getMe: async (_input, c) => {
     const user = (await getSessionUser(c))!;
@@ -50,8 +47,7 @@ const profileHandlers: any = {
 
       if (profileRow) {
         const secret = c.env.ENCRYPTION_SECRET;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const safeDecrypt = async (val: any) => {
+        const safeDecrypt = async (val: string | null) => {
           if (!val) return null;
           try {
             return await decrypt(val as string, secret);
@@ -147,8 +143,7 @@ const profileHandlers: any = {
         .execute();
 
       const secret = c.env.ENCRYPTION_SECRET;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const safeDecrypt = async (val: any) => {
+      const safeDecrypt = async (val: string | null) => {
         if (!val || !val.includes(":")) return val || null;
         try {
           return await decrypt(val, secret);
@@ -186,12 +181,10 @@ const profileHandlers: any = {
         console.warn("[Roster] Results found but all members were filtered out or failed processing.");
       }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { members } as any };
+      return { status: 200 as const, body: { members } };
     } catch (err) {
       console.error("[Profile:Roster] Error", err);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Failed to fetch team roster" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch team roster" } };
     }
   },
   getPublicProfile: async (input, c) => {
@@ -211,10 +204,8 @@ const profileHandlers: any = {
         .where("p.user_id", "=", userId)
         .executeTakeFirst();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!profileRow) return { status: 404 as const, body: { error: "Profile not found" } as any };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (Number(profileRow.show_on_about || 0) !== 1) return { status: 403 as const, body: { error: "This profile is private." } as any };
+      if (!profileRow) return { status: 404 as const, body: { error: "Profile not found" } };
+      if (Number(profileRow.show_on_about || 0) !== 1) return { status: 403 as const, body: { error: "This profile is private." } };
 
       const memberType = String(profileRow.member_type || "student");
       const sanitized = sanitizeProfileForPublic(profileRow, memberType) as Record<string, unknown>;
@@ -251,11 +242,10 @@ const profileHandlers: any = {
         .orderBy("ub.awarded_at", "desc")
         .execute();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest contract type compatibility
       return { status: 200 as const, body: { profile: sanitized as any, badges: rawBadges as any[] } as any };
     } catch {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Profile fetch failed" } as any };
+      return { status: 500 as const, body: { error: "Profile fetch failed" } };
     }
   },
 };
