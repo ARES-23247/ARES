@@ -1,20 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import { TestEnv, MockKysely } from "../../../src/test/types";
 import tbaRouter from "./tba";
 
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAuth: async (_c: unknown, next: any) => next(),
-    rateLimitMiddleware: () => async (_c: unknown, next: any) => next(),
+    ensureAuth: async (_c: unknown, next: () => Promise<void>) => next(),
+    rateLimitMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
   };
 });
 
 describe("Hono Backend - /tba Router", () => {
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -27,8 +28,8 @@ describe("Hono Backend - /tba Router", () => {
       executeTakeFirst: vi.fn().mockResolvedValue({ value: "test-api-key" }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       c.set("executionCtx", mockExecutionContext);
       c.env.DEV_BYPASS = "true";
