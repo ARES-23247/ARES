@@ -392,7 +392,7 @@ export default function SimulationPlayground() {
   useEffect(() => {
     if (isVimMode && editorRef.current) {
       import('monaco-vim').then((vim) => {
-        vimRef.current = vim.initVimMode(editorRef.current!, document.createElement('div'));
+        vimRef.current = vim.initVimMode(editorRef.current as any, document.createElement('div'));
       });
     } else {
       if (vimRef.current) {

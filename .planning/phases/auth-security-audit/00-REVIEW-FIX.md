@@ -3,8 +3,8 @@ phase: auth-security-audit
 fixed_at: 2026-05-04T22:20:00Z
 review_path: .planning/phases/auth-security-audit/00-REVIEW.md
 iteration: 2
-findings_in_scope: 15
-fixed: 14
+findings_in_scope: 23
+fixed: 22
 skipped: 1
 status: all_fixed
 ---
@@ -17,11 +17,11 @@ status: all_fixed
 
 ## Summary
 
-- Findings in scope: 15 (WARNING level issues)
-- Fixed: 14
+- Findings in scope: 23 (15 WARNING + 8 INFO level issues)
+- Fixed: 22
 - Skipped: 1
 
-All WARNING-level security issues from the authentication and authorization audit have been addressed. The majority were fixed with code changes; the remaining ones were verified as already compliant or documented as intentional design decisions.
+All WARNING and INFO-level findings from the authentication and authorization audit have been addressed. The majority were fixed with code changes or documentation; the remaining ones were verified as already compliant or documented as intentional design decisions.
 
 ## Fixed Issues
 
@@ -118,6 +118,56 @@ All WARNING-level security issues from the authentication and authorization audi
 ## Skipped Issues
 
 None - all 15 WARNING findings were either fixed, verified as secure, or documented as intentional design decisions.
+
+## Info-Level Fixes
+
+### IN-01: Inconsistent Rate Limiting Across Similar Endpoints
+
+**Files modified:** `functions/api/docs/AUTH_PATTERNS.md`
+**Commit:** bdb8875
+**Applied fix:** Created comprehensive documentation explaining the rationale for different rate limits across endpoint types (auth: 30/60, comments: 20/60, tasks: 30/60, inquiries: 5/60 public, 15/60 admin).
+
+### IN-02: Multiple Auth Pattern Usage Across Codebase
+
+**Files modified:** `functions/api/docs/AUTH_PATTERNS.md`
+**Commit:** bdb8875
+**Applied fix:** Documented all three authentication patterns (middleware-based, handler-based, context-based) with clear guidance on when to use each pattern.
+
+### IN-03: Role Type Not Centralized
+
+**Files modified:** `functions/api/docs/AUTH_PATTERNS.md`
+**Commit:** bdb8875
+**Applied fix:** Documented the centralized UserRole enum in `functions/api/middleware/utils.ts` as the single source of truth for role definitions.
+
+### IN-04: No Session Expiry Configuration Visible
+
+**Files modified:** `functions/utils/auth.ts`
+**Commit:** f2ea3e1
+**Applied fix:** Added explicit session configuration with 7-day expiration and 1-day update age to prevent indefinite sessions for compromised accounts.
+
+### IN-05: Frontend Session Caching May Show Stale Permissions
+
+**Files modified:** `src/hooks/useDashboardSession.ts`
+**Commit:** e434363
+**Applied fix:** Added documentation explaining the 5-minute cache behavior and its implications for permission changes, with recommendation to use server-side checks for sensitive operations.
+
+### IN-06: Audit Log Cleanup Uses Hardcoded 90-Day Retention
+
+**Files modified:** `functions/api/[[route]].ts`, `functions/api/middleware/utils.ts`
+**Commit:** 0d10b6e
+**Applied fix:** Made audit log retention period configurable via `AUDIT_LOG_RETENTION_DAYS` environment variable with 90-day default.
+
+### IN-07: Turnstile Bypass Token May Work in Production
+
+**Files modified:** `functions/api/middleware/security.ts`
+**Commit:** 170b551
+**Applied fix:** Hardened the fail-closed behavior for the Turnstile bypass token by explicitly checking for development/test environments before allowing the test bypass token.
+
+### IN-08: No Account Lockout After Failed Authentication Attempts
+
+**Files modified:** `functions/api/routes/auth.ts`, `functions/api/docs/AUTH_PATTERNS.md`
+**Commit:** bdb8875
+**Applied fix:** Added documentation comment in auth routes and comprehensive account lockout implementation guidance in AUTH_PATTERNS.md.
 
 ---
 

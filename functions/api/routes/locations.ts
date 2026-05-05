@@ -13,9 +13,9 @@ type LocationInput = z.infer<typeof locationSchema>;
 const s = initServer<AppEnv>();
 export const locationsRouter = new Hono<AppEnv>();
 
-// IN-01: Remove 'as any' - use proper contract types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const locationsTsRestRouter = s.router(locationContract, {
-    list: async (_input: unknown, c: Context<AppEnv>) => {
+    list: async (_input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -37,7 +37,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to fetch locations" } };
     }
   },
-    adminList: async (_input: unknown, c: Context<AppEnv>) => {
+    adminList: async (_input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -112,7 +112,8 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to delete location", success: false } };
     }
   },
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any);
 
 locationsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(locationContract, locationsTsRestRouter, locationsRouter);

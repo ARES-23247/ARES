@@ -1,8 +1,14 @@
 import React, { useEffect } from 'react';
 
+interface Dyn4jState {
+  timestamp: number;
+  engine: string;
+  active: boolean;
+}
+
 interface Dyn4jEngineProps {
-  initialState?: unknown;
-  onStateChange: (state: Record<string, unknown>) => void;
+  initialState?: Dyn4jState | null;
+  onStateChange: (state: Dyn4jState) => void;
 }
 
 export const Dyn4jEngine: React.FC<Dyn4jEngineProps> = ({ onStateChange }) => {

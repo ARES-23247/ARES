@@ -62,7 +62,7 @@ export function createJsonObjectSchema<T extends z.ZodType>(
   return z.string().transform((val, ctx) => {
     try {
       const parsed = JSON.parse(val);
-      return z.record(keySchema, valueSchema).parse(parsed);
+      return z.record(keySchema as any, valueSchema).parse(parsed);
     } catch (e) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

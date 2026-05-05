@@ -56,6 +56,7 @@ export type Variables = {
   socialConfig?: SocialConfig;
   db: Kysely<DB>;
   env: Bindings;
+  requestId?: string;
 };
 
 export type AppEnv = {

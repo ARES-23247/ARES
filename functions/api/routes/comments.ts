@@ -167,6 +167,9 @@ const commentHandlers = {
         .where("id", "=", id as any)
         .execute();
 
+      // IN-08: Audit log comment updates
+      c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_COMMENT", "comments", id, `Updated comment ${id} by ${user.name}`));
+
       if (row.zulip_message_id) {
         c.executionCtx.waitUntil((async () => {
           const social = await getSocialConfig(c);
