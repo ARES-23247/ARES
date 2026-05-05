@@ -68,10 +68,16 @@ test.describe("Event Editor E2E", () => {
   });
 
   test("should allow selecting a location from the registry", async ({ page }) => {
-    const locationSelect = page.locator("#event-location");
-    await locationSelect.selectOption({ label: "ARES HQ (123 Robot Lane)" });
-    
-    await expect(locationSelect).toHaveValue("ARES HQ");
+    const locationCombobox = page.locator("#event-location");
+    await locationCombobox.click();
+    await locationCombobox.fill("ARES");
+
+    // Click the matching option in the listbox dropdown
+    const option = page.getByRole("option", { name: /ARES HQ/i });
+    await expect(option).toBeVisible({ timeout: 5000 });
+    await option.click();
+
+    await expect(locationCombobox).toHaveValue("ARES HQ");
   });
 
   test("should toggle potluck and volunteer flags", async ({ page }) => {
