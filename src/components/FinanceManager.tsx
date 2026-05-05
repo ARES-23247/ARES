@@ -14,7 +14,8 @@ import SeasonPicker from "./SeasonPicker";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { financeTransactionSchema, sponsorshipPipelineSchema } from "@shared/schemas/financeSchema";
+import { financeTransactionSchema, sponsorshipPipelineSchema, type SponsorshipPipelinePayload } from "@shared/schemas/financeSchema";
+import type { PipelineItem, TransactionItem } from "../types/finance";
 
 // ── Status config for Sponsorship ─────────────────────────────────────
 const PIPELINE_COLUMNS = ["potential", "contacted", "pledged", "secured", "lost"] as const;
@@ -27,25 +28,7 @@ const pipelineConfig: Record<string, KanbanColumnConfig> = {
   lost:      { bg: "bg-ares-red/10", text: "text-ares-red", border: "border-ares-red/30", label: "Lost", icon: XCircleIcon },
 };
 
-export interface PipelineItem {
-  id?: string;
-  company_name: string;
-  status: string;
-  estimated_value: number;
-  contact_person?: string | null;
-  notes?: string | null;
-  zulip_message_id?: string | null;
-  assignees?: string[];
-}
-
-export interface TransactionItem {
-  id?: string;
-  type: string;
-  amount: number;
-  category: string;
-  date: string;
-  description: string;
-}
+export type { PipelineItem, TransactionItem };
 
 export default function FinanceManager() {
   const queryClient = useQueryClient();
@@ -61,9 +44,9 @@ export default function FinanceManager() {
   const { data: transactionsRes } = api.finance.listTransactions.useQuery(["finance-transactions", selectedSeason], { query: { season_id: selectedSeason || undefined } });
 
   const summary = summaryRes?.status === 200 ? summaryRes.body : null;
-  const pipeline: PipelineItem[] = pipelineRes?.status === 200 ? (pipelineRes.body as unknown as { pipeline: PipelineItem[] }).pipeline : [];
+  const pipeline: PipelineItem[] = pipelineRes?.status === 200 ? pipelineRes.body.pipeline : [];
 
-  const transactions: TransactionItem[] = transactionsRes?.status === 200 ? (transactionsRes.body as unknown as { transactions: TransactionItem[] }).transactions : [];
+  const transactions: TransactionItem[] = transactionsRes?.status === 200 ? transactionsRes.body.transactions : [];
 
   const isError = summaryRes?.status === 500 || pipelineRes?.status === 500 || transactionsRes?.status === 500;
 
@@ -250,8 +233,19 @@ export default function FinanceManager() {
               updates.forEach(update => {
                 const item = pipeline.find(p => String(p.id) === update.id);
                 if (item && item.status !== update.status) {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  savePipeline.mutate({ body: { ...item, status: update.status } as any });
+                  const pipelineItem = item as PipelineItem & { id?: string; season_id?: number | null };
+                  savePipeline.mutate({
+                    body: {
+                      id: pipelineItem.id,
+                      company_name: pipelineItem.company_name,
+                      status: update.status,
+                      estimated_value: Number(pipelineItem.estimated_value),
+                      contact_person: pipelineItem.contact_person ?? null,
+                      notes: pipelineItem.notes ?? null,
+                      season_id: pipelineItem.season_id ?? null,
+                      assignees: pipelineItem.assignees ?? [],
+                    },
+                  });
                 }
               });
             }}
@@ -280,8 +274,18 @@ export default function FinanceManager() {
                 item={editingLead}
                 onClose={() => setEditingLead(null)}
                 onSave={async (id, updates) => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  await savePipeline.mutateAsync({ body: { ...editingLead, ...updates } as any });
+                  const lead = editingLead as PipelineItem & { id?: string };
+                  const updatePayload: SponsorshipPipelinePayload = {
+                    id: lead.id,
+                    company_name: updates.company_name ?? lead.company_name,
+                    status: updates.status ?? lead.status,
+                    estimated_value: Number(updates.estimated_value ?? lead.estimated_value),
+                    contact_person: updates.contact_person ?? lead.contact_person ?? null,
+                    notes: updates.notes ?? lead.notes ?? null,
+                    season_id: updates.season_id ?? lead.season_id ?? null,
+                    assignees: updates.assignees ?? lead.assignees ?? [],
+                  };
+                  await savePipeline.mutateAsync({ body: updatePayload });
                   setEditingLead(null);
                 }}
                 onDelete={(id) => {

@@ -3,17 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Building, DollarSign, Type, AlignLeft, User, CheckCircle2, Plus } from "lucide-react";
 import { api } from "../../api/client";
 import ZulipThread from "../ZulipThread";
-
-interface PipelineItem {
-  id?: string;
-  company_name: string;
-  status: string;
-  estimated_value: number;
-  notes?: string | null;
-  contact_person?: string | null;
-  zulip_message_id?: string | null;
-  assignees?: string[];
-}
+import type { PipelineItem } from "../../types/finance";
 
 interface SponsorshipEditModalProps {
   item: PipelineItem;
