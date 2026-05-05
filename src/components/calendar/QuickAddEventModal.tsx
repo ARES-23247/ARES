@@ -49,7 +49,7 @@ export function QuickAddEventModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch locations from registry
+  // Fetch locations from registry (only when modal is open)
   const { data: locations = [] } = useQuery<LocationRow[]>({
     queryKey: ["locations"],
     queryFn: async () => {
@@ -64,6 +64,7 @@ export function QuickAddEventModal({
         return [];
       }
     },
+    enabled: isOpen,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
