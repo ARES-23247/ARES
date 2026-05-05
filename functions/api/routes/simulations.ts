@@ -148,6 +148,23 @@ simulationsRouter.get("/:id", async (c) => {
   }
 
   const simId = id.replace("github:", "");
+
+  // Validate simId format to prevent path traversal and injection
+  // SECURITY: Reject any path separators or special characters
+  if (!SIM_ID_PATTERN.test(simId)) {
+    console.warn(`[Simulations] Invalid simulation ID format: ${simId}`);
+    return c.json({ error: "Invalid simulation ID" }, 400);
+  }
+
+  // Explicitly check for path traversal attempts
+  if (simId.includes('..') || simId.includes('/') || simId.includes('\\')) {
+    console.warn(`[Simulations] Path traversal attempt blocked: ${simId}`);
+    return c.json({ error: "Invalid simulation ID" }, 400);
+  }
+
+  // Enforce .tsx extension explicitly
+  const filename = `${simId}.tsx`;
+
   try {
     const db = c.get("db");
     const config = await db.selectFrom("settings").selectAll().execute();
@@ -159,18 +176,18 @@ simulationsRouter.get("/:id", async (c) => {
     };
     if (pat) headers["Authorization"] = `Bearer ${pat}`;
 
-    const ghRes = await fetch(`https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/${simId}.tsx`, { headers });
+    const ghRes = await fetch(`https://api.github.com/repos/ARES-23247/ARESWEB/contents/src/sims/${filename}`, { headers });
     if (!ghRes.ok) {
       return c.json({ error: "Simulation not found in GitHub" }, 404);
     }
-    
+
     const code = await ghRes.text();
     return c.json({
       simulation: {
         id: id,
         name: simId,
         type: "github",
-        files: { [`${simId}.tsx`]: code },
+        files: { [filename]: code },
         author_id: "ARES-23247",
         is_public: true,
         created_at: new Date().toISOString(),
@@ -348,14 +365,28 @@ simulationsRouter.delete("/:id", async (c) => {
     if (!sessionUser) {
       return c.json({ error: "Unauthorized" }, 401);
     }
-    
+
     const id = c.req.param("id");
     if (!id.startsWith("github:")) {
       return c.json({ error: "Not found" }, 404);
     }
-    
+
     const simIdStr = id.replace("github:", "");
-    
+
+    // Validate simId format to prevent path traversal and injection
+    if (!SIM_ID_PATTERN.test(simIdStr)) {
+      console.warn(`[Simulations] Invalid simulation ID format in delete: ${simIdStr}`);
+      return c.json({ error: "Invalid simulation ID" }, 400);
+    }
+
+    // Explicitly check for path traversal attempts
+    if (simIdStr.includes('..') || simIdStr.includes('/') || simIdStr.includes('\\')) {
+      console.warn(`[Simulations] Path traversal attempt blocked in delete: ${simIdStr}`);
+      return c.json({ error: "Invalid simulation ID" }, 400);
+    }
+
+    const filename = `${simIdStr}.tsx`;
+
     const db = c.get("db");
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
@@ -372,7 +403,7 @@ simulationsRouter.delete("/:id", async (c) => {
       "Content-Type": "application/json"
     };
 
-    const path = `src/sims/${simIdStr}.tsx`;
+    const path = `src/sims/${filename}`;
     const url = `https://api.github.com/repos/ARES-23247/ARESWEB/contents/${path}`;
 
     let sha: string | undefined;
@@ -392,11 +423,11 @@ simulationsRouter.delete("/:id", async (c) => {
         method: "DELETE",
         headers,
         body: JSON.stringify({
-          message: `feat(sims): delete ${simIdStr}.tsx via Simulation Playground`,
+          message: `feat(sims): delete ${filename} via Simulation Playground`,
           sha: sha
         })
       });
-      
+
       if (!delRes.ok) {
         console.error("[Simulations] GitHub DELETE error:", await delRes.text());
       }
