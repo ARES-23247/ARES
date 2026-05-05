@@ -34,11 +34,16 @@
 **Goal:** Enable `@typescript-eslint/no-explicit-any` globally and validate types via TSC without bypassing.
 **Status:** Pending
 
-### Phase 25: Calendar Quick-Add Event Modal
-**Goal:** Add a quick-add modal to the calendar for creating events by clicking on day cells.
-**Status:** Complete
-**Commits:** `45df07f`
-**Summary:** Created QuickAddEventModal component with pre-filled date/times, category selector with ARES colors, and keyboard accessibility.
+### Phase 25: Calendar & Event Editor Enhancements
+**Goal:** Add a quick-add modal to the calendar, replace native location selects with a searchable combobox, fix collaborative editing connectivity, and update E2E tests.
+**Status:** ✅ Done
+**Commits:** `45df07f`, `d59542d`, `cca8dc5`, `88e13ae`
+**Summary:**
+- Created `QuickAddEventModal` component with pre-filled date/times, category selector with ARES colors, and keyboard accessibility.
+- Built `LocationCombobox` component (`@headlessui/react`) replacing native `<select>` in both `EventEditor` and `QuickAddEventModal` with searchable/autocomplete venue selection.
+- Integrated `CreateLocationModal` into both event forms for inline "Add New Venue" workflow.
+- Fixed collaborative editing WebSocket connection failure caused by incorrect `/party` path suffix appended to the PartyKit host (y-partykit already appends `/parties/main/`).
+- Updated E2E test (`EventEditor.spec.ts`) to use combobox interactions (`fill` + `getByRole("option")`) instead of `selectOption`.
 
 ---
 
