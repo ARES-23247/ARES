@@ -1,15 +1,13 @@
 import { Hono } from "hono";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { taskContract } from "../../../shared/schemas/contracts/taskContract";
-
-import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig, originIntegrityMiddleware } from "../middleware";
+import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig, originIntegrityMiddleware, s } from "../middleware";
 
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
 
-const s = initServer<AppEnv>();
 export const tasksRouter = new Hono<AppEnv>();
 
 const tasksTsRestRouter = s.router(taskContract, {

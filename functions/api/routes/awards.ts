@@ -1,14 +1,13 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { AppEnv, ensureAdmin, logAuditAction, s } from "../middleware";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { awardContract } from "../../../shared/schemas/contracts/awardContract";
 
 // Validation schema for saveAward (derived from contract)
 const saveAwardSchema = awardContract.saveAward.body;
 
-const s = initServer<AppEnv>();
 export const awardsRouter = new Hono<AppEnv>();
 
 const awardsTsRestRouter = s.router(awardContract, {

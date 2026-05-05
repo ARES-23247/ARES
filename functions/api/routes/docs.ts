@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { docContract } from "../../../shared/schemas/contracts/docContract";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkRateLimit, verifyTurnstile, emitNotification, notifyByRole, getSocialConfig, logAuditAction } from "../middleware";
+import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkRateLimit, verifyTurnstile, emitNotification, notifyByRole, getSocialConfig, logAuditAction, s } from "../middleware";
 import { triggerBackgroundReindex } from "./ai/autoReindex";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { sql, Kysely } from "kysely";
@@ -11,7 +11,6 @@ import { DB } from "../../../shared/schemas/database";
 import type { HonoContext } from "@shared/types/api";
 import type { SelectableRow } from "@shared/types/database";
 
-const s = initServer<AppEnv>();
 export const docsRouter = new Hono<AppEnv>();
 
 // SEC-Z01: Cache doc search results

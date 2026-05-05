@@ -120,6 +120,7 @@ const WeightConnections = React.memo(({ weights, layers }: { weights: number[][]
     </svg>
   );
 });
+WeightConnections.displayName = "WeightConnections";
 
 // --- Main Component ---
 export default function NeuralPlayground() {

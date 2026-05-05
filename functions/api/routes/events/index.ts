@@ -1,13 +1,11 @@
- 
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { eventContract } from "../../../../shared/schemas/contracts/eventContract";
-import { AppEnv, ensureAdmin, ensureAuth } from "../../middleware";
+import { AppEnv, ensureAdmin, ensureAuth, s } from "../../middleware";
 import { eventHandlers } from "./handlers";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 
-const s = initServer<AppEnv>();
 const eventsRouter = new Hono<AppEnv>();
 
 const eventTsRestRouter = s.router(eventContract, eventHandlers);

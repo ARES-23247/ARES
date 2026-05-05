@@ -1,15 +1,15 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, persistentRateLimitMiddleware, ensureAuth, originIntegrityMiddleware, logAuditAction } from "../middleware";
+import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, persistentRateLimitMiddleware, ensureAuth, originIntegrityMiddleware, logAuditAction, s } from "../middleware";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
-import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { commentContract } from "../../../shared/schemas/contracts/commentContract";
 
 import type { HonoContext } from "@shared/types/api";
 
-const s = initServer<AppEnv>();
+
 export const commentsRouter = new Hono<AppEnv>();
 
 

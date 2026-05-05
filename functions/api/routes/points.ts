@@ -1,14 +1,15 @@
 import { Hono } from "hono";
-import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { pointsContract } from "../../../shared/schemas/contracts/pointsContract";
 import type { AppEnv } from "../middleware/utils";
+import { s } from "../middleware";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
 import type { HonoContext } from "@shared/types/api";
 
 const app = new Hono<AppEnv>();
-const s = initServer<AppEnv>();
+
 
 const pointsHandlers = {
   getBalance: async (input, c: HonoContext) => {

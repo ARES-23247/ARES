@@ -1,14 +1,12 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { RecursiveRouterObj } from "ts-rest-hono";
 import { socialQueueContract, SocialQueuePost } from "../../../shared/schemas/contracts/socialQueueContract";
-import { AppEnv, getSessionUser } from "../middleware";
+import { AppEnv, getSessionUser, originIntegrityMiddleware } from "../middleware";
 import { nanoid } from "nanoid";
 import { dispatchQueuePost, SocialConfig } from "../../utils/socialSync";
-
-initServer<AppEnv>();
 
 const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
   id: String(r.id),

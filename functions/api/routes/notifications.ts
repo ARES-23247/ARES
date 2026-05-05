@@ -1,13 +1,13 @@
-import { AppEnv, getSessionUser, ensureAuth, rateLimitMiddleware } from "../middleware";
+import { AppEnv, getSessionUser, ensureAuth, rateLimitMiddleware, s } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { notificationContract } from "../../../shared/schemas/contracts/notificationContract";
 
 import type { HonoContext } from "@shared/types/api";
 
-const s = initServer<AppEnv>();
+
 export const notificationsRouter = new Hono<AppEnv>();
 
 const notificationHandlers = {

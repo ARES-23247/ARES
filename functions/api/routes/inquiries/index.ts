@@ -1,11 +1,9 @@
-
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { inquiryContract } from "../../../../shared/schemas/contracts/inquiryContract";
-import { AppEnv, ensureAdmin, turnstileMiddleware, persistentRateLimitMiddleware } from "../../middleware";
+import { AppEnv, ensureAdmin, turnstileMiddleware, persistentRateLimitMiddleware, s } from "../../middleware";
 import { inquiryHandlers } from "./handlers";
 
-const s = initServer<AppEnv>();
 const inquiriesRouter = new Hono<AppEnv>();
 
 const inquiriesTsRestRouter = s.router(inquiryContract, inquiryHandlers);

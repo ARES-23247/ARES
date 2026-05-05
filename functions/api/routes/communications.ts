@@ -1,11 +1,10 @@
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { communicationsContract } from "../../../shared/schemas/contracts/communicationsContract";
-import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError } from "../middleware";
+import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError, s } from "../middleware";
 
 import type { HonoContext } from "@shared/types/api";
 
-const s = initServer<AppEnv>();
 export const communicationsRouter = new Hono<AppEnv>();
 
 // Require admin for all communications endpoints

@@ -2,15 +2,12 @@
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 
-import { AppEnv, getSocialConfig, logAuditAction, SocialConfig } from "../../middleware";
+import { getSocialConfig, logAuditAction, SocialConfig } from "../../middleware";
 import { encrypt, decrypt } from "../../../utils/crypto";
 import { safeJSONStringify } from "../../../utils/json";
 import { sendZulipMessage } from "../../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../../utils/notifications";
 import { buildGitHubConfig, createProjectItem } from "../../../utils/githubProjects";
-import { initServer } from "ts-rest-hono";
-
-const _s = initServer<AppEnv>();
 
 /**
  * Deletes old inquiries that have been resolved or rejected.

@@ -2,11 +2,10 @@ import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react"
 import { createPortal } from "react-dom";
 import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
 import { loader } from "@monaco-editor/react";
-import { validateIdParam } from "../utils/security";
 import { logger } from "../utils/logger";
 import { GITHUB_REPO } from "../utils/constants";
 import { useSimulationChat } from "../hooks/useSimulationChat";
-import { ChatMessage } from "../utils/ai";
+
 
 // Monaco Editor CDN Configuration
 // SECURITY: Version pinned to 0.52.2 for supply chain stability.
@@ -149,14 +148,6 @@ export default function SimulationPlayground() {
   const monacoRef = useRef<IMonacoStandalone | null>(null);
   const vimRef = useRef<IVimMode | null>(null);
 
-  const compileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    localStorage.setItem("ares_sim_autorun", String(isAutoRun));
-  }, [isAutoRun]);
-
-
-
   // ── Compile logic ──
   const compileCode = useCallback(async (sourceFiles: Record<string, string>): Promise<string | null> => {
     setIsCompiling(true);
@@ -215,6 +206,189 @@ export default function SimulationPlayground() {
     compileError
   });
 
+  const handleReset = useCallback(() => {
+    setFiles(SIM_TEMPLATES["Blank Canvas"]);
+    setActiveFile("SimComponent.tsx");
+    setTelemetry({});
+    setConsoleLogs([]);
+    compileCode(SIM_TEMPLATES["Blank Canvas"]);
+    setSimId(null);
+    setSimName("Untitled Simulation");
+
+    resetChat();
+  }, [compileCode, resetChat]);
+
+  const handleRun = useCallback(() => {
+    setTelemetry({}); // clear telemetry on run
+    setConsoleLogs([]); // clear logs on run
+    compileCode(files);
+  }, [files, compileCode]);
+
+  const fetchSavedSims = useCallback(async () => {
+    setIsLoadingSims(true);
+    try {
+      const res = await fetch("/api/simulations");
+      if (res.ok) {
+        const data = await res.json() as { simulations?: SavedSim[] };
+        setSavedSims(data.simulations || []);
+      }
+    } catch (e) {
+      logger.error("[SimPlayground] Failed to fetch sims:", e);
+    } finally {
+      setIsLoadingSims(false);
+    }
+  }, []);
+
+  const fetchGithubSims = useCallback(async () => {
+    setIsLoadingGithubSims(true);
+    try {
+      const res = await fetch(`${GITHUB_REPO.rawUrl}/src/sims/simRegistry.json`);
+      if (res.ok) {
+        const data = await res.json() as { simulators: GithubSim[] };
+        setGithubSims(data.simulators || []);
+      }
+    } catch (e) {
+      logger.error("[SimPlayground] Failed to fetch github sims:", e);
+    } finally {
+      setIsLoadingGithubSims(false);
+    }
+  }, []);
+
+  const handleLoadSim = useCallback(async (id: string) => {
+    setIsLoadingSim(true);
+    try {
+      const res = await fetch(`/api/simulations/${id}`);
+      if (!res.ok) throw new Error("Not found");
+      const data = await res.json() as { simulation: { id: string; name: string; files: Record<string, string> | string, type?: string } };
+      const sim = data.simulation;
+      let parsedFiles: Record<string, string> = {};
+
+      if (typeof sim.files === "object") {
+         parsedFiles = sim.files as Record<string, string>;
+      } else if (typeof sim.files === "string") {
+         try {
+           parsedFiles = JSON.parse(sim.files);
+         } catch {
+           parsedFiles = { [sim.id]: sim.files };
+         }
+      }
+
+      if (Object.keys(parsedFiles).length === 0) {
+        parsedFiles = { "SimComponent.jsx": "" };
+      }
+
+      setFiles(parsedFiles);
+      setActiveFile(Object.keys(parsedFiles)[0]);
+      setSimName(sim.name);
+      setSimId(sim.id);
+      compileCode(parsedFiles);
+      setShowLibrary(false);
+
+      // Update URL to match loaded sim
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set("simId", sim.id.toString());
+      window.history.replaceState({}, "", newUrl.toString());
+
+      const { toast } = await import("sonner");
+      toast.success(`Loaded: ${sim.name}`);
+    } catch (e) {
+      logger.error("[SimPlayground] Load failed:", e);
+      const { toast } = await import("sonner");
+      toast.error("Failed to load simulation");
+    } finally {
+      setIsLoadingSim(false);
+    }
+  }, [compileCode]);
+
+  const handleLoadGithubSim = useCallback(async (sim: GithubSim) => {
+    setIsLoadingGithubSim(true);
+    try {
+      // New folder structure: path is like "./armkg", file is at "armkg/index.tsx"
+      const folder = sim.path.replace('./', '');
+      const filename = `${folder}/index.tsx`;
+      const res = await fetch(`${GITHUB_REPO.rawUrl}/src/sims/${filename}`);
+      if (!res.ok) throw new Error("Not found");
+      const code = await res.text();
+
+      const parsedFiles = { [filename]: code };
+
+      setFiles(parsedFiles);
+      setActiveFile(filename);
+      setSimName(sim.name);
+      setSimId(`github:${sim.id}`);
+      compileCode(parsedFiles);
+      setShowLibrary(false);
+
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set("simId", `github:${sim.id}`);
+      window.history.replaceState({}, "", newUrl.toString());
+
+      const { toast } = await import("sonner");
+      toast.success(`Loaded Official Sim: ${sim.name}`);
+    } catch (e) {
+      logger.error("[SimPlayground] GitHub Load failed:", e);
+      const { toast } = await import("sonner");
+      toast.error(`Failed to load ${sim.name} from GitHub`);
+    } finally {
+      setIsLoadingGithubSim(false);
+    }
+  }, [compileCode]);
+
+  const handleToggleLibrary = useCallback(() => {
+    if (!showLibrary) {
+      fetchSavedSims();
+      fetchGithubSims();
+    }
+    setShowLibrary(prev => !prev);
+  }, [showLibrary, fetchSavedSims, fetchGithubSims]);
+
+  const handleCopy = useCallback(async () => {
+    await navigator.clipboard.writeText(JSON.stringify(files, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [files]);
+
+  const handleFormatCode = useCallback(async () => {
+    try {
+      const code = files[activeFile];
+      if (!code) return;
+      const formatted = await prettier.format(code, {
+        parser: "typescript",
+        plugins: [prettierPluginBabel, prettierPluginEstree, prettierPluginTs],
+        tabWidth: 2,
+        printWidth: 100,
+        semi: true,
+      });
+      setFiles(prev => ({ ...prev, [activeFile]: formatted }));
+      const { toast } = await import("sonner");
+      toast.success("Code formatted");
+    } catch (e) {
+      logger.error("Failed to format code:", e);
+      const { toast } = await import("sonner");
+      toast.error("Format failed");
+    }
+  }, [files, activeFile]);
+
+  const handleDownloadZip = useCallback(async () => {
+    try {
+      const zip = new JSZip();
+      Object.entries(files).forEach(([path, content]) => {
+        zip.file(path, content);
+      });
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${simName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'simulation'}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      logger.error("Failed to download zip:", e);
+    }
+  }, [files, simName]);
+
   const handleCodeChange = useCallback((value: string | undefined) => {
     const newCode = value || "";
     setFiles(prev => {
@@ -227,7 +401,9 @@ export default function SimulationPlayground() {
 
   useEffect(() => {
     if (!isChatLoading) {
-      compileCode(files);
+      // Use a timeout to avoid synchronous setState during render/effect phase
+      const timer = setTimeout(() => compileCode(files), 0);
+      return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simId, files, isChatLoading]);
@@ -253,7 +429,7 @@ export default function SimulationPlayground() {
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [setAttachedImage]);
 
 
 
@@ -262,10 +438,9 @@ export default function SimulationPlayground() {
     const params = new URLSearchParams(window.location.search);
     const idParam = params.get("simId");
     if (idParam) {
-      handleLoadSim(idParam);
+      setTimeout(() => handleLoadSim(idParam), 0);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleLoadSim]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEditorDidMount = useCallback(async (editor: any, monaco: any) => {
@@ -407,201 +582,6 @@ export default function SimulationPlayground() {
     }
   }, [compileError]);
 
-  const handleRun = useCallback(() => {
-    setTelemetry({}); // clear telemetry on run
-    setConsoleLogs([]); // clear logs on run
-    compileCode(files);
-  }, [files, compileCode]);
-
-  useEffect(() => {
-    if (!isAutoRun) return;
-    const timer = setTimeout(() => {
-      handleRun();
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [files, isAutoRun, handleRun]);
-
-  const handleReset = () => {
-    setFiles(SIM_TEMPLATES["Blank Canvas"]);
-    setActiveFile("SimComponent.tsx");
-    setTelemetry({});
-    setConsoleLogs([]);
-    compileCode(SIM_TEMPLATES["Blank Canvas"]);
-    setSimId(null);
-    setSimName("Untitled Simulation");
-
-    resetChat();
-  };
-
-  // ── Library ──
-  const fetchSavedSims = async () => {
-    setIsLoadingSims(true);
-    try {
-      const res = await fetch("/api/simulations");
-      if (res.ok) {
-        const data = await res.json() as { simulations?: SavedSim[] };
-        setSavedSims(data.simulations || []);
-      }
-    } catch (e) {
-      logger.error("[SimPlayground] Failed to fetch sims:", e);
-    } finally {
-      setIsLoadingSims(false);
-    }
-  };
-
-  const fetchGithubSims = async () => {
-    setIsLoadingGithubSims(true);
-    try {
-      const res = await fetch(`${GITHUB_REPO.rawUrl}/src/sims/simRegistry.json`);
-      if (res.ok) {
-        const data = await res.json() as { simulators: GithubSim[] };
-        setGithubSims(data.simulators || []);
-      }
-    } catch (e) {
-      logger.error("[SimPlayground] Failed to fetch github sims:", e);
-    } finally {
-      setIsLoadingGithubSims(false);
-    }
-  };
-
-  const handleLoadSim = async (id: string) => {
-    setIsLoadingSim(true);
-    try {
-      const res = await fetch(`/api/simulations/${id}`);
-      if (!res.ok) throw new Error("Not found");
-      const data = await res.json() as { simulation: { id: string; name: string; files: Record<string, string> | string, type?: string } };
-      const sim = data.simulation;
-      let parsedFiles: Record<string, string> = {};
-
-      if (typeof sim.files === "object") {
-         parsedFiles = sim.files as Record<string, string>;
-      } else if (typeof sim.files === "string") {
-         try {
-           parsedFiles = JSON.parse(sim.files);
-         } catch {
-           parsedFiles = { [sim.id]: sim.files };
-         }
-      }
-
-      if (Object.keys(parsedFiles).length === 0) {
-        parsedFiles = { "SimComponent.jsx": "" };
-      }
-
-      setFiles(parsedFiles);
-      setActiveFile(Object.keys(parsedFiles)[0]);
-      setSimName(sim.name);
-      setSimId(sim.id);
-      compileCode(parsedFiles);
-      setShowLibrary(false);
-
-
-
-      // Update URL to match loaded sim
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set("simId", sim.id.toString());
-      window.history.replaceState({}, "", newUrl.toString());
-
-      const { toast } = await import("sonner");
-      toast.success(`Loaded: ${sim.name}`);
-    } catch (e) {
-      logger.error("[SimPlayground] Load failed:", e);
-      const { toast } = await import("sonner");
-      toast.error("Failed to load simulation");
-    } finally {
-      setIsLoadingSim(false);
-    }
-  };
-
-  const handleLoadGithubSim = async (sim: GithubSim) => {
-    setIsLoadingGithubSim(true);
-    try {
-      // New folder structure: path is like "./armkg", file is at "armkg/index.tsx"
-      const folder = sim.path.replace('./', '');
-      const filename = `${folder}/index.tsx`;
-      const res = await fetch(`${GITHUB_REPO.rawUrl}/src/sims/${filename}`);
-      if (!res.ok) throw new Error("Not found");
-      const code = await res.text();
-
-      const parsedFiles = { [filename]: code };
-
-      setFiles(parsedFiles);
-      setActiveFile(filename);
-      setSimName(sim.name);
-      setSimId(`github:${sim.id}`);
-      compileCode(parsedFiles);
-      setShowLibrary(false);
-
-
-
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set("simId", `github:${sim.id}`);
-      window.history.replaceState({}, "", newUrl.toString());
-
-      const { toast } = await import("sonner");
-      toast.success(`Loaded Official Sim: ${sim.name}`);
-    } catch (e) {
-      logger.error("[SimPlayground] GitHub Load failed:", e);
-      const { toast } = await import("sonner");
-      toast.error(`Failed to load ${sim.name} from GitHub`);
-    } finally {
-      setIsLoadingGithubSim(false);
-    }
-  };
-
-  const handleToggleLibrary = () => {
-    if (!showLibrary) {
-      fetchSavedSims();
-      fetchGithubSims();
-    }
-    setShowLibrary(prev => !prev);
-  };
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(JSON.stringify(files, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleFormatCode = async () => {
-    try {
-      const code = files[activeFile];
-      if (!code) return;
-      const formatted = await prettier.format(code, {
-        parser: "typescript",
-        plugins: [prettierPluginBabel, prettierPluginEstree, prettierPluginTs],
-        tabWidth: 2,
-        printWidth: 100,
-        semi: true,
-      });
-      setFiles(prev => ({ ...prev, [activeFile]: formatted }));
-      const { toast } = await import("sonner");
-      toast.success("Code formatted");
-    } catch (e) {
-      logger.error("Failed to format code:", e);
-      const { toast } = await import("sonner");
-      toast.error("Format failed");
-    }
-  };
-
-  const handleDownloadZip = async () => {
-    try {
-      const zip = new JSZip();
-      Object.entries(files).forEach(([path, content]) => {
-        zip.file(path, content);
-      });
-      const blob = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${simName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'simulation'}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      logger.error("Failed to download zip:", e);
-    }
-  };
 
   // ── z.AI Chat ──
 

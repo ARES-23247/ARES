@@ -1,12 +1,10 @@
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { analyticsContract } from "../../../shared/schemas/contracts/analyticsContract";
-import { AppEnv, ensureAuth, ensureAdmin, checkRateLimit, rateLimitMiddleware, turnstileMiddleware, getDbSettings  } from "../middleware";
+import { AppEnv, ensureAuth, ensureAdmin, checkRateLimit, rateLimitMiddleware, turnstileMiddleware, getDbSettings, s } from "../middleware";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
-
-const s = initServer<AppEnv>();
 export const analyticsRouter = new Hono<AppEnv>();
 
 const analyticsHandlers = {

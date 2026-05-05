@@ -2,12 +2,9 @@
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 
-import { AppEnv, getSessionUser, logAuditAction } from "../../middleware";
+import { getSessionUser, logAuditAction } from "../../middleware";
 
-import { initServer } from "ts-rest-hono";
-import { outreachSchema } from "../../../../shared/schemas/outreachSchema";
-
-const _s = initServer<AppEnv>();
+import { outreachSchema, OutreachPayload } from "../../../../shared/schemas/outreachSchema";
 
 // Description snippet length for list views (IN-07: use named constant instead of magic number)
 const SNIPPET_LENGTH = 200;
@@ -85,7 +82,7 @@ export const outreachHandlers = {
         (a, b) => b.date.localeCompare(a.date)
       );
 
-      return { status: 200 as const, body: { logs: combined as any } };
+      return { status: 200 as const, body: { logs: combined as OutreachPayload[] } };
     } catch (err) {
       console.error("[Outreach:List] Error", err);
       return { status: 500 as const, body: { error: "Failed to fetch outreach logs" } };
@@ -131,7 +128,7 @@ export const outreachHandlers = {
         (a, b) => b.date.localeCompare(a.date)
       );
 
-      return { status: 200 as const, body: { logs: combined as any } };
+      return { status: 200 as const, body: { logs: combined as OutreachPayload[] } };
     } catch (err) {
       console.error("[Outreach:AdminList] Error", err);
       return { status: 500 as const, body: { error: "Failed to fetch outreach logs" } };

@@ -1,15 +1,15 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { financeContract } from "../../../shared/schemas/contracts/financeContract";
-import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser } from "../middleware";
+import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser, s } from "../middleware";
 import { AppEnv } from "../middleware";
 
 import type { HonoContext } from "@shared/types/api";
 
 const financeRouter = new Hono<AppEnv>();
-const s = initServer<AppEnv>();
+
 
 const financeTsRestRouterObj = {
   getSummary: async (input, c: HonoContext) => {

@@ -26,7 +26,7 @@ interface UseSimulationChatOptions {
     arm: string;
     elevator: string;
   };
-  consoleLogs: { level: string; args: any[] }[];
+  consoleLogs: { level: string; args: unknown[] }[];
   compileError: string | null;
 }
 

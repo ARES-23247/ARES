@@ -1,16 +1,16 @@
 import { Hono } from "hono";
-import { AppEnv, getSessionUser, sanitizeProfileForPublic, persistentRateLimitMiddleware, rateLimitMiddleware, ensureAuth } from "../middleware";
+import { AppEnv, getSessionUser, sanitizeProfileForPublic, persistentRateLimitMiddleware, rateLimitMiddleware, ensureAuth, s } from "../middleware";
 import { getAuth } from "../../utils/auth";
 import { decrypt } from "../../utils/crypto";
 import { upsertProfile } from "./_profileUtils";
-import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { profileContract, updateUserProfileSchema } from "../../../shared/schemas/contracts/userContract";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
 import type { HonoContext } from "@shared/types/api";
 
-const s = initServer<AppEnv>();
+
 export const profilesRouter = new Hono<AppEnv>();
 
 const profileHandlers = {

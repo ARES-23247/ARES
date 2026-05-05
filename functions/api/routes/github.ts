@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, ensureAdmin, getSocialConfig, checkRateLimit } from "../middleware";
+import { AppEnv, ensureAdmin, getSocialConfig, checkRateLimit, s } from "../middleware";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem } from "../../utils/githubProjects";
-import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { githubContract } from "../../../shared/schemas/contracts/githubContract";
 
 import type { HonoContext } from "@shared/types/api";
 
-const s = initServer<AppEnv>();
+
 export const githubRouter = new Hono<AppEnv>();
 
 interface WeekData {

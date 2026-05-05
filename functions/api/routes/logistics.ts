@@ -1,13 +1,13 @@
-import { AppEnv, ensureAdmin } from "../middleware";
+import { AppEnv, ensureAdmin, s } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { logisticsContract } from "../../../shared/schemas/contracts/logisticsContract";
 import { decrypt } from "../../utils/crypto";
 
 import type { HonoContext } from "@shared/types/api";
-const s = initServer<AppEnv>();
+
 const logisticsRouter = new Hono<AppEnv>();
 
 const logisticsHandlers = {

@@ -1,14 +1,12 @@
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { seasonContract } from "../../../shared/schemas/contracts/seasonContract";
-import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware, s } from "../middleware";
 import { triggerBackgroundReindex } from "./ai/autoReindex";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
 import type { HonoContext } from "@shared/types/api";
-
-const _s = initServer<AppEnv>();
 
 
 
@@ -241,7 +239,7 @@ const seasonsTsRestRouterObj = {
   },
 };
 
-const seasonsTsRestRouter = _s.router(seasonContract, seasonsTsRestRouterObj);
+const seasonsTsRestRouter = s.router(seasonContract, seasonsTsRestRouterObj);
 export const seasonsRouter = new Hono<AppEnv>();
 
 import { edgeCacheMiddleware } from "../middleware/cache";

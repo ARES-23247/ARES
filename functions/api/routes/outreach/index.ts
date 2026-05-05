@@ -1,11 +1,9 @@
-
 import { Hono } from "hono";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { outreachContract } from "../../../../shared/schemas/contracts/outreachContract";
-import { AppEnv, ensureAdmin, ensureAuth, rateLimitMiddleware } from "../../middleware";
+import { AppEnv, ensureAdmin, ensureAuth, rateLimitMiddleware, s } from "../../middleware";
 import { outreachHandlers } from "./handlers";
 
-const s = initServer<AppEnv>();
 const outreachRouter = new Hono<AppEnv>();
 
 const outreachTsRestRouter = s.router(outreachContract, outreachHandlers);

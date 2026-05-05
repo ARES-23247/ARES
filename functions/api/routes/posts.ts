@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { postContract } from "../../../shared/schemas/contracts/postContract";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, validateLength, MAX_INPUT_LENGTHS, logAuditAction } from "../middleware";
+import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, validateLength, MAX_INPUT_LENGTHS, logAuditAction, s } from "../middleware";
 import { getStandardDate } from "../../utils/content";
 import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
@@ -18,8 +18,6 @@ import {
   captureHistory,
   pruneHistory
 } from "../../utils/postHistory";
-
-const s = initServer<AppEnv>();
 
 /**
  * Sanitize FTS query to prevent SQL injection via SQLite FTS syntax.

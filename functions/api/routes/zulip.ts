@@ -1,10 +1,8 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAdmin, ensureAuth, getSocialConfig } from "../middleware";
-import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { AppEnv, ensureAdmin, ensureAuth, getSocialConfig, s } from "../middleware";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { z } from "zod";
 import { zulipContract } from "../../../shared/schemas/contracts/zulipContract";
-
-const s = initServer<AppEnv>();
 export const zulipRouter = new Hono<AppEnv>();
 
 import { zulipPresenceSchema } from "../../../shared/schemas/contracts/zulipContract";

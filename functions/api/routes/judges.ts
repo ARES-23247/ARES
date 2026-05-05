@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { judgeContract } from "../../../shared/schemas/contracts/judgeContract";
-import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction } from "../middleware";
+import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction, s } from "../middleware";
 
-const s = initServer<AppEnv>();
+
 export const judgesRouter = new Hono<AppEnv>();
 
 /**

@@ -1,14 +1,10 @@
 import { Hono } from "hono";
 import { sql } from "kysely";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
-import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware, s } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
-
-
 import { RecursiveRouterObj } from "ts-rest-hono";
-
-const s = initServer<AppEnv>();
 export const sponsorsRouter = new Hono<AppEnv>();
 
 type SponsorSelectedRow = {
@@ -22,7 +18,7 @@ type SponsorSelectedRow = {
 
 const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
   getSponsors: async (_input, c) => {
-            try {
+    try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
         .select(["id", "name", "tier", "logo_url", "website_url", "is_active"])
@@ -30,17 +26,17 @@ const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
         .orderBy(sql<number>`CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END`)
         .execute();
 
-            const sponsors = results.map((s: SponsorSelectedRow) => ({
+      const sponsors = results.map((s: SponsorSelectedRow) => ({
         ...s,
         id: s.id ?? "",
         is_active: s.is_active ? 1 : 0,
         tier: s.tier || "In-Kind"
       }));
 
-      return { status: 200 as const, body: { sponsors } };
+      return { status: 200, body: { sponsors: sponsors as any } };
     } catch (e) {
       console.error("[Sponsors:List] Error", e);
-      return { status: 500 as const, body: { error: "Failed to fetch sponsors" } };
+      return { status: 500, body: { error: "Failed to fetch sponsors" } };
     }
   },
   getRoi: async ({ params }, c) => {
@@ -52,7 +48,7 @@ const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
         .where("token", "=", token)
         .execute();
 
-      if (!tokens || tokens.length === 0) return { status: 403 as const, body: { error: "Invalid token" } };
+      if (!tokens || tokens.length === 0) return { status: 403, body: { error: "Invalid token" } };
       const sponsor_id = tokens[0].sponsor_id;
 
       const sponsorRow = await db.selectFrom("sponsors")
@@ -60,7 +56,7 @@ const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
         .where("id", "=", sponsor_id)
         .executeTakeFirst();
 
-      if (!sponsorRow) return { status: 403 as const, body: { error: "Sponsor not found" } };
+      if (!sponsorRow) return { status: 403, body: { error: "Sponsor not found" } };
 
       const metricsRow = await db.selectFrom("sponsor_metrics")
         .select(["id", "sponsor_id", "clicks", "impressions", "year_month"])
@@ -74,7 +70,7 @@ const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
         is_active: sponsorRow.is_active ? 1 : 0,
         tier: sponsorRow.tier || "In-Kind"
       };
-            const metrics = metricsRow.map((m) => ({
+      const metrics = metricsRow.map((m) => ({
         id: m.id ?? "",
         sponsor_id: m.sponsor_id,
         clicks: m.clicks ?? 0,
@@ -82,27 +78,10 @@ const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
         year_month: m.year_month
       }));
 
-      return { status: 200, body: { sponsor, metrics } };
+      return { status: 200, body: { sponsor: sponsor as any, metrics } };
     } catch (e) {
       console.error("[Sponsors:Roi] Error", e);
       return { status: 500, body: { error: "Failed to fetch ROI" } };
-    }
-  },
-  trackClick: async ({ params }, c) => {
-    try {
-      const db = c.get("db");
-      const { id } = params;
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      await db.updateTable("sponsor_metrics")
-        .set({ clicks: sql`clicks + 1` })
-        .where("sponsor_id", "=", id)
-        .where("year_month", "=", currentMonth)
-        .execute();
-
-      return { status: 200, body: { success: true } };
-    } catch (e) {
-      console.error("[Sponsors:TrackClick] Error", e);
-      return { status: 500, body: { error: "Failed to track click" } };
     }
   },
   adminList: async (_input, c) => {
@@ -116,54 +95,45 @@ const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
       return { status: 500, body: { error: "Admin access required" } };
     }
   },
-  adminCreate: async ({ body }, c) => {
+  saveSponsor: async ({ body }, c) => {
     try {
       await ensureAdmin(c);
       const db = c.get("db");
-      const id = crypto.randomUUID();
-      await db.insertInto("sponsors")
-        .values({
-          id,
-          name: body.name,
-          tier: body.tier,
-          logo_url: body.logo_url || null,
-          website_url: body.website_url || null,
-          is_active: body.is_active ? 1 : 0,
-        })
-        .execute();
+      const id = body.id || crypto.randomUUID();
+      
+      if (body.id) {
+        await db.updateTable("sponsors")
+          .set({
+            name: body.name,
+            tier: body.tier,
+            logo_url: body.logo_url || null,
+            website_url: body.website_url || null,
+            is_active: body.is_active ? 1 : 0,
+          })
+          .where("id", "=", body.id)
+          .execute();
+        await logAuditAction(c, "update_sponsor", { id });
+      } else {
+        await db.insertInto("sponsors")
+          .values({
+            id,
+            name: body.name,
+            tier: body.tier,
+            logo_url: body.logo_url || null,
+            website_url: body.website_url || null,
+            is_active: body.is_active ? 1 : 0,
+          })
+          .execute();
+        await logAuditAction(c, "create_sponsor", { id, name: body.name });
+      }
 
-      await logAuditAction(c, "create_sponsor", { id, name: body.name });
-      return { status: 201, body: { success: true, id } };
+      return { status: 200, body: { success: true, id } };
     } catch (e) {
-      console.error("[Sponsors:AdminCreate] Error", e);
-      return { status: 500, body: { error: "Failed to create sponsor" } };
+      console.error("[Sponsors:Save] Error", e);
+      return { status: 500, body: { error: "Failed to save sponsor" } };
     }
   },
-  adminUpdate: async ({ params, body }, c) => {
-    try {
-      await ensureAdmin(c);
-      const db = c.get("db");
-      const { id } = params;
-
-      await db.updateTable("sponsors")
-        .set({
-          name: body.name,
-          tier: body.tier,
-          logo_url: body.logo_url || null,
-          website_url: body.website_url || null,
-          is_active: body.is_active ? 1 : 0,
-        })
-        .where("id", "=", id)
-        .execute();
-
-      await logAuditAction(c, "update_sponsor", { id });
-      return { status: 200, body: { success: true } };
-    } catch (e) {
-      console.error("[Sponsors:AdminUpdate] Error", e);
-      return { status: 500, body: { error: "Failed to update sponsor" } };
-    }
-  },
-  adminDelete: async ({ params }, c) => {
+  deleteSponsor: async ({ params }, c) => {
     try {
       await ensureAdmin(c);
       const db = c.get("db");
@@ -173,30 +143,8 @@ const sponsorHandlers: RecursiveRouterObj<typeof sponsorContract, AppEnv> = {
       await logAuditAction(c, "delete_sponsor", { id });
       return { status: 200, body: { success: true } };
     } catch (e) {
-      console.error("[Sponsors:AdminDelete] Error", e);
+      console.error("[Sponsors:Delete] Error", e);
       return { status: 500, body: { error: "Failed to delete sponsor" } };
-    }
-  },
-  adminGenerateToken: async ({ params }, c) => {
-    try {
-      await ensureAdmin(c);
-      const db = c.get("db");
-      const { id } = params;
-      const token = crypto.randomUUID();
-
-      await db.insertInto("sponsor_tokens")
-        .values({
-          token,
-          sponsor_id: id,
-          created_at: new Date().toISOString()
-        })
-        .execute();
-
-      await logAuditAction(c, "generate_sponsor_token", { id });
-      return { status: 200, body: { token } };
-    } catch (e) {
-      console.error("[Sponsors:AdminToken] Error", e);
-      return { status: 500, body: { error: "Failed to generate token" } };
     }
   },
   getAdminTokens: async (_input, c) => {

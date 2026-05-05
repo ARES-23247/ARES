@@ -2,14 +2,14 @@ import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { z } from "zod";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { locationContract, locationSchema } from "../../../shared/schemas/contracts/locationContract";
-import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, s } from "../middleware";
 
 // IN-01: Type inference for location schema
 type LocationInput = z.infer<typeof locationSchema>;
 
-const s = initServer<AppEnv>();
+
 export const locationsRouter = new Hono<AppEnv>();
 
 const locationsTsRestRouter = s.router(locationContract, {

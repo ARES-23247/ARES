@@ -2,15 +2,15 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings, rateLimitMiddleware  } from "../middleware";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings, rateLimitMiddleware, s } from "../middleware";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
 import { z } from "zod";
 
 import type { HonoContext } from "@shared/types/api";
 
 export const settingsRouter = new Hono<AppEnv>();
-const s = initServer<AppEnv>();
+
 
 // SEC-03: Infrastructure secrets that must never be returned in plaintext
 const SENSITIVE_KEYS = new Set([

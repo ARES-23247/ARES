@@ -1,16 +1,14 @@
 import { Hono } from "hono";
-import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { storeContract } from "../../../shared/schemas/contracts/storeContract";
-import type { AppEnv } from "../middleware/utils";
+import { AppEnv, logSystemError, ensureAdmin, s } from "../middleware";
 import Stripe from "stripe";
-import { logSystemError, ensureAdmin } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { RecursiveRouterObj } from "ts-rest-hono";
 
 const app = new Hono<AppEnv>();
-const s = initServer<AppEnv>();
 
 // CR-04 FIX: Apply ensureAdmin middleware to orders routes
 app.use("/orders", ensureAdmin);

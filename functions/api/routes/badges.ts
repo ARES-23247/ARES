@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints, initServer } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
 import { badgeContract } from "../../../shared/schemas/contracts/badgeContract";
-import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, rateLimitMiddleware } from "../middleware";
+import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, rateLimitMiddleware, s } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
 
-const s = initServer<AppEnv>();
+
 
 const badgesTsRestRouterObj = {
   list: async (_input, c) => {

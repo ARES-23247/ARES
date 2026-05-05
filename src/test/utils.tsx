@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, RenderHookOptions } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ModalProvider } from "../contexts/ModalContext";
 import { vi } from "vitest";
+import type { MockExecutionContext, MockExpressionBuilder } from "./types";
 
 // We mock the confirm globally for tests that use the provider to avoid blocking
 vi.mock("../contexts/ModalContext", async (importOriginal) => {
@@ -22,8 +22,8 @@ vi.mock("../contexts/ModalContext", async (importOriginal) => {
 // (Removed global mock as it interferes with testing the hook itself)
 
 // Mock ExecutionContext for Hono request testing
-export const mockExecutionContext: any = {
-  waitUntil: vi.fn((promise) => promise),
+export const mockExecutionContext: MockExecutionContext = {
+  waitUntil: vi.fn((promise: Promise<unknown>) => promise),
   passThroughOnException: vi.fn(),
 };
 
@@ -32,7 +32,8 @@ export const mockExecutionContext: any = {
  * allowing background tasks in edge functions to finish before test assertions.
  */
 export async function flushWaitUntil() {
-  const promises = mockExecutionContext.waitUntil.mock.calls.map((call: any[]) => call[0]);
+  const calls = mockExecutionContext.waitUntil.mock.calls as unknown as ReadonlyArray<readonly [Promise<unknown>]>;
+  const promises = calls.map((call) => call[0]);
   mockExecutionContext.waitUntil.mockClear();
   await Promise.all(promises);
 }
@@ -41,31 +42,36 @@ export async function flushWaitUntil() {
  * Creates a unified, chainable Kysely ExpressionBuilder mock
  * which avoids coverage drops from missing internal builder methods.
  */
-export function createMockExpressionBuilder() {
-  const ebMock: any = vi.fn().mockReturnThis();
-  const asMock = { as: vi.fn().mockReturnValue(ebMock) };
-  
-  ebMock.or = vi.fn().mockReturnThis();
-  ebMock.and = vi.fn().mockReturnThis();
-  ebMock.val = vi.fn().mockReturnThis();
-  ebMock.fn = {
-    count: vi.fn().mockReturnValue(asMock),
-    sum: vi.fn().mockReturnValue(asMock),
-    max: vi.fn().mockReturnValue(asMock),
-    min: vi.fn().mockReturnValue(asMock),
-    coalesce: vi.fn().mockReturnValue(asMock),
-  };
-  ebMock.case = vi.fn().mockReturnValue({
-    when: vi.fn().mockReturnThis(),
+export function createMockExpressionBuilder(): MockExpressionBuilder {
+  const fnAs = vi.fn().mockReturnThis();
+  const ebMock = {
+    or: vi.fn().mockReturnThis(),
     and: vi.fn().mockReturnThis(),
-    then: vi.fn().mockReturnThis(),
-    else: vi.fn().mockReturnThis(),
-    end: vi.fn().mockReturnThis(),
-  });
-  ebMock.selectFrom = vi.fn().mockReturnThis();
-  ebMock.select = vi.fn().mockReturnThis();
-  ebMock.where = vi.fn().mockReturnThis();
-  ebMock.execute = vi.fn().mockResolvedValue([]);
+    val: vi.fn().mockReturnThis(),
+    fn: {
+      count: vi.fn().mockReturnValue(fnAs),
+      sum: vi.fn().mockReturnValue(fnAs),
+      max: vi.fn().mockReturnValue(fnAs),
+      min: vi.fn().mockReturnValue(fnAs),
+      coalesce: vi.fn().mockReturnValue(fnAs),
+      as: fnAs,
+    },
+    case: Object.assign(
+      vi.fn().mockReturnThis(),
+      {
+        when: vi.fn().mockReturnThis(),
+        and: vi.fn().mockReturnThis(),
+        then: vi.fn().mockReturnThis(),
+        else: vi.fn().mockReturnThis(),
+        end: vi.fn().mockReturnThis(),
+      }
+    ),
+    selectFrom: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    execute: vi.fn().mockResolvedValue([]),
+  } as MockExpressionBuilder;
+
   return ebMock;
 }
 
