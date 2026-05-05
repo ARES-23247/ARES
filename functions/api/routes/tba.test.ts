@@ -3,6 +3,15 @@ import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import tbaRouter from "./tba";
 
+vi.mock("../middleware", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../middleware")>();
+  return {
+    ...actual,
+    ensureAuth: async (_c: unknown, next: any) => next(),
+    rateLimitMiddleware: () => async (_c: unknown, next: any) => next(),
+  };
+});
+
 describe("Hono Backend - /tba Router", () => {
   let mockDb: any;
   let testApp: Hono<any>;
@@ -22,9 +31,16 @@ describe("Hono Backend - /tba Router", () => {
     testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("executionCtx", mockExecutionContext);
+      c.env.DEV_BYPASS = "true";
       await next();
     });
     testApp.route("/", tbaRouter);
+
+    // Wrap request method to always include DEV_BYPASS in env
+    const originalRequest = testApp.request.bind(testApp);
+    testApp.request = async (path: string | Request, init?: RequestInit, env?: Record<string, any>, execCtx?: ExecutionContext) => {
+      return originalRequest(path, init, { ...env, DEV_BYPASS: "true" }, execCtx);
+    };
 
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

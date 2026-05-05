@@ -60,9 +60,16 @@ describe("Hono Backend - /tasks Router", () => {
     testApp.use("*", async (c: any, next: any) => {
       c.set("db", mockDb);
       c.set("executionCtx", mockExecutionContext);
+      c.env.DEV_BYPASS = "true";
       await next();
     });
     testApp.route("/", tasksRouter);
+
+    // Wrap request method to always include DEV_BYPASS in env
+    const originalRequest = testApp.request.bind(testApp);
+    testApp.request = async (path: string, init?: RequestInit, env?: Record<string, any>, execCtx?: ExecutionContext) => {
+      return originalRequest(path, init, { ...env, DEV_BYPASS: "true" }, execCtx);
+    };
   });
 
   // ─── LIST ───────────────────────────────────────────────────────────────

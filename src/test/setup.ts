@@ -1,35 +1,36 @@
 import "@testing-library/jest-dom";
-import { beforeAll, afterEach, afterAll, vi } from "vitest";
 import { server } from "./mocks/server";
+import { beforeEach, afterEach } from "vitest";
 
-// Start MSW Server before all tests
-beforeAll(() => {
+// Start MSW Server
+beforeEach(() => {
   server.listen({ onUnhandledRequest: "warn" });
 });
 
 // Reset handlers after each test to ensure test isolation
-afterEach(() => server.resetHandlers());
-
-// Close server after all tests
-afterAll(() => server.close());
+afterEach(() => {
+  server.resetHandlers();
+  server.close();
+});
 
 export { server };
 
 // Mock jsdom missing methods
-window.scrollTo = vi.fn();
+const scrollTo = () => {};
+window.scrollTo = scrollTo;
 
 // Mock Cloudflare-specific globals
-vi.stubGlobal("caches", {
+(globalThis as any).caches = {
   default: {
-    match: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
+    match: () => Promise.resolve(undefined),
+    put: () => Promise.resolve(undefined),
+    delete: () => Promise.resolve(undefined),
   },
-  open: vi.fn(),
-});
+  open: () => Promise.resolve(undefined),
+};
 
 // Mock ExecutionContext for Hono request testing
 export const mockExecutionContext = {
-  waitUntil: vi.fn((promise) => promise),
-  passThroughOnException: vi.fn(),
+  waitUntil: (promise: Promise<unknown>) => promise,
+  passThroughOnException: () => {},
 };

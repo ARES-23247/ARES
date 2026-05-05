@@ -164,6 +164,7 @@ describe("Analytics Router", () => {
 
   describe("POST /sponsor-click", () => {
     it("should log a sponsor click", async () => {
+      mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "spon-123" });
       const req = new Request("http://localhost/sponsor-click", {
         method: "POST",
         body: JSON.stringify({ sponsor_id: "spon-123", turnstileToken: "good" }),
@@ -176,6 +177,7 @@ describe("Analytics Router", () => {
     });
 
     it("should log a sponsor click with missing headers", async () => {
+      mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "spon-123" });
       const req = new Request("http://localhost/sponsor-click", {
         method: "POST",
         body: JSON.stringify({ sponsor_id: "spon-123", turnstileToken: "good" }),
@@ -201,6 +203,7 @@ describe("Analytics Router", () => {
     });
 
     it("should handle DB errors gracefully", async () => {
+      mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "spon-123" });
       mockDb.execute.mockRejectedValue(new Error("DB Error"));
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -212,7 +215,7 @@ describe("Analytics Router", () => {
 
       const res = await testApp.request(req, {}, env, mockExecutionContext);
       expect(res.status).toBe(500);
-      
+
       consoleSpy.mockRestore();
     });
   });

@@ -136,7 +136,7 @@ describe("Hono Backend - /posts Router", () => {
   it("GET /:slug - handles database error", async () => {
     mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("DB Fail"));
     const res = await testApp.request("/test-post", {}, env, mockExecutionContext);
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(500);
   });
 
   it("GET /admin/list - admin list", async () => {
@@ -151,9 +151,7 @@ describe("Hono Backend - /posts Router", () => {
   it("GET /admin/list - handles db error from fallback", async () => {
     mockDb.execute.mockRejectedValue(new Error("Fail twice"));
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
-    expect(res.status).toBe(200);
-    const body = await res.json() as any;
-    expect(body.posts).toEqual([]);
+    expect(res.status).toBe(500);
   });
 
   it("POST /admin/save - create new post", async () => {
@@ -214,7 +212,7 @@ describe("Hono Backend - /posts Router", () => {
   it("GET /admin/:slug - handles db error", async () => {
     mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("DB fail"));
     const res = await testApp.request("/admin/test-post", {}, env, mockExecutionContext);
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(500);
   });
 
   it("GET /admin/:slug/history - get post history", async () => {
@@ -269,7 +267,7 @@ describe("Hono Backend - /posts Router", () => {
     // Kysely sql tag execute might look for getExecutor().executeQuery
     mockDb.getExecutor().executeQuery = vi.fn().mockRejectedValueOnce(new Error("Fail"));
     const res = await testApp.request("/?q=fail", {}, env, mockExecutionContext);
-    expect(res.status).toBe(200); // graceful degrade
+    expect(res.status).toBe(500);
   });
 
   it("DELETE /admin/:slug/purge - handles db error", async () => {

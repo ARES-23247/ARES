@@ -90,9 +90,10 @@ describe("Hono Backend - /comments Router", () => {
   });
 
   it("should return 400 for empty comment content", async () => {
+    // Use whitespace to bypass ts-rest schema validation (min(1)) and test handler-level validation
     const res = await testApp.request("/post/my-post", {
       method: "POST",
-      body: JSON.stringify({ content: "" }),
+      body: JSON.stringify({ content: "   " }),
       headers: { "Content-Type": "application/json" },
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
 

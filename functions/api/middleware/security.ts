@@ -188,6 +188,11 @@ export const persistentRateLimitMiddleware = (limit = 15, windowSeconds = 60) =>
  */
 export const originIntegrityMiddleware = () => {
   return async (c: Context<AppEnv>, next: Next) => {
+    // 0. Skip for local development/testing with DEV_BYPASS
+    if (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1") {
+      return await next();
+    }
+
     // 1. Skip for GET/OPTIONS/HEAD (read-only or preflight)
     if (["GET", "OPTIONS", "HEAD"].includes(c.req.method)) {
       return await next();

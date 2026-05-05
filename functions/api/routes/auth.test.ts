@@ -88,15 +88,15 @@ describe("Auth Router", () => {
         vi.mocked(authUtils.getAuth).mockReturnValue({
           handler: vi.fn().mockRejectedValue(error),
         } as any);
-  
+
         const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
         const req = new Request("http://localhost/error");
-        const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "production", DEV_BYPASS: "true" } as any, mockExecutionContext);
-  
+        const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "production" } as any, mockExecutionContext);
+
         expect(res.status).toBe(500);
         const body = await res.json() as any;
         expect(body.stack).toBeUndefined();
-        
+
         consoleSpy.mockRestore();
       });
 
