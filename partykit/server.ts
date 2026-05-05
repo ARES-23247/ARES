@@ -5,12 +5,28 @@ import { onConnect } from "y-partykit";
  * ARES PartyKit Yjs Server (Cloudflare Worker Mode)
  *
  * Provides real-time collaborative editing via WebSocket + Yjs CRDT.
- * PartyKit's built-in persistence handles Yjs document state automatically.
- *
- * D1 snapshot persistence requires cloud-prem deployment — deferred to v6.1.
+ * Uses PartyKit's built-in snapshot persistence for document state.
  */
 export default class YjsServer implements Party.Server {
   constructor(public room: Party.Room) {}
+
+  /**
+   * Handle HTTP requests (health checks, status probes).
+   * Without this handler, PartyKit returns 500 for non-WebSocket requests.
+   */
+  async onRequest(req: Party.Request) {
+    return new Response(
+      JSON.stringify({
+        status: "ok",
+        room: this.room.id,
+        connections: [...this.room.getConnections()].length,
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
 
   async onConnect(conn: Party.Connection) {
     // Validate room ID format to prevent potential abuse (CR-09)
@@ -21,7 +37,9 @@ export default class YjsServer implements Party.Server {
     }
 
     await onConnect(conn, this.room, {
-      persist: true,
+      // Use explicit snapshot persistence (persist: true is deprecated)
+      // See: https://docs.partykit.io/reference/y-partykit-api/#persistence
+      persist: { mode: "snapshot" },
     });
   }
 }
