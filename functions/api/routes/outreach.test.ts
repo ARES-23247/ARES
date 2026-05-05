@@ -1,7 +1,7 @@
- 
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
+import { MockKysely, TestEnv } from "~/src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
 
 // Mock middleware
@@ -9,24 +9,16 @@ vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
-    ensureAuth: async (_c: unknown, next: () => Promise<void>) => next(),
+    ensureAdmin: async (_c: Context<TestEnv>, next: () => Promise<void>) => next(),
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
-    rateLimitMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
-    logAuditAction: vi.fn().mockResolvedValue(true),
   };
 });
-
-
 
 import outreachRouter from "./outreach/index";
 
 describe("Hono Backend - /outreach Router", () => {
-  
-  
-   
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,8 +44,8 @@ describe("Hono Backend - /outreach Router", () => {
       }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
       await next();
     });
@@ -69,10 +61,10 @@ describe("Hono Backend - /outreach Router", () => {
         { id: "v1", title: "Volunteer", date: "2024-02-01", location: "Loc", season_id: "1" },
         { id: "v2", title: "Volunteer No Season", date: "2024-01-15", location: null, season_id: null }
       ]); // events
-      
+
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { logs: { title: string; season_id: string | null }[] };
     expect(body.logs).toHaveLength(3);
     expect(body.logs[0].title).toBe("Volunteer"); // Sorted by date
     expect(body.logs[1].title).toBe("Volunteer No Season");
@@ -94,7 +86,7 @@ describe("Hono Backend - /outreach Router", () => {
       headers: { "Content-Type": "application/json" }
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { id: string };
     expect(body.id).toBe("123");
   });
 
@@ -111,11 +103,11 @@ describe("Hono Backend - /outreach Router", () => {
     mockDb.execute.mockRejectedValue(new Error("DB Error"));
     const res = await testApp.request("/admin/save", {
       method: "POST",
-      body: JSON.stringify({ 
-        title: "Fail", 
-        date: "2024-01-01", 
-        students_count: 0, 
-        hours_logged: 0, 
+      body: JSON.stringify({
+        title: "Fail",
+        date: "2024-01-01",
+        students_count: 0,
+        hours_logged: 0,
         reach_count: 0,
         location: null,
         description: null
@@ -133,10 +125,10 @@ describe("Hono Backend - /outreach Router", () => {
       .mockResolvedValueOnce([
         { id: "v1", title: "Volunteer", date: "2024-02-01", location: "Loc", season_id: "1" }
       ]); // events
-      
+
     const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { logs: { title: string }[] };
     expect(body.logs).toHaveLength(2);
     expect(body.logs[0].title).toBe("Volunteer");
   });
@@ -147,10 +139,10 @@ describe("Hono Backend - /outreach Router", () => {
         { id: "1", title: "Test", date: "2024-01-01", students_count: null, hours_logged: null, reach_count: null, description: "A".repeat(250), is_mentoring: null, mentored_team_number: null, season_id: null }
       ])
       .mockResolvedValueOnce([]); // events
-      
+
     const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { logs: { description: string }[] };
     expect(body.logs[0].description.length).toBe(203); // 200 + "..."
   });
 
@@ -160,10 +152,10 @@ describe("Hono Backend - /outreach Router", () => {
         { id: "1", title: "Test", date: "2024-01-01", students_count: 5, hours_logged: 10, reach_count: 50, description: "A".repeat(250) }
       ])
       .mockRejectedValueOnce(new Error("Volunteer DB Error")); // fetchVolunteerEvents fails
-      
+
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { logs: unknown[] };
     expect(body.logs).toHaveLength(1);
   });
 
