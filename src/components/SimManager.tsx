@@ -62,14 +62,16 @@ export default function SimManager() {
           </p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={generateRegistry}
-            disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2 bg-ares-red/20 text-ares-red rounded-lg hover:bg-ares-red/30 transition disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`} />
-            {isGenerating ? "Generating..." : "Regenerate"}
-          </button>
+          {import.meta.env.DEV && (
+            <button
+              onClick={generateRegistry}
+              disabled={isGenerating}
+              className="flex items-center gap-2 px-4 py-2 bg-ares-red/20 text-ares-red rounded-lg hover:bg-ares-red/30 transition disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`} />
+              {isGenerating ? "Generating..." : "Regenerate"}
+            </button>
+          )}
           <button
             onClick={copyJsonToClipboard}
             className="flex items-center gap-2 px-4 py-2 bg-ares-gold/20 text-ares-gold rounded-lg hover:bg-ares-gold/30 transition"
@@ -95,7 +97,13 @@ export default function SimManager() {
               {`/** @sim {"name": "My Display Name", "requiresContext": false} */`}
             </pre>
           </li>
-          <li>Click <strong>Regenerate</strong> button above (or run: <code className="bg-obsidian-900 px-1 rounded">npm run generate:sims</code>)</li>
+          <li>
+            {import.meta.env.DEV ? (
+              <>Click <strong>Regenerate</strong> button above (or run: <code className="bg-obsidian-900 px-1 rounded">npm run generate:sims</code>)</>
+            ) : (
+              <>Run <code className="bg-obsidian-900 px-1 rounded">npm run generate:sims</code> locally and commit</>
+            )}
+          </li>
           <li>Refresh page and use in docs: <code className="bg-obsidian-900 px-1 rounded">{'<mysim />'}</code></li>
         </ol>
       </div>
