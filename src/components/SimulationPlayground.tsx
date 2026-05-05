@@ -112,14 +112,38 @@ export default function SimulationPlayground() {
   
   // Visual AI State
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
-  
-  // Editor Refs
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const editorRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const monacoRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const vimRef = useRef<any>(null);
+
+  // Editor Refs - define interfaces for Monaco Editor types
+  interface IMonacoEditor {
+    getValue(): string;
+    getModel(): { updateOptions(options: unknown): void } | null;
+    onDidChangeModelContent(listener: () => void): { dispose(): void };
+    layout(): void;
+    focus(): void;
+    trigger(type: string, source: string): void;
+  }
+
+  interface IMonacoStandalone {
+    editor: {
+      setModelMarkers(model: { updateOptions(options: unknown): void } | null, owner: string, markers: unknown[]): void;
+    };
+    languages: {
+      typescript: {
+        javascriptDefaults: {
+          addExtraLib(content: string, filePath: string): void;
+          setCompilerOptions(options: unknown): void;
+        };
+      };
+    };
+  }
+
+  interface IVimMode {
+    dispose(): void;
+  }
+
+  const editorRef = useRef<IMonacoEditor | null>(null);
+  const monacoRef = useRef<IMonacoStandalone | null>(null);
+  const vimRef = useRef<IVimMode | null>(null);
 
   const compileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
