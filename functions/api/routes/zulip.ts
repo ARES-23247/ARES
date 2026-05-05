@@ -1,14 +1,12 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { AppEnv, ensureAdmin, ensureAuth, getSocialConfig } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
+import { z } from "zod";
 import { zulipContract } from "../../../shared/schemas/contracts/zulipContract";
 
 const s = initServer<AppEnv>();
 export const zulipRouter = new Hono<AppEnv>();
 
-import { Context } from "hono";
-
-import { z } from "zod";
 import { zulipPresenceSchema } from "../../../shared/schemas/contracts/zulipContract";
 
 // Normalize emails by removing dots for Google Workspace / Gmail domains
@@ -27,7 +25,7 @@ function normalizeEmail(email: string): string {
 }
 
 const zulipTsRestRouter = s.router(zulipContract, {
-  getPresence: async (_, c) => {
+  getPresence: async (_: any, c: Context<AppEnv>) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -66,12 +64,15 @@ const zulipTsRestRouter = s.router(zulipContract, {
       }
 
       const data = await res.json() as { result: string; presences: z.infer<typeof zulipPresenceSchema> };
-      return { status: 200 as const, body: { success: true, presence: data.presences, userNames } };
+      return { status: 200 as const, body: { success: true, presence: data.presences, userNames } as z.infer<typeof zulipContract.getPresence.responses[200]> };
     } catch (err) {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  sendMessage: async ({ body }, c) => {
+  sendMessage: async (
+    { body }: { body: z.infer<typeof zulipContract.sendMessage.body> },
+    c: Context<AppEnv>
+  ) => {
     try {
       const { sendZulipMessage } = await import("../../utils/zulipSync");
       const config = await getSocialConfig(c);
@@ -97,12 +98,15 @@ const zulipTsRestRouter = s.router(zulipContract, {
         return { status: 500 as const, body: { success: false, error: "Failed to send message" } };
       }
 
-      return { status: 200 as const, body: { success: true } };
+      return { status: 200 as const, body: { success: true } as z.infer<typeof zulipContract.sendMessage.responses[200]> };
     } catch (err) {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  getTopicMessages: async ({ query }, c) => {
+  getTopicMessages: async (
+    { query }: { query: z.infer<typeof zulipContract.getTopicMessages.query> },
+    c: Context<AppEnv>
+  ) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -136,12 +140,12 @@ const zulipTsRestRouter = s.router(zulipContract, {
       }
 
       const data = await res.json() as { result: string; messages: unknown[] };
-      return { status: 200 as const, body: { success: true, messages: data.messages } };
+      return { status: 200 as const, body: { success: true, messages: data.messages } as z.infer<typeof zulipContract.getTopicMessages.responses[200]> };
     } catch (err) {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  auditMissingUsers: async (_, c) => {
+  auditMissingUsers: async (_: any, c: Context<AppEnv>) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -217,7 +221,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
           if (!email) return false;
           const normalized = normalizeEmail(email);
           return !zulipEmails.has(normalized);
-        });
+        }) as string[];
 
       console.log(`[Zulip:Audit] ${aresUsers.length} ARES users, ${missingEmails.length} missing from Zulip`);
 
@@ -234,13 +238,16 @@ const zulipTsRestRouter = s.router(zulipContract, {
           sampleZulipEmails: sampleZulip,
           sampleMissingEmails: sampleMissing
         }
-      } };
+      } as z.infer<typeof zulipContract.auditMissingUsers.responses[200]> };
     } catch (err) {
       console.error("[Zulip:Audit] Unexpected error:", err);
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  inviteUsers: async ({ body }, c) => {
+  inviteUsers: async (
+    { body }: { body: z.infer<typeof zulipContract.inviteUsers.body> },
+    c: Context<AppEnv>
+  ) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -337,13 +344,13 @@ const zulipTsRestRouter = s.router(zulipContract, {
         return { status: 500 as const, body: { success: false, error: allErrors.join("; ") } };
       }
 
-      return { status: 200 as const, body: { success: true, invitedCount: totalInvited } };
+      return { status: 200 as const, body: { success: true, invitedCount: totalInvited } as z.infer<typeof zulipContract.inviteUsers.responses[200]> };
     } catch (err) {
       console.error("[Zulip:Invite] Unexpected error:", err);
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
-  },
-});
+  }
+} as any);
 
 zulipRouter.use("/presence", ensureAdmin);
 zulipRouter.use("/invites/*", ensureAdmin);
