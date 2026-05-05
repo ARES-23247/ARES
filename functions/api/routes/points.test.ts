@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { AppEnv } from "../middleware/utils";
+import { TestEnv, MockKysely } from "../../src/test/types";
 import pointsRouter from "./points";
 
 describe("Hono Backend - /points Router", () => {
-  let app: Hono<AppEnv>;
-  let mockDb: any;
-  let sessionUser: any;
+  let app: Hono<TestEnv>;
+  let mockDb: MockKysely;
+  let sessionUser: { id: string; role: string } | null;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -27,7 +28,7 @@ describe("Hono Backend - /points Router", () => {
     app.use("*", async (c, next) => {
       c.set("db", mockDb);
       if (sessionUser) {
-        c.set("sessionUser", sessionUser as any);
+        c.set("sessionUser", sessionUser);
       }
       await next();
     });
