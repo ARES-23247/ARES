@@ -4,10 +4,16 @@ import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
 import SEO from "../components/SEO";
 
+// SEC-WR-02: Whitelist of allowed GitHub repositories to prevent phishing redirects
+const ALLOWED_REPOS = [
+  `${siteConfig.urls.githubOrg}/ARESWEB`,
+  `${siteConfig.urls.githubOrg}/IntoTheDeep`
+] as const;
+
 export default function BugReport() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [repoStr, setRepoStr] = useState(`${siteConfig.urls.githubOrg}/ARESWEB`); // Default repo
+  const [repoStr, setRepoStr] = useState(ALLOWED_REPOS[0]); // Default repo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,14 +82,20 @@ export default function BugReport() {
 
                   <div>
                     <label htmlFor="repo-select" className="block text-xs font-bold text-ares-gold uppercase tracking-widest mb-2">Target Repository</label>
-                    <select 
+                    <select
                       id="repo-select"
                       value={repoStr}
-                      onChange={(e) => setRepoStr(e.target.value)}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        // SEC-WR-02: Validate against whitelist to prevent phishing redirects
+                        if (ALLOWED_REPOS.includes(selected as any)) {
+                          setRepoStr(selected);
+                        }
+                      }}
                       className="w-full bg-black/40 border border-white/10 ares-cut-sm px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-ares-gold focus:border-ares-gold transition-all font-mono appearance-none"
                     >
-                      <option value={`${siteConfig.urls.githubOrg}/ARESWEB`}>ARESWEB (Web Portal)</option>
-                      <option value={`${siteConfig.urls.githubOrg}/IntoTheDeep`}>IntoTheDeep (Robot Code)</option>
+                      <option value={ALLOWED_REPOS[0]}>ARESWEB (Web Portal)</option>
+                      <option value={ALLOWED_REPOS[1]}>IntoTheDeep (Robot Code)</option>
                     </select>
                   </div>
 
