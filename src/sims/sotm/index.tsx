@@ -19,7 +19,7 @@ export default function SotmSim() {
     const SCALE = 30;
     const HUB = { x: 400, y: 80 };
 
-    function drawArrow(fromX: number, fromY: number, toX: number, toY: number, color: string, width = 2) {
+    function drawArrow(fromX: number, fromY: number, toX: number, toY: number, color: string, width = 2): void {
       const headlen = 10;
       const dx = toX - fromX;
       const dy = toY - fromY;
