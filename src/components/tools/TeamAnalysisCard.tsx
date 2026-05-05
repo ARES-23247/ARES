@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Award, TrendingUp, TrendingDown, Target } from "lucide-react";
+import DOMPurify from 'dompurify';
 import { scoutingApi, type TOATeam, type TOARanking, type AnalysisResponse } from "../../lib/scouting-api";
 
 interface TeamAnalysisCardProps {
@@ -243,5 +244,9 @@ function markdownToHtml(md: string): string {
   // eslint-disable-next-line security/detect-unsafe-regex
   html = html.replace(/(<li>.*?<\/li>\n?)+/gs, (match) => `<ul>${match}</ul>`);
 
-  return html;
+  // Sanitize HTML to prevent XSS attacks
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['h1', 'h2', 'h3', 'strong', 'em', 'p', 'ul', 'li'],
+    ALLOWED_ATTR: ['class']
+  });
 }
