@@ -1,6 +1,23 @@
 import { test, expect } from '@playwright/test';
 
 /**
+ * Media item interface matching the assetSchema from mediaContract.
+ * Used for typed mock data in E2E tests.
+ */
+interface MediaItem {
+  key: string;
+  size: number;
+  uploaded: string;
+  url: string;
+  httpEtag?: string;
+  httpMetadata?: {
+    contentType?: string;
+  };
+  folder?: string | null;
+  tags?: string | null;
+}
+
+/**
  * E2E tests for Media Manager (Asset Vault) operations.
  * Tests verify:
  * - DEF-01: Media manager upload flow works correctly
@@ -73,8 +90,7 @@ test.describe('Media Manager - Asset Vault', () => {
     });
 
     // In-memory store for mocked media items (to support upload state verification)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockMediaItems: any[] = [];
+    const mockMediaItems: MediaItem[] = [];
 
     // Mock media API - GET /api/media/admin
     await page.route('**/api/media/admin', async route => {
