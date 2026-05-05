@@ -5,6 +5,7 @@ import { DB } from "../../../../shared/schemas/database";
 import { AppEnv, getSessionUser, logAuditAction } from "../../middleware";
 
 import { initServer } from "ts-rest-hono";
+import { outreachSchema } from "../../../../shared/schemas/outreachSchema";
 
 const _s = initServer<AppEnv>();
 
@@ -140,53 +141,65 @@ export const outreachHandlers: any = {
       const user = await getSessionUser(c);
       if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
+      // Validate input against schema before database insertion
+      const validationResult = outreachSchema.safeParse(body);
+      if (!validationResult.success) {
+        return {
+          status: 400 as const,
+          body: {
+            error: "Invalid outreach data: " + validationResult.error.issues.map(i => i.message).join(", ")
+          }
+        };
+      }
+
+      const validatedData = validationResult.data;
       let result: string | number;
-      if (body.id) {
+      if (validatedData.id) {
         await db.updateTable("outreach_logs")
           .set({
-            title: body.title,
-            date: body.date,
-            location: body.location,
-            hours: body.hours_logged,
-            people_reached: body.reach_count,
-            students_count: body.students_count,
-            impact_summary: body.description,
-            is_mentoring: body.is_mentoring ? 1 : 0,
-            mentored_team_number: body.mentored_team_number,
-            season_id: body.season_id,
-            event_id: body.event_id,
-            mentor_count: body.mentor_count || 0,
-            mentor_hours: body.mentor_hours || 0,
+            title: validatedData.title,
+            date: validatedData.date,
+            location: validatedData.location || null,
+            hours: validatedData.hours_logged,
+            people_reached: validatedData.reach_count,
+            students_count: validatedData.students_count,
+            impact_summary: validatedData.description || null,
+            is_mentoring: validatedData.is_mentoring ? 1 : 0,
+            mentored_team_number: validatedData.mentored_team_number || null,
+            season_id: validatedData.season_id || null,
+            event_id: validatedData.event_id || null,
+            mentor_count: validatedData.mentor_count || 0,
+            mentor_hours: validatedData.mentor_hours || 0,
           })
-          .where("id", "=", body.id as any)
+          .where("id", "=", validatedData.id)
           .execute();
-        result = body.id;
+        result = validatedData.id;
       } else {
         const inserted = await db.insertInto("outreach_logs")
           .values({
-            title: body.title,
-            date: body.date,
-            location: body.location,
-            hours: body.hours_logged,
-            people_reached: body.reach_count,
-            students_count: body.students_count,
-            impact_summary: body.description,
-            is_mentoring: body.is_mentoring ? 1 : 0,
-            mentored_team_number: body.mentored_team_number,
-            season_id: body.season_id,
-            event_id: body.event_id,
-            mentor_count: body.mentor_count || 0,
-            mentor_hours: body.mentor_hours || 0,
+            title: validatedData.title,
+            date: validatedData.date,
+            location: validatedData.location || null,
+            hours: validatedData.hours_logged,
+            people_reached: validatedData.reach_count,
+            students_count: validatedData.students_count,
+            impact_summary: validatedData.description || null,
+            is_mentoring: validatedData.is_mentoring ? 1 : 0,
+            mentored_team_number: validatedData.mentored_team_number || null,
+            season_id: validatedData.season_id || null,
+            event_id: validatedData.event_id || null,
+            mentor_count: validatedData.mentor_count || 0,
+            mentor_hours: validatedData.mentor_hours || 0,
           })
           .executeTakeFirst();
         result = inserted.insertId?.toString() || "new";
       }
 
-      if (body.id) {
-        c.executionCtx.waitUntil(logAuditAction(c, "update_outreach", "outreach_logs", body.id, `Updated outreach: ${body.title}`));
-        return { status: 200 as const, body: { success: true, id: body.id } };
+      if (validatedData.id) {
+        c.executionCtx.waitUntil(logAuditAction(c, "update_outreach", "outreach_logs", validatedData.id, `Updated outreach: ${validatedData.title}`));
+        return { status: 200 as const, body: { success: true, id: validatedData.id } };
       } else {
-        c.executionCtx.waitUntil(logAuditAction(c, "create_outreach", "outreach_logs", String(result), `Created outreach: ${body.title}`));
+        c.executionCtx.waitUntil(logAuditAction(c, "create_outreach", "outreach_logs", String(result), `Created outreach: ${validatedData.title}`));
         return { status: 200 as const, body: { success: true, id: result } };
       }
     } catch (err) {
