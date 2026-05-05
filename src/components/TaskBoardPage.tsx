@@ -148,7 +148,9 @@ export default function TaskBoardPage() {
   const lastCursorSend = React.useRef(0);
   const boardRef = React.useRef<HTMLDivElement>(null);
   
-  const host = import.meta.env.VITE_PARTYKIT_HOST || "";
+  const host = (typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__) 
+    ? "dummy-host-for-playwright" 
+    : (import.meta.env.VITE_PARTYKIT_HOST || "");
   const socket = usePartySocket({
     host: host || "dummy", // fallback so it doesn't crash if env missing
     room: "kanban-global",

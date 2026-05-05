@@ -222,10 +222,21 @@ describe("Analytics Router", () => {
 
   describe("Admin Endpoints", () => {
     it("GET /admin/platform-analytics should return analytics data", async () => {
+      mockDb.executeTakeFirst
+        .mockResolvedValueOnce({ total: 100 }) // totalViewsData
+        .mockResolvedValueOnce({ total: 50 }) // assetsCount
+        .mockResolvedValueOnce({ total: 1000 }); // apiCount
+
+      mockDb.getExecutor().executeQuery
+        .mockResolvedValueOnce({ rows: [{ unique: 20 }] }) // uniqueVisitorsData
+        .mockResolvedValueOnce({ rows: [{ date: "2023-01-01", pageViews: 10 }] }) // activityData
+        .mockResolvedValueOnce({ rows: [{ date: "2023-01-01", avg_latency: 150 }] }); // latencyData
+
       mockDb.execute
-        .mockResolvedValueOnce([{ path: "/", views: 10 }])
-        .mockResolvedValueOnce([{ path: "/about" }])
-        .mockResolvedValueOnce([{ total: 5 }]);
+        .mockResolvedValueOnce([{ path: "/", category: "home", views: 10 }]) // topPagesDataRow
+        .mockResolvedValueOnce([{ referrer: "google.com", visits: 5 }]) // referrersDataRow
+        .mockResolvedValueOnce([{ path: "/", category: "home", user_agent: "test", referrer: "google.com", timestamp: "2023-01-01T12:00:00Z" }]) // recentViewsDataRow
+        .mockResolvedValueOnce([{ category: "home", total: 10 }]); // totalsDataRow
 
       const req = new Request("http://localhost/admin/platform-analytics");
       const res = await testApp.request(req, {}, env, mockExecutionContext);

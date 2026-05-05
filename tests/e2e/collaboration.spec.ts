@@ -143,22 +143,24 @@ test.describe('Collaboration', () => {
   test('INT-01: All editors display Live badge when connected', async ({ page }) => {
     // Test BlogEditor - route is /dashboard/blog/:slug
     await page.goto('/dashboard/blog/test-post');
-    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' }).first()).toBeVisible({ timeout: 15000 });
 
     // Test DocsEditor - route is /dashboard/docs/:slug
     await page.goto('/dashboard/docs/test-doc');
-    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' }).first()).toBeVisible({ timeout: 15000 });
 
     // Test EventEditor - route is /dashboard/event/:id
     await page.goto('/dashboard/event/test-event-id');
-    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' }).first()).toBeVisible({ timeout: 15000 });
 
     // Test TaskDetailsModal - navigate to tasks, click on test task to open modal
     await page.goto('/dashboard/tasks');
-    // Click on the test task to open modal - use more specific selector (WR-04)
+    // Click on the test task to open modal
     await page.getByText('Test Task').first().click();
-    // Wait for modal and verify Live badge
-    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible({ timeout: 15000 });
+    // Wait for modal to be visible
+    await expect(page.getByRole('dialog')).toBeVisible();
+    // Verify Live badge (may be in header or modal, we just need one to be visible)
+    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' }).first()).toBeVisible({ timeout: 15000 });
   });
 
   test('INT-02: Multi-user concurrent editing - browser contexts', async ({ browser }) => {

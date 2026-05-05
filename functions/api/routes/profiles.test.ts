@@ -30,7 +30,7 @@ vi.mock("../middleware", async (importOriginal) => {
     persistentRateLimitMiddleware: () => (c: any, next: any) => next(),
     rateLimitMiddleware: () => (c: any, next: any) => next(),
     getSessionUser: vi.fn((c: any) => c.get("sessionUser")),
-    sanitizeProfileForPublic: vi.fn().mockImplementation((val) => val),
+    sanitizeProfileForPublic: vi.fn().mockImplementation((val, type) => actual.sanitizeProfileForPublic(val, type)),
   };
 });
 
@@ -173,7 +173,7 @@ describe("Hono Backend - /profiles Router", () => {
   it("should return team roster", async () => {
     const mockRoster = [
       { user_id: "1", nickname: "Member 1", member_type: "student", show_on_about: 1 },
-      { user_id: "2", nickname: "Member 2", member_type: "mentor", show_on_about: 1, contact_email: "encrypted" },
+      { user_id: "2", nickname: "Member 2", member_type: "mentor", show_on_about: 1, email: "decrypted@test.com" },
     ];
     mockDb.execute.mockResolvedValueOnce(mockRoster);
 
@@ -187,7 +187,7 @@ describe("Hono Backend - /profiles Router", () => {
 
   it("should handle team roster FTS5 search", async () => {
     const mockRoster = [
-      { user_id: "2", nickname: "Member 2", member_type: "mentor", show_on_about: 1, contact_email: "encrypted" },
+      { user_id: "2", nickname: "Member 2", member_type: "mentor", show_on_about: 1, email: "decrypted@test.com" },
     ];
     mockDb.execute.mockResolvedValueOnce(mockRoster);
 
@@ -300,12 +300,12 @@ describe("Hono Backend - /profiles Router", () => {
 
   it("should handle decryption failures in team-roster", async () => {
     vi.mocked(cryptoUtils.decrypt).mockRejectedValue(new Error("Corrupt"));
-    mockDb.execute.mockResolvedValueOnce([{ user_id: "1", member_type: "mentor", contact_email: "bad:data", show_on_about: 1 }]);
+    mockDb.execute.mockResolvedValueOnce([{ user_id: "1", member_type: "mentor", email: "bad:data", show_on_about: 1 }]);
 
     const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
-    expect(body.members[0].contact_email).toBeNull();
+    expect(body.members[0].email).toBeNull();
   });
 
   it("should handle empty results in team-roster with warning", async () => {

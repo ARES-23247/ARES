@@ -10,7 +10,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
     globals: true,
-    exclude: ['node_modules', 'tests/e2e/**'],
+    exclude: ['**/node_modules/**', 'tests/e2e/**'],
     coverage: {
       provider: "v8",
       include: ['src/utils/**', 'src/hooks/**', 'functions/api/routes/**'],
@@ -23,6 +23,11 @@ export default defineConfig({
         functions: 100,
         branches: 80,
         statements: 85
+      }
+    },
+    server: {
+      deps: {
+        external: [/parse5/]
       }
     }
   },

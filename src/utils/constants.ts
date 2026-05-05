@@ -10,9 +10,9 @@ export const DEFAULT_COVER_IMAGE = "/api/media/1776551060548-favicon.webp";
  * Centralized to avoid hardcoded references throughout the codebase.
  */
 export const GITHUB_REPO = {
-  owner: process.env.GITHUB_REPO_OWNER || 'ARES-23247',
-  repo: process.env.GITHUB_REPO_NAME || 'ARESWEB',
-  branch: process.env.GITHUB_BRANCH || 'main',
-  apiUrl: `https://api.github.com/repos/${process.env.GITHUB_REPO_OWNER || 'ARES-23247'}/${process.env.GITHUB_REPO_NAME || 'ARESWEB'}`,
-  rawUrl: `https://raw.githubusercontent.com/${process.env.GITHUB_REPO_OWNER || 'ARES-23247'}/${process.env.GITHUB_REPO_NAME || 'ARESWEB'}/${process.env.GITHUB_BRANCH || 'main'}`,
+  owner: (import.meta.env.VITE_GITHUB_REPO_OWNER as string) || 'ARES-23247',
+  repo: (import.meta.env.VITE_GITHUB_REPO_NAME as string) || 'ARESWEB',
+  branch: (import.meta.env.VITE_GITHUB_BRANCH as string) || 'main',
+  apiUrl: `https://api.github.com/repos/${(import.meta.env.VITE_GITHUB_REPO_OWNER as string) || 'ARES-23247'}/${(import.meta.env.VITE_GITHUB_REPO_NAME as string) || 'ARESWEB'}`,
+  rawUrl: `https://raw.githubusercontent.com/${(import.meta.env.VITE_GITHUB_REPO_OWNER as string) || 'ARES-23247'}/${(import.meta.env.VITE_GITHUB_REPO_NAME as string) || 'ARESWEB'}/${(import.meta.env.VITE_GITHUB_BRANCH as string) || 'main'}`,
 } as const;

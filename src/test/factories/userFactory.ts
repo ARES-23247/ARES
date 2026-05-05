@@ -16,7 +16,7 @@ export const createMockProfile = (overrides?: Record<string, unknown>) => ({
   member_type: faker.helpers.arrayElement(["student", "coach", "mentor", "parent"]),
   show_on_about: 1,
   leadership_role: faker.helpers.arrayElement([null, "Captain", "Lead Engineer"]),
-  rookie_year: 2023,
+  rookie_year: "2023",
   ...overrides,
 });
 

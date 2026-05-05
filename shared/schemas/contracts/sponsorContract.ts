@@ -86,7 +86,7 @@ export const sponsorContract = c.router({
       200: z.object({
         tokens: z.array(sponsorTokenSchema),
       }),
-      500: z.object({ tokens: z.array(sponsorTokenSchema) }),
+      500: z.object({ error: z.string() }),
     },
   },
   generateToken: {

@@ -35,7 +35,7 @@ export const docHistorySchema = z.object({
   title: z.string().nullable(),
   category: z.string().nullable(),
   description: z.string().nullable(),
-  content: z.string().nullable(),
+  content: z.string().nullable().optional(),
   author_email: z.string().nullable(),
   created_at: z.string(),
 });

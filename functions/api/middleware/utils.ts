@@ -401,8 +401,8 @@ export function sanitizeProfileForPublic(profile: Record<string, unknown>, membe
 
   return {
     ...safe,
-    email: (Number(profile.show_email) && !isEncrypted(profile.contact_email)) ? (profile.contact_email || profile.email) : undefined,
-    phone: (Number(profile.show_phone) && !isEncrypted(profile.phone)) ? profile.phone : undefined,
+    email: (Number(profile.show_email) && !isEncrypted(profile.contact_email)) ? (profile.contact_email || profile.email) : null,
+    phone: (Number(profile.show_phone) && !isEncrypted(profile.phone)) ? profile.phone : null,
     colleges: safeParseArray(profile.colleges),
     employers: safeParseArray(profile.employers),
     grade_year: profile.grade_year,

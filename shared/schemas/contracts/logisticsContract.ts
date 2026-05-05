@@ -26,7 +26,15 @@ export const logisticsContract = c.router({
     method: "GET",
     path: "/admin/export-emails",
     responses: {
-      200: z.object({ users: z.array(z.object({ name: z.string(), email: z.string(), role: z.string() })) }),
+      200: z.object({
+        users: z.array(z.object({
+          name: z.string(),
+          email: z.string(),
+          role: z.string(),
+          emergencyName: z.string().nullable().optional(),
+          emergencyPhone: z.string().nullable().optional(),
+        }))
+      }),
       401: z.object({ error: z.string() }),
       403: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),

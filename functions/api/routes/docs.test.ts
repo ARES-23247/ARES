@@ -243,7 +243,15 @@ describe("Hono Backend - /docs Router", () => {
 
   it("GET /admin/:slug/history - fetches document history", async () => {
     mockDb.execute.mockResolvedValueOnce([
-      { id: 1, slug: "test-doc", author_nickname: "Admin", created_at: "2026-01-01T00:00:00Z" }
+      { 
+        id: 1, 
+        slug: "test-doc", 
+        title: "Test", 
+        category: "Manuals", 
+        description: "Desc", 
+        author_email: "admin@test.com", 
+        created_at: "2026-01-01T00:00:00Z" 
+      }
     ]);
     const res = await testApp.request("/admin/test-doc/history", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
