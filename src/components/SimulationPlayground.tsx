@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
 import { loader } from "@monaco-editor/react";
 import { validateIdParam } from "../utils/security";
+import { logger } from "../utils/logger";
 
 // Monaco Editor CDN Configuration
 // SECURITY: Version pinned to 0.52.2 for supply chain stability.
@@ -140,7 +141,7 @@ export default function SimulationPlayground() {
         }
       }
     } catch (e) {
-      console.error("[SimPlayground] Failed to load chat from storage:", e);
+      logger.error("[SimPlayground] Failed to load chat from storage:", e);
     }
     return [DEFAULT_MESSAGE];
   };
@@ -154,7 +155,7 @@ export default function SimulationPlayground() {
       const limited = messages.slice(-MAX_CHAT_MESSAGES);
       sessionStorage.setItem(`${STORAGE_PREFIX}${id}`, JSON.stringify(limited));
     } catch (e) {
-      console.error("[SimPlayground] Failed to save chat to storage:", e);
+      logger.error("[SimPlayground] Failed to save chat to storage:", e);
     }
   };
 
@@ -291,7 +292,7 @@ export default function SimulationPlayground() {
       );
 
     } catch (e) {
-      console.error("[SimPlayground] Failed to load intellisense types:", e);
+      logger.error("[SimPlayground] Failed to load intellisense types:", e);
     }
     
     editorRef.current = editor;
@@ -421,7 +422,7 @@ export default function SimulationPlayground() {
         setSavedSims(data.simulations || []);
       }
     } catch (e) {
-      console.error("[SimPlayground] Failed to fetch sims:", e);
+      logger.error("[SimPlayground] Failed to fetch sims:", e);
     } finally {
       setIsLoadingSims(false);
     }
@@ -436,7 +437,7 @@ export default function SimulationPlayground() {
         setGithubSims(data.simulators || []);
       }
     } catch (e) {
-      console.error("[SimPlayground] Failed to fetch github sims:", e);
+      logger.error("[SimPlayground] Failed to fetch github sims:", e);
     } finally {
       setIsLoadingGithubSims(false);
     }
@@ -482,7 +483,7 @@ export default function SimulationPlayground() {
       const { toast } = await import("sonner");
       toast.success(`Loaded: ${sim.name}`);
     } catch (e) {
-      console.error("[SimPlayground] Load failed:", e);
+      logger.error("[SimPlayground] Load failed:", e);
     }
   };
 
@@ -514,7 +515,7 @@ export default function SimulationPlayground() {
       const { toast } = await import("sonner");
       toast.success(`Loaded Official Sim: ${sim.name}`);
     } catch (e) {
-      console.error("[SimPlayground] GitHub Load failed:", e);
+      logger.error("[SimPlayground] GitHub Load failed:", e);
       const { toast } = await import("sonner");
       toast.error(`Failed to load ${sim.name} from GitHub`);
     }
@@ -549,7 +550,7 @@ export default function SimulationPlayground() {
       const { toast } = await import("sonner");
       toast.success("Code formatted");
     } catch (e) {
-      console.error(e);
+      logger.error("Failed to format code:", e);
       const { toast } = await import("sonner");
       toast.error("Format failed");
     }
@@ -571,7 +572,7 @@ export default function SimulationPlayground() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      console.error(e);
+      logger.error("Failed to download zip:", e);
     }
   };
 
@@ -806,7 +807,7 @@ USER REQUEST: ${msg}`;
       }
 
     } catch (e: unknown) {
-      console.error(e);
+      logger.error("AI Chat error:", e);
       setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Error: ${(e as Error)?.message || "Network error"}` }]);
     } finally {
       setIsChatLoading(false);
@@ -847,7 +848,7 @@ USER REQUEST: ${msg}`;
         toast.error(`Save failed: ${errData.error || res.statusText}`);
       }
     } catch (e) {
-      console.error("[SimPlayground] Save failed:", e);
+      logger.error("[SimPlayground] Save failed:", e);
       const { toast } = await import("sonner");
       toast.error("Network error while saving simulation");
     } finally {
