@@ -96,10 +96,13 @@ const seasonsTsRestRouterObj: any = {
 
       const [seasonRow, awards, events, posts, outreach] = await Promise.all([
         db.selectFrom("seasons").select(["start_year", "end_year", "challenge_name", "robot_name", "robot_image", "robot_description", "robot_cad_url", "summary", "album_url", "album_cover", "status", "is_deleted"]).where("start_year", "=", year).executeTakeFirst(),
-        db.selectFrom("awards").select(["id", "title", "event_name", "date", "season_id", "is_deleted"]).where("season_id", "=", year).execute(),
-        db.selectFrom("events").select(["id", "title", "category", "date_start", "date_end", "location", "cover_image", "status", "is_deleted", "season_id"]).where("season_id", "=", year).where("is_deleted", "=", 0).execute(),
-        db.selectFrom("posts").select(["slug", "title", "snippet", "thumbnail", "status", "is_deleted", "season_id", "date"]).where("season_id", "=", year).where("is_deleted", "=", 0).execute(),
-        db.selectFrom("outreach_logs").select(["id", "title", "date", "location", "hours", "students_count", "people_reached", "impact_summary", "season_id", "is_deleted"]).where("season_id", "=", year).execute(),
+        db.selectFrom("awards").select(["id", "title", "event_name", "date", "season_id", "is_deleted"]).where("season_id", "=", year).where("is_deleted", "=", 0).execute(),
+        // WR-13: Add status filter to events to prevent exposing unpublished content
+        db.selectFrom("events").select(["id", "title", "category", "date_start", "date_end", "location", "cover_image", "status", "is_deleted", "season_id"]).where("season_id", "=", year).where("is_deleted", "=", 0).where("status", "=", "published").execute(),
+        // WR-13: Add status filter to posts to prevent exposing unpublished content
+        db.selectFrom("posts").select(["slug", "title", "snippet", "thumbnail", "status", "is_deleted", "season_id", "date"]).where("season_id", "=", year).where("is_deleted", "=", 0).where("status", "=", "published").execute(),
+        // WR-13: Add is_deleted filter to outreach to prevent exposing deleted content
+        db.selectFrom("outreach_logs").select(["id", "title", "date", "location", "hours", "students_count", "people_reached", "impact_summary", "season_id", "is_deleted"]).where("season_id", "=", year).where("is_deleted", "=", 0).execute(),
       ]);
 
       if (!seasonRow) return { status: 404 as const, body: { error: "Season not found" } };
