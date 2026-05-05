@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
-import type { AppEnv } from "../middleware/utils";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 import storeRouter from "./store";
 
 vi.mock("../../utils/zulip", () => ({
@@ -29,8 +29,8 @@ vi.mock("stripe", () => {
 });
 
 describe("Hono Backend - /store Router", () => {
-  let app: Hono<AppEnv>;
-  let mockDb: any;
+  let app: Hono<TestEnv>;
+  let mockDb: MockKysely;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,14 +46,17 @@ describe("Hono Backend - /store Router", () => {
       set: vi.fn().mockReturnThis()
     };
 
-    app = new Hono<AppEnv>();
+    app = new Hono<TestEnv>();
     app.use("*", async (c, next) => {
       c.set("db", mockDb);
-      c.set("sessionUser", { id: "admin-1", role: "admin" } as any);
+      c.set("sessionUser", { id: "admin-1", role: "admin", email: "admin@test.com", name: null, member_type: "mentor" });
       c.env = {
         STRIPE_SECRET_KEY: "sk_test_123",
-        STRIPE_WEBHOOK_SECRET: "whsec_123"
-      } as any;
+        STRIPE_WEBHOOK_SECRET: "whsec_123",
+        DB: {} as D1Database,
+        ENVIRONMENT: "test",
+        DEV_BYPASS: "true",
+      };
       await next();
     });
     app.route("/", storeRouter);
