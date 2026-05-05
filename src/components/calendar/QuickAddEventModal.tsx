@@ -35,19 +35,27 @@ export function QuickAddEventModal({
   onSuccess,
 }: QuickAddEventModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const previousDateRef = useRef<Date | null>(null);
   const [formData, setFormData] = useState<FormData>(DEFAULT_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Initialize form with selected date when modal opens
+  // Initialize form with selected date when modal opens or date changes
   useEffect(() => {
     if (isOpen && selectedDate) {
-      const dateStr = format(selectedDate, "yyyy-MM-dd'T'HH:mm");
-      setFormData({
-        ...DEFAULT_FORM_DATA,
-        dateStart: dateStr,
-        dateEnd: format(new Date(selectedDate.getTime() + 60 * 60 * 1000), "yyyy-MM-dd'T'HH:mm"), // +1 hour
-      });
+      // Only update if the date has actually changed
+      if (!previousDateRef.current || selectedDate.getTime() !== previousDateRef.current.getTime()) {
+        const dateStr = format(selectedDate, "yyyy-MM-dd'T'HH:mm");
+        setFormData({
+          ...DEFAULT_FORM_DATA,
+          dateStart: dateStr,
+          dateEnd: format(new Date(selectedDate.getTime() + 60 * 60 * 1000), "yyyy-MM-dd'T'HH:mm"), // +1 hour
+        });
+        previousDateRef.current = selectedDate;
+      }
+    } else if (!isOpen) {
+      // Reset ref when modal closes
+      previousDateRef.current = null;
     }
   }, [isOpen, selectedDate]);
 
@@ -101,7 +109,7 @@ export function QuickAddEventModal({
       } else {
         setError(result.body.error || "Failed to create event");
       }
-    } catch (err) {
+    } catch (_err) {
       setError("Network error. Please try again.");
     } finally {
       setIsSubmitting(false);
