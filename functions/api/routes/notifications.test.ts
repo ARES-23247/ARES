@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
+import { createMockNotification } from "../../../src/test/factories/systemFactory";
 import { getSessionUser } from "../middleware";
 
 // Mock middleware
@@ -16,15 +18,12 @@ vi.mock("../middleware", async (importOriginal) => {
 import notificationsRouter from "./notifications";
 
 describe("Hono Backend - /notifications Router", () => {
-  
-  
-   
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (getSessionUser as any).mockResolvedValue({ id: "1", email: "test@test.com", role: "member" });
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "1", email: "test@test.com", role: "member" });
     mockDb = {
       selectFrom: vi.fn().mockReturnThis(),
       selectAll: vi.fn().mockReturnThis(),
@@ -49,8 +48,8 @@ describe("Hono Backend - /notifications Router", () => {
       }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       await next();
     });
