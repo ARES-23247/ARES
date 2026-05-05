@@ -6,6 +6,9 @@ import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { awardContract } from "../../../shared/schemas/contracts/awardContract";
 
+// Validation schema for saveAward (derived from contract)
+const saveAwardSchema = awardContract.saveAward.body;
+
 const s = initServer<AppEnv>();
 export const awardsRouter = new Hono<AppEnv>();
 
@@ -43,8 +46,15 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
   },
     saveAward: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
+      // Validate input against schema
+      const validationResult = saveAwardSchema.safeParse(body);
+      if (!validationResult.success) {
+        return { status: 400 as const, body: { error: "Invalid input", details: validationResult.error.flatten() } };
+      }
+      const validatedData = validationResult.data;
+
                   const db = c.get("db") as Kysely<DB>;
-      const { id, title, year, event_name, description, image_url, season_id } = body;
+      const { id, title, year, event_name, description, image_url, season_id } = validatedData;
 
       let finalId: string | undefined = id;
       let exists = false;
