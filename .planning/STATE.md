@@ -2,28 +2,28 @@
 gsd_state_version: 1.0
 milestone: v6.7
 milestone_name: TypeScript Any Elimination
-status: Ready for 30-03 (Backend Test Migration)
-last_updated: "2026-05-05T18:52:00.000Z"
+status: Ready for 30-06 (Backend Test Migration)
+last_updated: "2026-05-05T19:07:00.000Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 34
-  completed_plans: 12
-  percent: 35
+  completed_plans: 13
+  percent: 38
 ---
 
 # System State
 
 **Current Milestone**: v6.7 — TypeScript Any Elimination
-**Status**: Phase 30 in progress — 2/8 plans executed
+**Status**: Phase 30 in progress — 5/8 plans executed
 **Last activity**: 2026-05-05
 
 ## Current Position
 
 Phase: 30 (Test Types) — IN PROGRESS
-Plan: 30-02 executed (Factory Migration complete)
-Status: Ready for 30-03 (Backend Test Migration)
+Plan: 30-05 executed (Events/Logistics Test Types Migration complete)
+Status: Ready for 30-06 (Admin/Operations Test Migration)
 Last activity: 2026-05-05
 
 ## Project Reference
@@ -154,11 +154,19 @@ Research complete, 8 plans created. 1/8 plans executed.
   - Created src/test/types.ts with MockKysely, TestEnv, MockExecutionContext, MockExpressionBuilder
   - Eliminated all 3 `any` violations from src/test/utils.tsx
   - Requirements completed: TEST-01, TEST-02, TEST-03, TEST-04
+- [x] 30-02-PLAN.md — Factory Migration — Complete
+  - Migrated 6 factory files to use D1Row<T> types
+- [x] 30-03-PLAN.md — Auth/Core Backend Test Migration — Complete
+  - Migrated auth, users, sponsors tests to MockKysely and TestEnv
+- [x] 30-04-PLAN.md — Content Backend Test Migration — Complete
+  - Migrated blog, docs, posts, media tests to MockKysely and TestEnv
+- [x] 30-05-PLAN.md — Events/Logistics Test Types Migration — Complete
+  - Migrated events, seasons, outreach, logistics, locations tests to MockKysely and TestEnv
 
 ### Remaining Plans
 
-- 30-02: Factory Migration (6 factory files)
-- 30-03 through 30-07: Backend Test Migration (parallel)
+- 30-06: Admin/Operations Backend Test Migration (awards, judges, tasks, etc.)
+- 30-07: Remaining Backend Test Migration (inquiries, entities, tba, zulip)
 - 30-08: E2E Test Fix
 
 ## Phase 31: Frontend Components — PLANNED
