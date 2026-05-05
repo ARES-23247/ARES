@@ -12,11 +12,6 @@ database_id = "24d5e2b3-5ad5-4e17-9c73-76b9a0030d16"
 binding = "ARES_STORAGE"
 bucket_name = "ares-media"
 
-[[kv_namespaces]]
-binding = "ARES_KV"
-id = "d7be46d8eb9049b78c32791b31c17301"
-preview_id = "228df7ca14b7464b92d5dbe1516ba94c"
-
 # PartyKit D1 binding for document snapshot persistence
 # Shares the main D1 database for document snapshots (WR-05)
 [[d1_databases]]

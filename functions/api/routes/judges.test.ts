@@ -5,6 +5,13 @@ import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import judgesRouter from "./judges";
 
+interface JudgesResponse {
+  success?: boolean;
+  judges?: unknown[];
+  error?: string;
+  [key: string]: unknown;
+}
+
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {

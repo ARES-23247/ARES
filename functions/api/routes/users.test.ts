@@ -14,7 +14,6 @@ vi.mock("../middleware", async (importOriginal) => {
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", role: "admin", email: "admin@test.com" }),
     logAuditAction: vi.fn().mockResolvedValue(true),
     rateLimitMiddleware: () => async (c: Context<TestEnv>, next: () => Promise<void>) => next(),
-    checkRateLimit: vi.fn().mockReturnValue(true),
   };
 });
 

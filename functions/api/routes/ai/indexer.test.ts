@@ -9,17 +9,26 @@ const createMockQuery = () => {
     orderBy: vi.fn(),
     limit: vi.fn(),
     execute: vi.fn().mockResolvedValue([]),
+    executeTakeFirst: vi.fn().mockResolvedValue(null),
+    values: vi.fn(),
+    onConflict: vi.fn(),
+    doUpdateSet: vi.fn(),
   };
   // Each method returns the same object for chaining
   q.select.mockReturnValue(q);
   q.where.mockReturnValue(q);
   q.orderBy.mockReturnValue(q);
   q.limit.mockReturnValue(q);
+  q.values.mockReturnValue(q);
+  q.onConflict.mockReturnValue(q);
+  q.doUpdateSet.mockReturnValue(q);
   return q;
 };
 
 const mockDb: any = {
   selectFrom: vi.fn(() => createMockQuery()),
+  insertInto: vi.fn(() => createMockQuery()),
+  deleteFrom: vi.fn(() => createMockQuery()),
 };
 
 // ── Mock Workers AI ───────────────────────────────────────────────────────
@@ -45,43 +54,45 @@ describe("indexSiteContent", () => {
     mockDb.selectFrom.mockImplementation(() => createMockQuery());
     mockAi.run.mockResolvedValue({ data: [] });
     mockVectorize.upsert.mockResolvedValue(undefined);
-    mockKv.get.mockResolvedValue(null);
-    mockKv.put.mockResolvedValue(undefined);
   });
 
   it("returns 0 indexed when DB has no public content", async () => {
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv);
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
 
     expect(result.indexed).toBe(0);
     expect(result.skipped).toBe(0);
     expect(result.errors).toEqual([]);
-    // Should query events, posts, docs, seasons (4 selectFrom calls)
-    expect(mockDb.selectFrom).toHaveBeenCalledTimes(4);
+    // Should query settings, events, posts, docs, seasons (5 selectFrom calls)
+    expect(mockDb.selectFrom).toHaveBeenCalledTimes(5);
     // Should NOT call AI or Vectorize when nothing to index
     expect(mockAi.run).not.toHaveBeenCalled();
     expect(mockVectorize.upsert).not.toHaveBeenCalled();
   });
 
   it("indexes events and generates embeddings", async () => {
+    const settingsQuery = createMockQuery();
     const mockQuery = createMockQuery();
     mockQuery.execute.mockResolvedValue([
       { title: "Practice", description: "Weekly practice", date_start: "2026-05-01T18:00:00Z", date_end: null, location: "Lab", category: "practice" },
     ]);
-    // First selectFrom = events
-    mockDb.selectFrom.mockImplementationOnce(() => mockQuery);
+    // First selectFrom = settings, Second = events
+    mockDb.selectFrom
+      .mockImplementationOnce(() => settingsQuery)
+      .mockImplementationOnce(() => mockQuery);
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2, 0.3]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv);
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
 
     expect(result.indexed).toBe(1);
     expect(mockAi.run).toHaveBeenCalledWith("@cf/baai/bge-base-en-v1.5", expect.any(Object));
     expect(mockVectorize.upsert).toHaveBeenCalledTimes(1);
-    // Verify KV timestamp was updated
-    expect(mockKv.put).toHaveBeenCalledWith("rag_last_indexed", expect.any(String));
+    // Verify D1 timestamp was updated
+    expect(mockDb.insertInto).toHaveBeenCalled();
   });
 
   it("indexes posts with AST content extraction", async () => {
+    const settingsQuery = createMockQuery();
     const eventsQuery = createMockQuery();
     const postsQuery = createMockQuery();
     postsQuery.execute.mockResolvedValue([
@@ -89,19 +100,21 @@ describe("indexSiteContent", () => {
     ]);
 
     mockDb.selectFrom
-      .mockImplementationOnce(() => eventsQuery)  // events
+      .mockImplementationOnce(() => settingsQuery) // settings
+      .mockImplementationOnce(() => eventsQuery)   // events
       .mockImplementationOnce(() => postsQuery);   // posts
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2, 0.3]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv);
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
 
     expect(result.indexed).toBe(1);
     expect(result.errors).toEqual([]);
   });
 
   it("indexes docs with incremental timestamp filter", async () => {
-    mockKv.get.mockResolvedValue("2026-04-29T00:00:00Z");
+    const settingsQuery = createMockQuery();
+    settingsQuery.executeTakeFirst.mockResolvedValue({ value: "2026-04-29T00:00:00Z" });
 
     const eventsQuery = createMockQuery();
     const postsQuery = createMockQuery();
@@ -111,39 +124,47 @@ describe("indexSiteContent", () => {
     ]);
 
     mockDb.selectFrom
+      .mockImplementationOnce(() => settingsQuery)
       .mockImplementationOnce(() => eventsQuery)
       .mockImplementationOnce(() => postsQuery)
       .mockImplementationOnce(() => docsQuery);
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2, 0.3]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv);
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
 
     expect(result.indexed).toBe(1);
-    // Verify incremental: KV was read
-    expect(mockKv.get).toHaveBeenCalledWith("rag_last_indexed");
+    // Verify incremental: D1 setting was read
+    expect(settingsQuery.executeTakeFirst).toHaveBeenCalled();
     // Verify the docs query chain got a where("updated_at", ">", ...) call
     expect(docsQuery.where).toHaveBeenCalled();
   });
 
-  it("force mode skips KV timestamp check", async () => {
-    mockKv.get.mockResolvedValue("2026-04-29T00:00:00Z");
+  it("force mode skips D1 timestamp check", async () => {
+    const settingsQuery = createMockQuery();
+    mockDb.selectFrom.mockImplementationOnce(() => settingsQuery);
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv, { force: true });
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, { force: true });
 
-    // KV.get should NOT be called in force mode
-    expect(mockKv.get).not.toHaveBeenCalled();
+    // DB should NOT be queried for settings in force mode
+    expect(settingsQuery.executeTakeFirst).not.toHaveBeenCalled();
     expect(result.indexed).toBe(0); // no data in mock DB
   });
 
   it("handles DB errors gracefully per-section", async () => {
+    const settingsQuery = createMockQuery();
+    settingsQuery.executeTakeFirst.mockResolvedValue(null);
+
     const failQuery = createMockQuery();
     failQuery.execute.mockRejectedValue(new Error("DB connection lost"));
 
-    // All 4 queries fail
-    mockDb.selectFrom.mockImplementation(() => failQuery);
+    // settings works, but all 4 indexing queries fail
+    mockDb.selectFrom.mockImplementation((table: string) => {
+      if (table === "settings") return settingsQuery;
+      return failQuery;
+    });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv);
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
 
     expect(result.indexed).toBe(0);
     expect(result.errors.length).toBe(4);
@@ -154,46 +175,48 @@ describe("indexSiteContent", () => {
   });
 
   it("handles embedding API returning mismatched results", async () => {
+    const settingsQuery = createMockQuery();
     const eventsQuery = createMockQuery();
     eventsQuery.execute.mockResolvedValue([
       { title: "Event A", description: "Test", date_start: "2026-05-01", date_end: null, location: "Lab", category: "practice" },
       { title: "Event B", description: "Test", date_start: "2026-05-02", date_end: null, location: "Lab", category: "meeting" },
     ]);
-    mockDb.selectFrom.mockImplementationOnce(() => eventsQuery);
+    mockDb.selectFrom
+      .mockImplementationOnce(() => settingsQuery)
+      .mockImplementationOnce(() => eventsQuery);
 
     // Return only 1 embedding for 2 documents
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv);
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
 
     expect(result.errors).toContainEqual(expect.stringContaining("mismatched results"));
     expect(mockVectorize.upsert).not.toHaveBeenCalled();
   });
 
   it("handles vectorize upsert failure", async () => {
+    const settingsQuery = createMockQuery();
     const eventsQuery = createMockQuery();
     eventsQuery.execute.mockResolvedValue([
       { title: "Event", description: "x", date_start: "2026-05-01", date_end: null, location: "Lab", category: "practice" },
     ]);
-    mockDb.selectFrom.mockImplementationOnce(() => eventsQuery);
+    mockDb.selectFrom
+      .mockImplementationOnce(() => settingsQuery)
+      .mockImplementationOnce(() => eventsQuery);
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2]] });
     mockVectorize.upsert.mockRejectedValue(new Error("Vectorize quota exceeded"));
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv);
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
 
     expect(result.errors).toContainEqual(expect.stringContaining("upsert failed"));
     expect(result.indexed).toBe(0);
   });
 
-  it("works without KV (optional param)", async () => {
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, undefined);
 
-    expect(result.indexed).toBe(0);
-    expect(result.errors).toEqual([]);
-  });
 
   it("indexes seasons with published status filter", async () => {
+    const settingsQuery = createMockQuery();
     const eventsQuery = createMockQuery();
     const postsQuery = createMockQuery();
     const docsQuery = createMockQuery();
@@ -206,17 +229,18 @@ describe("indexSiteContent", () => {
     mockDb.selectFrom.mockImplementation(() => {
       callCount++;
       switch (callCount) {
-        case 1: return eventsQuery;
-        case 2: return postsQuery;
-        case 3: return docsQuery;
-        case 4: return seasonsQuery;
+        case 1: return settingsQuery;
+        case 2: return eventsQuery;
+        case 3: return postsQuery;
+        case 4: return docsQuery;
+        case 5: return seasonsQuery;
         default: return createMockQuery();
       }
     });
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2, 0.3]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, mockKv);
+    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
 
     expect(result.indexed).toBe(1);
     expect(result.errors).toEqual([]);

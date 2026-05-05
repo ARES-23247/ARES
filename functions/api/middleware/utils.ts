@@ -41,7 +41,6 @@ export type Bindings = {
   DEV_BYPASS?: string;
   TURNSTILE_SECRET_KEY?: string;
   CRON_SECRET?: string;
-  ARES_KV?: KVNamespace;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   SENTRY_DSN?: string;

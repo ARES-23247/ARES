@@ -19,16 +19,19 @@ const scrubPII = (text: string): string => {
 // ── AI Status Diagnostic (admin only) ──────────────────────────────────────
 aiRouter.get("/status", ensureAdmin, async (c) => {
   let indexErrors = null;
-  const kv = c.env.ARES_KV;
-  if (kv) {
-    const errStr = await kv.get("LAST_INDEX_ERRORS");
-    if (errStr) {
+  const db = c.get("db") as Kysely<DB>;
+  
+  try {
+    const errSetting = await db.selectFrom("settings").select("value").where("key", "=", "LAST_INDEX_ERRORS").executeTakeFirst();
+    if (errSetting && errSetting.value) {
       try {
-        indexErrors = JSON.parse(errStr);
+        indexErrors = JSON.parse(errSetting.value);
       } catch (_e) {
-        indexErrors = errStr;
+        indexErrors = errSetting.value;
       }
     }
+  } catch (dbErr) {
+    console.error("Failed to read LAST_INDEX_ERRORS from D1", dbErr);
   }
 
   return c.json({
@@ -898,7 +901,7 @@ aiRouter.post("/reindex", ensureAdmin, persistentRateLimitMiddleware(5, 600), as
   const force = c.req.query("force") === "true";
   const db = c.get("db") as Kysely<DB>;
   const { indexSiteContent } = await import("./indexer");
-  const result = await indexSiteContent(db, c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV, { force });
+  const result = await indexSiteContent(db, c.env.AI, c.env.VECTORIZE_DB, { force });
 
   return c.json({
     success: true,
@@ -920,7 +923,7 @@ aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(50
   const { indexExternalResources } = await import("./indexer");
   const githubPat = c.env.GITHUB_PAT;
   const ai = c.env.AI as any;
-  const result = await indexExternalResources(db, ai, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat, c.env.ARES_KV, sourceId);
+  const result = await indexExternalResources(db, ai, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat, sourceId);
 
   return c.json({
     success: true,

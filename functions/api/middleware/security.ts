@@ -4,27 +4,7 @@ import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import type { KVNamespace } from "@cloudflare/workers-types";
 
-// ── Rate Limiting (Cloudflare KV) ────────────────────────
-export async function checkRateLimit(kv: KVNamespace | undefined, ip: string, userAgent: string, limit = 100, windowSeconds = 60): Promise<boolean> {
-  if (!kv) return true; // Fall open if KV is not bound
-  
-  const entropyKey = `${ip}:${userAgent.substring(0, 100)}`;
-  const currentCountStr = await kv.get(entropyKey);
-  let currentCount = currentCountStr ? parseInt(currentCountStr, 10) : 0;
-  
-  currentCount += 1;
-  
-  // Set expiration if it's the first request, otherwise KV handles TTL natively
-  if (currentCount === 1) {
-    await kv.put(entropyKey, currentCount.toString(), { expirationTtl: windowSeconds });
-  } else {
-    // Note: KV doesn't support atomic increments or extending TTL on write without reading first.
-    // Overwriting the key resets the TTL, which extends the window, but we accept this as a tradeoff for KV.
-    await kv.put(entropyKey, currentCount.toString());
-  }
-
-  return currentCount <= limit;
-}
+// ── Global KV Rate limiting removed. Use D1 persistent checks instead. ────────────────────────
 
 // ── Write-Endpoint Rate Limiting (Persistent D1) ────────────────────────────
 
@@ -119,36 +99,7 @@ export async function verifyTurnstile(
  * Middleware: Rate Limit
  */
 export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
-  return async (c: Context<AppEnv>, next: Next) => {
-    // SEC-03: Only bypass rate limiting if explicitly requested via DEV_BYPASS
-    // Do not automatically bypass based on environment - this could expose
-    // staging/pre-production environments to abuse.
-    if (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1") {
-      return await next();
-    }
-
-    const ip = c.req.header("CF-Connecting-IP") || "unknown";
-    const ua = c.req.header("User-Agent") || "unknown";
-    
-    // Use the ARES_KV KV namespace bound in wrangler.toml
-    const allowed = await checkRateLimit(c.env.ARES_KV, `mw:${ip}`, ua, limit, windowSeconds);
-    if (!allowed) {
-      const db = c.get("db") as Kysely<DB>;
-      if (db) {
-        c.executionCtx.waitUntil(
-          db.insertInto("audit_log").values({
-            id: crypto.randomUUID(),
-            action: "SECURITY_BLOCK",
-            actor: ip,
-            resource_type: "rate_limit",
-            details: JSON.stringify({ reason: "KV rate limit exceeded", path: c.req.path, ua })
-          }).execute().catch(console.error)
-        );
-      }
-      return c.json({ error: "Too many submissions. Please try again later." }, 429);
-    }
-    await next();
-  };
+  return persistentRateLimitMiddleware(limit, windowSeconds);
 };
 
 /**

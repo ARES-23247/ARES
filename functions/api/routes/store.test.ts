@@ -3,6 +3,14 @@ import { Hono } from "hono";
 import type { MockKysely, TestEnv } from "../../../src/test/types";
 import storeRouter from "./store";
 
+interface StoreResponse {
+  success?: boolean;
+  data?: unknown;
+  error?: string;
+  session?: { id: string; url: string };
+  [key: string]: unknown;
+}
+
 vi.mock("../../utils/zulip", () => ({
   sendZulipMessage: vi.fn().mockResolvedValue(true)
 }));
@@ -69,7 +77,7 @@ describe("Hono Backend - /store Router", () => {
         body: JSON.stringify({ type: "checkout.session.completed" })
       });
       expect(res.status).toBe(400);
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as { error: string };
       expect(data.error).toBe("Missing stripe signature");
     });
 
@@ -82,7 +90,7 @@ describe("Hono Backend - /store Router", () => {
         body: JSON.stringify({ type: "checkout.session.completed" })
       });
       expect(res.status).toBe(400);
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as { error: string };
       expect(data.error).toBe("Invalid signature");
     });
 
@@ -131,7 +139,7 @@ describe("Hono Backend - /store Router", () => {
       ]);
       const res = await app.request("/api/store/products");
       expect(res.status).toBe(200);
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as Array<{ id: string }>;
       expect(data).toHaveLength(1);
       expect(data[0].id).toBe("prod_1");
     });
@@ -154,7 +162,7 @@ describe("Hono Backend - /store Router", () => {
       });
 
       expect(res.status).toBe(200);
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as StoreResponse;
       expect(data.sessionId).toBe("cs_test_123");
       expect(data.url).toBe("https://stripe.com/checkout/test");
     });

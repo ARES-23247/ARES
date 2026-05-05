@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { analyticsContract } from "../../../shared/schemas/contracts/analyticsContract";
-import { AppEnv, ensureAuth, ensureAdmin, checkRateLimit, rateLimitMiddleware, turnstileMiddleware, getDbSettings, s } from "../middleware";
+import { AppEnv, ensureAuth, ensureAdmin, rateLimitMiddleware, turnstileMiddleware, getDbSettings, s, checkPersistentRateLimit } from "../middleware";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
@@ -11,7 +11,7 @@ const analyticsHandlers = {
   trackPageView: async (input, c) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
-    if (!(await checkRateLimit(c.env.ARES_KV, `track:${ip}`, ua, 20, 600))) {
+    if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `track:${ip}`, ua, 20, 600))) {
       return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } };
     }
 
@@ -38,7 +38,7 @@ const analyticsHandlers = {
   trackSponsorClick: async (input, c) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
-    if (!(await checkRateLimit(c.env.ARES_KV, `click:${ip}`, ua, 10, 600))) {
+    if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `click:${ip}`, ua, 10, 600))) {
       return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } };
     }
 

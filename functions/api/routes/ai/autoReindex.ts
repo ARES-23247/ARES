@@ -19,14 +19,13 @@ export function triggerBackgroundReindex(
   executionCtx: ExecutionContext,
   db: Kysely<DB>,
   ai: any,
-  vectorize: VectorizeIndex | undefined,
-  kv?: KVNamespace
+  vectorize: VectorizeIndex | undefined
 ): void {
   if (!ai || !vectorize) return;
 
   executionCtx.waitUntil(
     import("./indexer")
-      .then(({ indexSiteContent }) => indexSiteContent(db, ai, vectorize, kv))
+      .then(({ indexSiteContent }) => indexSiteContent(db, ai, vectorize))
       .then((r) => {
         if (r.indexed > 0 || r.errors.length > 0) {
           console.log(`[Auto-Reindex] Indexed: ${r.indexed}, Errors: ${r.errors.length}`);
@@ -44,14 +43,13 @@ export function triggerExternalReindex(
   ai: any,
   vectorize: VectorizeIndex | undefined,
   zaiApiKey?: string,
-  githubPat?: string,
-  kv?: KVNamespace
+  githubPat?: string
 ): void {
   if (!vectorize) return; // Vectorize is strictly required, AI might be optional if zaiApiKey is provided
 
   executionCtx.waitUntil(
     import("./indexer")
-      .then(({ indexExternalResources }) => indexExternalResources(db, ai as any, vectorize, zaiApiKey, githubPat, kv))
+      .then(({ indexExternalResources }) => indexExternalResources(db, ai as any, vectorize, zaiApiKey, githubPat))
       .then((r) => {
         if (r.indexed > 0 || r.errors.length > 0) {
           console.log(`[External-Reindex] Indexed: ${r.indexed}, Errors: ${r.errors.length}`);

@@ -41,17 +41,17 @@ export async function indexSiteContent(
   db: Kysely<DB>,
   ai: { run: (model: string, input: unknown) => Promise<unknown> },
   vectorize: VectorizeIndex,
-  kv?: KVNamespace,
   options?: { force?: boolean }
 ): Promise<{ indexed: number; skipped: number; errors: string[] }> {
   const documents: IndexableDocument[] = [];
   const errors: string[] = [];
   const force = options?.force ?? false;
 
-  // Get the last index timestamp from KV (or null for full index)
+  // Get the last index timestamp from D1 (or null for full index)
   let lastIndexed: string | null = null;
-  if (!force && kv) {
-    lastIndexed = await kv.get(KV_KEY);
+  if (!force) {
+    const setting = await db.selectFrom("settings").select("value").where("key", "=", KV_KEY).executeTakeFirst();
+    lastIndexed = setting?.value || null;
   }
 
   const nowIso = new Date().toISOString();
@@ -264,9 +264,12 @@ export async function indexSiteContent(
     }
   }
 
-  // ── 6. Update the last-indexed timestamp in KV ──
-  if (kv && indexed > 0) {
-    await kv.put(KV_KEY, nowIso);
+  // ── 6. Update the last-indexed timestamp in D1 ──
+  if (indexed > 0) {
+    await db.insertInto("settings")
+      .values({ key: KV_KEY, value: nowIso })
+      .onConflict(oc => oc.column("key").doUpdateSet({ value: nowIso }))
+      .execute();
   }
 
   return { indexed, skipped: 0, errors };
@@ -307,7 +310,6 @@ export async function indexExternalResources(
   vectorize: VectorizeIndex,
   zaiApiKey?: string,
   githubPat?: string,
-  kv?: KVNamespace,
   sourceId?: string
 ): Promise<{ indexed: number; skipped: number; errors: string[] }> {
   const documents: IndexableDocument[] = [];
@@ -417,17 +419,19 @@ export async function indexExternalResources(
     }
   }
 
-  // Store errors in KV for admin console debugging
-  if (kv) {
-    try {
-      if (errors.length > 0) {
-        await kv.put("LAST_INDEX_ERRORS", JSON.stringify({ timestamp: new Date().toISOString(), errors }));
-      } else {
-        await kv.delete("LAST_INDEX_ERRORS");
-      }
-    } catch (e) {
-      console.error("Failed to write errors to KV:", e);
+  // Store errors in D1 for admin console debugging
+  try {
+    if (errors.length > 0) {
+      const errStr = JSON.stringify({ timestamp: new Date().toISOString(), errors });
+      await db.insertInto("settings")
+        .values({ key: "LAST_INDEX_ERRORS", value: errStr })
+        .onConflict(oc => oc.column("key").doUpdateSet({ value: errStr }))
+        .execute();
+    } else {
+      await db.deleteFrom("settings").where("key", "=", "LAST_INDEX_ERRORS").execute();
     }
+  } catch (e) {
+    console.error("Failed to write errors to D1:", e);
   }
 
   return { indexed, skipped: 0, errors };

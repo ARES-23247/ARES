@@ -119,15 +119,17 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
 // List all simulations from GitHub
 simulationsRouter.get("/", async (c) => {
   try {
-    const db = c.get("db");
     const ghConfig = getGitHubConfig(c);
-    const config = await db.selectFrom("settings").selectAll().execute();
-    const patSetting = config.find(s => s.key === "GITHUB_PAT");
-    const pat = patSetting?.value || c.env.GITHUB_PAT;
-
-    // WR-17: Log PAT status without exposing the token value
-    const patStatus = pat ? `configured (ends with ${String(pat).slice(-4)})` : "missing";
-    console.log("[Simulations] Using GitHub PAT:", patStatus);
+    let pat = c.env.GITHUB_PAT;
+    
+    try {
+      const db = c.get("db");
+      const config = await db.selectFrom("settings").selectAll().execute();
+      const patSetting = config.find(s => s.key === "GITHUB_PAT");
+      if (patSetting?.value) pat = patSetting.value;
+    } catch (e) {
+      console.warn("[Simulations] DB Settings fetch failed (likely missing table):", e);
+    }
 
     const headers: Record<string, string> = {
       "User-Agent": "ARES-Cloudflare-Worker",

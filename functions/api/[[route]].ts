@@ -1,10 +1,9 @@
-console.log("[Init] Starting [[route]].ts");
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { handle } from "hono/cloudflare-pages";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
-import { Bindings, AppEnv, checkRateLimit, rateLimitMiddleware, persistentRateLimitMiddleware, logSystemError, ensureAdmin, dbMiddleware, envMiddleware, parsePagination, originIntegrityMiddleware } from "./middleware";
+import { Bindings, AppEnv, rateLimitMiddleware, persistentRateLimitMiddleware, logSystemError, ensureAdmin, dbMiddleware, envMiddleware, parsePagination, originIntegrityMiddleware } from "./middleware";
 import { sql } from "kysely";
 import { DB } from "../../shared/schemas/database";
 
@@ -49,7 +48,6 @@ import { logger } from "hono/logger";
 import { sentry } from "@hono/sentry";
 
 const app = new Hono<AppEnv>();
-console.log("[Init] Hono app instance created");
 
 app.use("*", logger());
 app.use("*", async (c, next) => {
@@ -60,16 +58,8 @@ app.use("*", async (c, next) => {
 });
 
 // ── 2. Isolate-Memory Rate Limiting (Fast reject) ────────────────────
-app.use("*", async (c, next) => {
-  const ip = c.req.header("CF-Connecting-IP") || "unknown";
-  const ua = c.req.header("User-Agent") || "unknown";
-  if (ip !== "unknown" && !c.req.path.startsWith("/assets")) {
-    const isBypass = c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1";
-    const allowed = isBypass || checkRateLimit(c.env.ARES_KV, ip, ua, 150, 60); 
-    if (!allowed) return c.json({ error: "Too many requests" }, 429);
-  }
-  await next();
-});
+// Global KV rate limiting has been removed to prevent KV write quota exhaustion.
+// Use persistentRateLimitMiddleware on specific high-risk routes instead.
 
 // ── 3. Env & DB setup ────
 app.use("*", envMiddleware);
@@ -79,7 +69,6 @@ app.use("*", dbMiddleware);
 app.use("*", originIntegrityMiddleware());
 
 const apiRouter = new Hono<AppEnv>();
-console.log("[Init] apiRouter instance created");
 
 // SCA-P01: Prevent CDN Cache Poisoning
 apiRouter.use("*", async (c, next) => {
@@ -306,11 +295,8 @@ app.onError(async (err, c: any) => {
   return c.json({ error: "Internal Server Error", message: isProd ? "Unexpected error" : err.message }, 500);
 });
 
-console.log("[Init] Mounting apiRouter to app...");
 app.route("/api", apiRouter);
-console.log("[Init] Mounted /api");
 app.route("/dashboard/api", apiRouter);
-console.log("[Init] Mounted /dashboard/api");
 
 export const onRequest = handle(app);
 import { purgeOldInquiries } from "./routes/inquiries/index";
@@ -417,7 +403,7 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
   if (env.AI && env.VECTORIZE_DB) {
     try {
       const { indexSiteContent } = await import("./routes/ai/indexer");
-      const result = await indexSiteContent(db, env.AI, env.VECTORIZE_DB, env.ARES_KV);
+      const result = await indexSiteContent(db, env.AI, env.VECTORIZE_DB);
       console.log(`[Cron] Vectorize indexed ${result.indexed} documents. Errors: ${result.errors.length}`);
       if (result.errors.length > 0) {
         console.error("[Cron] Indexing errors:", result.errors);
@@ -427,9 +413,15 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
     }
   }
 
-  // KV heartbeat for cron validation (TD-05)
-  if (env.ARES_KV) {
-    await env.ARES_KV.put("cron_last_run", new Date().toISOString());
+  // DB heartbeat for cron validation (TD-05) - migrated from KV to prevent quota exhaustion
+  try {
+    const nowIso = new Date().toISOString();
+    await db.insertInto("settings")
+      .values({ key: "cron_last_run", value: nowIso, updated_at: nowIso })
+      .onConflict((oc: any) => oc.column("key").doUpdateSet({ value: nowIso, updated_at: nowIso }))
+      .execute();
+  } catch (err) {
+    console.error("[Cron] Failed to update heartbeat in D1", err);
   }
 };
 

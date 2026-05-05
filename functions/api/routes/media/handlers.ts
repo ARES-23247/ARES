@@ -1,5 +1,4 @@
-
-import { AppEnv, getDbSettings, checkRateLimit, logAuditAction } from "../../middleware";
+import { AppEnv, getDbSettings, checkPersistentRateLimit, logAuditAction } from "../../middleware";
 import { initServer } from "ts-rest-hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -109,7 +108,7 @@ export const mediaHandlers = {
   getMedia: async (_input, c) => {
     const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
     const ua = c.req.header("user-agent") || "unknown";
-    const rl = await checkRateLimit(c.env.ARES_KV, `media_list_${ip}`, ua, 30, 60);
+    const rl = await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `media_list_${ip}`, ua, 30, 60);
     if (!rl) {
       return { status: 429, body: { error: "Rate limit exceeded", media: [] } };
     }
@@ -280,9 +279,9 @@ export const mediaHandlers = {
       }
 
       return { status: 200, body: { success: true, key, url: `/api/media/${key}`, altText } };
-    } catch (err) {
-      console.error("[Media:Upload] Error", err);
-      return { status: 500, body: { error: "Upload failed" } };
+    } catch (err: any) {
+      console.error("[Media:Upload] Error", err.stack || err);
+      return { status: 500, body: { error: "Upload failed: " + (err.message || String(err)) } };
     }
   },
   move: async (input, c) => {

@@ -1,9 +1,11 @@
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, ensureAdmin, getSocialConfig, checkRateLimit, s } from "../middleware";
+import { AppEnv, ensureAdmin, getSocialConfig, checkPersistentRateLimit, s } from "../middleware";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem } from "../../utils/githubProjects";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { githubContract } from "../../../shared/schemas/contracts/githubContract";
+import { type Kysely } from "kysely";
+import { type DB } from "@shared/types/db";
 
 import type { HonoContext } from "@shared/types/api";
 
@@ -64,7 +66,7 @@ const githubHandlers = {
     // WR-01: Add rate limiting to prevent abuse of GitHub API calls
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
-    if (!(await checkRateLimit(c.env.ARES_KV, `github-activity:${ip}`, ua, 10, 60))) {
+    if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `github-activity:${ip}`, ua, 10, 60))) {
       return { status: 429 as const, body: { error: "Rate limit exceeded" } };
     }
 

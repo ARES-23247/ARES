@@ -57,7 +57,6 @@ describe("AI Router - /reindex endpoint", () => {
       mockDb,
       baseEnv.AI,
       baseEnv.VECTORIZE_DB,
-      baseEnv.ARES_KV,
       { force: false }
     );
   });
@@ -71,7 +70,6 @@ describe("AI Router - /reindex endpoint", () => {
       mockDb,
       baseEnv.AI,
       baseEnv.VECTORIZE_DB,
-      baseEnv.ARES_KV,
       { force: true }
     );
   });

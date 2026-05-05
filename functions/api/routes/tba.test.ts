@@ -4,6 +4,13 @@ import { mockExecutionContext } from "../../../src/test/utils";
 import { TestEnv, MockKysely } from "../../../src/test/types";
 import tbaRouter from "./tba";
 
+interface TBAResponse {
+  success?: boolean;
+  data?: unknown;
+  error?: string;
+  [key: string]: unknown;
+}
+
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
@@ -39,7 +46,7 @@ describe("Hono Backend - /tba Router", () => {
 
     // Wrap request method to always include DEV_BYPASS in env
     const originalRequest = testApp.request.bind(testApp);
-    testApp.request = async (input: string | URL | Request, init?: RequestInit, env?: Record<string, any>, execCtx?: ExecutionContext) => {
+    testApp.request = async (input: string | URL | Request, init?: RequestInit, env?: Record<string, unknown>, execCtx?: ExecutionContext) => {
       return originalRequest(input, init, { ...env, DEV_BYPASS: "true" }, execCtx);
     };
 
@@ -55,7 +62,7 @@ describe("Hono Backend - /tba Router", () => {
 
     const res = await testApp.request("/rankings/2023test", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { rankings: Array<{ team_key: string; rank: number }> };
     expect(body.rankings).toHaveLength(1);
     expect(body.rankings[0].team_key).toBe("frc123");
   });
@@ -68,7 +75,7 @@ describe("Hono Backend - /tba Router", () => {
 
     const res = await testApp.request("/rankings/2023empty", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { rankings: unknown[] };
     expect(body.rankings).toHaveLength(0);
   });
 
@@ -94,7 +101,7 @@ describe("Hono Backend - /tba Router", () => {
 
     const res = await testApp.request("/matches/2023testMatches", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { matches: Array<{ time: number | null; key: string }> };
     expect(body.matches).toHaveLength(2);
     expect(body.matches[0].key).toBe("m1"); // Sorted by time
   });
@@ -110,7 +117,7 @@ describe("Hono Backend - /tba Router", () => {
 
     const res = await testApp.request("/matches/2023testMatchesNull", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { matches: unknown[] };
     expect(body.matches).toHaveLength(2);
   });
 
@@ -144,7 +151,7 @@ describe("Hono Backend - /tba Router", () => {
 
     const res = await testApp.request("/ftc-events/2023/TEST/matches", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { events: unknown[] };
     expect(body.events).toHaveLength(1);
   });
 
@@ -209,7 +216,7 @@ describe("Hono Backend - /tba Router", () => {
     });
     const res = await testApp.request("/rankings/2023fallback", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as TBAResponse;
     expect(body.rankings[0].team_key).toBe("frc999");
     vi.useRealTimers();
   });

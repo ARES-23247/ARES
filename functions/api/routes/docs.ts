@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { docContract } from "../../../shared/schemas/contracts/docContract";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkRateLimit, verifyTurnstile, emitNotification, notifyByRole, getSocialConfig, logAuditAction, s } from "../middleware";
+import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkPersistentRateLimit, verifyTurnstile, emitNotification, notifyByRole, getSocialConfig, logAuditAction, s } from "../middleware";
 import { triggerBackgroundReindex } from "./ai/autoReindex";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { sql, Kysely } from "kysely";
@@ -398,7 +398,7 @@ const docTsRestRouter = s.router(docContract, {
 
       await db.updateTable("docs").set({ is_deleted: 1 }).where("slug", "=", slug).execute();
       c.executionCtx?.waitUntil?.(logAuditAction(c, "DELETE_DOC", "docs", slug, JSON.stringify(existing)));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Delete] Error", e);
@@ -544,7 +544,7 @@ const docTsRestRouter = s.router(docContract, {
           }));
         }
 
-        triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
+        triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
         return { status: 200 as const, body: { success: true, slug } };
     } catch (e) {
       console.error("[Docs:Save] Error", e);
@@ -569,7 +569,7 @@ const docTsRestRouter = s.router(docContract, {
             const { isHelpful, comment, turnstileToken } = input.body;
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
-    if (!(await checkRateLimit(c.env.ARES_KV, `feedback:${ip}`, ua, 10, 60))) return { status: 429 as const, body: { error: "Too many submissions" } };
+    if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `feedback:${ip}`, ua, 10, 60))) return { status: 429 as const, body: { error: "Too many submissions" } };
 
     const valid = await verifyTurnstile(turnstileToken || "", c.env.TURNSTILE_SECRET_KEY, ip);
     if (!valid) return { status: 403 as const, body: { error: "Security verification failed" } };

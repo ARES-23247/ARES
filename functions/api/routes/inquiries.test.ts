@@ -20,7 +20,6 @@ vi.mock("../middleware", async (importOriginal) => {
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", role: "admin", email: "admin@test.com" }),
     logAuditAction: vi.fn().mockResolvedValue(true),
     rateLimitMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
-    checkRateLimit: vi.fn().mockReturnValue(true),
   };
 });
 
@@ -39,23 +38,40 @@ vi.mock("../../utils/notifications", () => ({
 
 import inquiriesRouter from "./inquiries/index";
 
+// Test interfaces - flexible response type for API responses
+interface InquiryResponseType {
+  [key: string]: unknown;
+  inquiries?: unknown[];
+  inquiry?: { id: string; [key: string]: unknown };
+  id?: string;
+  status?: string;
+  success?: boolean;
+  error?: string;
+}
+
 describe("Hono Backend - /inquiries Router", () => {
-  
+
   let mockDb: MockKysely;
-  let testApp: Hono<any>;
+  let testApp: Hono<TestEnv>;
   let env: { DEV_BYPASS?: string; DB: D1Database };
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Polyfill crypto for Node.js test environment if needed
-    if (typeof (global as any).crypto === "undefined") {
-      (global as any).crypto = {
-        randomUUID: () => "test-uuid-" + Math.random().toString(36).substring(7)
+    /* eslint-disable @typescript-eslint/no-explicit-any -- Test polyfill for Node.js environment */
+    // @ts-expect-error - Test polyfill for crypto
+    if (typeof global.crypto === "undefined") {
+      // @ts-expect-error - Test polyfill for crypto
+      global.crypto = {
+        randomUUID: () => `test-uuid-${Math.random().toString(36).substring(7)}`
       };
-    } else if (typeof (global as any).crypto.randomUUID === "undefined") {
-      (global as any).crypto.randomUUID = () => "test-uuid-" + Math.random().toString(36).substring(7);
+      // @ts-expect-error - Test polyfill for crypto
+    } else if (typeof global.crypto.randomUUID === "undefined") {
+      // @ts-expect-error - Test polyfill for crypto
+      global.crypto.randomUUID = () => `test-uuid-${Math.random().toString(36).substring(7)}`;
     }
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     mockDb = {
       selectFrom: vi.fn().mockReturnThis(),
@@ -107,7 +123,7 @@ describe("Hono Backend - /inquiries Router", () => {
     testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       // getSessionUser checks for "sessionUser" in context
-      c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com" });
+      c.set("sessionUser", { id: "1", email: "admin@test.com", name: "Admin", role: "admin", member_type: "mentor" });
       await next();
     });
     testApp.route("/", inquiriesRouter);
@@ -132,7 +148,7 @@ describe("Hono Backend - /inquiries Router", () => {
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
-      c.set("sessionUser", { id: "2", role: "user", member_type: "student", email: "student@test.com" });
+      c.set("sessionUser", { id: "2", email: "student@test.com", name: "Student", role: "user", member_type: "student" });
       await next();
     });
     testApp.route("/", inquiriesRouter);
@@ -143,7 +159,7 @@ describe("Hono Backend - /inquiries Router", () => {
 
     const res = await testApp.request("/admin/list", { headers: { "DEV_BYPASS": "true" } }, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { inquiries: unknown[] };
     expect(body.inquiries[0].name).toBe("J*******");
     expect(body.inquiries[0].email).toContain("***@");
     expect(body.inquiries[0].metadata).not.toContain("secret");
@@ -203,7 +219,7 @@ describe("Hono Backend - /inquiries Router", () => {
     }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as InquiryResponseType;
     expect(body.id).toBe("dup-id");
   });
 
@@ -269,7 +285,7 @@ describe("Hono Backend - /inquiries Router", () => {
     }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as InquiryResponseType;
     const inquiry = body.inquiries[0];
 
     // name: J******* (1 + length-1 stars)
@@ -329,7 +345,7 @@ describe("Hono Backend - /inquiries Router", () => {
 
   it("POST / - handles submission failure", async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
-    mockDb.insertInto.mockImplementationOnce(() => { throw new Error("Insert Error"); });
+    (mockDb.insertInto as ReturnType<typeof vi.fn>).mockImplementationOnce(() => { throw new Error("Insert Error"); });
     
     const res = await testApp.request("/", {
       method: "POST",
@@ -374,7 +390,7 @@ describe("Hono Backend - /inquiries Router", () => {
     vi.spyOn(cryptoModule, "decrypt").mockRejectedValue(new Error("Decryption failed"));
 
     const res = await testApp.request("/admin/list", { headers: { "DEV_BYPASS": "true" } }, env, mockExecutionContext);
-    const body = await res.json() as any;
+    const body = await res.json() as InquiryResponseType;
     expect(body.inquiries[0].name).toBe("[ENCRYPTED NAME]");
     expect(body.inquiries[0].email).toBe("[ENCRYPTED EMAIL]");
   });
@@ -405,7 +421,7 @@ describe("Hono Backend - /inquiries Router", () => {
     }, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as InquiryResponseType;
     expect(body.id).toBe("old-id");
     expect(mockDb.insertInto).not.toHaveBeenCalled();
   });
@@ -433,10 +449,12 @@ describe("Hono Backend - /inquiries Router", () => {
   it("purgeOldInquiries function - with results", async () => {
     const { purgeOldInquiries } = await import("./inquiries/handlers");
     mockDb.execute.mockResolvedValueOnce([{ id: "1" }]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bridging MockKysely to Kysely<DB>
     const res = await purgeOldInquiries(mockDb as any, 30);
     expect(res.deleted).toBe(1);
     expect(mockDb.deleteFrom).toHaveBeenCalledWith("inquiries");
-    
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bridging MockKysely to Kysely<DB>
     const res2 = await purgeOldInquiries(mockDb as any, 0);
     expect(res2.deleted).toBe(0);
   });

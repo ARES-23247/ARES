@@ -1,15 +1,23 @@
  
-import { TestEnv, MockKysely } from "../../../src/test/types";
+import { TestEnv, MockKysely, MockExecutionContext } from "../../../src/test/types";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import analyticsRouter from "./analytics";
 
-const mockExecutionContext = {
-  waitUntil: vi.fn(),
+interface MockFetchResponse {
+  ok: boolean;
+  json: () => Promise<{ success: boolean }>;
+}
+
+const mockExecutionContext: MockExecutionContext = {
+  waitUntil: vi.fn((promise: Promise<unknown>) => promise),
   passThroughOnException: vi.fn(),
-} as any;
+  props: {},
+};
 
 import { createMockExpressionBuilder } from "../../../src/test/utils";
+
+const rateLimitStore = new Map<string, number>();
 
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
@@ -19,12 +27,17 @@ vi.mock("../middleware", async (importOriginal) => {
     ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
     rateLimitMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
     turnstileMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
+    checkPersistentRateLimit: vi.fn().mockImplementation(async (_db, key, _ua, limit) => {
+      const count = (rateLimitStore.get(key) || 0) + 1;
+      rateLimitStore.set(key, count);
+      return count <= limit;
+    })
   };
 });
 
 describe("Analytics Router", () => {
   let mockDb: MockKysely;
-  let testApp: Hono<any>;
+  let testApp: Hono<TestEnv>;
   let env: { DEV_BYPASS?: string; DB: D1Database };
 
   beforeEach(() => {
@@ -79,17 +92,13 @@ describe("Analytics Router", () => {
       doUpdateSet: vi.fn().mockReturnThis(),
       fn: {}
     };
-    const kvStore = new Map<string, string>();
     env = {
       DB: {},
       TURNSTILE_SECRET_KEY: "test-secret",
-      DEV_BYPASS: "true",
-      ARES_KV: {
-        get: vi.fn().mockImplementation(async (k: string) => kvStore.get(k) || null),
-        put: vi.fn().mockImplementation(async (k: string, v: string) => { kvStore.set(k, v); })
-      }
+      DEV_BYPASS: "true"
     };
     vi.clearAllMocks();
+    rateLimitStore.clear();
 
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
@@ -103,7 +112,7 @@ describe("Analytics Router", () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: true }),
-    }) as any;
+    }) as MockFetchResponse;
   });
 
   describe("POST /track", () => {
@@ -116,7 +125,7 @@ describe("Analytics Router", () => {
 
       const res = await testApp.request(req, {}, env, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.success).toBe(true);
       expect(mockDb.execute).toHaveBeenCalled();
     });
@@ -243,7 +252,7 @@ describe("Analytics Router", () => {
       const res = await testApp.request(req, {}, env, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.topPages.length).toBe(1);
     });
 
@@ -257,7 +266,7 @@ describe("Analytics Router", () => {
       const res = await testApp.request(req, {}, env, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.roster.length).toBe(2);
       expect(body.roster[1].nickname).toBeNull();
       expect(body.roster[1].attended_events).toBe(0);
@@ -298,7 +307,7 @@ describe("Analytics Router", () => {
       const res = await testApp.request(req, {}, env, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.leaderboard.length).toBe(4);
       expect(body.leaderboard[1].first_name).toBe("ARES Member");
       expect(body.leaderboard[2].first_name).toBe("ARES");
@@ -324,7 +333,7 @@ describe("Analytics Router", () => {
       const res = await testApp.request(req, {}, env, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.posts).toBe(10);
     });
 
@@ -334,7 +343,7 @@ describe("Analytics Router", () => {
       const res = await testApp.request(req, {}, env, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.posts).toBe(0);
     });
 
@@ -351,7 +360,7 @@ describe("Analytics Router", () => {
       const req = new Request("http://localhost/search?q=");
       const res = await testApp.request(req, {}, env, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.results.length).toBe(0);
     });
 
@@ -365,7 +374,7 @@ describe("Analytics Router", () => {
       const res = await testApp.request(req, {}, env, mockExecutionContext);
       
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.results.length).toBe(3);
     });
 
@@ -375,7 +384,7 @@ describe("Analytics Router", () => {
       const res = await testApp.request(req, {}, env, mockExecutionContext);
       
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
       expect(body.results.length).toBe(0);
     });
 

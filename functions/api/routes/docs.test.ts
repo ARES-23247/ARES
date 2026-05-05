@@ -25,7 +25,6 @@ vi.mock("../middleware", async (importOriginal) => {
       return c.json({ error: "Unauthorized" }, 401);
     },
     getSessionUser: vi.fn().mockImplementation(() => Promise.resolve(mockUser)),
-    checkRateLimit: vi.fn().mockReturnValue(true),
     verifyTurnstile: vi.fn().mockResolvedValue(true),
     logAuditAction: vi.fn().mockResolvedValue(true),
     notifyByRole: vi.fn().mockResolvedValue(true),
