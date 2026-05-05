@@ -90,6 +90,12 @@ const userTsRestRouter = s.router(userContract, {
   },
   patchUser: async ({ params, body }, c) => {
     try {
+      // Defense-in-depth: Re-validate admin authorization for sensitive role changes
+      const sessionUser = c.get("sessionUser") as { id: string; role: string } | undefined;
+      if (!sessionUser || sessionUser.role !== "admin") {
+        return { status: 403 as const, body: { error: "Forbidden: Admin required" } };
+      }
+
       const { patchUserSchema } = await import("../../../shared/schemas/contracts/userContract");
       const validationResult = patchUserSchema.safeParse(body);
       if (!validationResult.success) {
@@ -208,7 +214,7 @@ const userTsRestRouter = s.router(userContract, {
             last_name: String(p.last_name || ""),
             nickname: String(p.nickname || ""),
             auth: { id: user.id, email: user.email, name: user.name, image: user.image, role: String(user.role || "user") }
-          }
+          } as Record<string, unknown>
         }
       };
     } catch (err) {
