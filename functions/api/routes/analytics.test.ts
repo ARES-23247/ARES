@@ -221,13 +221,13 @@ describe("Analytics Router", () => {
   });
 
   describe("Admin Endpoints", () => {
-    it("GET /summary should return analytics data", async () => {
+    it("GET /admin/platform-analytics should return analytics data", async () => {
       mockDb.execute
         .mockResolvedValueOnce([{ path: "/", views: 10 }])
         .mockResolvedValueOnce([{ path: "/about" }])
         .mockResolvedValueOnce([{ total: 5 }]);
 
-      const req = new Request("http://localhost/admin/summary");
+      const req = new Request("http://localhost/admin/platform-analytics");
       const res = await testApp.request(req, {}, env, mockExecutionContext);
 
       expect(res.status).toBe(200);
@@ -251,11 +251,11 @@ describe("Analytics Router", () => {
       expect(body.roster[1].attended_events).toBe(0);
     });
 
-    it("GET /summary should handle DB errors", async () => {
+    it("GET /admin/platform-analytics should handle DB errors", async () => {
       mockDb.execute.mockRejectedValueOnce(new Error("DB Error"));
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-      const req = new Request("http://localhost/admin/summary");
+      const req = new Request("http://localhost/admin/platform-analytics");
       const res = await testApp.request(req, {}, env, mockExecutionContext);
 
       expect(res.status).toBe(500);

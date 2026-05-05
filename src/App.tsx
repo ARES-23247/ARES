@@ -37,10 +37,7 @@ const Join = React.lazy(() => import("./pages/Join"));
 const Leaderboard = React.lazy(() => import("./pages/Leaderboard"));
 const Store = React.lazy(() => import("./pages/Store"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
-const ScienceCorner = React.lazy(() => import("./pages/ScienceCorner"));
-const ScienceCornerLesson = React.lazy(() => import("./pages/ScienceCornerLesson"));
-const MathCorner = React.lazy(() => import("./pages/MathCorner"));
-const MathCornerLesson = React.lazy(() => import("./pages/MathCornerLesson"));
+const Academy = React.lazy(() => import("./pages/Academy"));
 
 import { useModal } from "./contexts/ModalContext";
 import { useRegisterSW } from "virtual:pwa-register/react";
@@ -101,10 +98,8 @@ export default function App() {
                 <Route path="/judges/print" element={<PrintPortfolio />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/store" element={<Store />} />
-                <Route path="/science-corner" element={<ScienceCorner />} />
-                <Route path="/science-corner/:id" element={<ScienceCornerLesson />} />
-                <Route path="/math-corner" element={<MathCorner />} />
-                <Route path="/math-corner/:id" element={<MathCornerLesson />} />
+                <Route path="/academy" element={<Academy />} />
+                <Route path="/academy/:slug" element={<Academy />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

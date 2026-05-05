@@ -61,9 +61,27 @@
       "requiresContext": false
     },
     {
+      "id": "nnActivation",
+      "name": "Sim 1.5: Activation Functions",
+      "path": "./nn-activation",
+      "requiresContext": false
+    },
+    {
       "id": "nnBiology",
       "name": "Sim 0: The Single Neuron",
       "path": "./nn-biology",
+      "requiresContext": false
+    },
+    {
+      "id": "nnCnn",
+      "name": "Sim 2.5: Convolutions",
+      "path": "./nn-cnn",
+      "requiresContext": false
+    },
+    {
+      "id": "nnDiffusion",
+      "name": "Sim 5: Generative AI (Diffusion)",
+      "path": "./nn-diffusion",
       "requiresContext": false
     },
     {
@@ -76,6 +94,12 @@
       "id": "nnLlm",
       "name": "Sim 3: LLM Attention",
       "path": "./nn-llm",
+      "requiresContext": false
+    },
+    {
+      "id": "nnRl",
+      "name": "Sim 4: Reinforcement Learning",
+      "path": "./nn-rl",
       "requiresContext": false
     },
     {
@@ -151,5 +175,5 @@
       "requiresContext": true
     }
   ],
-  "_generated": "2026-05-05T14:05:48.204Z"
+  "_generated": "2026-05-05T14:23:28.187Z"
 }
