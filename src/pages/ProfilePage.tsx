@@ -6,6 +6,7 @@ import * as LucideIcons from "lucide-react";
 import { BrandLogo } from "../components/BrandLogo";
 import { api } from "../api/client";
 import SEO from "../components/SEO";
+import { validateIdParam } from "../utils/security";
 
 interface ProfilePublic {
   first_name?: string;
@@ -45,6 +46,21 @@ interface BadgeDef {
 
 export default function ProfilePage() {
   const { userId } = useParams();
+  const validatedUserId = validateIdParam(userId);
+
+  // Early return if userId is invalid
+  if (!userId || !validatedUserId) {
+    return (
+      <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center text-marble gap-4 p-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2">
+          <ShieldAlert size={40} className="text-ares-red" />
+        </div>
+        <h1 className="text-2xl font-black">Invalid User ID</h1>
+        <p className="text-marble max-w-md">The user ID format is invalid.</p>
+      </div>
+    );
+  }
+
   const [profile, setProfile] = useState<ProfilePublic | null>(null);
   const [badges, setBadges] = useState<BadgeDef[]>([]);
   const [points, setPoints] = useState<number | null>(null);
@@ -55,15 +71,15 @@ export default function ProfilePage() {
   useEffect(() => {
     let cancelled = false;
 
-    api.profiles.getPublicProfile.query({ params: { userId: userId || "" } })
-      .then((res: { status: number; body: unknown }) => { 
+    api.profiles.getPublicProfile.query({ params: { userId: validatedUserId } })
+      .then((res: { status: number; body: unknown }) => {
         if (cancelled || res.status !== 200) return;
-        const data = res.body as { profile: ProfilePublic; badges?: BadgeDef[] };
-         
-        setProfile(data.profile); 
+        const data = res.body as { profile: ProfilePublic; badges; badges?: BadgeDef[] };
+
+        setProfile(data.profile);
         setBadges(data.badges || []);
         setError(null);
-        setLoading(false); 
+        setLoading(false);
       })
       .catch((err: Error) => {
         if (cancelled) return;
@@ -71,18 +87,18 @@ export default function ProfilePage() {
         setLoading(false);
       });
 
-    api.points.getBalance.query({ params: { user_id: userId || "" } })
+    api.points.getBalance.query({ params: { user_id: validatedUserId } })
       .then((res: { status: number; body: { balance: number } }) => {
         if (!cancelled && res.status === 200) setPoints(res.body.balance);
       }).catch(() => {});
-      
-    api.points.getHistory.query({ params: { user_id: userId || "" } })
+
+    api.points.getHistory.query({ params: { user_id: validatedUserId } })
       .then((res: { status: number; body: { transactions: {id: string, reason: string, points_delta: number, created_at: string}[] } }) => {
         if (!cancelled && res.status === 200) setHistory(res.body.transactions);
       }).catch(() => {});
 
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [validatedUserId]);
 
   if (loading) {
     return (

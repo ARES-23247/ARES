@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react"
 import { createPortal } from "react-dom";
 import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
 import { loader } from "@monaco-editor/react";
+import { validateIdParam } from "../utils/security";
 
 // Configure Monaco CDN — version pinned for supply chain security
 // Note: @monaco-editor/react doesn't support SRI for worker files.
@@ -109,7 +110,10 @@ export default function SimulationPlayground() {
 
   const loadChatMessages = (simId: string | null): ChatMessage[] => {
     try {
-      const idParam = simId || new URLSearchParams(window.location.search).get("simId") || 'new';
+      // Validate the simId from URL before using it
+      const rawIdParam = new URLSearchParams(window.location.search).get("simId");
+      const validatedId = rawIdParam ? validateIdParam(rawIdParam) : null;
+      const idParam = simId || (validatedId || 'new');
       const stored = sessionStorage.getItem(`${STORAGE_PREFIX}${idParam}`);
       if (stored) {
         const parsed = JSON.parse(stored) as ChatMessage[];
@@ -126,7 +130,9 @@ export default function SimulationPlayground() {
 
   const saveChatMessages = (messages: ChatMessage[], simId: string | null) => {
     try {
-      const id = simId || 'new';
+      // Validate the simId before using it for storage
+      const validatedSimId = simId ? validateIdParam(simId) : null;
+      const id = validatedSimId || 'new';
       // Apply retention limit before saving
       const limited = messages.slice(-MAX_CHAT_MESSAGES);
       sessionStorage.setItem(`${STORAGE_PREFIX}${id}`, JSON.stringify(limited));

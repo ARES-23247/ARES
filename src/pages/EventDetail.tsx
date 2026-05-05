@@ -10,6 +10,7 @@ import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { api } from "../api/client";
 import SEO from "../components/SEO";
 import { extractTextFromAst } from "../utils/content";
+import { validateIdParam } from "../utils/security";
 
 interface EventRow {
   id: string;
@@ -32,15 +33,22 @@ import { downloadICS } from "../utils/calendar";
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  const validatedId = validateIdParam(id);
+
+  // Early return if ID is invalid
+  if (!id || !validatedId) {
+    return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white font-mono text-center">Invalid event ID format.</div>;
+  }
+
   const { data: session } = useSession();
 
   const userRole = (session?.user as Record<string, unknown>)?.role || "user";
   const isEditor = userRole === "admin" || userRole === "author";
 
-  const { data: eventRes, isLoading, isError } = api.events.getEvent.useQuery(["event", id], {
-    params: { id: id || "" },
+  const { data: eventRes, isLoading, isError } = api.events.getEvent.useQuery(["event", validatedId], {
+    params: { id: validatedId },
   }, {
-    enabled: !!id,
+    enabled: !!validatedId,
     retry: false,
   });
 

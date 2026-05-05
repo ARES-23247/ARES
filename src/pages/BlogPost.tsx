@@ -14,6 +14,7 @@ import ZulipThread from "../components/ZulipThread";
 import { api } from "../api/client";
 import SEO from "../components/SEO";
 import { extractTextFromAst } from "../utils/content";
+import { validateUrlParam } from "../utils/security";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface PostRow {
@@ -29,25 +30,32 @@ interface PostRow {
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
+  const validatedSlug = validateUrlParam(slug);
+
+  // Early return if slug is invalid
+  if (!slug || !validatedSlug) {
+    return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white">Invalid post slug format.</div>;
+  }
+
   const { data: session } = useSession();
-  
+
   const userRole = (session?.user as Record<string, unknown>)?.role || "user";
   const isEditor = userRole === "admin" || userRole === "author";
 
-  const { data: postRes, isLoading, isError } = api.posts.getPost.useQuery(["post", slug], {
-    params: { slug: slug || "" },
+  const { data: postRes, isLoading, isError } = api.posts.getPost.useQuery(["post", validatedSlug], {
+    params: { slug: validatedSlug },
   }, {
-    enabled: !!slug,
+    enabled: !!validatedSlug,
     retry: false,
   });
 
   const post = postRes?.status === 200 ? postRes.body.post : null;
 
   useEffect(() => {
-    if (post && slug) {
-      trackPageView(`/blog/${slug}`, 'blog');
+    if (post && validatedSlug) {
+      trackPageView(`/blog/${validatedSlug}`, 'blog');
     }
-  }, [post, slug]);
+  }, [post, validatedSlug]);
 
   if (isLoading) return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white animate-pulse">Loading post...</div>;
   if (isError || !post) return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white">Post not found.</div>;
