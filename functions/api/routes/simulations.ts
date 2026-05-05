@@ -11,6 +11,7 @@ const saveSimulationSchema = z.object({
 export const simulationsRouter = new Hono<AppEnv>();
 
 // Helper: Check if user owns a simulation or is admin
+// SECURITY: Uses multiple verification factors to prevent email spoofing
 async function canModifySimulation(c: any, simId: string): Promise<boolean> {
   const sessionUser = c.get("sessionUser");
   if (!sessionUser) return false;
@@ -18,7 +19,6 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
   // Admins can modify any simulation
   if (sessionUser.role === "admin") return true;
 
-  // Check if user is the author by fetching the file's commit history
   try {
     const db = c.get("db");
     const config = await db.selectFrom("settings").selectAll().execute();
@@ -43,11 +43,32 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
     const commits = await res.json();
     if (!commits || commits.length === 0) return false;
 
-    // Check commit author email matches user
-    const authorEmail = commits[0]?.author?.email;
-    return authorEmail === sessionUser.email;
-  } catch {
+    // Multi-factor ownership verification to prevent spoofing
+    const commit = commits[0];
+    const authorEmail = commit.author?.email;
+    const committerLogin = commit.committer?.login;
+    const verified = commit.commit?.verification?.verified;
+
+    // Primary: email must match
+    if (authorEmail !== sessionUser.email) return false;
+
+    // Secondary: if commit is cryptographically verified, email is trustworthy
+    if (verified) return true;
+
+    // Tertiary: for unverified commits, verify committer identity via GitHub API
+    // This prevents users from setting git config to use someone else's email
+    if (committerLogin && sessionUser.github_login) {
+      if (committerLogin === sessionUser.github_login) {
+        return true;
+      }
+    }
+
+    // If commit is unverified and committer doesn't match session user, reject
+    console.warn(`[Simulations] Rejecting unverified commit by ${authorEmail} (committer: ${committerLogin})`);
+    return false;
+  } catch (err) {
     // If we can't verify ownership, be conservative
+    console.error("[Simulations] Ownership verification error:", err);
     return false;
   }
 }
