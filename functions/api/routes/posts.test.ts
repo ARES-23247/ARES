@@ -8,6 +8,14 @@ import { MockKysely, TestEnv } from "../../../src/test/types";
 import postsRouter from "./posts";
 import { createMockPost } from "../../../src/test/factories/contentFactory";
 
+interface PostsResponse {
+  success?: boolean;
+  posts?: unknown[];
+  post?: unknown;
+  error?: string;
+  [key: string]: unknown;
+}
+
 // Mock global dependencies
 vi.stubGlobal("crypto", {
   randomUUID: () => "test-uuid",
@@ -119,7 +127,7 @@ describe("Hono Backend - /posts Router", () => {
 
     const res = await testApp.request("/", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as PostsResponse;
     expect(body.posts).toHaveLength(2);
   });
 
@@ -129,7 +137,7 @@ describe("Hono Backend - /posts Router", () => {
 
     const res = await testApp.request("/test-post", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as PostsResponse;
     expect(body.post).toBeDefined();
     expect((body.post as { slug: string }).slug).toBe("test-post");
   });
@@ -145,7 +153,7 @@ describe("Hono Backend - /posts Router", () => {
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
     expect(mockDb.selectFrom).toHaveBeenCalledWith("posts");
-    const body = await res.json() as any;
+    const body = await res.json() as PostsResponse;
     expect(body.posts[0].season_id).toBe(3);
   });
 
@@ -193,10 +201,11 @@ describe("Hono Backend - /posts Router", () => {
   it("DELETE /admin/:slug/purge - permanent delete with storage", async () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({ thumbnail: "https://r2.aresfirst.org/test.png" });
     const storageEnv = { ...env, ARES_STORAGE: { delete: vi.fn().mockResolvedValue(true) } };
-    const res = await testApp.request("/admin/test-post/purge", { 
+    const res = await testApp.request("/admin/test-post/purge", {
       method: "DELETE",
       body: JSON.stringify({}),
       headers: { "Content-Type": "application/json" }
+     
     }, storageEnv as any, mockExecutionContext);
     expect(res.status).toBe(200);
     expect(mockDb.deleteFrom).toHaveBeenCalledWith("posts");
@@ -206,7 +215,7 @@ describe("Hono Backend - /posts Router", () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({ slug: "test", title: "Test Post", season_id: "5", is_deleted: 1, ast: "{\"type\":\"doc\"}" });
     const res = await testApp.request("/admin/test", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as PostsResponse;
     expect(body.post.season_id).toBe(5);
   });
 
@@ -445,7 +454,7 @@ describe("Hono Backend - /posts Router", () => {
     }, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as PostsResponse;
     expect(body.success).toBe(true);
     expect(body.slug).toBe("new-slug");
   });
@@ -456,7 +465,7 @@ describe("Hono Backend - /posts Router", () => {
 
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as PostsResponse;
     expect(body.posts[0].slug).toBe("fallback-post");
   });
 
@@ -481,10 +490,11 @@ describe("Hono Backend - /posts Router", () => {
   it("DELETE /admin/:slug/purge - handles invalid thumbnail URL gracefully", async () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({ thumbnail: "not-a-valid-url" });
     const storageEnv = { ...env, ARES_STORAGE: { delete: vi.fn().mockResolvedValue(true) } };
-    const res = await testApp.request("/admin/test-post/purge", { 
+    const res = await testApp.request("/admin/test-post/purge", {
       method: "DELETE",
       body: JSON.stringify({}),
       headers: { "Content-Type": "application/json" }
+     
     }, storageEnv as any, mockExecutionContext);
     expect(res.status).toBe(200);
     expect(mockDb.deleteFrom).toHaveBeenCalledWith("posts");

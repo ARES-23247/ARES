@@ -10,8 +10,6 @@
  * All types use vi.fn mock types and avoid `any` for compile-time safety.
  */
 
-import type { Kysely } from "kysely";
-import type { DB } from "../../shared/schemas/database";
 import type { vi } from "vitest";
 
 // ── MockKysely ────────────────────────────────────────────────────────────────
@@ -30,9 +28,13 @@ import type { vi } from "vitest";
  *   };
  * });
  */
-export type MockKysely = Partial<
-  Pick<Kysely<DB>, "selectFrom" | "insertInto" | "updateTable" | "deleteFrom">
-> & {
+export type MockKysely = {
+  selectFrom?: ReturnType<typeof vi.fn>;
+  insertInto?: ReturnType<typeof vi.fn>;
+  updateTable?: ReturnType<typeof vi.fn>;
+  deleteFrom?: ReturnType<typeof vi.fn>;
+  onConflict?: ReturnType<typeof vi.fn>;
+  doUpdateSet?: ReturnType<typeof vi.fn>;
   /** Chain methods for fluent query building */
   innerJoin?: ReturnType<typeof vi.fn>;
   leftJoin?: ReturnType<typeof vi.fn>;
@@ -43,9 +45,11 @@ export type MockKysely = Partial<
   limit?: ReturnType<typeof vi.fn>;
   offset?: ReturnType<typeof vi.fn>;
   groupBy?: ReturnType<typeof vi.fn>;
+  values?: ReturnType<typeof vi.fn>;
+  set?: ReturnType<typeof vi.fn>;
   /** Execution methods */
   execute: ReturnType<typeof vi.fn>;
-  executeTakeFirst?: ReturnType<typeof vi.fn>;
+  executeTakeFirst: ReturnType<typeof vi.fn>;
 };
 
 // ── TestEnv ───────────────────────────────────────────────────────────────────
@@ -99,11 +103,11 @@ export type TestEnv = {
  */
 export interface MockExecutionContext {
   /** Registers a promise to execute in the background */
-  waitUntil: ReturnType<typeof vi.fn>;
+  waitUntil: ((promise: Promise<unknown>) => void) & ReturnType<typeof vi.fn>;
   /** Passes through exceptions to the runtime */
-  passThroughOnException: ReturnType<typeof vi.fn>;
+  passThroughOnException: (() => void) & ReturnType<typeof vi.fn>;
   /** Execution Context Props */
-  props?: Record<string, unknown>;
+  props: Record<string, unknown>;
 }
 
 // ── MockExpressionBuilder ──────────────────────────────────────────────────────

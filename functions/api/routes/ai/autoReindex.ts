@@ -1,6 +1,6 @@
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
-import type { KVNamespace, VectorizeIndex } from "@cloudflare/workers-types";
+import type { VectorizeIndex } from "@cloudflare/workers-types";
 
 /**
  * Trigger an incremental re-index in the background after a content mutation.

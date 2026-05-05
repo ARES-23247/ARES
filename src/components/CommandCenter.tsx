@@ -42,7 +42,7 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: { po
             </div>
             Command Center
           </h2>
-          <p className="text-marble/40 text-sm mt-1">
+          <p className="text-marble/60 text-sm mt-1">
             Unified view of ARESWEB, Zulip, and team task management
           </p>
         </div>
@@ -54,7 +54,7 @@ export default function CommandCenter({ stats: prefetchedStats }: { stats?: { po
           <button
             onClick={handleRefresh}
             title="Refresh dashboard data"
-            className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm text-marble/40 hover:text-white transition-all"
+            className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm text-marble/60 hover:text-white transition-all"
           >
             <RefreshCw size={16} />
           </button>

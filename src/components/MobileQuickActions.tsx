@@ -36,7 +36,7 @@ export default function MobileQuickActions() {
                     onClick={() => setSidebarOpen(false)}
                     className="flex flex-col items-center justify-center p-6 bg-white/5 border border-white/5 ares-cut-lg hover:bg-ares-red/10 hover:border-ares-red/20 transition-all group"
                   >
-                    <div className="text-marble/40 group-hover:text-ares-red mb-3 transition-colors">
+                    <div className="text-marble/60 group-hover:text-ares-red mb-3 transition-colors">
                       {link.icon}
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-marble group-hover:text-white transition-colors">

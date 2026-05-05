@@ -118,7 +118,7 @@ export default function SeasonEditor() {
         <h2 className="text-3xl font-black text-white tracking-tighter mb-2 uppercase">
           {editId ? "Update Legacy" : "Forge New Legacy"}
         </h2>
-        <p className="text-marble/40 text-sm font-bold uppercase tracking-widest">
+        <p className="text-marble/60 text-sm font-bold uppercase tracking-widest">
           Documenting the evolution of ARES 23247.
         </p>
       </div>
@@ -169,7 +169,7 @@ export default function SeasonEditor() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div>
-            <label htmlFor="album-url" className="block text-xs font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Google Photos Album Link</label>
+            <label htmlFor="album-url" className="block text-xs font-black text-marble/60 uppercase tracking-[0.2em] mb-2">Google Photos Album Link</label>
             <input
               id="album-url"
               type="text"
@@ -180,7 +180,7 @@ export default function SeasonEditor() {
             />
           </div>
           <div>
-            <label htmlFor="robot-name" className="block text-xs font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Robot Name</label>
+            <label htmlFor="robot-name" className="block text-xs font-black text-marble/60 uppercase tracking-[0.2em] mb-2">Robot Name</label>
             <input
               id="robot-name"
               type="text"
@@ -191,7 +191,7 @@ export default function SeasonEditor() {
             />
           </div>
           <div>
-            <label htmlFor="cad-link" className="block text-xs font-black text-marble/40 uppercase tracking-[0.2em] mb-2">CAD Link</label>
+            <label htmlFor="cad-link" className="block text-xs font-black text-marble/60 uppercase tracking-[0.2em] mb-2">CAD Link</label>
             <input
               id="cad-link"
               type="text"
@@ -203,7 +203,7 @@ export default function SeasonEditor() {
           </div>
         </div>
         <div>
-          <span className="block text-xs font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Album Cover / Hero Card</span>
+          <span className="block text-xs font-black text-marble/60 uppercase tracking-[0.2em] mb-2">Album Cover / Hero Card</span>
           <CoverAssetPicker 
             coverImage={albumCoverUrl}
             isUploading={isUploadingAlbumCover}
@@ -218,7 +218,7 @@ export default function SeasonEditor() {
       </div>
 
       <div>
-        <label htmlFor="summary" className="block text-xs font-black text-marble/40 uppercase tracking-[0.2em] mb-2">Brief Summary</label>
+        <label htmlFor="summary" className="block text-xs font-black text-marble/60 uppercase tracking-[0.2em] mb-2">Brief Summary</label>
         <textarea
           id="summary"
           value={summary}

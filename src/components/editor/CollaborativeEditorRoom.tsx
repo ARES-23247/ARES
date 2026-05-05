@@ -321,7 +321,7 @@ function StatusBadge({
       )}
       {/* Show host for debugging */}
       {host && (
-        <span className="text-[8px] text-marble/40 max-w-[150px] truncate" title={host}>
+        <span className="text-[8px] text-marble/60 max-w-[150px] truncate" title={host}>
           {host}
         </span>
       )}

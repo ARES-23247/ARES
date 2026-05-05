@@ -114,7 +114,7 @@ export default function Outreach() {
             Active Impact Reporting
           </div>
           <h1 className="text-5xl md:text-8xl font-black text-white mb-8 tracking-tighter">
-            Engineering <br/> <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block text-white">Change</span>.
+            Engineering <br/> <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block text-white font-bold">Change</span>.
           </h1>
           <p className="text-marble text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed font-medium">
             ARES 23247 isn&apos;t just about building robots. We&apos;re building a community that values curiosity, innovation, and service.
@@ -212,7 +212,7 @@ export default function Outreach() {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="px-6 py-4 bg-ares-red text-white ares-cut-lg text-center shadow-lg shadow-ares-red/20">
+                  <div className="px-6 py-4 bg-ares-red text-white ares-cut-lg text-center shadow-lg shadow-ares-red/20 font-bold">
                     <div className="text-xs font-black uppercase tracking-widest mb-1 opacity-80">Impact</div>
                     <div className="text-3xl font-black">{log.reach_count || 0}</div>
                   </div>
@@ -260,7 +260,7 @@ export default function Outreach() {
                 <X size={24} />
               </button>
 
-              <h3 className="text-3xl font-black text-white tracking-tight mb-2">Request a <span className="bg-ares-red px-3 py-1 ares-cut shadow-lg inline-block text-white ml-2">Demo</span></h3>
+              <h3 className="text-3xl font-black text-white tracking-tight mb-2">Request a <span className="bg-ares-red px-3 py-1 ares-cut shadow-lg inline-block text-white ml-2 font-bold">Demo</span></h3>
               <p className="text-marble/90 text-sm mb-8">Tell us about your event, and our student outreach team will get back to you to coordinate.</p>
 
               {submitStatus === "success" ? (

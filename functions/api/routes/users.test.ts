@@ -57,6 +57,7 @@ describe("Hono Backend - /users Router", () => {
 
     env = {
       DEV_BYPASS: "true",
+      DB: {} as D1Database,
     };
 
     testApp = new Hono<TestEnv>();
@@ -163,7 +164,7 @@ describe("Hono Backend - /users Router", () => {
 
   // Error paths
   it("GET /admin/list - error", async () => {
-    mockDb.execute.mockRejectedValueOnce(new Error("DB error"));
+    (mockDb.execute as any).mockRejectedValueOnce(new Error("DB error"));
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
     expect(res.status).toBe(500);
   });
@@ -181,7 +182,7 @@ describe("Hono Backend - /users Router", () => {
   });
 
   it("PATCH /admin/:id - error", async () => {
-    mockDb.updateTable.mockImplementationOnce(() => { throw new Error("DB error") });
+    (mockDb.updateTable as any).mockImplementationOnce(() => { throw new Error("DB error") });
     const res = await testApp.request("/admin/1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -191,7 +192,7 @@ describe("Hono Backend - /users Router", () => {
   });
 
   it("DELETE /admin/:id - error", async () => {
-    mockDb.deleteFrom.mockImplementationOnce(() => { throw new Error("DB error") });
+    (mockDb.deleteFrom as any).mockImplementationOnce(() => { throw new Error("DB error") });
     const res = await testApp.request("/admin/1", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -236,7 +237,7 @@ describe("Hono Backend - /users Router", () => {
   });
 
   it("GET /admin/list - list users without masking email", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Student", email: "student123@test.com", member_type: "student", role: "user", createdAt: 0, updatedAt: 0 }]);
+    (mockDb.execute as any).mockResolvedValueOnce([{ id: "1", name: "Student", email: "student123@test.com", member_type: "student", role: "user", createdAt: 0, updatedAt: 0 }]);
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as { users: Array<{ email: string }> };

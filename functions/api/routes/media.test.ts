@@ -5,6 +5,14 @@ import type { Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { MockKysely, TestEnv } from "../../../src/test/types";
 
+interface _MediaResponse {
+  success?: boolean;
+  media?: unknown[];
+  error?: string;
+  altText?: string;
+  [key: string]: unknown;
+}
+
 type HandlerResponse = Response & {
   body?: { success?: boolean; error?: string; altText?: string; media?: unknown[] };
 };
@@ -191,7 +199,10 @@ describe("Hono Backend - /media Router", () => {
 
     const fileBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); // Valid PNG header
     const file = new File([fileBytes], "test.png", { type: "image/png" });
-    if (!file.arrayBuffer) {
+     
+     
+    if (!(file as any).arrayBuffer) {
+       
       (file as any).arrayBuffer = () => Promise.resolve(fileBytes.buffer);
     }
 
@@ -203,6 +214,7 @@ describe("Hono Backend - /media Router", () => {
 
     const mockC = { get: vi.fn().mockReturnValue(mockDb), env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn().mockReturnValue("127.0.0.1") }, executionCtx: mockExecutionContext };
 
+     
     const uploadFn = mediaHandlers.upload as (h: { body: FormData }, c: any) => Promise<any>;
     const res = await uploadFn({ body: formData }, mockC);
     if (res.status !== 200) throw new Error("TEST FAILED " + JSON.stringify(res));
@@ -215,7 +227,10 @@ describe("Hono Backend - /media Router", () => {
     const { mediaHandlers } = await import("./media/handlers");
     const heicBytes = new Uint8Array([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63]);
     const file = new File([heicBytes], "test.heic", { type: "image/heic" });
-    if (!file.arrayBuffer) {
+     
+     
+    if (!(file as any).arrayBuffer) {
+       
       (file as any).arrayBuffer = () => Promise.resolve(heicBytes.buffer);
     }
 
@@ -276,7 +291,10 @@ describe("Hono Backend - /media Router", () => {
     env.AI.run.mockRejectedValue(new Error("AI Down"));
     const fileBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     const file = new File([fileBytes], "test.png", { type: "image/png" });
-    if (!file.arrayBuffer) {
+     
+     
+    if (!(file as any).arrayBuffer) {
+       
       (file as any).arrayBuffer = () => Promise.resolve(fileBytes.buffer);
     }
     const formData = {
@@ -325,11 +343,15 @@ describe("Hono Backend - /media Router", () => {
     const { mediaHandlers } = await import("./media/handlers");
     const fileBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     const file = new File([fileBytes], "test.png", { type: "image/png" });
-    if (!file.arrayBuffer) {
+     
+     
+    if (!(file as any).arrayBuffer) {
+       
       (file as any).arrayBuffer = () => Promise.resolve(fileBytes.buffer);
     }
     const mockFormData = { file };
     const mockC = { get: vi.fn().mockReturnValue(null), env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() }, executionCtx: mockExecutionContext };
+     
     const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
     expect(res.status).toBe(500);
   });
@@ -410,6 +432,7 @@ describe("Hono Backend - /media Router", () => {
     mockR2.list.mockResolvedValue({ objects: [{ key: "Public.png", size: 100, uploaded: new Date() }, { key: "Private.png", size: 100, uploaded: new Date() }], truncated: false });
     const localMockDb = { selectFrom: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), where: vi.fn().mockReturnThis(), execute: vi.fn().mockResolvedValue([{ key: "Public.png", folder: "Gallery", tags: "" }]) };
     const { mediaHandlers } = await import("./media/handlers");
+     
     const res = await (mediaHandlers.getMedia as any)({}, { get: vi.fn().mockReturnValue(localMockDb), env, req: { url: "http://localhost/", header: vi.fn().mockReturnValue("1.2.3.4") } });
     expect(res.body.media).toHaveLength(1);
   });

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
-import type { MockKysely, TestEnv, MockExecutionContext } from "../../../src/test/types";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { createMockExpressionBuilder } from "../../../src/test/utils";
 
@@ -17,6 +17,13 @@ vi.mock("../middleware", async (importOriginal) => {
 });
 
 import financeRouter from "./finance";
+
+interface FinanceResponse {
+  success?: boolean;
+  data?: unknown;
+  error?: string;
+  [key: string]: unknown;
+}
 
 const mockEnv = {
   DB: {} as D1Database,
@@ -80,7 +87,7 @@ describe("Hono Backend - /finance Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ type: "income", total: 1000 }, { type: "expense", total: 400 }]);
       const res = await testApp.request("/summary?season_id=2024", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as FinanceResponse;
       expect(body.total_income).toBe(1000);
       expect(body.total_expenses).toBe(400);
       expect(mockDb.where).toHaveBeenCalledWith("season_id", "=", "2024");
@@ -92,7 +99,7 @@ describe("Hono Backend - /finance Router", () => {
       
       const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as FinanceResponse;
       expect(body.season_id).toBe(2024);
     });
 
@@ -100,7 +107,7 @@ describe("Hono Backend - /finance Router", () => {
       mockDb.executeTakeFirst.mockResolvedValueOnce(null);
       const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as FinanceResponse;
       expect(body.season_id).toBe(null);
     });
 
@@ -116,7 +123,7 @@ describe("Hono Backend - /finance Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ id: "lead-1", company_name: "Test Corp", status: "potential", estimated_value: 500 }]);
       const res = await testApp.request("/sponsorship?season_id=2024", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as FinanceResponse;
       expect(body.pipeline).toHaveLength(1);
     });
 
@@ -227,7 +234,7 @@ describe("Hono Backend - /finance Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ id: "tx-1", amount: 100, type: "income", category: "Donation", date: "2024-01-01" }]);
       const res = await testApp.request("/transactions?season_id=2024&type=income", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as FinanceResponse;
       expect(body.transactions).toHaveLength(1);
     });
 

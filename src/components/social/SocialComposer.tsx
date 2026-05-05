@@ -187,7 +187,7 @@ export default function SocialComposer({
         {onClose && (
           <button
             onClick={onClose}
-            className="p-2 text-marble/40 hover:text-white hover:bg-white/10 ares-cut-sm transition-all"
+            className="p-2 text-marble/60 hover:text-white hover:bg-white/10 ares-cut-sm transition-all"
           >
             <X size={20} />
           </button>
@@ -206,7 +206,7 @@ export default function SocialComposer({
 
       {/* Platform Selection */}
       <div className="bg-obsidian/50 border border-white/10 ares-cut-sm p-4">
-        <div className="text-xs font-bold text-marble/40 uppercase tracking-widest mb-3">
+        <div className="text-xs font-bold text-marble/60 uppercase tracking-widest mb-3">
           Select Platforms
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -220,7 +220,7 @@ export default function SocialComposer({
                 className={`px-3 py-3 ares-cut-sm text-sm font-bold transition-all flex flex-col items-center gap-1 ${
                   isEnabled
                     ? `${config.color} text-white shadow-lg`
-                    : "bg-white/5 text-marble/40 hover:text-white hover:bg-white/10"
+                    : "bg-white/5 text-marble/60 hover:text-white hover:bg-white/10"
                 }`}
               >
                 <span className="text-lg">{config.icon}</span>
@@ -233,7 +233,7 @@ export default function SocialComposer({
 
       {/* Content Input */}
       <div className="space-y-2">
-        <label htmlFor="social-content" className="text-xs font-bold text-marble/40 uppercase tracking-widest">
+        <label htmlFor="social-content" className="text-xs font-bold text-marble/60 uppercase tracking-widest">
           Content
         </label>
         <textarea
@@ -246,7 +246,7 @@ export default function SocialComposer({
         />
         <div className="flex items-center justify-between">
           <span className={`text-xs font-mono ${
-            characterLimitError ? "text-ares-red" : characterLimitWarning ? "text-ares-gold" : "text-marble/40"
+            characterLimitError ? "text-ares-red" : characterLimitWarning ? "text-ares-gold" : "text-marble/60"
           }`}>
             {characterCount.toLocaleString()} / 5,000
           </span>
@@ -264,7 +264,7 @@ export default function SocialComposer({
 
       {/* Media Attachments */}
       <div className="space-y-2">
-        <label htmlFor="media-url-input" className="text-xs font-bold text-marble/40 uppercase tracking-widest flex items-center gap-2">
+        <label htmlFor="media-url-input" className="text-xs font-bold text-marble/60 uppercase tracking-widest flex items-center gap-2">
           <ImageIcon size={14} />
           Media URLs (max 4)
         </label>
@@ -299,7 +299,7 @@ export default function SocialComposer({
                 <button
                   type="button"
                   onClick={() => handleRemoveMedia(index)}
-                  className="text-marble/40 hover:text-ares-red transition-colors"
+                  className="text-marble/60 hover:text-ares-red transition-colors"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -311,7 +311,7 @@ export default function SocialComposer({
 
       {/* Scheduling */}
       <div className="bg-white/5 border border-white/10 ares-cut-sm p-4">
-        <div className="text-xs font-bold text-marble/40 uppercase tracking-widest mb-3 flex items-center gap-2">
+        <div className="text-xs font-bold text-marble/60 uppercase tracking-widest mb-3 flex items-center gap-2">
           <Calendar size={14} />
           Schedule
         </div>
@@ -325,7 +325,7 @@ export default function SocialComposer({
             className={`px-4 py-2 ares-cut-sm text-sm font-bold transition-all ${
               !isScheduling
                 ? "bg-ares-cyan text-black"
-                : "bg-white/5 text-marble/40 hover:text-white"
+                : "bg-white/5 text-marble/60 hover:text-white"
             }`}
           >
             Send Now
@@ -336,7 +336,7 @@ export default function SocialComposer({
             className={`px-4 py-2 ares-cut-sm text-sm font-bold transition-all ${
               isScheduling && scheduledDate
                 ? "bg-ares-cyan text-black"
-                : "bg-white/5 text-marble/40 hover:text-white"
+                : "bg-white/5 text-marble/60 hover:text-white"
             }`}
           >
             Schedule for Later
@@ -396,7 +396,7 @@ export default function SocialComposer({
             setMediaUrls([]);
             setIsScheduling(false);
           }}
-          className="px-4 py-3 bg-white/5 text-marble/40 font-bold ares-cut hover:text-white transition-colors"
+          className="px-4 py-3 bg-white/5 text-marble/60 font-bold ares-cut hover:text-white transition-colors"
         >
           Reset
         </button>

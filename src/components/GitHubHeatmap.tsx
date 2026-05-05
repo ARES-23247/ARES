@@ -114,7 +114,7 @@ export default function GitHubHeatmap() {
               return (
                 <div key={i} className="w-[12px] mr-[2px] relative flex-shrink-0">
                   {isFirstWeek && (
-                    <div className="absolute left-0 top-0 whitespace-nowrap">
+                    <div className="absolute left-0 top-0 whitespace-nowrap bg-obsidian z-10">
                       {MONTHS[month]}
                     </div>
                   )}

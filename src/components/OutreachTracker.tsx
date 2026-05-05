@@ -330,7 +330,7 @@ export default function OutreachTracker() {
               className={`px-4 py-2 text-xs font-black uppercase tracking-widest ares-cut-sm transition-all whitespace-nowrap ${
                 activeSeasonTab === "unlinked"
                   ? "bg-marble/30 text-white"
-                  : "bg-white/5 text-marble/40 hover:text-marble/80 hover:bg-white/10 border border-white/5"
+                  : "bg-white/5 text-marble/60 hover:text-marble/80 hover:bg-white/10 border border-white/5"
               }`}
             >
               Unlinked
@@ -434,7 +434,7 @@ export default function OutreachTracker() {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   title="Edit this impact record"
-                  className="p-3 text-marble/40 hover:text-ares-cyan transition-colors bg-white/5 ares-cut"
+                  className="p-3 text-marble/60 hover:text-ares-cyan transition-colors bg-white/5 ares-cut"
                 >
                   <Pencil size={18} />
                 </button>
@@ -442,7 +442,7 @@ export default function OutreachTracker() {
                   <button
                     onClick={() => { if(confirm("Purge this impact record?")) deleteMutation.mutate({ params: { id: log.id }, body: null }); }}
                     title="Purge this impact record"
-                    className="p-3 text-marble/40 hover:text-ares-red transition-colors bg-white/5 ares-cut"
+                    className="p-3 text-marble/60 hover:text-ares-red transition-colors bg-white/5 ares-cut"
                   >
                     <Trash2 size={18} />
                   </button>

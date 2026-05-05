@@ -10,6 +10,7 @@ import { fixupPluginRules } from "@eslint/compat";
 export default ts.config(
   {
     ignores: [
+      ".claude/**",
       "dist",
       "coverage",
       ".wrangler",

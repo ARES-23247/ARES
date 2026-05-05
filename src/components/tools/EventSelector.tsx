@@ -107,19 +107,19 @@ export default function EventSelector({ onEventSelect, selectedEventKey }: Event
             isOpen ? "border-ares-cyan/50" : "border-white/10 hover:border-white/20"
           }`}
         >
-          <Search size={14} className="text-marble/40 shrink-0" />
+          <Search size={14} className="text-marble/60 shrink-0" />
           {selectedEvent ? (
             <span className="text-sm text-white font-semibold truncate flex-1">
               {selectedEvent.event_name}
             </span>
           ) : (
-            <span className="text-sm text-marble/40 font-semibold truncate flex-1">
+            <span className="text-sm text-marble/60 font-semibold truncate flex-1">
               Select an event...
             </span>
           )}
           <ChevronDown
             size={14}
-            className={`text-marble/40 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`text-marble/60 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
           />
         </button>
 
@@ -141,18 +141,18 @@ export default function EventSelector({ onEventSelect, selectedEventKey }: Event
               {loading ? (
                 <div className="p-4 text-center">
                   <RefreshCw size={20} className="animate-spin text-ares-cyan/60 mx-auto mb-2" />
-                  <p className="text-xs text-marble/40 font-semibold">Loading events...</p>
+                  <p className="text-xs text-marble/60 font-semibold">Loading events...</p>
                 </div>
               ) : error ? (
                 <div className="p-4 text-center">
                   <p className="text-xs text-ares-danger font-semibold">{error}</p>
-                  <p className="text-xs text-marble/40 mt-1">
+                  <p className="text-xs text-marble/60 mt-1">
                     API keys may not be configured yet.
                   </p>
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="p-4 text-center">
-                  <p className="text-xs text-marble/40 font-semibold">No events found</p>
+                  <p className="text-xs text-marble/60 font-semibold">No events found</p>
                 </div>
               ) : (
                 filtered.slice(0, 50).map((evt) => (

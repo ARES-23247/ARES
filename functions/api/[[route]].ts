@@ -418,6 +418,7 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
     const nowIso = new Date().toISOString();
     await db.insertInto("settings")
       .values({ key: "cron_last_run", value: nowIso, updated_at: nowIso })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .onConflict((oc: any) => oc.column("key").doUpdateSet({ value: nowIso, updated_at: nowIso }))
       .execute();
   } catch (err) {

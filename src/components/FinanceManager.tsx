@@ -123,7 +123,7 @@ export default function FinanceManager() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <RefreshCw className="text-ares-cyan animate-spin" size={48} />
-        <p className="text-marble/40 font-black uppercase tracking-widest animate-pulse">Syncing Ledger...</p>
+        <p className="text-marble/60 font-black uppercase tracking-widest animate-pulse">Syncing Ledger...</p>
       </div>
     );
   }
@@ -144,13 +144,13 @@ export default function FinanceManager() {
         <div className="flex bg-black/40 p-1 ares-cut-sm border border-white/5">
           <button 
             onClick={() => { setActiveTab("pipeline"); setIsAdding(false); }}
-            className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all ares-cut-sm ${activeTab === 'pipeline' ? 'bg-ares-red text-white' : 'text-marble/40 hover:text-white'}`}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all ares-cut-sm ${activeTab === 'pipeline' ? 'bg-ares-red text-white' : 'text-marble/60 hover:text-white'}`}
           >
             Sponsorship Pipeline
           </button>
           <button 
             onClick={() => { setActiveTab("ledger"); setIsAdding(false); }}
-            className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all ares-cut-sm ${activeTab === 'ledger' ? 'bg-ares-red text-white' : 'text-marble/40 hover:text-white'}`}
+            className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all ares-cut-sm ${activeTab === 'ledger' ? 'bg-ares-red text-white' : 'text-marble/60 hover:text-white'}`}
           >
             Ledger & Expenses
           </button>
@@ -186,7 +186,7 @@ export default function FinanceManager() {
                 <DashboardInput id="pipeline-company" label="Company Name" {...pipelineForm.register("company_name")} error={pipelineForm.formState.errors.company_name?.message} fullWidth />
                 <DashboardInput id="pipeline-value" label="Est. Value ($)" type="number" {...pipelineForm.register("estimated_value")} error={pipelineForm.formState.errors.estimated_value?.message} />
                 <div className="flex flex-col gap-1">
-                  <label htmlFor="pipeline-status" className="text-[10px] font-black uppercase tracking-widest text-marble/40 px-1">Initial Status</label>
+                  <label htmlFor="pipeline-status" className="text-[10px] font-black uppercase tracking-widest text-marble/60 px-1">Initial Status</label>
                   <select id="pipeline-status" {...pipelineForm.register("status")} className="bg-white/5 border border-white/10 ares-cut-sm p-3 text-sm text-white focus:border-ares-red outline-none">
                     {PIPELINE_COLUMNS.map(c => <option key={c} value={c} className="bg-obsidian text-white">{pipelineConfig[c].label}</option>)}
                   </select>
@@ -198,7 +198,7 @@ export default function FinanceManager() {
             ) : (
               <form onSubmit={transactionForm.handleSubmit(data => saveTransaction.mutate({ body: { ...data, season_id: selectedSeason || undefined } }))} className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex flex-col gap-1">
-                  <label htmlFor="transaction-type" className="text-[10px] font-black uppercase tracking-widest text-marble/40 px-1">Type</label>
+                  <label htmlFor="transaction-type" className="text-[10px] font-black uppercase tracking-widest text-marble/60 px-1">Type</label>
                   <select id="transaction-type" {...transactionForm.register("type")} className="bg-white/5 border border-white/10 ares-cut-sm p-3 text-sm text-white focus:border-ares-red outline-none">
                     <option value="expense" className="bg-obsidian text-white">Expense (-)</option>
                     <option value="income" className="bg-obsidian text-white">Income (+)</option>
@@ -301,10 +301,10 @@ export default function FinanceManager() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-white/5 border-b border-white/5">
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-marble/40">Date</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-marble/40">Category</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-marble/40">Description</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-marble/40 text-right">Amount</th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-marble/60">Date</th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-marble/60">Category</th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-marble/60">Description</th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-marble/60 text-right">Amount</th>
                 <th className="p-4 w-10"></th>
               </tr>
             </thead>

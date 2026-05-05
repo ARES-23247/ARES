@@ -156,7 +156,7 @@ export default function DocManagerTab({
               {d.category}
             </span>
             {view === 'active' && (
-              <span className="flex items-center text-xs text-marble/40 bg-obsidian border border-white/10 ares-cut-sm overflow-hidden">
+              <span className="flex items-center text-xs text-marble/60 bg-obsidian border border-white/10 ares-cut-sm overflow-hidden">
                 <button 
                   onClick={() => sortMutation.mutate({ params: { slug: d.slug }, body: { sortOrder: d.sort_order - 1 } })}
                   disabled={sortMutation.isPending}
@@ -182,7 +182,7 @@ export default function DocManagerTab({
           view !== 'pending' && Number(d.is_deleted) !== 1 ? (
             <button
               onClick={() => exportSingleDoc(d.slug)}
-              className="text-xs font-bold text-marble/40 hover:text-ares-gold bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-1"
+              className="text-xs font-bold text-marble/60 hover:text-ares-gold bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-1"
             >
               <Download size={10} />
               EXPORT

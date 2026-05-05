@@ -2,11 +2,10 @@ import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints } from "ts-rest-hono";
-import { RecursiveRouterObj } from "ts-rest-hono";
 import { socialQueueContract, SocialQueuePost } from "../../../shared/schemas/contracts/socialQueueContract";
 import { AppEnv, getSessionUser, originIntegrityMiddleware } from "../middleware";
 import { nanoid } from "nanoid";
-import { dispatchQueuePost, SocialConfig } from "../../utils/socialSync";
+import { dispatchQueuePost } from "../../utils/socialSync";
 
 const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
   id: String(r.id),
@@ -24,8 +23,8 @@ const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
   created_by: (r.created_by as string) || null,
 });
 
-const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEnv> = {
-  list: async ({ query }, c) => {
+const socialQueueRouterObj: any = {
+  list: async ({ query }: any, c: any) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -64,7 +63,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
     }
   },
 
-  calendar: async ({ query }, c) => {
+  calendar: async ({ query }: any, c: any) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -93,7 +92,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
     }
   },
 
-  create: async ({ body }, c) => {
+  create: async ({ body }: any, c: any) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -138,7 +137,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
     }
   },
 
-  update: async ({ params, body }, c) => {
+  update: async ({ params, body }: any, c: any) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -152,7 +151,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
         .executeTakeFirst();
 
       if (!existing) return { status: 500, body: { error: "Post not found" } };
-      if (user.role !== "admin" && existing.created_by !== user.id) {
+      if (user.role !== "admin" && (existing as any).created_by !== user.id) {
         return { status: 401, body: { error: "Unauthorized" } };
       }
 
@@ -175,7 +174,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
     }
   },
 
-  delete: async ({ params }, c) => {
+  delete: async ({ params }: any, c: any) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
@@ -189,7 +188,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
         .executeTakeFirst();
 
       if (!existing) return { status: 500, body: { error: "Post not found" } };
-      if (user.role !== "admin" && existing.created_by !== user.id) {
+      if (user.role !== "admin" && (existing as any).created_by !== user.id) {
         return { status: 401, body: { error: "Unauthorized" } };
       }
 
@@ -202,7 +201,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
     }
   },
 
-  sendNow: async ({ params }, c) => {
+  sendNow: async ({ params }: any, c: any) => {
     try {
       const user = await getSessionUser(c);
       if (!user || user.role !== "admin") {
@@ -221,7 +220,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
       if (!record) return { status: 500, body: { error: "Post not found" } };
 
       const post = toSocialQueuePost(record as any);
-      const config: SocialConfig = {
+      const config: any = {
         twitter: !!c.env.TWITTER_API_KEY,
         bluesky: !!c.env.BLUESKY_HANDLE,
         facebook: !!c.env.FACEBOOK_ACCESS_TOKEN,
@@ -240,7 +239,7 @@ const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEn
     }
   },
 
-  analytics: async ({ query }, c) => {
+  analytics: async ({ query }: any, c: any) => {
     try {
       const user = await getSessionUser(c);
       if (!user || user.role !== "admin") {

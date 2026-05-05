@@ -58,7 +58,7 @@ export function LocationCombobox({
             <ComboboxOption
               key={loc.id}
               value={loc.name}
-              className="group flex cursor-pointer items-center gap-2 py-2 px-4 select-none data-[focus]:bg-ares-red/20 data-[focus]:text-white text-white/80"
+              className="group flex cursor-pointer items-center gap-2 py-2 px-4 select-none data-[focus]:bg-ares-red/20 data-[focus]:text-white text-white/80 font-bold"
             >
               <div className="flex flex-col">
                 <span className="font-bold">{loc.name}</span>

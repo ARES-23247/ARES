@@ -50,7 +50,7 @@ async function getTBA(path: string, c: any) {
 }
 
 const tbaTsRestRouter = s.router(tbaContract, {
-  getRankings: async (input, c) => {
+  getRankings: async (input: any, c: any) => {
     try {
       const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -63,7 +63,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch rankings" } };
     }
   },
-  getMatches: async (input, c) => {
+  getMatches: async (input: any, c: any) => {
     try {
       const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -77,7 +77,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch matches" } };
     }
   },
-  getFtcEvents: async (input, c) => {
+  getFtcEvents: async (input: any, c: any) => {
     try {
       const { season, eventCode, type } = input.params;
       const path = `/${season}/events/${eventCode}/${type}`;
@@ -109,7 +109,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch official event data" } };
     }
   }
-});
+} as any);
 
 createHonoEndpoints(
   tbaContract,

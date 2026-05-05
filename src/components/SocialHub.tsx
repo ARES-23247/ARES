@@ -58,7 +58,7 @@ export default function SocialHub() {
               className={`flex-1 px-4 py-3 font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                 activeTab === tab.id
                   ? "bg-ares-cyan/20 text-ares-cyan border-t-2 border-ares-cyan"
-                  : "text-marble/40 hover:text-white hover:bg-white/5"
+                  : "text-marble/60 hover:text-white hover:bg-white/5"
               }`}
             >
               {tab.icon}

@@ -22,7 +22,7 @@ const TIERS = [
   { name: "Gold", icon: <Award className="text-ares-gold" />, color: "text-ares-gold", border: "border-ares-gold/30" },
   { name: "Silver", icon: <ShieldCheck className="text-marble/90" />, color: "text-marble/90", border: "border-marble/20" },
   { name: "Bronze", icon: <Zap className="text-ares-bronze" />, color: "text-ares-bronze", border: "border-ares-bronze/30" },
-  { name: "In-Kind", icon: <Package className="text-marble/40" />, color: "text-marble/40", border: "border-marble/10" },
+  { name: "In-Kind", icon: <Package className="text-marble/60" />, color: "text-marble/60", border: "border-marble/10" },
 ];
 
 export default function SponsorEditor() {
@@ -188,7 +188,7 @@ export default function SponsorEditor() {
                 focusColor="ares-red"
               />
               <div className="space-y-1">
-                <label htmlFor="sponsor-tier" className="text-xs font-bold uppercase tracking-widest text-marble/40">Tier</label>
+                <label htmlFor="sponsor-tier" className="text-xs font-bold uppercase tracking-widest text-marble/60">Tier</label>
                 <select
                   id="sponsor-tier"
                   {...register("tier")}
@@ -199,7 +199,7 @@ export default function SponsorEditor() {
                 {errors.tier && <p className="text-[10px] font-black uppercase tracking-tighter text-ares-red">{errors.tier.message as string}</p>}
               </div>
               <div className="space-y-1">
-                <label htmlFor="sponsor-logo" className="text-xs font-bold uppercase tracking-widest text-marble/40">Partner Logo</label>
+                <label htmlFor="sponsor-logo" className="text-xs font-bold uppercase tracking-widest text-marble/60">Partner Logo</label>
                 <div className="flex gap-2">
                   <DashboardInput
                     id="sponsor-logo"
@@ -279,7 +279,7 @@ export default function SponsorEditor() {
             
             <div className="flex items-center gap-3 mt-4">
               {s.website_url && (
-                <a href={s.website_url} target="_blank" rel="noreferrer" title={`Visit ${s.name} website`} className="text-marble/40 hover:text-ares-gold transition-colors">
+                <a href={s.website_url} target="_blank" rel="noreferrer" title={`Visit ${s.name} website`} className="text-marble/60 hover:text-ares-gold transition-colors">
                   <Globe size={16} />
                 </a>
               )}

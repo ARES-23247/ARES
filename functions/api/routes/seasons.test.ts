@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context } from "hono";
-import type { MockKysely, TestEnv } from "../../../src/test/types";
+import type { TestEnv } from "../../../src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
 import seasonsRouter from "./seasons";
 
@@ -15,7 +15,7 @@ vi.mock("../middleware", async (importOriginal) => {
   };
 });
 
-const mockDb: MockKysely = {
+const mockDb: any = {
   selectFrom: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),

@@ -79,7 +79,7 @@ export default function TeamAvailability() {
     switch (status) {
       case "active": return <Zap size={14} className="text-ares-cyan" />;
       case "idle": return <Clock size={14} className="text-ares-gold" />;
-      default: return <UserMinus size={14} className="text-marble/40" />;
+      default: return <UserMinus size={14} className="text-marble/60" />;
     }
   };
 
@@ -111,7 +111,7 @@ export default function TeamAvailability() {
           Team Availability
         </h3>
         {presences && (
-          <span className="text-xs font-bold text-marble/40 uppercase tracking-wider">
+          <span className="text-xs font-bold text-marble/60 uppercase tracking-wider">
             {sortedMembers.filter(m => m.status === "active").length} Online
           </span>
         )}
@@ -121,16 +121,16 @@ export default function TeamAvailability() {
         {loading && !presences ? (
           <div className="flex flex-col items-center justify-center py-10 gap-2 opacity-50">
             <Circle className="text-marble/20 animate-pulse" size={24} />
-            <span className="text-xs font-bold uppercase tracking-widest text-marble/40">Syncing Radar...</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-marble/60">Syncing Radar...</span>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <span className="text-xs font-bold text-white bg-ares-red/20 border border-ares-red/30 px-3 py-1 ares-cut-sm">{error}</span>
+            <span className="text-xs font-bold text-ares-red border border-ares-red/50 px-3 py-1 ares-cut-sm">{error}</span>
           </div>
         ) : sortedMembers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 gap-2 opacity-50">
             <Users className="text-marble/20" size={24} />
-            <span className="text-xs font-bold uppercase tracking-widest text-marble/40">No telemetry data</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-marble/60">No telemetry data</span>
           </div>
         ) : (
           <AnimatePresence>
@@ -157,7 +157,7 @@ export default function TeamAvailability() {
                     </p>
                     <div className="flex items-center gap-1 mt-0.5">
                       {getIcon(member.status)}
-                      <span className="text-[9px] uppercase tracking-wider font-bold text-marble/40">
+                      <span className="text-[9px] uppercase tracking-wider font-bold text-marble/60">
                         {member.status}
                       </span>
                     </div>

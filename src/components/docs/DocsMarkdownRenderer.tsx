@@ -85,7 +85,7 @@ export default memo(function DocsMarkdownRenderer({ content }: DocsMarkdownRende
           const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           return (
             <h2 id={id} className="text-2xl font-bold font-heading mt-8 mb-3 text-ares-gold scroll-m-24 group relative">
-              <a href={`#${id}`} className="absolute -left-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-marble/40 hover:text-ares-cyan" aria-label="Link to section">
+              <a href={`#${id}`} className="absolute -left-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-marble/60 hover:text-ares-cyan" aria-label="Link to section">
                 <LinkIcon size={18} />
               </a>
               {children}
@@ -97,7 +97,7 @@ export default memo(function DocsMarkdownRenderer({ content }: DocsMarkdownRende
           const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           return (
             <h3 id={id} className="text-xl font-bold font-heading mt-6 mb-2 text-ares-red scroll-m-24 group relative">
-              <a href={`#${id}`} className="absolute -left-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-marble/40 hover:text-ares-cyan" aria-label="Link to section">
+              <a href={`#${id}`} className="absolute -left-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity text-marble/60 hover:text-ares-cyan" aria-label="Link to section">
                 <LinkIcon size={16} />
               </a>
               {children}

@@ -121,7 +121,7 @@ export default function DashboardSidebar({
             <AppWindow size={16} className="text-white" />
           </div>
           <h1 className="text-lg font-black tracking-tighter text-white">
-            ARES<span className="text-marble/40 font-bold">Workspace</span>
+            ARES<span className="text-marble/60 font-bold">Workspace</span>
           </h1>
         </div>
         <button
@@ -151,7 +151,7 @@ export default function DashboardSidebar({
         {/* Profile Header */}
         <div className="p-6 border-b border-white/5 shrink-0 flex flex-col gap-4">
           <div className="flex items-center justify-between md:hidden pb-2 mb-2 border-b border-white/5">
-            <span className="text-xs font-black text-marble/40 uppercase tracking-widest">Navigation Menu</span>
+            <span className="text-xs font-black text-marble/60 uppercase tracking-widest">Navigation Menu</span>
             <button className="text-marble/50 p-1 bg-white/5 ares-cut-sm hover:text-white" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">
               <X size={16} />
             </button>

@@ -4,12 +4,27 @@ import { mockExecutionContext } from "../../../src/test/utils";
 import { TestEnv, MockKysely } from "../../../src/test/types";
 import zulipRouter from "./zulip";
 
+interface ZulipConfig {
+  ZULIP_BOT_EMAIL?: string;
+  ZULIP_API_KEY?: string;
+  ZULIP_URL?: string;
+  [key: string]: unknown;
+}
+
+interface ZulipResponse {
+  success?: boolean;
+  userNames?: Record<string, string>;
+  presence?: Record<string, unknown>;
+  error?: string;
+  [key: string]: unknown;
+}
+
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
     ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
-    ensureAuth: async (c, next: () => Promise<void>) => {
+    ensureAuth: async (c: any, next: () => Promise<void>) => {
       c.set("sessionUser", { id: "test-user", email: "test@test.com", name: "Test User", nickname: "TestNick", image: null, role: "admin", member_type: "mentor" });
       return next();
     },
@@ -33,9 +48,8 @@ describe("Hono Backend - /zulip Router", () => {
 
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
-      c.set("executionCtx", mockExecutionContext);
-      if (c.env && c.env.db) {
-        c.set("db", c.env.db);
+      if (c.env && (c.env as any).db) {
+        c.set("db", (c.env as any).db);
       }
       await next();
     });
@@ -56,7 +70,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: "success", presences: { "alice@test.com": {} } }) }) // /presence
@@ -64,9 +78,9 @@ describe("Hono Backend - /zulip Router", () => {
 
     const res = await testApp.request("/presence", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as ZulipResponse;
     expect(body.success).toBe(true);
-    expect(body.userNames["alice@test.com"]).toBe("Alice");
+    expect(body.userNames?.["alice@test.com"]).toBe("Alice");
     expect(body.presence).toHaveProperty("alice@test.com");
   });
 
@@ -75,7 +89,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     fetchMock.mockResolvedValueOnce({ ok: false, text: async () => "Unauthorized" });
 
@@ -98,7 +112,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     vi.mocked(sendZulipMessage).mockResolvedValueOnce(true as any);
 
@@ -117,7 +131,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     vi.mocked(sendZulipMessage).mockResolvedValueOnce(false as any);
 
@@ -135,15 +149,15 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ messages: [{ id: 1, content: "hi" }] }) });
 
     const res = await testApp.request("/topic?stream=general&topic=test", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as ZulipResponse;
     expect(body.messages).toHaveLength(1);
-    expect(body.messages[0].content).toBe("hi");
+    expect((body.messages as any[])[0].content).toBe("hi");
   });
 
   it("GET /topic - handles 403 error", async () => {
@@ -151,7 +165,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     fetchMock.mockResolvedValueOnce({ ok: false, status: 403, text: async () => "Forbidden" });
 
@@ -164,7 +178,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     fetchMock.mockResolvedValueOnce({ ok: false, status: 500, text: async () => "Internal Error" });
 
@@ -177,7 +191,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: "success", presences: {} }) }) // /presence
@@ -192,7 +206,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: "success", presences: {} }) }) // /presence
@@ -213,7 +227,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     fetchMock.mockResolvedValueOnce({ 
       ok: true, 
@@ -232,6 +246,7 @@ describe("Hono Backend - /zulip Router", () => {
       selectFrom: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
+      executeTakeFirst: vi.fn().mockResolvedValue(null),
       execute: vi.fn().mockResolvedValue([
         { email: "alice@test.com" },
         { email: "charlie@test.com" }
@@ -243,7 +258,7 @@ describe("Hono Backend - /zulip Router", () => {
       console.log(await res.text());
     }
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as ZulipResponse;
     expect(body.success).toBe(true);
     expect(body.missingEmails).toEqual(["charlie@test.com"]);
   });
@@ -253,7 +268,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_BOT_EMAIL: "bot@test.com",
       ZULIP_API_KEY: "key123",
       ZULIP_URL: "https://test.zulip.com"
-    } as any);
+    } as ZulipConfig);
 
     // Mock streams response
     fetchMock.mockResolvedValueOnce({ 
@@ -274,7 +289,7 @@ describe("Hono Backend - /zulip Router", () => {
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as ZulipResponse;
     expect(body.success).toBe(true);
     expect(body.invitedCount).toBe(1);
   });

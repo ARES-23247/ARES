@@ -63,7 +63,7 @@ export default function MassEmailComposer() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter flex items-center gap-2">
-                Team <span className="text-marble/40">Broadcaster</span>
+                Team <span className="text-marble/60">Broadcaster</span>
               </h1>
               <p className="text-xs sm:text-sm text-marble/60 font-bold uppercase tracking-widest mt-1">
                 ARES Mass Email Composer
@@ -76,7 +76,7 @@ export default function MassEmailComposer() {
             disabled={sendMutation.isPending || !recipientCount || !subject}
             className={`flex items-center gap-2 px-8 py-3 ares-cut-sm font-black tracking-widest transition-all ${
               sendMutation.isPending || !recipientCount || !subject
-                ? "bg-white/5 text-marble/40 cursor-not-allowed border border-white/5"
+                ? "bg-white/5 text-marble/60 cursor-not-allowed border border-white/5"
                 : "bg-ares-red text-white hover:bg-red-700 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(192,0,0,0.4)]"
             }`}
           >
@@ -111,7 +111,7 @@ export default function MassEmailComposer() {
                <div className="h-6 w-16 bg-white/10 animate-pulse rounded"></div>
              ) : (
                <div className="text-2xl font-black text-ares-cyan tracking-tighter">
-                 {recipientCount} <span className="text-sm font-bold text-marble/40 uppercase tracking-widest">Recipients</span>
+                 {recipientCount} <span className="text-sm font-bold text-marble/60 uppercase tracking-widest">Recipients</span>
                </div>
              )}
           </div>

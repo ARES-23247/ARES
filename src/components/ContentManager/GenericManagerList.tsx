@@ -154,7 +154,7 @@ export default function GenericManagerList<T>({
                       {onEdit && (
                         <button
                           onClick={() => onEdit(item)}
-                          className="text-xs font-bold text-marble/40 hover:text-ares-cyan bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
+                          className="text-xs font-bold text-marble/60 hover:text-ares-cyan bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
                         >
                           EDIT
                         </button>
@@ -162,7 +162,7 @@ export default function GenericManagerList<T>({
                       {onHistory && view === "active" && (
                         <button
                           onClick={() => onHistory(item)}
-                          className="text-xs font-bold text-marble/40 hover:text-ares-gold bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
+                          className="text-xs font-bold text-marble/60 hover:text-ares-gold bg-white/5 hover:bg-white/10 px-3 py-1 ares-cut-sm transition-colors"
                         >
                           HISTORY
                         </button>

@@ -4,6 +4,13 @@ import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { TestEnv } from "../../../src/test/types";
 
+interface GitHubResponse {
+  success?: boolean;
+  data?: unknown;
+  error?: string;
+  [key: string]: unknown;
+}
+
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
@@ -60,7 +67,7 @@ describe("Hono Backend - /github Router", () => {
     }, {}, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as GitHubResponse;
     
     expect(body.success).toBe(true);
     expect(Array.isArray(body.board)).toBe(true);
@@ -79,7 +86,7 @@ describe("Hono Backend - /github Router", () => {
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as GitHubResponse;
     expect(body.success).toBe(true);
   });
 
@@ -88,7 +95,7 @@ describe("Hono Backend - /github Router", () => {
     vi.mocked(buildGitHubConfig).mockReturnValueOnce(null);
     const res = await testApp.request("/projects", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as GitHubResponse;
     expect(body.success).toBe(false);
   });
 
@@ -97,7 +104,7 @@ describe("Hono Backend - /github Router", () => {
     vi.mocked(fetchProjectBoard).mockRejectedValueOnce(new Error("API Error"));
     const res = await testApp.request("/projects", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as GitHubResponse;
     expect(body.success).toBe(false);
   });
 
@@ -157,7 +164,7 @@ describe("Hono Backend - /github Router", () => {
 
       const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as GitHubResponse;
       expect(body.repoCount).toBe(1);
       expect(body.totalCommits).toBe(5);
       expect(body.grid.length).toBeGreaterThanOrEqual(52);
@@ -179,7 +186,7 @@ describe("Hono Backend - /github Router", () => {
 
       const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as GitHubResponse;
       expect(body.repoCount).toBe(1);
       expect(body.totalCommits).toBe(0);
     });
@@ -196,7 +203,7 @@ describe("Hono Backend - /github Router", () => {
 
       const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
+      const body = await res.json() as GitHubResponse;
       expect(body.repoCount).toBe(2);
       expect(body.totalCommits).toBe(10);
       expect(fetchMock).not.toHaveBeenCalled();

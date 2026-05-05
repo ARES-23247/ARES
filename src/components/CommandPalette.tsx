@@ -256,7 +256,7 @@ export default function CommandPalette() {
                     setIsOpen(false);
                     setChatbotOpen(true);
                   }}
-                  className="flex-1 py-3 text-sm font-bold uppercase tracking-widest transition-colors text-marble/40 hover:text-white border-b-2 border-transparent hover:border-white/20 flex justify-center items-center gap-2"
+                  className="flex-1 py-3 text-sm font-bold uppercase tracking-widest transition-colors text-marble/60 hover:text-white border-b-2 border-transparent hover:border-white/20 flex justify-center items-center gap-2"
                 >
                   <Bot size={14} />
                   Ask AI
@@ -265,7 +265,7 @@ export default function CommandPalette() {
 
               {/* Input Header */}
               <div className="flex items-center px-6 py-5 border-b border-white/5 bg-white/[0.02]">
-                <Search className={`transition-colors ${isPending ? 'text-ares-cyan animate-pulse' : 'text-marble/40'} mr-3 shrink-0`} size={20} />
+                <Search className={`transition-colors ${isPending ? 'text-ares-cyan animate-pulse' : 'text-marble/60'} mr-3 shrink-0`} size={20} />
                 <Command.Input
                   // eslint-disable-next-line jsx-a11y/no-autofocus
                   autoFocus
@@ -275,8 +275,8 @@ export default function CommandPalette() {
                   onValueChange={handleValueChange}
                 />
                 <div className="shrink-0 items-center gap-1 ml-3 hidden sm:flex">
-                  <kbd className="bg-white/10 text-marble/40 text-xs px-2 py-1 rounded font-mono border border-white/10">ESC</kbd>
-                  <span className="text-xs text-marble/40 ml-1">to close</span>
+                  <kbd className="bg-white/10 text-marble/60 text-xs px-2 py-1 rounded font-mono border border-white/10">ESC</kbd>
+                  <span className="text-xs text-marble/60 ml-1">to close</span>
                 </div>
               </div>
 
@@ -287,13 +287,13 @@ export default function CommandPalette() {
               >
                 {(isSearching || isPending) && query.length >= 2 && results.length === 0 ? (
                   <Command.Loading>
-                    <div className="p-8 text-center text-marble/40 animate-pulse font-mono flex items-center justify-center gap-2">
+                    <div className="p-8 text-center text-marble/60 animate-pulse font-mono flex items-center justify-center gap-2">
                       <Terminal className="text-ares-cyan" size={16} /> Scanning D1 nodes...
                     </div>
                   </Command.Loading>
                 ) : (
                   <Command.Empty>
-                    <div className="p-8 text-center text-marble/40 font-bold uppercase tracking-widest text-sm">
+                    <div className="p-8 text-center text-marble/60 font-bold uppercase tracking-widest text-sm">
                       No vectors matched telemetry.
                     </div>
                   </Command.Empty>
@@ -304,7 +304,7 @@ export default function CommandPalette() {
                     key={res.id}
                     value={res.id}
                     onSelect={() => handleSelect(res)}
-                    className="w-full text-left flex items-center px-4 py-3 mb-1 transition-colors ares-cut-sm cursor-pointer data-[selected=true]:bg-ares-red/20 data-[selected=true]:border-l-2 data-[selected=true]:border-ares-red data-[selected=true]:text-white border-l-2 border-transparent text-marble/40 hover:bg-white/5"
+                    className="w-full text-left flex items-center px-4 py-3 mb-1 transition-colors ares-cut-sm cursor-pointer data-[selected=true]:bg-ares-red/20 data-[selected=true]:border-l-2 data-[selected=true]:border-ares-red data-[selected=true]:text-white border-l-2 border-transparent text-marble/60 hover:bg-white/5 font-bold"
                   >
                     <div className="mr-4 shrink-0 transition-colors group-data-[selected=true]:text-ares-red text-marble/30">
                       {res.icon}
@@ -321,7 +321,7 @@ export default function CommandPalette() {
                        </div>
                        
                        {res.snippet && (
-                         <p className="text-xs text-marble/40 line-clamp-1 mt-1 font-mono leading-relaxed" 
+                         <p className="text-xs text-marble/60 line-clamp-1 mt-1 font-mono leading-relaxed" 
                            dangerouslySetInnerHTML={{__html: sanitizeHtml(res.snippet)}} 
                          />
                        )}

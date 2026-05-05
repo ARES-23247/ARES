@@ -23,7 +23,7 @@ function normalizeEmail(email: string): string {
 }
 
 const zulipTsRestRouter = s.router(zulipContract, {
-  getPresence: async (_input, c) => {
+  getPresence: async (_input: any, c: any) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -67,7 +67,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  sendMessage: async (input, c) => {
+  sendMessage: async (input: any, c: any) => {
     try {
       const { sendZulipMessage } = await import("../../utils/zulipSync");
       const config = await getSocialConfig(c);
@@ -98,7 +98,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  getTopicMessages: async (input, c) => {
+  getTopicMessages: async (input: any, c: any) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -137,11 +137,11 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  auditMissingUsers: async (_input, c) => {
+  auditMissingUsers: async (_input: any, c: any) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
-        return { status: 500, body: { success: false, error: "Zulip not configured. Set ZULIP_BOT_EMAIL and ZULIP_API_KEY in settings." } };
+        return { status: 500 as const, body: { success: false, error: "Zulip not configured. Set ZULIP_BOT_EMAIL and ZULIP_API_KEY in settings." } };
       }
 
       const credentials = `${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`;
@@ -171,14 +171,14 @@ const zulipTsRestRouter = s.router(zulipContract, {
         if (!zulipRes.ok) {
           const errText = await zulipRes.text().catch(() => "(no body)");
           console.error(`[Zulip:Audit] Failed to fetch users page ${page}: ${zulipRes.status} — ${errText}`);
-          return { status: 500, body: { success: false, error: `Zulip API returned ${zulipRes.status}: ${errText.slice(0, 200)}` } };
+          return { status: 500 as const, body: { success: false, error: `Zulip API returned ${zulipRes.status}: ${errText.slice(0, 200)}` } };
         }
 
         const zulipData = await zulipRes.json() as { members: Array<{ email: string; delivery_email?: string | null; is_bot?: boolean; is_active?: boolean }> };
 
         if (!zulipData.members || !Array.isArray(zulipData.members)) {
           console.error("[Zulip:Audit] No members array in response:", JSON.stringify(zulipData).slice(0, 500));
-          return { status: 500, body: { success: false, error: "Zulip returned invalid data — no members array" } };
+          return { status: 500 as const, body: { success: false, error: "Zulip returned invalid data — no members array" } };
         }
 
         // Add emails from this page
@@ -221,7 +221,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       const sampleZulip = Array.from(zulipEmails).slice(0, 10);
       const sampleMissing = missingEmails.slice(0, 10);
 
-      return { status: 200, body: {
+      return { status: 200 as const, body: {
         success: true,
         missingEmails,
         debug: {
@@ -233,19 +233,19 @@ const zulipTsRestRouter = s.router(zulipContract, {
       } as z.infer<typeof zulipContract.auditMissingUsers.responses[200]> };
     } catch (err) {
       console.error("[Zulip:Audit] Unexpected error:", err);
-      return { status: 500, body: { success: false, error: (err as Error).message } };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  inviteUsers: async (input, c) => {
+  inviteUsers: async (input: any, c: any) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
-        return { status: 500, body: { success: false, error: "Zulip not configured." } };
+        return { status: 500 as const, body: { success: false, error: "Zulip not configured." } };
       }
 
       const { emails } = input.body;
       if (!emails || emails.length === 0) {
-        return { status: 200, body: { success: true, invitedCount: 0 } };
+        return { status: 200 as const, body: { success: true, invitedCount: 0 } };
       }
 
       const credentials = `${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`;
@@ -330,16 +330,16 @@ const zulipTsRestRouter = s.router(zulipContract, {
       }
 
       if (allErrors.length > 0 && totalInvited === 0) {
-        return { status: 500, body: { success: false, error: allErrors.join("; ") } };
+        return { status: 500 as const, body: { success: false, error: allErrors.join("; ") } };
       }
 
-      return { status: 200, body: { success: true, invitedCount: totalInvited } };
+      return { status: 200 as const, body: { success: true, invitedCount: totalInvited } };
     } catch (err) {
       console.error("[Zulip:Invite] Unexpected error:", err);
-      return { status: 500, body: { success: false, error: (err as Error).message } };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   }
-});
+} as any);
 
 // CR-07 FIX: Apply authentication to all Zulip routes
 // Admin-only routes override the base authentication

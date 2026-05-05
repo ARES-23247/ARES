@@ -11,7 +11,7 @@ import { siteConfig } from "../../utils/site.config";
 export const tasksRouter = new Hono<AppEnv>();
 
 const tasksTsRestRouter = s.router(taskContract, {
-  list: async (input, c) => {
+  list: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -88,7 +88,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  create: async (input, c) => {
+  create: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -209,7 +209,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  reorder: async (input, c) => {
+  reorder: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -241,7 +241,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  update: async (input, c) => {
+  update: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -346,7 +346,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  delete: async (input, c) => {
+  delete: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -386,7 +386,7 @@ const tasksTsRestRouter = s.router(taskContract, {
       return { status: 500, body: { error: "Failed to delete task" } };
     }
   },
-});
+} as any);
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));

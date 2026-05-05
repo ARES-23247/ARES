@@ -90,11 +90,11 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
 
         <div className="space-y-4">
           <div>
-            <label htmlFor="companyName" className="text-[10px] font-black uppercase tracking-widest text-marble/40 mb-1 block px-1">
+            <label htmlFor="companyName" className="text-[10px] font-black uppercase tracking-widest text-marble/60 mb-1 block px-1">
               Company Name
             </label>
             <div className="relative">
-              <Type className="absolute left-3 top-1/2 -translate-y-1/2 text-marble/40" size={16} />
+              <Type className="absolute left-3 top-1/2 -translate-y-1/2 text-marble/60" size={16} />
               <input
                 id="companyName"
                 type="text"
@@ -107,7 +107,7 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="status" className="text-[10px] font-black uppercase tracking-widest text-marble/40 mb-1 block px-1">
+              <label htmlFor="status" className="text-[10px] font-black uppercase tracking-widest text-marble/60 mb-1 block px-1">
                 Status
               </label>
               <select
@@ -125,11 +125,11 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
             </div>
             
             <div>
-              <label htmlFor="estimatedValue" className="text-[10px] font-black uppercase tracking-widest text-marble/40 mb-1 block px-1">
+              <label htmlFor="estimatedValue" className="text-[10px] font-black uppercase tracking-widest text-marble/60 mb-1 block px-1">
                 Est. Value ($)
               </label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-marble/40" size={16} />
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-marble/60" size={16} />
                 <input
                   id="estimatedValue"
                   type="number"
@@ -142,7 +142,7 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
           </div>
 
           <div>
-            <label htmlFor="contactPerson" className="text-[10px] font-black uppercase tracking-widest text-marble/40 mb-1 block px-1">
+            <label htmlFor="contactPerson" className="text-[10px] font-black uppercase tracking-widest text-marble/60 mb-1 block px-1">
               Contact Person
             </label>
             <input
@@ -156,11 +156,11 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
           </div>
 
           <div>
-            <label htmlFor="notes" className="text-[10px] font-black uppercase tracking-widest text-marble/40 mb-1 block px-1">
+            <label htmlFor="notes" className="text-[10px] font-black uppercase tracking-widest text-marble/60 mb-1 block px-1">
               Notes
             </label>
             <div className="relative">
-              <AlignLeft className="absolute left-3 top-3 text-marble/40" size={16} />
+              <AlignLeft className="absolute left-3 top-3 text-marble/60" size={16} />
               <textarea
                 id="notes"
                 value={notes}
@@ -173,7 +173,7 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
           </div>
 
           <div className="relative" ref={dropdownRef}>
-            <label className="text-[10px] font-black uppercase tracking-widest text-marble/40 mb-1 flex items-center gap-1 px-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-marble/60 mb-1 flex items-center gap-1 px-1">
               <User size={10} />
               Assignees ({assigneeIds.length})
             </label>
@@ -189,7 +189,7 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
               ))}
               <button 
                 onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
-                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-marble/40 hover:text-white transition-all ml-auto"
+                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-marble/60 hover:text-white transition-all ml-auto"
                 title="Add assignee"
               >
                 <Plus size={14} />
@@ -219,7 +219,7 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
                     </button>
                   ))}
                   {teamMembers.length === 0 && (
-                    <div className="p-3 text-xs text-marble/40 italic text-center">No team members found</div>
+                    <div className="p-3 text-xs text-marble/60 italic text-center">No team members found</div>
                   )}
                 </motion.div>
               )}

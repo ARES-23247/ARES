@@ -327,11 +327,11 @@ export default function NeuralPlayground() {
         <div className="flex gap-4">
           <div className="bg-black/40 border border-white/5 ares-cut-sm px-6 py-3 flex gap-8">
              <div className="text-center">
-                <div className="text-[10px] text-marble/40 uppercase tracking-widest mb-1">Epoch</div>
+                <div className="text-[10px] text-marble/60 uppercase tracking-widest mb-1">Epoch</div>
                 <div className="text-xl font-mono text-ares-cyan font-bold">{epoch}</div>
              </div>
              <div className="text-center">
-                <div className="text-[10px] text-marble/40 uppercase tracking-widest mb-1">Loss</div>
+                <div className="text-[10px] text-marble/60 uppercase tracking-widest mb-1">Loss</div>
                 <div className="text-xl font-mono text-ares-gold font-bold">{loss.toFixed(4)}</div>
              </div>
           </div>
@@ -361,12 +361,12 @@ export default function NeuralPlayground() {
             
             <div className="space-y-3">
               <label className="block">
-                <span className="text-xs text-marble/40 uppercase mb-2 block">Learning Rate: {learningRate}</span>
+                <span className="text-xs text-marble/60 uppercase mb-2 block">Learning Rate: {learningRate}</span>
                 <input type="range" min="0.001" max="0.3" step="0.01" value={learningRate} onChange={e => setLearningRate(parseFloat(e.target.value))} className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-ares-cyan" />
               </label>
 
               <label className="block">
-                <span className="text-xs text-marble/40 uppercase mb-2 block">Activation</span>
+                <span className="text-xs text-marble/60 uppercase mb-2 block">Activation</span>
                 <select value={activation} onChange={e => setActivation(e.target.value as Activation)} className="w-full bg-black/50 border border-white/10 ares-cut-sm p-2 text-sm outline-none focus:border-ares-cyan">
                   <option value="tanh">Tanh</option>
                   <option value="sigmoid">Sigmoid</option>
@@ -386,7 +386,7 @@ export default function NeuralPlayground() {
                 <button 
                   key={type} 
                   onClick={() => setDatasetType(type)}
-                  className={`p-2 text-[10px] uppercase font-bold tracking-widest border transition-all ${datasetType === type ? 'bg-ares-red/20 border-ares-red text-white' : 'bg-black/30 border-white/10 text-marble/40 hover:border-white/30'}`}
+                  className={`p-2 text-[10px] uppercase font-bold tracking-widest border transition-all ${datasetType === type ? 'bg-ares-red/20 border-ares-red text-white' : 'bg-black/30 border-white/10 text-marble/60 hover:border-white/30'}`}
                 >
                   {type}
                 </button>
@@ -440,8 +440,8 @@ export default function NeuralPlayground() {
                       ))}
                    </div>
                    <div className="flex gap-1 mt-4">
-                      <button onClick={() => updateLayerSize(lIdx, -1)} className="p-1 hover:bg-white/10 rounded text-marble/40"><Minus className="w-3 h-3"/></button>
-                      <button onClick={() => updateLayerSize(lIdx, 1)} className="p-1 hover:bg-white/10 rounded text-marble/40"><Plus className="w-3 h-3"/></button>
+                      <button onClick={() => updateLayerSize(lIdx, -1)} className="p-1 hover:bg-white/10 rounded text-marble/60"><Minus className="w-3 h-3"/></button>
+                      <button onClick={() => updateLayerSize(lIdx, 1)} className="p-1 hover:bg-white/10 rounded text-marble/60"><Plus className="w-3 h-3"/></button>
                    </div>
                 </div>
               ))}
@@ -492,7 +492,7 @@ export default function NeuralPlayground() {
           </div>
 
           <div className="bg-black/30 border border-white/5 ares-cut-sm p-4">
-             <div className="text-[10px] text-marble/40 uppercase mb-3 block">Architecture Controls</div>
+             <div className="text-[10px] text-marble/60 uppercase mb-3 block">Architecture Controls</div>
              <div className="flex gap-2">
                 <button onClick={removeLayer} disabled={layers.length === 0} className="flex-1 p-2 bg-white/5 border border-white/10 text-[10px] uppercase font-bold hover:bg-white/10 disabled:opacity-20">Remove Layer</button>
                 <button onClick={addLayer} disabled={layers.length >= 4} className="flex-1 p-2 bg-white/5 border border-white/10 text-[10px] uppercase font-bold hover:bg-white/10 disabled:opacity-20">Add Layer</button>

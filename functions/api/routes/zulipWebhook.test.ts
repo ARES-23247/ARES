@@ -127,7 +127,7 @@ describe("Zulip Webhook Router", () => {
   });
 
   it("should respond to !events with no events", async () => {
-    mockDb.execute.mockResolvedValueOnce([]);
+    (mockDb.execute as any).mockResolvedValueOnce([]);
     const payload = JSON.stringify({ token: "test-token", message: { content: "!events" } });
     const req = new Request("http://localhost/", { method: "POST", body: payload });
     const res = await testApp.request(req, {}, env, mockExecutionContext);

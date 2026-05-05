@@ -139,7 +139,7 @@ export function SecuritySettings({ inputClass, labelClass, sectionClass }: Profi
       <div className="bg-obsidian/50 border border-white/10 p-4 ares-cut-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-full ${session?.user?.twoFactorEnabled ? "bg-ares-gold/10 text-ares-gold" : "bg-black/40 text-marble/40"}`}>
+            <div className={`p-2 rounded-full ${session?.user?.twoFactorEnabled ? "bg-ares-gold/10 text-ares-gold" : "bg-black/40 text-marble/60"}`}>
               <Key size={20} />
             </div>
             <div>
@@ -176,7 +176,7 @@ export function SecuritySettings({ inputClass, labelClass, sectionClass }: Profi
                 <QRCodeSVG value={twoFactorData.qrCode} size={160} />
               </div>
               <div className="flex-1 space-y-3">
-                <p className="text-xs text-marble/40 font-medium">
+                <p className="text-xs text-marble/60 font-medium">
                   Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.). 
                   If you can&apos;t scan it, enter the secret key manually:
                 </p>
@@ -218,7 +218,7 @@ export function SecuritySettings({ inputClass, labelClass, sectionClass }: Profi
                 </button>
                 <button 
                   onClick={() => setIsSettingUp2FA(false)}
-                  className="px-4 border border-white/20 text-marble/40 font-bold ares-cut-sm hover:bg-white/5"
+                  className="px-4 border border-white/20 text-marble/60 font-bold ares-cut-sm hover:bg-white/5"
                 >
                   Cancel
                 </button>

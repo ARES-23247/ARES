@@ -113,7 +113,7 @@ export default function ExternalSourcesManager() {
           disabled={isSyncing || sources.length === 0}
           className={`px-3 py-1.5 ares-cut-sm border text-xs font-bold transition-all flex items-center gap-2 ${
             isSyncing || sources.length === 0
-              ? "bg-white/5 text-marble/40 border-white/5 cursor-not-allowed"
+              ? "bg-white/5 text-marble/60 border-white/5 cursor-not-allowed"
               : "bg-purple-500/10 text-purple-400 border-purple-500/20 hover:border-purple-500/40"
           }`}
         >
@@ -124,9 +124,9 @@ export default function ExternalSourcesManager() {
 
       <div className="space-y-3 mb-6">
         {isLoading ? (
-          <div className="text-marble/40 text-sm">Loading sources...</div>
+          <div className="text-marble/60 text-sm">Loading sources...</div>
         ) : sources.length === 0 ? (
-          <div className="text-marble/40 text-sm">No external sources configured.</div>
+          <div className="text-marble/60 text-sm">No external sources configured.</div>
         ) : (
           sources.map((src) => (
             <div key={src.id} className="flex items-center justify-between p-3 bg-white/5 border border-white/10 ares-cut-sm">
@@ -134,7 +134,7 @@ export default function ExternalSourcesManager() {
                 {src.type === "github" ? <GitBranch size={16} className="text-marble" /> : <Globe size={16} className="text-marble" />}
                 <div>
                   <div className="text-sm font-bold text-white">{src.url}</div>
-                  <div className="text-xs text-marble/40 flex items-center gap-2">
+                  <div className="text-xs text-marble/60 flex items-center gap-2">
                     {src.type === "github" && <span>{src.branch}</span>}
                     {src.last_indexed_at ? (
                       <span className="text-green-400/80">Synced {new Date(src.last_indexed_at).toLocaleDateString()}</span>

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { MockKysely, TestEnv } from "../../../src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
-import { createMockNotification } from "../../../src/test/factories/systemFactory";
 import { getSessionUser } from "../middleware";
 
 // Mock middleware

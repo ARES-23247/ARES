@@ -90,7 +90,7 @@ export default function SeasonManagerTab({
       getItemStatus={(s) => s.status}
       renderTitle={(s) => `${s.challenge_name} ${s.start_year}-${s.end_year}`}
       renderSubtitle={(s) => (
-        <span className="text-xs text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm uppercase tracking-widest">
+        <span className="text-xs text-marble/60 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm uppercase tracking-widest">
           {s.robot_name || 'No Robot Assigned'}
         </span>
       )}

@@ -117,7 +117,7 @@ export default function TeamAnalysisCard({ team, ranking, seasonKey }: TeamAnaly
                 </span>
               )}
               {team.rookie_year && (
-                <span className="text-xs text-marble/40 font-semibold">
+                <span className="text-xs text-marble/60 font-semibold">
                   Est. {team.rookie_year}
                 </span>
               )}
@@ -190,7 +190,7 @@ export default function TeamAnalysisCard({ team, ranking, seasonKey }: TeamAnaly
                   AI Analysis
                 </span>
                 {analysis.created_at && (
-                  <span className="text-[10px] text-marble/40 bg-white/5 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] text-marble/60 bg-white/5 px-2 py-0.5 rounded-full">
                     {new Date(analysis.created_at).toLocaleDateString()}
                   </span>
                 )}

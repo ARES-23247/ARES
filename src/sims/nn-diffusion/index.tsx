@@ -128,7 +128,7 @@ export default function DiffusionVisualizer() {
         </div>
       </div>
       
-      <div className="mt-8 text-xs text-marble/40 max-w-lg mx-auto leading-relaxed">
+      <div className="mt-8 text-xs text-marble/60 max-w-lg mx-auto leading-relaxed">
         Modern AI models like Midjourney or DALL-E work by starting with pure static noise (100% noise) and using a neural network to predict and subtract the noise step-by-step until a clear image emerges.
       </div>
     </div>

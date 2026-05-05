@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import githubWebhookRouter from "./githubWebhook";
 import { mockExecutionContext, flushWaitUntil } from "../../../src/test/utils";
+import type { MockExecutionContext } from "../../../src/test/types";
 import * as zulipSync from "../../utils/zulipSync";
 
 vi.mock("../../utils/zulipSync", () => ({
@@ -60,7 +61,7 @@ describe("GitHub Webhook Router", () => {
   });
 
   it("should process requests with missing event header", async () => {
-    vi.spyOn(globalThis.crypto.subtle, "verify").mockResolvedValue(true as any);
+    vi.spyOn(globalThis.crypto.subtle, "verify").mockResolvedValue(true);
     const payload = JSON.stringify({ action: "created" });
     const req = new Request("http://localhost/", {
       method: "POST",
@@ -76,7 +77,7 @@ describe("GitHub Webhook Router", () => {
 
   describe("Valid Webhook Processing", () => {
     beforeEach(() => {
-      vi.spyOn(globalThis.crypto.subtle, "verify").mockResolvedValue(true as any);
+      vi.spyOn(globalThis.crypto.subtle, "verify").mockResolvedValue(true);
     });
 
     it("should process push event", async () => {
@@ -458,11 +459,13 @@ describe("GitHub Webhook Router", () => {
       
       // We force an error by making JSON.parse valid but causing a TypeError down the line,
       // actually the easiest way is to mock executionCtx.waitUntil to throw
-      const badCtx = {
-        waitUntil: () => { throw new Error("Forced error in processing"); }
+      const badCtx: MockExecutionContext = {
+        waitUntil: vi.fn(() => { throw new Error("Forced error in processing"); }),
+        passThroughOnException: vi.fn(),
+        props: {},
       };
 
-      const res = await githubWebhookRouter.request(req, {}, env, badCtx as any);
+      const res = await githubWebhookRouter.request(req, {}, env, badCtx);
       expect(res.status).toBe(200);
       expect(consoleSpy).toHaveBeenCalled();
     });

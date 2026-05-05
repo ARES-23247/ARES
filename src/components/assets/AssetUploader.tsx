@@ -38,7 +38,7 @@ export default function AssetUploader({
         htmlFor="asset-upload-input"
         className={`px-6 py-3 ares-cut font-bold uppercase tracking-widest text-xs cursor-pointer transition-all flex items-center gap-2 focus-within:ring-2 focus-within:ring-ares-gold ${
           isUploading
-            ? "bg-white/5 text-marble/40 pointer-events-none"
+            ? "bg-white/5 text-marble/60 pointer-events-none"
             : "bg-ares-gold text-obsidian hover:bg-ares-gold/80 shadow-lg"
         }`}
       >

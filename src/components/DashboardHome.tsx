@@ -64,7 +64,7 @@ export default function DashboardHome({ stats: prefetchedStats }: { stats?: unkn
   };
 
   return (
-    <div className="space-y-8 h-full flex flex-col">
+    <div className="space-y-8 h-full flex flex-col bg-obsidian">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -74,7 +74,7 @@ export default function DashboardHome({ stats: prefetchedStats }: { stats?: unkn
             </div>
             Welcome back, {firstName}
           </h2>
-          <p className="text-marble/40 text-sm mt-2">
+          <p className="text-marble/60 text-sm mt-2">
             Your centralized ARESWEB overview and quick actions.
           </p>
         </div>
@@ -98,21 +98,21 @@ export default function DashboardHome({ stats: prefetchedStats }: { stats?: unkn
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <Link to="/dashboard/profile" className="flex flex-col items-center justify-center p-4 bg-white/5 hover:bg-white/10 ares-cut-sm transition-colors border border-white/5 group">
-                <User size={20} className="text-marble/40 group-hover:text-white mb-2" />
+                <User size={20} className="text-marble/60 group-hover:text-white mb-2" />
                 <span className="text-xs font-bold uppercase tracking-wider text-marble">My Profile</span>
               </Link>
               <Link to="/dashboard/outreach" className="flex flex-col items-center justify-center p-4 bg-white/5 hover:bg-white/10 ares-cut-sm transition-colors border border-white/5 group">
-                <Target size={20} className="text-marble/40 group-hover:text-white mb-2" />
+                <Target size={20} className="text-marble/60 group-hover:text-white mb-2" />
                 <span className="text-xs font-bold uppercase tracking-wider text-marble">Outreach</span>
               </Link>
               {canSeeInquiries && (
                 <Link to="/dashboard/inquiries" className="flex flex-col items-center justify-center p-4 bg-white/5 hover:bg-white/10 ares-cut-sm transition-colors border border-white/5 group">
-                  <MessageSquare size={20} className="text-marble/40 group-hover:text-white mb-2" />
+                  <MessageSquare size={20} className="text-marble/60 group-hover:text-white mb-2" />
                   <span className="text-xs font-bold uppercase tracking-wider text-marble">Inquiries</span>
                 </Link>
               )}
               <Link to="/docs" className="flex flex-col items-center justify-center p-4 bg-white/5 hover:bg-white/10 ares-cut-sm transition-colors border border-white/5 group">
-                <BookOpen size={20} className="text-marble/40 group-hover:text-white mb-2" />
+                <BookOpen size={20} className="text-marble/60 group-hover:text-white mb-2" />
                 <span className="text-xs font-bold uppercase tracking-wider text-marble">ARESLib</span>
               </Link>
             </div>

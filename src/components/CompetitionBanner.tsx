@@ -66,7 +66,7 @@ export default function CompetitionBanner({ eventKey, teamKey = "frc23247" }: Co
               LIVE COMPETITION INTEL
               <span className="text-xs not-italic font-bold bg-ares-red text-white px-2 py-0.5 ares-cut-sm uppercase tracking-widest ml-2 shadow-lg shadow-ares-red/20">Active</span>
             </h3>
-            <p className="text-marble/40 text-sm font-medium flex items-center gap-4 mt-1">
+            <p className="text-marble/60 text-sm font-medium flex items-center gap-4 mt-1">
               {myRanking ? (
                 <span className="flex items-center gap-1.5 text-ares-gold">
                   <Trophy size={14} /> Rank #{myRanking.rank}

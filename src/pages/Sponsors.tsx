@@ -142,7 +142,7 @@ export default function Sponsors() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-black tracking-tighter mb-6"
           >
-            Our <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block text-white">Partners</span>
+            Our <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block text-white font-bold">Partners</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}

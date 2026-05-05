@@ -216,10 +216,10 @@ export default function RLVisualizer() {
                 {/* Q-value arrows */}
                 {!isObs && !isG && qVals.some(v => v > 0) && (
                   <>
-                    <div className="absolute top-1 text-[8px] text-marble/40">{qVals[0].toFixed(0)}</div>
-                    <div className="absolute bottom-1 text-[8px] text-marble/40">{qVals[1].toFixed(0)}</div>
-                    <div className="absolute left-1 text-[8px] text-marble/40">{qVals[2].toFixed(0)}</div>
-                    <div className="absolute right-1 text-[8px] text-marble/40">{qVals[3].toFixed(0)}</div>
+                    <div className="absolute top-1 text-[8px] text-marble/60">{qVals[0].toFixed(0)}</div>
+                    <div className="absolute bottom-1 text-[8px] text-marble/60">{qVals[1].toFixed(0)}</div>
+                    <div className="absolute left-1 text-[8px] text-marble/60">{qVals[2].toFixed(0)}</div>
+                    <div className="absolute right-1 text-[8px] text-marble/60">{qVals[3].toFixed(0)}</div>
                   </>
                 )}
 

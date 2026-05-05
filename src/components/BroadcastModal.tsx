@@ -92,7 +92,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
               <Dialog.Title className="font-bold text-white tracking-tight m-0">Social Broadcast</Dialog.Title>
             </div>
             <Dialog.Close asChild>
-              <button aria-label="Close" className="p-1 text-marble/40 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded">
+              <button aria-label="Close" className="p-1 text-marble/60 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded">
                 <X size={20} />
               </button>
             </Dialog.Close>
@@ -105,14 +105,14 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
               {status === "error" && `Broadcast Failed: ${errorMsg}`}
             </div>
             <div className="mb-6">
-              <p className="text-xs font-bold text-marble/40 uppercase tracking-widest mb-1">Target Content</p>
+              <p className="text-xs font-bold text-marble/60 uppercase tracking-widest mb-1">Target Content</p>
               <Dialog.Description className="text-lg font-bold text-white leading-tight m-0">{title}</Dialog.Description>
               <p className="text-xs text-marble/90 mt-1 italic capitalize">{type} Entry</p>
             </div>
 
             {status === "idle" && (
               <>
-                <p className="text-xs font-bold text-marble/40 uppercase tracking-widest mb-3">Select Platforms</p>
+                <p className="text-xs font-bold text-marble/60 uppercase tracking-widest mb-3">Select Platforms</p>
                 {availableSocials.length > 0 ? (
                   <div className="grid grid-cols-2 gap-3 mb-6">
                     {availableSocials.map(platform => (
@@ -121,7 +121,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
                         className={`flex items-center gap-3 p-3 ares-cut-sm border cursor-pointer transition-all ${
                           selectedsocials[platform] 
                           ? 'bg-ares-cyan/10 border-ares-cyan/40 text-white' 
-                          : 'bg-white/5 border-white/10 text-marble/40 hover:border-white/20'
+                          : 'bg-white/5 border-white/10 text-marble/60 hover:border-white/20'
                         }`}
                       >
                         <input 
@@ -136,7 +136,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
                   </div>
                 ) : (
                   <div className="p-4 ares-cut-sm bg-white/5 border border-dashed border-white/10 text-center mb-6">
-                    <p className="text-xs text-marble/40">No social platforms configured in settings.</p>
+                    <p className="text-xs text-marble/60">No social platforms configured in settings.</p>
                   </div>
                 )}
 
@@ -179,7 +179,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
                 <p className="text-ares-danger-soft text-sm mb-4">{errorMsg}</p>
                 <button 
                   onClick={() => setStatus("idle")}
-                  className="text-xs font-bold text-marble/40 hover:text-white underline tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded px-2 py-1"
+                  className="text-xs font-bold text-marble/60 hover:text-white underline tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded px-2 py-1"
                 >
                   TRY AGAIN
                 </button>
@@ -188,7 +188,7 @@ export default function BroadcastModal({ isOpen, onClose, type, id, title }: Bro
           </div>
 
           <div className="p-4 bg-white/[0.02] border-t border-white/5">
-            <p className="text-xs text-marble/40 italic text-center font-mono uppercase tracking-tighter">
+            <p className="text-xs text-marble/60 italic text-center font-mono uppercase tracking-tighter">
               Omnichannel content delivery managed by ARES Content Pipeline
             </p>
           </div>

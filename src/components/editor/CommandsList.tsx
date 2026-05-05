@@ -191,7 +191,7 @@ export const CommandsList = forwardRef<CommandsListRef, CommandsListProps>((prop
   return (
     <div className="bg-obsidian border border-white/10 ares-cut-sm shadow-2xl overflow-hidden min-w-[280px] backdrop-blur-xl animate-in fade-in zoom-in duration-200">
       <div className="p-2 border-b border-white/10">
-        <span className="text-xs font-bold text-marble/40 uppercase tracking-widest px-2">Commands</span>
+        <span className="text-xs font-bold text-marble/60 uppercase tracking-widest px-2">Commands</span>
       </div>
       <div className="max-h-[320px] overflow-y-auto p-1 custom-scrollbar">
         {items.map((item, index) => (

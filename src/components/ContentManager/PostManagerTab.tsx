@@ -112,7 +112,7 @@ export default function PostManagerTab({
         getItemStatus={(p) => p.status}
         renderTitle={(p) => p.title}
         renderSubtitle={(p) => (
-          <span className="text-xs text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">
+          <span className="text-xs text-marble/60 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">
             {format(new Date(p.date), 'MMM do, yyyy')}
           </span>
         )}

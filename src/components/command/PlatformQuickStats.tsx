@@ -22,7 +22,7 @@ export default function PlatformQuickStats({ stats }: PlatformQuickStatsProps) {
       <Grid numItems={2} numItemsSm={2} numItemsLg={4} className="gap-4">
         {data.map(stat => (
           <Card key={stat.label} className="bg-ares-gray-dark/30 border-white/5 ares-cut-sm p-4 text-center" decoration="top" decorationColor={stat.color}>
-            <Text className="text-marble/40 uppercase tracking-widest font-bold text-[10px] mb-1">{stat.label}</Text>
+            <Text className="text-marble/60 uppercase tracking-widest font-bold text-[10px] mb-1">{stat.label}</Text>
             <Metric className="text-white font-black text-2xl">{stat.value}</Metric>
           </Card>
         ))}

@@ -10,7 +10,7 @@ import { DB } from "../../../shared/schemas/database";
 export const usersRouter = new Hono<AppEnv>();
 
 const userTsRestRouter = s.router(userContract, {
-  getUsers: async (input, c) => {
+  getUsers: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit, cursor } = parsePagination(c, 50, 100);
@@ -52,7 +52,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  adminDetail: async (input, c) => {
+  adminDetail: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("user as u")
@@ -87,7 +87,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  patchUser: async (input, c) => {
+  patchUser: async (input: any, c: any) => {
     try {
       // Defense-in-depth: Re-validate admin authorization for sensitive role changes
       const sessionUser = c.get("sessionUser") as { id: string; role: string } | undefined;
@@ -141,7 +141,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Update failed: " + (e instanceof Error ? e.message : "Unknown error") } };
     }
   },
-  updateUserProfile: async (input, c) => {
+  updateUserProfile: async (input: any, c: any) => {
     try {
       await upsertProfile(c, input.params.id, input.body as Record<string, unknown>);
       return { status: 200 as const, body: { success: true } };
@@ -149,7 +149,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Profile update failed" } };
     }
   },
-  adminGetProfile: async (input, c) => {
+  adminGetProfile: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await db.selectFrom("user").select(["id", "name", "email", "image", "role"]).where("id", "=", input.params.id).executeTakeFirst();
@@ -228,7 +228,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Failed to fetch user profile" } };
     }
   },
-  deleteUser: async (input, c) => {
+  deleteUser: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = input.params.id;
@@ -253,7 +253,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-});
+} as any);
 
 usersRouter.use("/admin/*", ensureAdmin);
 // WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad

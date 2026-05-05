@@ -2,7 +2,6 @@ import { Context, Next } from "hono";
 import { AppEnv } from "./utils";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import type { KVNamespace } from "@cloudflare/workers-types";
 
 // ── Global KV Rate limiting removed. Use D1 persistent checks instead. ────────────────────────
 

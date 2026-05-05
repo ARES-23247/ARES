@@ -37,7 +37,7 @@ export default function LinkedEntities({ type, id }: LinkedEntitiesProps) {
   return (
     <div className="mt-6 border-t border-white/5 pt-4">
       <div className="flex items-center gap-2 mb-3">
-        <Link2 size={16} className="text-marble/40" />
+        <Link2 size={16} className="text-marble/60" />
         <h4 className="text-[10px] font-black uppercase tracking-widest text-marble/60">Knowledge Graph Context</h4>
       </div>
       <div className="flex flex-wrap gap-2">

@@ -1,7 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockExecutionContext } from "../../../src/test/utils";
-import type { MockKysely, TestEnv } from "../../../src/test/types";
 import authRouter from "./auth";
 import * as shared from "../middleware";
 import * as authUtils from "../../utils/auth";

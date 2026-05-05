@@ -186,21 +186,21 @@ export default function SwerveSim() {
       <canvas role="img" aria-label="Interactive Physics Simulation Environment" ref={canvasRef} className="block w-full h-[400px]" />
       <div className="p-[15px] border-t border-ares-gray-dark flex gap-[20px] bg-obsidian flex-wrap items-end">
         <div className="flex-1 min-w-[150px]">
-            <div className="flex justify-between font-mono text-[12px] text-marble/40 mb-[5px]">
+            <div className="flex justify-between font-mono text-[12px] text-marble/60 mb-[5px]">
                 <span>Vx (Forward/Back)</span>
                 <span>{vx.toFixed(1)} m/s</span>
             </div>
             <input type="range" aria-label="Forward/Back Velocity" min="-5" max="5" step="0.1" value={vx} onChange={e => setVx(parseFloat(e.target.value))} className="w-full" />
         </div>
         <div className="flex-1 min-w-[150px]">
-            <div className="flex justify-between font-mono text-[12px] text-marble/40 mb-[5px]">
+            <div className="flex justify-between font-mono text-[12px] text-marble/60 mb-[5px]">
                 <span>Vy (Left/Right)</span>
                 <span>{vy.toFixed(1)} m/s</span>
             </div>
             <input type="range" aria-label="Left/Right Velocity" min="-5" max="5" step="0.1" value={vy} onChange={e => setVy(parseFloat(e.target.value))} className="w-full" />
         </div>
         <div className="flex-1 min-w-[150px]">
-            <div className="flex justify-between font-mono text-[12px] text-marble/40 mb-[5px]">
+            <div className="flex justify-between font-mono text-[12px] text-marble/60 mb-[5px]">
                 <span>Omega (Rotation)</span>
                 <span>{omega.toFixed(1)} rad/s</span>
             </div>

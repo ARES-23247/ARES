@@ -20,7 +20,7 @@ export default function SeasonPicker({ value, onChange, label = "Linked Season" 
 
   return (
     <div className="w-full">
-      <label className="block text-xs font-bold text-marble/40 uppercase tracking-wider mb-2">
+      <label className="block text-xs font-bold text-marble/60 uppercase tracking-wider mb-2">
         {label}
       </label>
       <select

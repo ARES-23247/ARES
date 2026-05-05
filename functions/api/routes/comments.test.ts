@@ -5,8 +5,6 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { MockKysely, TestEnv } from "../../../src/test/types";
-import { createMockComment } from "../../../src/test/factories/contentFactory";
-import { createMockUser } from "../../../src/test/factories/userFactory";
 
 
 // Mock Zulip and Notifications

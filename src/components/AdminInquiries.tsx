@@ -195,7 +195,7 @@ export default function AdminInquiries() {
               className={`text-[10px] font-black uppercase tracking-widest px-3 py-2 ares-cut-sm transition-colors ${
                 statusFilter === s
                   ? "bg-ares-gold text-black"
-                  : "bg-white/5 text-marble/40 hover:bg-white/10 hover:text-white"
+                  : "bg-white/5 text-marble/60 hover:bg-white/10 hover:text-white"
               }`}
             >
               {s}
@@ -238,7 +238,7 @@ export default function AdminInquiries() {
                     </span>
                     <div className="min-w-0">
                       <div className="font-bold text-marble/90 truncate">{inquiry.name}</div>
-                      <div className="text-xs text-marble/40 flex items-center gap-1 truncate">
+                      <div className="text-xs text-marble/60 flex items-center gap-1 truncate">
                         <Mail size={10} /> {inquiry.email}
                       </div>
                     </div>
@@ -285,7 +285,7 @@ export default function AdminInquiries() {
                     <button
                       onClick={() => updateStatusMutation.mutate({ params: { id: inquiry.id }, body: { status: "resolved" } })}
                       disabled={updateStatusMutation.isPending}
-                      className="text-xs font-bold text-marble/40 hover:text-ares-cyan bg-white/5 hover:bg-ares-cyan/10 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      className="text-xs font-bold text-marble/60 hover:text-ares-cyan bg-white/5 hover:bg-ares-cyan/10 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
                     >
                       <CheckSquare size={12} /> RESOLVE
                     </button>
@@ -293,7 +293,7 @@ export default function AdminInquiries() {
                     <button
                       onClick={() => updateStatusMutation.mutate({ params: { id: inquiry.id }, body: { status: "pending" } })}
                       disabled={updateStatusMutation.isPending}
-                      className="text-xs font-bold text-marble/40 hover:text-ares-gold bg-white/5 hover:bg-ares-gold/10 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      className="text-xs font-bold text-marble/60 hover:text-ares-gold bg-white/5 hover:bg-ares-gold/10 px-3 py-1 ares-cut-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
                     >
                       <Clock size={12} /> REOPEN
                     </button>
@@ -310,7 +310,7 @@ export default function AdminInquiries() {
                       </button>
                       <button
                         onClick={() => setConfirmId(null)}
-                        className="text-xs font-bold text-marble/40 bg-white/5 px-3 py-1 ares-cut-sm hover:bg-white/10 transition-colors"
+                        className="text-xs font-bold text-marble/60 bg-white/5 px-3 py-1 ares-cut-sm hover:bg-white/10 transition-colors"
                       >
                         CANCEL
                       </button>
@@ -318,7 +318,7 @@ export default function AdminInquiries() {
                   ) : (
                     <button
                       onClick={() => setConfirmId(inquiry.id)}
-                      className="text-xs font-bold text-marble/40 hover:text-white bg-white/5 hover:bg-ares-red px-3 py-1 ares-cut-sm transition-colors flex items-center gap-1.5"
+                      className="text-xs font-bold text-marble/60 hover:text-white bg-white/5 hover:bg-ares-red px-3 py-1 ares-cut-sm transition-colors flex items-center gap-1.5"
                     >
                       <Trash2 size={12} /> DELETE
                     </button>

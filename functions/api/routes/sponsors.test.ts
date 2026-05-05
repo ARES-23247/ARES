@@ -3,8 +3,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
-import type { MockKysely, TestEnv } from "../../../src/test/types";
-import { createMockSponsor } from "../../../src/test/factories/logisticsFactory";
+import type { TestEnv } from "../../../src/test/types";
 
 // Mock middleware
 vi.mock("../middleware", async (importOriginal) => {
@@ -22,7 +21,7 @@ vi.mock("../middleware", async (importOriginal) => {
 import sponsorsRouter from "./sponsors";
 
 describe("Hono Backend - /sponsors Router", () => {
-  let mockDb: MockKysely;
+  let mockDb: any;
   let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
@@ -56,7 +55,7 @@ describe("Hono Backend - /sponsors Router", () => {
         executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
         transformQuery: vi.fn((q) => q),
       }),
-    };
+    } as any;
 
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {

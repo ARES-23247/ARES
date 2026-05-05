@@ -13,7 +13,7 @@ export default function DashboardEmptyState({ icon, message, subMessage, classNa
       <div className="flex justify-center mb-4 text-marble/30">
         {icon}
       </div>
-      <p className="text-marble/40 font-bold italic">{message}</p>
+      <p className="text-marble/60 font-bold italic">{message}</p>
       {subMessage && (
         <p className="text-marble/30 text-sm mt-2">{subMessage}</p>
       )}

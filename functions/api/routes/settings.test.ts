@@ -1,7 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
-import type { MockKysely, TestEnv } from "../../../src/test/types";
+import type { TestEnv } from "../../../src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { settingsRouter } from "./settings";
 
@@ -16,7 +16,7 @@ vi.mock("../middleware", async (importOriginal) => {
 });
 
 describe("Hono Backend - /settings Router", () => {
-  let mockDb: MockKysely;
+  let mockDb: any;
   let testApp: Hono<TestEnv>;
   let env: Record<string, unknown>;
 
@@ -148,7 +148,7 @@ describe("Hono Backend - /settings Router", () => {
 
     const res = await testApp.request("/admin/backup", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as { success: boolean; backup: Record<string, unknown[]> };
+    const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(body.backup).toBeDefined();
 
@@ -222,7 +222,7 @@ describe("Hono Backend - /settings Router", () => {
 
     const res = await testApp.request("/admin/backup", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as { success: boolean; backup: Record<string, unknown[]> };
+    const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(body.backup.posts).toEqual([]);
   });

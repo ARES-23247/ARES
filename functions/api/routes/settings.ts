@@ -32,9 +32,9 @@ function maskSecret(value: string): string {
 // Schema for settings: keys and values must be strings, values max 10000 chars
 const settingsSchema = z.record(z.string(), z.string().max(10000));
 
-const settingsHandlers = {
+const settingsHandlers: any = {
 
-  getSettings: async (_input, c: HonoContext) => {
+  getSettings: async (_input: any, c: any) => {
     try {
       const settings = await getDbSettings(c);
       const masked: Record<string, string> = {};
@@ -48,7 +48,7 @@ const settingsHandlers = {
     }
   },
    
-  updateSettings: async (input, c: HonoContext) => {
+  updateSettings: async (input: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const body = input.body;
@@ -107,7 +107,7 @@ const settingsHandlers = {
     }
   },
    
-  getStats: async (_input, c: HonoContext) => {
+  getStats: async (_input: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [posts, events, docs, inquiries, users] = await Promise.all([
@@ -133,7 +133,7 @@ const settingsHandlers = {
     }
   },
    
-  getPublicSettings: async (_input, c: HonoContext) => {
+  getPublicSettings: async (_input: any, c: any) => {
     try {
       const settings = await getDbSettings(c);
       const publicKeys = ["COMMUNITY_PHOTO_DRIVE_URL", "COMMUNITY_DOCS_URL"];

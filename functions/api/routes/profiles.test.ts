@@ -18,7 +18,7 @@ vi.mock("../../utils/auth", () => ({
     api: {
       updateUser: vi.fn().mockResolvedValue({ success: true })
     }
-  })
+  } as any)
 }));
 
 import * as shared from "../middleware";
@@ -33,6 +33,7 @@ vi.mock("../middleware", async (importOriginal) => {
     rateLimitMiddleware: () => (c: Context<TestEnv>, next: () => Promise<void>) => next(),
     getSessionUser: vi.fn((c: Context<TestEnv>) => c.get("sessionUser")),
     sanitizeProfileForPublic: vi.fn().mockImplementation((val, type) => actual.sanitizeProfileForPublic(val, type)),
+    getDbSettings: vi.fn(),
   };
 });
 
@@ -157,7 +158,7 @@ describe("Hono Backend - /profiles Router", () => {
     const { getAuth } = await import("../../utils/auth");
     vi.mocked(getAuth).mockReturnValueOnce({
       api: { updateUser: vi.fn().mockRejectedValueOnce(new Error("API Error")) }
-    } as ReturnType<typeof getAuth>);
+    } as any);
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await testApp.request("/avatar", {
@@ -312,7 +313,7 @@ describe("Hono Backend - /profiles Router", () => {
   it("should handle empty results in team-roster with warning", async () => {
     mockDb.execute.mockResolvedValueOnce([{ user_id: "1", show_on_about: 1 }]);
 
-    vi.mocked(shared.sanitizeProfileForPublic).mockReturnValueOnce(null);
+    vi.mocked(shared.sanitizeProfileForPublic).mockReturnValueOnce(null as any);
 
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);

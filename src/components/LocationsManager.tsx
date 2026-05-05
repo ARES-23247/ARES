@@ -242,7 +242,7 @@ export default function LocationsManager() {
               <div>
                 <label htmlFor="maps_url" className="text-xs uppercase tracking-widest text-marble/90 font-bold mb-2 flex items-center justify-between">
                   <span>Google Maps URL</span>
-                  <span className="text-marble/40 text-xs lowercase tracking-normal bg-obsidian border border-white/10 px-2 py-0.5 rounded">Auto-generated</span>
+                  <span className="text-marble/60 text-xs lowercase tracking-normal bg-obsidian border border-white/10 px-2 py-0.5 rounded">Auto-generated</span>
                 </label>
                 <div className="flex gap-2">
                   <input 

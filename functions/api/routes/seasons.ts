@@ -6,12 +6,10 @@ import { triggerBackgroundReindex } from "./ai/autoReindex";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
-import type { HonoContext } from "@shared/types/api";
 
 
-
-const seasonsTsRestRouterObj = {
-  list: async (_input, c: HonoContext) => {
+const seasonsTsRestRouterObj: any = {
+  list: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -35,7 +33,7 @@ const seasonsTsRestRouterObj = {
       return { status: 500 as const, body: { error: "Failed to fetch seasons" } };
     }
   },
-  adminList: async (_input, c: HonoContext) => {
+  adminList: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -57,7 +55,7 @@ const seasonsTsRestRouterObj = {
       return { status: 500 as const, body: { error: "Failed to list seasons" } };
     }
   },
-  adminDetail: async (input, c: HonoContext) => {
+  adminDetail: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(input.params.id);
@@ -85,7 +83,7 @@ const seasonsTsRestRouterObj = {
       return { status: 500 as const, body: { error: "Failed to fetch season" } };
     }
   },
-  getDetail: async (input, c: HonoContext) => {
+  getDetail: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(input.params.year);
@@ -125,7 +123,7 @@ const seasonsTsRestRouterObj = {
       return { status: 500 as const, body: { error: "Failed to fetch season details" } };
     }
   },
-  save: async (input, c: HonoContext) => {
+  save: async (input: any, c: any) => {
     try {
       const body = input.body;
       const db = c.get("db") as Kysely<DB>;
@@ -189,7 +187,7 @@ const seasonsTsRestRouterObj = {
       return { status: 500 as const, body: { error: "Save failed" } };
     }
   },
-  delete: async (input, c: HonoContext) => {
+  delete: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { id } = input.params;
@@ -206,7 +204,7 @@ const seasonsTsRestRouterObj = {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-  undelete: async (input, c: HonoContext) => {
+  undelete: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { id } = input.params;
@@ -222,7 +220,7 @@ const seasonsTsRestRouterObj = {
       return { status: 500 as const, body: { error: "Restore failed" } };
     }
   },
-  purge: async (input, c: HonoContext) => {
+  purge: async (input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { id } = input.params;

@@ -84,7 +84,7 @@ export default function SocialAnalytics({ dateRange }: SocialAnalyticsProps) {
               className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider ares-cut-sm transition-all ${
                 selectedRange === range
                   ? "bg-ares-cyan text-black"
-                  : "text-marble/40 hover:text-white"
+                  : "text-marble/60 hover:text-white"
               }`}
             >
               {range === "all" ? "All Time" : range}
@@ -94,7 +94,7 @@ export default function SocialAnalytics({ dateRange }: SocialAnalyticsProps) {
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-marble/40">Loading analytics...</div>
+        <div className="p-8 text-center text-marble/60">Loading analytics...</div>
       ) : analytics ? (
         <>
           {/* Overview Stats */}
@@ -105,7 +105,7 @@ export default function SocialAnalytics({ dateRange }: SocialAnalyticsProps) {
                   <Send size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-marble/40 uppercase tracking-wider font-bold">Total Posts</p>
+                  <p className="text-xs text-marble/60 uppercase tracking-wider font-bold">Total Posts</p>
                   <p className="text-2xl font-black text-white">{analytics.total_posts}</p>
                 </div>
               </div>
@@ -116,7 +116,7 @@ export default function SocialAnalytics({ dateRange }: SocialAnalyticsProps) {
                   <CheckCircle2 size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-marble/40 uppercase tracking-wider font-bold">Sent</p>
+                  <p className="text-xs text-marble/60 uppercase tracking-wider font-bold">Sent</p>
                   <p className="text-2xl font-black text-white">{analytics.total_sent}</p>
                 </div>
               </div>
@@ -127,7 +127,7 @@ export default function SocialAnalytics({ dateRange }: SocialAnalyticsProps) {
                   <Clock size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-marble/40 uppercase tracking-wider font-bold">Pending</p>
+                  <p className="text-xs text-marble/60 uppercase tracking-wider font-bold">Pending</p>
                   <p className="text-2xl font-black text-white">{analytics.total_pending}</p>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export default function SocialAnalytics({ dateRange }: SocialAnalyticsProps) {
                   <AlertCircle size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-marble/40 uppercase tracking-wider font-bold">Failed</p>
+                  <p className="text-xs text-marble/60 uppercase tracking-wider font-bold">Failed</p>
                   <p className="text-2xl font-black text-white">{analytics.total_failed}</p>
                 </div>
               </div>
@@ -155,22 +155,22 @@ export default function SocialAnalytics({ dateRange }: SocialAnalyticsProps) {
               <div className="bg-white/5 ares-cut-sm p-4 text-center">
                 <Eye className="mx-auto text-ares-cyan mb-2" size={24} />
                 <p className="text-2xl font-black text-white">{analytics.engagement.total_impressions.toLocaleString()}</p>
-                <p className="text-xs text-marble/40 uppercase tracking-wider">Impressions</p>
+                <p className="text-xs text-marble/60 uppercase tracking-wider">Impressions</p>
               </div>
               <div className="bg-white/5 ares-cut-sm p-4 text-center">
                 <Heart className="mx-auto text-ares-red mb-2" size={24} />
                 <p className="text-2xl font-black text-white">{analytics.engagement.total_likes.toLocaleString()}</p>
-                <p className="text-xs text-marble/40 uppercase tracking-wider">Likes</p>
+                <p className="text-xs text-marble/60 uppercase tracking-wider">Likes</p>
               </div>
               <div className="bg-white/5 ares-cut-sm p-4 text-center">
                 <Share2 className="mx-auto text-ares-gold mb-2" size={24} />
                 <p className="text-2xl font-black text-white">{analytics.engagement.total_shares.toLocaleString()}</p>
-                <p className="text-xs text-marble/40 uppercase tracking-wider">Shares</p>
+                <p className="text-xs text-marble/60 uppercase tracking-wider">Shares</p>
               </div>
               <div className="bg-white/5 ares-cut-sm p-4 text-center">
                 <MessageCircle className="mx-auto text-ares-cyan mb-2" size={24} />
                 <p className="text-2xl font-black text-white">{analytics.engagement.total_comments.toLocaleString()}</p>
-                <p className="text-xs text-marble/40 uppercase tracking-wider">Comments</p>
+                <p className="text-xs text-marble/60 uppercase tracking-wider">Comments</p>
               </div>
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function SocialAnalytics({ dateRange }: SocialAnalyticsProps) {
           </div>
         </>
       ) : (
-        <div className="p-8 text-center text-marble/40">
+        <div className="p-8 text-center text-marble/60">
           No analytics data available for the selected period
         </div>
       )}

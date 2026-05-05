@@ -91,7 +91,7 @@ export default function RobotViewer() {
            ARES.V1
            <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
         </h4>
-        <p className="text-[10px] text-marble/40 uppercase tracking-widest font-mono">Precision Engineering Render // Interactive Mode</p>
+        <p className="text-[10px] text-marble/60 uppercase tracking-widest font-mono">Precision Engineering Render // Interactive Mode</p>
       </div>
       
       <div className="absolute bottom-6 right-6 z-10 flex flex-col items-end">

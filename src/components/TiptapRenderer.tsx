@@ -137,7 +137,7 @@ const renderInteractiveComponent = (node: ASTNode) => {
   if (Component) {
     return (
       <ErrorBoundary fallback={<div className="p-4 border border-white/10 bg-ares-danger/10 text-ares-danger rounded text-sm font-mono my-8">Component failed to load</div>}>
-        <Suspense fallback={<div className="p-8 border border-white/10 bg-ares-gray-dark rounded animate-pulse text-center text-marble/40">Loading interactive tool...</div>}>
+        <Suspense fallback={<div className="p-8 border border-white/10 bg-ares-gray-dark rounded animate-pulse text-center text-marble/60">Loading interactive tool...</div>}>
           <div className="w-full aspect-video min-h-[500px] my-8 ares-cut-sm border border-white/10 overflow-hidden relative">
             <Component className="w-full h-full" />
           </div>
@@ -174,7 +174,7 @@ const renderTaskItem = (node: ASTNode, children: ReactNode) => (
         className="w-4 h-4 rounded appearance-none border border-white/20 bg-ares-black checked:bg-ares-cyan checked:border-ares-cyan relative after:content-[''] after:hidden checked:after:block after:absolute after:left-[4px] after:top-[1px] after:w-[6px] after:h-[10px] after:border-solid after:border-obsidian after:border-r-[2px] after:border-b-[2px] after:rotate-45 transition-colors cursor-default" 
       />
     </div>
-    <div className={node.attrs?.checked ? "text-marble/40 line-through" : ""}>{children}</div>
+    <div className={node.attrs?.checked ? "text-marble/60 line-through" : ""}>{children}</div>
   </li>
 );
 
@@ -222,7 +222,7 @@ export default function TiptapRenderer({ node }: { node: ASTNode }) {
     case "listItem": return <li className="leading-relaxed">{children}</li>;
     case "image": return renderImage(node);
     case "interactiveComponent": return renderInteractiveComponent(node);
-    case "blockquote": return <blockquote className="border-l-4 border-ares-red/60 bg-ares-red/5 px-4 py-3 my-4 text-white italic">{children}</blockquote>;
+    case "blockquote": return <blockquote className="border-l-4 border-ares-red/60 bg-ares-red/5 px-4 py-3 my-4 text-white italic font-bold">{children}</blockquote>;
     case "table": return (
       <div className="overflow-x-auto my-6">
         <table className="w-full text-left border-collapse border border-white/10 ares-cut-sm hidden-border-corners shadow-lg table-auto">

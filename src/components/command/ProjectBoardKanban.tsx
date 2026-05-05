@@ -54,7 +54,7 @@ interface ProjectBoardKanbanProps {
 
 export const COLUMNS = ["todo", "in_progress", "done", "blocked"] as const;
 
-export const statusConfig: Record<string, { bg: string; text: string; border: string; icon: React.ElementType; label: string }> = {
+export const statusConfig: Record<string, { bg: string; text: string; border: string; icon: React.ElementType<{ size?: number; className?: string }>; label: string }> = {
   todo:        { bg: "bg-ares-gray-dark/60",   text: "text-white/60", border: "border-ares-gray/30", icon: Circle,        label: "Todo" },
   in_progress: { bg: "bg-ares-cyan/10",        text: "text-ares-cyan", border: "border-ares-cyan/30", icon: Clock,         label: "In Progress" },
   done:        { bg: "bg-ares-gold/10",        text: "text-ares-gold", border: "border-ares-gold/30", icon: CheckCircle2,  label: "Done" },

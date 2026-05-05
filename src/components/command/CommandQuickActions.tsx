@@ -64,7 +64,7 @@ export default function CommandQuickActions() {
             disabled={isReindexing}
             className={`flex-1 flex items-center justify-between p-3 ares-cut-sm border transition-all ${
               isReindexing
-                ? "bg-white/5 text-marble/40 border-white/5 cursor-not-allowed"
+                ? "bg-white/5 text-marble/60 border-white/5 cursor-not-allowed"
                 : "bg-purple-500/10 text-purple-400 border-purple-500/20 hover:border-purple-500/40"
             }`}
           >
@@ -84,7 +84,7 @@ export default function CommandQuickActions() {
             title="Full rebuild — re-embeds all content (~7K neurons)"
             className={`px-3 ares-cut-sm border text-xs font-bold transition-all ${
               isReindexing
-                ? "bg-white/5 text-marble/40 border-white/5 cursor-not-allowed"
+                ? "bg-white/5 text-marble/60 border-white/5 cursor-not-allowed"
                 : "bg-white/5 text-marble/60 border-white/10 hover:border-purple-500/40 hover:text-purple-400"
             }`}
           >

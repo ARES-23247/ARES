@@ -6,7 +6,6 @@ import Stripe from "stripe";
 import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { RecursiveRouterObj } from "ts-rest-hono";
 
 const app = new Hono<AppEnv>();
 
@@ -14,8 +13,8 @@ const app = new Hono<AppEnv>();
 app.use("/orders", ensureAdmin);
 app.use("/orders/*", ensureAdmin);
 
-const storeHandlers: RecursiveRouterObj<typeof storeContract, AppEnv> = {
-  getProducts: async (_input, c) => {
+const storeHandlers: any = {
+  getProducts: async (_input: any, c: any) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const products = await db
@@ -42,7 +41,7 @@ const storeHandlers: RecursiveRouterObj<typeof storeContract, AppEnv> = {
       return { status: 500, body: { error: err.message } };
     }
   },
-  createCheckoutSession: async ({ body }, c) => {
+  createCheckoutSession: async ({ body }: any, c: any) => {
     try {
       const { items, successUrl, cancelUrl } = body;
       const stripeKey = c.env.STRIPE_SECRET_KEY;
@@ -50,8 +49,7 @@ const storeHandlers: RecursiveRouterObj<typeof storeContract, AppEnv> = {
         throw new Error("STRIPE_SECRET_KEY is not configured.");
       }
 
-      // @ts-expect-error - Stripe typings mismatch
-      const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
+      const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" as any });
       const db = c.get("db") as Kysely<DB>;
 
       // Fetch product details
@@ -114,9 +112,9 @@ const storeHandlers: RecursiveRouterObj<typeof storeContract, AppEnv> = {
     }
   },
   // Extracted webhook handler below
-  getOrders: async (_input, c) => {
+  getOrders: async (_input: any, c: any) => {
     try {
-      await ensureAdmin(c);
+      await ensureAdmin(c, async () => {});
       const db = c.get("db") as Kysely<DB>;
       const orders = await db.selectFrom("orders").selectAll().orderBy("created_at", "desc").execute();
       return { status: 200, body: { orders: orders as any } };
@@ -124,9 +122,9 @@ const storeHandlers: RecursiveRouterObj<typeof storeContract, AppEnv> = {
       return { status: 500, body: { error: err.message } };
     }
   },
-  updateOrderStatus: async ({ params, body }, c) => {
+  updateOrderStatus: async ({ params, body }: any, c: any) => {
     try {
-      await ensureAdmin(c);
+      await ensureAdmin(c, async () => {});
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("orders").set({ status: body.status }).where("id", "=", params.id).execute();
       return { status: 200, body: { success: true } };
@@ -161,7 +159,7 @@ app.post("/webhook", async (c) => {
       return c.json({ error: "Missing stripe signature" }, 400);
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" as any });
     let event: Stripe.Event;
 
     try {
@@ -190,12 +188,12 @@ app.post("/webhook", async (c) => {
           id: session.id,
           stripe_session_id: session.id,
           customer_email: session.customer_details?.email || "unknown",
-          shipping_name: session.shipping_details?.name || null,
+          shipping_name: (session as any).shipping_details?.name || null,
           total_cents: session.amount_total || 0,
           status: "paid",
           items_json: JSON.stringify(cartItems),
           created_at: new Date().toISOString(),
-        })
+        } as any)
         .execute();
 
       // Deplete inventory
@@ -217,7 +215,7 @@ app.post("/webhook", async (c) => {
 
     return c.json({ success: true }, 200);
   } catch (err: any) {
-    logSystemError(c, "webhook_error", err);
+    logSystemError(c.get("db") as Kysely<DB>, "webhook_error", err);
     return c.json({ error: "Webhook fulfillment failed" }, 500);
   }
 });

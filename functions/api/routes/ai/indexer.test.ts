@@ -42,7 +42,7 @@ const mockVectorize: any = {
 };
 
 // ── Mock KV ───────────────────────────────────────────────────────────────
-const mockKv: any = {
+const _mockKv: any = {
   get: vi.fn().mockResolvedValue(null),
   put: vi.fn().mockResolvedValue(undefined),
 };

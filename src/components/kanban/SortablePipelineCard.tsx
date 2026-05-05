@@ -85,7 +85,7 @@ export function SortablePipelineCard({ item, onDelete, onEdit }: SortablePipelin
         </div>
         <div className="flex items-center gap-2">
           {item.contact_person && (
-            <div className="text-[10px] font-medium text-marble/40 truncate max-w-[80px]" title={item.contact_person}>
+            <div className="text-[10px] font-medium text-marble/60 truncate max-w-[80px]" title={item.contact_person}>
               {item.contact_person}
             </div>
           )}

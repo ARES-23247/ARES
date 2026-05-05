@@ -47,7 +47,7 @@ export default function AnalyticsDashboard() {
         <Card className="bg-black/40 border-white/5 ares-cut-lg">
           <Flex alignItems="start">
             <div className="truncate">
-              <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Total Views</Text>
+              <Text className="text-marble/60 uppercase tracking-widest font-black text-[10px]">Total Views</Text>
               <Title className="text-white text-3xl font-black">{data?.totalPageViews?.toLocaleString() || 0}</Title>
             </div>
             <Activity className="text-ares-cyan" size={24} />
@@ -56,7 +56,7 @@ export default function AnalyticsDashboard() {
         <Card className="bg-black/40 border-white/5 ares-cut-lg">
           <Flex alignItems="start">
             <div className="truncate">
-              <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Unique Visitors</Text>
+              <Text className="text-marble/60 uppercase tracking-widest font-black text-[10px]">Unique Visitors</Text>
               <Title className="text-white text-3xl font-black">{data?.uniqueVisitors?.toLocaleString() || 0}</Title>
             </div>
             <Users className="text-ares-gold" size={24} />
@@ -65,7 +65,7 @@ export default function AnalyticsDashboard() {
         <Card className="bg-black/40 border-white/5 ares-cut-lg">
           <Flex alignItems="start">
             <div className="truncate">
-              <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Total Assets</Text>
+              <Text className="text-marble/60 uppercase tracking-widest font-black text-[10px]">Total Assets</Text>
               <Title className="text-white text-3xl font-black">{data?.resourceUsage?.totalAssets?.toLocaleString() || 0}</Title>
             </div>
             <Database className="text-marble/80" size={24} />
@@ -74,7 +74,7 @@ export default function AnalyticsDashboard() {
         <Card className="bg-black/40 border-white/5 ares-cut-lg">
           <Flex alignItems="start">
             <div className="truncate">
-              <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">API Calls</Text>
+              <Text className="text-marble/60 uppercase tracking-widest font-black text-[10px]">API Calls</Text>
               <Title className="text-white text-3xl font-black">{data?.resourceUsage?.apiCalls?.toLocaleString() || 0}</Title>
             </div>
             <Server className="text-marble/80" size={24} />
@@ -123,7 +123,7 @@ export default function AnalyticsDashboard() {
          <Card className="bg-black/40 border-white/5 ares-cut-lg">
             <Flex alignItems="start">
               <div className="truncate">
-                <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Traffic Distribution</Text>
+                <Text className="text-marble/60 uppercase tracking-widest font-black text-[10px]">Traffic Distribution</Text>
                 <Title className="text-white text-3xl font-black">{(data?.totals || []).reduce((acc: number, t: { total: number }) => acc + t.total, 0).toLocaleString()}</Title>
               </div>
             </Flex>
@@ -138,7 +138,7 @@ export default function AnalyticsDashboard() {
          </Card>
          
          <Card className="md:col-span-2 bg-black/40 border-white/5 ares-cut-lg">
-            <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px] mb-4">Top Referrers</Text>
+            <Text className="text-marble/60 uppercase tracking-widest font-black text-[10px] mb-4">Top Referrers</Text>
             <BarList
               data={(data?.topReferrers || []).map((p: { referrer: string, visits: number }) => ({ name: p.referrer.replace(/https?:\/\//, '').split('/')[0], value: p.visits }))}
               className="mt-2"
@@ -161,11 +161,11 @@ export default function AnalyticsDashboard() {
                 <div className="absolute left-[-4px] top-2 w-2 h-2 rounded-full bg-ares-red shadow-[0_0_8px_rgba(192,0,0,0.5)]" />
                 <div className="flex justify-between items-start">
                   <span className="text-xs text-marble font-medium truncate max-w-[200px]">{view.path}</span>
-                  <span className="text-xs text-marble/40 font-mono">
+                  <span className="text-xs text-marble/60 font-mono">
                     {new Date(view.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-[9px] text-marble/40 uppercase font-bold tracking-widest">
+                <div className="flex items-center gap-2 text-[9px] text-marble/60 uppercase font-bold tracking-widest">
                   <span className={view.category === 'doc' ? 'text-ares-cyan' : view.category === 'blog' ? 'text-ares-gold' : 'text-marble/50'}>
                     {view.category}
                   </span>
@@ -187,13 +187,13 @@ export default function AnalyticsDashboard() {
             {(data?.topPages || []).map((page: { path: string, category: string, views: number }, idx: number) => (
               <div key={page.path} className="flex items-center justify-between group">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-xs font-mono text-marble/40 w-4">0{idx + 1}</span>
+                  <span className="text-xs font-mono text-marble/60 w-4">0{idx + 1}</span>
                   <div className="flex flex-col truncate">
                     <Link to={page.path} className="text-sm text-marble hover:text-ares-gold transition-colors truncate flex items-center gap-1">
                       {page.path}
                       <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                     </Link>
-                    <span className="text-xs uppercase text-marble/40 font-bold tracking-tighter">{page.category}</span>
+                    <span className="text-xs uppercase text-marble/60 font-bold tracking-tighter">{page.category}</span>
                   </div>
                 </div>
                 <div className="text-sm font-black text-white bg-white/5 px-2 py-1 ares-cut-sm">{page.views}</div>

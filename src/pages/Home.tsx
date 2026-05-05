@@ -31,7 +31,7 @@ export default function Home() {
               </p>
               <h1 className="text-6xl md:text-[7rem] lg:text-[10rem] font-bold text-white leading-[0.85] uppercase font-heading relative z-10 w-full xl:w-2/3">
                 <span className="block mb-2 text-white">Engineered</span>
-                <span className="bg-ares-red px-6 py-2 pb-3 mt-2 inline-block ares-cut-sm shadow-[0_20px_25px_-5px_rgba(0,0,0,0.4)] text-white">To Inspire</span>
+                <span className="bg-ares-red px-6 py-2 pb-3 mt-2 inline-block ares-cut-sm shadow-[0_20px_25px_-5px_rgba(0,0,0,0.4)] text-white font-bold">To Inspire</span>
               </h1>
             </div>
           </div>
@@ -43,7 +43,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-6 mt-4">
-            <Link to="/about" className="clipped-button bg-ares-red hover:bg-ares-bronze transition-all shadow-xl text-white">
+            <Link to="/about" className="clipped-button bg-ares-red hover:bg-ares-bronze transition-all shadow-xl text-white font-bold">
               Meet the Team
             </Link>
             <Link to="/sponsors" className="clipped-button bg-obsidian border-2 border-ares-bronze text-ares-bronze hover:bg-ares-bronze hover:text-white transition-all">
@@ -111,7 +111,7 @@ export default function Home() {
       <section className="py-24 obsidian-section relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <h2 className="text-4xl md:text-6xl font-bold mb-8 font-heading">
-            Join <span className="bg-ares-red px-3 py-1 pb-2 ares-cut-sm text-white">ARES</span>
+            Join <span className="bg-ares-red px-3 py-1 pb-2 ares-cut-sm text-white font-bold">ARES</span>
           </h2>
           <p className="text-marble text-xl mb-12 leading-relaxed">
             Whether you&apos;re a student looking to build monsters of engineering or a sponsor looking to invest in the future of WV technology, there is a place for you at the table.
@@ -128,7 +128,7 @@ export default function Home() {
       </section>
 
       {/* ─── OUTREACH CALENDAR BANNER ─── */}
-      <section className="py-20 bg-ares-red text-white">
+      <section className="py-20 bg-ares-red text-white font-bold">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-10">
           <div className="text-center md:text-left">
             <h3 className="text-3xl md:text-4xl font-bold mb-2 font-heading">Event Calendar</h3>

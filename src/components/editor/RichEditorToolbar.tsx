@@ -112,7 +112,7 @@ const Btn = ({ active, onClick, children, className = "", disabled = false, aria
     className={`px-3 py-2 ares-cut-sm text-sm font-bold transition-all ${
       active
         ? "bg-ares-gray-dark text-white"
-        : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"
+        : "text-marble/60 hover:bg-ares-gray-dark hover:text-white"
     } disabled:opacity-30 ${className}`}
   >
     {children}
@@ -310,7 +310,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
           const chain = editor.chain().focus() as unknown as { toggleMathInline?: () => { run: () => void }, insertContent: (c: string) => { run: () => void } };
           if (chain.toggleMathInline) chain.toggleMathInline().run();
           else chain.insertContent('$\\Sigma$').run();
-        }} className={`px-3 py-2 ares-cut-sm text-sm font-serif italic transition-all ${editor.isActive("mathematics") ? "bg-ares-gray-dark text-white" : "text-marble/40 hover:bg-ares-gray-dark hover:text-white"}`}>Σ Math</button>
+        }} className={`px-3 py-2 ares-cut-sm text-sm font-serif italic transition-all ${editor.isActive("mathematics") ? "bg-ares-gray-dark text-white" : "text-marble/60 hover:bg-ares-gray-dark hover:text-white"}`}>Σ Math</button>
 
         {/* Mermaid */}
         <Btn onClick={() => editor.chain().focus().insertContent({ type: 'mermaidBlock', attrs: { language: 'mermaid' } }).run()} className="border border-white/10" ariaLabel="Insert Mermaid Diagram">Mermaid</Btn>
@@ -324,7 +324,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
 
         {/* Utilities */}
         <Btn onClick={() => editor.chain().focus().setHorizontalRule().run()} ariaLabel="Horizontal Rule">―――</Btn>
-        <button type="button" aria-label="Clear all formatting" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} className="px-2 py-2 ares-cut-sm text-sm transition-all text-ares-red/70 hover:bg-ares-red hover:text-white">Clear</button>
+        <button type="button" aria-label="Clear all formatting" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} className="px-2 py-2 ares-cut-sm text-sm transition-all text-ares-red/70 hover:bg-ares-red hover:text-white font-bold">Clear</button>
         <Sep />
 
         {/* AI Chat Button */}
@@ -344,7 +344,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
           onClick={() => importRef.current?.click()}
           disabled={isImporting}
           aria-label="Import Word Document"
-          className={`px-4 py-2 ares-cut-sm text-sm font-bold transition-all border border-ares-cyan/30 ${isImporting ? "bg-ares-gray-dark text-marble/40 animate-pulse" : "text-ares-cyan hover:bg-ares-cyan hover:text-white shadow-sm"}`}
+          className={`px-4 py-2 ares-cut-sm text-sm font-bold transition-all border border-ares-cyan/30 ${isImporting ? "bg-ares-gray-dark text-marble/60 animate-pulse" : "text-ares-cyan hover:bg-ares-cyan hover:text-white shadow-sm"}`}
         >
           {isImporting ? "IMPORTING..." : "Import .DOCX"}
         </button>
@@ -412,7 +412,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
           <button type="button" onClick={() => editor.chain().focus().splitCell().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble border border-white/10">Split</button>
           <div className="w-px h-4 bg-ares-cyan/30 mx-1" />
           <button type="button" onClick={() => editor.chain().focus().toggleHeaderRow().run()} className="px-2 py-1 rounded bg-black/40 hover:bg-ares-cyan hover:text-black transition-colors text-marble border border-white/10">Toggle Header</button>
-          <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className="px-2 py-1 rounded bg-ares-red/10 hover:bg-ares-red hover:text-white transition-colors text-ares-red ml-auto border border-ares-red/30">Delete Table</button>
+          <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className="px-2 py-1 rounded bg-ares-red/10 hover:bg-ares-red hover:text-white transition-colors text-ares-red ml-auto border border-ares-red/30 font-bold">Delete Table</button>
         </div>
       )}
 
@@ -424,7 +424,7 @@ export default function RichEditorToolbar({ editor, documentTitle }: RichEditorT
             className="h-full p-4 md:p-6 pb-12"
           />
           {editor.storage.characterCount && (
-            <div className="absolute bottom-4 right-6 text-xs text-marble/40 font-mono">
+            <div className="absolute bottom-4 right-6 text-xs text-marble/60 font-mono">
               {editor.storage.characterCount.words()} words | {editor.storage.characterCount.characters()} chars
             </div>
           )}

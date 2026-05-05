@@ -71,7 +71,7 @@ export default function About() {
             <div className="md:col-span-1">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 font-heading uppercase leading-tight">
                 Who Joins <br />
-                <span className="bg-ares-red px-4 py-2 mt-2 inline-block ares-cut text-white">Our Community?</span>
+                <span className="bg-ares-red px-4 py-2 mt-2 inline-block ares-cut text-white font-bold">Our Community?</span>
               </h2>
               <p className="text-marble/70 text-lg">
                 We recruit students from 6th–12th grade who possess grit, determination, and a hunger for innovation.

@@ -16,7 +16,7 @@ export const CodeBlock = ({ language, value, ...props }: { language?: string; va
     <div className="relative group my-4">
       <button
         onClick={handleCopy}
-        className="absolute top-2 right-2 p-2 bg-obsidian/80 hover:bg-obsidian text-marble/40 hover:text-white ares-cut-sm opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-sm shadow-md border border-white/10"
+        className="absolute top-2 right-2 p-2 bg-obsidian/80 hover:bg-obsidian text-marble/60 hover:text-white ares-cut-sm opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-sm shadow-md border border-white/10"
         aria-label="Copy code"
       >
         {isCopied ? <Check size={14} className="text-ares-cyan" /> : <Copy size={14} />}

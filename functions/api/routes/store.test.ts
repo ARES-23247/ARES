@@ -48,6 +48,7 @@ describe("Hono Backend - /store Router", () => {
       where: vi.fn().mockReturnThis(),
       orderBy: vi.fn().mockReturnThis(),
       execute: vi.fn().mockResolvedValue([]),
+      executeTakeFirst: vi.fn().mockResolvedValue(null),
       insertInto: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis(),
       updateTable: vi.fn().mockReturnThis(),
@@ -61,10 +62,10 @@ describe("Hono Backend - /store Router", () => {
       c.env = {
         STRIPE_SECRET_KEY: "sk_test_123",
         STRIPE_WEBHOOK_SECRET: "whsec_123",
-        DB: {} as D1Database,
+        DB: {} as any,
         ENVIRONMENT: "test",
         DEV_BYPASS: "true",
-      };
+      } as any;
       await next();
     });
     app.route("/", storeRouter);
@@ -123,7 +124,7 @@ describe("Hono Backend - /store Router", () => {
       expect(mockDb.values).toHaveBeenCalled();
       expect(mockDb.execute).toHaveBeenCalled();
       
-      const valuesArg = mockDb.values.mock.calls[0][0];
+      const valuesArg = (mockDb.values as any).mock.calls[0][0];
       expect(valuesArg.stripe_session_id).toBe("cs_test_123");
       expect(valuesArg.customer_email).toBe("test@example.com");
       expect(valuesArg.total_cents).toBe(1500);

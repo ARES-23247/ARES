@@ -47,7 +47,7 @@ export default function Seasons() {
           animate={{ opacity: 1, y: 0 }}
           className="text-6xl md:text-8xl font-black text-white mb-8 tracking-tighter"
         >
-          Our <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block text-white">Legacy</span>.
+          Our <span className="bg-ares-red px-6 py-2 ares-cut shadow-xl mt-2 inline-block text-white font-bold">Legacy</span>.
         </motion.h1>
         <p className="text-marble text-xl max-w-2xl mx-auto leading-relaxed font-medium">
           The story of ARES 23247 is told through the banners we hang and the challenges we overcome. We document our history to inspire our future.
@@ -181,7 +181,7 @@ export default function Seasons() {
               ))
             ) : (
               <div className="col-span-full py-32 text-center border-2 border-dashed border-white/5 ares-cut-lg">
-                 <div className="w-20 h-20 bg-ares-red ares-cut flex items-center justify-center mx-auto mb-6 text-white shadow-lg shadow-ares-red/20">
+                 <div className="w-20 h-20 bg-ares-red ares-cut flex items-center justify-center mx-auto mb-6 text-white shadow-lg shadow-ares-red/20 font-bold">
                     <Trophy size={40} />
                  </div>
                  <h3 className="text-2xl font-bold text-white mb-2 uppercase tracking-tighter">The Case is Open.</h3>

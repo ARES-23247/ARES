@@ -49,7 +49,7 @@ export default function ContentManager({
           <h2 className="text-2xl font-bold text-white tracking-tighter">
             {mode === "blog" ? "Manage Blogs & News" : mode === "event" ? "Manage Events" : mode === "docs" ? "Manage Documentation" : mode === "seasons" ? "Manage Seasonal Legacy" : mode === "badges" ? "Manage User Badges" : "Manage Content"}
           </h2>
-          <p className="text-marble/40 text-sm mt-1">Review and manage the lifecycle of Platform resources.</p>
+          <p className="text-marble/60 text-sm mt-1">Review and manage the lifecycle of Platform resources.</p>
         </div>
         
         <div className="flex bg-obsidian/50 p-1 ares-cut-sm border border-white/10 self-start md:self-auto w-full md:w-auto overflow-x-auto custom-scrollbar shadow-inner gap-1">

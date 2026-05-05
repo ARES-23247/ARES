@@ -212,7 +212,7 @@ export default function ScoutingTool() {
         <div className="space-y-4">
           <div className="flex gap-3">
             <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-marble/40" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-marble/60" />
               <input
                 type="number"
                 value={teamSearch}
@@ -274,7 +274,7 @@ export default function ScoutingTool() {
                 <h3 className="text-sm font-black text-white uppercase tracking-wider">
                   {selectedEventName || "Event Rankings"}
                 </h3>
-                <p className="text-xs text-marble/40 mt-0.5">
+                <p className="text-xs text-marble/60 mt-0.5">
                   {eventRankings.length} teams ranked
                 </p>
               </div>
@@ -282,7 +282,7 @@ export default function ScoutingTool() {
               {eventLoading ? (
                 <div className="p-8 text-center">
                   <RefreshCw size={24} className="animate-spin text-ares-cyan/60 mx-auto mb-2" />
-                  <p className="text-sm text-marble/40 font-semibold">Loading event data...</p>
+                  <p className="text-sm text-marble/60 font-semibold">Loading event data...</p>
                 </div>
               ) : eventError ? (
                 <div className="p-4">
@@ -291,7 +291,7 @@ export default function ScoutingTool() {
               ) : (
                 <div className="divide-y divide-white/5">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[60px_80px_1fr_80px_100px_80px] gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-marble/40 bg-white/3">
+                  <div className="grid grid-cols-[60px_80px_1fr_80px_100px_80px] gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-marble/60 bg-white/3">
                     <span>Rank</span>
                     <span>Team</span>
                     <span>Name</span>
@@ -345,7 +345,7 @@ export default function ScoutingTool() {
 
                   {eventRankings.length === 0 && !eventLoading && (
                     <div className="p-8 text-center">
-                      <p className="text-sm text-marble/40 font-semibold">
+                      <p className="text-sm text-marble/60 font-semibold">
                         No rankings available for this event yet.
                       </p>
                     </div>
@@ -421,12 +421,12 @@ export default function ScoutingTool() {
                       AI Event Analysis
                     </h3>
                     {eventAnalysis.created_at && (
-                      <span className="text-[10px] text-marble/40 bg-white/5 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] text-marble/60 bg-white/5 px-2 py-0.5 rounded-full">
                         {new Date(eventAnalysis.created_at).toLocaleDateString()}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-marble/40 mt-0.5">
+                  <p className="text-xs text-marble/60 mt-0.5">
                     {analysisEventName}
                   </p>
                 </div>

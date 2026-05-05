@@ -102,16 +102,16 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
       {/* Attendance & Provisions Summary (Visible to verified users) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-obsidian/40 border border-white/10 p-5 ares-cut">
-          <h4 className="text-marble/40 text-xs font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+          <h4 className="text-marble/60 text-xs font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
             <Users size={14} className="text-ares-gold" /> Attendance Stats
           </h4>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-black text-white">{totalAttending}</span>
-            <span className="text-marble/40 text-sm font-bold">/ {signups.length} present</span>
+            <span className="text-marble/60 text-sm font-bold">/ {signups.length} present</span>
           </div>
           {isVolunteer && (
             <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center text-sm font-bold">
-              <span className="text-marble/40 uppercase tracking-widest text-xs">Volunteer Prep Time</span>
+              <span className="text-marble/60 uppercase tracking-widest text-xs">Volunteer Prep Time</span>
               <span className="text-ares-gold">{totalPrep} hrs</span>
             </div>
           )}
@@ -119,7 +119,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
         
         {dietarySummary && (
           <div className="bg-obsidian/40 border border-white/10 p-5 ares-cut">
-            <h4 className="text-marble/40 text-xs font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+            <h4 className="text-marble/60 text-xs font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
               <AlertCircle size={14} className="text-ares-red" /> Dietary Restrictions
             </h4>
             <div className="flex flex-col gap-4">
@@ -182,7 +182,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
             <div className="overflow-x-auto mb-6 bg-obsidian/20 border border-white/10 ares-cut">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/10 text-xs font-bold text-marble/40 uppercase tracking-wider">
+                  <tr className="border-b border-white/10 text-xs font-bold text-marble/60 uppercase tracking-wider">
                     <th className="text-left py-3 px-4">Status</th>
                     <th className="text-left py-3 px-4">Who</th>
                     {isPotluck && <th className="text-left py-3 px-4">Bringing</th>}
@@ -211,12 +211,12 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
                         <div className="flex items-center gap-2">
                           <img src={entry.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${entry.user_id}`}
                             alt={`${entry.nickname || "ARES Member"}'s avatar`} className="w-6 h-6 ares-cut-sm bg-white/10" />
-                          <span className={`text-sm font-bold ${entry.attended ? "text-white" : "text-marble/40"}`}>{entry.nickname || "ARES Member"}</span>
+                          <span className={`text-sm font-bold ${entry.attended ? "text-white" : "text-marble/60"}`}>{entry.nickname || "ARES Member"}</span>
                         </div>
                       </td>
                       {isPotluck && <td className="py-3 px-4 text-sm text-marble">{entry.bringing || "—"}</td>}
                       {isVolunteer && <td className="py-3 px-4 text-sm text-marble">{entry.prep_hours || 0}</td>}
-                      <td className="py-3 px-4 text-sm text-marble/40">{entry.notes || "—"}</td>
+                      <td className="py-3 px-4 text-sm text-marble/60">{entry.notes || "—"}</td>
                     </tr>
                   ))}
                   {signups.length === 0 && (
@@ -252,7 +252,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
               />
               {isVolunteer && (
                 <div className="flex items-center gap-3">
-                  <span className="text-marble/40 uppercase tracking-widest text-xs font-bold shrink-0">Prep Hrs</span>
+                  <span className="text-marble/60 uppercase tracking-widest text-xs font-bold shrink-0">Prep Hrs</span>
                   <input
                     type="number" step="0.5" min="0" placeholder="0"
                     value={mySignup?.prep_hours || 0}
@@ -284,7 +284,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
           <p className="text-sm text-marble mb-2">
             <span className="text-ares-gold font-bold">Verified Access Required</span>
           </p>
-          <p className="text-sm text-marble/40 max-w-md mx-auto mb-6">
+          <p className="text-sm text-marble/60 max-w-md mx-auto mb-6">
             Sign-ups and provisions are restricted to verified ARES members to protect privacy.
           </p>
           {!isAuthenticated ? (
@@ -295,7 +295,7 @@ export default function EventSignups({ eventId, isPotluck, isVolunteer }: EventS
               </p>
             </div>
           ) : (
-            <p className="text-xs uppercase tracking-widest text-marble/40 font-bold max-w-sm mx-auto">Your account is pending team administrator verification. If you have any questions, <a href="/about" className="text-ares-gold hover:underline">contact us</a>.</p>
+            <p className="text-xs uppercase tracking-widest text-marble/60 font-bold max-w-sm mx-auto">Your account is pending team administrator verification. If you have any questions, <a href="/about" className="text-ares-gold hover:underline">contact us</a>.</p>
           )}
         </div>
       )}

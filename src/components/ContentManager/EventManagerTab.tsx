@@ -197,7 +197,7 @@ export default function EventManagerTab({
       renderSubtitle={(e) => (
         <>
           <span className={`w-2 h-2 rounded-full ${e.category === 'internal' ? 'bg-ares-red' : e.category === 'outreach' ? 'bg-ares-gold' : 'bg-ares-cyan'}`}></span>
-          <span className="text-xs text-marble/40 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">
+          <span className="text-xs text-marble/60 bg-obsidian border border-white/10 px-2 py-0.5 ares-cut-sm">
             {e.date_start ? format(new Date(e.date_start), 'MMM do, yyyy') : 'No Date'}
           </span>
         </>

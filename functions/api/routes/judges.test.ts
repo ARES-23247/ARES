@@ -98,7 +98,7 @@ describe("Hono Backend - /judges Router", () => {
     }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as JudgesResponse;
     expect(body.success).toBe(true);
   });
 
@@ -127,7 +127,7 @@ describe("Hono Backend - /judges Router", () => {
     }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as JudgesResponse;
     expect(body.portfolioDocs).toHaveLength(1);
     expect(body.portfolioDocs[0].content).toBe("Championship info.");
   });

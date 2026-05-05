@@ -213,7 +213,7 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
         <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
           {editSlug ? "Edit Entry" : "Publish Entry"}
         </h2>
-        <p className="text-marble/40 text-sm">
+        <p className="text-marble/60 text-sm">
           {editSlug ? "Modify an existing engineering or outreach update." : "Draft rich-text engineering and outreach updates."}
         </p>
       </div>
@@ -228,7 +228,7 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
       {/* Settings Grid */}
       <div className="flex flex-col md:flex-row gap-4 mt-2">
         <div className="flex-1">
-          <label htmlFor="post-title" className="block text-xs font-bold text-marble/40 uppercase tracking-wider mb-2">Post Title</label>
+          <label htmlFor="post-title" className="block text-xs font-bold text-marble/60 uppercase tracking-wider mb-2">Post Title</label>
           <input
             id="post-title"
             type="text"
@@ -259,7 +259,7 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
       
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 md:max-w-xs">
-          <label htmlFor="post-published-at" className="block text-xs font-bold text-marble/40 uppercase tracking-wider mb-2">Schedule Publish Time</label>
+          <label htmlFor="post-published-at" className="block text-xs font-bold text-marble/60 uppercase tracking-wider mb-2">Schedule Publish Time</label>
           <input
             id="post-published-at" type="datetime-local"
             {...register("publishedAt")}

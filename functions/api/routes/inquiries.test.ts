@@ -59,7 +59,7 @@ describe("Hono Backend - /inquiries Router", () => {
     vi.clearAllMocks();
 
     // Polyfill crypto for Node.js test environment if needed
-    /* eslint-disable @typescript-eslint/no-explicit-any -- Test polyfill for Node.js environment */
+     
     // @ts-expect-error - Test polyfill for crypto
     if (typeof global.crypto === "undefined") {
       // @ts-expect-error - Test polyfill for crypto
@@ -71,7 +71,7 @@ describe("Hono Backend - /inquiries Router", () => {
       // @ts-expect-error - Test polyfill for crypto
       global.crypto.randomUUID = () => `test-uuid-${Math.random().toString(36).substring(7)}`;
     }
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+     
 
     mockDb = {
       selectFrom: vi.fn().mockReturnThis(),
@@ -449,12 +449,12 @@ describe("Hono Backend - /inquiries Router", () => {
   it("purgeOldInquiries function - with results", async () => {
     const { purgeOldInquiries } = await import("./inquiries/handlers");
     mockDb.execute.mockResolvedValueOnce([{ id: "1" }]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bridging MockKysely to Kysely<DB>
+     
     const res = await purgeOldInquiries(mockDb as any, 30);
     expect(res.deleted).toBe(1);
     expect(mockDb.deleteFrom).toHaveBeenCalledWith("inquiries");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bridging MockKysely to Kysely<DB>
+     
     const res2 = await purgeOldInquiries(mockDb as any, 0);
     expect(res2.deleted).toBe(0);
   });

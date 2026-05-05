@@ -354,7 +354,7 @@ export default function TaskBoardPage() {
             </div>
             Task Board
           </h2>
-          <p className="text-marble/40 text-sm mt-1">
+          <p className="text-marble/60 text-sm mt-1">
             Native D1-powered project management kanban
           </p>
         </div>

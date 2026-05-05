@@ -5,11 +5,18 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { MockKysely, TestEnv } from "../../../src/test/types";
-import { createMockDoc } from "../../../src/test/factories/contentFactory";
 import { createMockUser } from "../../../src/test/factories/userFactory";
 
 const mockUser = createMockUser({ id: "1", email: "admin@test.com", role: "admin" });
 let authBypass = true;
+
+interface DocsResponse {
+  success?: boolean;
+  docs?: unknown[];
+  results?: unknown[];
+  error?: string;
+  [key: string]: unknown;
+}
 
 // Mock middleware
 vi.mock("../middleware", async (importOriginal) => {
@@ -199,7 +206,7 @@ describe("Hono Backend - /docs Router", () => {
     });
     const res = await testApp.request("/search?q=query", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as DocsResponse;
     expect(body.results).toHaveLength(2);
     expect(body.results[1].description).toBeNull();
   });
@@ -207,7 +214,7 @@ describe("Hono Backend - /docs Router", () => {
   it("GET /search - ignores short queries", async () => {
     const res = await testApp.request("/search?q=ab", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as DocsResponse;
     expect(body.results).toEqual([]);
   });
 

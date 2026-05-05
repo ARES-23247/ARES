@@ -37,7 +37,7 @@ export function MemberCard({ member }: { member: TeamMember }) {
           {member.nickname || member.first_name || "ARES Member"}
         </h4>
         {member.pronouns && (
-          <p className="text-marble/40 text-xs mb-2">{member.pronouns}</p>
+          <p className="text-marble/60 text-xs mb-2">{member.pronouns}</p>
         )}
         
         <div className="mt-auto pt-2 flex flex-col gap-2">

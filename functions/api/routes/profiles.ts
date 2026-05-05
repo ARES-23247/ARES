@@ -13,8 +13,8 @@ import type { HonoContext } from "@shared/types/api";
 
 export const profilesRouter = new Hono<AppEnv>();
 
-const profileHandlers = {
-  getMe: async (_input, c: HonoContext) => {
+const profileHandlers: any = {
+  getMe: async (_input: any, c: any) => {
     const user = (await getSessionUser(c))!;
     const db = c.get("db") as Kysely<DB>;
 
@@ -103,7 +103,7 @@ const profileHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch your profile" } };
     }
   },
-  updateMe: async (input, c: HonoContext) => {
+  updateMe: async (input: any, c: any) => {
     const user = (await getSessionUser(c))!;
     try {
       // Validate input against schema before updating profile
@@ -124,7 +124,7 @@ const profileHandlers = {
       return { status: 500 as const, body: { error: "Failed to update profile" } };
     }
   },
-  getTeamRoster: async (_input, c: HonoContext) => {
+  getTeamRoster: async (_input: any, c: any) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       // SEC-F04: Only show verified users or those who have explicitly opted in via profile.
@@ -187,7 +187,7 @@ const profileHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch team roster" } as any };
     }
   },
-  getPublicProfile: async (input, c: HonoContext) => {
+  getPublicProfile: async (input: any, c: any) => {
     const { userId } = input.params;
     const db = c.get("db") as Kysely<DB>;
     try {

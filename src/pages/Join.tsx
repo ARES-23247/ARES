@@ -101,7 +101,7 @@ export default function Join() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="lg:col-span-4"
           >
-            <h2 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">The ARES <span className="bg-ares-red px-4 py-1 ares-cut shadow-xl inline-block text-white">Advantage</span></h2>
+            <h2 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">The ARES <span className="bg-ares-red px-4 py-1 ares-cut shadow-xl inline-block text-white font-bold">Advantage</span></h2>
             
             <div className="space-y-6">
               <div className="flex gap-4">

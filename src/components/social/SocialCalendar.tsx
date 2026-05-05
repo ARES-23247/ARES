@@ -105,7 +105,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <div
               key={day}
-              className="p-3 text-center text-xs font-bold text-marble/40 uppercase tracking-wider bg-white/5"
+              className="p-3 text-center text-xs font-bold text-marble/60 uppercase tracking-wider bg-white/5"
             >
               {day}
             </div>
@@ -114,7 +114,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
 
         {/* Calendar Days */}
         {isLoading ? (
-          <div className="p-8 text-center text-marble/40">Loading calendar...</div>
+          <div className="p-8 text-center text-marble/60">Loading calendar...</div>
         ) : (
           <div className="grid grid-cols-7">
             {calendarDays.map((day) => {
@@ -140,7 +140,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
                           ? "bg-ares-cyan text-black w-6 h-6 rounded-full flex items-center justify-center"
                           : isCurrentMonth
                           ? "text-white"
-                          : "text-marble/40"
+                          : "text-marble/60"
                       }`}
                     >
                       {format(day, "d")}
@@ -159,7 +159,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
                       </div>
                     ))}
                     {dayPosts.length > 2 && (
-                      <div className="text-[10px] text-marble/40 font-bold">
+                      <div className="text-[10px] text-marble/60 font-bold">
                         +{dayPosts.length - 2} more
                       </div>
                     )}
@@ -186,7 +186,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
               </h3>
               <button
                 onClick={() => setSelectedDay(null)}
-                className="text-marble/40 hover:text-white transition-colors"
+                className="text-marble/60 hover:text-white transition-colors"
               >
                 ×
               </button>
@@ -203,7 +203,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
                         <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter ares-cut-sm ${STATUS_COLORS[post.status]}`}>
                           {post.status}
                         </span>
-                        <span className="text-xs text-marble/40 font-mono">
+                        <span className="text-xs text-marble/60 font-mono">
                           {format(new Date(post.scheduled_for), "h:mm a")}
                         </span>
                       </div>
@@ -220,7 +220,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
                           {onEditPost && (
                             <button
                               onClick={() => onEditPost(post)}
-                              className="p-2 text-marble/40 hover:text-ares-cyan transition-colors"
+                              className="p-2 text-marble/60 hover:text-ares-cyan transition-colors"
                               title="Edit"
                             >
                               <Edit size={16} />
@@ -228,7 +228,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
                           )}
                           <button
                             onClick={() => handleDelete(post.id)}
-                            className="p-2 text-marble/40 hover:text-ares-red transition-colors"
+                            className="p-2 text-marble/60 hover:text-ares-red transition-colors"
                             title="Cancel"
                           >
                             <Trash2 size={16} />
@@ -239,7 +239,7 @@ export default function SocialCalendar({ onEditPost }: SocialCalendarProps) {
                   </div>
                 ))
               ) : (
-                <div className="text-center text-marble/40 py-8">
+                <div className="text-center text-marble/60 py-8">
                   No posts scheduled for this day
                 </div>
               )}
