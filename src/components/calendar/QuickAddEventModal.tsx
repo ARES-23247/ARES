@@ -72,6 +72,8 @@ export function QuickAddEventModal({
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
+  const saveMutation = api.events.saveEvent.useMutation();
+
   // Initialize form with selected date when modal opens or date changes
   useEffect(() => {
     if (isOpen && selectedDate) {
@@ -108,7 +110,7 @@ export function QuickAddEventModal({
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => {
-        const titleInput = modalRef.current?.querySelector('#quick-event-title') as HTMLElement;
+        const titleInput = modalRef.current?.querySelector('#quick-event-title-input') as HTMLElement;
         if (titleInput) titleInput.focus();
       }, 50);
       return () => clearTimeout(timer);
@@ -123,7 +125,7 @@ export function QuickAddEventModal({
     try {
       const locationValue = formData.location === "CUSTOM" ? undefined : formData.location;
 
-      const result = await api.events.saveEvent.mutate({
+      const result = await saveMutation.mutateAsync({
         body: {
           title: formData.title,
           dateStart: formData.dateStart,
@@ -304,13 +306,13 @@ export function QuickAddEventModal({
                     }}
                     className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all appearance-none pr-10"
                   >
-                    <option value="">-- Select a Venue --</option>
+                    <option value="" className="bg-obsidian text-marble">-- Select a Venue --</option>
                     {locations.map((loc) => (
-                      <option key={loc.id} value={loc.name}>
+                      <option key={loc.id} value={loc.name} className="bg-obsidian text-white">
                         {loc.name} ({loc.address})
                       </option>
                     ))}
-                    <option value="CUSTOM">--- Manual Entry / New Venue ---</option>
+                    <option value="CUSTOM" className="bg-obsidian text-ares-gold">--- Manual Entry / New Venue ---</option>
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/60 group-hover:text-ares-red transition-colors">
                     <MapPin size={16} />
