@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { D1Row } from "~/shared/types/database";
+import type { D1Row } from "../../../shared/types/database";
 
 /**
  * Mock Event factory matching Events table schema.

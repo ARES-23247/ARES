@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { D1Row } from "~/shared/types/database";
+import type { D1Row } from "../../../shared/types/database";
 
 /**
  * Mock Analytics interface for aggregate analytics data.
@@ -19,7 +19,6 @@ export const createMockNotification = (overrides?: Partial<D1Row<"notifications"
   id: faker.string.uuid(),
   title: faker.lorem.sentence(),
   message: faker.lorem.paragraph(),
-  type: faker.helpers.arrayElement(["info", "warning", "success", "error"]),
   is_read: faker.datatype.boolean() ? 1 : 0,
   created_at: faker.date.recent().toISOString(),
   user_id: faker.string.uuid(),

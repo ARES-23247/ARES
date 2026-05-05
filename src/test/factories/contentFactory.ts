@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { D1Row } from "~/shared/types/database";
+import type { D1Row } from "../../../shared/types/database";
 
 /**
  * Mock Media interface for R2-stored media files.
@@ -18,26 +18,24 @@ export interface MockMedia {
  * Mock Post factory matching Posts table schema.
  * Returns D1Row<"posts"> type for compile-time schema validation.
  *
- * Note: ast and content are JSON strings representing TipTap document structure.
+ * Note: ast is a JSON string representing TipTap document structure.
+ * Posts table uses slug as the primary identifier (no separate id column).
  */
 export const createMockPost = (overrides?: Partial<D1Row<"posts">>): D1Row<"posts"> => ({
-  id: faker.string.uuid(),
   slug: faker.helpers.slugify(faker.company.catchPhrase().toLowerCase()),
   title: faker.company.catchPhrase(),
   snippet: faker.lorem.sentence(),
   ast: JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: faker.lorem.paragraph() }] }] }),
   author: faker.person.fullName(),
   date: faker.date.recent().toISOString(),
-  cover_image: faker.image.url(),
-  category: faker.helpers.arrayElement(["news", "robotics", "community"]),
-  status: "published",
-  published_at: faker.date.recent().toISOString(),
-  is_deleted: 0,
-  is_portfolio: 0,
   cf_email: faker.internet.email(),
   content_draft: null,
+  is_deleted: 0,
+  is_portfolio: 0,
+  published_at: faker.date.recent().toISOString(),
   revision_of: null,
   season_id: null,
+  status: "published",
   thumbnail: null,
   updated_at: faker.date.recent().toISOString(),
   zulip_stream: null,
@@ -49,10 +47,10 @@ export const createMockPost = (overrides?: Partial<D1Row<"posts">>): D1Row<"post
  * Mock Doc factory matching Docs table schema.
  * Returns D1Row<"docs"> type for compile-time schema validation.
  *
- * Note: content and content_draft are JSON strings representing rich text.
+ * Note: content is a JSON string representing rich text.
+ * Docs table uses slug as the primary identifier (no separate id column).
  */
 export const createMockDoc = (overrides?: Partial<D1Row<"docs">>): D1Row<"docs"> => ({
-  id: faker.string.uuid(),
   slug: faker.helpers.slugify(faker.commerce.productName().toLowerCase()),
   title: faker.commerce.productName(),
   description: faker.lorem.sentence(),

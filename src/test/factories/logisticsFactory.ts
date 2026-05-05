@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { D1Row } from "~/shared/types/database";
+import type { D1Row } from "../../../shared/types/database";
 
 /**
  * Mock Outreach factory matching OutreachLogs table schema.
@@ -10,10 +10,9 @@ export const createMockOutreach = (overrides?: Partial<D1Row<"outreach_logs">>):
   title: faker.company.catchPhrase(),
   date: faker.date.future().toISOString(),
   hours: faker.number.int({ min: 1, max: 8 }),
-  description: faker.lorem.paragraph(),
   cf_email: faker.internet.email(),
   event_id: null,
-  impact_summary: null,
+  impact_summary: faker.lorem.paragraph(),
   is_deleted: 0,
   is_mentoring: faker.datatype.boolean() ? 1 : 0,
   location: faker.location.streetAddress(),
@@ -50,7 +49,6 @@ export const createMockSponsor = (overrides?: Partial<D1Row<"sponsors">>): D1Row
 export const createMockAward = (overrides?: Partial<D1Row<"awards">>): D1Row<"awards"> => ({
   id: faker.number.int({ min: 1, max: 1000 }),
   title: faker.commerce.productName() + " Award",
-  name: faker.commerce.productName() + " Award",
   event_name: faker.company.catchPhrase(),
   date: "2024",
   description: faker.lorem.sentence(),
@@ -71,8 +69,6 @@ export const createMockInquiry = (overrides?: Partial<D1Row<"inquiries">>): D1Ro
   email: faker.internet.email(),
   type: faker.helpers.arrayElement(["general", "sponsorship", "media", "technical"]),
   status: faker.helpers.arrayElement(["new", "contacted", "resolved", "closed"]),
-  subject: faker.lorem.sentence(),
-  message: faker.lorem.paragraph(),
   created_at: faker.date.recent().toISOString(),
   is_deleted: 0,
   metadata: null,
