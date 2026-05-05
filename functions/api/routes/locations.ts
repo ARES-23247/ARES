@@ -3,7 +3,7 @@ import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { locationContract } from "../../../shared/schemas/contracts/locationContract";
+import { locationContract, locationSchema } from "../../../shared/schemas/contracts/locationContract";
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 
 const s = initServer<AppEnv>();
@@ -53,26 +53,38 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
   },
     save: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
-                  const db = c.get("db") as Kysely<DB>;
-      const id = body.id || crypto.randomUUID();
-      
+      // Validate input against schema before database insertion
+      const validationResult = locationSchema.safeParse(body);
+      if (!validationResult.success) {
+        return {
+          status: 400 as const,
+          body: {
+            error: "Invalid input: " + validationResult.error.issues.map(i => i.message).join(", ")
+          } as any
+        };
+      }
+
+      const db = c.get("db") as Kysely<DB>;
+      const validatedData = validationResult.data;
+      const id = validatedData.id || crypto.randomUUID();
+
       await db.insertInto("locations")
         .values({
           id,
-          name: body.name,
-          address: body.address,
-          maps_url: body.maps_url || null,
-          is_deleted: body.is_deleted || 0,
+          name: validatedData.name,
+          address: validatedData.address,
+          maps_url: validatedData.maps_url || null,
+          is_deleted: validatedData.is_deleted || 0,
         })
         .onConflict(oc => oc.column("id").doUpdateSet({
-          name: body.name,
-          address: body.address,
-          maps_url: body.maps_url || null,
-          is_deleted: body.is_deleted || 0,
+          name: validatedData.name,
+          address: validatedData.address,
+          maps_url: validatedData.maps_url || null,
+          is_deleted: validatedData.is_deleted || 0,
         }))
         .execute();
 
-      c.executionCtx.waitUntil(logAuditAction(c, "SAVE_LOCATION", "locations", id, `Saved location: ${body.name}`));
+      c.executionCtx.waitUntil(logAuditAction(c, "SAVE_LOCATION", "locations", id, `Saved location: ${validatedData.name}`));
       return { status: 200 as const, body: { success: true, id } };
     } catch (e) {
       console.error("SAVE_LOCATION ERROR", e);
