@@ -7,6 +7,9 @@ const isoDateSchema = z.string().refine(
   { message: "Invalid ISO 8601 date format" }
 );
 
+// Event category enum for consistency
+export const EventCategoryEnum = z.enum(["internal", "outreach", "external"]);
+
 // Sanitized text field for rich content that may contain HTML
 const sanitizedTextSchema = z.string().max(200000).optional().transform((val) => {
   if (!val) return val;
@@ -21,7 +24,7 @@ export const eventSchema = z.object({
   location: z.string().max(255).optional(),
   description: z.string().max(5000).optional(),
   coverImage: z.string().max(255).optional().or(z.literal("")),
-  category: z.enum(["internal", "outreach", "external"]).default("internal"),
+  category: EventCategoryEnum.default("internal"),
   tbaEventKey: z.string().max(255).optional().or(z.literal("")),
   isPotluck: z.boolean().default(false),
   isVolunteer: z.boolean().default(false),
