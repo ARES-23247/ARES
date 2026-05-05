@@ -1,4 +1,4 @@
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, persistentRateLimitMiddleware, ensureAuth, originIntegrityMiddleware, logAuditAction } from "../middleware";
@@ -6,12 +6,21 @@ import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../
 import { emitNotification } from "../../utils/notifications";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { commentContract } from "../../../shared/schemas/contracts/commentContract";
+import type { HandlerInput, HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const commentsRouter = new Hono<AppEnv>();
 
+type CommentSubmitBody = {
+  content?: string;
+};
+
+type CommentUpdateBody = {
+  content?: string;
+};
+
 const commentHandlers = {
-  list: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  list: async ({ params }: HandlerInput, c: HonoContext) => {
     const { targetType, targetId } = params;
     const user = await getSessionUser(c);
     const db = c.get("db") as Kysely<DB>;
@@ -46,29 +55,32 @@ const commentHandlers = {
           comments,
           authenticated: !!user,
           role: user?.role || null
-        } as any
+        }
       };
     } catch (e) {
       console.error("[Comments:List] Error", e);
-      return { status: 500 as const, body: { error: "Failed to fetch comments" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch comments" } };
     }
   },
-  submit: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
+  submit: async ({ params, body }: HandlerInput<CommentSubmitBody>, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) {
-      return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      return { status: 401 as const, body: { error: "Unauthorized" } };
     }
     if (user.role === "unverified") {
-      return { status: 403 as const, body: { error: "Verify your email to comment" } as any };
+      return { status: 403 as const, body: { error: "Verify your email to comment" } };
     }
 
     const { targetType, targetId } = params;
     const db = c.get("db") as Kysely<DB>;
     const rawContent = body.content;
+    if (!rawContent) {
+      return { status: 400 as const, body: { error: "Comment content is required" } };
+    }
     const content = rawContent.trim();
 
     if (!content) {
-      return { status: 400 as const, body: { error: "Comment content is required" } as any };
+      return { status: 400 as const, body: { error: "Comment content is required" } };
     }
 
     // CR-08: Check original length, not trimmed length, to prevent bypass
@@ -77,7 +89,7 @@ const commentHandlers = {
         status: 400 as const,
         body: {
           error: `Comment exceeds ${MAX_INPUT_LENGTHS.comment} character limit`
-        } as any
+        }
       };
     }
 
@@ -91,7 +103,7 @@ const commentHandlers = {
           target_id: targetId,
           content,
           created_at: new Date().toISOString()
-        } as any)
+        })
         .execute();
 
       const social = await getSocialConfig(c);
@@ -125,23 +137,23 @@ const commentHandlers = {
         }
       }
 
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Comments:Submit] Error", e);
-      return { status: 500 as const, body: { error: "Failed to submit comment" } as any };
+      return { status: 500 as const, body: { error: "Failed to submit comment" } };
     }
   },
-  update: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
+  update: async ({ params, body }: HandlerInput<CommentUpdateBody>, c: HonoContext) => {
     const user = await getSessionUser(c);
-    if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
-    if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } as any };
+    if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+    if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };
 
     const { id } = params;
     const db = c.get("db") as Kysely<DB>;
     const rawContent = body.content;
     const content = rawContent?.trim();
 
-    if (!content) return { status: 400 as const, body: { error: "Content is required" } as any };
+    if (!content) return { status: 400 as const, body: { error: "Content is required" } };
 
     // CR-08: Check original length, not trimmed length, to prevent bypass
     if (rawContent && rawContent.length > MAX_INPUT_LENGTHS.comment) {
@@ -149,18 +161,18 @@ const commentHandlers = {
         status: 400 as const,
         body: {
           error: `Comment exceeds ${MAX_INPUT_LENGTHS.comment} character limit`
-        } as any
+        }
       };
     }
 
     try {
       const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id).executeTakeFirst();
-      if (!row) return { status: 404 as const, body: { error: "Comment not found" } as any };
+      if (!row) return { status: 404 as const, body: { error: "Comment not found" } };
       
       const isOwner = row.user_id === user.id;
       const isModerator = user.role === "admin" || user.member_type === "mentor" || user.member_type === "coach";
       
-      if (!isOwner && !isModerator) return { status: 403 as const, body: { error: "Unauthorized to update this comment" } as any };
+      if (!isOwner && !isModerator) return { status: 403 as const, body: { error: "Unauthorized to update this comment" } };
 
       await db.updateTable("comments")
         .set({ content })
@@ -178,28 +190,28 @@ const commentHandlers = {
         })());
       }
 
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Comments:Update] Error", e);
-      return { status: 500 as const, body: { error: "Failed to update comment" } as any };
+      return { status: 500 as const, body: { error: "Failed to update comment" } };
     }
   },
-  delete: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  delete: async ({ params }: HandlerInput, c: HonoContext) => {
     const user = await getSessionUser(c);
-    if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
-    if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } as any };
+    if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+    if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };
 
     const { id } = params;
     const db = c.get("db") as Kysely<DB>;
 
     try {
       const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id).executeTakeFirst();
-      if (!row) return { status: 404 as const, body: { error: "Comment not found" } as any };
+      if (!row) return { status: 404 as const, body: { error: "Comment not found" } };
       
       const isOwner = row.user_id === user.id;
       const isModerator = user.role === "admin" || user.member_type === "mentor" || user.member_type === "coach";
       
-      if (!isOwner && !isModerator) return { status: 403 as const, body: { error: "Unauthorized to delete this comment" } as any };
+      if (!isOwner && !isModerator) return { status: 403 as const, body: { error: "Unauthorized to delete this comment" } };
 
       await db.updateTable("comments")
         .set({ is_deleted: 1 })
@@ -217,15 +229,15 @@ const commentHandlers = {
         })());
       }
 
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Comments:Delete] Error", e);
-      return { status: 500 as const, body: { error: "Failed to delete comment" } as any };
+      return { status: 500 as const, body: { error: "Failed to delete comment" } };
     }
   },
 };
 
-const commentTsRestRouter = s.router(commentContract, commentHandlers as any);
+const commentTsRestRouter = s.router(commentContract, commentHandlers);
 
 commentsRouter.use("/:targetType/:targetId", ensureAuth);
 
