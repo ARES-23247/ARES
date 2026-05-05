@@ -64,13 +64,21 @@ const commentHandlers = {
 
     const { targetType, targetId } = params;
     const db = c.get("db") as Kysely<DB>;
-    const content = body.content.trim();
+    const rawContent = body.content;
+    const content = rawContent.trim();
 
     if (!content) {
       return { status: 400 as const, body: { error: "Comment content is required" } as any };
     }
-    if (content.length > MAX_INPUT_LENGTHS.comment) {
-      return { status: 400 as const, body: { error: "Comment is too long" } as any };
+
+    // CR-08: Check original length, not trimmed length, to prevent bypass
+    if (rawContent.length > MAX_INPUT_LENGTHS.comment) {
+      return {
+        status: 400 as const,
+        body: {
+          error: `Comment exceeds ${MAX_INPUT_LENGTHS.comment} character limit`
+        } as any
+      };
     }
 
     try {
@@ -130,9 +138,20 @@ const commentHandlers = {
 
     const { id } = params;
     const db = c.get("db") as Kysely<DB>;
-    const content = body.content?.trim();
+    const rawContent = body.content;
+    const content = rawContent?.trim();
 
     if (!content) return { status: 400 as const, body: { error: "Content is required" } as any };
+
+    // CR-08: Check original length, not trimmed length, to prevent bypass
+    if (rawContent && rawContent.length > MAX_INPUT_LENGTHS.comment) {
+      return {
+        status: 400 as const,
+        body: {
+          error: `Comment exceeds ${MAX_INPUT_LENGTHS.comment} character limit`
+        } as any
+      };
+    }
 
     try {
       const row = await db.selectFrom("comments").select(["user_id", "zulip_message_id"]).where("id", "=", id).executeTakeFirst();
