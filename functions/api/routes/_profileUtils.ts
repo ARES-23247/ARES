@@ -6,6 +6,14 @@ import { AppEnv, getSessionUser } from "../middleware";
 import { encrypt } from "../../utils/crypto";
 import { safeJSONStringify } from "../../utils/json";
 
+/**
+ * Creates or updates a user profile with proper encryption for sensitive fields.
+ * Merges provided data with existing profile values, only overwriting fields
+ * explicitly included in the data parameter.
+ * @param c - Hono context with environment bindings
+ * @param userId - ID of the user whose profile is being updated
+ * @param data - Partial profile data to merge with existing profile
+ */
 export async function upsertProfile(
   c: Context<AppEnv>,
   userId: string,
