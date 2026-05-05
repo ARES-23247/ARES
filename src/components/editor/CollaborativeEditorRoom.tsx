@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- PartyKit provider types are incomplete */
 import React, { useEffect, useState, createContext, useContext, useRef, useMemo, useCallback } from "react";
 import YPartyKitProvider, { WebsocketProvider } from "y-partykit/provider";
 import * as Y from "yjs";
