@@ -116,8 +116,10 @@ export async function verifyTurnstile(
  */
 export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
   return async (c: Context<AppEnv>, next: Next) => {
-    // SEC-03: Bypass rate limiting in local dev/test if DEV_BYPASS is enabled
-    if (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1" || c.env.ENVIRONMENT !== "production") {
+    // SEC-03: Only bypass rate limiting if explicitly requested via DEV_BYPASS
+    // Do not automatically bypass based on environment - this could expose
+    // staging/pre-production environments to abuse.
+    if (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1") {
       return await next();
     }
 
@@ -150,7 +152,8 @@ export const rateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
  */
 export const persistentRateLimitMiddleware = (limit = 15, windowSeconds = 60) => {
   return async (c: Context<AppEnv>, next: Next) => {
-    if (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1" || c.env.ENVIRONMENT !== "production") {
+    // Only bypass if explicitly requested via DEV_BYPASS
+    if (c.env.DEV_BYPASS === "true" || c.env.DEV_BYPASS === "1") {
       return await next();
     }
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
