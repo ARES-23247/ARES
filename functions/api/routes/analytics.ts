@@ -4,14 +4,13 @@ import { analyticsContract } from "../../../shared/schemas/contracts/analyticsCo
 import { AppEnv, ensureAuth, ensureAdmin, checkRateLimit, rateLimitMiddleware, turnstileMiddleware, getDbSettings  } from "../middleware";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { AppRouteInput } from "../../../shared/types/contracts";
 
 const s = initServer<AppEnv>();
 export const analyticsRouter = new Hono<AppEnv>();
 
-import { Context } from "hono";
-
 const analyticsHandlers = {
-  trackPageView: async ({ body }: { body: { path?: string; category?: string; referrer?: string } }, c: Context<AppEnv>) => {
+  trackPageView: async (input, c) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
     if (!(await checkRateLimit(c.env.ARES_KV, `track:${ip}`, ua, 20, 600))) {
@@ -20,7 +19,7 @@ const analyticsHandlers = {
 
     const db = c.get("db") as Kysely<DB>;
     try {
-      const { path, category, referrer } = body;
+      const { path, category, referrer } = input.body;
       const userAgent = c.req.header("user-agent") || ua;
       
       await db.insertInto("page_analytics")
@@ -38,7 +37,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { success: false } };
     }
   },
-  trackSponsorClick: async ({ body }: { body: { sponsor_id: string } }, c: Context<AppEnv>) => {
+  trackSponsorClick: async (input, c) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
     if (!(await checkRateLimit(c.env.ARES_KV, `click:${ip}`, ua, 10, 600))) {
@@ -47,7 +46,7 @@ const analyticsHandlers = {
 
     const db = c.get("db") as Kysely<DB>;
     try {
-      const { sponsor_id } = body;
+      const { sponsor_id } = input.body;
 
       // WR-04: Validate sponsor exists to prevent database pollution
       if (!sponsor_id || typeof sponsor_id !== 'string') {
@@ -84,7 +83,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { success: false } };
     }
   },
-  getPlatformAnalytics: async (_: unknown, c: Context<AppEnv>) => {
+  getPlatformAnalytics: async (_input, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [
@@ -182,7 +181,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch platform metrics" } };
     }
   },
-  getRosterStats: async (_: unknown, c: Context<AppEnv>) => {
+  getRosterStats: async (_input, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user_profiles as u")
@@ -228,7 +227,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { roster: [] } };
     }
   },
-  getLeaderboard: async (_: unknown, c: Context<AppEnv>) => {
+  getLeaderboard: async (_input, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user as u")
@@ -267,7 +266,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch leaderboard" } };
     }
   },
-  getStats: async (_: unknown, c: Context<AppEnv>) => {
+  getStats: async (_input, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [postsCount, eventsCount, docsCount, securityBlocksRow, dbSettings] = await Promise.all([
@@ -301,9 +300,9 @@ const analyticsHandlers = {
     }
   },
 
-  search: async ({ query }: { query: { q: string } }, c: Context<AppEnv>) => {
+  search: async (input, c) => {
     const db = c.get("db") as Kysely<DB>;
-    const { q } = query;
+    const { q } = input.query;
     try {
       // SCA-FTS-01: Sanitize FTS5 query
       const qClean = (q || "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
@@ -329,7 +328,7 @@ const analyticsHandlers = {
   }
 };
 
-const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as any);
+const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers);
 
 // CR-01 FIX: Apply authentication to all analytics routes
 // Public routes (page view tracking, search) have rate limiting only
@@ -343,6 +342,17 @@ analyticsRouter.use("/admin/*", ensureAdmin);
 analyticsRouter.use("/sponsor-click", turnstileMiddleware());
 analyticsRouter.use("/search", rateLimitMiddleware(100, 60));
 
-createHonoEndpoints(analyticsContract, analyticsTsRestRouter, analyticsRouter);
+createHonoEndpoints(
+  analyticsContract,
+  analyticsTsRestRouter,
+  analyticsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default analyticsRouter;
