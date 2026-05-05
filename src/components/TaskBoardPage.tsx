@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Layout } from "lucide-react";
 import ProjectBoardKanban from "./command/ProjectBoardKanban";
 import { TaskTableView } from "./kanban/TaskTableView";
@@ -6,8 +6,8 @@ import type { TaskItem } from "./command/ProjectBoardKanban";
 import { KANBAN_SUBTEAMS } from "./command/ProjectBoardKanban";
 import { api } from "../api/client";
 import { useQueryClient } from "@tanstack/react-query";
-
-
+import usePartySocket from "partysocket/react";
+import { useSession } from "../utils/auth-client";
 interface TaskListResponse {
   status: number;
   body: { tasks: TaskItem[] };
@@ -142,6 +142,82 @@ export default function TaskBoardPage() {
     ? rootTasks.filter((t: TaskItem) => t.subteam?.toLowerCase() === subteamFilter.toLowerCase())
     : rootTasks;
 
+  // -- Real-Time Presence & Sync --------------------------------------
+  const { data: session } = useSession();
+  const [activeUsers, setActiveUsers] = useState<Record<string, { name: string; image?: string; lastSeen: number }>>({});
+  
+  const host = import.meta.env.VITE_PARTYKIT_HOST || "";
+  const socket = usePartySocket({
+    host: host || "dummy", // fallback so it doesn't crash if env missing
+    room: "kanban-global",
+    onOpen(e) {
+      if (!session?.user) return;
+      // Broadcast our presence when we join
+      e.target.send(JSON.stringify({ 
+        type: "presence", 
+        userId: session.user.id, 
+        name: session.user.name || "ARES Member", 
+        image: session.user.image 
+      }));
+    },
+    onMessage(e) {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "task_updated") {
+          // Someone else changed a task, silently refetch our query!
+          queryClient.invalidateQueries({ queryKey: ["tasks", "list"] });
+        } else if (msg.type === "presence") {
+          // Track active users
+          setActiveUsers((prev) => ({
+            ...prev,
+            [msg.userId]: { name: msg.name, image: msg.image, lastSeen: Date.now() }
+          }));
+          // Ping back so they know we are here too
+          if (session?.user && msg.userId !== session.user.id) {
+             socket.send(JSON.stringify({ 
+               type: "presence_ack", 
+               userId: session.user.id, 
+               name: session.user.name || "ARES Member", 
+               image: session.user.image 
+             }));
+          }
+        } else if (msg.type === "presence_ack") {
+          setActiveUsers((prev) => ({
+            ...prev,
+            [msg.userId]: { name: msg.name, image: msg.image, lastSeen: Date.now() }
+          }));
+        }
+      } catch (_err) {
+        // ignore parse errors
+      }
+    }
+  });
+
+  // Cleanup stale presence (users who left without saying goodbye)
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveUsers(prev => {
+        const now = Date.now();
+        const next = { ...prev };
+        let changed = false;
+        for (const [id, user] of Object.entries(next)) {
+          if (now - user.lastSeen > 60000) { // 1 minute timeout
+            delete next[id];
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const broadcastTaskUpdate = () => {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "task_updated" }));
+    }
+  };
+
   const handleCreateTaskWithSubteam = async (title: string) => {
     setIsCreating(true);
     try {
@@ -158,6 +234,7 @@ export default function TaskBoardPage() {
           return updated as TaskListResponse;
         });
         queryClient.invalidateQueries({ queryKey: ["tasks", "list"] });
+        broadcastTaskUpdate();
       }
     } catch (err) {
       console.error("Create task failed:", err);
@@ -167,16 +244,24 @@ export default function TaskBoardPage() {
   };
 
   const handleUpdateTask = async (id: string, updates: Partial<TaskItem>) => {
-    updateMutation.mutate({ params: { id }, body: updates });
+    updateMutation.mutate({ params: { id }, body: updates }, {
+      onSuccess: () => broadcastTaskUpdate()
+    });
   };
 
   const handleDeleteTask = async (id: string) => {
-    deleteMutation.mutate({ params: { id } });
+    deleteMutation.mutate({ params: { id } }, {
+      onSuccess: () => broadcastTaskUpdate()
+    });
   };
 
   const handleReorder = async (items: { id: string; status: string; sort_order: number }[]) => {
-    reorderMutation.mutate({ body: { items } });
+    reorderMutation.mutate({ body: { items } }, {
+      onSuccess: () => broadcastTaskUpdate()
+    });
   };
+
+  const activeUserList = Object.values(activeUsers);
 
   const boardContent = (
     <div className={isFullscreen ? "fixed inset-0 z-50 bg-obsidian overflow-hidden flex flex-col" : "space-y-6 flex flex-col"}>
@@ -193,7 +278,33 @@ export default function TaskBoardPage() {
             Native D1-powered project management kanban
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          
+          {/* Real-time Presence Avatars */}
+          {host && (
+            <div className="flex items-center">
+              <div className="flex -space-x-2 mr-2">
+                {activeUserList.slice(0, 5).map((user, i) => (
+                  <div key={i} className="w-8 h-8 rounded-full border border-ares-cyan/40 bg-ares-gray-dark overflow-hidden flex items-center justify-center relative" title={user.name}>
+                    {user.image ? (
+                      <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-bold text-ares-cyan">{user.name.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                ))}
+                {activeUserList.length > 5 && (
+                  <div className="w-8 h-8 rounded-full border border-ares-cyan/40 bg-ares-cyan/20 text-ares-cyan font-bold text-xs flex items-center justify-center z-10">
+                    +{activeUserList.length - 5}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Live
+              </div>
+            </div>
+          )}
+
           <div className="flex bg-black/40 ares-cut-sm border border-white/10 p-1">
             <button
               onClick={() => setViewMode("kanban")}

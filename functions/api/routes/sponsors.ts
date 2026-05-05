@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { Context } from "hono";
+// Removed unused Context
 import { sql } from "kysely";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
