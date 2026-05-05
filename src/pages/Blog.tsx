@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -8,23 +6,21 @@ import SEO from "../components/SEO";
 import { DEFAULT_COVER_IMAGE } from "../utils/constants";
 import { api } from "../api/client";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface PostRecord {
   slug: string;
   title: string;
-  date: string;
-  snippet: string;
-  thumbnail: string;
-  author_nickname?: string;
-  author_avatar?: string;
+  date: string | null;
+  snippet: string | null;
+  thumbnail: string | null;
+  author_nickname?: string | null;
+  author_avatar?: string | null;
   cf_email?: string;
 }
 
 export default function Blog() {
   const { data: postsRes, isLoading } = api.posts.getPosts.useQuery(["posts"], {});
-   
-  const rawBody = (postsRes as any)?.body;
-  const posts = postsRes?.status === 200 ? (Array.isArray(rawBody) ? rawBody : (Array.isArray(rawBody?.posts) ? rawBody.posts : [])) : [];
+
+  const posts = postsRes?.status === 200 ? postsRes.body.posts : [];
 
   return (
     <motion.div 
@@ -56,7 +52,7 @@ export default function Blog() {
           transition={{ delay: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
-          {posts.map((post: any) => (
+          {posts.map((post: PostRecord) => (
             <Link to={`/blog/${post.slug}`} key={post.slug} className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan">
               <div className="glass-card hero-card overflow-hidden cursor-pointer flex flex-col h-full border border-white/10">
                 <div className="relative h-56 w-full overflow-hidden">
@@ -68,10 +64,10 @@ export default function Blog() {
                   <p className="text-sm text-white/60 line-clamp-3 mb-4">{post.snippet}</p>
                   
                   <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-                    <p className="text-xs text-white/50">{format(new Date(post.date), 'MMMM do, yyyy')}</p>
+                    <p className="text-xs text-white/50">{post.date ? format(new Date(post.date), 'MMMM do, yyyy') : 'No date'}</p>
                     {(post.author_avatar || post.author_nickname) && (
-                      <div className="flex items-center gap-1.5" title={post.author_nickname}>
-                        <img 
+                      <div className="flex items-center gap-1.5" title={post.author_nickname ?? undefined}>
+                        <img
                           src={post.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_nickname || post.slug}`}
                           alt={`${post.author_nickname || "Author"}'s avatar`}
                           className="w-5 h-5 rounded-full object-cover border border-white/10"
