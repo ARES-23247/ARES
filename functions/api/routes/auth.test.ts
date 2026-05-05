@@ -70,14 +70,16 @@ describe("Auth Router", () => {
       } as any);
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      const req = new Request("http://localhost/error");
+      const req = new Request("http://localhost/error", {
+        headers: { "Host": "localhost:8080" } // Required for localhost check in auth handler
+      });
       const res = await authRouter.request(req, {}, { DB: {}, ENVIRONMENT: "development", DEV_BYPASS: "true" } as any, mockExecutionContext);
 
       expect(res.status).toBe(500);
       const body = await res.json() as any;
       expect(body.message).toBe("Auth failed");
       expect(body.stack).toBeDefined();
-      
+
       consoleSpy.mockRestore();
     });
 

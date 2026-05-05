@@ -154,9 +154,9 @@ export default function Join() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-obsidian rounded-full blur-[100px] opacity-[0.03] -translate-y-1/2 translate-x-1/3"></div>
               
               <div className="flex flex-wrap gap-4 mb-10 relative z-10">
-                <button 
+                <button
                   onClick={() => setRole("student")}
-                  className={`flex-1 min-w-[200px] flex items-center justify-center gap-3 px-6 py-4 ares-cut-sm font-bold uppercase tracking-widest text-sm transition-all ${role === "student" ? "bg-ares-red text-white shadow-lg shadow-ares-red/20 scale-100" : "bg-obsidian/5 text-obsidian/80 hover:bg-obsidian/10 scale-95"}`}
+                  className={`flex-1 min-w-[200px] flex items-center justify-center gap-3 px-6 py-4 ares-cut-sm font-bold uppercase tracking-widest text-sm transition-all ${role === "student" ? "bg-ares-red-dark text-white shadow-lg shadow-ares-red/20 scale-100" : "bg-obsidian/5 text-obsidian/80 hover:bg-obsidian/10 scale-95"}`}
                 >
                   <Rocket size={18} /> Student Application
                 </button>
@@ -245,7 +245,7 @@ export default function Join() {
                 
                 <div className="pt-4">
                   <Turnstile onVerify={setTurnstileToken} theme="light" className="mb-4" />
-                  <button type="submit" disabled={isSubmitting || !turnstileToken} className={`px-8 py-4 w-full text-white font-black uppercase tracking-widest ares-cut-sm hover:-translate-y-1 active:translate-y-0 transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 ${role === "student" ? "bg-ares-red hover:shadow-[0_10px_30px_rgba(220,38,38,0.3)] hover:bg-ares-bronze" : "bg-obsidian hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"}`}>
+                  <button type="submit" disabled={isSubmitting || !turnstileToken} className={`px-8 py-4 w-full text-white font-black uppercase tracking-widest ares-cut-sm hover:-translate-y-1 active:translate-y-0 transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 ${role === "student" ? "bg-ares-red-dark hover:shadow-[0_10px_30px_rgba(138,0,0,0.4)] hover:bg-ares-red" : "bg-obsidian hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"}`}>
                     {isSubmitting ? "Submitting..." : `Submit ${role === "student" ? "Student" : "Mentor"} Application`}
                   </button>
                   <p className="text-center text-[11px] text-obsidian font-bold uppercase tracking-widest mt-4">

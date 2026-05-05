@@ -10,11 +10,28 @@
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| - | - | - | - | - |
+| 21 | v6.6 | 0/1 | Active | - |
+| 22 | v6.6 | 0/1 | Pending | - |
+| 23 | v6.6 | 0/1 | Pending | - |
+| 24 | v6.6 | 0/1 | Pending | - |
 
 ## Phase Details
 
-No active phases for v6.6 yet. Run `/gsd-new-milestone` to begin.
+### Phase 21: Core Domain & Data Layer Strictness
+**Goal:** Audit and strictly type all Cloudflare D1/KV bindings, Hono API routes, and shared utilities.
+**Status:** Active
+
+### Phase 22: ARES Physics & Math Engine Validation
+**Goal:** Provide explicit struct definitions for physics engines (Dyn4j, Matter.js) and generic math visualizers.
+**Status:** Pending
+
+### Phase 23: React Three Fiber (R3F) & Sim Component Typings
+**Goal:** Strictly type React context providers, 3D meshes, refs, and simulation component props.
+**Status:** Pending
+
+### Phase 24: ESLint Lockdown & CI Validation
+**Goal:** Enable `@typescript-eslint/no-explicit-any` globally and validate types via TSC without bypassing.
+**Status:** Pending
 
 ---
 
