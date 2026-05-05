@@ -22,7 +22,12 @@ function sanitizeJudgeContent(content: string): string {
     .trim();
 }
 
-const portfolioCache = new Map<string, { data: any; expiresAt: number }>();
+// WR-08: Add cache versioning to prevent stale data
+let portfolioCacheVersion = 0;
+const portfolioCache = new Map<string, { data: any; expiresAt: number; version: number }>();
+
+// Helper to get the current portfolio cache key with version
+const getPortfolioCacheKey = () => `portfolio_v${portfolioCacheVersion}`;
 const judgesTsRestRouter: any = s.router(judgeContract as any, {
     login: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
@@ -82,8 +87,11 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
       c.executionCtx.waitUntil(logAuditAction(c, "JUDGE_PORTFOLIO_ACCESS", "judge_access", code, `Judge portfolio accessed via code ${code}`));
 
       const now = Date.now();
-      const cached = portfolioCache.get("portfolio");
-      if (cached && cached.expiresAt > now) return { status: 200 as const, body: cached.data };
+      const cacheKey = getPortfolioCacheKey();
+      const cached = portfolioCache.get(cacheKey);
+      if (cached && cached.expiresAt > now && cached.version === portfolioCacheVersion) {
+        return { status: 200 as const, body: cached.data };
+      }
 
       const [portfolioDocs, outreach, awards, sponsors] = await Promise.all([
         db.selectFrom("docs")
@@ -131,7 +139,7 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
         sponsors: sponsors.map(s => ({ ...s, id: s.id || "", tier: s.tier as any }))
       };
 
-      portfolioCache.set("portfolio", { data: payload, expiresAt: now + 300000 });
+      portfolioCache.set(cacheKey, { data: payload, expiresAt: now + 300000, version: portfolioCacheVersion });
       return { status: 200 as const, body: payload as any };
     } catch (err) {
       console.error("[Judges] Portfolio failed:", err);
@@ -173,6 +181,10 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
         } as any)
         .execute();
 
+      // WR-08: Invalidate cache when content changes
+      portfolioCacheVersion++;
+      portfolioCache.clear();
+
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_JUDGE_CODE", "judge_access", id, `Created access code: ${label}`));
       return { status: 200 as const, body: { success: true, code, id } };
     } catch {
@@ -183,6 +195,11 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
     const db = c.get("db") as Kysely<DB>;
     try {
       await db.deleteFrom("judge_access_codes").where("id", "=", params.id).execute();
+
+      // WR-08: Invalidate cache when content changes
+      portfolioCacheVersion++;
+      portfolioCache.clear();
+
       return { status: 200 as const, body: { success: true } };
     } catch {
       return { status: 500 as const, body: { error: "Delete failed" } };
