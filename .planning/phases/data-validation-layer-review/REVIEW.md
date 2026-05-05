@@ -58,7 +58,7 @@ findings:
   warning: 15
   info: 12
   total: 35
-status: issues_found
+status: critical_warning_fixed
 ---
 
 # Phase: Data Validation Layer Review
