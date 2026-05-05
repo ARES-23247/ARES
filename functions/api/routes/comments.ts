@@ -124,7 +124,8 @@ const commentHandlers = {
     }
   },
   update: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
-    const user = (await getSessionUser(c))!;
+    const user = await getSessionUser(c);
+    if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } as any };
 
     const { id } = params;
@@ -162,7 +163,8 @@ const commentHandlers = {
     }
   },
   delete: async ({ params }: { params: any }, c: Context<AppEnv>) => {
-    const user = (await getSessionUser(c))!;
+    const user = await getSessionUser(c);
+    if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } as any };
 
     const { id } = params;
