@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Award, Plus, UserPlus, Check, X } from "lucide-react";
 import { toast } from "sonner";
-import * as LucideIcons from "lucide-react";
+import { getLucideIcon } from "../types/components";
 import { api } from "../api/client";
 import { ClickToDeleteButton } from "./ContentManager/shared";
 
@@ -163,10 +163,9 @@ export default function BadgeManager() {
           ) : badges.length === 0 ? (
             <p className="text-white/60 text-sm">No badges defined yet.</p>
           ) : (
-             
+
             badges.map((b: BadgeRecord) => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const IconComp = ((LucideIcons as unknown as Record<string, React.ElementType>)[b.icon] || LucideIcons.Award) as any;
+              const IconComp = getLucideIcon(b.icon);
               return (
                 <div key={b.id} className="bg-ares-gray-dark/50 border border-white/10 ares-cut-sm p-4 flex items-start gap-4">
                   <div className={`p-3 ares-cut-sm bg-obsidian/50 flex-shrink-0 text-${b.color_theme.replace("text-", "")}`}>
