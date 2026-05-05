@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { slugSchema } from "./validators";
 
 export const docSchema = z.object({
-  slug: z.string().min(1, "Slug is required").max(255).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
+  slug: slugSchema,
   title: z.string().min(1, "Title is required").max(255),
   category: z.string().min(1, "Category is required").max(255),
   sortOrder: z.number().int().default(10),
