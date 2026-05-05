@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import { createHonoEndpoints, type AppRouteInput } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
+import type { AppRouteInput } from "@shared/types/api";
 import { docContract } from "../../../shared/schemas/contracts/docContract";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, checkPersistentRateLimit, verifyTurnstile, emitNotification, notifyByRole, getSocialConfig, logAuditAction, s } from "../middleware";

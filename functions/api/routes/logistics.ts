@@ -2,7 +2,8 @@ import { AppEnv, ensureAdmin, s } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { Hono } from "hono";
-import { createHonoEndpoints, type AppRouteInput } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
+import type { AppRouteInput } from "@shared/types/api";
 import { logisticsContract } from "../../../shared/schemas/contracts/logisticsContract";
 import { decrypt } from "../../utils/crypto";
 

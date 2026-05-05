@@ -6,6 +6,8 @@ interface SimPreviewFrameProps {
   compiledFiles: Record<string, string>;
   /** Compilation error message, if any */
   compileError: string | null;
+  /** Callback to trigger AI error fixing from the preview overlay */
+  onFixWithAI?: () => void;
 }
 
 /**
@@ -13,7 +15,7 @@ interface SimPreviewFrameProps {
  * Uses srcdoc with React CDN + the user's component. Runtime errors
  * are captured via postMessage and displayed in the parent.
  */
-export default function SimPreviewFrame({ compiledFiles, compileError }: SimPreviewFrameProps) {
+export default function SimPreviewFrame({ compiledFiles, compileError, onFixWithAI }: SimPreviewFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
 
@@ -31,6 +33,7 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
     'ARES_TELEMETRY',
     'ARES_SCREENSHOT',
     'sim-console',
+    'sim-fps',
   ]), []);
 
   /**
@@ -122,8 +125,15 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
     if (!iframeRef.current || compileError) return;
     setRuntimeError(null);
 
-    // Build the script blocks for each compiled file
+    // Build CSS injection blocks from .css files
+    const cssBlocks = Object.entries(compiledFiles)
+      .filter(([filename]) => filename.endsWith('.css'))
+      .map(([filename, content]) => `<style data-file="${filename}">${content}</style>`)
+      .join('\n');
+
+    // Build the script blocks for each compiled file (skip CSS)
     const moduleDefs = Object.entries(compiledFiles)
+      .filter(([filename]) => !filename.endsWith('.css'))
       .map(([filename, code]) => {
         // We use env preset, so it outputs CommonJS. We wrap it in a function.
         return `
@@ -187,6 +197,7 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
     .sim-grid { display: grid; gap: 16px; }
     .sim-flex { display: flex; gap: 12px; align-items: center; }
 </style>
+  ${cssBlocks}
   <script>
     // Virtual Module System & require MUST be defined before ares-physics.min.js loads
     // so that its internal require('react') calls succeed.
@@ -200,14 +211,41 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       if (window.__virtualModules[name]) return window.__virtualModules[name].exports;
       
       let resolveName = name;
+      // Strip leading ./ or ../
       if (resolveName.startsWith('./')) resolveName = resolveName.slice(2);
-      if (!resolveName.endsWith('.js') && !resolveName.endsWith('.jsx')) {
-        if (window.__modules[resolveName + '.jsx']) resolveName += '.jsx';
-        else if (window.__modules[resolveName + '.js']) resolveName += '.js';
+      while (resolveName.startsWith('../')) resolveName = resolveName.slice(3);
+      
+      // Try exact match first
+      if (window.__modules[resolveName]) {
+        // Found exact match
+      } else {
+        // Try common extensions: .tsx, .jsx, .ts, .js
+        const exts = ['.tsx', '.jsx', '.ts', '.js'];
+        let found = false;
+        for (const ext of exts) {
+          if (window.__modules[resolveName + ext]) {
+            resolveName = resolveName + ext;
+            found = true;
+            break;
+          }
+        }
+        // Try index file in subdirectory
+        if (!found) {
+          for (const ext of exts) {
+            if (window.__modules[resolveName + '/index' + ext]) {
+              resolveName = resolveName + '/index' + ext;
+              found = true;
+              break;
+            }
+          }
+        }
       }
       
       if (window.__cache[resolveName]) return window.__cache[resolveName].exports;
-      if (!window.__modules[resolveName]) throw new Error('Module not found: ' + name);
+      if (!window.__modules[resolveName]) {
+        const available = Object.keys(window.__modules).join(', ');
+        throw new Error('Module not found: ' + name + '. Available: [' + available + ']');
+      }
       
       const module = { exports: {} };
       window.__cache[resolveName] = module;
@@ -326,6 +364,22 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
         }
       }
     });
+    // FPS counter
+    (function() {
+      let frames = 0;
+      let lastTime = performance.now();
+      function countFrame() {
+        frames++;
+        const now = performance.now();
+        if (now - lastTime >= 1000) {
+          window.parent.postMessage({ type: 'sim-fps', fps: frames }, '${window.location.origin}');
+          frames = 0;
+          lastTime = now;
+        }
+        requestAnimationFrame(countFrame);
+      }
+      requestAnimationFrame(countFrame);
+    })();
   </script>
 </body>
 </html>`;
@@ -340,7 +394,15 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       {displayError && (
         <div className="absolute top-0 left-0 right-0 z-10 bg-red-950/90 border-b border-red-500/30 px-4 py-3 flex items-start gap-2 text-red-400 text-xs font-mono">
           <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <pre className="whitespace-pre-wrap">{displayError}</pre>
+          <pre className="whitespace-pre-wrap flex-1">{displayError}</pre>
+          {onFixWithAI && (
+            <button
+              onClick={onFixWithAI}
+              className="shrink-0 ml-2 px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider"
+            >
+              ✨ Fix with AI
+            </button>
+          )}
         </div>
       )}
       <iframe

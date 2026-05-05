@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
-import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
+import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize, Link2, Keyboard, History, Upload } from "lucide-react";
 import { loader, type Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import type { languages } from "monaco-editor";
@@ -111,6 +111,12 @@ export default function SimulationPlayground() {
   const [isWordWrap, setIsWordWrap] = useState(true);
   const [isMinimap, setIsMinimap] = useState(false);
   const compileTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // FPS state from sandbox
+  const [fps, setFps] = useState<number | null>(null);
+
+  // Version Snapshot state
+  const [showHistory, setShowHistory] = useState(false);
 
 
 
@@ -402,10 +408,75 @@ export default function SimulationPlayground() {
       if (e.data?.type === "sim-console") {
         setConsoleLogs(prev => [...prev, e.data]);
       }
+      if (e.data?.type === "sim-fps") {
+        setFps(e.data.fps);
+      }
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [setAttachedImage]);
+
+
+  // ── localStorage Version Snapshots ──
+  const SNAPSHOT_KEY = 'ares_sim_snapshots';
+  const MAX_SNAPSHOTS = 5;
+
+  const saveSnapshot = useCallback(() => {
+    try {
+      const snapshot = {
+        files,
+        simName,
+        simId,
+        timestamp: Date.now()
+      };
+      const stored = localStorage.getItem(SNAPSHOT_KEY);
+      const snapshots = stored ? JSON.parse(stored) : [];
+      snapshots.unshift(snapshot);
+      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshots.slice(0, MAX_SNAPSHOTS)));
+    } catch { /* localStorage full or unavailable */ }
+  }, [files, simName, simId]);
+
+  // Autosave snapshot every 60s while editing
+  useEffect(() => {
+    const interval = setInterval(saveSnapshot, 60000);
+    return () => clearInterval(interval);
+  }, [saveSnapshot]);
+
+  const getSnapshots = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(SNAPSHOT_KEY);
+      return stored ? JSON.parse(stored) as { files: Record<string, string>; simName: string; simId: string | null; timestamp: number }[] : [];
+    } catch { return []; }
+  }, []);
+
+  const restoreSnapshot = useCallback((snapshot: { files: Record<string, string>; simName: string; simId: string | null }) => {
+    setFiles(snapshot.files);
+    setActiveFile(Object.keys(snapshot.files)[0]);
+    setSimName(snapshot.simName);
+    setSimId(snapshot.simId);
+    compileCode(snapshot.files);
+    setShowHistory(false);
+    import("sonner").then(({ toast }) => toast.success("Snapshot restored"));
+  }, [compileCode]);
+
+  // On mount: offer to resume if there's a recent snapshot
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('simId')) return; // Don't offer resume if loading a specific sim
+    const snapshots = getSnapshots();
+    if (snapshots.length > 0 && Date.now() - snapshots[0].timestamp < 24 * 60 * 60 * 1000) {
+      import("sonner").then(({ toast }) => {
+        toast("Resume previous session?", {
+          action: {
+            label: "Restore",
+            onClick: () => restoreSnapshot(snapshots[0])
+          },
+          duration: 8000
+        });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
 
@@ -614,8 +685,66 @@ export default function SimulationPlayground() {
     }
   };
 
+  // ── Keyboard Shortcuts ──
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ctrl+S → Save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      // Ctrl+Enter → Run
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleRun();
+      }
+      // Ctrl+Shift+F → Format
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        handleFormatCode();
+      }
+      // Escape → Exit fullscreen
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFullscreen, handleRun, handleFormatCode]);
   const content = (
-    <div className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col p-4 md:p-6 overflow-hidden w-full h-full" : "flex flex-col h-[calc(100vh-80px)]"}>
+    <div
+      className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col p-4 md:p-6 overflow-hidden w-full h-full" : "flex flex-col h-[calc(100vh-80px)]"}
+      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      onDrop={async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const items = e.dataTransfer.files;
+        if (!items || items.length === 0) return;
+        const newFiles: Record<string, string> = {};
+        for (const file of Array.from(items)) {
+          if (file.name.endsWith('.zip')) {
+            // Handle ZIP files
+            try {
+              const zip = await JSZip.loadAsync(file);
+              for (const [path, zipFile] of Object.entries(zip.files)) {
+                if (!zipFile.dir && /\.(tsx?|jsx?|css|json)$/.test(path)) {
+                  newFiles[path.split('/').pop() || path] = await zipFile.async('string');
+                }
+              }
+            } catch { /* ignore malformed zips */ }
+          } else if (/\.(tsx?|jsx?|css|json)$/.test(file.name)) {
+            newFiles[file.name] = await file.text();
+          }
+        }
+        if (Object.keys(newFiles).length > 0) {
+          setFiles(prev => ({ ...prev, ...newFiles }));
+          setActiveFile(Object.keys(newFiles)[0]);
+          const { toast } = await import("sonner");
+          toast.success(`Imported ${Object.keys(newFiles).length} file(s)`);
+        }
+      }}
+    >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-obsidian">
         <div className="flex items-center gap-2 flex-1">
@@ -761,7 +890,98 @@ export default function SimulationPlayground() {
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             {simId ? 'Update' : 'Save'}
           </button>
-          <button onClick={() => setIsFullscreen(!isFullscreen)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/80 border border-white/10 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors ml-2">
+          {simId && (
+            <button
+              onClick={async () => {
+                const shareUrl = `${window.location.origin}/academy/playground?simId=${encodeURIComponent(simId)}`;
+                await navigator.clipboard.writeText(shareUrl);
+                const { toast } = await import("sonner");
+                toast.success("Shareable link copied!");
+              }}
+              title="Copy shareable link"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-indigo-600/30 transition-colors"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              Share
+            </button>
+          )}
+          {/* History dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              title="Version history"
+              className="flex items-center gap-1.5 px-2 py-1.5 bg-white/5 text-white/60 border border-white/10 rounded-md text-xs hover:bg-white/10 transition-colors"
+            >
+              <History className="w-3.5 h-3.5" />
+            </button>
+            {showHistory && (
+              <div className="absolute top-full right-0 mt-1 w-64 bg-[#161b22] border border-white/10 rounded-lg shadow-xl z-50 max-h-52 overflow-y-auto">
+                <div className="p-2 border-b border-white/10">
+                  <span className="text-white/50 text-[10px] uppercase tracking-wider font-bold">Autosaved Snapshots</span>
+                </div>
+                {getSnapshots().length === 0 ? (
+                  <div className="p-3 text-center text-white/30 text-xs">No snapshots yet</div>
+                ) : (
+                  getSnapshots().map((snap, i) => (
+                    <button
+                      key={i}
+                      onClick={() => restoreSnapshot(snap)}
+                      className="w-full text-left px-3 py-2 hover:bg-white/5 transition-colors border-0 bg-transparent"
+                    >
+                      <div className="text-sm text-white/80 truncate">{snap.simName || 'Untitled'}</div>
+                      <div className="text-[10px] text-white/30">
+                        {new Date(snap.timestamp).toLocaleString()} · {Object.keys(snap.files).length} files
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+          {/* Import files button */}
+          <button
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.multiple = true;
+              input.accept = '.tsx,.jsx,.ts,.js,.css,.json';
+              input.onchange = async () => {
+                if (!input.files) return;
+                const newFiles: Record<string, string> = {};
+                for (const file of Array.from(input.files)) {
+                  newFiles[file.name] = await file.text();
+                }
+                if (Object.keys(newFiles).length > 0) {
+                  setFiles(prev => ({ ...prev, ...newFiles }));
+                  setActiveFile(Object.keys(newFiles)[0]);
+                  const { toast } = await import("sonner");
+                  toast.success(`Imported ${Object.keys(newFiles).length} file(s)`);
+                }
+              };
+              input.click();
+            }}
+            title="Import local files"
+            className="flex items-center gap-1.5 px-2 py-1.5 bg-white/5 text-white/60 border border-white/10 rounded-md text-xs hover:bg-white/10 transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" />
+          </button>
+          {/* Keyboard shortcuts tooltip */}
+          <div className="relative group/shortcuts">
+            <button className="flex items-center gap-1 px-2 py-1.5 text-white/30 hover:text-white/60 transition-colors">
+              <Keyboard className="w-3.5 h-3.5" />
+            </button>
+            <div className="absolute top-full right-0 mt-1 w-52 bg-[#1e1e1e] border border-white/10 rounded-md shadow-xl opacity-0 invisible group-hover/shortcuts:opacity-100 group-hover/shortcuts:visible transition-all z-50 p-3">
+              <div className="text-[10px] text-white/50 uppercase tracking-wider font-bold mb-2">Shortcuts</div>
+              <div className="space-y-1.5 text-xs text-white/70">
+                <div className="flex justify-between"><span>Save</span><kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">Ctrl+S</kbd></div>
+                <div className="flex justify-between"><span>Run</span><kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">Ctrl+Enter</kbd></div>
+                <div className="flex justify-between"><span>Format</span><kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">Ctrl+Shift+F</kbd></div>
+                <div className="flex justify-between"><span>AI Complete</span><kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">Ctrl+Space</kbd></div>
+                <div className="flex justify-between"><span>Exit Fullscreen</span><kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">Esc</kbd></div>
+              </div>
+            </div>
+          </div>
+          <button onClick={() => setIsFullscreen(!isFullscreen)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/80 border border-white/10 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors">
             {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
           </button>
           
@@ -855,7 +1075,7 @@ export default function SimulationPlayground() {
                     <Suspense fallback={<textarea className="w-full h-full bg-[#1e1e1e] text-white/80 text-sm font-mono p-4 resize-none border-0 outline-none" value={files[activeFile] || ''} readOnly placeholder="Loading code editor..." />}>
                       <MonacoEditor
                         height="100%"
-                        language={activeFile.endsWith('.ts') || activeFile.endsWith('.tsx') ? 'typescript' : 'javascript'}
+                        language={activeFile.endsWith('.ts') || activeFile.endsWith('.tsx') ? 'typescript' : activeFile.endsWith('.css') ? 'css' : activeFile.endsWith('.json') ? 'json' : 'javascript'}
                         theme="vs-dark"
                         path={`file:///${activeFile}`}
                         value={files[activeFile] || ''}
@@ -991,11 +1211,16 @@ export default function SimulationPlayground() {
                 <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d1117] flex items-center gap-2 shrink-0">
                   <span className="text-white/40 text-xs font-mono">Live Preview</span>
                   <div className={`w-2 h-2 rounded-full ${compileError ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                  {fps !== null && (
+                    <span className={`text-[10px] font-mono ml-auto ${fps >= 50 ? 'text-emerald-400' : fps >= 30 ? 'text-yellow-400' : 'text-red-400'}`}>
+                      {fps} FPS
+                    </span>
+                  )}
                 </div>
                 <div className="flex-1 min-h-0 relative flex flex-col">
                   <div className="flex-1 min-h-0">
                     <Suspense fallback={<div className="flex items-center justify-center h-full bg-[#0d1117] text-white/40 text-sm">Loading preview...</div>}>
-                      <SimPreviewFrame compiledFiles={compiledFiles} compileError={compileError} />
+                      <SimPreviewFrame compiledFiles={compiledFiles} compileError={compileError} onFixWithAI={handleFixWithAI} />
                     </Suspense>
                   </div>
                   <TelemetryPanel data={telemetry} />

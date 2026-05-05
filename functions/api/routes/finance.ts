@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { createHonoEndpoints, type AppRouteInput } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
+import type { AppRouteInput } from "@shared/types/api";
 import { financeContract } from "../../../shared/schemas/contracts/financeContract";
 import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser, s } from "../middleware";
 import { AppEnv } from "../middleware";

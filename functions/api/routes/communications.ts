@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import { createHonoEndpoints, type AppRouteInput } from "ts-rest-hono";
+import { createHonoEndpoints } from "ts-rest-hono";
+import type { AppRouteInput } from "@shared/types/api";
 import { communicationsContract } from "../../../shared/schemas/contracts/communicationsContract";
 import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError, s } from "../middleware";
 

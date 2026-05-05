@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FolderOpen, AlertCircle, Code, Zap, Check, Copy, Plus, Folder, RefreshCw, Play, X } from "lucide-react";
+import { FolderOpen, AlertCircle, Code, Zap, Check, Copy, Plus, Folder, RefreshCw, Play, X, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { SIM_METADATA, SIM_COMPONENTS } from "./generated/sim-registry";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -175,13 +175,24 @@ export default function SimManager() {
                 </button>
               </div>
 
-              <div className="mt-4 pt-2 border-t border-ares-gold/10">
+              <div className="mt-4 pt-2 border-t border-ares-gold/10 flex gap-2">
                 <button
                   onClick={() => setActiveSim(sim)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-ares-red/10 text-ares-red hover:bg-ares-red/20 rounded text-xs font-semibold transition w-full justify-center"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-ares-red/10 text-ares-red hover:bg-ares-red/20 rounded text-xs font-semibold transition flex-1 justify-center"
                 >
                   <Play className="w-3 h-3" />
-                  Test / Preview
+                  Preview
+                </button>
+                <button
+                  onClick={async () => {
+                    const shareUrl = `${window.location.origin}/academy/playground?simId=github:${sim.id}`;
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast.success(`Copied share link for ${sim.name}`);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded text-xs font-semibold transition"
+                >
+                  <Link2 className="w-3 h-3" />
+                  Share
                 </button>
               </div>
             </div>
@@ -205,6 +216,18 @@ export default function SimManager() {
                   <span className="sr-only">Close</span>
                 </button>
               </Dialog.Close>
+              <button
+                onClick={async () => {
+                  if (!activeSim) return;
+                  const shareUrl = `${window.location.origin}/academy/playground?simId=github:${activeSim.id}`;
+                  await navigator.clipboard.writeText(shareUrl);
+                  toast.success("Shareable link copied!");
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded text-xs font-semibold transition"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                Share
+              </button>
             </div>
             <div className="flex-1 min-h-[500px] bg-obsidian-950 rounded-lg border border-white/5 overflow-hidden relative">
               <Suspense fallback={
