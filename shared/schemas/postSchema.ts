@@ -1,10 +1,25 @@
 import { z } from "zod";
 
+// Define a more specific schema for Tiptap AST nodes
+const tiptapNodeSchema: z.ZodType<{
+  type?: string;
+  content?: any[];
+  attrs?: Record<string, unknown>;
+  marks?: unknown[];
+  text?: string;
+}> = z.object({
+  type: z.string().optional(),
+  content: z.array(z.lazy(() => tiptapNodeSchema)).optional(),
+  attrs: z.record(z.unknown()).optional(),
+  marks: z.array(z.unknown()).optional(),
+  text: z.string().optional(),
+});
+
 export const postSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
   slug: z.string().max(255).optional(),
   thumbnail: z.string().max(255).optional().or(z.literal("")),
-  ast: z.record(z.string().max(255), z.any()), // JSON AST from Tiptap
+  ast: z.record(z.string().max(255), tiptapNodeSchema), // JSON AST from Tiptap - validated structure
   socials: z.record(z.string().max(255), z.boolean()).optional(),
   isDraft: z.boolean().optional(),
   publishedAt: z.string().max(255).optional(),
