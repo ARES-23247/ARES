@@ -11,6 +11,10 @@ interface RoundResult {
   won: boolean;
 }
 
+// Limit history buffer to prevent unbounded memory growth
+const MAX_HISTORY = 10000;
+const MAX_AUTO_ROUNDS = 100000;
+
 export default function SimComponent() {
   const [numDoors, setNumDoors] = useState(3);
   const [doors, setDoors] = useState<DoorContent[]>(['goat', 'goat', 'goat']);
@@ -105,12 +109,16 @@ export default function SimComponent() {
       setMessage(doSwitch ? '🐐 You switched... but it was a goat!' : '🐐 You stayed... but it was a goat!');
     }
 
-    setHistory(prev => [...prev, {
-      initialPick: playerPick,
-      finalPick: finalDoor,
-      switched: doSwitch,
-      won: didWin,
-    }]);
+    setHistory(prev => {
+      const newHistory = [...prev, {
+        initialPick: playerPick,
+        finalPick: finalDoor,
+        switched: doSwitch,
+        won: didWin,
+      }];
+      // Limit history to MAX_HISTORY to prevent unbounded growth
+      return newHistory.slice(-MAX_HISTORY);
+    });
   }, [phase, playerPick, revealedDoors, doors]);
 
   const runAutoRound = useCallback((strategy: 'switch' | 'stay' | 'both') => {
@@ -131,12 +139,16 @@ export default function SimComponent() {
       : playerInitial;
     const didWin = finalDoor === carIndex;
 
-    setHistory(prev => [...prev, {
-      initialPick: playerInitial,
-      finalPick: finalDoor,
-      switched: doSwitch,
-      won: didWin,
-    }]);
+    setHistory(prev => {
+      const newHistory = [...prev, {
+        initialPick: playerInitial,
+        finalPick: finalDoor,
+        switched: doSwitch,
+        won: didWin,
+      }];
+      // Limit history to MAX_HISTORY to prevent unbounded growth
+      return newHistory.slice(-MAX_HISTORY);
+    });
   }, [numDoors]);
 
   const runAutoBatch = useCallback((count: number) => {
@@ -152,17 +164,26 @@ export default function SimComponent() {
     let timeoutId: NodeJS.Timeout | null = null;
 
     const runSlowAutoplay = async () => {
+      // Auto-stop if we've reached max rounds
+      if (history.length >= MAX_AUTO_ROUNDS) {
+        setAutoRunning(false);
+        return;
+      }
+
       // If speed > 100, just run batches instantly
       if (speedRef.current > 100) {
-        while (!isCancelled && autoRef.current) {
+        while (!isCancelled && autoRef.current && history.length < MAX_AUTO_ROUNDS) {
           runAutoBatch(Math.floor(speedRef.current / 10));
           await new Promise(r => setTimeout(r, 50));
         }
+        if (history.length >= MAX_AUTO_ROUNDS) {
+          setAutoRunning(false);
+        }
         return;
       }
-      
+
       // Slower visual autoplay
-      while (!isCancelled && autoRef.current) {
+      while (!isCancelled && autoRef.current && history.length < MAX_AUTO_ROUNDS) {
         const delay = Math.max(50, 1000 - (speedRef.current * 9));
         
         // Pick Phase
