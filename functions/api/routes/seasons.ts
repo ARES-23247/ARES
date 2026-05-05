@@ -250,9 +250,9 @@ import { edgeCacheMiddleware } from "../middleware/cache";
 seasonsRouter.use("/", edgeCacheMiddleware(300, 60)); // Cache list
 seasonsRouter.use("/:year", edgeCacheMiddleware(300, 60)); // Cache detail
 
-seasonsRouter.use("/admin", ensureAdmin);
 seasonsRouter.use("/admin/*", ensureAdmin);
-seasonsRouter.use("/admin", rateLimitMiddleware(15, 60));
+// WR-01 FIX: Standardize on /admin/* pattern (remove redundant /admin patterns)
+seasonsRouter.use("/admin/*", rateLimitMiddleware(15, 60));
 
 createHonoEndpoints(seasonContract, seasonsTsRestRouter, seasonsRouter);
 
