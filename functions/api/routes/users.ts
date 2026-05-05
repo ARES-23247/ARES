@@ -110,6 +110,8 @@ const userTsRestRouter = s.router(userContract, {
         await db.updateTable("user").set({ role }).where("id", "=", params.id).execute();
         // Invalidate all sessions for the user to force re-auth with new role
         await db.deleteFrom("session").where("userId", "=", params.id).execute();
+        // IN-08: Audit log role changes
+        c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_ROLE", "user", params.id, `Changed role to ${role}`));
       }
       // WR-14: Document session invalidation behavior
       // Note: member_type changes do NOT invalidate sessions currently.
