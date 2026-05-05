@@ -766,8 +766,9 @@ export default function SimComponent() {
             min={1}
             max={8}
             value={beeCount}
-            onChange={e => setBeeCount(parseInt(e.target.value))}
+            onChange={e => setBeeCount(parseInt(e.target.value, 10))}
             disabled={mode === 'playing'}
+            aria-label="Number of bees in simulation"
             style={{ width: '80px' }}
           />
           <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', color: 'var(--ares-cyan)' }}>{beeCount}</span>
@@ -780,8 +781,9 @@ export default function SimComponent() {
             min={6}
             max={30}
             value={flowerCount}
-            onChange={e => setFlowerCount(parseInt(e.target.value))}
+            onChange={e => setFlowerCount(parseInt(e.target.value, 10))}
             disabled={mode === 'playing'}
+            aria-label="Number of flowers in simulation"
             style={{ width: '80px' }}
           />
           <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', color: 'var(--ares-cyan)' }}>{flowerCount}</span>
@@ -796,6 +798,7 @@ export default function SimComponent() {
             step={0.25}
             value={speed}
             onChange={e => setSpeed(parseFloat(e.target.value))}
+            aria-label="Simulation speed multiplier"
             style={{ width: '80px' }}
           />
           <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', color: 'var(--ares-cyan)' }}>{speed}x</span>

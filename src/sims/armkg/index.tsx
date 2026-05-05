@@ -110,19 +110,19 @@ export default function ArmKgSim() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>Target Angle &deg;</span><span>{armSet}&deg;</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="-90" max="90" step="1" value={armSet} onChange={e => setArmSet(parseInt(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Arm target angle in degrees" type="range" min="-90" max="90" step="1" value={armSet} onChange={e => setArmSet(parseInt(e.target.value, 10))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>kG (Gravity Max)</span><span>{armKg.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="2.0" step="0.1" value={armKg} onChange={e => setArmKg(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Gravity feedforward gain" type="range" min="0" max="2.0" step="0.1" value={armKg} onChange={e => setArmKg(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>kP (Proportional)</span><span>{armKp.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="0.2" step="0.01" value={armKp} onChange={e => setArmKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Proportional gain" type="range" min="0" max="0.2" step="0.01" value={armKp} onChange={e => setArmKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
       </div>
       <div style={{ display: 'flex', padding: '20px', gap: '40px', alignItems: 'center' }}>

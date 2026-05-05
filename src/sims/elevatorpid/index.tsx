@@ -155,25 +155,25 @@ export default function ElevatorPidSim() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-gray)', marginBottom: '5px' }}>
                 <span>kP (Proportional)</span><span>{kp.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="25" step="0.01" value={kp} onChange={e => setKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Proportional gain" type="range" min="0" max="25" step="0.01" value={kp} onChange={e => setKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-gray)', marginBottom: '5px' }}>
                 <span>kI (Integral)</span><span>{ki.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="25" step="0.01" value={ki} onChange={e => setKi(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Integral gain" type="range" min="0" max="25" step="0.01" value={ki} onChange={e => setKi(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-gray)', marginBottom: '5px' }}>
                 <span>kD (Derivative)</span><span>{kd.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="25" step="0.01" value={kd} onChange={e => setKd(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Derivative gain" type="range" min="0" max="25" step="0.01" value={kd} onChange={e => setKd(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-gray)', marginBottom: '5px' }}>
                 <span>kG (Gravity FF)</span><span>{kg.toFixed(1)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="10" step="0.1" value={kg} onChange={e => setKg(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Gravity feedforward" type="range" min="0" max="10" step="0.1" value={kg} onChange={e => setKg(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
             <button 

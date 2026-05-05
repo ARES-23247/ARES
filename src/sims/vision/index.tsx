@@ -158,15 +158,15 @@ export default function VisionSim() {
       <div style={{ display: 'flex', gap: '20px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div style={{ flex: 1, minWidth: '180px' }}>
           <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Tags Visible: <span style={{ color: 'var(--ares-cyan)' }}>{tagCount === 1 ? "1 Tag" : "2 Tags (MegaTagBoost)"}</span></label>
-          <input aria-label="Simulation Configuration Slider" type="range" min="1" max="2" value={tagCount} step="1" onChange={(e) => setTagCount(parseInt(e.target.value))} style={{ width: '100%' }} />
+          <input aria-label="Number of AprilTags visible" type="range" min="1" max="2" value={tagCount} step="1" onChange={(e) => setTagCount(parseInt(e.target.value, 10))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '180px' }}>
           <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Robot Spin Rate: <span style={{ color: 'var(--ares-cyan)' }}>{yawRate}&deg;/s</span></label>
-          <input aria-label="Simulation Configuration Slider" type="range" min="0" max="250" value={yawRate} step="5" onChange={(e) => setYawRate(parseFloat(e.target.value))} style={{ width: '100%' }} />
+          <input aria-label="Robot yaw spin rate in degrees per second" type="range" min="0" max="250" value={yawRate} step="5" onChange={(e) => setYawRate(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '180px' }}>
           <label style={{ color: 'var(--ifm-color-emphasis-600)', fontSize: '0.9rem', fontFamily: '"Orbitron", sans-serif' }}>Robot Pitch (Tilt): <span style={{ color: 'var(--ares-cyan)' }}>{tiltVal}&deg;</span></label>
-          <input aria-label="Simulation Configuration Slider" type="range" min="0" max="30" value={tiltVal} step="1" onChange={(e) => setTiltVal(parseFloat(e.target.value))} style={{ width: '100%' }} />
+          <input aria-label="Robot pitch angle in degrees" type="range" min="0" max="30" value={tiltVal} step="1" onChange={(e) => setTiltVal(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
       </div>
       

@@ -403,9 +403,10 @@ export default function SimComponent() {
             max={50}
             value={numDoors}
             onChange={(e) => {
-              setNumDoors(parseInt(e.target.value));
+              setNumDoors(parseInt(e.target.value, 10));
               setHistory([]);
             }}
+            aria-label="Number of doors in Monty Hall problem"
             style={{ flex: 1 }}
           />
           <span style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold' }}>{numDoors}</span>
@@ -627,10 +628,10 @@ export default function SimComponent() {
               <span>Speed</span><span>{autoSpeed} rounds/tick</span>
             </div>
             <input
-              aria-label="Simulation Configuration Slider"
+              aria-label="Auto simulation speed in rounds per tick"
               type="range" min={1} max={200} step={1}
               value={autoSpeed}
-              onChange={e => setAutoSpeed(parseInt(e.target.value))}
+              onChange={e => setAutoSpeed(parseInt(e.target.value, 10))}
               style={{ width: '100%' }}
             />
           </div>
