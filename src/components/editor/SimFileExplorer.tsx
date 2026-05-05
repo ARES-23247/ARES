@@ -1,5 +1,5 @@
 import { useState, useMemo, ReactNode } from "react";
-import { Folder, File, FileCode, Plus, Trash2, Edit2, ChevronRight } from "lucide-react";
+import { Folder, FolderPlus, File, FileCode, Plus, Trash2, Edit2, ChevronRight } from "lucide-react";
 
 interface SimFileExplorerProps {
   files: Record<string, string>;
@@ -53,6 +53,22 @@ export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: 
     setFiles(prev => ({ ...prev, [fullPath]: "// new file\n" }));
     setActiveFile(fullPath);
     if (folderPath) setExpandedFolders(prev => ({ ...prev, [folderPath]: true }));
+  };
+
+  const handleCreateFolder = (parentPath: string) => {
+    const name = prompt("Enter folder name:");
+    if (!name) return;
+    const fullPath = parentPath ? `${parentPath}/${name}` : name;
+    
+    // Check if any file already exists with this prefix
+    const exists = Object.keys(files).some(k => k === fullPath || k.startsWith(`${fullPath}/`));
+    if (exists) return alert("Folder or file already exists");
+
+    // We create a placeholder file so the folder shows up in the tree
+    const placeholder = `${fullPath}/README.md`;
+    setFiles(prev => ({ ...prev, [placeholder]: `# ${name}\n\nFolder created for organization.` }));
+    if (parentPath) setExpandedFolders(prev => ({ ...prev, [parentPath]: true }));
+    setExpandedFolders(prev => ({ ...prev, [fullPath]: true }));
   };
 
   const handleDelete = (path: string, e: React.MouseEvent) => {
@@ -159,13 +175,22 @@ export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: 
 
           <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
             {isFolder && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleCreateFile(node.path); }}
-                className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white"
-                title="New File in Folder"
-              >
-                <Plus className="w-3 h-3" />
-              </button>
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCreateFile(node.path); }}
+                  className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white"
+                  title="New File"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCreateFolder(node.path); }}
+                  className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white"
+                  title="New Folder"
+                >
+                  <FolderPlus className="w-3 h-3" />
+                </button>
+              </>
             )}
             <button
               onClick={(e) => handleRename(node.path, e)}
@@ -200,9 +225,12 @@ export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: 
     <div className="flex flex-col h-full bg-[#1e1e1e] border-r border-white/5">
       <div className="px-3 py-2 flex items-center justify-between border-b border-white/5">
         <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Explorer</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button onClick={() => handleCreateFile("")} className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white" title="New File">
             <Plus className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => handleCreateFolder("")} className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white" title="New Folder">
+            <FolderPlus className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

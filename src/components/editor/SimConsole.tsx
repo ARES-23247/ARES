@@ -6,14 +6,34 @@ export interface LogEntry {
   timestamp: number;
 }
 
-export function SimConsole({ logs, onClear }: { logs: LogEntry[]; onClear: () => void }) {
+export function SimConsole({ 
+  logs, 
+  onClear, 
+  onFixWithAI 
+}: { 
+  logs: LogEntry[]; 
+  onClear: () => void;
+  onFixWithAI?: () => void;
+}) {
+  const hasError = logs.some(l => l.level === "error");
+
   return (
     <div className="flex flex-col h-full bg-[#0d0f14] border-t border-white/10 overflow-hidden">
       <div className="px-3 py-1.5 border-b border-white/10 flex items-center justify-between shrink-0 bg-[#0d0f14]">
-        <span className="text-zinc-400 text-xs font-mono uppercase flex items-center gap-1.5">
-          <Terminal className="w-3.5 h-3.5" />
-          Console
-        </span>
+        <div className="flex items-center gap-4">
+          <span className="text-zinc-400 text-xs font-mono uppercase flex items-center gap-1.5">
+            <Terminal className="w-3.5 h-3.5" />
+            Console
+          </span>
+          {hasError && onFixWithAI && (
+            <button
+              onClick={onFixWithAI}
+              className="text-[10px] px-2 py-0.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded transition-colors flex items-center gap-1"
+            >
+              <span>✨ Fix with AI</span>
+            </button>
+          )}
+        </div>
         <button
           onClick={onClear}
           title="Clear console"

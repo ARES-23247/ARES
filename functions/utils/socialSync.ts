@@ -14,6 +14,7 @@ import { logSystemError } from '../api/middleware';
 import pRetry from 'p-retry';
 import { Kysely } from "kysely";
 import { DB } from "../../shared/schemas/database";
+import { SocialQueuePost } from "../../shared/schemas/contracts/socialQueueContract";
 
 export interface SocialConfig {
   DISCORD_WEBHOOK_URL?: string;
@@ -149,4 +150,70 @@ export async function dispatchPhotoSocials(imageUrl: string, caption: string, co
   promises.push(wrapRetry(() => dispatchGChatPhoto(imageUrl, caption, config), 'GChatPhoto'));
 
   await Promise.allSettled(promises);
+}
+
+/**
+ * Orchestrates the dispatch of a queued social post, resolving linked metadata if necessary.
+ */
+export async function dispatchQueuePost(
+  db: Kysely<DB>,
+  post: SocialQueuePost,
+  config: SocialConfig
+) {
+  const baseUrl = config.ZULIP_URL ? new URL(config.ZULIP_URL).origin : "https://aresfirst.org";
+  
+  const payload: PostPayload = {
+    title: "ARES Update",
+    url: baseUrl,
+    snippet: post.content,
+    thumbnail: post.media_urls?.[0],
+    baseUrl
+  };
+
+  if (post.linked_type && post.linked_id) {
+    if (post.linked_type === "blog") {
+      const p = await db
+        .selectFrom("posts")
+        .selectAll()
+        .where("slug", "=", post.linked_id)
+        .where("is_deleted", "=", 0)
+        .executeTakeFirst();
+      if (p) {
+        payload.title = p.title;
+        payload.url = `${baseUrl}/blog/${p.slug}`;
+        payload.snippet = p.snippet || post.content;
+        payload.thumbnail = p.thumbnail || payload.thumbnail;
+      }
+    } else if (post.linked_type === "document") {
+      const d = await db
+        .selectFrom("docs")
+        .selectAll()
+        .where("slug", "=", post.linked_id)
+        .where("is_deleted", "=", 0)
+        .executeTakeFirst();
+      if (d) {
+        payload.title = d.title;
+        payload.url = `${baseUrl}/docs/${d.slug}`;
+        payload.snippet = d.description || post.content;
+      }
+    } else if (post.linked_type === "event") {
+      const e = await db
+        .selectFrom("events")
+        .selectAll()
+        .where("id", "=", post.linked_id)
+        .where("is_deleted", "=", 0)
+        .executeTakeFirst();
+      if (e) {
+        payload.title = e.title;
+        payload.url = `${baseUrl}/events/${e.id}`;
+        payload.snippet = e.description || post.content;
+        payload.thumbnail = e.cover_image || payload.thumbnail;
+      }
+    }
+  }
+
+  // Cast platforms to expected type for dispatchSocials
+  const platformsFilter = post.platforms as Record<string, boolean>;
+  
+  return dispatchSocials(db, payload, config, platformsFilter);
 }

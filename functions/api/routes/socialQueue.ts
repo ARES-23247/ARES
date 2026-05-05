@@ -6,6 +6,7 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { socialQueueContract } from "../../../shared/schemas/contracts/socialQueueContract";
 import { AppEnv, getSessionUser, originIntegrityMiddleware } from "../middleware";
 import { nanoid } from "nanoid";
+import { dispatchQueuePost, SocialConfig } from "../../utils/socialSync";
 
 initServer<AppEnv>();
 
@@ -263,12 +264,26 @@ const socialQueueRouterObj: any = {
 
       await db.updateTable("social_queue").set({ status: "processing" }).where("id", "=", id).execute();
 
-      // TODO: Trigger actual social media dispatch
-      await db
-        .updateTable("social_queue")
-        .set({ status: "sent", sent_at: new Date().toISOString() })
-        .where("id", "=", id)
-        .execute();
+      try {
+        const post = toSocialQueuePost(existing);
+        const config = c.env as unknown as SocialConfig;
+
+        await dispatchQueuePost(db, post, config);
+
+        await db
+          .updateTable("social_queue")
+          .set({ status: "sent", sent_at: new Date().toISOString(), error_message: null })
+          .where("id", "=", id)
+          .execute();
+      } catch (err) {
+        console.error("Social queue dispatch failed:", err);
+        await db
+          .updateTable("social_queue")
+          .set({ status: "failed", error_message: String(err) })
+          .where("id", "=", id)
+          .execute();
+        return { status: 500, body: { error: `Syndication failed: ${String(err)}` } };
+      }
 
       return { status: 200, body: { success: true } };
     } catch (error) {

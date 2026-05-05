@@ -277,6 +277,20 @@ export default function SimulationPlayground() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
+  const handleFixWithAI = useCallback(() => {
+    const errorLogs = consoleLogs.filter(l => l.level === "error");
+    if (errorLogs.length === 0 && !compileError) return;
+
+    const errorContext = [
+      compileError ? `Compile Error:\n${compileError}` : "",
+      errorLogs.length > 0 ? `Runtime Errors:\n${errorLogs.map(l => l.args.join(" ")).join("\n")}` : ""
+    ].filter(Boolean).join("\n\n");
+
+    const fixPrompt = `I'm seeing these errors in the simulation:\n\n${errorContext}\n\nPlease help me fix them. Analyze the provided current files and errors, then suggest a patch or full file replacement to resolve the issue.`;
+    handleChatSend(fixPrompt);
+    chatInputRef.current?.focus();
+  }, [consoleLogs, compileError, handleChatSend]);
+
   // Check URL for shared simulation on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -644,9 +658,9 @@ export default function SimulationPlayground() {
     const MAX_FILE_SIZE = 10000; // 10KB max per file in AI context
 
     for (const [filename, content] of Object.entries(files)) {
-      // Validate filename is safe
+      // Validate filename is safe (allow subfolders)
       // eslint-disable-next-line no-useless-escape
-      if (!/^[a-zA-Z0-9_\-\.]+\.(tsx?|jsx?|json)$/.test(filename)) {
+      if (!/^(?!.*?\.\.)[a-zA-Z0-9_\-\.\/]+\.(tsx?|jsx?|json)$/.test(filename)) {
         continue; // Skip files with suspicious names
       }
 
@@ -662,8 +676,29 @@ export default function SimulationPlayground() {
     return sanitized;
   };
 
-  const handleChatSend = async () => {
-    const msg = sanitizeUserInput(chatInput.trim());
+  /**
+   * Truncates chat history to keep within token limits while preserving context.
+   * Priority: System Message > Last 5 messages > Intermediate messages.
+   */
+  const truncateChatHistory = (messages: ChatMessage[], maxChars: number = 12000): ChatMessage[] => {
+    let currentChars = 0;
+    const result: ChatMessage[] = [];
+    
+    // Always iterate backwards to keep the most recent context
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (currentChars + msg.content.length > maxChars && result.length >= 3) {
+        break; // Keep at least 3 messages if possible, otherwise stop at limit
+      }
+      result.unshift(msg);
+      currentChars += msg.content.length;
+    }
+    
+    return result;
+  };
+
+  const handleChatSend = useCallback(async (overrideMsg?: string) => {
+    const msg = sanitizeUserInput((overrideMsg || chatInput).trim());
     if (!msg || isChatLoading) return;
 
     const newMessages: ChatMessage[] = [...chatMessages, { role: "user", content: msg }];
@@ -685,6 +720,12 @@ RULES:
 - Use React.useState, React.useEffect, etc. (React is a global, don't import it)
 - Use standard ARESWEB UI classes: sim-container, sim-title, sim-label, sim-value, sim-slider, sim-canvas, sim-btn, sim-grid, sim-flex
 - Use Vite-style raw typescript format (.tsx).
+
+ARES ROBOTICS SIMULATION TIPS:
+- Physics: Matter.js is global as 'Matter'. Use for 2D rigid bodies.
+- Coordinate Mapping: Field is 144x144 inches. (0,0) is center. Use areslib.FieldMapping for translations.
+- Colors: ARES Red (#C00000), Dark (#0d0f14), Gold (#FFD700), White (#FFFFFF).
+- Input: Always include a 'Reset' button in your simulation UI.
 
 OUTPUT FORMAT:
 - You can either output the COMPLETE updated file or use a PATCH block to edit specific parts efficiently.
@@ -714,7 +755,8 @@ ${filesJson}
 
 USER REQUEST: ${msg}`;
 
-      const apiMessages = chatMessages.map(m => ({ role: m.role, content: sanitizeUserInput(m.content) }));
+      const history = truncateChatHistory(chatMessages);
+      const apiMessages = history.map(m => ({ role: m.role, content: sanitizeUserInput(m.content) }));
       apiMessages.push({ role: "user", content: msg });
 
       // Normalize for Anthropic: must start with user, must alternate roles
@@ -857,7 +899,7 @@ USER REQUEST: ${msg}`;
     } finally {
       setIsChatLoading(false);
     }
-  };
+  }, [chatMessages, files, simId, attachedImage, activeFile, compileCode]);
 
   const handleChatKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -1089,7 +1131,7 @@ USER REQUEST: ${msg}`;
                       }}
                       className={`group flex items-center gap-2 px-4 py-2 text-xs font-mono border-r border-white/5 transition-colors min-w-[120px] max-w-[200px] shrink-0 ${activeFile === f ? 'bg-[#1e1e1e] text-ares-gold border-t-2 border-t-ares-gold relative z-10' : 'bg-[#252526] text-white/40 hover:bg-[#2d2d2d] hover:text-white/80 border-t-2 border-t-transparent shadow-[inset_0_-1px_0_rgba(255,255,255,0.1)]'}`}
                     >
-                      <span className="truncate flex-1 text-left" title="Double-click to rename">{f}</span>
+                      <span className="truncate flex-1 text-left" title={f}>{f.split('/').pop()}</span>
                       {Object.keys(files).length > 1 && (
                         <button type="button" onClick={(e) => {
                           e.stopPropagation();
@@ -1126,7 +1168,7 @@ USER REQUEST: ${msg}`;
                     <Suspense fallback={<textarea className="w-full h-full bg-[#1e1e1e] text-white/80 text-sm font-mono p-4 resize-none border-0 outline-none" value={files[activeFile] || ''} readOnly placeholder="Loading code editor..." />}>
                       <MonacoEditor
                         height="100%"
-                        language="javascript"
+                        language={activeFile.endsWith('.ts') || activeFile.endsWith('.tsx') ? 'typescript' : 'javascript'}
                         theme="vs-dark"
                         path={`file:///${activeFile}`}
                         value={files[activeFile] || ''}
@@ -1278,7 +1320,11 @@ USER REQUEST: ${msg}`;
               </PanelResizeHandle>
 
               <Panel defaultSize={40} minSize={20} className="flex flex-col min-w-0 bg-[#0d0f14]">
-                <SimConsole logs={consoleLogs} onClear={() => setConsoleLogs([])} />
+                <SimConsole 
+                  logs={consoleLogs} 
+                  onClear={() => setConsoleLogs([])} 
+                  onFixWithAI={handleFixWithAI}
+                />
               </Panel>
             </PanelGroup>
           </Panel>
