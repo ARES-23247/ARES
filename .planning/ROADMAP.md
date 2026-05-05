@@ -197,7 +197,7 @@ Plans:
 - [x] 30-01-PLAN.md — Create src/test/types.ts with MockKysely, TestEnv, MockExecutionContext, MockExpressionBuilder and update utils.tsx (COMPLETE)
 - [x] 30-02-PLAN.md — Migrate all 6 factory files to D1Row<T> return types (COMPLETE)
 - [ ] 30-03-PLAN.md — Migrate auth/core tests (auth.test.ts, users.test.ts, profiles.test.ts, badges.test.ts, _profileUtils.test.ts) to typed mocks (TODO)
-- [ ] 30-04-PLAN.md — Migrate content/docs tests (docs.test.ts, posts.test.ts, comments.test.ts, media.test.ts) to typed mocks (TODO)
+- [x] 30-04-PLAN.md — Migrate content/docs tests (docs.test.ts, posts.test.ts, comments.test.ts, media.test.ts) to typed mocks (COMPLETED 2026-05-05)
 - [ ] 30-05-PLAN.md — Migrate events/logistics tests (events.test.ts, seasons.test.ts, outreach.test.ts, logistics.test.ts, locations.test.ts) to typed mocks (TODO)
 - [ ] 30-06-PLAN.md — Migrate admin/operations tests (sponsors.test.ts, finance.test.ts, store.test.ts, tasks.test.ts, settings.test.ts, notifications.test.ts) to typed mocks (TODO)
 - [ ] 30-07-PLAN.md — Migrate integration/misc tests (github.test.ts, githubWebhook.test.ts, zulip.test.ts, zulipWebhook.test.ts, tba.test.ts, points.test.ts, awards.test.ts, judges.test.ts, inquiries.test.ts, communications.test.ts, entities.test.ts, analytics.test.ts) to typed mocks (TODO)
