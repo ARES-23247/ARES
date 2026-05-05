@@ -35,7 +35,7 @@ export async function createShadowRevision(
     snippet: string;
     astStr: string;
     publishedAt?: string;
-    seasonId?: string;
+    seasonId?: string | number;
   }
 ) {
   const db = c.get("db");
@@ -56,8 +56,8 @@ export async function createShadowRevision(
       status: 'pending',
       revision_of: originalSlug,
       published_at: data.publishedAt || "" as any,
-      season_id: data.seasonId || "" as any
-    })
+      season_id: data.seasonId ? Number(data.seasonId) : null
+    } as any)
     .execute();
 
   return revSlug;
@@ -83,8 +83,8 @@ export async function approveAndMergeRevision(
       snippet: row.snippet,
       ast: row.ast,
       status: 'published',
-      season_id: row.season_id || "" as any
-    })
+      season_id: row.season_id ? Number(row.season_id) : null
+    } as any)
     .where("slug", "=", originalSlug)
     .execute();
   

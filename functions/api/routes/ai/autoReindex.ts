@@ -18,7 +18,7 @@ import type { KVNamespace, VectorizeIndex } from "@cloudflare/workers-types";
 export function triggerBackgroundReindex(
   executionCtx: ExecutionContext,
   db: Kysely<DB>,
-  ai: any,
+  ai: { run: (model: string, input: unknown) => Promise<unknown> },
   vectorize: VectorizeIndex | undefined,
   kv?: KVNamespace
 ): void {
@@ -41,7 +41,7 @@ export function triggerBackgroundReindex(
 export function triggerExternalReindex(
   executionCtx: ExecutionContext,
   db: Kysely<DB>,
-  ai: any,
+  ai: { run: (model: string, input: unknown) => Promise<unknown> },
   vectorize: VectorizeIndex | undefined,
   zaiApiKey?: string,
   githubPat?: string,

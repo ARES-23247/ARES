@@ -11,8 +11,8 @@ const _s = initServer<AppEnv>();
 
 
 
-const seasonsTsRestRouterObj: any = {
-  list: async (_input: any, c: Context<AppEnv>) => {
+const seasonsTsRestRouterObj = {
+  list: async (_input: unknown, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -36,7 +36,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch seasons" } };
     }
   },
-  adminList: async (_input: any, c: Context<AppEnv>) => {
+  adminList: async (_input: unknown, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -58,9 +58,8 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to list seasons" } };
     }
   },
-  adminDetail: async (input: any, c: Context<AppEnv>) => {
+  adminDetail: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
     try {
-      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       const row = await db.selectFrom("seasons")
@@ -87,9 +86,8 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch season" } };
     }
   },
-  getDetail: async (input: any, c: Context<AppEnv>) => {
+  getDetail: async ({ params }: { params: { year: string } }, c: Context<AppEnv>) => {
     try {
-      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.year);
       if (isNaN(year)) return { status: 404 as const, body: { error: "Invalid year" } };
@@ -117,10 +115,10 @@ const seasonsTsRestRouterObj: any = {
             is_deleted: Number(seasonRow.is_deleted || 0),
             status: seasonRow.status as string | null | undefined
           },
-          awards: awards as any[],
-          events: events as any[],
-          posts: posts as any[],
-          outreach: outreach as any[],
+          awards,
+          events,
+          posts,
+          outreach,
         }
       };
     } catch (e) {
@@ -128,9 +126,8 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch season details" } };
     }
   },
-  save: async (input: any, c: Context<AppEnv>) => {
+  save: async ({ body }: { body: { original_year?: number; start_year: number; end_year: number; challenge_name: string; robot_name?: string | null; robot_image?: string | null; robot_description?: string | null; robot_cad_url?: string | null; summary?: string | null; album_url?: string | null; album_cover?: string | null; status?: string | null } }, c: Context<AppEnv>) => {
     try {
-      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const targetYear = body.original_year || body.start_year;
 
@@ -185,16 +182,15 @@ const seasonsTsRestRouterObj: any = {
           .execute();
         c.executionCtx.waitUntil(logAuditAction(c, "season_created", "seasons", body.start_year.toString(), `Season "${body.start_year}" created`));
       }
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Seasons:Save] Error", e);
       return { status: 500 as const, body: { error: "Save failed" } };
     }
   },
-  delete: async (input: any, c: Context<AppEnv>) => {
+  delete: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
     try {
-      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       await db.updateTable("seasons")
@@ -209,9 +205,8 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-  undelete: async (input: any, c: Context<AppEnv>) => {
+  undelete: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
     try {
-      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       await db.updateTable("seasons")
@@ -225,9 +220,8 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Restore failed" } };
     }
   },
-  purge: async (input: any, c: Context<AppEnv>) => {
+  purge: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
     try {
-      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(params.id);
       await db.deleteFrom("seasons")
@@ -242,7 +236,7 @@ const seasonsTsRestRouterObj: any = {
   },
 };
 
-const seasonsTsRestRouter = _s.router(seasonContract, seasonsTsRestRouterObj as any);
+const seasonsTsRestRouter = _s.router(seasonContract, seasonsTsRestRouterObj);
 export const seasonsRouter = new Hono<AppEnv>();
 
 import { edgeCacheMiddleware } from "../middleware/cache";

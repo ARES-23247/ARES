@@ -7,19 +7,17 @@ import { api } from "../api/client";
 import { STORAGE_KEYS } from "../utils/storageKeys";
 
 // Helper to detect if content is JSON AST or markdown
-function useContentParser(content: string | null | undefined) {
-  return useMemo(() => {
-    if (!content) return { parsedAst: null, isAst: false };
-    try {
-      const parsed = JSON.parse(content);
-      if (parsed && typeof parsed === 'object' && 'type' in parsed && parsed.type === 'doc') {
-        return { parsedAst: parsed as ASTNode, isAst: true };
-      }
-    } catch {
-      // Not JSON, fall back to markdown
+function parseContent(content: string | null | undefined) {
+  if (!content) return { parsedAst: null, isAst: false };
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed && typeof parsed === 'object' && 'type' in parsed && parsed.type === 'doc') {
+      return { parsedAst: parsed as ASTNode, isAst: true };
     }
-    return { parsedAst: null, isAst: false };
-  }, [content]);
+  } catch {
+    // Not JSON, fall back to markdown
+  }
+  return { parsedAst: null, isAst: false };
 }
 
 interface PortfolioData {
@@ -138,7 +136,7 @@ export default function PrintPortfolio() {
           </div>
           
           {execDocs.map(doc => {
-            const { parsedAst, isAst } = useContentParser(doc.content);
+            const { parsedAst, isAst } = parseContent(doc.content);
             return (
               <div key={doc.slug} className="mb-12 page-break-inside-avoid">
                 <h3 className="text-2xl font-bold uppercase tracking-tight mb-2">{doc.title}</h3>
@@ -161,7 +159,7 @@ export default function PrintPortfolio() {
 
           <div className="space-y-12">
             {techDocs.map((doc, idx) => {
-              const { parsedAst, isAst } = useContentParser(doc.content);
+              const { parsedAst, isAst } = parseContent(doc.content);
               return (
                 <div key={doc.slug} className={`print-doc ${idx > 0 ? "pt-12 border-t-2 border-black/10" : ""}`}>
                   <div className="mb-6">

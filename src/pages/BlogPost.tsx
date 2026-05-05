@@ -31,13 +31,12 @@ interface PostRow {
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const validatedSlug = validateUrlParam(slug);
-
+  const { data: session } = useSession();
+  
   // Early return if slug is invalid
   if (!slug || !validatedSlug) {
     return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white">Invalid post slug format.</div>;
   }
-
-  const { data: session } = useSession();
 
   const userRole = (session?.user as Record<string, unknown>)?.role || "user";
   const isEditor = userRole === "admin" || userRole === "author";

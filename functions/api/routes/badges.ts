@@ -9,8 +9,8 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 
 const s = initServer<AppEnv>();
 
-const badgesTsRestRouterObj: any = {
-  list: async (_input: any, c: Context<AppEnv>) => {
+const badgesTsRestRouterObj = {
+  list: async (_input: unknown, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -34,9 +34,8 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to fetch badges" } };
     }
   },
-  create: async (input: any, c: Context<AppEnv>) => {
+  create: async ({ body }: { body: { id: string; name: string; description: string; icon: string; color_theme: string } }, c: Context<AppEnv>) => {
     try {
-      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       await db
         .insertInto("badges")
@@ -54,9 +53,8 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to create badge" } };
     }
   },
-  grant: async (input: any, c: Context<AppEnv>) => {
+  grant: async ({ body }: { body: { userId: string; badgeId: string } }, c: Context<AppEnv>) => {
     try {
-      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       const sessionId = user?.id || "system";
@@ -117,9 +115,8 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to award badge" } };
     }
   },
-  revoke: async (input: any, c: Context<AppEnv>) => {
+  revoke: async ({ params }: { params: { userId: string; badgeId: string } }, c: Context<AppEnv>) => {
     try {
-      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       await db
         .deleteFrom("user_badges")
@@ -132,9 +129,8 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to revoke badge" } };
     }
   },
-  delete: async (input: any, c: Context<AppEnv>) => {
+  delete: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
     try {
-      const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("badges").where("id", "=", params.id).execute();
       return { status: 200 as const, body: { success: true } };
@@ -143,7 +139,7 @@ const badgesTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: err.message || "Failed to delete badge definition" } };
     }
   },
-  leaderboard: async (_input: any, c: Context<AppEnv>) => {
+  leaderboard: async (_input: unknown, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db

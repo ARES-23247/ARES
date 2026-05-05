@@ -29,13 +29,13 @@ const s = initServer<AppEnv>();
  */
 const sanitizeFtsQuery = (query: string): string => {
   // Allow only alphanumeric, spaces, hyphens, and periods
-  const cleanQ = (query || "").replace(/[^\w\s\-\.]/g, "").trim();
+  const cleanQ = (query || "").replace(/[^\w\s\-.]/g, "").trim();
   if (!cleanQ) return "";
   // Escape double quotes for FTS5 phrase search and use prefix search
   return `"${cleanQ.replace(/"/g, '""')}*`;
 };
 
-const postTsRestRouterObj = {
+const postTsRestRouterObj: any = {
   getPosts: async (input: { query: z.infer<typeof postContract.getPosts.query> }, c: Context<AppEnv>) => {
     try {
       const { query } = input;
@@ -79,7 +79,7 @@ const postTsRestRouterObj = {
           is_portfolio: 0
         }));
 
-        return { status: 200, body: { posts } };
+        return { status: 200 as const, body: { posts: posts as any } };
       }
 
       const results = await db.selectFrom("posts")
@@ -118,7 +118,7 @@ const postTsRestRouterObj = {
 
       c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=600");
 
-      return { status: 200, body: { posts } };
+      return { status: 200 as const, body: { posts: posts as any } };
     } catch (e) {
       console.error("[Posts:List] Error", e);
       return { status: 500, body: { error: "Failed to fetch posts" } };
@@ -161,7 +161,7 @@ const postTsRestRouterObj = {
       if (!row) return { status: 404, body: { error: "Post not found" } };
 
       return { 
-        status: 200, 
+        status: 200 as const, 
         body: { 
           post: {
             ...row,
@@ -177,7 +177,7 @@ const postTsRestRouterObj = {
             image: row.author_avatar || null,
             role: "author"
           }
-        }
+        } as any
       };
     } catch (e) {
       console.error("[Posts:Detail] Error", e);
@@ -208,12 +208,15 @@ const postTsRestRouterObj = {
           .execute();
       }
       
-      const posts = results.map(p => ({
-        ...p,
-        season_id: (p as any).season_id ? Number((p as any).season_id) : null,
-        is_deleted: Number(p.is_deleted),
-        is_portfolio: 0
-      }));
+      const posts = results.map(p => {
+        const item = p as { season_id?: unknown; is_deleted?: unknown };
+        return {
+          ...p,
+          season_id: item.season_id ? Number(item.season_id) : null,
+          is_deleted: Number(item.is_deleted ?? 0),
+          is_portfolio: 0
+        };
+      });
 
       return { status: 200, body: { posts } };
     } catch (e) {
@@ -326,7 +329,7 @@ const postTsRestRouterObj = {
 
       c.executionCtx.waitUntil(pruneHistory(c, slug, 10));
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
 
       const warnings: string[] = [];
 
@@ -412,7 +415,7 @@ const postTsRestRouterObj = {
           snippet,
           astStr,
           publishedAt: body.publishedAt,
-          seasonId: body.seasonId as any
+          seasonId: body.seasonId
         });
         return { status: 200, body: { success: true, slug: revSlug } };
       }
@@ -457,7 +460,7 @@ const postTsRestRouterObj = {
       );
 
       c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${body.title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
       return { status: 200, body: { success: true, slug } };
     } catch (e) {
       console.error("[Posts:Update] Error", e);
@@ -605,7 +608,10 @@ const postTsRestRouterObj = {
             snippet: post.snippet || "Read the latest update from ARES 23247!",
             thumbnail: post.thumbnail || "",
             baseUrl: baseUrl
-          }, socialConfig, socials ? socials.reduce((acc: Record<string, boolean>, curr: string) => ({...acc, [curr]: true}), {}) : null).catch(err => console.error("[Repush] Social dispatch failed:", err))
+          },
+          socialConfig,
+          socials ? socials.reduce((acc: Record<string, boolean>, curr: string) => ({...acc, [curr]: true}), {} as Record<string, boolean>) : null
+        ).catch(err => console.error("[Repush] Social dispatch failed:", err))
       );
       return { status: 200, body: { success: true } };
     } catch (err) {
@@ -614,7 +620,7 @@ const postTsRestRouterObj = {
   },
 };
 
-const postTsRestRouter = s.router(postContract, postTsRestRouterObj as any);
+const postTsRestRouter: any = s.router(postContract, postTsRestRouterObj);
 
 export const postsRouter = new Hono<AppEnv>();
 

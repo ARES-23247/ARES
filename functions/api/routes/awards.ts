@@ -12,8 +12,8 @@ const saveAwardSchema = awardContract.saveAward.body;
 const s = initServer<AppEnv>();
 export const awardsRouter = new Hono<AppEnv>();
 
-const awardsTsRestRouter: any = s.router(awardContract as any, {
-    getAwards: async ({ query }: { query: any }, c: Context<AppEnv>) => {
+const awardsTsRestRouter = s.router(awardContract, {
+    getAwards: async ({ query }: { query: { limit?: number; offset?: number } }, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = query;
@@ -41,10 +41,10 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       return { status: 200 as const, body: { awards } };
     } catch (e) {
       console.error("GET_AWARDS ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to fetch awards" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch awards" } };
     }
   },
-    saveAward: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  saveAward: async ({ body }: { body: { id?: string; title: string; year: number; event_name?: string | null; description?: string | null; image_url?: string | null; season_id?: number | null } }, c: Context<AppEnv>) => {
     try {
       // Validate input against schema
       const validationResult = saveAwardSchema.safeParse(body);
@@ -110,9 +110,10 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
           const newId = res && "insertId" in res ? String(res.insertId) : "new";
           c.executionCtx.waitUntil(logAuditAction(c, "award_created", "awards", newId, `Award "${title}" (${year}) created`));
           finalId = newId;
-        } catch (insertError: any) {
+        } catch (insertError: unknown) {
+          const err = insertError as Error;
           // Check if this is a duplicate constraint violation (race condition)
-          if (insertError?.message?.includes('UNIQUE') || insertError?.message?.includes('constraint')) {
+          if (err?.message?.includes('UNIQUE') || err?.message?.includes('constraint')) {
             // Retry by fetching the duplicate that was just created
             const duplicate = await db.selectFrom("awards")
               .select("id")
@@ -136,10 +137,10 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       return { status: 200 as const, body: { success: true, id: finalId! } };
     } catch (e) {
       console.error("SAVE_AWARD ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to save award", success: false } as any };
+      return { status: 500 as const, body: { error: "Failed to save award", success: false } };
     }
   },
-    deleteAward: async ({ params, body: _body }: { params: any, body: any }, c: Context<AppEnv>) => {
+  deleteAward: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
 
     try {
                   const db = c.get("db") as Kysely<DB>;
@@ -152,10 +153,10 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("DELETE_AWARD ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to delete award", success: false } as any };
+      return { status: 500 as const, body: { error: "Failed to delete award", success: false } };
     }
   },
-} as any);
+});
 
 awardsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(awardContract, awardsTsRestRouter, awardsRouter);

@@ -13,6 +13,7 @@ export const postResponseSchema = z.object({
   status: z.string().nullish(),
   author: z.string().nullish(),
   author_nickname: z.string().nullish(),
+  author_avatar: z.string().nullish(),
   published_at: z.string().nullish(),
   season_id: z.coerce.number().nullish(),
   is_deleted: z.number().nullish(),

@@ -3,6 +3,7 @@ import { AppEnv, ensureAdmin, persistentRateLimitMiddleware, verifyTurnstile } f
 import { streamSSE } from "hono/streaming";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
+import { MessageContent, ZaiChatResponse, ChatMessage } from "./types";
 
 export const aiRouter = new Hono<AppEnv>();
 
@@ -70,7 +71,7 @@ aiRouter.post("/liveblocks-copilot", persistentRateLimitMiddleware(30, 60), asyn
     try {
       // ── Premium path: z.ai (Claude) ──
       if (hasZai) {
-        let userContent: any = safeContext;
+        let userContent: MessageContent = safeContext;
         
         if (imageUrl && imageUrl.startsWith('data:image')) {
           const [header, base64] = imageUrl.split(',');
@@ -111,7 +112,7 @@ aiRouter.post("/liveblocks-copilot", persistentRateLimitMiddleware(30, 60), asyn
 
           const contentType = zaiRes.headers.get("content-type") || "";
           if (contentType.includes("application/json")) {
-            const errData = await zaiRes.json() as any;
+            const errData = await zaiRes.json() as ZaiChatResponse;
             throw new Error(errData.error?.message || JSON.stringify(errData));
           }
 
@@ -137,7 +138,7 @@ aiRouter.post("/liveblocks-copilot", persistentRateLimitMiddleware(30, 60), asyn
                   const dataStr = line.slice(6).trim();
                   if (dataStr === "[DONE]") continue;
                   try {
-                    const data = JSON.parse(dataStr);
+                    const data = JSON.parse(dataStr) as ZaiChatResponse;
                     if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
                       await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                     }
@@ -184,7 +185,7 @@ aiRouter.post("/liveblocks-copilot", persistentRateLimitMiddleware(30, 60), asyn
             const dataStr = line.slice(6).trim();
             if (dataStr === "[DONE]") continue;
             try {
-              const data = JSON.parse(dataStr);
+              const data = JSON.parse(dataStr) as { response?: string };
               const text = data.response || "";
               if (text) {
                 await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
@@ -257,7 +258,7 @@ aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c
 
             const contentType = zaiRes.headers.get("content-type") || "";
             if (contentType.includes("application/json")) {
-              const errData = await zaiRes.json() as any;
+              const errData = await zaiRes.json() as ZaiChatResponse;
               throw new Error(errData.error?.message || JSON.stringify(errData));
             }
 
@@ -281,7 +282,7 @@ aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c
                     const dataStr = line.slice(6).trim();
                     if (dataStr === "[DONE]") continue;
                     try {
-                      const data = JSON.parse(dataStr);
+                      const data = JSON.parse(dataStr) as ZaiChatResponse;
                       if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
                         await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                       }
@@ -291,8 +292,8 @@ aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c
               }
               return; // Successfully streamed z.ai, exit
             }
-          } catch (zaiErr: any) {
-            lastZaiError = zaiErr.message || String(zaiErr);
+          } catch (zaiErr: unknown) {
+            lastZaiError = zaiErr instanceof Error ? zaiErr.message : String(zaiErr);
             console.error(`z.ai sim error (attempt ${attempt + 1}):`, lastZaiError);
             if (!lastZaiError.includes("Rate limit") && !lastZaiError.includes("502") && !lastZaiError.includes("503")) {
               break; // Do not retry client errors
@@ -313,7 +314,7 @@ aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c
       console.log("[Sim IDE] Falling back to Workers AI (Llama 3.1)");
 
       // Normalize images back out for Llama 3.1, which may not support Vision in the standard instruct route
-      const cleanMessages = messages.map((m: any) => {
+      const cleanMessages = (messages as ChatMessage[]).map((m) => {
         if (Array.isArray(m.content)) {
           const textPart = m.content.find((p: any) => p.type === "text");
           return { role: m.role, content: textPart ? textPart.text : "" };
@@ -348,7 +349,7 @@ aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c
             if (dataStr === "[DONE]") continue;
 
             try {
-              const data = JSON.parse(dataStr);
+              const data = JSON.parse(dataStr) as { response?: string };
               const text = data.response || "";
               if (text) {
                 await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
@@ -400,7 +401,7 @@ aiRouter.post("/editor-chat", persistentRateLimitMiddleware(30, 60), async (c) =
 
           const contentType = zaiRes.headers.get("content-type") || "";
           if (contentType.includes("application/json")) {
-            const errData = await zaiRes.json() as any;
+            const errData = await zaiRes.json() as ZaiChatResponse;
             throw new Error(errData.error?.message || JSON.stringify(errData));
           }
 
@@ -426,7 +427,7 @@ aiRouter.post("/editor-chat", persistentRateLimitMiddleware(30, 60), async (c) =
                   const dataStr = line.slice(6).trim();
                   if (dataStr === "[DONE]") continue;
                   try {
-                    const data = JSON.parse(dataStr);
+                    const data = JSON.parse(dataStr) as ZaiChatResponse;
                     if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
                       await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                     }
@@ -476,7 +477,7 @@ aiRouter.post("/editor-chat", persistentRateLimitMiddleware(30, 60), async (c) =
             if (dataStr === "[DONE]") continue;
 
             try {
-              const data = JSON.parse(dataStr);
+              const data = JSON.parse(dataStr) as { response?: string };
               const text = data.response || "";
               if (text) {
                 await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
@@ -535,7 +536,7 @@ aiRouter.post("/suggest", persistentRateLimitMiddleware(30, 60), ensureAdmin, as
 
         if (!zaiRes.ok) throw new Error(await zaiRes.text());
         
-        const data = await zaiRes.json() as any;
+        const data = await zaiRes.json() as ZaiChatResponse;
         if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
         
         const suggestion = data.choices?.[0]?.message?.content?.trim() || "";
@@ -599,7 +600,7 @@ aiRouter.post("/rag-chatbot", persistentRateLimitMiddleware(15, 60), async (c) =
   if (c.env.AI) {
     let embeddingVector: number[] = [];
     try {
-      const response = (await c.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [safeQuery] })) as any;
+      const response = (await c.env.AI.run("@cf/baai/bge-base-en-v1.5", { text: [safeQuery] })) as { data: number[][] };
       embeddingVector = response.data[0];
     } catch (e) {
       console.error("Embedding generation failed:", e);
@@ -609,7 +610,7 @@ aiRouter.post("/rag-chatbot", persistentRateLimitMiddleware(15, 60), async (c) =
     try {
       if (c.env.VECTORIZE_DB && embeddingVector.length > 0) {
         const vecRes = await c.env.VECTORIZE_DB.query(embeddingVector, { topK: 3, returnMetadata: true });
-        contextDocs = vecRes.matches.map((m: any) => m.metadata?.text || "").join("\n\n");
+        contextDocs = vecRes.matches.map((m) => (m.metadata?.text as string) || "").join("\n\n");
       }
     } catch (e) {
       console.error("Vectorize query failed:", e);
@@ -685,7 +686,7 @@ aiRouter.post("/rag-chatbot", persistentRateLimitMiddleware(15, 60), async (c) =
   }
 
   // Fetch history if session exists
-  let historyMessages: any[] = [];
+  let historyMessages: ChatMessage[] = [];
   
   if (sessionId) {
     try {
@@ -733,7 +734,7 @@ Never make up event dates, team members, or scores — only use what's provided 
 ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : ""}${upcomingEventsContext}${seasonContext}${recentPostsContext}`;
 
   const messages = [
-    ...historyMessages.map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content })),
+    ...historyMessages.map((m) => ({ role: m.role, content: m.content })),
     { role: "user" as const, content: safeQuery }
   ];
 
@@ -765,7 +766,7 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
 
           const contentType = zaiRes.headers.get("content-type") || "";
           if (contentType.includes("application/json")) {
-            const errData = await zaiRes.json() as any;
+            const errData = await zaiRes.json() as ZaiChatResponse;
             throw new Error(errData.error?.message || JSON.stringify(errData));
           }
 
@@ -791,7 +792,7 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
                   const dataStr = line.slice(6).trim();
                   if (dataStr === "[DONE]") continue;
                   try {
-                    const data = JSON.parse(dataStr);
+                    const data = JSON.parse(dataStr) as ZaiChatResponse;
                     if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
                       accumulatedText += data.choices[0].delta.content;
                       await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
@@ -845,7 +846,7 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
             if (dataStr === "[DONE]") continue;
 
             try {
-              const data = JSON.parse(dataStr);
+              const data = JSON.parse(dataStr) as { response?: string };
               const text = data.response || "";
               if (text) {
                 accumulatedText += text;
@@ -866,7 +867,7 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
 });
 
 // Helper to persist chat session history
-async function saveHistory(db: Kysely<DB>, sessionId: string | undefined, historyMessages: any[], query: string, response: string) {
+async function saveHistory(db: Kysely<DB>, sessionId: string | undefined, historyMessages: ChatMessage[], query: string, response: string) {
   if (!sessionId) return;
   const updatedHistory = [
     ...historyMessages,
@@ -917,8 +918,9 @@ aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(50
 
   const db = c.get("db") as Kysely<DB>;
   const { indexExternalResources } = await import("./indexer");
-  const githubPat = (c.env as any).GITHUB_PAT;
-  const result = await indexExternalResources(db, c.env.AI as any, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat, c.env.ARES_KV, sourceId);
+  const githubPat = c.env.GITHUB_PAT;
+  const ai = c.env.AI as any;
+  const result = await indexExternalResources(db, ai, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat, c.env.ARES_KV, sourceId);
 
   return c.json({
     success: true,

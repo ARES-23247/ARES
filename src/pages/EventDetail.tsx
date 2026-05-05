@@ -35,12 +35,12 @@ export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const validatedId = validateIdParam(id);
 
+  const { data: session } = useSession();
+
   // Early return if ID is invalid
   if (!id || !validatedId) {
     return <div className="w-full max-w-4xl mx-auto px-6 py-24 text-white font-mono text-center">Invalid event ID format.</div>;
   }
-
-  const { data: session } = useSession();
 
   const userRole = (session?.user as Record<string, unknown>)?.role || "user";
   const isEditor = userRole === "admin" || userRole === "author";

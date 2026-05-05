@@ -11,11 +11,11 @@ export const analyticsRouter = new Hono<AppEnv>();
 import { Context } from "hono";
 
 const analyticsHandlers = {
-  trackPageView: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  trackPageView: async ({ body }: { body: { path?: string; category?: string; referrer?: string } }, c: Context<AppEnv>) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
     if (!(await checkRateLimit(c.env.ARES_KV, `track:${ip}`, ua, 20, 600))) {
-      return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } as any };
+      return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } };
     }
 
     const db = c.get("db") as Kysely<DB>;
@@ -33,16 +33,16 @@ const analyticsHandlers = {
         })
         .execute();
 
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch {
-      return { status: 500 as const, body: { success: false } as any };
+      return { status: 500 as const, body: { success: false } };
     }
   },
-  trackSponsorClick: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  trackSponsorClick: async ({ body }: { body: { sponsor_id: string } }, c: Context<AppEnv>) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
     if (!(await checkRateLimit(c.env.ARES_KV, `click:${ip}`, ua, 10, 600))) {
-      return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } as any };
+      return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } };
     }
 
     const db = c.get("db") as Kysely<DB>;
@@ -79,12 +79,12 @@ const analyticsHandlers = {
         }))
         .execute();
 
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch {
-      return { status: 500 as const, body: { success: false } as any };
+      return { status: 500 as const, body: { success: false } };
     }
   },
-  getSummary: async (_: any, c: Context<AppEnv>) => {
+  getSummary: async (_: unknown, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [topPagesRow, recentViewsRow, totalsRow] = await Promise.all([
@@ -124,12 +124,12 @@ const analyticsHandlers = {
         total: Number(t.total)
       }));
 
-      return { status: 200 as const, body: { topPages, recentViews, totals } as any };
+      return { status: 200 as const, body: { topPages, recentViews, totals } };
     } catch {
-      return { status: 500 as const, body: { topPages: [], recentViews: [], totals: [] } as any };
+      return { status: 500 as const, body: { topPages: [], recentViews: [], totals: [] } };
     }
   },
-  getRosterStats: async (_: any, c: Context<AppEnv>) => {
+  getRosterStats: async (_: unknown, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user_profiles as u")
@@ -170,12 +170,12 @@ const analyticsHandlers = {
         avatar: r.avatar ? String(r.avatar) : null
       }));
 
-      return { status: 200 as const, body: { roster } as any };
+      return { status: 200 as const, body: { roster } };
     } catch {
-      return { status: 500 as const, body: { roster: [] } as any };
+      return { status: 500 as const, body: { roster: [] } };
     }
   },
-  getLeaderboard: async (_: any, c: Context<AppEnv>) => {
+  getLeaderboard: async (_: unknown, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user as u")
@@ -209,12 +209,12 @@ const analyticsHandlers = {
         };
       });
 
-      return { status: 200 as const, body: { leaderboard } as any };
+      return { status: 200 as const, body: { leaderboard } };
     } catch {
-      return { status: 500 as const, body: { error: "Failed to fetch leaderboard" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch leaderboard" } };
     }
   },
-  getStats: async (_: any, c: Context<AppEnv>) => {
+  getStats: async (_: unknown, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [postsCount, eventsCount, docsCount, securityBlocksRow, dbSettings] = await Promise.all([
@@ -241,13 +241,13 @@ const analyticsHandlers = {
             gcal: !!dbSettings["GCAL_PRIVATE_KEY"]
           },
           securityBlocks: Number(securityBlocksRow?.total || 0)
-        } as any
+        }
       };
     } catch {
-      return { status: 500 as const, body: { error: "Failed to fetch stats" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch stats" } };
     }
   },
-  getUsageMetrics: async (_: any, c: Context<AppEnv>) => {
+  getUsageMetrics: async (_: unknown, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       // Page views summary
@@ -335,19 +335,19 @@ const analyticsHandlers = {
         },
       };
 
-      return { status: 200 as const, body: { summary } as any };
+      return { status: 200 as const, body: { summary } };
     } catch (err) {
       console.error("[Analytics] Usage metrics error:", err);
-      return { status: 500 as const, body: { error: "Failed to fetch usage metrics" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch usage metrics" } };
     }
   },
-  search: async ({ query }: { query: any }, c: Context<AppEnv>) => {
+  search: async ({ query }: { query: { q: string } }, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     const { q } = query;
     try {
       // SCA-FTS-01: Sanitize FTS5 query
       const qClean = (q || "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
-      if (!qClean) return { status: 200 as const, body: { results: [] } as any };
+      if (!qClean) return { status: 200 as const, body: { results: [] } };
       const ftsQ = `"${qClean}"*`;
 
       const [postsReq, eventsReq, docsReq] = await Promise.all([
@@ -362,14 +362,14 @@ const analyticsHandlers = {
         ...(docsReq.rows || []).map(r => ({ type: "doc" as const, id: r.id, title: r.title }))
       ];
 
-      return { status: 200 as const, body: { results } as any };
+      return { status: 200 as const, body: { results } };
     } catch {
-      return { status: 500 as const, body: { error: "Search failed" } as any };
+      return { status: 500 as const, body: { error: "Search failed" } };
     }
   }
 };
 
-const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as any);
+const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers);
 
 // CR-01 FIX: Apply authentication to all analytics routes
 // Public routes (page view tracking, search) have rate limiting only

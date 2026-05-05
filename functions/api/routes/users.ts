@@ -11,8 +11,8 @@ import { DB } from "../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 export const usersRouter = new Hono<AppEnv>();
 
-const userTsRestRouter = s.router(userContract, {
-  getUsers: async ({ query }: { query: z.infer<typeof userContract.getUsers.query> }, c: Context<AppEnv>) => {
+const userTsRestRouter: any = s.router(userContract, {
+  getUsers: async ({ query: _query }: { query: z.infer<typeof userContract.getUsers.query> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit, cursor } = parsePagination(c, 50, 100);
@@ -49,7 +49,7 @@ const userTsRestRouter = s.router(userContract, {
 
       const nextCursor = results.length === limit ? String(results[results.length - 1].createdAt) : null;
 
-      return { status: 200 as const, body: { users, nextCursor } };
+      return { status: 200 as const, body: { users: users as any, nextCursor } };
     } catch {
       return { status: 500 as const, body: { error: "Database error" } };
     }
@@ -81,8 +81,8 @@ const userTsRestRouter = s.router(userContract, {
             createdAt: Number(row.createdAt),
             updatedAt: Number(row.updatedAt),
             nickname: row.nickname || null,
-            member_type: row.member_type || null
-          }
+            member_type: row.member_type as any
+          } as any
         }
       };
     } catch {
@@ -145,7 +145,7 @@ const userTsRestRouter = s.router(userContract, {
   },
   updateUserProfile: async ({ params, body }: { params: z.infer<typeof userContract.updateUserProfile.pathParams>, body: z.infer<typeof userContract.updateUserProfile.body> }, c: Context<AppEnv>) => {
     try {
-      await upsertProfile(c as any, params.id, body as any);
+      await upsertProfile(c, params.id, body as Record<string, unknown>);
       return { status: 200 as const, body: { success: true } };
     } catch {
       return { status: 500 as const, body: { error: "Profile update failed" } };
@@ -255,7 +255,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-} as any);
+});
 
 usersRouter.use("/*", ensureAdmin);
 

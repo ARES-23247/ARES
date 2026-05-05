@@ -59,20 +59,9 @@ export default function ProfilePage() {
   const [pointsLoading, setPointsLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  // Early return if userId is invalid
-  if (!userId || !validatedUserId) {
-    return (
-      <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center text-marble gap-4 p-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2">
-          <ShieldAlert size={40} className="text-ares-red" />
-        </div>
-        <h1 className="text-2xl font-black">Invalid User ID</h1>
-        <p className="text-marble max-w-md">The user ID format is invalid.</p>
-      </div>
-    );
-  }
-
   useEffect(() => {
+    if (!userId || !validatedUserId) return;
+    
     let cancelled = false;
 
     api.profiles.getPublicProfile.query({ params: { userId: validatedUserId } })
@@ -114,7 +103,20 @@ export default function ProfilePage() {
       });
 
     return () => { cancelled = true; };
-  }, [validatedUserId]);
+  }, [userId, validatedUserId]);
+
+  // Early return if userId is invalid
+  if (!userId || !validatedUserId) {
+    return (
+      <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center text-marble gap-4 p-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2">
+          <ShieldAlert size={40} className="text-ares-red" />
+        </div>
+        <h1 className="text-2xl font-black">Invalid User ID</h1>
+        <p className="text-marble max-w-md">The user ID format is invalid.</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import { Kysely, sql } from "kysely";
+import { Kysely, sql, Selectable } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import { fetchGithubRepoFiles } from "./external/githubFetcher";
 import { chunkText } from "./external/chunker";
@@ -67,7 +67,7 @@ export async function indexSiteContent(
       .where("status", "!=", "draft")
       .where((eb) => eb.or([
         eb("published_at", "is", null),
-        eb("published_at", "<=", sql`datetime('now')` as any),
+        eb("published_at", "<=", sql<string>`datetime('now')`),
       ]))
       .orderBy("date_start", "desc")
       .limit(100);
@@ -321,7 +321,7 @@ export async function indexExternalResources(
     query = query.where("id", "=", sourceId);
   }
 
-  const sources = await query.execute();
+  const sources = (await query.execute()) as (Selectable<DB["external_knowledge_sources"]> & { new_indexed_sha?: string })[];
 
   for (const source of sources) {
     if (source.type === "github") {
@@ -362,7 +362,7 @@ export async function indexExternalResources(
         }
         
         // We will update the SHA after successful indexing
-        (source as any).new_indexed_sha = res.commitSha; 
+        source.new_indexed_sha = res.commitSha; 
       }
     } else {
       errors.push(`Website indexing not yet implemented for ${source.url}`);
@@ -408,9 +408,9 @@ export async function indexExternalResources(
 
   if (indexed > 0) {
     for (const source of sources) {
-      if ((source as any).new_indexed_sha) {
+      if (source.new_indexed_sha) {
         await db.updateTable("external_knowledge_sources")
-          .set({ last_indexed_sha: (source as any).new_indexed_sha, last_indexed_at: new Date().toISOString() })
+          .set({ last_indexed_sha: source.new_indexed_sha, last_indexed_at: new Date().toISOString() })
           .where("id", "=", source.id)
           .execute();
       }
