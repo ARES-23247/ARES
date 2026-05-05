@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AppEnv, ensureAuth, isAdmin } from "../middleware";
+import { AppEnv, ensureAuth } from "../middleware";
 import { z } from "zod";
 
 // Validation schema for simulation save
@@ -40,7 +40,7 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
     const res = await fetch(url, { headers });
     if (!res.ok) return false;
 
-    const commits = await res.json();
+    const commits = await res.json() as any[];
     if (!commits || commits.length === 0) return false;
 
     // Check commit author email matches user
@@ -59,6 +59,11 @@ simulationsRouter.get("/", async (c) => {
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
     const pat = patSetting?.value || c.env.GITHUB_PAT;
+
+    // WR-17: Log PAT status without exposing the token value
+    const patStatus = pat ? `configured (ends with ${String(pat).slice(-4)})` : "missing";
+    console.log("[Simulations] Using GitHub PAT:", patStatus);
+
     const headers: Record<string, string> = {
       "User-Agent": "ARES-Cloudflare-Worker",
       "Accept": "application/vnd.github.v3.raw"
@@ -104,6 +109,11 @@ simulationsRouter.get("/:id", async (c) => {
     const config = await db.selectFrom("settings").selectAll().execute();
     const patSetting = config.find(s => s.key === "GITHUB_PAT");
     const pat = patSetting?.value || c.env.GITHUB_PAT;
+
+    // WR-17: Log PAT status without exposing the token value
+    const patStatus = pat ? `configured (ends with ${String(pat).slice(-4)})` : "missing";
+    console.log("[Simulations] Using GitHub PAT:", patStatus);
+
     const headers: Record<string, string> = {
       "User-Agent": "ARES-Cloudflare-Worker",
       "Accept": "application/vnd.github.v3.raw"
