@@ -26,7 +26,7 @@ import logisticsRouter from "./routes/logistics";
 import usersRouter from "./routes/users";
 import commentsRouter from "./routes/comments";
 import inquiriesRouter from "./routes/inquiries/index";
-import badgesRouter from "./routes/badges";
+import { badgesRouter } from "./routes/badges";
 import locationsRouter from "./routes/locations";
 import sitemapRouter from "./routes/sitemap";
 import githubRouter from "./routes/github";

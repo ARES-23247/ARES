@@ -13,7 +13,7 @@ const s = initServer<AppEnv>();
 export const awardsRouter = new Hono<AppEnv>();
 
 const awardsTsRestRouter = s.router(awardContract, {
-    getAwards: async ({ query }: { query: { limit?: number; offset?: number } }, c: Context<AppEnv>) => {
+  getAwards: async ({ query }: { query: { limit?: number; offset?: number } }, c: Context<AppEnv>) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = query;
@@ -156,7 +156,7 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to delete award", success: false } };
     }
   },
-});
+} as any);
 
 awardsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(awardContract, awardsTsRestRouter, awardsRouter);

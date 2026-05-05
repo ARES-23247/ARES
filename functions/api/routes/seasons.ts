@@ -236,7 +236,7 @@ const seasonsTsRestRouterObj = {
   },
 };
 
-const seasonsTsRestRouter = _s.router(seasonContract, seasonsTsRestRouterObj);
+const seasonsTsRestRouter = _s.router(seasonContract, seasonsTsRestRouterObj as any);
 export const seasonsRouter = new Hono<AppEnv>();
 
 import { edgeCacheMiddleware } from "../middleware/cache";

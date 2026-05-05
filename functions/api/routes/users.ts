@@ -255,7 +255,7 @@ const userTsRestRouter: any = s.router(userContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-});
+} as any);
 
 usersRouter.use("/admin/*", ensureAdmin);
 // WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad

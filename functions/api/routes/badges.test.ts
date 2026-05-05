@@ -19,7 +19,7 @@ vi.mock("../../utils/zulipSync", () => ({
   sendZulipMessage: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-import badgesRouter from "./badges";
+import { badgesRouter } from "./badges";
 
 describe("Hono Backend - /badges Router", () => {
   let mockDb: any;
