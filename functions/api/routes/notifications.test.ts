@@ -99,7 +99,7 @@ describe("Hono Backend - /notifications Router", () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({ count: 0 }); // docs
     const res = await testApp.request("/pending-counts", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { inquiries?: number };
     expect(body.inquiries).toBe(5);
   });
 
@@ -110,18 +110,18 @@ describe("Hono Backend - /notifications Router", () => {
     mockDb.execute.mockResolvedValueOnce([]); // docs
     const res = await testApp.request("/action-items", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { inquiries: Array<{ id: number }> };
     expect(body.inquiries.length).toBe(1);
   });
 
   it("GET / - handles unauthenticated", async () => {
-    (getSessionUser as any).mockResolvedValueOnce(null);
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(401);
   });
 
   it("PUT /:id/read - handles unauthenticated", async () => {
-    (getSessionUser as any).mockResolvedValueOnce(null);
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
     const res = await testApp.request("/123/read", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -131,7 +131,7 @@ describe("Hono Backend - /notifications Router", () => {
   });
 
   it("PUT /read-all - handles unauthenticated", async () => {
-    (getSessionUser as any).mockResolvedValueOnce(null);
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
     const res = await testApp.request("/read-all", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -150,7 +150,7 @@ describe("Hono Backend - /notifications Router", () => {
   });
 
   it("DELETE /:id - handles unauthenticated", async () => {
-    (getSessionUser as any).mockResolvedValueOnce(null);
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
     const res = await testApp.request("/123", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -160,13 +160,13 @@ describe("Hono Backend - /notifications Router", () => {
   });
 
   it("GET /pending-counts - handles unauthenticated", async () => {
-    (getSessionUser as any).mockResolvedValueOnce(null);
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
     const res = await testApp.request("/pending-counts", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(401);
   });
 
   it("GET /action-items - handles unauthenticated", async () => {
-    (getSessionUser as any).mockResolvedValueOnce(null);
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
     const res = await testApp.request("/action-items", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(401);
   });
@@ -220,8 +220,8 @@ describe("Hono Backend - /notifications Router", () => {
   });
 
   it("GET /pending-counts - filters outreach for students", async () => {
-    (getSessionUser as any).mockResolvedValueOnce({ id: "1", role: "user", member_type: "student" });
-    
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: "1", role: "user", member_type: "student" });
+
     mockDb.executeTakeFirst.mockResolvedValueOnce({ count: 5 }); // inquiries
     mockDb.executeTakeFirst.mockResolvedValueOnce({ count: 2 }); // posts
     mockDb.executeTakeFirst.mockResolvedValueOnce({ count: 1 }); // events
@@ -231,7 +231,7 @@ describe("Hono Backend - /notifications Router", () => {
   });
 
   it("GET /action-items - filters outreach for students", async () => {
-    (getSessionUser as any).mockResolvedValueOnce({ id: "1", role: "user", member_type: "student" });
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: "1", role: "user", member_type: "student" });
     mockDb.execute.mockResolvedValueOnce([{ id: 1 }]); // inquiries
     mockDb.execute.mockResolvedValueOnce([{ title: "post1" }]); // posts
     mockDb.execute.mockResolvedValueOnce([]); // events
@@ -241,8 +241,8 @@ describe("Hono Backend - /notifications Router", () => {
   });
 
   it("GET /pending-counts - does not filter outreach for mentors", async () => {
-    (getSessionUser as any).mockResolvedValueOnce({ id: "1", role: "user", member_type: "mentor" });
-    
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: "1", role: "user", member_type: "mentor" });
+
     mockDb.executeTakeFirst.mockResolvedValueOnce({ count: 5 }); // inquiries
     mockDb.executeTakeFirst.mockResolvedValueOnce({ count: 2 }); // posts
     mockDb.executeTakeFirst.mockResolvedValueOnce({ count: 1 }); // events
@@ -252,7 +252,7 @@ describe("Hono Backend - /notifications Router", () => {
   });
 
   it("GET /action-items - does not filter outreach for mentors", async () => {
-    (getSessionUser as any).mockResolvedValueOnce({ id: "1", role: "user", member_type: "mentor" });
+    (getSessionUser as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: "1", role: "user", member_type: "mentor" });
     mockDb.execute.mockResolvedValueOnce([{ id: 1 }]); // inquiries
     mockDb.execute.mockResolvedValueOnce([{ title: "post1" }]); // posts
     mockDb.execute.mockResolvedValueOnce([]); // events
