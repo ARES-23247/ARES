@@ -1,10 +1,17 @@
 import { z } from "zod";
+import { sanitizeHtml } from "../utils/sanitize";
 
 // ISO 8601 date string validator
 const isoDateSchema = z.string().refine(
   (val) => !isNaN(Date.parse(val)),
   { message: "Invalid ISO 8601 date format" }
 );
+
+// Sanitized text field for rich content that may contain HTML
+const sanitizedTextSchema = z.string().max(200000).optional().transform((val) => {
+  if (!val) return val;
+  return sanitizeHtml(val);
+});
 
 export const eventSchema = z.object({
   id: z.string().optional(),
@@ -21,7 +28,7 @@ export const eventSchema = z.object({
   publishedAt: z.string().max(255).optional(),
   isDraft: z.boolean().optional(),
   seasonId: z.union([z.string(), z.number()]).transform(v => v === "" ? undefined : Number(v)).optional(),
-  meetingNotes: z.string().max(200000).optional(),
+  meetingNotes: sanitizedTextSchema, // Sanitized to prevent XSS
   socials: z.record(z.string().max(255), z.boolean()).optional(),
   rrule: z.string().max(1000).optional().or(z.literal("")),
   recurrenceRule: z.string().max(1000).optional().or(z.literal("")),

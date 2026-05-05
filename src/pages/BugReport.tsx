@@ -10,10 +10,12 @@ const ALLOWED_REPOS = [
   `${siteConfig.urls.githubOrg}/IntoTheDeep`
 ] as const;
 
+type AllowedRepo = typeof ALLOWED_REPOS[number];
+
 export default function BugReport() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [repoStr, setRepoStr] = useState(ALLOWED_REPOS[0]); // Default repo
+  const [repoStr, setRepoStr] = useState<AllowedRepo>(ALLOWED_REPOS[0]); // Default repo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
