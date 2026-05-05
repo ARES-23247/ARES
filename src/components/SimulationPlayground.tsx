@@ -5,6 +5,7 @@ import { loader } from "@monaco-editor/react";
 import { validateIdParam } from "../utils/security";
 import { logger } from "../utils/logger";
 import { getSimChatKey } from "../utils/storageKeys";
+import { GITHUB_REPO } from "../utils/constants";
 
 // Monaco Editor CDN Configuration
 // SECURITY: Version pinned to 0.52.2 for supply chain stability.
@@ -126,6 +127,12 @@ export default function SimulationPlayground() {
   interface IMonacoStandalone {
     editor: {
       setModelMarkers(model: { updateOptions(options: unknown): void } | null, owner: string, markers: unknown[]): void;
+    };
+    MarkerSeverity: {
+      Error: number;
+      Warning: number;
+      Info: number;
+      Hint: number;
     };
     languages: {
       typescript: {
@@ -385,7 +392,7 @@ export default function SimulationPlayground() {
   useEffect(() => {
     if (isVimMode && editorRef.current) {
       import('monaco-vim').then((vim) => {
-        vimRef.current = vim.initVimMode(editorRef.current, document.createElement('div'));
+        vimRef.current = vim.initVimMode(editorRef.current!, document.createElement('div'));
       });
     } else {
       if (vimRef.current) {
@@ -457,7 +464,7 @@ export default function SimulationPlayground() {
   const fetchGithubSims = async () => {
     setIsLoadingGithubSims(true);
     try {
-      const res = await fetch("https://raw.githubusercontent.com/ARES-23247/ARESWEB/main/src/sims/simRegistry.json");
+      const res = await fetch(`${GITHUB_REPO.rawUrl}/src/sims/simRegistry.json`);
       if (res.ok) {
         const data = await res.json() as { simulators: GithubSim[] };
         setGithubSims(data.simulators || []);
@@ -524,7 +531,7 @@ export default function SimulationPlayground() {
       // New folder structure: path is like "./armkg", file is at "armkg/index.tsx"
       const folder = sim.path.replace('./', '');
       const filename = `${folder}/index.tsx`;
-      const res = await fetch(`https://raw.githubusercontent.com/ARES-23247/ARESWEB/main/src/sims/${filename}`);
+      const res = await fetch(`${GITHUB_REPO.rawUrl}/src/sims/${filename}`);
       if (!res.ok) throw new Error("Not found");
       const code = await res.text();
 
