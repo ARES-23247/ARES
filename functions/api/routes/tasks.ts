@@ -250,10 +250,10 @@ const tasksTsRestRouter = s.router(taskContract, {
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
       const existing = await db.selectFrom("tasks")
-        .select(["id", "title", "created_by"])
+        .select(["id", "title", "created_by", "subteam"])
         .where("id", "=", params.id)
         .executeTakeFirst();
-      
+
       if (!existing) return { status: 404, body: { error: "Task not found" } };
 
       const isAdmin = user.role === "admin";
@@ -283,6 +283,29 @@ const tasksTsRestRouter = s.router(taskContract, {
         if (!canAssign) {
           return { status: 403, body: { error: "Only mentors, coaches, admins, or the task creator can change assignments" } };
         }
+
+        // WR-12: Additional validation - prevent assigning users from different subteams
+        if (existing.subteam && body.assignees && body.assignees.length > 0) {
+          const assigneeProfiles = await db.selectFrom("user_profiles")
+            .select(["user_id", "member_type"])
+            .where("user_id", "in", body.assignees)
+            .execute();
+
+          // Check if any assignee belongs to a different subteam
+          // Admins can assign anyone, but mentors/coaches can only assign within their subteam
+          if (!isAdmin && isMentor) {
+            const assigneeSubteams = await db.selectFrom("user_profiles")
+              .select("subteam")
+              .where("user_id", "in", body.assignees)
+              .execute();
+
+            const hasMismatchedSubteam = assigneeSubteams.some(p => p.subteam && p.subteam !== existing.subteam);
+            if (hasMismatchedSubteam) {
+              return { status: 403, body: { error: "Cannot assign users from different subteams to this task" } };
+            }
+          }
+        }
+
         // Sync assignments: delete and re-insert
         await db.deleteFrom("task_assignments").where("task_id", "=", params.id).execute();
         if (body.assignees && body.assignees.length > 0) {
