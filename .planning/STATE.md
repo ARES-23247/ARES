@@ -239,6 +239,6 @@ Eliminate all `any` violations in React components and hooks through proper prop
 
 ## Session Continuity
 
-**Last session**: Completed Phase 29 (Contract Inference) — 2/2 plans verified PASS
-**This session**: Planned Phase 29.1 (Remaining Route Contract Inference) — 4/4 plans ready
-**Next step**: Execute Phase 29.1 with `/gsd-execute-phase 29.1`
+**Last session**: Production hotfix — PartyKit CSP, Roster API triple schema mismatch, Pa11y contrast (2026-05-05)
+**This session**: See `.planning/logs/2026-05-05-hotfix-partykit-roster-a11y.md`
+**Next step**: Resume Phase 30 with `/gsd-execute-phase 30` (Test Types — 30-06 next)
