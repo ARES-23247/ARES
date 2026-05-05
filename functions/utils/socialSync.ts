@@ -14,7 +14,7 @@ import { dispatchFacebook, dispatchMetaPhoto } from './social/meta';
 import { logSystemError } from '../api/middleware';
 import pRetry from 'p-retry';
 import { Kysely } from "kysely";
-import { DB } from "../../../shared/schemas/database";
+import { DB } from "../../shared/schemas/database";
 
 export interface SocialConfig {
   DISCORD_WEBHOOK_URL?: string;

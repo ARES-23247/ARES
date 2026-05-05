@@ -106,6 +106,8 @@ export const userContract = c.router({
     }),
     responses: {
       200: z.object({ success: z.boolean() }),
+      400: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
     },
     summary: "Update user role or type",
   },
@@ -116,6 +118,7 @@ export const userContract = c.router({
     body: z.record(z.string(), z.unknown()),
     responses: {
       200: z.object({ success: z.boolean() }),
+      500: z.object({ error: z.string() }),
     },
     summary: "Update user profile",
   },
@@ -128,6 +131,7 @@ export const userContract = c.router({
         profile: z.record(z.string(), z.unknown()),
       }),
       404: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
     },
     summary: "Get full user profile for admin editing",
   },
@@ -138,6 +142,7 @@ export const userContract = c.router({
     body: c.noBody(),
     responses: {
       200: z.object({ success: z.boolean() }),
+      500: z.object({ error: z.string() }),
     },
     summary: "Delete a user",
   },

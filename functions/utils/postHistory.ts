@@ -251,7 +251,7 @@ export async function approvePost(c: Context<AppEnv>, slug: string) {
 
   c.executionCtx.waitUntil(
     dispatchSocials(
-      c.env.DB,
+      c.get("db"),
       {
         title: row.title as string,
         url: `${baseUrl}/blog/${slug}`,

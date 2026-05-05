@@ -41,6 +41,12 @@ export default function SimComponent() {
   const switchRate = switchTotal > 0 ? ((switchWins / switchTotal) * 100).toFixed(1) : '—';
   const stayRate = stayTotal > 0 ? ((stayWins / stayTotal) * 100).toFixed(1) : '—';
 
+  // Dynamic probabilities based on number of doors
+  const stayProbability = 1 / numDoors;
+  const switchProbability = (numDoors - 1) / numDoors;
+  const stayProbabilityPercent = (stayProbability * 100).toFixed(1);
+  const switchProbabilityPercent = (switchProbability * 100).toFixed(1);
+
   const initRound = useCallback(() => {
     const carDoor = Math.floor(Math.random() * numDoors);
     const newDoors: DoorContent[] = Array(numDoors).fill('goat');
@@ -340,12 +346,12 @@ export default function SimComponent() {
         lineHeight: '1.6',
         color: 'rgba(255,255,255,0.7)',
       }}>
-        <strong style={{ color: 'var(--ares-cyan)' }}>The Setup:</strong> Behind one of three doors is a car 🚗. The other two hide goats 🐐.
-        You pick a door, then the host <em>always</em> reveals a goat behind one of the remaining doors.
+        <strong style={{ color: 'var(--ares-cyan)' }}>The Setup:</strong> Behind one of <strong>{numDoors} doors</strong> is a car 🚗. The other {numDoors - 1} hide goats 🐐.
+        You pick a door, then the host <em>always</em> reveals {numDoors - 2} goat{numDoors - 2 !== 1 ? 's' : ''} behind the remaining doors.
         Should you <strong style={{ color: '#4ade80' }}>switch</strong> or <strong style={{ color: '#f4a261' }}>stay</strong>?
         <br />
-        <strong style={{ color: 'var(--ares-cyan)' }}>The Paradox:</strong> Switching gives you a <strong style={{ color: '#4ade80' }}>2/3 (66.7%)</strong> chance of winning,
-        while staying gives only <strong style={{ color: '#f4a261' }}>1/3 (33.3%)</strong>!
+        <strong style={{ color: 'var(--ares-cyan)' }}>The Paradox:</strong> Switching gives you a <strong style={{ color: '#4ade80' }}>{switchProbability.toFixed(2)} ({switchProbabilityPercent}%)</strong> chance of winning,
+        while staying gives only <strong style={{ color: '#f4a261' }}>{stayProbability.toFixed(2)} ({stayProbabilityPercent}%)</strong>!
       </div>
 
       {/* Interactive Game Area */}
@@ -525,8 +531,8 @@ export default function SimComponent() {
               }} />
             </div>
             <div style={{ position: 'relative', height: '0' }}>
-              <div style={{ position: 'absolute', left: '66.67%', top: '-10px', width: '2px', height: '10px', background: '#4ade80', opacity: 0.4 }} />
-              <div style={{ position: 'absolute', left: '66.67%', top: '-16px', transform: 'translateX(-50%)', fontSize: '8px', color: '#4ade80', fontFamily: 'monospace', opacity: 0.5 }}>66.7%</div>
+              <div style={{ position: 'absolute', left: `${switchProbabilityPercent}%`, top: '-10px', width: '2px', height: '10px', background: '#4ade80', opacity: 0.4 }} />
+              <div style={{ position: 'absolute', left: `${switchProbabilityPercent}%`, top: '-16px', transform: 'translateX(-50%)', fontSize: '8px', color: '#4ade80', fontFamily: 'monospace', opacity: 0.5 }}>{switchProbabilityPercent}%</div>
             </div>
           </div>
 
@@ -546,8 +552,8 @@ export default function SimComponent() {
               }} />
             </div>
             <div style={{ position: 'relative', height: '0' }}>
-              <div style={{ position: 'absolute', left: '33.33%', top: '-10px', width: '2px', height: '10px', background: '#f4a261', opacity: 0.4 }} />
-              <div style={{ position: 'absolute', left: '33.33%', top: '-16px', transform: 'translateX(-50%)', fontSize: '8px', color: '#f4a261', fontFamily: 'monospace', opacity: 0.5 }}>33.3%</div>
+              <div style={{ position: 'absolute', left: `${stayProbabilityPercent}%`, top: '-10px', width: '2px', height: '10px', background: '#f4a261', opacity: 0.4 }} />
+              <div style={{ position: 'absolute', left: `${stayProbabilityPercent}%`, top: '-16px', transform: 'translateX(-50%)', fontSize: '8px', color: '#f4a261', fontFamily: 'monospace', opacity: 0.5 }}>{stayProbabilityPercent}%</div>
             </div>
           </div>
         </div>
@@ -696,14 +702,14 @@ export default function SimComponent() {
             <div style={{ color: '#f4a261', fontFamily: 'monospace', fontSize: '11px', marginBottom: '6px', fontWeight: 'bold' }}>IF YOU ALWAYS STAY</div>
             <div style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace', fontSize: '12px' }}>
               You only win if your <strong style={{ color: '#f4a261' }}>initial pick</strong> was the car.<br />
-              Probability of initial pick being correct: <strong style={{ color: '#f4a261' }}>1/3 (33.3%)</strong>
+              Probability of initial pick being correct: <strong style={{ color: '#f4a261' }}>{stayProbability.toFixed(2)} ({stayProbabilityPercent}%)</strong>
             </div>
           </div>
           <div>
             <div style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: '11px', marginBottom: '6px', fontWeight: 'bold' }}>IF YOU ALWAYS SWITCH</div>
             <div style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace', fontSize: '12px' }}>
               You win if your initial pick was <strong style={{ color: '#4ade80' }}>wrong</strong> (a goat).<br />
-              Probability of initial pick being wrong: <strong style={{ color: '#4ade80' }}>2/3 (66.7%)</strong>
+              Probability of initial pick being wrong: <strong style={{ color: '#4ade80' }}>{switchProbability.toFixed(2)} ({switchProbabilityPercent}%)</strong>
             </div>
           </div>
         </div>
@@ -724,9 +730,9 @@ export default function SimComponent() {
               <div style={{ color: 'var(--ares-cyan)', marginBottom: '4px' }}>YOUR INITIAL PICK</div>
               <div style={{ display: 'flex', gap: '24px', justifyContent: 'center' }}>
                 <div>
-                  <div style={{ color: '#ef4444', fontSize: '10px' }}>Car (1/3)</div>
+                  <div style={{ color: '#ef4444', fontSize: '10px' }}>Car ({stayProbability.toFixed(2)})</div>
                   <div style={{ margin: '4px 0' }}>↓</div>
-                  <div style={{ fontSize: '10px' }}>Host shows goat</div>
+                  <div style={{ fontSize: '10px' }}>Host shows {numDoors - 2} goat{numDoors - 2 !== 1 ? 's' : ''}</div>
                   <div style={{ margin: '4px 0' }}>↓</div>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <div>
@@ -738,9 +744,9 @@ export default function SimComponent() {
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#4ade80', fontSize: '10px' }}>Goat (2/3)</div>
+                  <div style={{ color: '#4ade80', fontSize: '10px' }}>Goat ({switchProbability.toFixed(2)})</div>
                   <div style={{ margin: '4px 0' }}>↓</div>
-                  <div style={{ fontSize: '10px' }}>Host shows other goat</div>
+                  <div style={{ fontSize: '10px' }}>Host shows {numDoors - 2} other goat{numDoors - 2 !== 1 ? 's' : ''}</div>
                   <div style={{ margin: '4px 0' }}>↓</div>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <div>
