@@ -55,6 +55,12 @@ function normalizeFileNameExtension(fileName: string, mimeType: string): string 
   return fileName + correctExt;
 }
 
+/**
+ * Validates whether the given buffer contains a valid image file.
+ * Checks magic bytes for PNG, JPEG, GIF, WEBP, SVG, and HEIC formats.
+ * @param buffer - ArrayBuffer containing the file data
+ * @returns true if the buffer starts with valid image magic bytes
+ */
 export function isValidImage(buffer: ArrayBuffer): boolean {
   const arr = new Uint8Array(buffer);
   
