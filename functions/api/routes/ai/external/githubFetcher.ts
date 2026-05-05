@@ -46,8 +46,8 @@ export async function fetchGithubRepoFiles(
       }
     }
     
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const refData = await refRes.json() as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External API: GitHub API response is not fully typed
+    const refData = await refRes.json() as { object: { sha: string } };
     const commitSha = refData.object.sha;
 
     // 2. Get the full recursive tree
@@ -55,12 +55,11 @@ export async function fetchGithubRepoFiles(
     if (!treeRes.ok) {
       return { files: [], commitSha, error: `Failed to fetch tree: ${treeRes.statusText}` };
     }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const treeData = await treeRes.json() as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External API: GitHub API response is not fully typed
+    const treeData = await treeRes.json() as { tree: Array<{ type: string; path: string; sha: string }> };
 
     // 3. Filter files by extension
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const targetFiles = treeData.tree.filter((node: any) => {
+    const targetFiles = treeData.tree.filter((node) => {
       if (node.type !== "blob") return false;
       if (!allowedExtensions || allowedExtensions.length === 0) return true;
       const ext = node.path.substring(node.path.lastIndexOf("."));

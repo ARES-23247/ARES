@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { AppEnv, ensureAdmin, persistentRateLimitMiddleware, verifyTurnstile } from "../../middleware";
 import { streamSSE } from "hono/streaming";
 import { Kysely } from "kysely";
@@ -19,7 +18,7 @@ const scrubPII = (text: string): string => {
 };
 
 // ── AI Status Diagnostic (admin only) ──────────────────────────────────────
-aiRouter.get("/status", ensureAdmin, async (c) => {
+aiRouter.get("/status", ensureAdmin, async (c: Context<AppEnv>) => {
   let indexErrors = null;
   const db = c.get("db") as Kysely<DB>;
   
@@ -49,7 +48,7 @@ aiRouter.get("/status", ensureAdmin, async (c) => {
 // Premium: uses z.ai (Claude) if Z_AI_API_KEY is set, otherwise falls back to Workers AI (Llama 3.1)
 
 // WR-07: Add rate limiting to prevent abuse of AI endpoints
-aiRouter.post("/liveblocks-copilot", persistentRateLimitMiddleware(30, 60), async (c) => {
+aiRouter.post("/liveblocks-copilot", persistentRateLimitMiddleware(30, 60), async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const { documentContext, action, imageUrl } = body;
 
@@ -207,7 +206,7 @@ aiRouter.post("/liveblocks-copilot", persistentRateLimitMiddleware(30, 60), asyn
 });
 
 // ── Simulation Playground IDE Endpoint ──────────────────────────────────
-aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c) => {
+aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const { systemPrompt, messages, imageUrl } = body;
 
@@ -321,7 +320,7 @@ aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c
       // Normalize images back out for Llama 3.1, which may not support Vision in the standard instruct route
       const cleanMessages = (messages as ChatMessage[]).map((m) => {
         if (Array.isArray(m.content)) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External Library Type Gap: MessageContent union type
           const textPart = m.content.find((p: any) => p.type === "text");
           return { role: m.role, content: textPart ? textPart.text : "" };
         }
@@ -374,7 +373,7 @@ aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c
 });
 
 // ── Editor AI Chat Endpoint ──────────────────────────────────────────────
-aiRouter.post("/editor-chat", persistentRateLimitMiddleware(30, 60), async (c) => {
+aiRouter.post("/editor-chat", persistentRateLimitMiddleware(30, 60), async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const { systemPrompt, messages, editorContent } = body;
 
@@ -502,7 +501,7 @@ aiRouter.post("/editor-chat", persistentRateLimitMiddleware(30, 60), async (c) =
 // ── AI Inline Suggestions Endpoint ────────────────────────────────────────
 // Returns a short completion suggestion for ghost text in the editor
 
-aiRouter.post("/suggest", persistentRateLimitMiddleware(30, 60), ensureAdmin, async (c) => {
+aiRouter.post("/suggest", persistentRateLimitMiddleware(30, 60), ensureAdmin, async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const { context } = body;
 
@@ -574,7 +573,7 @@ aiRouter.post("/suggest", persistentRateLimitMiddleware(30, 60), ensureAdmin, as
 
 // ── RAG Chatbot Endpoint ──────────────────────────────────────────────────
 
-aiRouter.post("/rag-chatbot", persistentRateLimitMiddleware(15, 60), async (c) => {
+aiRouter.post("/rag-chatbot", persistentRateLimitMiddleware(15, 60), async (c: Context<AppEnv>) => {
   const body = await c.req.json();
   const { query, turnstileToken, sessionId } = body;
 
@@ -896,7 +895,7 @@ async function saveHistory(db: Kysely<DB>, sessionId: string | undefined, histor
 
 // ── Manual Re-Index Endpoint (admin-only) ─────────────────────────────
 
-aiRouter.post("/reindex", ensureAdmin, persistentRateLimitMiddleware(5, 600), async (c) => {
+aiRouter.post("/reindex", ensureAdmin, persistentRateLimitMiddleware(5, 600), async (c: Context<AppEnv>) => {
   if (!c.env.AI || !c.env.VECTORIZE_DB) {
     return c.json({ error: "AI or Vectorize bindings not configured" }, 500);
   }
@@ -914,7 +913,7 @@ aiRouter.post("/reindex", ensureAdmin, persistentRateLimitMiddleware(5, 600), as
   });
 });
 
-aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(50, 600), async (c) => {
+aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(50, 600), async (c: Context<AppEnv>) => {
   if (!c.env.VECTORIZE_DB) {
     return c.json({ error: "Vectorize DB binding not configured" }, 500);
   }
@@ -925,7 +924,7 @@ aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(50
   const db = c.get("db") as Kysely<DB>;
   const { indexExternalResources } = await import("./indexer");
   const githubPat = c.env.GITHUB_PAT;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- System Boundary Type: Cloudflare AI binding has version conflicts
   const ai = c.env.AI as any;
   const result = await indexExternalResources(db, ai, c.env.VECTORIZE_DB, c.env.Z_AI_API_KEY, githubPat, sourceId);
 
@@ -937,13 +936,13 @@ aiRouter.post("/reindex-external", ensureAdmin, persistentRateLimitMiddleware(50
   });
 });
 
-aiRouter.get("/external-sources", ensureAdmin, async (c) => {
+aiRouter.get("/external-sources", ensureAdmin, async (c: Context<AppEnv>) => {
   const db = c.get("db") as Kysely<DB>;
   const sources = await db.selectFrom("external_knowledge_sources").selectAll().execute();
   return c.json(sources);
 });
 
-aiRouter.post("/external-sources", ensureAdmin, async (c) => {
+aiRouter.post("/external-sources", ensureAdmin, async (c: Context<AppEnv>) => {
   const db = c.get("db") as Kysely<DB>;
   const body = await c.req.json();
   const id = crypto.randomUUID();
@@ -957,14 +956,14 @@ aiRouter.post("/external-sources", ensureAdmin, async (c) => {
   return c.json({ success: true, id });
 });
 
-aiRouter.delete("/external-sources/:id", ensureAdmin, async (c) => {
+aiRouter.delete("/external-sources/:id", ensureAdmin, async (c: Context<AppEnv>) => {
   const db = c.get("db") as Kysely<DB>;
   const id = c.req.param("id") as string;
   await db.deleteFrom("external_knowledge_sources").where("id", "=", id).execute();
   return c.json({ success: true });
 });
 
-aiRouter.get("/chat-session/:id", async (c) => {
+aiRouter.get("/chat-session/:id", async (c: Context<AppEnv>) => {
   const db = c.get("db") as Kysely<DB>;
   const id = c.req.param("id") as string;
   try {
