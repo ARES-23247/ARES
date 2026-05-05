@@ -93,7 +93,9 @@ export default function SimulationPlayground() {
   const [savedSims, setSavedSims] = useState<SavedSim[]>([]);
   const [showLibrary, setShowLibrary] = useState(false);
   const [isLoadingSims, setIsLoadingSims] = useState(false);
-  
+  const [isLoadingSim, setIsLoadingSim] = useState(false);
+  const [isLoadingGithubSim, setIsLoadingGithubSim] = useState(false);
+
   const [githubSims, setGithubSims] = useState<GithubSim[]>([]);
   const [isLoadingGithubSims, setIsLoadingGithubSims] = useState(false);
   
@@ -444,13 +446,14 @@ export default function SimulationPlayground() {
   };
 
   const handleLoadSim = async (id: string) => {
+    setIsLoadingSim(true);
     try {
       const res = await fetch(`/api/simulations/${id}`);
       if (!res.ok) throw new Error("Not found");
       const data = await res.json() as { simulation: { id: string; name: string; files: Record<string, string> | string, type?: string } };
       const sim = data.simulation;
       let parsedFiles: Record<string, string> = {};
-      
+
       if (typeof sim.files === "object") {
          parsedFiles = sim.files as Record<string, string>;
       } else if (typeof sim.files === "string") {
@@ -460,11 +463,11 @@ export default function SimulationPlayground() {
            parsedFiles = { [sim.id]: sim.files };
          }
       }
-      
+
       if (Object.keys(parsedFiles).length === 0) {
         parsedFiles = { "SimComponent.jsx": "" };
       }
-      
+
       setFiles(parsedFiles);
       setActiveFile(Object.keys(parsedFiles)[0]);
       setSimName(sim.name);
@@ -474,7 +477,7 @@ export default function SimulationPlayground() {
 
       // Load chat for this sim from sessionStorage
       setChatMessages(loadChatMessages(sim.id));
-      
+
       // Update URL to match loaded sim
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set("simId", sim.id.toString());
@@ -484,10 +487,15 @@ export default function SimulationPlayground() {
       toast.success(`Loaded: ${sim.name}`);
     } catch (e) {
       logger.error("[SimPlayground] Load failed:", e);
+      const { toast } = await import("sonner");
+      toast.error("Failed to load simulation");
+    } finally {
+      setIsLoadingSim(false);
     }
   };
 
   const handleLoadGithubSim = async (sim: GithubSim) => {
+    setIsLoadingGithubSim(true);
     try {
       // New folder structure: path is like "./armkg", file is at "armkg/index.tsx"
       const folder = sim.path.replace('./', '');
@@ -497,7 +505,7 @@ export default function SimulationPlayground() {
       const code = await res.text();
 
       const parsedFiles = { [filename]: code };
-      
+
       setFiles(parsedFiles);
       setActiveFile(filename);
       setSimName(sim.name);
@@ -507,7 +515,7 @@ export default function SimulationPlayground() {
 
       // Load chat for this GitHub sim from sessionStorage
       setChatMessages(loadChatMessages(`github:${sim.id}`));
-      
+
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set("simId", `github:${sim.id}`);
       window.history.replaceState({}, "", newUrl.toString());
@@ -518,6 +526,8 @@ export default function SimulationPlayground() {
       logger.error("[SimPlayground] GitHub Load failed:", e);
       const { toast } = await import("sonner");
       toast.error(`Failed to load ${sim.name} from GitHub`);
+    } finally {
+      setIsLoadingGithubSim(false);
     }
   };
 
