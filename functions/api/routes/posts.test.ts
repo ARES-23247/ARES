@@ -1,8 +1,10 @@
- 
+
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { mockExecutionContext, flushWaitUntil } from "../../../src/test/utils";
+import { MockKysely, TestEnv } from "../../../src/test/types";
 import postsRouter from "./posts";
 import { createMockPost } from "../../../src/test/factories/contentFactory";
 
@@ -32,8 +34,8 @@ vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
-    ensureAuth: async (_c: unknown, next: () => Promise<void>) => next(),
+    ensureAdmin: async (_c: Context<TestEnv>, next: () => Promise<void>) => next(),
+    ensureAuth: async (_c: Context<TestEnv>, next: () => Promise<void>) => next(),
     logAuditAction: vi.fn().mockResolvedValue(true),
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
   };
@@ -48,10 +50,9 @@ vi.mock("../../../functions/utils/postHistory", () => ({
 }));
 
 describe("Hono Backend - /posts Router", () => {
-  
-   
-  let mockDb: any;
-  let testApp: Hono<any>;
+
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
   const env = { 
     DB: {
       prepare: vi.fn().mockReturnThis(),
@@ -72,7 +73,7 @@ describe("Hono Backend - /posts Router", () => {
       select: vi.fn().mockReturnThis(),
       where: vi.fn().mockImplementation((arg1) => {
         if (typeof arg1 === "function") {
-          const ebMock: any = vi.fn().mockReturnThis();
+          const ebMock = vi.fn().mockReturnThis();
           ebMock.or = vi.fn().mockReturnThis();
           ebMock.and = vi.fn().mockReturnThis();
           ebMock.val = vi.fn().mockReturnThis();
@@ -103,10 +104,10 @@ describe("Hono Backend - /posts Router", () => {
       }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
-      c.set("user", { id: "1", email: "admin@test.com", role: "admin" });
+      c.set("sessionUser", { id: "1", email: "admin@test.com", name: null, nickname: "Admin", image: null, role: "admin", member_type: "student" });
       await next();
     });
     testApp.route("/", postsRouter);
@@ -202,7 +203,7 @@ describe("Hono Backend - /posts Router", () => {
   });
 
   it("GET /admin/:slug - get post details", async () => {
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ slug: "test", season_id: "5", is_deleted: 1, ast: "{\"type\":\"doc\"}" });
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ slug: "test", title: "Test Post", season_id: "5", is_deleted: 1, ast: "{\"type\":\"doc\"}" });
     const res = await testApp.request("/admin/test", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -217,7 +218,16 @@ describe("Hono Backend - /posts Router", () => {
 
   it("GET /admin/:slug/history - get post history", async () => {
     const { getPostHistory } = await import("../../../functions/utils/postHistory");
-    (getPostHistory as any).mockResolvedValueOnce([{ id: "1", title: "Old Post" }]);
+    vi.mocked(getPostHistory).mockResolvedValueOnce([{
+      id: 1,
+      slug: "old-post",
+      title: "Old Post",
+      author: "admin@test.com",
+      thumbnail: null,
+      snippet: "Old snippet",
+      ast: "{\"type\":\"doc\"}",
+      created_at: "2024-01-01T00:00:00Z",
+    }]);
     const res = await testApp.request("/admin/test/history", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
@@ -282,7 +292,7 @@ describe("Hono Backend - /posts Router", () => {
 
   it("POST /admin/:slug/approve - handles internal error", async () => {
     const { approvePost } = await import("../../../functions/utils/postHistory");
-    (approvePost as any).mockRejectedValueOnce(new Error("Fail"));
+    vi.mocked(approvePost).mockRejectedValueOnce(new Error("Fail"));
     const res = await testApp.request("/admin/test/approve", { 
       method: "POST",
       body: JSON.stringify({}),
@@ -325,7 +335,7 @@ describe("Hono Backend - /posts Router", () => {
   it("POST /admin/:slug/repush - repush socials error", async () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({ title: "Test" });
     const { dispatchSocials } = await import("../../../functions/utils/socialSync");
-    (dispatchSocials as any).mockRejectedValueOnce(new Error("Social failed"));
+    vi.mocked(dispatchSocials).mockRejectedValueOnce(new Error("Social failed"));
     
     const res = await testApp.request("/admin/test-post/repush", {
       method: "POST",
@@ -399,7 +409,7 @@ describe("Hono Backend - /posts Router", () => {
 
   it("POST /admin/save - handles social dispatch failure gracefully", async () => {
     const { dispatchSocials } = await import("../../../functions/utils/socialSync");
-    (dispatchSocials as any).mockRejectedValueOnce(new Error("Fail"));
+    vi.mocked(dispatchSocials).mockRejectedValueOnce(new Error("Fail"));
     
     const postData = {
       title: "New Post Social Fail",
@@ -426,7 +436,7 @@ describe("Hono Backend - /posts Router", () => {
   it("POST /admin/:slug - non-admin creates shadow revision", async () => {
     // Override getSessionUser for this test
     const { getSessionUser } = await import("../middleware");
-    (getSessionUser as any).mockResolvedValueOnce({ id: "2", email: "author@test.com", role: "author" });
+    vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "2", email: "author@test.com", role: "author" });
     
     const res = await testApp.request("/admin/test-post", {
       method: "POST",
@@ -442,8 +452,8 @@ describe("Hono Backend - /posts Router", () => {
 
   it("GET /admin/list - admin list fallback when schema is old", async () => {
     mockDb.execute.mockRejectedValueOnce(new Error("Column not found"));
-    mockDb.execute.mockResolvedValueOnce([{ slug: "fallback-post", is_deleted: 0 }]); // fallback query
-    
+    mockDb.execute.mockResolvedValueOnce([{ slug: "fallback-post", title: "Fallback Post", is_deleted: 0 }]); // fallback query
+
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -452,7 +462,7 @@ describe("Hono Backend - /posts Router", () => {
 
   it("GET /admin/:slug/history - handles error", async () => {
     const { getPostHistory } = await import("../../../functions/utils/postHistory");
-    (getPostHistory as any).mockRejectedValueOnce(new Error("History fail"));
+    vi.mocked(getPostHistory).mockRejectedValueOnce(new Error("History fail"));
     
     const res = await testApp.request("/admin/test/history", {}, env, mockExecutionContext);
     expect(res.status).toBe(500);
@@ -495,7 +505,7 @@ describe("Hono Backend - /posts Router", () => {
 
   it("POST /admin/save - handles notifyByRole failure gracefully", async () => {
     const { notifyByRole } = await import("../../../functions/utils/notifications");
-    (notifyByRole as any).mockRejectedValueOnce(new Error("Notify fail"));
+    vi.mocked(notifyByRole).mockRejectedValueOnce(new Error("Notify fail"));
     
     const postData = {
       title: "Draft Post Error",
@@ -518,7 +528,7 @@ describe("Hono Backend - /posts Router", () => {
 
   it("POST /admin/save - handles synchronous error in Zulip prepare", async () => {
     const { sendZulipMessage } = await import("../../../functions/utils/zulipSync");
-    (sendZulipMessage as any).mockImplementationOnce(() => { throw new Error("Sync Fail"); });
+    vi.mocked(sendZulipMessage).mockImplementationOnce(() => { throw new Error("Sync Fail"); });
     
     const postData = {
       title: "Sync Fail Post",
@@ -536,7 +546,7 @@ describe("Hono Backend - /posts Router", () => {
 
   it("POST /admin/save - handles async error in Zulip prepare", async () => {
     const { sendZulipMessage } = await import("../../../functions/utils/zulipSync");
-    (sendZulipMessage as any).mockRejectedValueOnce(new Error("Async Fail"));
+    vi.mocked(sendZulipMessage).mockRejectedValueOnce(new Error("Async Fail"));
     
     const postData = {
       title: "Async Fail Post",
