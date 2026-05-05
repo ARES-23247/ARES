@@ -4,6 +4,7 @@ import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical
 import { loader } from "@monaco-editor/react";
 import { validateIdParam } from "../utils/security";
 import { logger } from "../utils/logger";
+import { getSimChatKey } from "../utils/storageKeys";
 
 // Monaco Editor CDN Configuration
 // SECURITY: Version pinned to 0.52.2 for supply chain stability.
@@ -125,7 +126,6 @@ export default function SimulationPlayground() {
   // Chat state
   // Use sessionStorage instead of localStorage for better security (clears on browser close)
   // Implement retention policy: max 50 messages, sanitize before storage
-  const STORAGE_PREFIX = 'sim_chat_v2_';
   const MAX_CHAT_MESSAGES = 50;
 
   const loadChatMessages = (simId: string | null): ChatMessage[] => {
@@ -134,7 +134,7 @@ export default function SimulationPlayground() {
       const rawIdParam = new URLSearchParams(window.location.search).get("simId");
       const validatedId = rawIdParam ? validateIdParam(rawIdParam) : null;
       const idParam = simId || (validatedId || 'new');
-      const stored = sessionStorage.getItem(`${STORAGE_PREFIX}${idParam}`);
+      const stored = sessionStorage.getItem(getSimChatKey(idParam));
       if (stored) {
         const parsed = JSON.parse(stored) as ChatMessage[];
         // Validate structure
@@ -155,7 +155,7 @@ export default function SimulationPlayground() {
       const id = validatedSimId || 'new';
       // Apply retention limit before saving
       const limited = messages.slice(-MAX_CHAT_MESSAGES);
-      sessionStorage.setItem(`${STORAGE_PREFIX}${id}`, JSON.stringify(limited));
+      sessionStorage.setItem(getSimChatKey(id), JSON.stringify(limited));
     } catch (e) {
       logger.error("[SimPlayground] Failed to save chat to storage:", e);
     }

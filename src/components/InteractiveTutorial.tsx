@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { sanitizeHtml, signTutorialProgress, verifyTutorialProgress } from '../utils/security';
 import { api } from '../api/client';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 import './InteractiveTutorial.css';
 
 export interface TutorialStep {
@@ -56,11 +57,11 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
       const progressArray = [...next];
       try {
         const signedData = await signTutorialProgress(progressArray);
-        localStorage.setItem(`tutorial-${title}-progress`, JSON.stringify(signedData));
+                localStorage.setItem(STORAGE_KEYS.TUTORIAL_PROGRESS(title), JSON.stringify(signedData));
       } catch (e) {
         console.error("Failed to sign tutorial progress", e);
         // Fallback to unsigned storage if signing fails
-        localStorage.setItem(`tutorial-${title}-progress`, JSON.stringify(progressArray));
+                localStorage.setItem(STORAGE_KEYS.TUTORIAL_PROGRESS(title), JSON.stringify(progressArray));
       }
 
       // Sync to Cloudflare conditionally
@@ -100,7 +101,7 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
   // Load saved progress with signature verification
   useEffect(() => {
     const loadProgress = async () => {
-      const saved = localStorage.getItem(`tutorial-${title}-progress`);
+            const saved = localStorage.getItem(STORAGE_KEYS.TUTORIAL_PROGRESS(title));
       if (saved) {
         try {
           const parsed = JSON.parse(saved);

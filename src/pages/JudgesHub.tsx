@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import Turnstile from "../components/Turnstile";
 import { api } from "../api/client";
 import SEO from "../components/SEO";
+import { STORAGE_KEYS } from "../utils/storageKeys";
 
 interface PortfolioData {
   docs: Array<{
@@ -60,24 +61,24 @@ export default function JudgesHub() {
         body: { code, turnstileToken }
       });
       if (res.status === 200 && res.body.success) {
-        sessionStorage.setItem("ares_judge_code", code);
+                sessionStorage.setItem(STORAGE_KEYS.JUDGE_CODE, code);
         setIsAuthenticated(true);
         fetchPortfolio(code);
       } else {
         const body = res.body as { error?: string };
         setError(body?.error || "Invalid access code.");
-        sessionStorage.removeItem("ares_judge_code");
+                sessionStorage.removeItem(STORAGE_KEYS.JUDGE_CODE);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error. Please try again.");
-      sessionStorage.removeItem("ares_judge_code");
+              sessionStorage.removeItem(STORAGE_KEYS.JUDGE_CODE);
     } finally {
       setIsLoading(false);
     }
   }, [fetchPortfolio, turnstileToken]);
 
   useEffect(() => {
-    const savedCode = sessionStorage.getItem("ares_judge_code");
+    const savedCode =     sessionStorage.getItem(STORAGE_KEYS.JUDGE_CODE);
     if (savedCode) {
       setTimeout(() => {
         handleLogin(savedCode);
@@ -86,7 +87,7 @@ export default function JudgesHub() {
   }, [handleLogin]);
 
   const logout = () => {
-    sessionStorage.removeItem("ares_judge_code");
+            sessionStorage.removeItem(STORAGE_KEYS.JUDGE_CODE);
     setIsAuthenticated(false);
     setPortfolio(null);
     setAccessCode("");
