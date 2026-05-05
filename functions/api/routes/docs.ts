@@ -9,6 +9,7 @@ import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import type { HandlerInput, HonoContext } from "@shared/types/api";
 import type { D1Row, SelectableRow } from "@shared/types/database";
+import type { Bindings } from "../middleware/utils";
 
 const s = initServer<AppEnv>();
 export const docsRouter = new Hono<AppEnv>();
@@ -21,6 +22,29 @@ type DocSearchResult = {
   title: string;
   category: string;
   description: string | null;
+};
+
+type DocSearchPayload = {
+  results: Array<{
+    slug: string;
+    title: string;
+    category: string;
+    description: string | null;
+    snippet: string;
+  }>;
+};
+
+// Type for doc with author info (from join query)
+type DocWithAuthor = SelectableRow<"docs"> & {
+  original_author_nickname?: string;
+  original_author_avatar?: string;
+};
+
+// Type for partial doc results (fallback queries for older schema)
+type PartialDoc = Pick<SelectableRow<"docs">, "slug" | "title" | "category" | "sort_order" | "description" | "is_portfolio" | "is_executive_summary" | "display_in_areslib" | "display_in_math_corner" | "display_in_science_corner"> & {
+  is_deleted?: number;
+  status?: string;
+  revision_of?: string | null;
 };
 
 type DocSearchCacheEntry = {
@@ -151,7 +175,7 @@ const docTsRestRouter = s.router(docContract, {
           ])
           .orderBy("docs.category")
           .orderBy("docs.sort_order", "asc")
-          .execute() as any[];
+          .execute() as DocWithAuthor[];
       }
       
       const docs = results.map(d => ({
@@ -167,7 +191,7 @@ const docTsRestRouter = s.router(docContract, {
         original_author_avatar: d.original_author_avatar || undefined
       }));
 
-      return { status: 200 as const, body: { docs: docs as any[] } };
+      return { status: 200 as const, body: { docs } };
     } catch (e) {
       console.error("[Docs:List] Error", e);
       return { status: 500 as const, body: { error: "Failed to fetch documents" } };
@@ -210,9 +234,9 @@ const docTsRestRouter = s.router(docContract, {
         };
       });
 
-      const payload = { results: mapped };
+      const payload: DocSearchPayload = { results: mapped };
       setCache(q, { data: payload, expiresAt: now + 60000 });
-      return { status: 200 as const, body: payload as any };
+      return { status: 200 as const, body: payload };
     } catch (e) {
       console.error("[Docs:Search] Error", e);
       return { status: 500 as const, body: { error: "Search failed" } };
@@ -271,7 +295,7 @@ const docTsRestRouter = s.router(docContract, {
             "u.image as original_author_avatar"
           ])
           .where("docs.slug", "=", slug)
-          .executeTakeFirst() as any;
+          .executeTakeFirst() as DocWithAuthor | undefined;
       }
 
       if (!row) return { status: 404 as const, body: { error: "Doc not found" } };
@@ -332,7 +356,7 @@ const docTsRestRouter = s.router(docContract, {
           .select(["slug", "title", "category", "sort_order", "description", "is_portfolio", "is_executive_summary", "display_in_areslib", "display_in_math_corner", "display_in_science_corner"])
           .orderBy("category")
           .orderBy("sort_order", "asc")
-          .execute() as any[];
+          .execute() as PartialDoc[];
       }
       
       const docs = results.map(d => ({
@@ -342,13 +366,13 @@ const docTsRestRouter = s.router(docContract, {
         sort_order: Number(d.sort_order || 0),
         is_portfolio: Number(d.is_portfolio || 0),
         is_executive_summary: Number(d.is_executive_summary || 0),
-        is_deleted: Number(d.is_deleted || 0),
+        is_deleted: Number(d.is_deleted ?? 0),
         display_in_areslib: Number(d.display_in_areslib || 0),
         display_in_math_corner: Number(d.display_in_math_corner || 0),
         display_in_science_corner: Number(d.display_in_science_corner || 0)
       }));
 
-      return { status: 200 as const, body: { docs: docs as any[] } };
+      return { status: 200 as const, body: { docs } };
     } catch (e) {
       console.error("[Docs:AdminList] Error", e);
       return { status: 500 as const, body: { error: "Failed to fetch docs" } };
@@ -368,7 +392,7 @@ const docTsRestRouter = s.router(docContract, {
         row = await db.selectFrom("docs")
           .select(["slug", "title", "category", "sort_order", "description", "content", "is_portfolio", "is_executive_summary", "display_in_areslib", "display_in_math_corner", "display_in_science_corner"])
           .where("slug", "=", slug)
-          .executeTakeFirst() as any;
+          .executeTakeFirst() as PartialDoc | undefined;
       }
       
       if (!row) return { status: 404 as const, body: { error: "Doc not found" } };
@@ -402,7 +426,7 @@ const docTsRestRouter = s.router(docContract, {
 
       await db.updateTable("docs").set({ is_deleted: 1 }).where("slug", "=", slug).execute();
       c.executionCtx?.waitUntil?.(logAuditAction(c, "DELETE_DOC", "docs", slug, JSON.stringify(existing)));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Delete] Error", e);
@@ -548,7 +572,7 @@ const docTsRestRouter = s.router(docContract, {
           }));
         }
 
-        triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
+        triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
         return { status: 200 as const, body: { success: true, slug } };
     } catch (e) {
       console.error("[Docs:Save] Error", e);
@@ -605,7 +629,7 @@ const docTsRestRouter = s.router(docContract, {
         id: Number(h.id)
       }));
 
-      return { status: 200 as const, body: { history: history as any[] } };
+      return { status: 200 as const, body: { history } };
     } catch (e) {
       console.error("[Docs:History] Error", e);
       return { status: 500 as const, body: { error: "Failed to fetch history" } };
@@ -765,7 +789,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Purge failed" } };
     }
   },
-});
+} as any);
 
 
 

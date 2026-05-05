@@ -61,6 +61,30 @@
       "requiresContext": false
     },
     {
+      "id": "nnBiology",
+      "name": "Sim 0: The Single Neuron",
+      "path": "./nn-biology",
+      "requiresContext": false
+    },
+    {
+      "id": "nnIntro",
+      "name": "Sim 1: Neural Networks Basics",
+      "path": "./nn-intro",
+      "requiresContext": false
+    },
+    {
+      "id": "nnLlm",
+      "name": "Sim 3: LLM Attention",
+      "path": "./nn-llm",
+      "requiresContext": false
+    },
+    {
+      "id": "nnVision",
+      "name": "Sim 2: Machine Vision",
+      "path": "./nn-vision",
+      "requiresContext": false
+    },
+    {
       "id": "performance",
       "name": "AdvantageScope Telemetry Dashboard",
       "path": "./performance",
@@ -127,5 +151,5 @@
       "requiresContext": true
     }
   ],
-  "_generated": "2026-05-05T13:09:16.615Z"
+  "_generated": "2026-05-05T14:05:48.204Z"
 }

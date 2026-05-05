@@ -8,6 +8,7 @@ import { DB } from "../../../../shared/schemas/database";
 import { initServer } from "ts-rest-hono";
 import { rrulestr } from 'rrule';
 import type { HandlerInput, HonoContext } from "@shared/types/api";
+import type { SelectableRow } from "@shared/types/database";
 
 import type { SocialConfig } from "../../middleware";
 
@@ -61,6 +62,14 @@ type SocialsBody = {
   socials?: string[];
 };
 
+// Type for partial event results from fallback queries (older schema compatibility)
+type PartialEvent = Pick<SelectableRow<"events">, "id" | "title" | "category" | "date_start" | "date_end" | "location" | "description" | "cover_image" | "season_id" | "is_deleted"> & {
+  status?: string | null;
+  meeting_notes?: string | null;
+  zulip_stream?: string | null;
+  zulip_topic?: string | null;
+};
+
 export const eventHandlers = {
   getEvents: async (input: HandlerInput, c: HonoContext) => {
     try {
@@ -111,7 +120,7 @@ export const eventHandlers = {
           .orderBy("date_start", "desc")
           .limit(Number(limit) || 50)
           .offset(Number(offset) || 0)
-          .execute() as any[];
+          .execute() as PartialEvent[];
       }
 
       // Resolve location addresses from the locations registry
@@ -128,9 +137,9 @@ export const eventHandlers = {
         ...e,
         season_id: e.season_id ? Number(e.season_id) : null,
         is_deleted: Number(e.is_deleted || 0),
-        status: (e as any).status || "published",
-        category: (e as any).category || "internal",
-        meeting_notes: (e as any).meeting_notes || null,
+        status: e.status ?? "published",
+        category: e.category ?? "internal",
+        meeting_notes: e.meeting_notes ?? null,
         location_address: e.location ? (locationMap[e.location] || null) : null
       }));
 
@@ -223,7 +232,7 @@ export const eventHandlers = {
       } catch {
         results = await baseQuery
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
-          .execute() as any[];
+          .execute() as PartialEvent[];
       }
       
       const lastSyncRow = await db.selectFrom("settings").select("value").where("key", "=", "LAST_CALENDAR_SYNC").executeTakeFirst();
@@ -232,9 +241,9 @@ export const eventHandlers = {
         ...e,
         season_id: e.season_id ? Number(e.season_id) : null,
         is_deleted: Number(e.is_deleted || 0),
-        status: (e as any).status || "published",
-        category: (e as any).category || "internal",
-        meeting_notes: (e as any).meeting_notes || null
+        status: e.status ?? "published",
+        category: e.category ?? "internal",
+        meeting_notes: e.meeting_notes ?? null
       }));
 
       const nextCursor = results.length === (Number(limit) || 100) ? results[results.length - 1].date_start : null;
@@ -260,21 +269,21 @@ export const eventHandlers = {
         row = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
           .where("id", "=", id)
-          .executeTakeFirst() as any;
+          .executeTakeFirst() as PartialEvent | undefined;
       }
 
       if (!row) return { status: 404 as const, body: { error: "Event not found" } };
 
       return { 
         status: 200 as const, 
-        body: { 
+        body: {
           event: {
             ...row,
             season_id: row.season_id ? Number(row.season_id) : null,
             is_deleted: Number(row.is_deleted || 0),
-            status: (row as any).status || "published",
-            category: (row as any).category || "internal",
-            meeting_notes: (row as any).meeting_notes || null
+            status: row.status ?? "published",
+            category: row.category ?? "internal",
+            meeting_notes: row.meeting_notes ?? null
           }
         }
       };

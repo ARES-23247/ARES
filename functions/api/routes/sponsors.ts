@@ -112,7 +112,7 @@ const sponsorHandlers = {
       return { status: 200 as const, body: { sponsor, metrics } };
     } catch (e) {
       console.error("[Sponsors:ROI] Error", e);
-      return { status: 500 as const, body: { error: "Failed to fetch ROI" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch ROI" } };
     }
   },
   adminList: async (_: HandlerInput, c: HonoContext) => {
@@ -233,7 +233,7 @@ const sponsorHandlers = {
   },
 };
 
-const sponsorTsRestRouter = s.router(sponsorContract, sponsorHandlers);
+const sponsorTsRestRouter = s.router(sponsorContract, sponsorHandlers as any);
 
 // WR-12: Add rate limiting to public sponsor endpoint to prevent scraping
 sponsorsRouter.use("*", rateLimitMiddleware(15, 60));

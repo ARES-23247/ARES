@@ -10,7 +10,7 @@ import { DB } from "../../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 const eventsRouter = new Hono<AppEnv>();
 
-const eventTsRestRouter = s.router(eventContract, eventHandlers);
+const eventTsRestRouter = s.router(eventContract, eventHandlers as any);
 
 import { edgeCacheMiddleware } from "../../middleware/cache";
 

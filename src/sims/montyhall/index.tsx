@@ -27,10 +27,10 @@ export default function SimComponent() {
 
   const [history, setHistory] = useState<RoundResult[]>([]);
   const [autoRunning, setAutoRunning] = useState(false);
-  const [autoSpeed, setAutoSpeed] = useState(50);
+  const [autoSpeed, setAutoSpeed] = useState(2); // Default to a slower speed
   const [autoStrategy, setAutoStrategy] = useState<'switch' | 'stay' | 'both'>('both');
   const autoRef = useRef(false);
-  const speedRef = useRef(50);
+  const speedRef = useRef(2);
   const strategyRef = useRef<'switch' | 'stay' | 'both'>('both');
 
   useEffect(() => { speedRef.current = autoSpeed; }, [autoSpeed]);
@@ -170,21 +170,9 @@ export default function SimComponent() {
         return;
       }
 
-      // If speed > 100, just run batches instantly
-      if (speedRef.current > 100) {
-        while (!isCancelled && autoRef.current && history.length < MAX_AUTO_ROUNDS) {
-          runAutoBatch(Math.floor(speedRef.current / 10));
-          await new Promise(r => setTimeout(r, 50));
-        }
-        if (history.length >= MAX_AUTO_ROUNDS) {
-          setAutoRunning(false);
-        }
-        return;
-      }
-
-      // Slower visual autoplay
+      // Visual autoplay loop
       while (!isCancelled && autoRef.current && history.length < MAX_AUTO_ROUNDS) {
-        const delay = Math.max(50, 1000 - (speedRef.current * 9));
+        const delay = 2000 / speedRef.current;
         
         // Pick Phase
         const carDoor = Math.floor(Math.random() * numDoors);
@@ -197,6 +185,7 @@ export default function SimComponent() {
         setRevealedDoors([]);
         setFinalPick(null);
         setWon(null);
+        setMessage(`Auto Pick: Door ${playerInitial + 1}`);
         
         await new Promise(r => { timeoutId = setTimeout(r, delay); });
         if (isCancelled || !autoRef.current) break;
@@ -211,6 +200,7 @@ export default function SimComponent() {
         const toReveal = shuffledGoats.slice(0, numToReveal);
         setRevealedDoors(toReveal);
         setPhase('revealed');
+        setMessage(`Host reveals goat${numToReveal > 1 ? 's' : ''}`);
         
         await new Promise(r => { timeoutId = setTimeout(r, delay); });
         if (isCancelled || !autoRef.current) break;
@@ -226,14 +216,23 @@ export default function SimComponent() {
         const didWin = newDoors[finalDoor] === 'car';
         setWon(didWin);
         setPhase('result');
-        setHistory(prev => [...prev, {
-          initialPick: playerInitial,
-          finalPick: finalDoor,
-          switched: doSwitch,
-          won: didWin,
-        }]);
+        setMessage(didWin 
+          ? (doSwitch ? '🎉 Auto switched and WON!' : '🎉 Auto stayed and WON!') 
+          : (doSwitch ? '🐐 Auto switched to a goat!' : '🐐 Auto stayed on a goat!')
+        );
+
+        setHistory(prev => {
+          const newHistory = [...prev, {
+            initialPick: playerInitial,
+            finalPick: finalDoor,
+            switched: doSwitch,
+            won: didWin,
+          }];
+          return newHistory.slice(-MAX_HISTORY);
+        });
         
-        await new Promise(r => { timeoutId = setTimeout(r, delay); });
+        // Pause longer on result so user can see final choices
+        await new Promise(r => { timeoutId = setTimeout(r, delay * 2); });
       }
     };
 
@@ -625,11 +624,11 @@ export default function SimComponent() {
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '11px', color: 'var(--ares-muted)', marginBottom: '4px' }}>
-              <span>Speed</span><span>{autoSpeed} rounds/tick</span>
+              <span>Speed</span><span>{autoSpeed}x</span>
             </div>
             <input
-              aria-label="Auto simulation speed in rounds per tick"
-              type="range" min={1} max={200} step={1}
+              aria-label="Auto simulation speed"
+              type="range" min={1} max={100} step={1}
               value={autoSpeed}
               onChange={e => setAutoSpeed(parseInt(e.target.value, 10))}
               style={{ width: '100%' }}

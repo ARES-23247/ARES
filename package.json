@@ -17,7 +17,8 @@
     "test:e2e": "playwright test",
     "pa11y": "pa11y-ci",
     "audit:security": "npm audit --audit-level=high",
-    "generate:sims": "tsx scripts/generate-sim-registry.ts"
+    "generate:sims": "tsx scripts/generate-sim-registry.ts",
+    "postinstall": "patch-package"
   },
   "overrides": {
     "miniflare": {
@@ -197,6 +198,7 @@
     "msw": "^2.14.3",
     "pa11y-ci": "^4.1.0",
     "partykit": "^0.0.115",
+    "patch-package": "^8.0.1",
     "postcss": "^8",
     "rollup-plugin-visualizer": "^7.0.1",
     "start-server-and-test": "^3.0.2",

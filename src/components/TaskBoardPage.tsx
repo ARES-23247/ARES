@@ -155,8 +155,11 @@ export default function TaskBoardPage() {
     party: "kanban",
     onOpen(e) {
       if (!session?.user) return;
+      const target = e.target as WebSocket;
+      if (!target) return;
+      
       // Broadcast our presence when we join
-      e.target.send(JSON.stringify({ 
+      target.send(JSON.stringify({ 
         type: "presence", 
         userId: session.user.id, 
         name: session.user.name || "ARES Member", 

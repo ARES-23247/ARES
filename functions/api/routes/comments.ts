@@ -117,7 +117,7 @@ const commentHandlers = {
           `**${user.name || 'ARES Member'}** commented on ${targetType} \`${targetId}\`:\n\n${content}`
         );
         if (msgId) {
-          await db.updateTable("comments").set({ zulip_message_id: String(msgId) }).where("id", "=", id as any).execute();
+          await db.updateTable("comments").set({ zulip_message_id: String(msgId) }).where("id", "=", id).execute();
         }
       })().catch((err) => console.error("[Comments:ZulipSync] Error", err)));
 
@@ -176,7 +176,7 @@ const commentHandlers = {
 
       await db.updateTable("comments")
         .set({ content })
-        .where("id", "=", id as any)
+        .where("id", "=", id)
         .execute();
 
       // IN-08: Audit log comment updates
@@ -215,7 +215,7 @@ const commentHandlers = {
 
       await db.updateTable("comments")
         .set({ is_deleted: 1 })
-        .where("id", "=", id as any)
+        .where("id", "=", id)
         .execute();
 
       // IN-08: Audit log comment deletion
@@ -237,7 +237,7 @@ const commentHandlers = {
   },
 };
 
-const commentTsRestRouter = s.router(commentContract, commentHandlers);
+const commentTsRestRouter = s.router(commentContract, commentHandlers as any);
 
 commentsRouter.use("/:targetType/:targetId", ensureAuth);
 

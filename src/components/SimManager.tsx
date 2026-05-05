@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { FolderOpen, AlertCircle, Code, Zap, Check, Copy, Plus, Folder, RefreshCw } from "lucide-react";
+import { FolderOpen, AlertCircle, Code, Zap, Check, Copy, Plus, Folder, RefreshCw, Play, X } from "lucide-react";
 import { toast } from "sonner";
-import { SIM_METADATA } from "./generated/sim-registry";
+import { SIM_METADATA, SIM_COMPONENTS } from "./generated/sim-registry";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Suspense } from "react";
 
 interface SimMetadata {
   id: string;
@@ -14,6 +16,9 @@ export default function SimManager() {
   const sims = SIM_METADATA;
   const [copiedJson, setCopiedJson] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeSim, setActiveSim] = useState<SimMetadata | null>(null);
+
+  const ActiveComponent = activeSim ? SIM_COMPONENTS[activeSim.id] : null;
 
   const generateRegistry = async () => {
     setIsGenerating(true);
@@ -169,10 +174,50 @@ export default function SimManager() {
                   {getMarkdownTag(sim)}
                 </button>
               </div>
+
+              <div className="mt-4 pt-2 border-t border-ares-gold/10">
+                <button
+                  onClick={() => setActiveSim(sim)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-ares-red/10 text-ares-red hover:bg-ares-red/20 rounded text-xs font-semibold transition w-full justify-center"
+                >
+                  <Play className="w-3 h-3" />
+                  Test / Preview
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Preview Modal */}
+      <Dialog.Root open={activeSim !== null} onOpenChange={(open) => !open && setActiveSim(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/80 z-50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <Dialog.Content className="fixed left-[50%] top-[50%] z-50 grid w-[95vw] max-w-6xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-ares-gold/20 bg-obsidian-900 p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 rounded-xl flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center mb-2">
+              <Dialog.Title className="text-xl font-bold text-white flex items-center gap-2">
+                <Play className="w-5 h-5 text-ares-red" />
+                {activeSim?.name}
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <button className="rounded-full p-1.5 hover:bg-white/10 text-gray-400 hover:text-white transition">
+                  <X className="h-5 w-5" />
+                  <span className="sr-only">Close</span>
+                </button>
+              </Dialog.Close>
+            </div>
+            <div className="flex-1 min-h-[500px] bg-obsidian-950 rounded-lg border border-white/5 overflow-hidden relative">
+              <Suspense fallback={
+                <div className="absolute inset-0 flex items-center justify-center text-ares-gold/50">
+                  <RefreshCw className="w-6 h-6 animate-spin" />
+                </div>
+              }>
+                {ActiveComponent && <ActiveComponent />}
+              </Suspense>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* Registry File Info */}
       <div className="mt-8 p-4 bg-obsidian-800 rounded-lg border border-white/10">

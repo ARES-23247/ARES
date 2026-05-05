@@ -36,10 +36,27 @@ export default class YjsServer implements Party.Server {
       throw new Error(`Invalid room_id format: ${roomId}`);
     }
 
-    await onConnect(conn, this.room, {
-      // Use explicit snapshot persistence (persist: true is deprecated)
-      // See: https://docs.partykit.io/reference/y-partykit-api/#persistence
-      persist: { mode: "snapshot" },
-    });
+    try {
+      await onConnect(conn, this.room, {
+        // Use explicit snapshot persistence (persist: true is deprecated)
+        // See: https://docs.partykit.io/reference/y-partykit-api/#persistence
+        persist: { mode: "snapshot" },
+      });
+      console.log(`[YjsServer] successfully connected and persisted room: ${roomId}`);
+    } catch (e) {
+      console.error(`[YjsServer] Error during onConnect for room ${roomId}:`, e);
+      throw e;
+    }
+  }
+
+  async onMessage(message: string | ArrayBuffer, conn: Party.Connection) {
+    console.log(`[PartyKit-onMessage] message type: ${typeof message}, proto: ${Object.prototype.toString.call(message)}, constructor: ${message && (message as any).constructor ? (message as any).constructor.name : 'null'}`);
+    if (message instanceof ArrayBuffer) {
+      console.log(`[PartyKit-onMessage] ArrayBuffer byteLength:`, message.byteLength);
+    } else if (message instanceof Uint8Array) {
+      console.log(`[PartyKit-onMessage] Uint8Array length:`, message.length);
+    } else if (typeof message === "object" && message !== null) {
+      console.log(`[PartyKit-onMessage] Keys:`, Object.keys(message));
+    }
   }
 }
