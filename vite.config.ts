@@ -59,6 +59,7 @@ export default defineConfig({
         clientsClaim: true,
         maximumFileSizeToCacheInBytes: 15000000,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        navigateFallback: null,
         navigateFallbackDenylist: [/^\/api\//, /\/[^/]+\.[^/]+$/],
         runtimeCaching: [
           {
