@@ -140,7 +140,7 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
                     if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
                       await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                     }
-                  } catch (_e) { /* ignore */ }
+                  } catch (e) { console.error("[AI] Stream parsing error:", e); }
                 }
               }
             }
@@ -188,7 +188,7 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
               if (text) {
                 await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
               }
-            } catch (_e) { /* ignore */ }
+            } catch (e) { console.error("[AI] Stream parsing error:", e); }
           }
         }
       }
@@ -284,7 +284,7 @@ aiRouter.post("/sim-playground", async (c) => {
                       if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
                         await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                       }
-                    } catch (_e) { /* ignore */ }
+                    } catch (e) { console.error("[AI] Stream parsing error:", e); }
                   }
                 }
               }
@@ -352,7 +352,7 @@ aiRouter.post("/sim-playground", async (c) => {
               if (text) {
                 await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
               }
-            } catch (_e) { /* ignore */ }
+            } catch (e) { console.error("[AI] Stream parsing error:", e); }
           }
         }
       }
@@ -429,7 +429,7 @@ aiRouter.post("/editor-chat", async (c) => {
                     if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
                       await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                     }
-                  } catch (_e) { /* ignore */ }
+                  } catch (e) { console.error("[AI] Stream parsing error:", e); }
                 }
               }
             }
@@ -480,7 +480,7 @@ aiRouter.post("/editor-chat", async (c) => {
               if (text) {
                 await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
               }
-            } catch (_e) { /* ignore */ }
+            } catch (e) { console.error("[AI] Stream parsing error:", e); }
           }
         }
       }
@@ -795,7 +795,7 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
                       accumulatedText += data.choices[0].delta.content;
                       await stream.writeSSE({ data: JSON.stringify({ chunk: data.choices[0].delta.content }) });
                     }
-                  } catch (_e) { /* ignore */ }
+                  } catch (e) { console.error("[AI] Stream parsing error:", e); }
                 }
               }
             }
@@ -850,7 +850,7 @@ ${contextDocs ? `\nRelevant context from the knowledge base:\n${contextDocs}` : 
                 accumulatedText += text;
                 await stream.writeSSE({ data: JSON.stringify({ chunk: text }) });
               }
-            } catch (_e) { /* ignore */ }
+            } catch (e) { console.error("[AI] Stream parsing error:", e); }
           }
         }
       }

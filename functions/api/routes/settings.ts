@@ -49,7 +49,7 @@ const settingsHandlers = {
       let updatedCount = 0;
       for (const [key, value] of entries) {
         // SEC-03: Prevent overwriting secrets with the masked versions passed back by the frontend
-        if (SENSITIVE_KEYS.has(key) && typeof value === 'string' && value.startsWith('••••')) {
+        if (SENSITIVE_KEYS.has(key) && typeof value === 'string' && /^•+$/.test(value)) {
           continue;
         }
 

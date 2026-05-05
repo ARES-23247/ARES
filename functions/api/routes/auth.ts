@@ -24,10 +24,13 @@ authRouter.on(["POST", "GET"], "/*", persistentRateLimitMiddleware(20, 60), asyn
   } catch (error: unknown) {
     const err = error as Error & { status?: number };
     console.error("[Auth Handler] Internal Exception:", err);
-    return c.json({ 
-      message: err.message || "Internal Server Error during Authentication", 
-       
-      stack: (c.env as any).ENVIRONMENT === "development" ? err.stack : undefined
+    // Only expose stack traces for localhost in development
+    const isLocalDev = (c.env as any).ENVIRONMENT === "development" &&
+                       (c.req.header("CF-Connecting-IP") === "127.0.0.1" ||
+                        c.req.header("Host")?.includes("localhost"));
+    return c.json({
+      message: err.message || "Internal Server Error during Authentication",
+      stack: isLocalDev ? err.stack : undefined
     }, 500);
   }
 });

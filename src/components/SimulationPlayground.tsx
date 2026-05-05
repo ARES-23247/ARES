@@ -481,24 +481,6 @@ export default function SimulationPlayground() {
     }
   };
 
-  const _handleDeleteSim = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Delete this simulation?")) return;
-    try {
-      await fetch(`/api/simulations/${id}`, { method: "DELETE" });
-      setSavedSims(prev => prev.filter(s => s.id !== id));
-      if (simId === id) {
-        setSimId(null);
-        setSimName("Untitled Simulation");
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete("simId");
-        window.history.replaceState({}, "", newUrl.toString());
-      }
-    } catch (e) {
-      console.error("[SimPlayground] Delete failed:", e);
-    }
-  };
-
   const handleToggleLibrary = () => {
     if (!showLibrary) {
       fetchSavedSims();

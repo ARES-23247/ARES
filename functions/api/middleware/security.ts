@@ -282,3 +282,23 @@ export const turnstileMiddleware = () => {
     await next();
   };
 };
+
+/**
+ * Middleware: Content-Type Validation
+ * Validates Content-Type header for POST/PUT/PATCH requests to prevent parsing errors.
+ */
+export const contentTypeValidationMiddleware = () => {
+  return async (c: Context<AppEnv>, next: Next) => {
+    if (["POST", "PUT", "PATCH"].includes(c.req.method)) {
+      const contentType = c.req.header("Content-Type");
+      if (contentType &&
+          !contentType.includes("application/json") &&
+          !contentType.includes("multipart/form-data") &&
+          !contentType.includes("application/x-www-form-urlencoded") &&
+          !contentType.includes("text/plain")) {
+        return c.json({ error: "Unsupported content type" }, 415);
+      }
+    }
+    await next();
+  };
+};

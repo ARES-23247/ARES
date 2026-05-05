@@ -265,7 +265,7 @@ const postTsRestRouterObj: any = {
       let slug = body.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+        .replace(/^-+|-+$/g, "") || `untitled-${Date.now()}`;
 
       const existing = await db.selectFrom("posts").select("slug").where("slug", "=", slug).executeTakeFirst();
       if (existing) {

@@ -219,8 +219,8 @@ apiRouter.get("/search", rateLimitMiddleware(20, 60), async (c) => {
   
   // SCA-FTS-01: Sanitize FTS5 query
   const qClean = q.replace(/[^a-zA-Z0-9\s]/g, "").trim();
-  if (!qClean) return c.json({ results: [] });
-  const ftsQ = `${qClean}*`;
+  if (!qClean || qClean.length > 100) return c.json({ results: [] });
+  const ftsQ = qClean.replace(/\*/g, '') + '*';
 
   const db = c.get("db") as Kysely<DB>;
   
