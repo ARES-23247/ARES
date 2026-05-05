@@ -56,7 +56,8 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
         }
       }
 
-      // SCA-A01: Fix race condition by checking for duplicates before insertion
+      // CR-06 FIX: Reduce race condition window by checking duplicates immediately before insert
+      // Note: Full atomic upsert requires database unique constraint on (title, date, event_name)
       if (!exists) {
         const duplicate = await db.selectFrom("awards")
           .select("id")
@@ -85,11 +86,33 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
         await db.updateTable("awards").set(values).where("id", "=", Number(finalId) as any).execute();
         c.executionCtx.waitUntil(logAuditAction(c, "award_updated", "awards", finalId, `Award "${title}" (${year}) updated`));
       } else {
-        const res = await db.insertInto("awards").values({ ...values, id: undefined }).executeTakeFirst();
-        // Handle null result from executeTakeFirst (common in some mock/db drivers for inserts)
-        const newId = res && "insertId" in res ? String(res.insertId) : (finalId || "new");
-        c.executionCtx.waitUntil(logAuditAction(c, "award_created", "awards", newId, `Award "${title}" (${year}) created`));
-        finalId = newId;
+        // Attempt insert with duplicate handling for race condition
+        try {
+          const res = await db.insertInto("awards").values({ ...values, id: undefined }).executeTakeFirst();
+          const newId = res && "insertId" in res ? String(res.insertId) : "new";
+          c.executionCtx.waitUntil(logAuditAction(c, "award_created", "awards", newId, `Award "${title}" (${year}) created`));
+          finalId = newId;
+        } catch (insertError: any) {
+          // Check if this is a duplicate constraint violation (race condition)
+          if (insertError?.message?.includes('UNIQUE') || insertError?.message?.includes('constraint')) {
+            // Retry by fetching the duplicate that was just created
+            const duplicate = await db.selectFrom("awards")
+              .select("id")
+              .where("title", "=", title)
+              .where("date", "=", String(year))
+              .where("event_name", "=", event_name || "")
+              .where("is_deleted", "=", 0)
+              .executeTakeFirst();
+            if (duplicate) {
+              finalId = String(duplicate.id);
+              c.executionCtx.waitUntil(logAuditAction(c, "award_race_condition_handled", "awards", finalId, `Award "${title}" (${year}) race condition - returned existing record`));
+            } else {
+              throw insertError;
+            }
+          } else {
+            throw insertError;
+          }
+        }
       }
 
       return { status: 200 as const, body: { success: true, id: finalId! } };
