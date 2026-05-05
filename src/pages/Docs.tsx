@@ -14,6 +14,7 @@ import ZulipThread from "../components/ZulipThread";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDocs } from "../hooks/useDocs";
 import { ContributorStack } from "../components/ui/ContributorStack";
+import TiptapRenderer from "../components/TiptapRenderer";
 
 export default function Docs() {
   const { slug } = useParams<{ slug: string }>();
@@ -159,7 +160,22 @@ export default function Docs() {
               )}
 
               <div className="ares-docs-content">
-                <DocsMarkdownRenderer content={currentDoc.content || ""} />
+                {(() => {
+                  const content = currentDoc.content || "";
+                  let parsedAst = null;
+                  try {
+                    const parsed = JSON.parse(content);
+                    if (parsed && typeof parsed === "object" && parsed.type === "doc") {
+                      parsedAst = parsed;
+                    }
+                  } catch {
+                    // Not JSON, fallback to Markdown
+                  }
+                  
+                  return parsedAst 
+                    ? <TiptapRenderer node={parsedAst} /> 
+                    : <DocsMarkdownRenderer content={content} />;
+                })()}
 
                 {/* Pilot Visualizer for Robotics Logic */}
                 {currentDoc.slug === "autonomous-mapping" && (
