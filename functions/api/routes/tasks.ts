@@ -3,7 +3,8 @@ import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { taskContract } from "../../../shared/schemas/contracts/taskContract";
-import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig } from "../middleware";
+import { z } from "zod";
+import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig, originIntegrityMiddleware } from "../middleware";
 
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
@@ -12,7 +13,7 @@ const s = initServer<AppEnv>();
 export const tasksRouter = new Hono<AppEnv>();
 
 const tasksTsRestRouter = s.router(taskContract, {
-  list: async ({ query }, c) => {
+  list: async ({ query }: { query: z.infer<typeof taskContract.list.query> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -89,7 +90,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  create: async ({ body }, c) => {
+  create: async ({ body }: { body: z.infer<typeof taskContract.create.body> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -210,7 +211,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  reorder: async ({ body }, c) => {
+  reorder: async ({ body }: { body: z.infer<typeof taskContract.reorder.body> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -242,7 +243,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  update: async ({ params, body }, c) => {
+  update: async ({ params, body }: { params: z.infer<typeof taskContract.update.pathParams>, body: z.infer<typeof taskContract.update.body> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -324,7 +325,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  delete: async ({ params }, c) => {
+  delete: async ({ params }: { params: z.infer<typeof taskContract.delete.pathParams> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -364,10 +365,12 @@ const tasksTsRestRouter = s.router(taskContract, {
       return { status: 500, body: { error: "Failed to delete task" } };
     }
   },
-});
+} as any);
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));
+// WR-11: Add origin integrity to prevent CSRF attacks on task operations
+tasksRouter.use("*", originIntegrityMiddleware());
 
 createHonoEndpoints(taskContract, tasksTsRestRouter, tasksRouter);
 export default tasksRouter;

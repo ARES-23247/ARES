@@ -4,7 +4,7 @@ import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { socialQueueContract } from "../../../shared/schemas/contracts/socialQueueContract";
-import { AppEnv, getSessionUser } from "../middleware";
+import { AppEnv, getSessionUser, originIntegrityMiddleware } from "../middleware";
 import { nanoid } from "nanoid";
 
 initServer<AppEnv>();
@@ -352,6 +352,9 @@ const socialQueueRouterObj: any = {
 };
 
 const socialQueueRouter = new Hono<AppEnv>();
+
+// WR-11: Add origin integrity to prevent CSRF attacks on social queue operations
+socialQueueRouter.use("*", originIntegrityMiddleware());
 
 createHonoEndpoints(socialQueueContract, socialQueueRouterObj, socialQueueRouter);
 
