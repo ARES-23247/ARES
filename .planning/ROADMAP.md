@@ -30,7 +30,7 @@
 - [x] **Phase 27: Type Foundation** — Create `shared/types/` with core generics and handler types (completed 2026-05-05)
 - [x] **Phase 28: High-Impact Handlers** — Fix top 4 violation files (~192 any, ~60% of total) (completed 2026-05-05)
 - [x] **Phase 28.1: AI Simulation & Analytics Stabilization** — Fix module resolution and dashboard regressions (completed 2026-05-05)
-- [ ] **Phase 29: Contract Inference** — Full ts-rest contract inference with Zod boundaries
+- [x] **Phase 29: Contract Inference** — Full ts-rest contract inference with Zod boundaries (completed 2026-05-05)
 - [ ] **Phase 30: Test Types** — Mock factories and typed test helpers
 - [ ] **Phase 31: Frontend Components** — React prop interfaces and event handler types
 - [ ] **Phase 32: Final Validation** — ESLint enforcement and legitimate use justifications
@@ -134,9 +134,65 @@ Plans:
 - Wave 2: 29-02 (Batch Migration & Exports) — autonomous, depends on 29-01
 
 Plans:
-- [x] 29-01-PLAN.md — Export ts-rest-hono contract inference types (AppRouteInput, AppRouteImplementation) and migrate analytics.ts as reference implementation
-- [ ] 29-02-PLAN.md — Migrate remaining 14 route files to contract inference, export all 33 contract types for frontend, deprecate HandlerInput, and document patterns
+- [x] 29-01-PLAN.md — Export ts-rest-hono contract inference types (AppRouteInput, AppRouteImplementation) and migrate analytics.ts as reference implementation (COMPLETED 2026-05-05)
+- [x] 29-02-PLAN.md — Migrate remaining 14 route files to contract inference, export all 29 contract types for frontend, deprecate HandlerInput, and document patterns (COMPLETED 2026-05-05)
 
 ---
 
 ### Phase 30: Test Types
+
+**Goal**: Systematically eliminate 131 `any` violations in 82 test files using mock factories and typed test helpers.
+
+**Depends on**: Phase 29 (provides `D1Row<T>` and other shared types)
+
+**Requirements**: Anti-pattern 3 (Over-Typed Test Mocks), TEST-01 through TEST-04
+
+**Success Criteria** (what must be TRUE):
+1. `src/test/types.ts` exists with MockKysely, TestEnv, MockExecutionContext, MockExpressionBuilder types
+2. All 6 factory files return D1Row<T> or domain types instead of Record<string, unknown>
+3. All 26 backend test files use MockKysely for mockDb and Hono<TestEnv> for app typing
+4. `src/test/utils.tsx` has zero `any` violations
+5. E2E tests have zero `any` violations
+6. All tests still pass after migration
+
+**Plans**: 8/8 planned
+
+**Wave Structure**:
+- Wave 1: 30-01 (Type Infrastructure) — autonomous, creates src/test/types.ts
+- Wave 2: 30-02 (Factory Migration) — autonomous, depends on 30-01, updates 6 factory files
+- Wave 3: 30-03 through 30-07 (Backend Test Migration) — autonomous, depends on 30-01, 30-02, parallel execution
+- Wave 4: 30-08 (E2E Test Fix) — autonomous, depends on 30-01, fixes 2 E2E violations
+
+Plans:
+- [ ] 30-01-PLAN.md — Create src/test/types.ts with MockKysely, TestEnv, MockExecutionContext, MockExpressionBuilder and update utils.tsx (TODO)
+- [ ] 30-02-PLAN.md — Migrate all 6 factory files to D1Row<T> return types (TODO)
+- [ ] 30-03-PLAN.md — Migrate auth/core tests (auth.test.ts, users.test.ts, profiles.test.ts, badges.test.ts, _profileUtils.test.ts) to typed mocks (TODO)
+- [ ] 30-04-PLAN.md — Migrate content/docs tests (docs.test.ts, posts.test.ts, comments.test.ts, media.test.ts) to typed mocks (TODO)
+- [ ] 30-05-PLAN.md — Migrate events/logistics tests (events.test.ts, seasons.test.ts, outreach.test.ts, logistics.test.ts, locations.test.ts) to typed mocks (TODO)
+- [ ] 30-06-PLAN.md — Migrate admin/operations tests (sponsors.test.ts, finance.test.ts, store.test.ts, tasks.test.ts, settings.test.ts, notifications.test.ts) to typed mocks (TODO)
+- [ ] 30-07-PLAN.md — Migrate integration/misc tests (github.test.ts, githubWebhook.test.ts, zulip.test.ts, zulipWebhook.test.ts, tba.test.ts, points.test.ts, awards.test.ts, judges.test.ts, inquiries.test.ts, communications.test.ts, entities.test.ts, analytics.test.ts) to typed mocks (TODO)
+- [ ] 30-08-PLAN.md — Fix E2E test `any` violations (media.spec.ts, kanban.spec.ts) (TODO)
+
+---
+
+### Phase 31: Frontend Components
+
+**Goal**: Eliminate `any` violations in React components and hooks through proper prop interfaces and event handler types.
+
+**Depends on**: Phase 30 (test infrastructure won't interfere)
+
+**Requirements**: Anti-pattern 1 (Over-Genericizing Types), Frontend Checklist
+
+**Plans**: TBD
+
+---
+
+### Phase 32: Final Validation
+
+**Goal**: Enable ESLint `no-explicit-any` enforcement and document all legitimate `any` uses with justification comments.
+
+**Depends on**: Phase 31 (all violations fixed)
+
+**Requirements**: Validation Checklist, Legitimate Any Cases
+
+**Plans**: TBD
