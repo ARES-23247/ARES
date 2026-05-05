@@ -242,11 +242,11 @@ export default function TroubleshootingWizard({
       <div className="wizard-footer">
         <p>
           Still need help?{' '}
-          <a href="https://github.com/MARSProgramming/MARSLib/issues">
+          <a href="https://github.com/MARSProgramming/MARSLib/issues" target="_blank" rel="noopener noreferrer">
             Report an issue
           </a>
           {' '}or{' '}
-          <a href="https://discord.gg/marslib">
+          <a href="https://discord.gg/marslib" target="_blank" rel="noopener noreferrer">
             ask on Discord
           </a>
         </p>
