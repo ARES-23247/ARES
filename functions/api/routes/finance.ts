@@ -97,6 +97,13 @@ const financeTsRestRouterObj: any = {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
+
+      // CR-05 FIX: Require proper authorization for pipeline modifications
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+      if (user.role !== "admin" && user.member_type !== "mentor" && user.member_type !== "coach") {
+        return { status: 403 as const, body: { error: "Insufficient permissions" } };
+      }
+
       const id = body.id || crypto.randomUUID();
       const isNew = !body.id;
 
@@ -233,6 +240,13 @@ const financeTsRestRouterObj: any = {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
+
+      // CR-05 FIX: Require proper authorization for transaction modifications
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
+      if (user.role !== "admin" && user.member_type !== "mentor" && user.member_type !== "coach") {
+        return { status: 403 as const, body: { error: "Insufficient permissions" } };
+      }
+
       const id = body.id || crypto.randomUUID();
       const isNew = !body.id;
 
