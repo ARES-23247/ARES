@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DocsMarkdownRenderer from '../components/docs/DocsMarkdownRenderer';
+import TiptapRenderer, { type ASTNode } from '../components/TiptapRenderer';
 import { api } from '../api/client';
 
 export default function ScienceCornerLesson() {
@@ -13,6 +14,21 @@ export default function ScienceCornerLesson() {
   );
 
   const doc = docRes?.status === 200 ? docRes.body.doc : null;
+
+  // Detect if content is JSON AST or markdown
+  const parsedAst = useMemo(() => {
+    if (!doc?.content) return null;
+    try {
+      const parsed = JSON.parse(doc.content);
+      // Check if it has the AST structure
+      if (parsed && typeof parsed === 'object' && 'type' in parsed && parsed.type === 'doc') {
+        return parsed as ASTNode;
+      }
+    } catch {
+      // Not JSON, fall back to markdown
+    }
+    return null;
+  }, [doc?.content]);
 
   if (isLoading) {
     return (
@@ -57,7 +73,11 @@ export default function ScienceCornerLesson() {
         </div>
 
         <div className="ares-docs-content">
-          <DocsMarkdownRenderer content={doc.content || ""} />
+          {parsedAst ? (
+            <TiptapRenderer node={parsedAst} />
+          ) : (
+            <DocsMarkdownRenderer content={doc.content || ""} />
+          )}
         </div>
       </motion.div>
     </div>

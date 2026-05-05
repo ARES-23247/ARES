@@ -41,14 +41,14 @@ export const updateUserProfileSchema = z.record(
     const MAX_NAME_LENGTH = 100;
     const MAX_GENERAL_LENGTH = 500;
 
-    if (data.bio && data.bio.length > MAX_BIO_LENGTH) return false;
-    if (data.nickname && data.nickname.length > MAX_NAME_LENGTH) return false;
-    if (data.pronouns && data.pronouns.length > MAX_GENERAL_LENGTH) return false;
-    if (data.favorite_food && data.favorite_food.length > MAX_GENERAL_LENGTH) return false;
-    if (data.dietary_restrictions && data.dietary_restrictions.length > MAX_GENERAL_LENGTH) return false;
-    if (data.favorite_robot_mechanism && data.favorite_robot_mechanism.length > MAX_GENERAL_LENGTH) return false;
-    if (data.pre_match_superstition && data.pre_match_superstition.length > MAX_GENERAL_LENGTH) return false;
-    if (data.leadership_role && data.leadership_role.length > MAX_GENERAL_LENGTH) return false;
+    if (typeof data.bio === "string" && data.bio.length > MAX_BIO_LENGTH) return false;
+    if (typeof data.nickname === "string" && data.nickname.length > MAX_NAME_LENGTH) return false;
+    if (typeof data.pronouns === "string" && data.pronouns.length > MAX_GENERAL_LENGTH) return false;
+    if (typeof data.favorite_food === "string" && data.favorite_food.length > MAX_GENERAL_LENGTH) return false;
+    if (typeof data.dietary_restrictions === "string" && data.dietary_restrictions.length > MAX_GENERAL_LENGTH) return false;
+    if (typeof data.favorite_robot_mechanism === "string" && data.favorite_robot_mechanism.length > MAX_GENERAL_LENGTH) return false;
+    if (typeof data.pre_match_superstition === "string" && data.pre_match_superstition.length > MAX_GENERAL_LENGTH) return false;
+    if (typeof data.leadership_role === "string" && data.leadership_role.length > MAX_GENERAL_LENGTH) return false;
 
     return true;
   },
@@ -87,6 +87,7 @@ export const userContract = c.router({
   adminDetail: {
     method: "GET",
     path: "/admin/:id",
+    pathParams: z.object({ id: z.string() }),
     responses: {
       200: z.object({
         user: userResponseSchema,
@@ -98,6 +99,7 @@ export const userContract = c.router({
   patchUser: {
     method: "PATCH",
     path: "/admin/:id",
+    pathParams: z.object({ id: z.string() }),
     body: z.object({
       role: z.string().optional(),
       member_type: z.string().optional(),
@@ -110,7 +112,8 @@ export const userContract = c.router({
   updateUserProfile: {
     method: "PUT",
     path: "/admin/:id/profile",
-    body: z.any(),
+    pathParams: z.object({ id: z.string() }),
+    body: z.record(z.string(), z.unknown()),
     responses: {
       200: z.object({ success: z.boolean() }),
     },
@@ -119,9 +122,10 @@ export const userContract = c.router({
   adminGetProfile: {
     method: "GET",
     path: "/admin/:id/profile",
+    pathParams: z.object({ id: z.string() }),
     responses: {
       200: z.object({
-        profile: z.record(z.string(), z.any()),
+        profile: z.record(z.string(), z.unknown()),
       }),
       404: z.object({ error: z.string() }),
     },
@@ -130,6 +134,7 @@ export const userContract = c.router({
   deleteUser: {
     method: "DELETE",
     path: "/admin/:id",
+    pathParams: z.object({ id: z.string() }),
     body: c.noBody(),
     responses: {
       200: z.object({ success: z.boolean() }),
@@ -165,11 +170,11 @@ export const profileContract = c.router({
         dietary_restrictions: z.string().optional().nullable(),
         favorite_first_thing: z.string().optional().nullable(),
         fun_fact: z.string().optional().nullable(),
-        show_email: z.any().optional(),
+        show_email: z.union([z.number(), z.boolean()]).optional(),
         contact_email: z.string().optional().nullable(),
-        show_phone: z.any().optional(),
+        show_phone: z.union([z.number(), z.boolean()]).optional(),
         phone: z.string().optional().nullable(),
-        show_on_about: z.any().optional(),
+        show_on_about: z.union([z.number(), z.boolean()]).optional(),
         favorite_robot_mechanism: z.string().optional().nullable(),
         pre_match_superstition: z.string().optional().nullable(),
         leadership_role: z.string().optional().nullable(),
@@ -191,7 +196,7 @@ export const profileContract = c.router({
   updateMe: {
     method: "PUT",
     path: "/me",
-    body: z.record(z.string(), z.any()),
+    body: z.record(z.string(), z.unknown()),
     responses: {
       200: z.object({ success: z.boolean() }),
     },
@@ -224,10 +229,11 @@ export const profileContract = c.router({
   getPublicProfile: {
     method: "GET",
     path: "/:userId",
+    pathParams: z.object({ userId: z.string() }),
     responses: {
       200: z.object({
-        profile: z.record(z.string(), z.any()),
-        badges: z.array(z.record(z.string(), z.any())),
+        profile: z.record(z.string(), z.unknown()),
+        badges: z.array(z.record(z.string(), z.unknown())),
       }),
       403: z.object({ error: z.string() }),
       404: z.object({ error: z.string() }),

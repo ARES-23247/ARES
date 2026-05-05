@@ -1,8 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ShieldCheck, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import DocsMarkdownRenderer from "../components/docs/DocsMarkdownRenderer";
+import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import { api } from "../api/client";
+
+// Helper to detect if content is JSON AST or markdown
+function useContentParser(content: string | null | undefined) {
+  return useMemo(() => {
+    if (!content) return { parsedAst: null, isAst: false };
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed && typeof parsed === 'object' && 'type' in parsed && parsed.type === 'doc') {
+        return { parsedAst: parsed as ASTNode, isAst: true };
+      }
+    } catch {
+      // Not JSON, fall back to markdown
+    }
+    return { parsedAst: null, isAst: false };
+  }, [content]);
+}
 
 interface PortfolioData {
   portfolioDocs: Array<{
@@ -119,15 +136,18 @@ export default function PrintPortfolio() {
             <h2 className="text-3xl font-black uppercase tracking-tight text-ares-red border-b-4 border-black pb-4 mb-8">Executive Summaries</h2>
           </div>
           
-          {execDocs.map(doc => (
-            <div key={doc.slug} className="mb-12 page-break-inside-avoid">
-              <h3 className="text-2xl font-bold uppercase tracking-tight mb-2">{doc.title}</h3>
-              <p className="text-black/50 italic mb-6">{doc.description}</p>
-              <div className="print-prosemirror">
-                <DocsMarkdownRenderer content={doc.content} />
+          {execDocs.map(doc => {
+            const { parsedAst, isAst } = useContentParser(doc.content);
+            return (
+              <div key={doc.slug} className="mb-12 page-break-inside-avoid">
+                <h3 className="text-2xl font-bold uppercase tracking-tight mb-2">{doc.title}</h3>
+                <p className="text-black/50 italic mb-6">{doc.description}</p>
+                <div className="print-prosemirror">
+                  {isAst ? <TiptapRenderer node={parsedAst} /> : <DocsMarkdownRenderer content={doc.content || ""} />}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -139,18 +159,21 @@ export default function PrintPortfolio() {
           </div>
 
           <div className="space-y-12">
-            {techDocs.map((doc, idx) => (
-              <div key={doc.slug} className={`print-doc ${idx > 0 ? "pt-12 border-t-2 border-black/10" : ""}`}>
-                <div className="mb-6">
-                  <div className="text-xs font-bold uppercase tracking-widest text-ares-red mb-1">{doc.category}</div>
-                  <h3 className="text-2xl font-bold tracking-tight mb-2">{doc.title}</h3>
-                  <p className="text-black/60 mb-4">{doc.description}</p>
+            {techDocs.map((doc, idx) => {
+              const { parsedAst, isAst } = useContentParser(doc.content);
+              return (
+                <div key={doc.slug} className={`print-doc ${idx > 0 ? "pt-12 border-t-2 border-black/10" : ""}`}>
+                  <div className="mb-6">
+                    <div className="text-xs font-bold uppercase tracking-widest text-ares-red mb-1">{doc.category}</div>
+                    <h3 className="text-2xl font-bold tracking-tight mb-2">{doc.title}</h3>
+                    <p className="text-black/60 mb-4">{doc.description}</p>
+                  </div>
+                  <div className="print-prosemirror">
+                    {isAst ? <TiptapRenderer node={parsedAst} /> : <DocsMarkdownRenderer content={doc.content || ""} />}
+                  </div>
                 </div>
-                <div className="print-prosemirror">
-                  <DocsMarkdownRenderer content={doc.content} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

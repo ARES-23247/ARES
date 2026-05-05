@@ -25,12 +25,12 @@ export async function upsertProfile(
   const isAdmin = sessionUser?.role === "admin" || sessionUser?.member_type === "coach" || sessionUser?.member_type === "mentor";
 
   // Robust Merge Helper: Only overwrite if key is present in data, otherwise keep existing or use default
-  const getMergedValue = async (key: string, isEncrypted: boolean = false, defaultValue: any = "") => {
+  const getMergedValue = async (key: keyof typeof data, isEncrypted: boolean = false, defaultValue: unknown = "") => {
     if (key in data) {
       const val = data[key];
       if (isEncrypted) return await encrypt(String(val || ""), secret);
       if (key === 'subteams' || key === 'dietary_restrictions' || key === 'colleges' || key === 'employers') {
-        return safeJSONStringify(val, defaultValue);
+        return safeJSONStringify(val, defaultValue as string);
       }
       if (key === 'show_on_about' || key === 'show_email' || key === 'show_phone') {
         return data[key] ? 1 : 0;
@@ -39,7 +39,7 @@ export async function upsertProfile(
     }
     
     // Reading back from DB: ensure it's valid if it's a JSON column
-    const existingVal = (existing as any)?.[key];
+    const existingVal = (existing as Record<string, unknown>)?.[key as string];
     if (key === 'subteams' || key === 'dietary_restrictions' || key === 'colleges' || key === 'employers') {
       // We want to return the string from the DB, but only if it's valid JSON
       if (typeof existingVal === 'string') {
@@ -101,6 +101,6 @@ export async function upsertProfile(
 
   await db.insertInto("user_profiles")
     .values(values)
-    .onConflict((oc: any) => oc.column("user_id").doUpdateSet(updateSet))
+    .onConflict((oc) => oc.column("user_id").doUpdateSet(updateSet))
     .execute();
 }

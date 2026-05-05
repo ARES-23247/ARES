@@ -13,6 +13,8 @@ import { dispatchTwitterPhoto } from './social/twitter';
 import { dispatchFacebook, dispatchMetaPhoto } from './social/meta';
 import { logSystemError } from '../api/middleware';
 import pRetry from 'p-retry';
+import { Kysely } from "kysely";
+import { DB } from "../../../shared/schemas/database";
 
 export interface SocialConfig {
   DISCORD_WEBHOOK_URL?: string;
@@ -54,7 +56,7 @@ export interface PostPayload {
  * Fails gracefully on any single provider so others still execute.
  */
 export async function dispatchSocials(
-  db: any,
+  db: Kysely<DB>,
   payload: PostPayload, 
   config: SocialConfig, 
   socialsFilter: Record<string, boolean> | null = null

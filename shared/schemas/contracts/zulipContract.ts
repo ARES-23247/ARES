@@ -57,7 +57,7 @@ export const zulipContract = c.router({
       topic: z.string(),
     }),
     responses: {
-      200: z.object({ success: z.boolean(), messages: z.any() }),
+      200: z.object({ success: z.boolean(), messages: z.array(z.unknown()) }),
       403: z.object({ success: z.boolean(), error: z.string() }),
       500: z.object({ success: z.boolean(), error: z.string() }),
     },
@@ -67,7 +67,16 @@ export const zulipContract = c.router({
     method: "GET",
     path: "/invites/audit",
     responses: {
-      200: z.object({ success: z.boolean(), missingEmails: z.array(z.string()) }),
+      200: z.object({ 
+        success: z.boolean(), 
+        missingEmails: z.array(z.string()),
+        debug: z.object({
+          totalZulipUsers: z.number(),
+          totalAresUsers: z.number(),
+          sampleZulipEmails: z.array(z.string()),
+          sampleMissingEmails: z.array(z.string()),
+        })
+      }),
       500: z.object({ success: z.boolean(), error: z.string() }),
     },
     summary: "Audit ARESWEB database against Zulip directory to find missing users",

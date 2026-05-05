@@ -15,12 +15,12 @@ const ZulipResponseSchema = z.object({
   msg: z.string().optional(),
 });
 
-type ZulipCredentials = any;
+type ZulipCredentials = Record<string, string>;
 type ZulipEnv = Bindings | ZulipCredentials;
-const getZulipAuthHeaders = (env: any) => {
-  const email = env.ZULIP_BOT_EMAIL || env.ZULIP_EMAIL;
+const getZulipAuthHeaders = (env: ZulipEnv) => {
+  const email = (env as Record<string, string>).ZULIP_BOT_EMAIL || (env as Record<string, string>).ZULIP_EMAIL;
   return { 
-    "Authorization": "Basic " + btoa(unescape(encodeURIComponent(email + ":" + env.ZULIP_API_KEY))) 
+    "Authorization": "Basic " + btoa(unescape(encodeURIComponent(email + ":" + (env as Record<string, string>).ZULIP_API_KEY))) 
   };
 };
 
@@ -54,7 +54,7 @@ export async function sendZulipMessage(
     formData.append("content", content);
 
     const headers: Record<string, string> = { 
-      ...getZulipAuthHeaders(env) as Record<string, string>,
+      ...getZulipAuthHeaders(env),
       "Content-Type": "application/x-www-form-urlencoded"
     };
 
@@ -89,7 +89,7 @@ export async function sendZulipMessage(
   } catch (err) {
     console.error("[ZulipSync] Critical failure after retries:", err);
     const db = 'DB' in env ? env.DB : undefined;
-    if (db) await logSystemError(db as any, "Zulip", "Critical failure after retries", String(err));
+    if (db) await logSystemError(db as import("kysely").Kysely<import("../../../shared/schemas/database").DB>, "Zulip", "Critical failure after retries", String(err));
     return null;
   }
 }
@@ -108,7 +108,7 @@ export async function updateZulipMessage(
     formData.append("content", newContent);
 
     const headers: Record<string, string> = { 
-      ...getZulipAuthHeaders(env) as Record<string, string>,
+      ...getZulipAuthHeaders(env),
       "Content-Type": "application/x-www-form-urlencoded"
     };
 
