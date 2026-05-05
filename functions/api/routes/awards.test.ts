@@ -1,4 +1,5 @@
  
+import { TestEnv, MockKysely } from "../../../src/test/types";
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
@@ -20,8 +21,8 @@ describe("Hono Backend - /awards Router", () => {
   
   
    
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
     mockDb = {
@@ -46,8 +47,8 @@ describe("Hono Backend - /awards Router", () => {
       }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       await next();
     });
