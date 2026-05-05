@@ -59,7 +59,23 @@ export interface BottleneckAnalysis {
  * Parse WPILog file and extract all entries
  */
 export async function parseWPILog(file: File): Promise<ParsedLog> {
+  // Security: Add strict size limits before processing to prevent DoS
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB hard limit
+  const MAX_ENTRIES = 5000;
+  const MAX_ARRAY_LENGTH = 100;
+  const MIN_ENTRY_SIZE = 20; // Minimum bytes per entry
+
   const arrayBuffer = await file.arrayBuffer();
+
+  // Validate file size before any processing
+  if (arrayBuffer.byteLength > MAX_FILE_SIZE) {
+    throw new Error(`File too large: ${arrayBuffer.byteLength} bytes (max ${MAX_FILE_SIZE} bytes)`);
+  }
+
+  if (arrayBuffer.byteLength < MIN_ENTRY_SIZE) {
+    throw new Error(`File too small: ${arrayBuffer.byteLength} bytes (min ${MIN_ENTRY_SIZE} bytes)`);
+  }
+
   const dataView = new DataView(arrayBuffer);
 
   // WPILog format: AdvantageKit binary format
@@ -74,22 +90,38 @@ export async function parseWPILog(file: File): Promise<ParsedLog> {
     // For now, we'll create a mock parser since WPILog format is complex
     // In production, this would use the actual AdvantageKit log format
 
-    // Parse basic structure
-    const entryCount = Math.floor(arrayBuffer.byteLength / 100); // Rough estimate
+    // Parse basic structure with strict entry count limit
+    const entryCount = Math.min(
+      Math.floor(arrayBuffer.byteLength / 100),
+      MAX_ENTRIES
+    );
 
-    for (let i = 0; i < Math.min(entryCount, 10000); i++) {
+    for (let i = 0; i < entryCount; i++) {
       const offset = i * 100;
-      if (offset + 20 > arrayBuffer.byteLength) break;
+
+      // Bounds check before reading any data
+      if (offset + 20 > arrayBuffer.byteLength) {
+        break; // End of valid data
+      }
 
       const timestamp = dataView.getFloat64(offset, true); // Little-endian
       dataView.getUint8(offset + 8); // keyLength
       const valueType = dataView.getUint8(offset + 9);
+
+      // Validate valueType is in expected range
+      if (valueType > 3) {
+        continue; // Skip invalid entry types
+      }
 
       let value: number | string | boolean | number[];
       let dataType: 'number' | 'string' | 'boolean' | 'number[]';
 
       switch (valueType) {
         case 0: { // number
+          // Validate we have enough bytes for a float64
+          if (offset + 10 + 8 > arrayBuffer.byteLength) {
+            throw new Error(`Number data exceeds buffer bounds at entry ${i}`);
+          }
           value = dataView.getFloat64(offset + 10, true);
           dataType = 'number';
           break;
@@ -102,12 +134,24 @@ export async function parseWPILog(file: File): Promise<ParsedLog> {
           break;
         }
         case 2: { // boolean
+          if (offset + 11 > arrayBuffer.byteLength) {
+            throw new Error(`Boolean data exceeds buffer bounds at entry ${i}`);
+          }
           value = dataView.getUint8(offset + 10) === 1;
           dataType = 'boolean';
           break;
         }
         case 3: { // number array
-          const arrLength = dataView.getUint8(offset + 10);
+          // Read and validate array length
+          const arrLength = Math.min(dataView.getUint8(offset + 10), MAX_ARRAY_LENGTH);
+
+          // Validate we have enough bytes for the entire array
+          const arrayBytesNeeded = 11 + arrLength * 8;
+          if (offset + arrayBytesNeeded > arrayBuffer.byteLength) {
+            throw new Error(`Array data exceeds buffer bounds at entry ${i} (need ${arrayBytesNeeded} bytes, have ${arrayBuffer.byteLength - offset} bytes)`);
+          }
+
+          // Safe array construction with validated bounds
           value = new Array(arrLength).fill(0).map((_, j) =>
             dataView.getFloat64(offset + 11 + j * 8, true)
           );
@@ -371,6 +415,7 @@ export async function validateWPILog(file: File): Promise<{
   errors: string[];
 }> {
   const errors: string[] = [];
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB hard limit (must match parseWPILog)
 
   // Check file extension
   if (!file.name.endsWith('.wpilog')) {
@@ -382,8 +427,8 @@ export async function validateWPILog(file: File): Promise<{
     errors.push('File is empty');
   }
 
-  if (file.size > 100_000_000) { // 100MB limit
-    errors.push('File too large (>100MB)');
+  if (file.size > MAX_FILE_SIZE) {
+    errors.push(`File too large (>${MAX_FILE_SIZE / 1024 / 1024}MB)`);
   }
 
   // Try to parse file
