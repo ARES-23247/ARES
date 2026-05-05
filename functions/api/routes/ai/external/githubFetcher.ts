@@ -46,7 +46,6 @@ export async function fetchGithubRepoFiles(
       }
     }
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External API: GitHub API response is not fully typed
     const refData = await refRes.json() as { object: { sha: string } };
     const commitSha = refData.object.sha;
 
@@ -55,7 +54,6 @@ export async function fetchGithubRepoFiles(
     if (!treeRes.ok) {
       return { files: [], commitSha, error: `Failed to fetch tree: ${treeRes.statusText}` };
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External API: GitHub API response is not fully typed
     const treeData = await treeRes.json() as { tree: Array<{ type: string; path: string; sha: string }> };
 
     // 3. Filter files by extension

@@ -71,7 +71,6 @@ export async function upsertProfile(
   }
 
   // Values object needs to match database column types which are mixed (string, number, JSON columns)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Kysely insert requires mixed types matching DB schema
   const values: Record<string, string | number | null> = {
     user_id: userId,
     nickname: await getMergedValue("nickname") as string,

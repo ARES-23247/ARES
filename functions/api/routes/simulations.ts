@@ -5,11 +5,12 @@ import { z } from "zod";
 
 // GitHub repository configuration
 // Centralized to avoid hardcoded references throughout the codebase
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- System Boundary Type: Cloudflare env extensions
 function getGitHubConfig(c: Context<AppEnv>) {
-  const owner = (c.env as any).GITHUB_REPO_OWNER || 'ARES-23247';
-  const repo = (c.env as any).GITHUB_REPO_NAME || 'ARESWEB';
-  const branch = (c.env as any).GITHUB_BRANCH || 'main';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- System Boundary Type: Cloudflare env extensions
+  const env = c.env as any;
+  const owner = env.GITHUB_REPO_OWNER || 'ARES-23247';
+  const repo = env.GITHUB_REPO_NAME || 'ARESWEB';
+  const branch = env.GITHUB_BRANCH || 'main';
   return {
     owner,
     repo,

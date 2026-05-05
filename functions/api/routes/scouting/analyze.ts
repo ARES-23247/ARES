@@ -116,7 +116,6 @@ analyzeRouter.post("/", ensureAuth, async (c: Context<AppEnv>) => {
       return c.json({ error: `AI analysis failed (${zaiRes.status})`, details: errText }, 502);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External API: Z.ai API response is not fully typed
     const data = (await zaiRes.json()) as { choices?: Array<{ message?: { content?: string } }>; error?: { message?: string }; usage?: { total_tokens?: number } };
     if (data.error) {
       return c.json({ error: data.error.message || "AI returned an error" }, 502);
