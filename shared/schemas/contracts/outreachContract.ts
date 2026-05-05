@@ -8,17 +8,17 @@ export const outreachSchema = z.object({
   title: z.string(),
   date: z.string(),
   location: z.string().nullable(),
-  students_count: z.number(),
-  hours_logged: z.number(),
-  reach_count: z.number(),
+  students_count: z.number().int().min(0).max(1000, "Student count cannot exceed 1000"),
+  hours_logged: z.number().min(0).max(24, "Hours logged cannot exceed 24"),
+  reach_count: z.number().int().min(0).max(1000000, "Reach count is unrealistically high"),
   description: z.string().nullable(),
   is_mentoring: z.coerce.boolean().optional(),
   mentored_team_number: z.string().nullable().optional(),
   season_id: z.coerce.number().nullable().optional(),
   is_dynamic: z.boolean().optional(),
   event_id: z.string().nullable().optional(),
-  mentor_count: z.number().optional(),
-  mentor_hours: z.number().optional(),
+  mentor_count: z.number().int().min(0).max(100, "Mentor count seems too high").optional(),
+  mentor_hours: z.number().min(0).max(1000, "Mentor hours seem too high").optional(),
 });
 
 export const outreachContract = c.router({
