@@ -1,3 +1,4 @@
+console.log("[Init] Starting [[route]].ts");
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { handle } from "hono/cloudflare-pages";
@@ -48,6 +49,7 @@ import { logger } from "hono/logger";
 import { sentry } from "@hono/sentry";
 
 const app = new Hono<AppEnv>();
+console.log("[Init] Hono app instance created");
 
 app.use("*", logger());
 app.use("*", async (c, next) => {
@@ -77,6 +79,7 @@ app.use("*", dbMiddleware);
 app.use("*", originIntegrityMiddleware());
 
 const apiRouter = new Hono<AppEnv>();
+console.log("[Init] apiRouter instance created");
 
 // SCA-P01: Prevent CDN Cache Poisoning
 apiRouter.use("*", async (c, next) => {
@@ -303,8 +306,11 @@ app.onError(async (err, c: any) => {
   return c.json({ error: "Internal Server Error", message: isProd ? "Unexpected error" : err.message }, 500);
 });
 
+console.log("[Init] Mounting apiRouter to app...");
 app.route("/api", apiRouter);
+console.log("[Init] Mounted /api");
 app.route("/dashboard/api", apiRouter);
+console.log("[Init] Mounted /dashboard/api");
 
 export const onRequest = handle(app);
 import { purgeOldInquiries } from "./routes/inquiries/index";

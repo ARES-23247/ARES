@@ -1,15 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { MockKysely, TestEnv } from "~/src/test/types";
-import { mockExecutionContext } from "~/src/test/utils";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
+import { mockExecutionContext } from "../../../src/test/utils";
 import seasonsRouter from "./seasons";
 
-vi.mock("../middleware", () => ({
-  ensureAdmin: (c: Context<TestEnv>, next: () => Promise<void>) => next(),
-  logAuditAction: vi.fn().mockResolvedValue(true),
-  rateLimitMiddleware: () => (c: Context<TestEnv>, next: () => Promise<void>) => next(),
-}));
+vi.mock("../middleware", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../middleware")>();
+  return {
+    ...actual,
+    ensureAdmin: (c: Context<TestEnv>, next: () => Promise<void>) => next(),
+    logAuditAction: vi.fn().mockResolvedValue(true),
+    rateLimitMiddleware: () => (c: Context<TestEnv>, next: () => Promise<void>) => next(),
+  };
+});
 
 const mockDb: MockKysely = {
   selectFrom: vi.fn().mockReturnThis(),

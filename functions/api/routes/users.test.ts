@@ -79,6 +79,9 @@ describe("Hono Backend - /users Router", () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({
       id: "1",
       email: "test@test.com",
+      createdAt: 0,
+      updatedAt: 0,
+      emailVerified: 1,
     });
 
     const res = await testApp.request("/admin/1", {}, env, mockExecutionContext);
@@ -234,7 +237,7 @@ describe("Hono Backend - /users Router", () => {
   });
 
   it("GET /admin/list - list users without masking email", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Student", email: "student123@test.com", member_type: "student", role: "user" }]);
+    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Student", email: "student123@test.com", member_type: "student", role: "user", createdAt: 0, updatedAt: 0 }]);
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as { users: Array<{ email: string }> };

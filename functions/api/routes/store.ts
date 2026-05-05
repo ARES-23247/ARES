@@ -113,74 +113,7 @@ const storeHandlers: RecursiveRouterObj<typeof storeContract, AppEnv> = {
       return { status: 500, body: { error: err.message } };
     }
   },
-  handleWebhook: async ({ body, headers }, c) => {
-    try {
-      const stripeKey = c.env.STRIPE_SECRET_KEY;
-      const endpointSecret = c.env.STRIPE_WEBHOOK_SECRET;
-      const signature = headers["stripe-signature"];
-
-      if (!stripeKey || !endpointSecret || !signature) {
-        return { status: 400, body: { error: "Missing stripe config or signature" } };
-      }
-
-      const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
-      let event: Stripe.Event;
-
-      try {
-        event = stripe.webhooks.constructEvent(
-          JSON.stringify(body),
-          signature,
-          endpointSecret
-        );
-      } catch (err: any) {
-        console.error(`[Webhook] Signature verification failed: ${err.message}`);
-        return { status: 400, body: { error: `Webhook Error: ${err.message}` } };
-      }
-
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const db = c.get("db") as Kysely<DB>;
-
-        // Fulfill order
-        const metadata = session.metadata;
-        const cartItems = metadata?.cartItems ? JSON.parse(metadata.cartItems) : [];
-
-        await db
-          .insertInto("orders")
-          .values({
-            id: session.id,
-            stripe_session_id: session.id,
-            customer_email: session.customer_details?.email || "unknown",
-            total_cents: session.amount_total || 0,
-            status: "paid",
-            items_json: JSON.stringify(cartItems),
-            created_at: new Date().toISOString(),
-          })
-          .execute();
-
-        // Deplete inventory
-        for (const item of cartItems) {
-          await db
-            .updateTable("products")
-            .set((eb) => ({ stock_count: eb("stock_count", "-", item.q) }))
-            .where("id", "=", item.id)
-            .where("stock_count", "is not", null)
-            .execute();
-        }
-
-        // Alert team
-        const totalAmount = session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00";
-        const customerEmail = session.customer_details?.email || "Unknown Email";
-        const message = `🛍️ **New Order Received!**\n\n**Order ID**: ${session.id}\n**Customer**: ${customerEmail}\n**Total**: $${totalAmount}\n\n[View Dashboard](https://aresweb.org/admin)`;
-        await sendZulipMessage(c.env, "general", "Store Orders", message);
-      }
-
-      return { status: 200, body: { success: true } };
-    } catch (err: any) {
-      logSystemError(c, "webhook_error", err);
-      return { status: 500, body: { error: "Webhook fulfillment failed" } };
-    }
-  },
+  // Extracted webhook handler below
   getOrders: async (_input, c) => {
     try {
       await ensureAdmin(c);
@@ -217,5 +150,76 @@ createHonoEndpoints(
     }
   }
 );
+
+app.post("/webhook", async (c) => {
+  try {
+    const stripeKey = c.env.STRIPE_SECRET_KEY;
+    const endpointSecret = c.env.STRIPE_WEBHOOK_SECRET;
+    const signature = c.req.header("stripe-signature");
+
+    if (!stripeKey || !endpointSecret || !signature) {
+      return c.json({ error: "Missing stripe signature" }, 400);
+    }
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
+    let event: Stripe.Event;
+
+    try {
+      const rawBody = await c.req.text();
+      event = stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        endpointSecret
+      );
+    } catch (err: any) {
+      console.error(`[Webhook] Signature verification failed: ${err.message}`);
+      return c.json({ error: `Invalid signature` }, 400);
+    }
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const db = c.get("db") as Kysely<DB>;
+
+      // Fulfill order
+      const metadata = session.metadata;
+      const cartItems = metadata?.cartItems ? JSON.parse(metadata.cartItems) : [];
+
+      await db
+        .insertInto("orders")
+        .values({
+          id: session.id,
+          stripe_session_id: session.id,
+          customer_email: session.customer_details?.email || "unknown",
+          shipping_name: session.shipping_details?.name || null,
+          total_cents: session.amount_total || 0,
+          status: "paid",
+          items_json: JSON.stringify(cartItems),
+          created_at: new Date().toISOString(),
+        })
+        .execute();
+
+      // Deplete inventory
+      for (const item of cartItems) {
+        await db
+          .updateTable("products")
+          .set((eb) => ({ stock_count: eb("stock_count", "-", item.q) }))
+          .where("id", "=", item.id)
+          .where("stock_count", "is not", null)
+          .execute();
+      }
+
+      // Alert team
+      const totalAmount = session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00";
+      const customerEmail = session.customer_details?.email || "Unknown Email";
+      const message = `🛍️ **New Order Received!**\n\n**Order ID**: ${session.id}\n**Customer**: ${customerEmail}\n**Total**: $${totalAmount}\n\n[View Dashboard](https://aresweb.org/admin)`;
+      await sendZulipMessage(c.env, "general", "Store Orders", message);
+    }
+
+    return c.json({ success: true }, 200);
+  } catch (err: any) {
+    logSystemError(c, "webhook_error", err);
+    return c.json({ error: "Webhook fulfillment failed" }, 500);
+  }
+});
 
 export default app;

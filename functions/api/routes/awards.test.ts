@@ -57,7 +57,7 @@ describe("Hono Backend - /awards Router", () => {
 
   it("GET / - list all awards", async () => {
     mockDb.execute.mockResolvedValueOnce([
-      { id: "1", title: "Inspire Award", year: "2024", event_name: "World Champs", description: "Best overall", image_url: "trophy", season_id: 1 }
+      { id: "1", title: "Inspire Award", date: "2024", event_name: "World Champs", description: "Best overall", image_url: "trophy", season_id: 1 }
     ]);
 
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);

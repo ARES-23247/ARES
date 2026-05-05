@@ -158,7 +158,7 @@ describe("Hono Backend - /tasks Router", () => {
 
   it("POST / - creates task with multiple assignees", async () => {
     vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student", nickname: "Creator" } as any);
-    mockDb.execute.mockResolvedValueOnce([{ user_id: "user2", nickname: "Alice" }]); // For profiles fetch
+    mockDb.execute.mockResolvedValueOnce([{ id: "user2", nickname: "Alice" }]); // For profiles fetch
 
     const res = await testApp.request("/", {
       method: "POST",
@@ -229,7 +229,7 @@ describe("Hono Backend - /tasks Router", () => {
       .mockResolvedValueOnce([]) // insert tasks
       .mockResolvedValueOnce([]) // insert assignments
       .mockResolvedValueOnce([]) // insert audit
-      .mockResolvedValueOnce([{ user_id: "user2", nickname: "Alice" }]) // profiles
+      .mockResolvedValueOnce([{ id: "user2", nickname: "Alice" }]) // profiles
       .mockRejectedValueOnce(new Error("DB query fail for user emails"));
 
     const res = await testApp.request("/", {
@@ -265,7 +265,7 @@ describe("Hono Backend - /tasks Router", () => {
 
   it("POST / - sends Zulip notification on create", async () => {
     vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
-    mockDb.execute = vi.fn().mockResolvedValue([{ email: "alice@test.com", user_id: "user2", nickname: null }]);
+    mockDb.execute = vi.fn().mockResolvedValue([{ email: "alice@test.com", id: "user2", nickname: null }]);
     vi.mocked(sendZulipMessage).mockResolvedValueOnce("msg123");
 
     const res = await testApp.request("/", {
@@ -285,7 +285,7 @@ describe("Hono Backend - /tasks Router", () => {
       .mockResolvedValueOnce([]) // insert tasks
       .mockResolvedValueOnce([]) // insert assignments
       .mockResolvedValueOnce([]) // insert audit
-      .mockResolvedValueOnce([{ user_id: "user2", nickname: "Alice" }]) // profiles
+      .mockResolvedValueOnce([{ id: "user2", nickname: "Alice" }]) // profiles
       .mockResolvedValueOnce([{ email: "alice@test.com", user_id: "user2", nickname: null }]); // emails
 
     vi.mocked(sendZulipMessage).mockRejectedValueOnce(new Error("Zulip single fail"));

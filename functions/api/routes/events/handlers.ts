@@ -100,6 +100,7 @@ export const eventHandlers = {
 
       let results;
       try {
+        console.log("FIRST execute called");
         results = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image", "status", "is_deleted", "season_id", "meeting_notes"])
           .where("is_deleted", "=", 0)
@@ -112,8 +113,11 @@ export const eventHandlers = {
           .limit(Number(limit) || 50)
           .offset(Number(offset) || 0)
           .execute();
-      } catch {
+        console.log("FIRST execute finished");
+      } catch (errInner) {
+        console.log("INNER CATCH CAUGHT:", errInner);
         // Fallback for older schemas
+        console.log("SECOND execute called");
         results = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
           .where("is_deleted", "=", 0)
@@ -121,6 +125,7 @@ export const eventHandlers = {
           .limit(Number(limit) || 50)
           .offset(Number(offset) || 0)
           .execute() as PartialEvent[];
+        console.log("SECOND execute finished", results);
       }
 
       // Resolve location addresses from the locations registry
@@ -145,6 +150,7 @@ export const eventHandlers = {
 
       return { status: 200 as const, body: { events } };
     } catch (e) {
+      console.log("OUTER CATCH CAUGHT:", e);
       console.error("[Events:List] Error", e);
       return { status: 500 as const, body: { error: "Failed to fetch events" } };
     }

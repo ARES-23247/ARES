@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import { TestEnv, MockKysely } from "../../../src/test/types";
 import zulipRouter from "./zulip";
 
 vi.mock("../middleware", async (importOriginal) => {
@@ -8,7 +9,7 @@ vi.mock("../middleware", async (importOriginal) => {
   return {
     ...actual,
     ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
-    ensureAuth: async (c: any, next: () => Promise<void>) => {
+    ensureAuth: async (c, next: () => Promise<void>) => {
       c.set("sessionUser", { id: "test-user", email: "test@test.com", name: "Test User", nickname: "TestNick", image: null, role: "admin", member_type: "mentor" });
       return next();
     },
@@ -24,14 +25,14 @@ import { getSocialConfig } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
 describe("Hono Backend - /zulip Router", () => {
-  let testApp: Hono<any>;
+  let testApp: Hono<TestEnv>;
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("executionCtx", mockExecutionContext);
       if (c.env && c.env.db) {
         c.set("db", c.env.db);
@@ -227,7 +228,7 @@ describe("Hono Backend - /zulip Router", () => {
       json: async () => ({ members: [] })
     });
 
-    const mockDb = {
+    const mockDb: MockKysely = {
       selectFrom: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
