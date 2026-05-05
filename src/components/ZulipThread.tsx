@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageSquare, RefreshCw, Send } from 'lucide-react';
+import { sanitizeHtml } from '../utils/security';
 
 interface ZulipMessage {
   id: number;
@@ -118,9 +119,9 @@ export default function ZulipThread({ stream, topic, className }: ZulipThreadPro
                   <span className="font-bold text-white">{msg.sender_full_name}</span>
                   <span className="text-xs text-ares-gray">{new Date(msg.timestamp * 1000).toLocaleString()}</span>
                 </div>
-                <div 
+                <div
                   className="prose prose-sm prose-invert max-w-none text-marble/80 prose-p:my-1 prose-a:text-ares-cyan prose-a:no-underline hover:prose-a:underline"
-                  dangerouslySetInnerHTML={{ __html: msg.content }} 
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.content) }}
                 />
               </div>
             </div>
