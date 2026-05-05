@@ -11,6 +11,50 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 // Maximum file size for AI processing: 2.5MB
 const MAX_FILE_SIZE_FOR_AI = 2.5 * 1024 * 1024;
 
+// IN-11: File extension mapping for validation and normalization
+// Maps MIME types to their canonical file extensions
+const MIME_TO_EXTENSION: Record<string, string> = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+  'image/svg+xml': '.svg',
+  'image/heic': '.heic',
+  'image/heif': '.heif',
+};
+
+/**
+ * Get the canonical file extension for a given MIME type.
+ * Returns null if the MIME type is not supported.
+ */
+function getExtensionForMimeType(mimeType: string): string | null {
+  return MIME_TO_EXTENSION[mimeType.toLowerCase()] || null;
+}
+
+/**
+ * Normalize a filename by ensuring it has the correct extension for its MIME type.
+ * If the filename already ends with the correct extension (case-insensitive), it's returned as-is.
+ * Otherwise, the correct extension is appended.
+ */
+function normalizeFileNameExtension(fileName: string, mimeType: string): string {
+  const correctExt = getExtensionForMimeType(mimeType);
+  if (!correctExt) return fileName;
+
+  // Check if filename already ends with the correct extension (case-insensitive)
+  if (fileName.toLowerCase().endsWith(correctExt.toLowerCase())) {
+    return fileName;
+  }
+
+  // Remove any existing extension and add the correct one
+  const lastDotIndex = fileName.lastIndexOf('.');
+  if (lastDotIndex > 0) {
+    return fileName.substring(0, lastDotIndex) + correctExt;
+  }
+
+  return fileName + correctExt;
+}
+
 export function isValidImage(buffer: ArrayBuffer): boolean {
   const arr = new Uint8Array(buffer);
   
@@ -184,7 +228,14 @@ export const mediaHandlers: any = {
         return { status: 400, body: { error: "Invalid file type. Only standard images are supported." } };
       }
 
-      const key = folder ? `${folder}/${file.name}` : file.name;
+      // IN-11: Validate and normalize file extension based on MIME type
+      const canonicalExtension = getExtensionForMimeType(file.type);
+      if (!canonicalExtension) {
+        return { status: 400, body: { error: `Unsupported image type: ${file.type}` } };
+      }
+
+      const normalizedName = normalizeFileNameExtension(file.name, file.type);
+      const key = folder ? `${folder}/${normalizedName}` : normalizedName;
       const finalFolder = folder || "Library";
       if (c.env.ARES_STORAGE) {
         if (isLarge) {
