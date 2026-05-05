@@ -3,13 +3,17 @@ import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { storeContract } from "../../../shared/schemas/contracts/storeContract";
 import type { AppEnv } from "../middleware/utils";
 import Stripe from "stripe";
-import { logSystemError } from "../middleware/utils";
+import { logSystemError, ensureAdmin } from "../middleware/utils";
 import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
 const app = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
+
+// CR-04 FIX: Apply ensureAdmin middleware to orders routes
+app.use("/orders", ensureAdmin);
+app.use("/orders/*", ensureAdmin);
 
 const storeHandlers = {
   getProducts: async (_input: any, c: Context<AppEnv>) => {
