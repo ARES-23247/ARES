@@ -1,7 +1,9 @@
- 
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 import profilesRouter from "./profiles";
 import { createMockProfile } from "../../../src/test/factories/userFactory";
 
@@ -26,18 +28,18 @@ vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAuth: async (_c: unknown, next: any) => next(),
-    persistentRateLimitMiddleware: () => (c: any, next: any) => next(),
-    rateLimitMiddleware: () => (c: any, next: any) => next(),
-    getSessionUser: vi.fn((c: any) => c.get("sessionUser")),
+    ensureAuth: async (_c: Context<TestEnv>, next: () => Promise<void>) => next(),
+    persistentRateLimitMiddleware: () => (c: Context<TestEnv>, next: () => Promise<void>) => next(),
+    rateLimitMiddleware: () => (c: Context<TestEnv>, next: () => Promise<void>) => next(),
+    getSessionUser: vi.fn((c: Context<TestEnv>) => c.get("sessionUser")),
     sanitizeProfileForPublic: vi.fn().mockImplementation((val, type) => actual.sanitizeProfileForPublic(val, type)),
   };
 });
 
 describe("Hono Backend - /profiles Router", () => {
-  let mockDb: any;
-  let testApp: Hono<any>;
-  let env: any;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
+  let env: TestEnv["Bindings"];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,15 +75,14 @@ describe("Hono Backend - /profiles Router", () => {
         first: vi.fn(),
         all: vi.fn(),
         run: vi.fn(),
-      } as any,
+      } as D1Database,
       DEV_BYPASS: "true",
-      ENCRYPTION_SECRET: "test-secret",
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
-      c.set("sessionUser", { id: "local-dev", email: "admin@test.com", role: "admin", name: "Local Dev" });
+      c.set("sessionUser", { id: "local-dev", email: "admin@test.com", role: "admin", name: "Local Dev", member_type: "mentor" });
       await next();
     });
     testApp.route("/", profilesRouter);
@@ -95,7 +96,7 @@ describe("Hono Backend - /profiles Router", () => {
     const res = await testApp.request("/me", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { nickname: string; auth: { id: string } };
     expect(body.nickname).toBe("Local Dev");
     expect(body.auth.id).toBe("local-dev");
   });
@@ -154,9 +155,9 @@ describe("Hono Backend - /profiles Router", () => {
 
   it("should return 500 on /avatar update error", async () => {
     const { getAuth } = await import("../../utils/auth");
-    (getAuth as any).mockReturnValueOnce({
+    vi.mocked(getAuth).mockReturnValueOnce({
       api: { updateUser: vi.fn().mockRejectedValueOnce(new Error("API Error")) }
-    });
+    } as ReturnType<typeof getAuth>);
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await testApp.request("/avatar", {
@@ -180,7 +181,7 @@ describe("Hono Backend - /profiles Router", () => {
     const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { members: Array<{ nickname: string }> };
     expect(body.members).toHaveLength(2);
     expect(body.members[0].nickname).toBe("Member 1");
   });
@@ -194,7 +195,7 @@ describe("Hono Backend - /profiles Router", () => {
     const res = await testApp.request("/team-roster?q=search", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { members: Array<{ nickname: string }> };
     expect(body.members).toHaveLength(1);
     expect(body.members[0].nickname).toBe("Member 2");
   });
@@ -223,7 +224,7 @@ describe("Hono Backend - /profiles Router", () => {
     const res = await testApp.request("/user-123", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { profile: { nickname: string } };
     expect(body.profile.nickname).toBe("Public User");
   });
 
@@ -271,7 +272,7 @@ describe("Hono Backend - /profiles Router", () => {
     const res = await testApp.request("/local-dev", {}, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { profile: { nickname: string; dietary_restrictions: string } };
     expect(body.profile.nickname).toBe("Public User");
     expect(body.profile.dietary_restrictions).toBe("None");
   });
@@ -294,7 +295,7 @@ describe("Hono Backend - /profiles Router", () => {
 
     const res = await testApp.request("/me", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { phone: string };
     expect(body.phone).toBe("[Decryption Failed]");
   });
 
@@ -304,15 +305,15 @@ describe("Hono Backend - /profiles Router", () => {
 
     const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { members: Array<{ email: string | null }> };
     expect(body.members[0].email).toBeNull();
   });
 
   it("should handle empty results in team-roster with warning", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ user_id: "1", show_on_about: 1 }]); 
-    
-    vi.mocked(shared.sanitizeProfileForPublic).mockReturnValueOnce(null as any);
-    
+    mockDb.execute.mockResolvedValueOnce([{ user_id: "1", show_on_about: 1 }]);
+
+    vi.mocked(shared.sanitizeProfileForPublic).mockReturnValueOnce(null);
+
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
