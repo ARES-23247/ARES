@@ -1,4 +1,5 @@
  
+import { TestEnv, MockKysely } from "../../../src/test/types";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import analyticsRouter from "./analytics";
@@ -15,23 +16,23 @@ vi.mock("../middleware", async (importOriginal) => {
   return {
     ...actual,
     getDbSettings: vi.fn().mockResolvedValue({ ZULIP_API_KEY: "abc" }),
-    ensureAdmin: async (_c: unknown, next: any) => next(),
-    rateLimitMiddleware: () => async (_c: unknown, next: any) => next(),
-    turnstileMiddleware: () => async (_c: unknown, next: any) => next(),
+    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
+    rateLimitMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
+    turnstileMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
   };
 });
 
 describe("Analytics Router", () => {
-  let mockDb: any;
+  let mockDb: MockKysely;
   let testApp: Hono<any>;
-  let env: any;
+  let env: { DEV_BYPASS?: string; DB: D1Database };
 
   beforeEach(() => {
     mockDb = {
       selectFrom: vi.fn().mockReturnThis(),
       selectAll: vi.fn().mockReturnThis(),
       select: vi.fn().mockImplementation((arg) => {
-        const executeArg = (a: any) => {
+        const executeArg = (a: unknown) => {
           if (typeof a === "function") {
             try {
               a(createMockExpressionBuilder());
@@ -64,7 +65,7 @@ describe("Analytics Router", () => {
       getExecutor: vi.fn().mockReturnValue({
         compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),
         executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
-        transformQuery: vi.fn((q: any) => q),
+        transformQuery: vi.fn((q: unknown) => q),
       }),
       executeTakeFirst: vi.fn().mockResolvedValue(null),
       insertInto: vi.fn().mockReturnThis(),
@@ -90,8 +91,8 @@ describe("Analytics Router", () => {
     };
     vi.clearAllMocks();
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       c.set("user", { id: "1", role: "admin" });
       await next();
