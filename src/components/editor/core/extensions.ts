@@ -34,7 +34,7 @@ import * as Y from 'yjs';
 /**
  * Returns the full list of Tiptap extensions used by the ARES editor.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Library type gap: PartyKit provider types are incomplete for window globals
 export const getEditorExtensions = (lowlight: unknown, ydoc?: Y.Doc, provider?: any, yfield: string = 'default') => [
   GlobalDragHandle.configure({
     dragHandleWidth: 20,

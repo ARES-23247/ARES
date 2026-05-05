@@ -22,6 +22,8 @@ export const MemberTypeEnum = z.enum([
   "coach",
   "parent",
   "alumnus",
+  "alumni",
+  "sponsor",
   "other"
 ]);
 
