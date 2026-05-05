@@ -1,0 +1,153 @@
+/**
+ * Shared test type definitions for type-safe mocking.
+ *
+ * Provides typed interfaces for common test mocks:
+ * - MockKysely: Type-safe database mocking
+ * - TestEnv: Hono environment binding for tests
+ * - MockExecutionContext: Cloudflare Workers ExecutionContext mock
+ * - MockExpressionBuilder: Kysely ExpressionBuilder mock interface
+ *
+ * All types use vi.fn mock types and avoid `any` for compile-time safety.
+ */
+
+import type { Kysely } from "kysely";
+import type { DB } from "../../shared/schemas/database";
+import type { vi } from "vitest";
+
+// ── MockKysely ────────────────────────────────────────────────────────────────
+/**
+ * Partial Kysely interface for database mocks.
+ *
+ * Provides fluent chaining for the most commonly used Kysely methods in tests.
+ * Each method returns a vi.fn mock configured with mockReturnThis() for chaining.
+ *
+ * @example
+ * let mockDb: MockKysely;
+ * beforeEach(() => {
+ *   mockDb = {
+ *     selectFrom: vi.fn().mockReturnThis(),
+ *     execute: vi.fn().mockResolvedValue([]),
+ *   };
+ * });
+ */
+export type MockKysely = Partial<
+  Pick<Kysely<DB>, "selectFrom" | "insertInto" | "updateTable" | "deleteFrom">
+> & {
+  /** Chain methods for fluent query building */
+  innerJoin?: ReturnType<typeof vi.fn>;
+  leftJoin?: ReturnType<typeof vi.fn>;
+  select?: ReturnType<typeof vi.fn>;
+  selectAll?: ReturnType<typeof vi.fn>;
+  where?: ReturnType<typeof vi.fn>;
+  orderBy?: ReturnType<typeof vi.fn>;
+  limit?: ReturnType<typeof vi.fn>;
+  offset?: ReturnType<typeof vi.fn>;
+  groupBy?: ReturnType<typeof vi.fn>;
+  /** Execution methods */
+  execute: ReturnType<typeof vi.fn>;
+  executeTakeFirst?: ReturnType<typeof vi.fn>;
+};
+
+// ── TestEnv ───────────────────────────────────────────────────────────────────
+/**
+ * Hono environment binding for tests.
+ *
+ * Defines the Variables and Bindings available in test contexts.
+ * Use with Hono<TestEnv> for type-safe route handler testing.
+ *
+ * @example
+ * let testApp: Hono<TestEnv>;
+ * testApp.use("*", async (c, next) => {
+ *   c.set("db", mockDb);
+ *   c.set("sessionUser", mockUser);
+ *   await next();
+ * });
+ */
+export type TestEnv = {
+  Variables: {
+    db: MockKysely;
+    sessionUser: {
+      id: string;
+      email: string;
+      name: string | null;
+      role: string;
+      member_type: string;
+    };
+    socialConfig?: Record<string, string | undefined>;
+    requestId?: string;
+  };
+  Bindings: {
+    DEV_BYPASS?: string;
+    DB: D1Database;
+    ENVIRONMENT?: string;
+  };
+};
+
+// ── MockExecutionContext ───────────────────────────────────────────────────────
+/**
+ * Cloudflare Workers ExecutionContext mock.
+ *
+ * Use for testing edge functions that use waitUntil() for background tasks.
+ *
+ * @example
+ * import { mockExecutionContext, flushWaitUntil } from "~/src/test/utils";
+ *
+ * test("background task completes", async () => {
+ *   await handler(c, mockExecutionContext);
+ *   await flushWaitUntil(); // Awaits all waitUntil promises
+ * });
+ */
+export interface MockExecutionContext {
+  /** Registers a promise to execute in the background */
+  waitUntil: ReturnType<typeof vi.fn>;
+  /** Passes through exceptions to the runtime */
+  passThroughOnException: ReturnType<typeof vi.fn>;
+}
+
+// ── MockExpressionBuilder ──────────────────────────────────────────────────────
+/**
+ * Kysely ExpressionBuilder mock interface.
+ *
+ * Provides a complete mock surface for Kysely's ExpressionBuilder,
+ * used in select() callbacks for complex query building.
+ *
+ * @example
+ * const eb = createMockExpressionBuilder();
+ * select: vi.fn((args) => {
+ *   if (Array.isArray(args)) {
+ *     args.forEach((arg) => {
+ *       if (typeof arg === "function") arg(eb);
+ *     });
+ *   }
+ *   return mockDb;
+ * }),
+ */
+export interface MockExpressionBuilder {
+  // Boolean operators
+  or: ReturnType<typeof vi.fn>;
+  and: ReturnType<typeof vi.fn>;
+  val: ReturnType<typeof vi.fn>;
+  // Function helpers
+  fn: {
+    count: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+    sum: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+    max: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+    min: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+    coalesce: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+  };
+  // Case expressions
+  case: {
+    when: ReturnType<typeof vi.fn>;
+    and: ReturnType<typeof vi.fn>;
+    then: ReturnType<typeof vi.fn>;
+    else: ReturnType<typeof vi.fn>;
+    end: ReturnType<typeof vi.fn>;
+  };
+  // Query building
+  selectFrom: ReturnType<typeof vi.fn>;
+  select: ReturnType<typeof vi.fn>;
+  where: ReturnType<typeof vi.fn>;
+  execute: ReturnType<typeof vi.fn>;
+  // Self-reference (callable)
+  (...args: unknown[]): unknown;
+}
