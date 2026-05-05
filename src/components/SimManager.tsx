@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FolderOpen, AlertCircle, Code, Zap, Check, Copy, Plus, Folder } from "lucide-react";
+import { FolderOpen, AlertCircle, Code, Zap, Check, Copy, Plus, Folder, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SIM_METADATA } from "./generated/sim-registry";
 
@@ -13,6 +13,24 @@ interface SimMetadata {
 export default function SimManager() {
   const sims = SIM_METADATA;
   const [copiedJson, setCopiedJson] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateRegistry = async () => {
+    setIsGenerating(true);
+    try {
+      const res = await fetch("/api/generate-sim-registry", { method: "POST" });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (data.success) {
+        toast.success("Registry regenerated! Refresh to see changes.");
+      } else {
+        toast.error(`Failed: ${data.error}`);
+      }
+    } catch {
+      toast.error("Failed to regenerate registry");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const copyJsonToClipboard = () => {
     const json = JSON.stringify({
@@ -45,6 +63,14 @@ export default function SimManager() {
         </div>
         <div className="flex gap-3">
           <button
+            onClick={generateRegistry}
+            disabled={isGenerating}
+            className="flex items-center gap-2 px-4 py-2 bg-ares-red/20 text-ares-red rounded-lg hover:bg-ares-red/30 transition disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isGenerating ? "animate-spin" : ""}`} />
+            {isGenerating ? "Generating..." : "Regenerate"}
+          </button>
+          <button
             onClick={copyJsonToClipboard}
             className="flex items-center gap-2 px-4 py-2 bg-ares-gold/20 text-ares-gold rounded-lg hover:bg-ares-gold/30 transition"
           >
@@ -69,8 +95,8 @@ export default function SimManager() {
               {`/** @sim {"name": "My Display Name", "requiresContext": false} */`}
             </pre>
           </li>
-          <li>Run: <code className="bg-obsidian-900 px-1 rounded">npm run generate:sims</code></li>
-          <li>Use in docs: <code className="bg-obsidian-900 px-1 rounded">{'<mysim />'}</code></li>
+          <li>Click <strong>Regenerate</strong> button above (or run: <code className="bg-obsidian-900 px-1 rounded">npm run generate:sims</code>)</li>
+          <li>Refresh page and use in docs: <code className="bg-obsidian-900 px-1 rounded">{'<mysim />'}</code></li>
         </ol>
       </div>
 
