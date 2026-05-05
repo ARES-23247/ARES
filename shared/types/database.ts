@@ -3,7 +3,7 @@
  * Provides unwrapping of Generated<> wrappers and type-safe row operations.
  */
 
-import type { DB, Generated } from "../schemas/database";
+import type { DB } from "../schemas/database";
 import type { Selectable, Insertable, Updateable } from "kysely";
 
 /**

@@ -626,17 +626,12 @@ function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: st
 export default function EventEditor({ userRole }: { userRole?: string | unknown }) {
   const { editId } = useParams<{ editId?: string }>();
 
-  // Use a predictable room ID based on the event ID
-  const roomId = editId ? `event_${editId}` : null;
+  const [draftId] = useState(() => `draft_event_${crypto.randomUUID?.() || Math.random().toString(36).substring(2)}`);
+  const roomId = editId ? `event_${editId}` : draftId;
 
-  if (roomId) {
-    return (
-      <CollaborativeEditorRoom roomId={roomId}>
-        <EventEditorInner editId={editId} userRole={userRole} roomId={roomId} />
-      </CollaborativeEditorRoom>
-    );
-  }
-
-  // Single player mode for new events until they are saved and get an ID
-  return <EventEditorInner editId={editId} userRole={userRole} roomId={roomId} />;
+  return (
+    <CollaborativeEditorRoom roomId={roomId}>
+      <EventEditorInner editId={editId} userRole={userRole} roomId={roomId} />
+    </CollaborativeEditorRoom>
+  );
 }

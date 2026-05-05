@@ -337,17 +337,12 @@ function BlogEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
 export default function BlogEditor({ userRole }: { userRole?: string | unknown }) {
   const { editSlug } = useParams<{ editSlug?: string }>();
 
-  // Use a predictable room ID based on the post slug
-  const roomId = editSlug ? `blog_${editSlug}` : null;
+  const [draftId] = useState(() => `draft_blog_${crypto.randomUUID?.() || Math.random().toString(36).substring(2)}`);
+  const roomId = editSlug ? `blog_${editSlug}` : draftId;
 
-  if (roomId) {
-    return (
-      <CollaborativeEditorRoom roomId={roomId}>
-        <BlogEditorInner editSlug={editSlug} userRole={userRole} roomId={roomId} />
-      </CollaborativeEditorRoom>
-    );
-  }
-
-  // Single player mode for new documents until they are saved and get a slug
-  return <BlogEditorInner editSlug={editSlug} userRole={userRole} roomId={roomId} />;
+  return (
+    <CollaborativeEditorRoom roomId={roomId}>
+      <BlogEditorInner editSlug={editSlug} userRole={userRole} roomId={roomId} />
+    </CollaborativeEditorRoom>
+  );
 }

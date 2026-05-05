@@ -5,8 +5,6 @@
 
 import type { Context } from "hono";
 import type {
-  Bindings,
-  Variables,
   AppEnv as MiddlewareAppEnv,
 } from "../../functions/api/middleware/utils";
 

@@ -371,18 +371,13 @@ function DocsEditorInner({ editSlug, userRole, roomId }: { editSlug?: string, us
 export default function DocsEditor({ userRole }: { userRole?: string | unknown }) {
   const { editSlug } = useParams<{ editSlug?: string }>();
 
-  // Use a predictable room ID based on the document slug
-  const roomId = editSlug ? `doc_${editSlug}` : null;
+  const [draftId] = useState(() => `draft_doc_${crypto.randomUUID?.() || Math.random().toString(36).substring(2)}`);
+  const roomId = editSlug ? `doc_${editSlug}` : draftId;
 
-  if (roomId) {
-    return (
-      <CollaborativeEditorRoom roomId={roomId}>
-        <DocsEditorInner editSlug={editSlug} userRole={userRole} roomId={roomId} />
-      </CollaborativeEditorRoom>
-    );
-  }
-
-  // Single player mode for new documents until they are saved and get a slug
-  return <DocsEditorInner editSlug={editSlug} userRole={userRole} roomId={roomId} />;
+  return (
+    <CollaborativeEditorRoom roomId={roomId}>
+      <DocsEditorInner editSlug={editSlug} userRole={userRole} roomId={roomId} />
+    </CollaborativeEditorRoom>
+  );
 }
 
