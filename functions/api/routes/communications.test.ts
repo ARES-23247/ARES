@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { TestEnv, MockKysely } from "../../../src/test/types";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import communicationsRouter from "./communications";
@@ -19,7 +20,7 @@ import { getSocialConfig, logAuditAction, logSystemError } from "../middleware";
 const globalFetch = (globalThis as any).fetch;
 
 describe("Hono Backend - /communications Router", () => {
-  let mockDb: any;
+  let mockDb: MockKysely;
   let testApp: Hono<any>;
 
   beforeEach(() => {
@@ -32,8 +33,8 @@ describe("Hono Backend - /communications Router", () => {
       execute: vi.fn().mockResolvedValue([]),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       await next();
     });
@@ -58,8 +59,8 @@ describe("Hono Backend - /communications Router", () => {
   });
 
   it("GET /stats - returns 500 when DB is null", async () => {
-    const errorApp = new Hono<any>();
-    errorApp.use("*", async (c: any, next: any) => {
+    const errorApp = new Hono<TestEnv>();
+    errorApp.use("*", async (c, next) => {
       c.set("db", null);
       await next();
     });
