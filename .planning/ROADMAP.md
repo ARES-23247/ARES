@@ -194,8 +194,8 @@ Plans:
 - Wave 4: 30-08 (E2E Test Fix) — autonomous, depends on 30-01, fixes 2 E2E violations
 
 Plans:
-- [ ] 30-01-PLAN.md — Create src/test/types.ts with MockKysely, TestEnv, MockExecutionContext, MockExpressionBuilder and update utils.tsx (TODO)
-- [ ] 30-02-PLAN.md — Migrate all 6 factory files to D1Row<T> return types (TODO)
+- [x] 30-01-PLAN.md — Create src/test/types.ts with MockKysely, TestEnv, MockExecutionContext, MockExpressionBuilder and update utils.tsx (COMPLETE)
+- [x] 30-02-PLAN.md — Migrate all 6 factory files to D1Row<T> return types (COMPLETE)
 - [ ] 30-03-PLAN.md — Migrate auth/core tests (auth.test.ts, users.test.ts, profiles.test.ts, badges.test.ts, _profileUtils.test.ts) to typed mocks (TODO)
 - [ ] 30-04-PLAN.md — Migrate content/docs tests (docs.test.ts, posts.test.ts, comments.test.ts, media.test.ts) to typed mocks (TODO)
 - [ ] 30-05-PLAN.md — Migrate events/logistics tests (events.test.ts, seasons.test.ts, outreach.test.ts, logistics.test.ts, locations.test.ts) to typed mocks (TODO)
