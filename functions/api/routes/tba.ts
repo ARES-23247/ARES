@@ -4,6 +4,7 @@ import { Hono, Context } from "hono";
 import { AppEnv, ensureAuth, rateLimitMiddleware } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { tbaContract } from "../../../shared/schemas/contracts/tbaContract";
+import { z } from "zod";
 
 const s = initServer<AppEnv>();
 export const tbaRouter = new Hono<AppEnv>();
@@ -50,7 +51,7 @@ async function getTBA(path: string, c: Context<AppEnv>) {
 }
 
 const tbaTsRestRouter = s.router(tbaContract, {
-  getRankings: async ({ params }, c) => {
+  getRankings: async ({ params }: { params: z.infer<typeof tbaContract.getRankings.pathParams> }, c: Context<AppEnv>) => {
     try {
       const eventKey = String(params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -63,7 +64,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch rankings" } };
     }
   },
-  getMatches: async ({ params }, c) => {
+  getMatches: async ({ params }: { params: z.infer<typeof tbaContract.getMatches.pathParams> }, c: Context<AppEnv>) => {
     try {
       const eventKey = String(params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -77,7 +78,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch matches" } };
     }
   },
-  getFtcEvents: async ({ params }, c) => {
+  getFtcEvents: async ({ params }: { params: z.infer<typeof tbaContract.getFtcEvents.pathParams> }, c: Context<AppEnv>) => {
     try {
       const { season, eventCode, type } = params;
       const path = `/${season}/events/${eventCode}/${type}`;
@@ -109,7 +110,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch official event data" } };
     }
   }
-});
+} as any);
 
 createHonoEndpoints(tbaContract, tbaTsRestRouter, tbaRouter);
 export default tbaRouter;

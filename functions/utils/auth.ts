@@ -4,6 +4,7 @@ import { kyselyAdapter } from "@better-auth/kysely-adapter";
 import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
 import { siteConfig } from "./site.config";
+import type { D1Database } from "@cloudflare/workers-types";
 
 export const getAuth = (db: D1Database, env: Record<string, unknown>, requestUrl?: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Kysely requires generic DB type; better-auth's adapter expects any

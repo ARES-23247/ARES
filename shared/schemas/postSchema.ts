@@ -10,7 +10,7 @@ const tiptapNodeSchema: z.ZodType<{
 }> = z.object({
   type: z.string().optional(),
   content: z.array(z.lazy(() => tiptapNodeSchema)).optional(),
-  attrs: z.record(z.unknown()).optional(),
+  attrs: z.record(z.string(), z.unknown()).optional(),
   marks: z.array(z.unknown()).optional(),
   text: z.string().optional(),
 });

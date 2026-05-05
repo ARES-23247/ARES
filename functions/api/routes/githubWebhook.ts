@@ -25,7 +25,7 @@ async function verifyGitHubSignature(
     const PREFIX = "sha256=";
     // Always extract signature hex, even if prefix doesn't match
     const sigHex = signature.length >= PREFIX.length ? signature.slice(PREFIX.length) : signature;
-    const sigBytes = new Uint8Array(sigHex.match(/.{1,2}/g) || [].map(byte => parseInt(byte, 16)));
+    const sigBytes = new Uint8Array((sigHex.match(/.{1,2}/g) || []).map(byte => parseInt(byte, 16)));
 
     // Check prefix matches AFTER doing the work (constant-time)
     const prefixMatches = signature.length >= PREFIX.length &&

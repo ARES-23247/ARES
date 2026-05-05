@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Read(.agents/skills/**)"
+      "Read(.agents/skills/**)",
+      "Bash(node -c c:/Users/david/dev/robotics/ftc/ARESWEB/shared/schemas/contracts/outreachContract.ts)",
+      "Bash(node -c c:/Users/david/dev/robotics/ftc/ARESWEB/shared/schemas/contracts/locationContract.ts)"
     ]
   },
   "extraKnownMarketplaces": {

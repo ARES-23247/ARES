@@ -143,7 +143,7 @@ export default function PrintPortfolio() {
                 <h3 className="text-2xl font-bold uppercase tracking-tight mb-2">{doc.title}</h3>
                 <p className="text-black/50 italic mb-6">{doc.description}</p>
                 <div className="print-prosemirror">
-                  {isAst ? <TiptapRenderer node={parsedAst} /> : <DocsMarkdownRenderer content={doc.content || ""} />}
+                  {isAst && parsedAst ? <TiptapRenderer node={parsedAst} /> : <DocsMarkdownRenderer content={doc.content || ""} />}
                 </div>
               </div>
             );
@@ -169,7 +169,7 @@ export default function PrintPortfolio() {
                     <p className="text-black/60 mb-4">{doc.description}</p>
                   </div>
                   <div className="print-prosemirror">
-                    {isAst ? <TiptapRenderer node={parsedAst} /> : <DocsMarkdownRenderer content={doc.content || ""} />}
+                    {isAst && parsedAst ? <TiptapRenderer node={parsedAst} /> : <DocsMarkdownRenderer content={doc.content || ""} />}
                   </div>
                 </div>
               );

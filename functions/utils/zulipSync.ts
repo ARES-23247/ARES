@@ -2,6 +2,7 @@
 import { Bindings, logSystemError } from "../api/middleware";
 import pRetry from "p-retry";
 import { z } from "zod";
+import type { D1Database } from "@cloudflare/workers-types";
 
 /**
  * Minimal credentials needed for Zulip API calls.
@@ -15,12 +16,21 @@ const ZulipResponseSchema = z.object({
   msg: z.string().optional(),
 });
 
-type ZulipCredentials = Record<string, string>;
+type ZulipCredentials = {
+  ZULIP_BOT_EMAIL?: string;
+  ZULIP_EMAIL?: string;
+  ZULIP_API_KEY?: string;
+  ZULIP_URL?: string;
+  ZULIP_ADMIN_STREAM?: string;
+  DB?: import("kysely").Kysely<import("../../shared/schemas/database").DB> | D1Database;
+  [key: string]: unknown;
+};
 type ZulipEnv = Bindings | ZulipCredentials;
 const getZulipAuthHeaders = (env: ZulipEnv) => {
-  const email = (env as Record<string, string>).ZULIP_BOT_EMAIL || (env as Record<string, string>).ZULIP_EMAIL;
+  const creds = env as ZulipCredentials;
+  const email = creds.ZULIP_BOT_EMAIL || creds.ZULIP_EMAIL;
   return { 
-    "Authorization": "Basic " + btoa(unescape(encodeURIComponent(email + ":" + (env as Record<string, string>).ZULIP_API_KEY))) 
+    "Authorization": "Basic " + btoa(unescape(encodeURIComponent(email + ":" + creds.ZULIP_API_KEY))) 
   };
 };
 
@@ -88,7 +98,7 @@ export async function sendZulipMessage(
     });
   } catch (err) {
     console.error("[ZulipSync] Critical failure after retries:", err);
-    const db = 'DB' in env ? env.DB : undefined;
+    const db = ('DB' in env) ? env.DB : undefined;
     if (db) await logSystemError(db as import("kysely").Kysely<import("../../shared/schemas/database").DB>, "Zulip", "Critical failure after retries", String(err));
     return null;
   }

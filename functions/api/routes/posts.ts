@@ -300,7 +300,7 @@ const postTsRestRouterObj = {
           title: body.title,
           author: "ARES Team", 
           date: dateStr,
-          thumbnail: body.coverImageUrl || "",
+          thumbnail: body.thumbnail || "",
           snippet,
           ast: astStr,
           cf_email: email,
@@ -326,7 +326,7 @@ const postTsRestRouterObj = {
 
       c.executionCtx.waitUntil(pruneHistory(c, slug, 10));
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
 
       const warnings: string[] = [];
 
@@ -338,12 +338,12 @@ const postTsRestRouterObj = {
         c.executionCtx.waitUntil((async () => {
           try {
             await dispatchSocials(
-              c.env.DB,
+              c.get("db") as Kysely<DB>,
               {
                 title: body.title,
                 url: `${baseUrl}/blog/${slug}`,
                 snippet: snippet || "Read the latest engineering update from ARES 23247!",
-                thumbnail: body.coverImageUrl || "/gallery_1.png",
+                thumbnail: body.thumbnail || "/gallery_1.png",
                 baseUrl: baseUrl
               },
               socialConfig,
@@ -408,11 +408,11 @@ const postTsRestRouterObj = {
         const revSlug = await createShadowRevision(c, slug, user!, {
           title: body.title,
           author: "ARES Team",
-          thumbnail: body.coverImageUrl,
+          thumbnail: body.thumbnail,
           snippet,
           astStr,
           publishedAt: body.publishedAt,
-          seasonId: body.seasonId
+          seasonId: body.seasonId as any
         });
         return { status: 200, body: { success: true, slug: revSlug } };
       }
@@ -432,7 +432,7 @@ const postTsRestRouterObj = {
       await db.updateTable("posts")
         .set({
           title: body.title,
-          thumbnail: body.coverImageUrl || "",
+          thumbnail: body.thumbnail || "",
           snippet,
           ast: astStr,
           status,
@@ -457,7 +457,7 @@ const postTsRestRouterObj = {
       );
 
       c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${body.title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
       return { status: 200, body: { success: true, slug } };
     } catch (e) {
       console.error("[Posts:Update] Error", e);
@@ -471,7 +471,7 @@ const postTsRestRouterObj = {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("posts").set({ is_deleted: 1, status: "draft", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_POST", "posts", slug));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
       return { status: 200, body: { success: true } };
     } catch (e) {
       console.error("[Posts:Delete] Error", e);
@@ -598,14 +598,14 @@ const postTsRestRouterObj = {
       
       c.executionCtx.waitUntil(
         dispatchSocials(
-          c.env.DB,
+          c.get("db") as Kysely<DB>,
           {
             title: String(post.title),
             url: `${baseUrl}/blog/${slug}`,
             snippet: post.snippet || "Read the latest update from ARES 23247!",
             thumbnail: post.thumbnail || "",
             baseUrl: baseUrl
-          }, socialConfig, socials).catch(err => console.error("[Repush] Social dispatch failed:", err))
+          }, socialConfig, socials ? socials.reduce((acc: Record<string, boolean>, curr: string) => ({...acc, [curr]: true}), {}) : null).catch(err => console.error("[Repush] Social dispatch failed:", err))
       );
       return { status: 200, body: { success: true } };
     } catch (err) {

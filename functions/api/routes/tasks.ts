@@ -219,7 +219,7 @@ const tasksTsRestRouter = s.router(taskContract, {
 
       const now = new Date().toISOString();
       
-      await Promise.all(body.items.map((item: { id: string; status: "todo" | "in_progress" | "in_review" | "done"; sort_order: number }) =>
+      await Promise.all(body.items.map((item: any) =>
         db.updateTable("tasks")
           .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
           .where("id", "=", item.id)
@@ -295,11 +295,11 @@ const tasksTsRestRouter = s.router(taskContract, {
           // Admins can assign anyone, but mentors/coaches can only assign within their subteam
           if (!isAdmin && isMentor) {
             const assigneeSubteams = await db.selectFrom("user_profiles")
-              .select("subteam")
+              .select("subteams")
               .where("user_id", "in", body.assignees)
               .execute();
 
-            const hasMismatchedSubteam = assigneeSubteams.some(p => p.subteam && p.subteam !== existing.subteam);
+            const hasMismatchedSubteam = assigneeSubteams.some(p => p.subteams && p.subteams !== existing.subteam);
             if (hasMismatchedSubteam) {
               return { status: 403, body: { error: "Cannot assign users from different subteams to this task" } };
             }

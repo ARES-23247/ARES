@@ -6,8 +6,8 @@ import SEO from "../components/SEO";
 
 // SEC-WR-02: Whitelist of allowed GitHub repositories to prevent phishing redirects
 const ALLOWED_REPOS = [
-  `${siteConfig.urls.githubOrg}/ARESWEB`,
-  `${siteConfig.urls.githubOrg}/IntoTheDeep`
+  "ARES-23247/ARESWEB",
+  "ARES-23247/IntoTheDeep"
 ] as const;
 
 type AllowedRepo = typeof ALLOWED_REPOS[number];
