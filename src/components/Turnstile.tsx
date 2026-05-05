@@ -1,6 +1,19 @@
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from "react";
 import { siteConfig } from "../site.config";
 
+/**
+ * Turnstile CAPTCHA Component
+ *
+ * SECURITY NOTE (IN-08): The Turnstile site key is intentionally exposed in client-side code.
+ * This is expected behavior for Turnstile - the site key is public by design and must be
+ * included in the client bundle. Security is enforced server-side through:
+ * 1. Secret key verification on the backend (never exposed to client)
+ * 2. Token validation with Cloudflare APIs
+ * 3. Site key rotation via environment-specific configuration
+ *
+ * For environment-specific keys, configure via VITE_TURNSTLE_SITE_KEY env var.
+ */
+
 // Extend Window type for E2E tests
 declare global {
   interface TurnstileWidget {
