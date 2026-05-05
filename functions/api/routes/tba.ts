@@ -1,12 +1,17 @@
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { Hono, Context } from "hono";
-import { AppEnv  } from "../middleware";
+import { AppEnv, ensureAuth, rateLimitMiddleware } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { tbaContract } from "../../../shared/schemas/contracts/tbaContract";
 
 const s = initServer<AppEnv>();
 export const tbaRouter = new Hono<AppEnv>();
+
+// CR-06 FIX: Apply authentication and rate limiting to all TBA proxy routes
+// While TBA data is public, the proxy could be abused for rate limit evasion
+tbaRouter.use("*", ensureAuth);
+tbaRouter.use("*", rateLimitMiddleware(30, 60));
 
 const tbaCache = new Map<string, { data: unknown; expiresAt: number }>();
 
