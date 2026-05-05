@@ -13,6 +13,27 @@ export function SecuritySettings({ inputClass, labelClass, sectionClass }: Profi
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // SEC-WR-10: Validate TOTP URI format to prevent QR code injection attacks
+  const validateTotpUri = (uri: string): string => {
+    if (!uri.startsWith('otpauth://totp/')) {
+      throw new Error('Invalid TOTP URI format: must start with otpauth://totp/');
+    }
+    // Check for dangerous patterns that could indicate injection attempts
+    const dangerousPatterns = [
+      /javascript:/i,
+      /<script/i,
+      /onerror=/i,
+      /onload=/i,
+      /data:text\/html/i
+    ];
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(uri)) {
+        throw new Error('Invalid TOTP URI: contains dangerous content');
+      }
+    }
+    return uri;
+  };
+
   const handleSendVerification = async () => {
     setIsSendingVerification(true);
     setError("");
@@ -39,8 +60,10 @@ export function SecuritySettings({ inputClass, labelClass, sectionClass }: Profi
       const { data, error } = await authClient.twoFactor.enable();
       if (error) throw new Error(error.message);
       if (data) {
+        // SEC-WR-10: Validate TOTP URI format before storing in state
+        const validUri = validateTotpUri(data.totpURI);
         // @ts-expect-error -- BetterAuth extensions
-        setTwoFactorData({ qrCode: data.totpURI, secret: data.secret });
+        setTwoFactorData({ qrCode: validUri, secret: data.secret });
         setIsSettingUp2FA(true);
       }
     } catch (err) {
