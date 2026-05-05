@@ -96,7 +96,7 @@ export default ts.config(
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
       }],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-empty-object-type": "off",
       
       // Security overrides
@@ -114,13 +114,6 @@ export default ts.config(
     rules: {
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
       "no-undef": "off",
-    }
-  },
-  {
-    // Disable explicit any warnings for the API router where `as any` is used for structural casting
-    files: ["functions/api/routes/**/*.{ts,tsx}"],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "off"
     }
   }
 );
