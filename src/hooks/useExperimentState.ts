@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { z } from 'zod';
+import { logger } from '../utils/logger';
 
 /**
  * SEC-WR-06: Hook for localStorage with Zod schema validation.
@@ -30,11 +31,11 @@ export function useExperimentState<T extends z.ZodType>(
         return validated.data;
       }
       // Schema validation failed - data may be corrupted or tampered
-      console.warn(`localStorage key "${key}" failed schema validation, using initial value`);
+      logger.warn(`localStorage key "${key}" failed schema validation, using initial value`);
       return initialValue;
     } catch (error) {
       // If error also return initialValue
-      console.error(`Error reading localStorage key "${key}":`, error);
+      logger.error(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -50,7 +51,7 @@ export function useExperimentState<T extends z.ZodType>(
       // SEC-WR-06: Validate value before storing
       const validated = schema.safeParse(valueToStore);
       if (!validated.success) {
-        console.error(`Failed to validate value for localStorage key "${key}":`, validated.error);
+        logger.error(`Failed to validate value for localStorage key "${key}":`, validated.error);
         return;
       }
 
@@ -62,7 +63,7 @@ export function useExperimentState<T extends z.ZodType>(
         window.localStorage.setItem(key, JSON.stringify(validated.data));
       }
     } catch (error) {
-      console.error(`Error setting localStorage key "${key}":`, error);
+      logger.error(`Error setting localStorage key "${key}":`, error);
     }
   };
 

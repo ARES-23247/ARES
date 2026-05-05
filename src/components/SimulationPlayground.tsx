@@ -3,6 +3,9 @@ import { createPortal } from "react-dom";
 import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize } from "lucide-react";
 import { loader } from "@monaco-editor/react";
 import { validateIdParam } from "../utils/security";
+import { logger } from "../utils/logger";
+import { getSimChatKey } from "../utils/storageKeys";
+import { GITHUB_REPO } from "../utils/constants";
 
 // Monaco Editor CDN Configuration
 // SECURITY: Version pinned to 0.52.2 for supply chain stability.
@@ -92,7 +95,9 @@ export default function SimulationPlayground() {
   const [savedSims, setSavedSims] = useState<SavedSim[]>([]);
   const [showLibrary, setShowLibrary] = useState(false);
   const [isLoadingSims, setIsLoadingSims] = useState(false);
-  
+  const [isLoadingSim, setIsLoadingSim] = useState(false);
+  const [isLoadingGithubSim, setIsLoadingGithubSim] = useState(false);
+
   const [githubSims, setGithubSims] = useState<GithubSim[]>([]);
   const [isLoadingGithubSims, setIsLoadingGithubSims] = useState(false);
   
@@ -108,21 +113,50 @@ export default function SimulationPlayground() {
   
   // Visual AI State
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
-  
-  // Editor Refs
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const editorRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const monacoRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const vimRef = useRef<any>(null);
+
+  // Editor Refs - define interfaces for Monaco Editor types
+  interface IMonacoEditor {
+    getValue(): string;
+    getModel(): { updateOptions(options: unknown): void } | null;
+    onDidChangeModelContent(listener: () => void): { dispose(): void };
+    layout(): void;
+    focus(): void;
+    trigger(type: string, source: string): void;
+  }
+
+  interface IMonacoStandalone {
+    editor: {
+      setModelMarkers(model: { updateOptions(options: unknown): void } | null, owner: string, markers: unknown[]): void;
+    };
+    MarkerSeverity: {
+      Error: number;
+      Warning: number;
+      Info: number;
+      Hint: number;
+    };
+    languages: {
+      typescript: {
+        javascriptDefaults: {
+          addExtraLib(content: string, filePath: string): void;
+          setCompilerOptions(options: unknown): void;
+        };
+      };
+    };
+  }
+
+  interface IVimMode {
+    dispose(): void;
+  }
+
+  const editorRef = useRef<IMonacoEditor | null>(null);
+  const monacoRef = useRef<IMonacoStandalone | null>(null);
+  const vimRef = useRef<IVimMode | null>(null);
 
   const compileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Chat state
   // Use sessionStorage instead of localStorage for better security (clears on browser close)
   // Implement retention policy: max 50 messages, sanitize before storage
-  const STORAGE_PREFIX = 'sim_chat_v2_';
   const MAX_CHAT_MESSAGES = 50;
 
   const loadChatMessages = (simId: string | null): ChatMessage[] => {
@@ -131,7 +165,7 @@ export default function SimulationPlayground() {
       const rawIdParam = new URLSearchParams(window.location.search).get("simId");
       const validatedId = rawIdParam ? validateIdParam(rawIdParam) : null;
       const idParam = simId || (validatedId || 'new');
-      const stored = sessionStorage.getItem(`${STORAGE_PREFIX}${idParam}`);
+      const stored = sessionStorage.getItem(getSimChatKey(idParam));
       if (stored) {
         const parsed = JSON.parse(stored) as ChatMessage[];
         // Validate structure
@@ -140,7 +174,7 @@ export default function SimulationPlayground() {
         }
       }
     } catch (e) {
-      console.error("[SimPlayground] Failed to load chat from storage:", e);
+      logger.error("[SimPlayground] Failed to load chat from storage:", e);
     }
     return [DEFAULT_MESSAGE];
   };
@@ -152,9 +186,9 @@ export default function SimulationPlayground() {
       const id = validatedSimId || 'new';
       // Apply retention limit before saving
       const limited = messages.slice(-MAX_CHAT_MESSAGES);
-      sessionStorage.setItem(`${STORAGE_PREFIX}${id}`, JSON.stringify(limited));
+      sessionStorage.setItem(getSimChatKey(id), JSON.stringify(limited));
     } catch (e) {
-      console.error("[SimPlayground] Failed to save chat to storage:", e);
+      logger.error("[SimPlayground] Failed to save chat to storage:", e);
     }
   };
 
@@ -291,7 +325,7 @@ export default function SimulationPlayground() {
       );
 
     } catch (e) {
-      console.error("[SimPlayground] Failed to load intellisense types:", e);
+      logger.error("[SimPlayground] Failed to load intellisense types:", e);
     }
     
     editorRef.current = editor;
@@ -358,7 +392,7 @@ export default function SimulationPlayground() {
   useEffect(() => {
     if (isVimMode && editorRef.current) {
       import('monaco-vim').then((vim) => {
-        vimRef.current = vim.initVimMode(editorRef.current, document.createElement('div'));
+        vimRef.current = vim.initVimMode(editorRef.current as any, document.createElement('div'));
       });
     } else {
       if (vimRef.current) {
@@ -421,7 +455,7 @@ export default function SimulationPlayground() {
         setSavedSims(data.simulations || []);
       }
     } catch (e) {
-      console.error("[SimPlayground] Failed to fetch sims:", e);
+      logger.error("[SimPlayground] Failed to fetch sims:", e);
     } finally {
       setIsLoadingSims(false);
     }
@@ -430,26 +464,27 @@ export default function SimulationPlayground() {
   const fetchGithubSims = async () => {
     setIsLoadingGithubSims(true);
     try {
-      const res = await fetch("https://raw.githubusercontent.com/ARES-23247/ARESWEB/main/src/sims/simRegistry.json");
+      const res = await fetch(`${GITHUB_REPO.rawUrl}/src/sims/simRegistry.json`);
       if (res.ok) {
         const data = await res.json() as { simulators: GithubSim[] };
         setGithubSims(data.simulators || []);
       }
     } catch (e) {
-      console.error("[SimPlayground] Failed to fetch github sims:", e);
+      logger.error("[SimPlayground] Failed to fetch github sims:", e);
     } finally {
       setIsLoadingGithubSims(false);
     }
   };
 
   const handleLoadSim = async (id: string) => {
+    setIsLoadingSim(true);
     try {
       const res = await fetch(`/api/simulations/${id}`);
       if (!res.ok) throw new Error("Not found");
       const data = await res.json() as { simulation: { id: string; name: string; files: Record<string, string> | string, type?: string } };
       const sim = data.simulation;
       let parsedFiles: Record<string, string> = {};
-      
+
       if (typeof sim.files === "object") {
          parsedFiles = sim.files as Record<string, string>;
       } else if (typeof sim.files === "string") {
@@ -459,11 +494,11 @@ export default function SimulationPlayground() {
            parsedFiles = { [sim.id]: sim.files };
          }
       }
-      
+
       if (Object.keys(parsedFiles).length === 0) {
         parsedFiles = { "SimComponent.jsx": "" };
       }
-      
+
       setFiles(parsedFiles);
       setActiveFile(Object.keys(parsedFiles)[0]);
       setSimName(sim.name);
@@ -473,7 +508,7 @@ export default function SimulationPlayground() {
 
       // Load chat for this sim from sessionStorage
       setChatMessages(loadChatMessages(sim.id));
-      
+
       // Update URL to match loaded sim
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set("simId", sim.id.toString());
@@ -482,21 +517,26 @@ export default function SimulationPlayground() {
       const { toast } = await import("sonner");
       toast.success(`Loaded: ${sim.name}`);
     } catch (e) {
-      console.error("[SimPlayground] Load failed:", e);
+      logger.error("[SimPlayground] Load failed:", e);
+      const { toast } = await import("sonner");
+      toast.error("Failed to load simulation");
+    } finally {
+      setIsLoadingSim(false);
     }
   };
 
   const handleLoadGithubSim = async (sim: GithubSim) => {
+    setIsLoadingGithubSim(true);
     try {
       // New folder structure: path is like "./armkg", file is at "armkg/index.tsx"
       const folder = sim.path.replace('./', '');
       const filename = `${folder}/index.tsx`;
-      const res = await fetch(`https://raw.githubusercontent.com/ARES-23247/ARESWEB/main/src/sims/${filename}`);
+      const res = await fetch(`${GITHUB_REPO.rawUrl}/src/sims/${filename}`);
       if (!res.ok) throw new Error("Not found");
       const code = await res.text();
 
       const parsedFiles = { [filename]: code };
-      
+
       setFiles(parsedFiles);
       setActiveFile(filename);
       setSimName(sim.name);
@@ -506,7 +546,7 @@ export default function SimulationPlayground() {
 
       // Load chat for this GitHub sim from sessionStorage
       setChatMessages(loadChatMessages(`github:${sim.id}`));
-      
+
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set("simId", `github:${sim.id}`);
       window.history.replaceState({}, "", newUrl.toString());
@@ -514,9 +554,11 @@ export default function SimulationPlayground() {
       const { toast } = await import("sonner");
       toast.success(`Loaded Official Sim: ${sim.name}`);
     } catch (e) {
-      console.error("[SimPlayground] GitHub Load failed:", e);
+      logger.error("[SimPlayground] GitHub Load failed:", e);
       const { toast } = await import("sonner");
       toast.error(`Failed to load ${sim.name} from GitHub`);
+    } finally {
+      setIsLoadingGithubSim(false);
     }
   };
 
@@ -549,7 +591,7 @@ export default function SimulationPlayground() {
       const { toast } = await import("sonner");
       toast.success("Code formatted");
     } catch (e) {
-      console.error(e);
+      logger.error("Failed to format code:", e);
       const { toast } = await import("sonner");
       toast.error("Format failed");
     }
@@ -571,7 +613,7 @@ export default function SimulationPlayground() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      console.error(e);
+      logger.error("Failed to download zip:", e);
     }
   };
 
@@ -806,7 +848,7 @@ USER REQUEST: ${msg}`;
       }
 
     } catch (e: unknown) {
-      console.error(e);
+      logger.error("AI Chat error:", e);
       setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Error: ${(e as Error)?.message || "Network error"}` }]);
     } finally {
       setIsChatLoading(false);
@@ -847,7 +889,7 @@ USER REQUEST: ${msg}`;
         toast.error(`Save failed: ${errData.error || res.statusText}`);
       }
     } catch (e) {
-      console.error("[SimPlayground] Save failed:", e);
+      logger.error("[SimPlayground] Save failed:", e);
       const { toast } = await import("sonner");
       toast.error("Network error while saving simulation");
     } finally {

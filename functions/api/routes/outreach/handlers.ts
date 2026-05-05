@@ -9,6 +9,9 @@ import { outreachSchema } from "../../../../shared/schemas/outreachSchema";
 
 const _s = initServer<AppEnv>();
 
+// Description snippet length for list views (IN-07: use named constant instead of magic number)
+const SNIPPET_LENGTH = 200;
+
 async function fetchVolunteerEvents(db: Kysely<DB>, existingEventIds: string[]) {
   try {
     const results = await db.selectFrom("events")
@@ -68,7 +71,7 @@ export const outreachHandlers: any = {
         students_count: Number(r.students_count || 0),
         hours_logged: Number(r.hours_logged || 0),
         reach_count: Number(r.reach_count || 0),
-        description: r.description ? (r.description.length > 200 ? r.description.substring(0, 200) + "..." : r.description) : null,
+        description: r.description ? (r.description.length > SNIPPET_LENGTH ? r.description.substring(0, SNIPPET_LENGTH) + "..." : r.description) : null,
         is_mentoring: !!r.is_mentoring,
         mentored_team_number: r.mentored_team_number || null,
         season_id: r.season_id ? Number(r.season_id) : null,
@@ -114,7 +117,7 @@ export const outreachHandlers: any = {
         students_count: Number(r.students_count || 0),
         hours_logged: Number(r.hours_logged || 0),
         reach_count: Number(r.reach_count || 0),
-        description: r.description ? (r.description.length > 200 ? r.description.substring(0, 200) + "..." : r.description) : null,
+        description: r.description ? (r.description.length > SNIPPET_LENGTH ? r.description.substring(0, SNIPPET_LENGTH) + "..." : r.description) : null,
         is_mentoring: !!r.is_mentoring,
         mentored_team_number: r.mentored_team_number || null,
         season_id: r.season_id ? Number(r.season_id) : null,

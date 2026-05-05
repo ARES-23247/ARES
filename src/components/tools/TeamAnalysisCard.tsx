@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Award, TrendingUp, TrendingDown, Target } from "lucide-react";
 import DOMPurify from 'dompurify';
 import { scoutingApi, type TOATeam, type TOARanking, type AnalysisResponse } from "../../lib/scouting-api";
+import { logger } from "../../utils/logger";
 
 interface TeamAnalysisCardProps {
   team: TOATeam;
@@ -27,7 +28,7 @@ export default function TeamAnalysisCard({ team, ranking, seasonKey }: TeamAnaly
           }
         }
       } catch (err) {
-        console.error("Failed to load analysis history:", err);
+        logger.error("Failed to load analysis history:", err);
       } finally {
         if (mounted) setLoadingHistory(false);
       }

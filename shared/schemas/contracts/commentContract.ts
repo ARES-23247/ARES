@@ -1,8 +1,13 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { commentSchema as commentInputSchema } from "../commentSchema";
 
 const c = initContract();
 
+/**
+ * Comment response schema (database record).
+ * Note: This is different from commentInputSchema which is for user input.
+ */
 export const commentSchema = z.object({
   id: z.string(),
   user_id: z.string(),
@@ -37,9 +42,8 @@ export const commentContract = c.router({
       targetType: z.enum(["post", "event", "doc"]),
       targetId: z.string(),
     }),
-    body: z.object({
-      content: z.string(),
-    }),
+    // IN-03: Use shared input schema instead of duplicating definition
+    body: commentInputSchema,
     responses: {
       200: z.object({ success: z.boolean() }),
     },
@@ -51,9 +55,8 @@ export const commentContract = c.router({
     pathParams: z.object({
       id: z.string(),
     }),
-    body: z.object({
-      content: z.string(),
-    }),
+    // IN-03: Use shared input schema instead of duplicating definition
+    body: commentInputSchema,
     responses: {
       200: z.object({ success: z.boolean() }),
     },

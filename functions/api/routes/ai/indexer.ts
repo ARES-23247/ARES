@@ -27,6 +27,16 @@ interface IndexableDocument {
 const BATCH_SIZE = 100;
 const KV_KEY = "rag_last_indexed";
 
+/**
+ * Indexes site content (events, blog posts, docs) for RAG search using Vectorize.
+ * Performs incremental indexing by default, only reindexing content modified since last run.
+ * @param db - Database instance
+ * @param ai - Cloudflare AI binding for embeddings
+ * @param vectorize - Vectorize index for storing embeddings
+ * @param kv - KV namespace for tracking last index timestamp (optional)
+ * @param options.force - If true, performs full reindex instead of incremental
+ * @returns Statistics about indexed, skipped, and errors
+ */
 export async function indexSiteContent(
   db: Kysely<DB>,
   ai: { run: (model: string, input: unknown) => Promise<unknown> },
@@ -279,6 +289,18 @@ function extractTextFromAst(node: Record<string, unknown>): string {
   return text.trim();
 }
 
+/**
+ * Indexes external resources (FIRST manuals, FTC docs, GitHub repositories) for RAG search.
+ * Fetches content from external sources and creates embeddings for cross-reference search.
+ * @param db - Database instance
+ * @param ai - Cloudflare AI binding for embeddings
+ * @param vectorize - Vectorize index for storing embeddings
+ * @param zaiApiKey - Optional Z.AI API key for alternative embedding service
+ * @param githubPat - Optional GitHub PAT for accessing private repositories
+ * @param kv - KV namespace for tracking last index timestamp (optional)
+ * @param sourceId - Optional source identifier for targeted reindexing
+ * @returns Statistics about indexed, skipped, and errors
+ */
 export async function indexExternalResources(
   db: Kysely<DB>,
   ai: Ai | undefined,

@@ -27,26 +27,31 @@ export default function ArmKgSim() {
     
     let frameId: number;
 
+    // Physics constants
+    const GRAVITY_COEFF = 0.6; // Gravity compensation coefficient
+    const DT = 0.02; // 20ms timestep (50Hz)
+    const FRICTION_COEFF = 0.85; // Damping factor for arm velocity
+
     function simArm() {
       const { armSet: setTarget, armKg: kG, armKp: kP } = stateRef.current;
-      
+
       const error = setTarget - armAng;
-      
+
       const radians = armAng * (Math.PI / 180);
       const cosTheta = Math.cos(radians);
-      
+
       const ffVoltage = kG * cosTheta;
       const pidVoltage = kP * error;
-      
+
       const voltage = ffVoltage + pidVoltage;
-      
-      const GRAVITY_PULL = -0.6 * cosTheta; 
-      const MOTOR_PUSH = voltage * 1.0; 
-      
+
+      const GRAVITY_PULL = -GRAVITY_COEFF * cosTheta;
+      const MOTOR_PUSH = voltage * 1.0;
+
       const accel = MOTOR_PUSH + GRAVITY_PULL;
-      armVel += accel * 0.02;
-      armVel *= 0.85; 
-      
+      armVel += accel * DT;
+      armVel *= FRICTION_COEFF;
+
       armAng += armVel;
 
       // Update React state loosely for the UI panel (every 2 frames to avoid mega React re-renders)
@@ -105,19 +110,19 @@ export default function ArmKgSim() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>Target Angle &deg;</span><span>{armSet}&deg;</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="-90" max="90" step="1" value={armSet} onChange={e => setArmSet(parseInt(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Arm target angle in degrees" type="range" min="-90" max="90" step="1" value={armSet} onChange={e => setArmSet(parseInt(e.target.value, 10))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>kG (Gravity Max)</span><span>{armKg.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="2.0" step="0.1" value={armKg} onChange={e => setArmKg(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Gravity feedforward gain" type="range" min="0" max="2.0" step="0.1" value={armKg} onChange={e => setArmKg(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-muted)', marginBottom: '5px' }}>
                 <span>kP (Proportional)</span><span>{armKp.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="0.2" step="0.01" value={armKp} onChange={e => setArmKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Proportional gain" type="range" min="0" max="0.2" step="0.01" value={armKp} onChange={e => setArmKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
       </div>
       <div style={{ display: 'flex', padding: '20px', gap: '40px', alignItems: 'center' }}>

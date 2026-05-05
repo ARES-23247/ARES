@@ -85,8 +85,8 @@ const profileHandlers = {
         p.students_email = students_email;
       }
 
-      return { 
-        status: 200 as const, 
+      return {
+        status: 200 as const,
         body: {
           ...p,
           member_type: String(p.member_type || "student"),
@@ -94,14 +94,14 @@ const profileHandlers = {
           last_name: String(p.last_name || ""),
           nickname: String(p.nickname || ""),
           auth: { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role }
-        } as any
+        }
       };
     } catch (err) {
       console.error("[Profile:Me] Error", err);
-      return { status: 500 as const, body: { error: "Failed to fetch your profile" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch your profile" } };
     }
   },
-  updateMe: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  updateMe: async ({ body }: { body: unknown }, c: Context<AppEnv>) => {
     const user = (await getSessionUser(c))!;
     try {
       // Validate input against schema before updating profile
@@ -111,7 +111,7 @@ const profileHandlers = {
           status: 400 as const,
           body: {
             error: "Invalid profile data: " + validationResult.error.issues.map(i => i.message).join(", ")
-          } as any
+          }
         };
       }
 
@@ -119,7 +119,7 @@ const profileHandlers = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Profile:UpdateMe] Error", e);
-      return { status: 500 as const, body: { error: "Failed to update profile" } as any };
+      return { status: 500 as const, body: { error: "Failed to update profile" } };
     }
   },
   getTeamRoster: async (_: any, c: Context<AppEnv>) => {
@@ -160,7 +160,7 @@ const profileHandlers = {
           row.contact_email = await safeDecrypt(row.contact_email);
         }
 
-        const sanitized = sanitizeProfileForPublic(row, memberType) as any;
+        const sanitized = sanitizeProfileForPublic(row, memberType);
         if (!sanitized) return null;
 
         return {
@@ -169,9 +169,9 @@ const profileHandlers = {
           nickname: sanitized.nickname || sanitized.name || "ARES Member",
           avatar: sanitized.avatar || null,
           member_type: memberType,
-          subteams: Array.isArray(sanitized.subteams) ? (sanitized.subteams as string[]) : [],
-          colleges: Array.isArray(sanitized.colleges) ? (sanitized.colleges as string[]) : [],
-          employers: Array.isArray(sanitized.employers) ? (sanitized.employers as string[]) : []
+          subteams: Array.isArray(sanitized.subteams) ? sanitized.subteams : [],
+          colleges: Array.isArray(sanitized.colleges) ? sanitized.colleges : [],
+          employers: Array.isArray(sanitized.employers) ? sanitized.employers : []
         };
       }))).filter(m => !!m);
 

@@ -19,7 +19,7 @@ export default function SotmSim() {
     const SCALE = 30;
     const HUB = { x: 400, y: 80 };
 
-    function drawArrow(fromX: number, fromY: number, toX: number, toY: number, color: string, width = 2) {
+    function drawArrow(fromX: number, fromY: number, toX: number, toY: number, color: string, width = 2): void {
       const headlen = 10;
       const dx = toX - fromX;
       const dy = toY - fromY;
@@ -158,15 +158,15 @@ export default function SotmSim() {
       <div style={{ display: 'flex', gap: '20px', marginTop: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div style={{ flex: 1, minWidth: '200px' }}>
           <label style={{ color: 'var(--ares-gray)', fontSize: '0.9rem' }}>Robot Velocity: <span style={{ color: 'var(--ares-cyan)' }}>{botVelocity.toFixed(1)} m/s</span></label>
-          <input aria-label="Simulation Configuration Slider" type="range" min="0" max="8" value={botVelocity} step="0.1" onChange={(e) => setBotVelocity(parseFloat(e.target.value))} style={{ width: '100%' }} />
+          <input aria-label="Robot velocity in meters per second" type="range" min="0" max="8" value={botVelocity} step="0.1" onChange={(e) => setBotVelocity(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '200px' }}>
           <label style={{ color: 'var(--ares-gray)', fontSize: '0.9rem' }}>Robot Heading: <span style={{ color: 'var(--ares-cyan)' }}>{botHeading}&deg;</span></label>
-          <input aria-label="Simulation Configuration Slider" type="range" min="-180" max="180" value={botHeading} step="1" onChange={(e) => setBotHeading(parseInt(e.target.value))} style={{ width: '100%' }} />
+          <input aria-label="Robot heading in degrees" type="range" min="-180" max="180" value={botHeading} step="1" onChange={(e) => setBotHeading(parseInt(e.target.value, 10))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '200px' }}>
           <label style={{ color: 'var(--ares-gray)', fontSize: '0.9rem' }}>Muzzle Velocity: <span style={{ color: 'var(--ares-cyan)' }}>{shotSpeed.toFixed(1)} m/s</span></label>
-          <input aria-label="Simulation Configuration Slider" type="range" min="5" max="30" value={shotSpeed} step="0.5" onChange={(e) => setShotSpeed(parseFloat(e.target.value))} style={{ width: '100%' }} />
+          <input aria-label="Muzzle velocity in meters per second" type="range" min="5" max="30" value={shotSpeed} step="0.5" onChange={(e) => setShotSpeed(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
       </div>
       

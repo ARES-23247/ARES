@@ -11,7 +11,13 @@ export function ContactForm({ profile, setProfile, isMinor, inputClass, labelCla
           <label htmlFor="pe-phone" className={labelClass}>Phone</label>
           <input id="pe-phone" className={inputClass} placeholder="(304) 555-1234" value={profile.phone} onChange={e => setProfile({...profile, phone: e.target.value})} />
           <label className="flex items-center gap-2 mt-2 text-xs text-ares-gray">
-            <input type="checkbox" checked={profile.show_phone} onChange={e => setProfile({...profile, show_phone: e.target.checked})} className="accent-ares-red" />
+            <input
+              type="checkbox"
+              checked={profile.show_phone}
+              onChange={e => setProfile({...profile, show_phone: e.target.checked})}
+              className="accent-ares-red"
+              aria-label="Show phone number on public profile"
+            />
             Show on public profile
           </label>
         </div>
@@ -28,7 +34,13 @@ export function ContactForm({ profile, setProfile, isMinor, inputClass, labelCla
             onChange={e => setProfile({...profile, contact_email: e.target.value})}
           />
           <label className="flex items-center gap-2 mt-2 text-xs text-ares-gray">
-            <input type="checkbox" checked={profile.show_email} onChange={e => setProfile({...profile, show_email: e.target.checked})} className="accent-ares-red" />
+            <input
+              type="checkbox"
+              checked={profile.show_email}
+              onChange={e => setProfile({...profile, show_email: e.target.checked})}
+              className="accent-ares-red"
+              aria-label="Show email on public profile"
+            />
             Show email on public profile
           </label>
         </div>

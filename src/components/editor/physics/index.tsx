@@ -3,10 +3,16 @@ import * as R3F from '@react-three/fiber';
 import * as Drei from '@react-three/drei';
 import React, { useRef } from 'react';
 
+interface PhysicsWorldProps {
+  children: React.ReactNode;
+  cameraPos?: [number, number, number];
+  bg?: string;
+}
+
 // Common physics environment wrapper
-export function PhysicsWorld({ children, cameraPos = [0, 5, 10], bg = "#1e1e1e" }: any) {
+export function PhysicsWorld({ children, cameraPos = [0, 5, 10], bg = "#1e1e1e" }: PhysicsWorldProps) {
   return (
-    <R3F.Canvas camera={{ position: cameraPos as [number, number, number], fov: 50 }}>
+    <R3F.Canvas camera={{ position: cameraPos, fov: 50 }}>
       <color attach="background" args={[bg]} />
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
@@ -17,8 +23,14 @@ export function PhysicsWorld({ children, cameraPos = [0, 5, 10], bg = "#1e1e1e" 
   );
 }
 
+interface SwerveModuleProps {
+  position?: [number, number, number];
+  rotation?: number;
+  wheelSpeed?: number;
+}
+
 // Basic swerve module representation
-export function SwerveModule({ position = [0, 0, 0], rotation = 0, wheelSpeed = 0 }: any) {
+export function SwerveModule({ position = [0, 0, 0], rotation = 0, wheelSpeed = 0 }: SwerveModuleProps) {
   const wheelRef = useRef<THREE.Group>(null);
   
   R3F.useFrame(() => {
@@ -28,7 +40,7 @@ export function SwerveModule({ position = [0, 0, 0], rotation = 0, wheelSpeed = 
   });
 
   return (
-    <group position={position as [number, number, number]} rotation={[0, rotation, 0]}>
+    <group position={position} rotation={[0, rotation, 0]}>
       {/* Module housing */}
       <mesh position={[0, 0.5, 0]} castShadow>
         <boxGeometry args={[1, 1, 1]} />

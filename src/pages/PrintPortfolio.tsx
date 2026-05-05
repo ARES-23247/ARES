@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import DocsMarkdownRenderer from "../components/docs/DocsMarkdownRenderer";
 import TiptapRenderer, { type ASTNode } from "../components/TiptapRenderer";
 import { api } from "../api/client";
+import { STORAGE_KEYS } from "../utils/storageKeys";
 
 // Helper to detect if content is JSON AST or markdown
 function useContentParser(content: string | null | undefined) {
@@ -54,7 +55,7 @@ interface PortfolioData {
 export default function PrintPortfolio() {
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
   const [readyToPrint, setReadyToPrint] = useState(false);
-  const code = typeof window !== "undefined" ? localStorage.getItem("ares_judge_code") : null;
+  const code = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEYS.JUDGE_CODE) : null;
   const [error, setError] = useState<string | null>(!code ? "Unauthorized. Please login through the Judges Hub first." : null);
 
   useEffect(() => {

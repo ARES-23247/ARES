@@ -31,38 +31,42 @@ export default function ElevatorPidSim() {
     window.addEventListener('resize', resize);
     resize();
 
-    let position = 0.2; 
+    // Physics constants
+    const DT = 0.02; // 20ms timestep (50Hz)
+    const GRAVITY_FORCE = -0.5; // Downward force due to gravity
+    const MOTOR_EFFICIENCY = 0.1; // Motor force per volt
+    const FRICTION_COEFF = 0.88; // Damping factor for velocity
+
+    let position = 0.2;
     let velocity = 0;
     let lastError = 0;
     let integral = 0;
-    
+
     const history: {p: number, s: number}[] = [];
-    const dt = 0.02; // 50hz
-    
+
     let frameId: number;
 
     function simulate() {
       const { kp: kP, ki: kI, kd: kD, kg: kG, setpoint: s } = stateRef.current;
-      
+
       const error = s - position;
-      const errorRate = (error - lastError) / dt;
+      const errorRate = (error - lastError) / DT;
       lastError = error;
-      
-      integral += error * dt;
+
+      integral += error * DT;
       if (integral > 2) integral = 2;
       if (integral < -2) integral = -2;
-      
+
       let voltage = (kP * error * 50) + (kI * integral * 20) + (kD * errorRate * 1.5);
       voltage += kG;
-      
-      const GRAVITY_FORCE = -0.5; 
-      const MOTOR_FORCE = (voltage * 0.1); 
-      const FORCE = MOTOR_FORCE + GRAVITY_FORCE; 
-      
-      velocity += FORCE * dt; 
-      velocity *= 0.88; 
-      
-      position += velocity * dt;
+
+      const motorForce = voltage * MOTOR_EFFICIENCY;
+      const force = motorForce + GRAVITY_FORCE;
+
+      velocity += force * DT;
+      velocity *= FRICTION_COEFF;
+
+      position += velocity * DT;
       
       if(position <= 0) { position = 0; velocity = 0; integral = 0; }
       if(position >= 1) { position = 1; velocity = 0; integral = 0; }
@@ -151,25 +155,25 @@ export default function ElevatorPidSim() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-gray)', marginBottom: '5px' }}>
                 <span>kP (Proportional)</span><span>{kp.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="25" step="0.01" value={kp} onChange={e => setKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Proportional gain" type="range" min="0" max="25" step="0.01" value={kp} onChange={e => setKp(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-gray)', marginBottom: '5px' }}>
                 <span>kI (Integral)</span><span>{ki.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="25" step="0.01" value={ki} onChange={e => setKi(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Integral gain" type="range" min="0" max="25" step="0.01" value={ki} onChange={e => setKi(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-gray)', marginBottom: '5px' }}>
                 <span>kD (Derivative)</span><span>{kd.toFixed(2)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="25" step="0.01" value={kd} onChange={e => setKd(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Derivative gain" type="range" min="0" max="25" step="0.01" value={kd} onChange={e => setKd(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ flex: 1, minWidth: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ares-gray)', marginBottom: '5px' }}>
                 <span>kG (Gravity FF)</span><span>{kg.toFixed(1)}</span>
             </div>
-            <input aria-label="Simulation Configuration Slider" type="range" min="0" max="10" step="0.1" value={kg} onChange={e => setKg(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            <input aria-label="Gravity feedforward" type="range" min="0" max="10" step="0.1" value={kg} onChange={e => setKg(parseFloat(e.target.value))} style={{ width: '100%' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
             <button 

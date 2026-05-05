@@ -30,6 +30,10 @@ export interface DashboardPermissions {
 }
 
 export function useDashboardSession() {
+  // NOTE: Session is cached for 5 minutes to reduce API calls. This means
+  // permission changes (role updates, member_type changes) may not reflect
+  // immediately for the user. For sensitive operations requiring immediate
+  // permission validation, use server-side checks instead.
   const { data: res, isLoading: isPending } = api.profiles.getMe.useQuery(
     ["dashboard", "session"],
     { query: {} },

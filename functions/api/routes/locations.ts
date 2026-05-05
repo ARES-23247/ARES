@@ -1,39 +1,45 @@
 import { Hono } from "hono";
 import { Context } from "hono";
 import { Kysely } from "kysely";
+import { z } from "zod";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { locationContract, locationSchema } from "../../../shared/schemas/contracts/locationContract";
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 
+// IN-01: Type inference for location schema
+type LocationInput = z.infer<typeof locationSchema>;
+
 const s = initServer<AppEnv>();
 export const locationsRouter = new Hono<AppEnv>();
 
-const locationsTsRestRouter: any = s.router(locationContract as any, {
-    list: async (_: any, c: Context<AppEnv>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const locationsTsRestRouter = s.router(locationContract, {
+    list: async (_input: any, c: Context<AppEnv>) => {
     try {
-                  const db = c.get("db") as Kysely<DB>;
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
         .select(["id", "name", "address", "maps_url", "is_deleted"])
         .where("is_deleted", "=", 0)
         .orderBy("name", "asc")
         .execute();
-      
+
       const locations = results.map(r => ({
         ...r,
         id: r.id || undefined,
         is_deleted: Number(r.is_deleted || 0)
       }));
 
-      return { status: 200 as const, body: { locations: locations as any[] } };
+      // IN-01: Cast to LocationInput[] instead of any[]
+      return { status: 200 as const, body: { locations: locations as LocationInput[] } };
     } catch (e) {
       console.error("LIST_LOCATIONS ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to fetch locations" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch locations" } };
     }
   },
-    adminList: async (_: any, c: Context<AppEnv>) => {
+    adminList: async (_input: any, c: Context<AppEnv>) => {
     try {
-                  const db = c.get("db") as Kysely<DB>;
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
         .select(["id", "name", "address", "maps_url", "is_deleted"])
         .orderBy("name", "asc")
@@ -45,13 +51,14 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
         is_deleted: Number(r.is_deleted || 0)
       }));
 
-      return { status: 200 as const, body: { locations: locations as any[] } };
+      // IN-01: Cast to LocationInput[] instead of any[]
+      return { status: 200 as const, body: { locations: locations as LocationInput[] } };
     } catch (e) {
       console.error("ADMIN_LIST_LOCATIONS ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to fetch locations" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch locations" } };
     }
   },
-    save: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+    save: async ({ body }: { body: unknown }, c: Context<AppEnv>) => {
     try {
       // Validate input against schema before database insertion
       const validationResult = locationSchema.safeParse(body);
@@ -60,7 +67,7 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
           status: 400 as const,
           body: {
             error: "Invalid input: " + validationResult.error.issues.map(i => i.message).join(", ")
-          } as any
+          }
         };
       }
 
@@ -88,12 +95,12 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
       return { status: 200 as const, body: { success: true, id } };
     } catch (e) {
       console.error("SAVE_LOCATION ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to save location", success: false } as any };
+      return { status: 500 as const, body: { error: "Failed to save location", success: false } };
     }
   },
-    delete: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+    delete: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
     try {
-                  const db = c.get("db") as Kysely<DB>;
+      const db = c.get("db") as Kysely<DB>;
       await db.updateTable("locations")
         .set({ is_deleted: 1 })
         .where("id", "=", params.id)
@@ -102,9 +109,10 @@ const locationsTsRestRouter: any = s.router(locationContract as any, {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("DELETE_LOCATION ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to delete location", success: false } as any };
+      return { status: 500 as const, body: { error: "Failed to delete location", success: false } };
     }
   },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any);
 
 locationsRouter.use("/admin/*", ensureAdmin);

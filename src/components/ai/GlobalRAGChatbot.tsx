@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import { v4 as uuidv4 } from "uuid";
 import { useUIStore } from "../../store/uiStore";
 import { z } from "zod";
+import { STORAGE_KEYS } from "../../utils/storageKeys";
 
 export function GlobalRAGChatbot() {
   const { isChatbotOpen, setChatbotOpen } = useUIStore();
@@ -16,10 +17,10 @@ export function GlobalRAGChatbot() {
   const turnstileRef = useRef<TurnstileRef>(null);
   const [sessionId] = useState(() => {
     if (typeof window !== "undefined") {
-      const existing = sessionStorage.getItem("ares_rag_session");
+      const existing =       sessionStorage.getItem(STORAGE_KEYS.RAG_SESSION);
       if (existing) return existing;
       const newId = uuidv4();
-      sessionStorage.setItem("ares_rag_session", newId);
+            sessionStorage.setItem(STORAGE_KEYS.RAG_SESSION, newId);
       return newId;
     }
     return uuidv4();

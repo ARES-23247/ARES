@@ -79,9 +79,12 @@ export async function verifyTurnstile(
   if (!token) return false;
 
   // SEC-03: Allow E2E / local development bypass token
+  // Fail-closed: only allow bypass token in known non-production environments
   const isProd = globalThis.process?.env?.ENVIRONMENT === "production" || globalThis.process?.env?.NODE_ENV === "production";
-  if (token === "test-bypass-token" && !isProd) {
-    console.warn("[Turnstile] Accepted test-bypass-token in non-production environment.");
+  const isDevOrTest = globalThis.process?.env?.ENVIRONMENT === "development" || globalThis.process?.env?.NODE_ENV === "development" || globalThis.process?.env?.NODE_ENV === "test";
+  // Only accept bypass token in dev/test, never in production or preview
+  if (token === "test-bypass-token" && !isProd && isDevOrTest) {
+    console.warn("[Turnstile] Accepted test-bypass-token in development environment.");
     return true;
   }
 

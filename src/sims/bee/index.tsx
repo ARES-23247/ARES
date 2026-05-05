@@ -52,11 +52,11 @@ const FLOWER_TYPES = [
 const CANVAS_W = 800;
 const CANVAS_H = 500;
 
-function rand(min: number, max: number) {
+function rand(min: number, max: number): number {
   return Math.random() * (max - min) + min;
 }
 
-function dist(x1: number, y1: number, x2: number, y2: number) {
+function dist(x1: number, y1: number, x2: number, y2: number): number {
   return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 }
 
@@ -111,7 +111,7 @@ function generateFlowers(count: number): Flower[] {
   return flowers;
 }
 
-function drawFlower(ctx: CanvasRenderingContext2D, flower: Flower, time: number) {
+function drawFlower(ctx: CanvasRenderingContext2D, flower: Flower, time: number): void {
   const { x, y, color, pollenColor, size, isPollinated, hasPollen, bloomPhase } = flower;
   const sway = Math.sin(time * 0.002 + bloomPhase) * 3;
 
@@ -170,7 +170,7 @@ function drawFlower(ctx: CanvasRenderingContext2D, flower: Flower, time: number)
   }
 }
 
-function drawBee(ctx: CanvasRenderingContext2D, bee: Bee, time: number) {
+function drawBee(ctx: CanvasRenderingContext2D, bee: Bee, time: number): void {
   const { x, y, carryingPollen, wingPhase } = bee;
 
   const wingFlap = Math.sin(wingPhase * 2) * 0.4;
@@ -766,8 +766,9 @@ export default function SimComponent() {
             min={1}
             max={8}
             value={beeCount}
-            onChange={e => setBeeCount(parseInt(e.target.value))}
+            onChange={e => setBeeCount(parseInt(e.target.value, 10))}
             disabled={mode === 'playing'}
+            aria-label="Number of bees in simulation"
             style={{ width: '80px' }}
           />
           <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', color: 'var(--ares-cyan)' }}>{beeCount}</span>
@@ -780,8 +781,9 @@ export default function SimComponent() {
             min={6}
             max={30}
             value={flowerCount}
-            onChange={e => setFlowerCount(parseInt(e.target.value))}
+            onChange={e => setFlowerCount(parseInt(e.target.value, 10))}
             disabled={mode === 'playing'}
+            aria-label="Number of flowers in simulation"
             style={{ width: '80px' }}
           />
           <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', color: 'var(--ares-cyan)' }}>{flowerCount}</span>
@@ -796,6 +798,7 @@ export default function SimComponent() {
             step={0.25}
             value={speed}
             onChange={e => setSpeed(parseFloat(e.target.value))}
+            aria-label="Simulation speed multiplier"
             style={{ width: '80px' }}
           />
           <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', color: 'var(--ares-cyan)' }}>{speed}x</span>

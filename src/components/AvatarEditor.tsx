@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, RefreshCw, Save, Image as ImageIcon, Shuffle, ToggleLeft, ToggleRight } from "lucide-react";
 import { authClient } from "../utils/auth-client";
+import { logger } from "../utils/logger";
 
 interface AvatarEditorProps {
   currentImage?: string | null;
@@ -47,17 +48,17 @@ export default function AvatarEditor({ currentImage, onClose, onSave }: AvatarEd
       const url = new URL(currentImage);
       // SEC-WR-12: Validate URL is from allowed DiceBear domain to prevent malicious avatar URLs
       if (!url.hostname.endsWith('dicebear.com') && !url.hostname.endsWith('api.dicebear.com')) {
-        console.warn('Avatar URL must be from dicebear.com domain');
+        logger.warn('Avatar URL must be from dicebear.com domain');
         return new URLSearchParams();
       }
       // Ensure it's https
       if (url.protocol !== 'https:') {
-        console.warn('Avatar URL must use HTTPS');
+        logger.warn('Avatar URL must use HTTPS');
         return new URLSearchParams();
       }
       return new URLSearchParams(url.search);
     } catch {
-      console.warn('Invalid avatar URL format');
+      logger.warn('Invalid avatar URL format');
       return new URLSearchParams();
     }
   };
@@ -105,6 +106,10 @@ export default function AvatarEditor({ currentImage, onClose, onSave }: AvatarEd
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // IN-05: Debounce for randomizeAll to prevent rapid DiceBear API calls
+  // when users click the randomize button multiple times quickly
+  const randomizeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const randomizeAll = () => {
     if (styleMode === "avataaars") {
       setAvaState({
@@ -134,7 +139,24 @@ export default function AvatarEditor({ currentImage, onClose, onSave }: AvatarEd
         baseColor: getRandom(BOTTTS_OPTIONS.baseColor),
       });
     }
+
+    // Clear any pending randomize calls
+    if (randomizeDebounceRef.current) {
+      clearTimeout(randomizeDebounceRef.current);
+      randomizeDebounceRef.current = null;
+    }
   };
+
+  // Debounced version of randomizeAll for rapid clicks
+  const debouncedRandomize = useCallback(() => {
+    if (randomizeDebounceRef.current) {
+      clearTimeout(randomizeDebounceRef.current);
+    }
+    randomizeDebounceRef.current = setTimeout(() => {
+      randomizeAll();
+      randomizeDebounceRef.current = null;
+    }, 200);
+  }, [randomizeAll]);
 
   const currentUrl = useMemo(() => {
     if (styleMode === "avataaars") {
@@ -268,7 +290,7 @@ export default function AvatarEditor({ currentImage, onClose, onSave }: AvatarEd
             </div>
 
             <button
-              onClick={randomizeAll}
+              onClick={debouncedRandomize}
               className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-white/5 hover:bg-white/10 border border-white/10 ares-cut-sm md:ares-cut text-xs md:text-sm font-bold transition-colors w-full justify-center max-w-[160px] md:max-w-[200px]"
             >
               <Shuffle size={14} className="text-ares-gold md:w-4 md:h-4" />

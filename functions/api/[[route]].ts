@@ -313,11 +313,14 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
   const { Kysely } = await import("kysely");
   const db = new Kysely<DB>({ dialect: new D1Dialect({ database: env.DB }) });
   await purgeOldInquiries(db, 30);
+
+  // Configurable audit log retention (default 90 days)
+  const auditRetentionDays = parseInt(env.AUDIT_LOG_RETENTION_DAYS || "90", 10);
   await db.deleteFrom("audit_log")
     .where("id", "in", (eb) => eb.selectFrom("audit_log")
       .select("id")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- sql template literal type mismatch with Kysely
-      .where("created_at", "<", sql`datetime('now', '-90 days')` as any)
+      .where("created_at", "<", sql`datetime('now', '-${auditRetentionDays} days')` as any)
       .limit(100)
     )
     .execute();
