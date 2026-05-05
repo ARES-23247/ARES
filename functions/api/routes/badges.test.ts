@@ -1,15 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { mockExecutionContext, createMockExpressionBuilder } from "../../../src/test/utils";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 
 // Mock middleware
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (c: any, next: any) => next(),
-    ensureAuth: async (c: any, next: any) => next(),
-    rateLimitMiddleware: () => (c: any, next: any) => next(),
+    ensureAdmin: async (c: Context<TestEnv>, next: () => Promise<void>) => next(),
+    ensureAuth: async (c: Context<TestEnv>, next: () => Promise<void>) => next(),
+    rateLimitMiddleware: () => (c: Context<TestEnv>, next: () => Promise<void>) => next(),
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
   };
 });
@@ -22,9 +24,9 @@ vi.mock("../../utils/zulipSync", () => ({
 import { badgesRouter } from "./badges";
 
 describe("Hono Backend - /badges Router", () => {
-  let mockDb: any;
-  let testApp: Hono<any>;
-  const mockEnv = { DEV_BYPASS: "true" };
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
+  const mockEnv: TestEnv["Bindings"] = { DEV_BYPASS: "true" };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -55,8 +57,8 @@ describe("Hono Backend - /badges Router", () => {
       deleteFrom: vi.fn().mockReturnThis(),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
       await next();
     });
@@ -67,7 +69,7 @@ describe("Hono Backend - /badges Router", () => {
     mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Innovator", description: "...", icon: "Award", color_theme: "...", created_at: "2024-01-01" }]);
     const res = await testApp.request("/", {}, mockEnv, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { badges: Array<{ name: string }> };
     expect(body.badges[0].name).toBe("Innovator");
   });
 
@@ -126,7 +128,7 @@ describe("Hono Backend - /badges Router", () => {
     mockDb.execute.mockResolvedValueOnce([{ user_id: "u1", nickname: "test", member_type: "student", badge_count: 5 }]);
     const res = await testApp.request("/leaderboard", {}, mockEnv, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { leaderboard: Array<{ badge_count: number }> };
     expect(body.leaderboard[0].badge_count).toBe(5);
   });
 
