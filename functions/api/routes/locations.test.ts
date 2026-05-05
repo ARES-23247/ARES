@@ -1,7 +1,7 @@
- 
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
+import { MockKysely, TestEnv } from "~/src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
 
 // Mock middleware
@@ -9,7 +9,7 @@ vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
+    ensureAdmin: async (_c: Context<TestEnv>, next: () => Promise<void>) => next(),
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
   };
 });
@@ -17,12 +17,8 @@ vi.mock("../middleware", async (importOriginal) => {
 import locationsRouter from "./locations";
 
 describe("Hono Backend - /locations Router", () => {
-  
-  
-  
-   
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,8 +49,8 @@ describe("Hono Backend - /locations Router", () => {
       }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
       await next();
     });
@@ -65,8 +61,8 @@ describe("Hono Backend - /locations Router", () => {
     mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Shop", address: "123 Main St", is_deleted: 0 }]);
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect((body as any).locations.length).toBe(1);
+    const body = await res.json() as { locations: { id: string; name: string }[] };
+    expect(body.locations.length).toBe(1);
   });
 
   it("GET / - handles db error", async () => {
