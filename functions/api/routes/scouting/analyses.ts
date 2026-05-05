@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { AppEnv, ensureAuth } from "../../middleware";
 
 const analysesRouter = new Hono<AppEnv>();
 
-analysesRouter.get("/", ensureAuth, async (c) => {
+analysesRouter.get("/", ensureAuth, async (c: Context<AppEnv>) => {
   const teamNumberStr = c.req.query("teamNumber");
   const eventKey = c.req.query("eventKey");
   const db = c.get("db");

@@ -1,15 +1,14 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 // ── The Orange Alliance API Proxy ─────────────────────────────────────
 // Proxies requests to TOA, injecting the API key server-side so it
 // never reaches the client. Protects against key leakage and CORS issues.
 
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { AppEnv } from "../../middleware";
 
 const toaProxy = new Hono<AppEnv>();
 
-toaProxy.get("/:path{.+}", async (c) => {
+toaProxy.get("/:path{.+}", async (c: Context<AppEnv>) => {
   const path = c.req.param("path");
   const toaKey = (c.env as Record<string, unknown>).TOA_API_KEY as string | undefined;
 

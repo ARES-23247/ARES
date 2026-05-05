@@ -1,15 +1,14 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 // ── FTC Events API Proxy ─────────────────────────────────────────────
 // Proxies requests to the FIRST FTC Events API v2.0, injecting Basic
 // Auth credentials server-side. Protects API keys from client exposure.
 
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { AppEnv } from "../../middleware";
 
 const ftcEventsProxy = new Hono<AppEnv>();
 
-ftcEventsProxy.get("/:path{.+}", async (c) => {
+ftcEventsProxy.get("/:path{.+}", async (c: Context<AppEnv>) => {
   const path = c.req.param("path");
   const env = c.env as Record<string, unknown>;
   const username = env.FTC_EVENTS_USERNAME as string | undefined;

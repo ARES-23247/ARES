@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 // ── AI Scouting Analysis Endpoint ────────────────────────────────────
 // POST endpoint that accepts team/event data and sends it to Z.ai GLM 5.1
 // for analysis. Supports three modes: team_analysis, match_prediction,
 // and event_overview.
 
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { AppEnv, ensureAuth } from "../../middleware";
 
 interface AnalyzeBody {
@@ -74,7 +73,7 @@ Be specific and use the data provided. Reference team numbers and stats.`,
 
 const analyzeRouter = new Hono<AppEnv>();
 
-analyzeRouter.post("/", ensureAuth, async (c) => {
+analyzeRouter.post("/", ensureAuth, async (c: Context<AppEnv>) => {
   const body = await c.req.json<AnalyzeBody>();
   const { mode, teamNumber, eventKey, seasonKey, context } = body;
 
@@ -117,8 +116,8 @@ analyzeRouter.post("/", ensureAuth, async (c) => {
       return c.json({ error: `AI analysis failed (${zaiRes.status})`, details: errText }, 502);
     }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = (await zaiRes.json()) as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External API: Z.ai API response is not fully typed
+    const data = (await zaiRes.json()) as { choices?: Array<{ message?: { content?: string } }>; error?: { message?: string }; usage?: { total_tokens?: number } };
     if (data.error) {
       return c.json({ error: data.error.message || "AI returned an error" }, 502);
     }

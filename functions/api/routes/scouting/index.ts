@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 // ── Scouting Routes Index ────────────────────────────────────────────
 // Aggregates all scouting sub-routes (TOA proxy, FTC Events proxy,
 // AI analysis) under a single router for mounting in the main API.

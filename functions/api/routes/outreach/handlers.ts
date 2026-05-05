@@ -1,11 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
-
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
-
 import { getSessionUser, logAuditAction } from "../../middleware";
-
 import { outreachSchema, OutreachPayload } from "../../../../shared/schemas/outreachSchema";
 
 // Description snippet length for list views (IN-07: use named constant instead of magic number)
