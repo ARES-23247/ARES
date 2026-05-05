@@ -4,9 +4,11 @@ import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical
 import { loader } from "@monaco-editor/react";
 import { validateIdParam } from "../utils/security";
 
-// Configure Monaco CDN — version pinned for supply chain security
-// Note: @monaco-editor/react doesn't support SRI for worker files.
-// Consider vendoring for maximum security or adding CSP headers.
+// Monaco Editor CDN Configuration
+// SECURITY: Version pinned to 0.52.2 for supply chain stability.
+// MITIGATION: CSP (index.html) restricts script sources to cdn.jsdelivr.net only.
+// NOTE: @monaco-editor/react doesn't support SRI for worker files. For maximum
+// security, consider vendoring Monaco Editor locally in a future update.
 loader.config({
   paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs" },
 });
