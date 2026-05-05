@@ -1,6 +1,7 @@
- 
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { settingsRouter } from "./settings";
 
@@ -15,11 +16,8 @@ vi.mock("../middleware", async (importOriginal) => {
 });
 
 describe("Hono Backend - /settings Router", () => {
-  
-  
-   
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
   let env: Record<string, unknown>;
 
   beforeEach(() => {
@@ -51,15 +49,15 @@ describe("Hono Backend - /settings Router", () => {
     };
 
     env = {
-      DB: {},
+      DB: {} as D1Database,
       ENVIRONMENT: "test",
       DEV_BYPASS: "true",
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
-      c.set("user", { id: "1", email: "admin@test.com", role: "admin" });
+      c.set("sessionUser", { id: "1", email: "admin@test.com", name: null, role: "admin", member_type: "mentor" });
       await next();
     });
     testApp.route("/", settingsRouter);
