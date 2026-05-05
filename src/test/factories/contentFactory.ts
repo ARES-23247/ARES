@@ -1,19 +1,57 @@
 import { faker } from "@faker-js/faker";
+import type { D1Row } from "~/shared/types/database";
 
-export const createMockPost = (overrides?: Record<string, unknown>) => ({
+/**
+ * Mock Media interface for R2-stored media files.
+ * Media doesn't have a direct DB table; stored in R2 with metadata in MediaTags.
+ */
+export interface MockMedia {
+  key: string;
+  url: string;
+  size: number;
+  type: string;
+  folder: string;
+  uploaded_at: string;
+}
+
+/**
+ * Mock Post factory matching Posts table schema.
+ * Returns D1Row<"posts"> type for compile-time schema validation.
+ *
+ * Note: ast and content are JSON strings representing TipTap document structure.
+ */
+export const createMockPost = (overrides?: Partial<D1Row<"posts">>): D1Row<"posts"> => ({
   id: faker.string.uuid(),
   slug: faker.helpers.slugify(faker.company.catchPhrase().toLowerCase()),
   title: faker.company.catchPhrase(),
   snippet: faker.lorem.sentence(),
-  content: JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: faker.lorem.paragraph() }] }] }),
+  ast: JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: faker.lorem.paragraph() }] }] }),
+  author: faker.person.fullName(),
+  date: faker.date.recent().toISOString(),
   cover_image: faker.image.url(),
   category: faker.helpers.arrayElement(["news", "robotics", "community"]),
   status: "published",
   published_at: faker.date.recent().toISOString(),
+  is_deleted: 0,
+  is_portfolio: 0,
+  cf_email: faker.internet.email(),
+  content_draft: null,
+  revision_of: null,
+  season_id: null,
+  thumbnail: null,
+  updated_at: faker.date.recent().toISOString(),
+  zulip_stream: null,
+  zulip_topic: null,
   ...overrides,
 });
 
-export const createMockDoc = (overrides?: Record<string, unknown>) => ({
+/**
+ * Mock Doc factory matching Docs table schema.
+ * Returns D1Row<"docs"> type for compile-time schema validation.
+ *
+ * Note: content and content_draft are JSON strings representing rich text.
+ */
+export const createMockDoc = (overrides?: Partial<D1Row<"docs">>): D1Row<"docs"> => ({
   id: faker.string.uuid(),
   slug: faker.helpers.slugify(faker.commerce.productName().toLowerCase()),
   title: faker.commerce.productName(),
@@ -21,10 +59,30 @@ export const createMockDoc = (overrides?: Record<string, unknown>) => ({
   content: JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: faker.lorem.paragraph() }] }] }),
   category: faker.helpers.arrayElement(["software", "hardware", "business", "outreach"]),
   status: "published",
+  cf_email: faker.internet.email(),
+  is_deleted: 0,
+  is_executive_summary: 0,
+  is_portfolio: 0,
+  content_draft: null,
+  revision_of: null,
+  display_in_areslib: 1,
+  display_in_math_corner: 0,
+  display_in_science_corner: 0,
+  sort_order: 0,
+  updated_at: faker.date.recent().toISOString(),
+  zulip_stream: null,
+  zulip_topic: null,
   ...overrides,
 });
 
-export const createMockMedia = (overrides?: Record<string, unknown>) => ({
+/**
+ * Mock Media factory for R2-stored files.
+ * Returns MockMedia interface type.
+ *
+ * Media files are stored in R2, not D1. This factory generates test data
+ * matching the shape returned by the media API.
+ */
+export const createMockMedia = (overrides?: Partial<MockMedia>): MockMedia => ({
   key: faker.system.fileName(),
   url: faker.image.url(),
   size: faker.number.int({ min: 1000, max: 10000000 }),
