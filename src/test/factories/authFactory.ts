@@ -1,10 +1,14 @@
 import { faker } from "@faker-js/faker";
 import { DashboardSession } from "../../hooks/useDashboardSession";
 
+/**
+ * Mock Session factory using DashboardSession domain interface.
+ * Already correctly typed - uses Partial<DashboardSession> for overrides.
+ */
 export const createMockSession = (overrides?: Partial<DashboardSession>): DashboardSession => {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
-  
+
   return {
     authenticated: true,
     user: {
@@ -22,6 +26,13 @@ export const createMockSession = (overrides?: Partial<DashboardSession>): Dashbo
   };
 };
 
+/**
+ * Mock Settings factory.
+ *
+ * Settings are dynamic key-value pairs; Record<string, string> is appropriate here.
+ * Unlike database tables with fixed schemas, settings can have arbitrary keys
+ * determined by the configuration system.
+ */
 export const createMockSettings = (overrides?: Record<string, string>): Record<string, string> => {
   return {
     DISCORD_WEBHOOK_URL: faker.internet.url(),
