@@ -31,9 +31,10 @@
 - [x] **Phase 28: High-Impact Handlers** — Fix top 4 violation files (~192 any, ~60% of total) (completed 2026-05-05)
 - [x] **Phase 28.1: AI Simulation & Analytics Stabilization** — Fix module resolution and dashboard regressions (completed 2026-05-05)
 - [x] **Phase 29: Contract Inference** — Full ts-rest contract inference with Zod boundaries (completed 2026-05-05)
-- [ ] **Phase 30: Test Types** — Mock factories and typed test helpers
-- [ ] **Phase 31: Frontend Components** — React prop interfaces and event handler types
-- [ ] **Phase 32: Final Validation** — ESLint enforcement and legitimate use justifications
+- [ ] **Phase 29.1: Remaining Route Contract Inference** — Migrate remaining 11 route files to contract inference (4/4 plans ready)
+- [ ] **Phase 30: Test Types** — Mock factories and typed test helpers (8/8 plans ready)
+- [ ] **Phase 31: Frontend Components** — React prop interfaces and event handler types (5/5 plans ready)
+- [ ] **Phase 32: Final Validation** — ESLint enforcement and legitimate use justifications (2/2 plans ready)
 
 ## Phase Details
 
@@ -136,6 +137,35 @@ Plans:
 Plans:
 - [x] 29-01-PLAN.md — Export ts-rest-hono contract inference types (AppRouteInput, AppRouteImplementation) and migrate analytics.ts as reference implementation (COMPLETED 2026-05-05)
 - [x] 29-02-PLAN.md — Migrate remaining 14 route files to contract inference, export all 29 contract types for frontend, deprecate HandlerInput, and document patterns (COMPLETED 2026-05-05)
+
+---
+
+### Phase 29.1: Remaining Route Contract Inference
+
+**Goal**: Migrate the remaining 11 route files to ts-rest contract inference, eliminating `as any` casts from router setup and enabling runtime response validation.
+
+**Depends on**: Phase 29 (provides the migration pattern)
+
+**Requirements**: Anti-pattern 4 (Runtime Type Assumptions), Contract inference goal
+
+**Success Criteria** (what must be TRUE):
+1. All remaining route files use full type inference from `initServer<AppEnv>`
+2. Zero `as any` casts in router setup across all route files
+3. Runtime response validation enabled on all routes
+4. Handler signatures use inferred `(input, c)` pattern without explicit types
+5. All contracts already export their types (from Phase 29-02)
+
+**Plans**: 4/4 planned
+
+**Wave Structure**:
+- Wave 1: 29.1-01, 29.1-02, 29.1-03 (Inline handlers) — parallel execution, 2-3 files each
+- Wave 2: 29.1-04 (Handler modules) — depends on Wave 1 completion
+
+Plans:
+- [ ] 29.1-01-PLAN.md — Migrate awards.ts, entities.ts, locations.ts, tasks.ts, tba.ts to contract inference
+- [ ] 29.1-02-PLAN.md — Migrate judges.ts and users.ts to contract inference
+- [ ] 29.1-03-PLAN.md — Migrate posts.ts and zulip.ts to contract inference
+- [ ] 29.1-04-PLAN.md — Migrate handler modules (inquiries/, outreach/, media/) to contract inference
 
 ---
 

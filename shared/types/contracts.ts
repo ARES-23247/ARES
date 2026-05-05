@@ -5,7 +5,7 @@
 
 import type { AppRoute } from "@ts-rest/core";
 import type { HonoContext } from "./api";
-import type { AppRouteImplementation, AppRouteInput, ServerInferResponses, RecursiveRouterObj } from "ts-rest-hono";
+import type { AppRouteImplementation, RecursiveRouterObj } from "ts-rest-hono";
 
 /**
  * ## Contract Inference Pattern (Phase 29)
@@ -14,7 +14,6 @@ import type { AppRouteImplementation, AppRouteInput, ServerInferResponses, Recur
  *
  * @example
  * import { initServer } from 'ts-rest-hono';
- * import type { AppRouteInput } from '@shared/types/contracts';
  * import { myContract } from '~/shared/schemas/contracts/myContract';
  * import type { AppEnv } from '../middleware/utils';
  *
@@ -59,7 +58,7 @@ export type ContractResponse<T extends AppRoute> = T extends {
  * Re-exports from ts-rest-hono for contract inference.
  * Use these types instead of custom HandlerInput for ts-rest handlers.
  */
-export type { AppRouteImplementation, AppRouteInput, ServerInferResponses, RecursiveRouterObj };
+export type { AppRouteImplementation, RecursiveRouterObj };
 
 /**
  * Legacy: Use AppRouteImplementation from ts-rest-hono instead. Contract handler function type for ts-rest integration (Phase 27 pattern, superseded in Phase 29).

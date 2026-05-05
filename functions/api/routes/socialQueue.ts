@@ -1,61 +1,44 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
-import { socialQueueContract } from "../../../shared/schemas/contracts/socialQueueContract";
-import { AppEnv, getSessionUser, originIntegrityMiddleware } from "../middleware";
+import { RecursiveRouterObj } from "ts-rest-hono";
+import { socialQueueContract, SocialQueuePost } from "../../../shared/schemas/contracts/socialQueueContract";
+import { AppEnv, getSessionUser } from "../middleware";
 import { nanoid } from "nanoid";
 import { dispatchQueuePost, SocialConfig } from "../../utils/socialSync";
 
 initServer<AppEnv>();
 
-interface SocialQueuePost {
-  id: string;
-  content: string;
-  media_urls: string[] | null;
-  scheduled_for: string;
-  platforms: Record<string, boolean>;
-  status: "pending" | "processing" | "sent" | "failed" | "cancelled";
-  created_at: string | null;
-  sent_at: string | null;
-  error_message: string | null;
-  created_by: string | null;
-  linked_type: "blog" | "event" | "document" | "asset" | null;
-  linked_id: string | null;
-  analytics: Record<string, unknown> | null;
-}
-
 const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
   id: String(r.id),
   content: String(r.content),
-  media_urls: r.media_urls ? JSON.parse(String(r.media_urls)) : null,
+  media_urls: r.media_urls ? JSON.parse(String(r.media_urls)) : undefined,
   scheduled_for: String(r.scheduled_for),
   platforms: JSON.parse(String(r.platforms)),
   analytics: r.analytics ? JSON.parse(String(r.analytics)) : null,
   status: r.status as SocialQueuePost["status"],
-  linked_type: r.linked_type as SocialQueuePost["linked_type"],
-  linked_id: r.linked_id as string | null,
-  created_at: r.created_at as string | null,
-  sent_at: r.sent_at as string | null,
-  error_message: r.error_message as string | null,
-  created_by: r.created_by as string | null,
+  linked_type: (r.linked_type as SocialQueuePost["linked_type"]) || null,
+  linked_id: (r.linked_id as string) || null,
+  created_at: r.created_at ? String(r.created_at) : new Date().toISOString(),
+  sent_at: (r.sent_at as string) || null,
+  error_message: (r.error_message as string) || null,
+  created_by: (r.created_by as string) || null,
 });
 
-const socialQueueRouterObj: any = {
-  list: async (input: any, c: Context<AppEnv>) => {
+const socialQueueRouterObj: RecursiveRouterObj<typeof socialQueueContract, AppEnv> = {
+  list: async ({ query }, c) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
-      const { query } = input;
       const { status = "all", limit = 20, offset = 0 } = query;
       const db = c.get("db") as Kysely<DB>;
 
       let queryBuilder = db.selectFrom("social_queue").selectAll();
 
       if (status !== "all") {
-        queryBuilder = queryBuilder.where("status", "=", status as string);
+        queryBuilder = queryBuilder.where("status", "=", status as any);
       }
 
       if (user.role !== "admin") {
@@ -83,12 +66,11 @@ const socialQueueRouterObj: any = {
     }
   },
 
-  calendar: async (input: any, c: Context<AppEnv>) => {
+  calendar: async ({ query }, c) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
-      const { query } = input;
       const { start, end } = query;
       const db = c.get("db") as Kysely<DB>;
 
@@ -113,207 +95,168 @@ const socialQueueRouterObj: any = {
     }
   },
 
-  create: async (input: any, c: Context<AppEnv>) => {
+  create: async ({ body }, c) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
-      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
-
       const id = nanoid();
-      const now = new Date().toISOString();
+      const createdAt = new Date().toISOString();
 
       const newPost = {
         id,
         content: body.content,
+        platforms: JSON.stringify(body.platforms),
         media_urls: body.media_urls ? JSON.stringify(body.media_urls) : null,
         scheduled_for: body.scheduled_for,
-        platforms: JSON.stringify(body.platforms),
-        status: "pending" as const,
-        created_at: now,
-        sent_at: null,
-        error_message: null,
-        created_by: user.id,
-        linked_type: (body.linked_type || null) as "blog" | "event" | "document" | "asset" | null,
-        linked_id: (body.linked_id || null) as string | null,
-        analytics: null,
-      };
-
-      await db.insertInto("social_queue").values(newPost).execute();
-
-      const post: SocialQueuePost = {
-        id,
-        content: body.content,
-        media_urls: body.media_urls || null,
-        scheduled_for: body.scheduled_for,
-        platforms: body.platforms,
         status: "pending",
-        created_at: now,
-        sent_at: null,
-        error_message: null,
+        created_at: createdAt,
         created_by: user.id,
         linked_type: body.linked_type || null,
         linked_id: body.linked_id || null,
+      };
+
+      await db.insertInto("social_queue").values(newPost as any).execute();
+
+      const post: SocialQueuePost = {
+        ...body,
+        id,
+        status: "pending",
+        created_at: createdAt,
+        created_by: user.id,
+        sent_at: null,
+        error_message: null,
         analytics: null,
+        media_urls: body.media_urls || [],
+        linked_type: body.linked_type || null,
+        linked_id: body.linked_id || null,
       };
 
       return { status: 200, body: { success: true, post } };
     } catch (error) {
       console.error("Social queue create error:", error);
-      return { status: 500, body: { error: "Failed to create scheduled post" } };
+      return { status: 500, body: { error: "Failed to schedule post" } };
     }
   },
 
-  update: async (input: any, c: Context<AppEnv>) => {
+  update: async ({ params, body }, c) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
-      const { params, body } = input;
-      const { id } = params;
       const db = c.get("db") as Kysely<DB>;
+      const { id } = params;
 
-      const existing = await db.selectFrom("social_queue").selectAll().where("id", "=", id).executeTakeFirst();
+      const existing = await db
+        .selectFrom("social_queue")
+        .where("id", "=", id)
+        .executeTakeFirst();
 
-      if (!existing) {
-        return { status: 404, body: { error: "Post not found" } };
+      if (!existing) return { status: 500, body: { error: "Post not found" } };
+      if (user.role !== "admin" && existing.created_by !== user.id) {
+        return { status: 401, body: { error: "Unauthorized" } };
       }
 
-      if (existing.created_by !== user.id && user.role !== "admin") {
-        return { status: 403, body: { error: "Forbidden" } };
-      }
+      const updates: any = { ...body };
+      if (body.platforms) updates.platforms = JSON.stringify(body.platforms);
+      if (body.media_urls) updates.media_urls = JSON.stringify(body.media_urls);
 
-      if (existing.status === "processing" || existing.status === "sent") {
-        return { status: 400, body: { error: "Cannot update posts that are processing or already sent" } };
-      }
+      await db.updateTable("social_queue").set(updates).where("id", "=", id).execute();
 
-      const updateData: Record<string, unknown> = {};
-      if (body.content !== undefined) updateData.content = body.content;
-      if (body.media_urls !== undefined) updateData.media_urls = JSON.stringify(body.media_urls);
-      if (body.scheduled_for !== undefined) updateData.scheduled_for = body.scheduled_for;
-      if (body.platforms !== undefined) updateData.platforms = JSON.stringify(body.platforms);
-      if (body.linked_type !== undefined) updateData.linked_type = body.linked_type;
-      if (body.linked_id !== undefined) updateData.linked_id = body.linked_id;
+      const updated = await db
+        .selectFrom("social_queue")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow();
 
-      if (Object.keys(updateData).length > 0) {
-        await db.updateTable("social_queue").set(updateData).where("id", "=", id).execute();
-      }
-
-      const updated = await db.selectFrom("social_queue").selectAll().where("id", "=", id).executeTakeFirst();
-
-      if (!updated) {
-        return { status: 404, body: { error: "Post not found" } };
-      }
-
-      const post = toSocialQueuePost(updated);
-
-      return { status: 200, body: { success: true, post } };
+      return { status: 200, body: { success: true, post: toSocialQueuePost(updated as any) } };
     } catch (error) {
       console.error("Social queue update error:", error);
-      return { status: 500, body: { error: "Failed to update scheduled post" } };
+      return { status: 500, body: { error: "Failed to update post" } };
     }
   },
 
-  delete: async (input: any, c: Context<AppEnv>) => {
+  delete: async ({ params }, c) => {
     try {
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
-      const { params } = input;
-      const { id } = params;
       const db = c.get("db") as Kysely<DB>;
+      const { id } = params;
 
-      const existing = await db.selectFrom("social_queue").selectAll().where("id", "=", id).executeTakeFirst();
+      const existing = await db
+        .selectFrom("social_queue")
+        .where("id", "=", id)
+        .executeTakeFirst();
 
-      if (!existing) {
-        return { status: 404, body: { error: "Post not found" } };
+      if (!existing) return { status: 500, body: { error: "Post not found" } };
+      if (user.role !== "admin" && existing.created_by !== user.id) {
+        return { status: 401, body: { error: "Unauthorized" } };
       }
 
-      if (existing.created_by !== user.id && user.role !== "admin") {
-        return { status: 403, body: { error: "Forbidden" } };
-      }
-
-      await db.updateTable("social_queue").set({ status: "cancelled" }).where("id", "=", id).execute();
+      await db.deleteFrom("social_queue").where("id", "=", id).execute();
 
       return { status: 200, body: { success: true } };
     } catch (error) {
       console.error("Social queue delete error:", error);
-      return { status: 500, body: { error: "Failed to cancel scheduled post" } };
+      return { status: 500, body: { error: "Failed to delete post" } };
     }
   },
 
-  sendNow: async (input: any, c: Context<AppEnv>) => {
+  sendNow: async ({ params }, c) => {
     try {
       const user = await getSessionUser(c);
-      if (!user) return { status: 401, body: { error: "Unauthorized" } };
+      if (!user || user.role !== "admin") {
+        return { status: 401, body: { error: "Unauthorized" } };
+      }
 
-      const { params } = input;
-      const { id } = params;
       const db = c.get("db") as Kysely<DB>;
+      const { id } = params;
 
-      const existing = await db.selectFrom("social_queue").selectAll().where("id", "=", id).executeTakeFirst();
+      const record = await db
+        .selectFrom("social_queue")
+        .selectAll()
+        .where("id", "=", id)
+        .executeTakeFirst();
 
-      if (!existing) {
-        return { status: 404, body: { error: "Post not found" } };
-      }
+      if (!record) return { status: 500, body: { error: "Post not found" } };
 
-      if (existing.created_by !== user.id && user.role !== "admin") {
-        return { status: 403, body: { error: "Forbidden" } };
-      }
+      const post = toSocialQueuePost(record as any);
+      const config: SocialConfig = {
+        twitter: !!c.env.TWITTER_API_KEY,
+        bluesky: !!c.env.BLUESKY_HANDLE,
+        facebook: !!c.env.FACEBOOK_ACCESS_TOKEN,
+        instagram: !!c.env.INSTAGRAM_ACCESS_TOKEN,
+        discord: !!c.env.DISCORD_WEBHOOK_URL,
+        slack: !!c.env.SLACK_WEBHOOK_URL,
+        linkedin: !!c.env.LINKEDIN_ACCESS_TOKEN,
+      };
 
-      await db.updateTable("social_queue").set({ status: "processing" }).where("id", "=", id).execute();
-
-      try {
-        const post = toSocialQueuePost(existing);
-        const config = c.env as unknown as SocialConfig;
-
-        await dispatchQueuePost(db, post, config);
-
-        await db
-          .updateTable("social_queue")
-          .set({ status: "sent", sent_at: new Date().toISOString(), error_message: null })
-          .where("id", "=", id)
-          .execute();
-      } catch (err) {
-        console.error("Social queue dispatch failed:", err);
-        await db
-          .updateTable("social_queue")
-          .set({ status: "failed", error_message: String(err) })
-          .where("id", "=", id)
-          .execute();
-        return { status: 500, body: { error: `Syndication failed: ${String(err)}` } };
-      }
+      await dispatchQueuePost(db, post, config);
 
       return { status: 200, body: { success: true } };
     } catch (error) {
-      console.error("Social queue send now error:", error);
+      console.error("Social queue sendNow error:", error);
       return { status: 500, body: { error: "Failed to send post" } };
     }
   },
 
-  analytics: async (input: any, c: Context<AppEnv>) => {
+  analytics: async ({ query }, c) => {
     try {
       const user = await getSessionUser(c);
-      if (!user) return { status: 401, body: { error: "Unauthorized" } };
-      if (user.role !== "admin") {
-        return { status: 403, body: { error: "Forbidden" } };
+      if (!user || user.role !== "admin") {
+        return { status: 401, body: { error: "Unauthorized" } };
       }
 
-      const { query } = input;
       const { start, end } = query;
       const db = c.get("db") as Kysely<DB>;
 
-      let queryBuilder = db.selectFrom("social_queue").selectAll();
+      let q = db.selectFrom("social_queue");
+      if (start) q = q.where("scheduled_for", ">=", start);
+      if (end) q = q.where("scheduled_for", "<=", end);
 
-      if (start) {
-        queryBuilder = queryBuilder.where("scheduled_for", ">=", start);
-      }
-      if (end) {
-        queryBuilder = queryBuilder.where("scheduled_for", "<=", end);
-      }
-
-      const results = await queryBuilder.execute();
+      const results = await q.selectAll().execute();
 
       const total_posts = results.length;
       const total_sent = results.filter((r) => r.status === "sent").length;

@@ -120,7 +120,7 @@ export default function NnBiologySim() {
   };
 
   const formatNum = (n: number) => n.toFixed(2);
-  const getColor = (val: number) => val > 0 ? '#4ade80' : val < 0 ? '#ef4444' : '#9ca3af';
+  const getColor = (val: number) => val > 0 ? '#3b82f6' : val < 0 ? '#f59e0b' : '#9ca3af';
 
   return (
     <div style={{
@@ -173,13 +173,10 @@ export default function NnBiologySim() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div style={{ flex: 1, textAlign: 'right', color: '#fbcfe8' }}>
                   <strong>Dendrites</strong><br/>
-                  <span style={{ fontSize: '13px', opacity: 0.7 }}>Receives chemical signals (Inputs)</span>
-                </div>
-                <div style={{ width: '4px', height: '40px', background: '#ec4899' }} />
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ flex: 1, textAlign: 'right', color: '#fbcfe8' }}>
+                  <div style={{ display: 'flex', gap: '16px', fontSize: '12px', justifyContent: 'flex-end', margin: '4px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#3b82f6' }}/> Excitatory (+)</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#f59e0b' }}/> Inhibitory (-)</div>
+                  </div>
                   <strong>Soma (Cell Body)</strong><br/>
                   <span style={{ fontSize: '13px', opacity: 0.7 }}>Accumulates signals (Summation)</span>
                 </div>

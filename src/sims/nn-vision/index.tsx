@@ -181,14 +181,14 @@ export default function NnVisionSim() {
                      style={{ 
                        width: '25px', 
                        height: '25px', 
-                       background: w > 0 ? `rgba(74, 222, 128, ${w/5})` : `rgba(239, 68, 68, ${-w/5})`, 
+                       background: w > 0 ? `rgba(59, 130, 246, ${w/5})` : `rgba(245, 158, 11, ${-w/5})`, 
                      }} 
                    />
                  ))}
               </div>
               <div style={{ display: 'flex', gap: '16px', marginTop: '16px', fontSize: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#4ade80' }}/> Excitatory (+)</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#ef4444' }}/> Inhibitory (-)</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#3b82f6' }}/> Excitatory (+)</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '12px', height: '12px', background: '#f59e0b' }}/> Inhibitory (-)</div>
               </div>
             </>
           ) : (

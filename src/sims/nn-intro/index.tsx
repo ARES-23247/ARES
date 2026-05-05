@@ -60,7 +60,7 @@ export default function NnIntroSim() {
   const predictedDigit = outputs.indexOf(maxOutput);
 
   const formatNum = (n: number) => n.toFixed(2);
-  const getColor = (val: number) => val > 0 ? '#4ade80' : '#ef4444';
+  const getColor = (val: number) => val > 0 ? '#3b82f6' : '#f59e0b';
 
   return (
     <div style={{

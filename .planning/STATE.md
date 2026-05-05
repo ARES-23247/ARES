@@ -3,26 +3,28 @@ gsd_state_version: 1.0
 milestone: v6.7
 milestone_name: TypeScript Any Elimination
 status: executing
-last_updated: "2026-05-05T19:00:00.000Z"
+last_updated: "2026-05-05T19:30:00.000Z"
 last_activity: 2026-05-05
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 4
-  total_plans: 14
+  total_plans: 33
   completed_plans: 10
-  percent: 71
+  planned_plans: 18
+  percent: 56
 ---
 
 # System State
 
 **Current Milestone**: v6.7 — TypeScript Any Elimination
-**Status**: Phase 29 complete, Phase 31 planned
+**Status**: Phase 29.1 planned, 4/4 plans ready for execution
+**Last activity**: 2026-05-05
 
 ## Current Position
 
-Phase: 31 (Frontend Components) — PLANNED
-Plan: 5 of 5 plans ready
-Next: Execute Phase 31
+Phase: 29.1 (Remaining Route Contract Inference) — PLANNED
+Plan: 4 of 4 plans ready
+Next: Execute Phase 29.1 with `/gsd-execute-phase 29.1`
 Status: Plans created, awaiting execution
 Last activity: 2026-05-05
 
@@ -31,13 +33,13 @@ Last activity: 2026-05-05
 See: .planning/PROJECT.md (updated 2026-05-05)
 
 **Core value:** Championship-grade FIRST Robotics team management platform
-**Current focus:** Phase 31 — Frontend Components
+**Current focus:** Phase 29.1 — Remaining Route Contract Inference
 
 ## Milestone v6.7: TypeScript Any Elimination
 
 **Goal**: Systematically eliminate all `@typescript-eslint/no-explicit-any` violations across the codebase through shared type creation and parallel agent execution.
 
-**Approach**: Foundation-first with 6 phases — create shared types, fix high-impact handlers, establish contract inference, standardize test mocks, address frontend components, and validate remaining uses.
+**Approach**: Foundation-first with 7 phases — create shared types, fix high-impact handlers, establish contract inference, migrate remaining routes, standardize test mocks, address frontend components, and validate remaining uses.
 
 **Violation target**: 983 → <20 (only legitimate uses with justification comments)
 
@@ -57,15 +59,7 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 - sponsors.ts: 7 handler signatures migrated
 - Pattern established for Phase 28 mass migration
 
-### Commits
-
-- a81c585: feat(27-01): create shared/types/database.ts
-- 1593053: feat(27-01): create shared/types/api.ts
-- 5ec6d62: feat(27-01): create shared/types/contracts.ts
-- ee6ddd7: feat(27-01): create shared/types/utility.ts
-- c67be6c: feat(27-01): create shared/types/index.ts
-- b56dfe8: feat(27-02): import types into docs.ts
-- 377d7e1: feat(27-02): import types into sponsors.ts
+---
 
 ## Phase 28 Complete: High-Impact Handlers
 
@@ -105,6 +99,48 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 
 - (Plan 29-01) Type infrastructure and analytics.ts reference
 - (Plan 29-02) Batch migration of 14 routes and contract exports
+
+## Phase 29.1: Remaining Route Contract Inference — PLANNED
+
+### Status
+
+Research complete, 4 plans created.
+
+### Goal
+
+Migrate the remaining 11 route files to ts-rest contract inference, eliminating `as any` casts from router setup and enabling runtime response validation.
+
+### Files to Migrate
+
+**Inline handlers (9):**
+- awards.ts, entities.ts, judges.ts, locations.ts, posts.ts, tasks.ts, tba.ts, users.ts, zulip.ts
+
+**Handler modules (3 directories):**
+- inquiries/ (handlers.ts, index.ts)
+- outreach/ (handlers.ts, index.ts)
+- media/ (handlers.ts, index.ts)
+
+### Success Criteria
+
+1. All 11 route files use full type inference from `initServer<AppEnv>`
+2. Zero `as any` casts in router setup
+3. Runtime response validation enabled on all routes
+4. Handler signatures use inferred `(input, c)` pattern
+5. All contracts already export types (from Phase 29-02)
+
+### Wave Structure
+
+- **Wave 1**: 29.1-01 (awards, entities, locations, tasks, tba), 29.1-02 (judges, users), 29.1-03 (posts, zulip) — parallel execution
+- **Wave 2**: 29.1-04 (inquiries, outreach, media handler modules) — depends on Wave 1
+
+### Plans
+
+- [ ] 29.1-01-PLAN.md — Migrate awards.ts, entities.ts, locations.ts, tasks.ts, tba.ts to contract inference
+- [ ] 29.1-02-PLAN.md — Migrate judges.ts and users.ts to contract inference
+- [ ] 29.1-03-PLAN.md — Migrate posts.ts and zulip.ts to contract inference
+- [ ] 29.1-04-PLAN.md — Migrate handler modules (inquiries/, outreach/, media/) to contract inference
+
+---
 
 ## Phase 30: Test Types — PLANNED
 
@@ -189,5 +225,5 @@ Eliminate all `any` violations in React components and hooks through proper prop
 ## Session Continuity
 
 **Last session**: Completed Phase 29 (Contract Inference) — 2/2 plans verified PASS
-**This session**: Planned Phase 31 (Frontend Components) — 5/5 plans ready
-**Next step**: Execute Phase 31 with `/gsd-execute-phase 31`
+**This session**: Planned Phase 29.1 (Remaining Route Contract Inference) — 4/4 plans ready
+**Next step**: Execute Phase 29.1 with `/gsd-execute-phase 29.1`

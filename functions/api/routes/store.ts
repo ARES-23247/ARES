@@ -7,8 +7,7 @@ import { logSystemError, ensureAdmin } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-
-import type { HonoContext } from "@shared/types/api";
+import { RecursiveRouterObj } from "ts-rest-hono";
 
 const app = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
@@ -17,8 +16,8 @@ const s = initServer<AppEnv>();
 app.use("/orders", ensureAdmin);
 app.use("/orders/*", ensureAdmin);
 
-const storeHandlers = {
-  getProducts: async (_input, c: HonoContext) => {
+const storeHandlers: RecursiveRouterObj<typeof storeContract, AppEnv> = {
+  getProducts: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const products = await db
@@ -28,7 +27,7 @@ const storeHandlers = {
         .execute();
 
       return {
-        status: 200 as const,
+        status: 200,
         body: products.map((p) => ({
           id: p.id || "",
           name: p.name || "Unknown Product",
@@ -42,12 +41,12 @@ const storeHandlers = {
       };
     } catch (err: any) {
       console.error("[Store] Get products failed:", err);
-      return { status: 500 as const, body: { error: err.message } };
+      return { status: 500, body: { error: err.message } };
     }
   },
-  createCheckoutSession: async (input, c: HonoContext) => {
+  createCheckoutSession: async ({ body }, c) => {
     try {
-      const { items, successUrl, cancelUrl } = input.body;
+      const { items, successUrl, cancelUrl } = body;
       const stripeKey = c.env.STRIPE_SECRET_KEY;
       if (!stripeKey) {
         throw new Error("STRIPE_SECRET_KEY is not configured.");
@@ -100,79 +99,108 @@ const storeHandlers = {
         },
       });
 
+      if (!session.url) {
+        throw new Error("Stripe session URL is null");
+      }
+
       return {
-        status: 200 as const,
+        status: 200,
         body: {
           sessionId: session.id,
-          url: session.url || "",
+          url: session.url,
         },
       };
     } catch (err: any) {
-      console.error("[Store] Create checkout session failed:", err);
-      return { status: 500 as const, body: { error: err.message } };
+      console.error("[Store] Checkout failed:", err);
+      return { status: 500, body: { error: err.message } };
     }
   },
-  getOrders: async (_input, c: HonoContext) => {
+  handleWebhook: async ({ body, headers }, c) => {
     try {
-      const sessionUser = c.get("sessionUser");
-      if (!sessionUser || sessionUser.role !== "admin") {
-        return { status: 401 as const, body: { error: "Unauthorized" } };
+      const stripeKey = c.env.STRIPE_SECRET_KEY;
+      const endpointSecret = c.env.STRIPE_WEBHOOK_SECRET;
+      const signature = headers["stripe-signature"];
+
+      if (!stripeKey || !endpointSecret || !signature) {
+        return { status: 400, body: { error: "Missing stripe config or signature" } };
       }
 
-      const db = c.get("db") as Kysely<DB>;
-      const orders = await db
-        .selectFrom("orders")
-        .selectAll()
-        .orderBy("created_at", "desc")
-        .execute();
+      const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
+      let event: Stripe.Event;
 
-      return {
-        status: 200 as const,
-        body: orders.map(o => ({
-          ...o,
-          id: o.id || "",
-          stripe_session_id: o.stripe_session_id || null,
-          customer_email: o.customer_email || null,
-          shipping_name: o.shipping_name || null,
-          shipping_address_line1: o.shipping_address_line1 || null,
-          shipping_address_line2: o.shipping_address_line2 || null,
-          shipping_city: o.shipping_city || null,
-          shipping_state: o.shipping_state || null,
-          shipping_postal_code: o.shipping_postal_code || null,
-          shipping_country: o.shipping_country || null,
-          total_cents: o.total_cents || 0,
-          status: o.status || null,
-          fulfillment_status: o.fulfillment_status || null,
-          created_at: o.created_at || null,
-          updated_at: o.updated_at || null,
-        }))
-      };
+      try {
+        event = stripe.webhooks.constructEvent(
+          JSON.stringify(body),
+          signature,
+          endpointSecret
+        );
+      } catch (err: any) {
+        console.error(`[Webhook] Signature verification failed: ${err.message}`);
+        return { status: 400, body: { error: `Webhook Error: ${err.message}` } };
+      }
+
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const db = c.get("db") as Kysely<DB>;
+
+        // Fulfill order
+        const metadata = session.metadata;
+        const cartItems = metadata?.cartItems ? JSON.parse(metadata.cartItems) : [];
+
+        await db
+          .insertInto("orders")
+          .values({
+            id: session.id,
+            stripe_session_id: session.id,
+            customer_email: session.customer_details?.email || "unknown",
+            total_cents: session.amount_total || 0,
+            status: "paid",
+            items_json: JSON.stringify(cartItems),
+            created_at: new Date().toISOString(),
+          })
+          .execute();
+
+        // Deplete inventory
+        for (const item of cartItems) {
+          await db
+            .updateTable("products")
+            .set((eb) => ({ stock_count: eb("stock_count", "-", item.q) }))
+            .where("id", "=", item.id)
+            .where("stock_count", "is not", null)
+            .execute();
+        }
+
+        // Alert team
+        const totalAmount = session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00";
+        const customerEmail = session.customer_details?.email || "Unknown Email";
+        const message = `🛍️ **New Order Received!**\n\n**Order ID**: ${session.id}\n**Customer**: ${customerEmail}\n**Total**: $${totalAmount}\n\n[View Dashboard](https://aresweb.org/admin)`;
+        await sendZulipMessage(c.env, "general", "Store Orders", message);
+      }
+
+      return { status: 200, body: { success: true } };
     } catch (err: any) {
-      console.error("[Store] Get orders failed:", err);
-      return { status: 500 as const, body: { error: err.message } };
+      logSystemError(c, "webhook_error", err);
+      return { status: 500, body: { error: "Webhook fulfillment failed" } };
     }
   },
-  updateOrderStatus: async (input, c: HonoContext) => {
+  getOrders: async (_input, c) => {
     try {
-      const sessionUser = c.get("sessionUser");
-      if (!sessionUser || sessionUser.role !== "admin") {
-        return { status: 401 as const, body: { error: "Unauthorized" } };
-      }
-
+      await ensureAdmin(c);
       const db = c.get("db") as Kysely<DB>;
-      await db
-        .updateTable("orders")
-        .set({ fulfillment_status: input.body.fulfillment_status })
-        .where("id", "=", input.params.id)
-        .execute();
-
-      return {
-        status: 200 as const,
-        body: { success: true }
-      };
+      const orders = await db.selectFrom("orders").selectAll().orderBy("created_at", "desc").execute();
+      return { status: 200, body: { orders: orders as any } };
     } catch (err: any) {
-      console.error("[Store] Update order status failed:", err);
-      return { status: 500 as const, body: { error: err.message } };
+      return { status: 500, body: { error: err.message } };
+    }
+  },
+  updateOrderStatus: async ({ params, body }, c) => {
+    try {
+      await ensureAdmin(c);
+      const db = c.get("db") as Kysely<DB>;
+      await db.updateTable("orders").set({ status: body.status }).where("id", "=", params.id).execute();
+      return { status: 200, body: { success: true } };
+    } catch (err: any) {
+      return { status: 500, body: { error: err.message } };
     }
   },
 };
@@ -191,90 +219,5 @@ createHonoEndpoints(
     }
   }
 );
-
-// We define the webhook separately from ts-rest because webhooks require raw body parsing.
-app.post("/webhook", async (c) => {
-  const stripeKey = c.env.STRIPE_SECRET_KEY;
-  const webhookSecret = c.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!stripeKey || !webhookSecret) {
-    return c.json({ error: "Stripe keys not configured" }, 500);
-  }
-
-  // @ts-expect-error - Stripe typings mismatch
-  const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
-  const signature = c.req.header("stripe-signature");
-
-  if (!signature) {
-    return c.json({ error: "Missing stripe signature" }, 400);
-  }
-
-  try {
-    const rawBody = await c.req.text();
-    const event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as any;
-      const db = c.get("db") as Kysely<DB>;
-
-      const shippingDetails = session.shipping_details;
-
-      const orderId =
-        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-          ? crypto.randomUUID()
-          : `order-${Date.now()}`;
-
-      await db
-        .insertInto("orders")
-        .values({
-          id: orderId,
-          stripe_session_id: session.id,
-          customer_email: session.customer_details?.email || null,
-          shipping_name: shippingDetails?.name || null,
-          shipping_address_line1: shippingDetails?.address?.line1 || null,
-          shipping_address_line2: shippingDetails?.address?.line2 || null,
-          shipping_city: shippingDetails?.address?.city || null,
-          shipping_state: shippingDetails?.address?.state || null,
-          shipping_postal_code: shippingDetails?.address?.postal_code || null,
-          shipping_country: shippingDetails?.address?.country || null,
-          total_cents: session.amount_total || 0,
-          status: "paid",
-          fulfillment_status: "unfulfilled",
-        })
-        .execute();
-
-      // Deplete inventory
-      const cartItemsStr = session.metadata?.cartItems;
-      if (cartItemsStr) {
-        try {
-          const cartItems = JSON.parse(cartItemsStr);
-          for (const item of cartItems) {
-            await db
-              .updateTable("products")
-              // Kysely typing for arithmetic
-              .set((eb) => ({ stock_count: eb("stock_count", "-", item.q) }))
-              .where("id", "=", item.id)
-              .where("stock_count", "is not", null)
-              .execute();
-          }
-        } catch (e) {
-          console.error("[Store] Failed to process stock depletion:", e);
-        }
-      }
-
-      // Send Zulip alert
-      const totalAmount = session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00";
-      const customerEmail = session.customer_details?.email || "Unknown Email";
-      const message = `🛍️ **New Order Received!**\n\n**Order ID**: ${orderId}\n**Customer**: ${customerEmail}\n**Total**: $${totalAmount}\n\n[View Dashboard](https://aresweb.org/admin)`;
-      await sendZulipMessage(c.env, "general", "Store Orders", message);
-    }
-
-    return c.json({ received: true }, 200);
-  } catch (err: any) {
-    console.error("[Store] Webhook error:", err);
-    await logSystemError(c.get("db") as Kysely<DB>, "Stripe Webhook", err.message);
-    return c.json({ error: err.message }, 400);
-  }
-});
 
 export default app;

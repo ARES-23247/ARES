@@ -97,6 +97,12 @@
       "requiresContext": false
     },
     {
+      "id": "nnPlayground",
+      "name": "Sim 6: Neural Playground",
+      "path": "./nn-playground",
+      "requiresContext": false
+    },
+    {
       "id": "nnRl",
       "name": "Sim 4: Reinforcement Learning",
       "path": "./nn-rl",
@@ -175,5 +181,5 @@
       "requiresContext": true
     }
   ],
-  "_generated": "2026-05-05T15:37:11.133Z"
+  "_generated": "2026-05-05T17:41:27.292Z"
 }

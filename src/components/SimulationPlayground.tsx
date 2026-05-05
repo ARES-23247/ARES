@@ -160,13 +160,7 @@ export default function SimulationPlayground() {
     localStorage.setItem("ares_sim_autorun", String(isAutoRun));
   }, [isAutoRun]);
 
-  useEffect(() => {
-    if (!isAutoRun) return;
-    const timer = setTimeout(() => {
-      handleRun();
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [files, isAutoRun, handleRun]);
+
 
   // Chat state
   // Use sessionStorage instead of localStorage for better security (clears on browser close)
@@ -291,19 +285,7 @@ export default function SimulationPlayground() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  const handleFixWithAI = useCallback(() => {
-    const errorLogs = consoleLogs.filter(l => l.level === "error");
-    if (errorLogs.length === 0 && !compileError) return;
 
-    const errorContext = [
-      compileError ? `Compile Error:\n${compileError}` : "",
-      errorLogs.length > 0 ? `Runtime Errors:\n${errorLogs.map(l => l.args.join(" ")).join("\n")}` : ""
-    ].filter(Boolean).join("\n\n");
-
-    const fixPrompt = `I'm seeing these errors in the simulation:\n\n${errorContext}\n\nPlease help me fix them. Analyze the provided current files and errors, then suggest a patch or full file replacement to resolve the issue.`;
-    handleChatSend(fixPrompt);
-    chatInputRef.current?.focus();
-  }, [consoleLogs, compileError, handleChatSend]);
 
   // Check URL for shared simulation on mount
   useEffect(() => {
@@ -460,6 +442,14 @@ export default function SimulationPlayground() {
     setConsoleLogs([]); // clear logs on run
     compileCode(files);
   }, [files, compileCode]);
+
+  useEffect(() => {
+    if (!isAutoRun) return;
+    const timer = setTimeout(() => {
+      handleRun();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [files, isAutoRun, handleRun]);
 
   const handleReset = () => {
     setFiles(SIM_TEMPLATES["Blank Canvas"]);
@@ -915,6 +905,20 @@ USER REQUEST: ${msg}`;
     }
   }, [chatMessages, files, attachedImage, activeFile, compileCode, chatInput, isChatLoading]);
 
+  const handleFixWithAI = useCallback(() => {
+    const errorLogs = consoleLogs.filter(l => l.level === "error");
+    if (errorLogs.length === 0 && !compileError) return;
+
+    const errorContext = [
+      compileError ? `Compile Error:\n${compileError}` : "",
+      errorLogs.length > 0 ? `Runtime Errors:\n${errorLogs.map(l => l.args.join(" ")).join("\n")}` : ""
+    ].filter(Boolean).join("\n\n");
+
+    const fixPrompt = `I'm seeing these errors in the simulation:\n\n${errorContext}\n\nPlease help me fix them. Analyze the provided current files and errors, then suggest a patch or full file replacement to resolve the issue.`;
+    handleChatSend(fixPrompt);
+    chatInputRef.current?.focus();
+  }, [consoleLogs, compileError, handleChatSend]);
+
   const handleChatKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -1122,10 +1126,10 @@ USER REQUEST: ${msg}`;
 
       {/* Layout Split: Top/Bottom */}
       <div className="flex-1 flex flex-col min-h-0">
-        <PanelGroup orientation="vertical" autoSaveId="playground-main-v2">
+        <PanelGroup direction="vertical" autoSaveId="playground-main-v2">
           <Panel defaultSize={60} minSize={20}>
             {/* Top Row: Explorer, Code, Chat */}
-            <PanelGroup orientation="horizontal" autoSaveId="playground-top-v2">
+            <PanelGroup direction="horizontal" autoSaveId="playground-top-v2">
               {/* ── File Explorer Pane ── */}
               <Panel defaultSize={15} minSize={10} className="flex flex-col min-w-0">
                 <SimFileExplorer 
@@ -1312,7 +1316,7 @@ USER REQUEST: ${msg}`;
                       className="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-indigo-500/50 focus:outline-none resize-none"
                     />
                     <button
-                      onClick={handleChatSend}
+                      onClick={() => handleChatSend()}
                       disabled={isChatLoading || !chatInput.trim()}
                       className="self-end px-3 py-2 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-md hover:bg-indigo-600/30 transition-colors disabled:opacity-30"
                     >
@@ -1329,7 +1333,7 @@ USER REQUEST: ${msg}`;
 
           {/* ── Bottom Row: Preview & Console ── */}
           <Panel defaultSize={40} minSize={20} className="flex flex-col min-w-0 z-0">
-            <PanelGroup orientation="horizontal" autoSaveId="playground-bottom-v2">
+            <PanelGroup direction="horizontal" autoSaveId="playground-bottom-v2">
               <Panel defaultSize={60} minSize={20} className="flex flex-col min-w-0 bg-[#0d1117]">
                 <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d1117] flex items-center gap-2 shrink-0">
                   <span className="text-white/40 text-xs font-mono">Live Preview</span>
