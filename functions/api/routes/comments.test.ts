@@ -78,7 +78,7 @@ describe("Hono Backend - /comments Router", () => {
 
     const res = await testApp.request("/post/my-post", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { comments: typeof mockComments };
     expect(body.comments).toHaveLength(1);
   });
 
@@ -176,9 +176,9 @@ describe("Hono Backend - /comments Router", () => {
       body: JSON.stringify({ content: "test" }),
       headers: { "Content-Type": "application/json" }
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
-    
+
     expect(res.status).toBe(200);
-    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r) => (r.type === 'return' ? r.value : Promise.resolve())));
   });
 
   it("PATCH edit - handles not found", async () => {
@@ -222,7 +222,7 @@ describe("Hono Backend - /comments Router", () => {
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r) => (r.type === 'return' ? r.value : Promise.resolve())));
   });
 
   it("DELETE - handles not found", async () => {
@@ -265,6 +265,6 @@ describe("Hono Backend - /comments Router", () => {
       body: JSON.stringify({})
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
-    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
+    await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r) => (r.type === 'return' ? r.value : Promise.resolve())));
   });
 });
