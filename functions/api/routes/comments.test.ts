@@ -1,8 +1,12 @@
- 
+
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import { MockKysely, TestEnv } from "../../../src/test/types";
+import { createMockComment } from "../../../src/test/factories/contentFactory";
+import { createMockUser } from "../../../src/test/factories/userFactory";
 
 
 // Mock Zulip and Notifications
@@ -22,19 +26,19 @@ vi.mock("../middleware", async (importOriginal) => {
     ...actual,
     getSessionUser: vi.fn().mockResolvedValue({ id: "local-dev", email: "test@test.com", role: "admin", nickname: "Local Dev" }),
     getSocialConfig: vi.fn().mockResolvedValue({ ZULIP_COMMENT_STREAM: "test-stream" }),
-    turnstileMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
-    rateLimitMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
+    turnstileMiddleware: () => async (_c: Context<TestEnv>, next: () => Promise<void>) => next(),
+    rateLimitMiddleware: () => async (_c: Context<TestEnv>, next: () => Promise<void>) => next(),
   };
 });
 
 import commentsRouter from "./comments";
 
 describe("Hono Backend - /comments Router", () => {
-  
-  
-   
-  let mockDb: any;
-  let testApp: Hono<any>;
+
+
+
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,8 +62,8 @@ describe("Hono Backend - /comments Router", () => {
       }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
       await next();
     });
@@ -133,7 +137,15 @@ describe("Hono Backend - /comments Router", () => {
 
   it("POST submit - handles unverified user", async () => {
     const { getSessionUser } = await import("../middleware");
-    (getSessionUser as any).mockResolvedValueOnce({ id: "1", role: "unverified" });
+    vi.mocked(getSessionUser).mockResolvedValueOnce({
+      id: "1",
+      email: "unverified@test.com",
+      name: "Unverified",
+      nickname: "Unv",
+      image: null,
+      role: "unverified",
+      member_type: "student",
+    });
     const res = await testApp.request("/post/my-post", { method: "POST", body: JSON.stringify({ content: "test" }), headers: { "Content-Type": "application/json" } }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(403);
   });
@@ -177,7 +189,15 @@ describe("Hono Backend - /comments Router", () => {
 
   it("PATCH edit - handles unauthorized user (not owner)", async () => {
     const { getSessionUser } = await import("../middleware");
-    (getSessionUser as any).mockResolvedValueOnce({ id: "user", role: "member" }); // not admin
+    vi.mocked(getSessionUser).mockResolvedValueOnce({
+      id: "user",
+      email: "member@test.com",
+      name: "Member",
+      nickname: "Mem",
+      image: null,
+      role: "member",
+      member_type: "student",
+    });
     mockDb.executeTakeFirst.mockResolvedValueOnce({ user_id: "other-user" });
     const res = await testApp.request("/1", { method: "PATCH", body: JSON.stringify({ content: "test" }), headers: { "Content-Type": "application/json" } }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(403);
@@ -213,7 +233,15 @@ describe("Hono Backend - /comments Router", () => {
 
   it("DELETE - handles unauthorized user (not owner/admin)", async () => {
     const { getSessionUser } = await import("../middleware");
-    (getSessionUser as any).mockResolvedValueOnce({ id: "user", role: "member" }); // not admin, not owner
+    vi.mocked(getSessionUser).mockResolvedValueOnce({
+      id: "user",
+      email: "member@test.com",
+      name: "Member",
+      nickname: "Mem",
+      image: null,
+      role: "member",
+      member_type: "student",
+    });
     mockDb.executeTakeFirst.mockResolvedValueOnce({ user_id: "other-user" });
     const res = await testApp.request("/1", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(403);
