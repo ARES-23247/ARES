@@ -6,7 +6,8 @@ import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../
 import { emitNotification } from "../../utils/notifications";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { commentContract } from "../../../shared/schemas/contracts/commentContract";
-import type { HandlerInput, HonoContext } from "@shared/types/api";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const commentsRouter = new Hono<AppEnv>();
@@ -20,8 +21,8 @@ type CommentUpdateBody = {
 };
 
 const commentHandlers = {
-  list: async ({ params }: HandlerInput, c: HonoContext) => {
-    const { targetType, targetId } = params;
+  list: async (input, c: HonoContext) => {
+    const { targetType, targetId } = input.params;
     const user = await getSessionUser(c);
     const db = c.get("db") as Kysely<DB>;
 
@@ -62,7 +63,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch comments" } };
     }
   },
-  submit: async ({ params, body }: HandlerInput<CommentSubmitBody>, c: HonoContext) => {
+  submit: async (input, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) {
       return { status: 401 as const, body: { error: "Unauthorized" } };
@@ -71,9 +72,9 @@ const commentHandlers = {
       return { status: 403 as const, body: { error: "Verify your email to comment" } };
     }
 
-    const { targetType, targetId } = params;
+    const { targetType, targetId } = input.params;
     const db = c.get("db") as Kysely<DB>;
-    const rawContent = body.content;
+    const rawContent = input.body.content;
     if (!rawContent) {
       return { status: 400 as const, body: { error: "Comment content is required" } };
     }
@@ -143,14 +144,14 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to submit comment" } };
     }
   },
-  update: async ({ params, body }: HandlerInput<CommentUpdateBody>, c: HonoContext) => {
+  update: async (input, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };
 
-    const { id } = params;
+    const { id } = input.params;
     const db = c.get("db") as Kysely<DB>;
-    const rawContent = body.content;
+    const rawContent = input.body.content;
     const content = rawContent?.trim();
 
     if (!content) return { status: 400 as const, body: { error: "Content is required" } };
@@ -196,12 +197,12 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to update comment" } };
     }
   },
-  delete: async ({ params }: HandlerInput, c: HonoContext) => {
+  delete: async (input, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };
 
-    const { id } = params;
+    const { id } = input.params;
     const db = c.get("db") as Kysely<DB>;
 
     try {
@@ -237,7 +238,7 @@ const commentHandlers = {
   },
 };
 
-const commentTsRestRouter = s.router(commentContract, commentHandlers as any);
+const commentTsRestRouter = s.router(commentContract, commentHandlers);
 
 commentsRouter.use("/:targetType/:targetId", ensureAuth);
 
@@ -265,6 +266,17 @@ commentsRouter.use("/:id", (c, next) => {
   return next();
 });
 
-createHonoEndpoints(commentContract, commentTsRestRouter, commentsRouter);
+createHonoEndpoints(
+  commentContract,
+  commentTsRestRouter,
+  commentsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default commentsRouter;

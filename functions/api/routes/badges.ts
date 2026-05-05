@@ -1,16 +1,16 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { badgeContract } from "../../../shared/schemas/contracts/badgeContract";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, rateLimitMiddleware } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
+import type { AppRouteInput } from "../../../shared/types/contracts";
 
 const s = initServer<AppEnv>();
 
 const badgesTsRestRouterObj = {
-  list: async (_input: unknown, c: Context<AppEnv>) => {
+  list: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -34,17 +34,18 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to fetch badges" } };
     }
   },
-  create: async ({ body }: { body: { id: string; name: string; description: string; icon: string; color_theme: string } }, c: Context<AppEnv>) => {
+  create: async (input, c) => {
     try {
+      const { id, name, description, icon, color_theme } = input.body;
       const db = c.get("db") as Kysely<DB>;
       await db
         .insertInto("badges")
         .values({
-          id: body.id,
-          name: body.name,
-          description: body.description,
-          icon: body.icon,
-          color_theme: body.color_theme,
+          id,
+          name,
+          description,
+          icon,
+          color_theme,
         })
         .execute();
       return { status: 200 as const, body: { success: true } };
@@ -53,8 +54,9 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to create badge" } };
     }
   },
-  grant: async ({ body }: { body: { userId: string; badgeId: string } }, c: Context<AppEnv>) => {
+  grant: async (input, c) => {
     try {
+      const { userId, badgeId } = input.body;
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       const sessionId = user?.id || "system";
@@ -62,8 +64,8 @@ const badgesTsRestRouterObj = {
       await db
         .insertInto("user_badges")
         .values({
-          user_id: body.userId,
-          badge_id: body.badgeId,
+          user_id: userId,
+          badge_id: badgeId,
           awarded_by: sessionId,
         })
         .execute();
@@ -115,13 +117,14 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to award badge" } };
     }
   },
-  revoke: async ({ params }: { params: { userId: string; badgeId: string } }, c: Context<AppEnv>) => {
+  revoke: async (input, c) => {
     try {
+      const { userId, badgeId } = input.params;
       const db = c.get("db") as Kysely<DB>;
       await db
         .deleteFrom("user_badges")
-        .where("user_id", "=", params.userId)
-        .where("badge_id", "=", params.badgeId)
+        .where("user_id", "=", userId)
+        .where("badge_id", "=", badgeId)
         .execute();
       return { status: 200 as const, body: { success: true } };
     } catch (e: unknown) {
@@ -129,17 +132,18 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to revoke badge" } };
     }
   },
-  delete: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
+  delete: async (input, c) => {
     try {
+      const { id } = input.params;
       const db = c.get("db") as Kysely<DB>;
-      await db.deleteFrom("badges").where("id", "=", params.id).execute();
+      await db.deleteFrom("badges").where("id", "=", id).execute();
       return { status: 200 as const, body: { success: true } };
     } catch (e: unknown) {
       const err = e as Error;
       return { status: 500 as const, body: { error: err.message || "Failed to delete badge definition" } };
     }
   },
-  leaderboard: async (_input: unknown, c: Context<AppEnv>) => {
+  leaderboard: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -168,7 +172,7 @@ const badgesTsRestRouterObj = {
   },
 };
 
-const badgesTsRestRouter = s.router(badgeContract, badgesTsRestRouterObj as any);
+const badgesTsRestRouter = s.router(badgeContract, badgesTsRestRouterObj);
 export const badgesRouter = new Hono<AppEnv>();
 
 // Middlewares
@@ -177,7 +181,18 @@ badgesRouter.use("/", ensureAuth);
 badgesRouter.use("/admin/*", ensureAdmin);
 badgesRouter.use("/admin/*", rateLimitMiddleware(15, 60));
 
-createHonoEndpoints(badgeContract, badgesTsRestRouter, badgesRouter);
+createHonoEndpoints(
+  badgeContract,
+  badgesTsRestRouter,
+  badgesRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default badgesRouter;
 

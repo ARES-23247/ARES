@@ -38,6 +38,7 @@ const Leaderboard = React.lazy(() => import("./pages/Leaderboard"));
 const Store = React.lazy(() => import("./pages/Store"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const Academy = React.lazy(() => import("./pages/Academy"));
+const SimRunner = React.lazy(() => import("./pages/SimRunner"));
 
 import { useModal } from "./contexts/ModalContext";
 import { useRegisterSW } from "virtual:pwa-register/react";
@@ -100,6 +101,7 @@ export default function App() {
                 <Route path="/store" element={<Store />} />
                 <Route path="/academy" element={<Academy />} />
                 <Route path="/academy/:slug" element={<Academy />} />
+                <Route path="/sim-runner" element={<SimRunner />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

@@ -1,6 +1,6 @@
 /** @sim {"name": "Sim 0: The Single Neuron", "requiresContext": false} */
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCcw, ArrowRight, Brain, Zap } from 'lucide-react';
+import { Play, RotateCcw, ArrowRight, Brain, Zap, Code } from 'lucide-react';
 
 type Mode = 'single' | 'network';
 

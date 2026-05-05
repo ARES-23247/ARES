@@ -1,8 +1,9 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { communicationsContract } from "../../../shared/schemas/contracts/communicationsContract";
 import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError } from "../middleware";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const communicationsRouter = new Hono<AppEnv>();
@@ -12,7 +13,7 @@ communicationsRouter.use("/admin/*", ensureAdmin);
 // WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad
 
 const handlers = {
-  getStats: async (_args: any, c: Context<AppEnv>) => {
+  getStats: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as any;
       if (!db) {
@@ -28,10 +29,11 @@ const handlers = {
     }
   },
 
-  sendMassEmail: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  sendMassEmail: async (input, c: HonoContext) => {
     try {
+      const { subject, htmlContent } = input.body;
       const socialConfig = await getSocialConfig(c);
-      
+
       if (!socialConfig.RESEND_API_KEY) {
         return { status: 400 as const, body: { success: false as const, error: "Resend API key is not configured." } };
       }
@@ -56,15 +58,15 @@ const handlers = {
         emailPayloads.push({
           from: `ARES Robotics <${fromEmail}>`,
           to: [member.email],
-          subject: body.subject,
-          html: body.htmlContent,
+          subject,
+          html: htmlContent,
         });
       }
 
       let sentCount = 0;
       for (let i = 0; i < emailPayloads.length; i += BATCH_LIMIT) {
         const chunk = emailPayloads.slice(i, i + BATCH_LIMIT);
-        
+
         const resendRes = await fetch("https://api.resend.com/emails/batch", {
           method: "POST",
           headers: {
@@ -78,17 +80,17 @@ const handlers = {
           const errText = await resendRes.text();
           throw new Error(`Resend API Error: ${errText}`);
         }
-        
+
         const resData = await resendRes.json();
         // Batch returns an array of data or an error
         if (resData && (resData as any).error) {
            throw new Error(`Resend Batch Error: ${(resData as any).error.message}`);
         }
-        
+
         sentCount += chunk.length;
       }
 
-      await logAuditAction(c, "SEND_MASS_EMAIL", "communications", "broadcast", `Sent to ${sentCount} recipients. Subject: ${body.subject}`);
+      await logAuditAction(c, "SEND_MASS_EMAIL", "communications", "broadcast", `Sent to ${sentCount} recipients. Subject: ${subject}`);
 
       return { 
         status: 200 as const, 
@@ -116,7 +118,18 @@ const handlers = {
   }
 };
 
-const communicationsTsRestRouter = s.router(communicationsContract, handlers as any);
-createHonoEndpoints(communicationsContract, communicationsTsRestRouter, communicationsRouter);
+const communicationsTsRestRouter = s.router(communicationsContract, handlers);
+createHonoEndpoints(
+  communicationsContract,
+  communicationsTsRestRouter,
+  communicationsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default communicationsRouter;
