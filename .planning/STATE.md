@@ -157,7 +157,8 @@ Research complete, 8 plans created. 1/8 plans executed.
 - [x] 30-02-PLAN.md — Factory Migration — Complete
   - Migrated 6 factory files to use D1Row<T> types
 - [x] 30-03-PLAN.md — Auth/Core Backend Test Migration — Complete
-  - Migrated auth, users, sponsors tests to MockKysely and TestEnv
+  - Migrated auth.test.ts, users.test.ts, profiles.test.ts, badges.test.ts, _profileUtils.test.ts to MockKysely and TestEnv
+  - 71/71 tests pass, zero `: any` violations remaining
 - [x] 30-04-PLAN.md — Content Backend Test Migration — Complete
   - Migrated blog, docs, posts, media tests to MockKysely and TestEnv
 - [x] 30-05-PLAN.md — Events/Logistics Test Types Migration — Complete
