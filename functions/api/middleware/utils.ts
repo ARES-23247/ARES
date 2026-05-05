@@ -210,9 +210,19 @@ export async function logSystemError(
 }
 
 // ── Pagination Helper ───────────────────────────────────────
+/**
+ * Parse a positive integer from a query parameter with fallback.
+ * Returns the fallback value if the input is NaN, not an integer, or negative.
+ */
+function parsePositiveInt(val: string | undefined, fallback: number): number {
+  if (!val) return fallback;
+  const num = Number(val);
+  return isNaN(num) || !Number.isInteger(num) || num < 0 ? fallback : num;
+}
+
 export function parsePagination(c: Context<AppEnv>, defaultLimit = 50, maxLimit = 200) {
-  const limit = Math.min(Number(c.req.query("limit") || String(defaultLimit)), maxLimit);
-  const offset = Math.max(Number(c.req.query("offset") || "0"), 0);
+  const limit = Math.min(parsePositiveInt(c.req.query("limit"), defaultLimit), maxLimit);
+  const offset = parsePositiveInt(c.req.query("offset"), 0);
   const cursor = c.req.query("cursor") || null;
   return { limit, offset, cursor };
 }
