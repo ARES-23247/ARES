@@ -19,15 +19,25 @@ export default class ErrorBoundary extends Component<Props, State> {
     correlationId: ""
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public static getDerivedStateFromError(error: any): State {
-    const errorStr = error?.message || error?.toString?.() || "";
+  public static getDerivedStateFromError(error: unknown): State {
+    // Type narrow from unknown to extract error information safely
+    const getErrorMessage = (err: unknown): string => {
+      if (err instanceof Error) {
+        return err.message || "";
+      }
+      if (typeof err === "string") {
+        return err;
+      }
+      return String(err);
+    };
+
+    const errorMessage = getErrorMessage(error);
 
     // Detect stale chunk errors from PWA/service worker cache after deployment
     const isStaleChunk =
-      errorStr.includes("Failed to fetch dynamically imported module") ||
-      errorStr.includes("Importing a module script failed") ||
-      errorStr.includes("error loading dynamically imported module");
+      errorMessage.includes("Failed to fetch dynamically imported module") ||
+      errorMessage.includes("Importing a module script failed") ||
+      errorMessage.includes("error loading dynamically imported module");
 
     if (isStaleChunk) {
       const reloadKey = "ares-stale-chunk-reload";
@@ -46,17 +56,51 @@ export default class ErrorBoundary extends Component<Props, State> {
       }
     }
 
-    const isThirdPartyFault = 
-      errorStr.includes("SecurityError") || 
-      errorStr.includes("cross-origin") ||
-      errorStr.includes("Blocked a frame");
+    const isThirdPartyFault =
+      errorMessage.includes("SecurityError") ||
+      errorMessage.includes("cross-origin") ||
+      errorMessage.includes("Blocked a frame");
 
     const correlationId = Math.random().toString(36).substring(2, 10).toUpperCase();
-    return { 
-      hasError: true, 
-      errorStr: isThirdPartyFault ? "Third-party resource or iframe blocked due to security constraints." : (error.stack || error.toString()),
+
+    // Extract status code with proper type guards
+    const getStatusCode = (err: unknown): number | undefined => {
+      if (err instanceof Error && "status" in err && typeof err.status === "number") {
+        return err.status;
+      }
+      if (err && typeof err === "object" && "statusCode" in err && typeof err.statusCode === "number") {
+        return err.statusCode;
+      }
+      if (err && typeof err === "object" && "response" in err) {
+        const response = (err as { response: unknown }).response;
+        if (response && typeof response === "object" && "status" in response && typeof response.status === "number") {
+          return response.status;
+        }
+      }
+      return undefined;
+    };
+
+    // Extract error details with type narrowing
+    const getErrorDetails = (err: unknown): { stack: string; toString: string } => {
+      if (err instanceof Error) {
+        return {
+          stack: err.stack || "",
+          toString: err.toString()
+        };
+      }
+      return {
+        stack: "",
+        toString: String(err)
+      };
+    };
+
+    const errorDetails = getErrorDetails(error);
+
+    return {
+      hasError: true,
+      errorStr: isThirdPartyFault ? "Third-party resource or iframe blocked due to security constraints." : (errorDetails.stack || errorDetails.toString),
       correlationId,
-      statusCode: error.status || error.statusCode || error.response?.status
+      statusCode: getStatusCode(error)
     };
   }
 
