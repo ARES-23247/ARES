@@ -1,4 +1,5 @@
  
+import { TestEnv, MockKysely } from "../../../src/test/types";
 declare const global: typeof globalThis;
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Hono } from "hono";
@@ -15,10 +16,10 @@ vi.mock("../middleware", async (importOriginal) => {
       GITHUB_ORG: "test-org",
       DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/test"
     }),
-    ensureAdmin: async (_c: unknown, next: any) => next(),
+    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", role: "admin", email: "admin@test.com" }),
     logAuditAction: vi.fn().mockResolvedValue(true),
-    rateLimitMiddleware: () => async (_c: unknown, next: any) => next(),
+    rateLimitMiddleware: () => async (_c: unknown, next: () => Promise<void>) => next(),
     checkRateLimit: vi.fn().mockReturnValue(true),
   };
 });
@@ -40,9 +41,9 @@ import inquiriesRouter from "./inquiries/index";
 
 describe("Hono Backend - /inquiries Router", () => {
   
-  let mockDb: any;
+  let mockDb: MockKysely;
   let testApp: Hono<any>;
-  let env: any;
+  let env: { DEV_BYPASS?: string; DB: D1Database };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -81,7 +82,7 @@ describe("Hono Backend - /inquiries Router", () => {
     };
 
     mockDb.transaction = vi.fn().mockReturnValue({
-      execute: vi.fn().mockImplementation(async (cb: any) => {
+      execute: vi.fn().mockImplementation(async (cb: () => Promise<void>) => {
         return await cb(mockDb);
       }),
     });
@@ -98,12 +99,12 @@ describe("Hono Backend - /inquiries Router", () => {
       TURNSTILE_SECRET: "test-secret",
     };
 
-    testApp = new Hono<any>();
-    testApp.onError((err, c: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.onError((err, c) => {
       console.error("Test App Error:", err);
       return c.json({ error: err.message }, 500);
     });
-    testApp.use("*", async (c: any, next: any) => {
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       // getSessionUser checks for "sessionUser" in context
       c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com" });
@@ -128,8 +129,8 @@ describe("Hono Backend - /inquiries Router", () => {
   });
 
   it("GET /admin/list - mask PII for students", async () => {
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       c.set("sessionUser", { id: "2", role: "user", member_type: "student", email: "student@test.com" });
       await next();
@@ -243,8 +244,8 @@ describe("Hono Backend - /inquiries Router", () => {
 
   it("GET /admin/list - masks PII for students", async () => {
     // Setup a new app instance to override sessionUser for this test
-    const studentApp = new Hono<any>();
-    studentApp.use("*", async (c: any, next: any) => {
+    const studentApp = new Hono<TestEnv>();
+    studentApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       c.set("sessionUser", { id: "2", role: "user", member_type: "student", email: "student@test.com" });
       await next();
@@ -308,8 +309,8 @@ describe("Hono Backend - /inquiries Router", () => {
   });
 
   it("GET /admin/list - returns 401 if no user", async () => {
-    const noUserApp = new Hono<any>();
-    noUserApp.use("*", async (c: any, next: any) => {
+    const noUserApp = new Hono<TestEnv>();
+    noUserApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       // No sessionUser set
       await next();
