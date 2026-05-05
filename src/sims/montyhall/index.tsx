@@ -626,6 +626,27 @@ export default function SimComponent() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '11px', color: 'var(--ares-muted)', marginBottom: '4px' }}>
               <span>Speed</span><span>{autoSpeed}x</span>
             </div>
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+              {[1, 5, 20, 100].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setAutoSpeed(s)}
+                  style={{
+                    flex: 1,
+                    padding: '4px',
+                    fontSize: '9px',
+                    fontFamily: 'monospace',
+                    border: `1px solid ${autoSpeed === s ? 'var(--ares-cyan)' : 'var(--ares-gray-dark)'}`,
+                    background: autoSpeed === s ? 'rgba(0,200,255,0.1)' : 'transparent',
+                    color: autoSpeed === s ? 'var(--ares-cyan)' : 'var(--ares-muted)',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {s === 1 ? 'SLOW' : s === 5 ? 'MED' : s === 20 ? 'FAST' : 'MAX'}
+                </button>
+              ))}
+            </div>
             <input
               aria-label="Auto simulation speed"
               type="range" min={1} max={100} step={1}
