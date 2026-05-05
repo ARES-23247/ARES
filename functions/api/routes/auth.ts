@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { AppEnv, getSessionUser, persistentRateLimitMiddleware } from "../middleware";

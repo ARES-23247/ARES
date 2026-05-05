@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { AppEnv, ensureAuth } from "../middleware";
 import { z } from "zod";
 
 // GitHub repository configuration
 // Centralized to avoid hardcoded references throughout the codebase
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getGitHubConfig(c: any) {
-  const owner = c.env.GITHUB_REPO_OWNER || 'ARES-23247';
-  const repo = c.env.GITHUB_REPO_NAME || 'ARESWEB';
-  const branch = c.env.GITHUB_BRANCH || 'main';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- System Boundary Type: Cloudflare env extensions
+function getGitHubConfig(c: Context<AppEnv>) {
+  const owner = (c.env as any).GITHUB_REPO_OWNER || 'ARES-23247';
+  const repo = (c.env as any).GITHUB_REPO_NAME || 'ARESWEB';
+  const branch = (c.env as any).GITHUB_BRANCH || 'main';
   return {
     owner,
     repo,
@@ -57,8 +56,7 @@ export const simulationsRouter = new Hono<AppEnv>();
 
 // Helper: Check if user owns a simulation or is admin
 // SECURITY: Uses multiple verification factors to prevent email spoofing
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function canModifySimulation(c: any, simId: string): Promise<boolean> {
+async function canModifySimulation(c: Context<AppEnv>, simId: string): Promise<boolean> {
   const sessionUser = c.get("sessionUser");
   if (!sessionUser) return false;
 
@@ -106,8 +104,10 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
 
     // Tertiary: for unverified commits, verify committer identity via GitHub API
     // This prevents users from setting git config to use someone else's email
-    if (committerLogin && sessionUser.github_login) {
-      if (committerLogin === sessionUser.github_login) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- github_login is a planned extension to SessionUser
+    if (committerLogin && (sessionUser as any).github_login) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- github_login is a planned extension to SessionUser
+      if (committerLogin === (sessionUser as any).github_login) {
         return true;
       }
     }
@@ -123,7 +123,7 @@ async function canModifySimulation(c: any, simId: string): Promise<boolean> {
 }
 
 // List all simulations from GitHub
-simulationsRouter.get("/", async (c) => {
+simulationsRouter.get("/", async (c: Context<AppEnv>) => {
   try {
     const ghConfig = getGitHubConfig(c);
     let pat = c.env.GITHUB_PAT;
@@ -169,10 +169,10 @@ simulationsRouter.get("/", async (c) => {
 });
 
 // Get a single simulation file by id from GitHub
-simulationsRouter.get("/:id", async (c) => {
+simulationsRouter.get("/:id", async (c: Context<AppEnv>) => {
   const id = c.req.param("id");
 
-  if (!id.startsWith("github:")) {
+  if (!id || !id.startsWith("github:")) {
     return c.json({ error: "Simulation not found" }, 404);
   }
 
@@ -236,7 +236,7 @@ simulationsRouter.get("/:id", async (c) => {
 });
 
 // Save simulation to GitHub
-simulationsRouter.post("/", ensureAuth, async (c) => {
+simulationsRouter.post("/", ensureAuth, async (c: Context<AppEnv>) => {
   try {
     const sessionUser = c.get("sessionUser");
     if (!sessionUser) {
@@ -398,7 +398,7 @@ simulationsRouter.post("/", ensureAuth, async (c) => {
   }
 });
 // Delete simulation from GitHub
-simulationsRouter.delete("/:id", async (c) => {
+simulationsRouter.delete("/:id", async (c: Context<AppEnv>) => {
   try {
     const sessionUser = c.get("sessionUser");
     if (!sessionUser) {
@@ -406,7 +406,7 @@ simulationsRouter.delete("/:id", async (c) => {
     }
 
     const id = c.req.param("id");
-    if (!id.startsWith("github:")) {
+    if (!id || !id.startsWith("github:")) {
       return c.json({ error: "Not found" }, 404);
     }
 

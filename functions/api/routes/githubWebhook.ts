@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { AppEnv  } from "../middleware";
+import { AppEnv } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
 const githubWebhookRouter = new Hono<AppEnv>();

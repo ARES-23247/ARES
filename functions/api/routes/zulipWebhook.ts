@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { siteConfig } from "../../utils/site.config";
@@ -49,8 +48,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 // ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
-// ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
-zulipWebhookRouter.post("/", async (c) => {
+zulipWebhookRouter.post("/", async (c: Context<AppEnv>) => {
   let body: ZulipOutgoingPayload;
   try {
     body = await c.req.json();
