@@ -11,6 +11,12 @@ import { buildGitHubConfig, createProjectItem } from "../../../utils/githubProje
 import { initServer } from "ts-rest-hono";
 const _s = initServer<AppEnv>();
 
+/**
+ * Deletes old inquiries that have been resolved or rejected.
+ * @param db - Database instance
+ * @param days - Delete inquiries older than this many days
+ * @returns Number of inquiries deleted
+ */
 export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
   if (days <= 0) return { deleted: 0 };
   const res = await db.deleteFrom("inquiries")
