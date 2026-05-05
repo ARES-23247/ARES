@@ -24,26 +24,26 @@ interface ZulipOutgoingPayload {
 }
 
 // SEC-F01: Timing-safe comparison for webhook tokens (Length-Independent)
+// CR-07 FIX: Always iterate MAX_TOKEN_LENGTH to normalize timing across all comparisons
 function timingSafeEqual(a: string, b: string): boolean {
   const enc = new TextEncoder();
   const aBuf = enc.encode(a);
   const bBuf = enc.encode(b);
-  
-  if (aBuf.length !== bBuf.length) {
-    // If lengths differ, compare aBuf against itself to consume time
-    // but ensure we return false at the end.
-    let _result = 0;
-    for (let i = 0; i < aBuf.length; i++) {
-      _result |= aBuf[i] ^ aBuf[i];
-    }
-    return false;
-  }
+
+  // Define maximum expected token length for timing normalization
+  // Webhook tokens are typically UUIDs or similar, 128 bytes is more than sufficient
+  const MAX_TOKEN_LENGTH = 128;
 
   let result = 0;
-  for (let i = 0; i < aBuf.length; i++) {
-    result |= aBuf[i] ^ bBuf[i];
+  // Always iterate the full MAX_TOKEN_LENGTH to normalize timing
+  for (let i = 0; i < MAX_TOKEN_LENGTH; i++) {
+    // Use 0 for bytes beyond actual buffer length
+    const aByte = i < aBuf.length ? aBuf[i] : 0;
+    const bByte = i < bBuf.length ? bBuf[i] : 0;
+    result |= aByte ^ bByte;
   }
-  return result === 0;
+  // Length check is incorporated via XOR with zeros
+  return result === 0 && aBuf.length === bBuf.length;
 }
 
 // ── POST /webhooks/zulip — Handle outgoing webhook from Zulip ────────
