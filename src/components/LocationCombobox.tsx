@@ -31,10 +31,10 @@ export function LocationCombobox({
         });
 
   return (
-    <Combobox value={value || ''} onChange={(val: string) => {
+    <Combobox value={value || ''} onChange={(val: string | null) => {
       if (val === 'CUSTOM') {
         onCustomClick();
-      } else {
+      } else if (val) {
         onChange(val);
       }
     }} onClose={() => setQuery('')}>
