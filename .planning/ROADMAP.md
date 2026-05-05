@@ -110,7 +110,7 @@ Plans:
 - Wave 2: 29-02 (Batch Migration & Exports) — autonomous, depends on 29-01
 
 Plans:
-- [ ] 29-01-PLAN.md — Export ts-rest-hono contract inference types (AppRouteInput, AppRouteImplementation) and migrate analytics.ts as reference implementation
+- [x] 29-01-PLAN.md — Export ts-rest-hono contract inference types (AppRouteInput, AppRouteImplementation) and migrate analytics.ts as reference implementation
 - [ ] 29-02-PLAN.md — Migrate remaining 14 route files to contract inference, export all 33 contract types for frontend, deprecate HandlerInput, and document patterns
 
 ---
