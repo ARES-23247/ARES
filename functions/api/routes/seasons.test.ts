@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
+import { MockKysely, TestEnv } from "~/src/test/types";
+import { mockExecutionContext } from "~/src/test/utils";
 import seasonsRouter from "./seasons";
 
 vi.mock("../middleware", () => ({
-  ensureAdmin: (c: any, next: any) => next(),
+  ensureAdmin: (c: Context<TestEnv>, next: () => Promise<void>) => next(),
   logAuditAction: vi.fn().mockResolvedValue(true),
-  rateLimitMiddleware: () => (c: any, next: any) => next(),
+  rateLimitMiddleware: () => (c: Context<TestEnv>, next: () => Promise<void>) => next(),
 }));
 
-const mockDb = {
+const mockDb: MockKysely = {
   selectFrom: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
@@ -23,15 +26,12 @@ const mockDb = {
 };
 
 describe("Seasons Router", () => {
-  let app: Hono<any>;
+  let app: Hono<TestEnv>;
   const env = { DB: {} };
-  const mockExecutionContext: any = {
-    waitUntil: vi.fn(),
-  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    app = new Hono();
+    app = new Hono<TestEnv>();
     app.use("*", async (c, next) => {
       c.set("db", mockDb);
       await next();
@@ -43,7 +43,7 @@ describe("Seasons Router", () => {
     mockDb.execute.mockResolvedValueOnce([{ start_year: 2023, challenge_name: "Centerstage", status: "published" }]);
     const res = await app.request("/", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { seasons: { start_year: number }[] };
     expect(body.seasons[0].start_year).toBe(2023);
   });
 
@@ -118,7 +118,7 @@ describe("Seasons Router", () => {
   });
 
   it("POST /admin/:id/undelete - restores", async () => {
-    const res = await app.request("/admin/2023/undelete", { 
+    const res = await app.request("/admin/2023/undelete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}"
@@ -128,7 +128,7 @@ describe("Seasons Router", () => {
 
   it("POST /admin/:id/undelete - handles error", async () => {
     mockDb.updateTable.mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ execute: vi.fn().mockRejectedValueOnce(new Error("Undelete fail")) }) }) });
-    const res = await app.request("/admin/2023/undelete", { 
+    const res = await app.request("/admin/2023/undelete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}"
