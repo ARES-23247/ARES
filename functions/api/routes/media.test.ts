@@ -1,7 +1,10 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import { MockKysely, TestEnv } from "../../../src/test/types";
+import { createMockMedia } from "../../../src/test/factories/contentFactory";
 
 // Mock external utilities
 vi.mock("../../utils/socialSync", () => ({
@@ -13,10 +16,10 @@ vi.mock("../middleware", async (importOriginal) => {
   return {
     ...actual,
     getDbSettings: vi.fn().mockResolvedValue({}),
-    ensureAdmin: async (c: any, next: any) => next(),
+    ensureAdmin: async (c: Context<TestEnv>, next: () => Promise<void>) => next(),
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", role: "admin", email: "admin@test.com" }),
     logAuditAction: vi.fn().mockResolvedValue(true),
-    rateLimitMiddleware: () => async (c: any, next: any) => next(),
+    rateLimitMiddleware: () => async (c: Context<TestEnv>, next: () => Promise<void>) => next(),
     checkRateLimit: vi.fn().mockReturnValue(true),
   };
 });
@@ -29,8 +32,8 @@ import mediaRouter from "./media/index";
 
 describe("Hono Backend - /media Router", () => {
   let mockR2: any;
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
   let env: any;
 
   beforeEach(() => {
@@ -87,10 +90,10 @@ describe("Hono Backend - /media Router", () => {
       ENVIRONMENT: "test",
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
-      c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com" });
+      c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com", name: null, nickname: "Admin", image: null, member_type: "student" });
       await next();
     });
     testApp.route("/", mediaRouter);
