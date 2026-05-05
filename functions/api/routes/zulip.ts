@@ -352,9 +352,10 @@ const zulipTsRestRouter = s.router(zulipContract, {
   }
 } as any);
 
+// CR-07 FIX: Apply authentication to all Zulip routes
+// Admin-only routes override the base authentication
+zulipRouter.use("*", ensureAuth);
 zulipRouter.use("/presence", ensureAdmin);
 zulipRouter.use("/invites/*", ensureAdmin);
-zulipRouter.use("/message", ensureAuth);
-zulipRouter.use("/topic", ensureAuth);
 createHonoEndpoints(zulipContract, zulipTsRestRouter, zulipRouter);
 export default zulipRouter;
