@@ -6,6 +6,7 @@ import { authClient } from "../utils/auth-client";
 interface AvatarEditorProps {
   currentImage?: string | null;
   onClose: () => void;
+  onSave?: () => void;
 }
 
 /* ─── DiceBear 9.x Official Parameters ──────────────────────────── */
@@ -39,7 +40,7 @@ function getRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export default function AvatarEditor({ currentImage, onClose }: AvatarEditorProps) {
+export default function AvatarEditor({ currentImage, onClose, onSave }: AvatarEditorProps) {
   const getParams = () => {
     try {
       if (!currentImage) return new URLSearchParams();
@@ -177,7 +178,9 @@ export default function AvatarEditor({ currentImage, onClose }: AvatarEditorProp
         image: currentUrl
       });
       if (apiError) throw new Error(apiError.message || "Failed to update profile image");
-      window.location.reload();
+      // Call onSave callback to refresh session data instead of full page reload
+      if (onSave) onSave();
+      onClose();
     } catch (err) {
       setError(String(err));
       setIsSaving(false);

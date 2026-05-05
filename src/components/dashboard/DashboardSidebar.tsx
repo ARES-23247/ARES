@@ -5,7 +5,7 @@ import {
   User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert, Mail, DollarSign, Package, Sparkles, Crosshair, Puzzle, Share2,
   type LucideIcon
 } from "lucide-react";
-import { signOut } from "../../utils/auth-client";
+import { signOut, useSession } from "../../utils/auth-client";
 import { DashboardSession, DashboardPermissions } from "../../hooks/useDashboardSession";
 import { lazy } from "react";
 
@@ -91,6 +91,14 @@ export default function DashboardSidebar({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
 
+  // Use the auth session hook for refetching
+  const { refetch } = useSession();
+
+  const handleAvatarSave = () => {
+    // Refetch session data to update the avatar image without page reload
+    refetch();
+  };
+
   const { isAuthorized, canSeeInquiries, isAdmin, canSeeLogistics, canSeeTasks, canSeeSimulations, role, memberType } = permissions;
   const { pendingInquiriesCount, pendingPostsCount, pendingEventsCount, pendingDocsCount } = notifications;
 
@@ -98,7 +106,11 @@ export default function DashboardSidebar({
     <>
       {isAvatarEditorOpen && (
         <Suspense fallback={null}>
-          <AvatarEditor currentImage={session?.user?.image as string | null} onClose={() => setIsAvatarEditorOpen(false)} />
+          <AvatarEditor
+            currentImage={session?.user?.image as string | null}
+            onClose={() => setIsAvatarEditorOpen(false)}
+            onSave={handleAvatarSave}
+          />
         </Suspense>
       )}
 
