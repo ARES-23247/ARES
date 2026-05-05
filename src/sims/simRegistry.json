@@ -37,9 +37,9 @@
       "requiresContext": false
     },
     {
-      "id": "MonteHall",
-      "name": "Monte Hall Paradox Simulation",
-      "path": "./montehall",
+      "id": "MontyHall",
+      "name": "Monty Hall Problem",
+      "path": "./montyhall",
       "requiresContext": false
     },
     {

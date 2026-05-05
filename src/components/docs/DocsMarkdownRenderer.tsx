@@ -6,6 +6,8 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { Link as LinkIcon } from "lucide-react";
 import TiptapRenderer from "../TiptapRenderer";
 import { CodeBlock } from "./CodeBlock";
+// Auto-generated sim registry - run: npm run generate:sims
+import { SIM_COMPONENTS, SIM_TAG_NAMES } from "../generated/sim-registry";
 
 // ── Lazy-loaded Non-Sim Components ─────────────────────────────────────
 const ConfigVisualizer = lazy(() => import("./ConfigVisualizer"));
@@ -13,61 +15,6 @@ const SimulationPlayground = lazy(() => import("../SimulationPlayground"));
 const CodePlayground = lazy(() => import("./CodePlayground"));
 const ScreenshotGallery = lazy(() => import("./ScreenshotGallery"));
 const InteractiveTutorial = lazy(() => import("../InteractiveTutorial"));
-
-// ── Lazy-loaded Simulators (New Folder Structure) ────────────────────
-// Each sim is now in its own subfolder with an index.tsx export
-// IMPORTANT: When adding a new sim, create a folder in src/sims/ with index.tsx
-// and add the lazy import and SIM_COMPONENTS entry here.
-const SwerveSimulator = lazy(() => import("../../sims/swerve"));
-const SOTMSimulator = lazy(() => import("../../sims/sotm"));
-const FaultSim = lazy(() => import("../../sims/fault"));
-const PhysicsSim = lazy(() => import("../../sims/physics"));
-const SysIdSim = lazy(() => import("../../sims/sysid"));
-const VisionSim = lazy(() => import("../../sims/vision"));
-const ZeroAllocationSim = lazy(() => import("../../sims/zeroallocation"));
-const FieldVisualizer = lazy(() => import("../../sims/field"));
-const TroubleshootingWizard = lazy(() => import("../../sims/troubleshooting"));
-const PerformanceDashboard = lazy(() => import("../../sims/performance"));
-const ArmKgSim = lazy(() => import("../../sims/armkg"));
-const AutoSim = lazy(() => import("../../sims/auto"));
-const ElevatorPidSim = lazy(() => import("../../sims/elevatorpid"));
-const FlywheelKvSim = lazy(() => import("../../sims/flywheelkv"));
-const PowerSheddingSim = lazy(() => import("../../sims/powershedding"));
-const StateMachineSim = lazy(() => import("../../sims/statemachine"));
-const BeeSim = lazy(() => import("../../sims/bee"));
-const TheGreatBeeAdventure = lazy(() => import("../../sims/greatbee"));
-const UntitledSimulation = lazy(() => import("../../sims/untitled"));
-const Battleship = lazy(() => import("../../sims/battleship"));
-const MonteHall = lazy(() => import("../../sims/montehall"));
-
-// ── Sim Component Registry ───────────────────────────────────────────────
-// Maps sim component IDs to their lazy-loaded components
-// Tag names are lowercased versions of the component IDs
-const SIM_COMPONENTS: Record<string, React.ComponentType<any>> = {
-  swervesimulator: SwerveSimulator,
-  sotmsimulator: SOTMSimulator,
-  faultsim: FaultSim,
-  physicssim: PhysicsSim,
-  sysidsim: SysIdSim,
-  visionsim: VisionSim,
-  zeroallocationsim: ZeroAllocationSim,
-  fieldvisualizer: FieldVisualizer,
-  troubleshootingwizard: TroubleshootingWizard,
-  performancedashboard: PerformanceDashboard,
-  armkgsim: ArmKgSim,
-  autosim: AutoSim,
-  elevatorpidsim: ElevatorPidSim,
-  flywheelkvsim: FlywheelKvSim,
-  powersheddingsim: PowerSheddingSim,
-  statemachinesim: StateMachineSim,
-  beesim: BeeSim,
-  thegreatbeeadventure: TheGreatBeeAdventure,
-  untitledsimulation: UntitledSimulation,
-  battleship: Battleship,
-};
-
-// Generate tag names and component mappings from SIM_COMPONENTS
-const SIM_TAG_NAMES = Object.keys(SIM_COMPONENTS);
 
 function SimLoader() {
   return (

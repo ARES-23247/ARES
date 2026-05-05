@@ -27,7 +27,7 @@ const ElevatorPidSim = lazy(() => import('../sims/elevatorpid'));
 const FlywheelKvSim = lazy(() => import('../sims/flywheelkv'));
 const PowerSheddingSim = lazy(() => import('../sims/powershedding'));
 const StateMachineSim = lazy(() => import('../sims/statemachine'));
-const MonteHall = lazy(() => import('../sims/montehall').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load MonteHall</div> })));
+const MonteHall = lazy(() => import('../sims/montyhall').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load MonteHall</div> })));
 const SimulationPlayground = lazy(() => import('./SimulationPlayground').catch(() => ({ default: () => <div className="text-ares-danger">Failed to load SimulationPlayground</div> })));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
