@@ -369,7 +369,7 @@ const tasksTsRestRouter = s.router(taskContract, {
       }
 
       await db.deleteFrom("tasks")
-        .where("id", "=", params.id)
+        .where("id", "=", input.params.id)
         .execute();
 
       await db.insertInto("audit_log").values({
