@@ -33,7 +33,7 @@ const settingsSchema = z.record(z.string(), z.string().max(10000));
 
 const settingsHandlers = {
 
-  getSettings: async (_input, c: HonoContext) => {
+  getSettings: async (_input: unknown, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const masked: Record<string, string> = {};
@@ -49,7 +49,7 @@ const settingsHandlers = {
     }
   },
    
-  updateSettings: async (input, c: HonoContext) => {
+  updateSettings: async (input: unknown, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const body = input.body;
@@ -114,7 +114,7 @@ const settingsHandlers = {
     }
   },
    
-  getStats: async (_input, c: HonoContext) => {
+  getStats: async (_input: unknown, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [posts, events, docs, inquiries, users] = await Promise.all([
@@ -142,7 +142,7 @@ const settingsHandlers = {
     }
   },
    
-  getPublicSettings: async (_input, c: HonoContext) => {
+  getPublicSettings: async (_input: unknown, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const publicKeys = ["COMMUNITY_PHOTO_DRIVE_URL", "COMMUNITY_DOCS_URL"];

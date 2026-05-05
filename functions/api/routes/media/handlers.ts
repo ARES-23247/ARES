@@ -106,7 +106,7 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
 }
 
 export const mediaHandlers = {
-  getMedia: async (_input, c: HonoContext) => {
+  getMedia: async (_input: unknown, c: HonoContext) => {
     const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
     const ua = c.req.header("user-agent") || "unknown";
     const rl = await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `media_list_${ip}`, ua, 30, 60);
@@ -165,7 +165,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  adminList: async (_input, c: HonoContext) => {
+  adminList: async (_input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const [objects, results] = await Promise.all([
@@ -195,7 +195,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  upload: async (input, c: HonoContext) => {
+  upload: async (input: unknown, c: HonoContext) => {
     try {
       const { body } = input;
       const formData = body as FormData;
@@ -289,7 +289,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "Upload failed: " + (err.message || String(err)) } };
     }
   },
-  move: async (input, c: HonoContext) => {
+  move: async (input: unknown, c: HonoContext) => {
     const { params, body } = input;
     const oldKey = params.key;
     const { folder } = body;
@@ -324,7 +324,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "Move failed" } };
     }
   },
-  delete: async (input, c: HonoContext) => {
+  delete: async (input: unknown, c: HonoContext) => {
     const { params } = input;
     try {
       if (c.env.ARES_STORAGE) {
@@ -339,7 +339,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  syndicate: async (input, c: HonoContext) => {
+  syndicate: async (input: unknown, c: HonoContext) => {
     try {
       const { body } = input;
       const { key, caption } = body;

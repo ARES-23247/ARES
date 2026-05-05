@@ -9,7 +9,7 @@ import type { HonoContext } from "@shared/types/api";
 export const entitiesRouter = new Hono<AppEnv>();
 
 const entityHandlers = {
-  getLinks: async (input, c: HonoContext) => {
+  getLinks: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { type, id } = input.query;
@@ -73,7 +73,7 @@ const entityHandlers = {
     }
   },
 
-  saveLink: async (input, c: HonoContext) => {
+  saveLink: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = crypto.randomUUID();
@@ -97,7 +97,7 @@ const entityHandlers = {
     }
   },
 
-  deleteLink: async (input, c: HonoContext) => {
+  deleteLink: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("entity_links").where("id", "=", input.params.id).execute();

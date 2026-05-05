@@ -24,7 +24,7 @@ function normalizeEmail(email: string): string {
 }
 
 const zulipTsRestRouter = s.router(zulipContract, {
-  getPresence: async (_input, c: HonoContext) => {
+  getPresence: async (_input: unknown, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -68,7 +68,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  sendMessage: async (input, c: HonoContext) => {
+  sendMessage: async (input: unknown, c: HonoContext) => {
     try {
       const { sendZulipMessage } = await import("../../utils/zulipSync");
       const config = await getSocialConfig(c);
@@ -99,7 +99,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  getTopicMessages: async (input, c: HonoContext) => {
+  getTopicMessages: async (input: unknown, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -138,7 +138,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  auditMissingUsers: async (_input, c: HonoContext) => {
+  auditMissingUsers: async (_input: unknown, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -237,14 +237,14 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  inviteUsers: async (input, c: HonoContext) => {
+  inviteUsers: async (input: unknown, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
         return { status: 500 as const, body: { success: false, error: "Zulip not configured." } };
       }
 
-      const { emails } = input.body;
+      const { emails } = (input as { body: { emails: string[] } }).body;
       if (!emails || emails.length === 0) {
         return { status: 200 as const, body: { success: true, invitedCount: 0 } };
       }

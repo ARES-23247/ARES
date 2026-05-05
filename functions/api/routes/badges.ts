@@ -12,7 +12,7 @@ import type { HonoContext } from "@shared/types/api";
 
 
 const badgesTsRestRouterObj = {
-  list: async (_input, c: HonoContext) => {
+  list: async (_input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -36,7 +36,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to fetch badges" } };
     }
   },
-  create: async (input, c: HonoContext) => {
+  create: async (input: unknown, c: HonoContext) => {
     try {
       const { id, name, description, icon, color_theme } = input.body;
       const db = c.get("db") as Kysely<DB>;
@@ -56,7 +56,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to create badge" } };
     }
   },
-  grant: async (input, c: HonoContext) => {
+  grant: async (input: unknown, c: HonoContext) => {
     try {
       const { userId, badgeId } = input.body;
       const db = c.get("db") as Kysely<DB>;
@@ -119,7 +119,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to award badge" } };
     }
   },
-  revoke: async (input, c: HonoContext) => {
+  revoke: async (input: unknown, c: HonoContext) => {
     try {
       const { userId, badgeId } = input.params;
       const db = c.get("db") as Kysely<DB>;
@@ -134,7 +134,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to revoke badge" } };
     }
   },
-  delete: async (input, c: HonoContext) => {
+  delete: async (input: unknown, c: HonoContext) => {
     try {
       const { id } = input.params;
       const db = c.get("db") as Kysely<DB>;
@@ -145,7 +145,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to delete badge definition" } };
     }
   },
-  leaderboard: async (_input, c: HonoContext) => {
+  leaderboard: async (_input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db

@@ -12,7 +12,7 @@ const app = new Hono<AppEnv>();
 
 
 const pointsHandlers = {
-  getBalance: async (input, c: HonoContext) => {
+  getBalance: async (input: unknown, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
@@ -43,7 +43,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getHistory: async (input, c: HonoContext) => {
+  getHistory: async (input: unknown, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
@@ -77,7 +77,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  awardPoints: async (input, c: HonoContext) => {
+  awardPoints: async (input: unknown, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
@@ -118,7 +118,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getLeaderboard: async (_input, c: HonoContext) => {
+  getLeaderboard: async (_input: unknown, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user as u")

@@ -30,7 +30,7 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
 }
 
 export const inquiryHandlers = {
-  list: async (input, c: HonoContext) => {
+  list: async (input: unknown, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -116,7 +116,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch inquiries" } };
     }
   },
-  submit: async (input, c: HonoContext) => {
+  submit: async (input: unknown, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -222,7 +222,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Submission failed" } };
     }
   },
-  updateStatus: async (input, c: HonoContext) => {
+  updateStatus: async (input: unknown, c: HonoContext) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -238,7 +238,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } };
     }
   },
-  updateNotes: async (input, c: HonoContext) => {
+  updateNotes: async (input: unknown, c: HonoContext) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -254,7 +254,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Notes update failed" } };
     }
   },
-  delete: async (input, c: HonoContext) => {
+  delete: async (input: unknown, c: HonoContext) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;

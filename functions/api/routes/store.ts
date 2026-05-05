@@ -16,7 +16,7 @@ app.use("/orders/*", ensureAdmin);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const storeHandlers: any = {
-  getProducts: async (_input, c: HonoContext) => {
+  getProducts: async (_input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const products = await db
@@ -121,7 +121,7 @@ const storeHandlers: any = {
     }
   },
   // Extracted webhook handler below
-  getOrders: async (_input, c: HonoContext) => {
+  getOrders: async (_input: unknown, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db") as Kysely<DB>;

@@ -11,7 +11,7 @@ import type { HonoContext } from "@shared/types/api";
 export const usersRouter = new Hono<AppEnv>();
 
 const userTsRestRouter = s.router(userContract, {
-  getUsers: async (input, c: HonoContext) => {
+  getUsers: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit, cursor } = parsePagination(c, 50, 100);
@@ -54,7 +54,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  adminDetail: async (input, c: HonoContext) => {
+  adminDetail: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("user as u")
@@ -91,7 +91,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  patchUser: async (input, c: HonoContext) => {
+  patchUser: async (input: unknown, c: HonoContext) => {
     try {
       // Defense-in-depth: Re-validate admin authorization for sensitive role changes
       const sessionUser = c.get("sessionUser") as { id: string; role: string } | undefined;
@@ -145,7 +145,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Update failed: " + (e instanceof Error ? e.message : "Unknown error") } };
     }
   },
-  updateUserProfile: async (input, c: HonoContext) => {
+  updateUserProfile: async (input: unknown, c: HonoContext) => {
     try {
       await upsertProfile(c, input.params.id, input.body as Record<string, unknown>);
       return { status: 200 as const, body: { success: true } };
@@ -153,7 +153,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Profile update failed" } };
     }
   },
-  adminGetProfile: async (input, c: HonoContext) => {
+  adminGetProfile: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await db.selectFrom("user").select(["id", "name", "email", "image", "role"]).where("id", "=", input.params.id).executeTakeFirst();
@@ -232,7 +232,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Failed to fetch user profile" } };
     }
   },
-  deleteUser: async (input, c: HonoContext) => {
+  deleteUser: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = input.params.id;

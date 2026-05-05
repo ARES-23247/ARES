@@ -14,7 +14,7 @@ type LocationInput = z.infer<typeof locationSchema>;
 export const locationsRouter = new Hono<AppEnv>();
 
 const locationsTsRestRouter = s.router(locationContract, {
-    list: async (input, c: HonoContext) => {
+    list: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -36,7 +36,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to fetch locations" } };
     }
   },
-    adminList: async (input, c: HonoContext) => {
+    adminList: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -57,7 +57,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to fetch locations" } };
     }
   },
-    save: async (input, c: HonoContext) => {
+    save: async (input: unknown, c: HonoContext) => {
     try {
       // Validate input against schema before database insertion
       const validationResult = locationSchema.safeParse(input.body);
@@ -97,7 +97,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to save location", success: false } };
     }
   },
-    delete: async (input, c: HonoContext) => {
+    delete: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("locations")

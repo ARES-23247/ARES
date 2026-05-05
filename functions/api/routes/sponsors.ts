@@ -18,7 +18,7 @@ type SponsorSelectedRow = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sponsorHandlers: any = {
-  getSponsors: async (_input, c: HonoContext) => {
+  getSponsors: async (_input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -89,7 +89,7 @@ const sponsorHandlers: any = {
       return { status: 500, body: { error: "Failed to fetch ROI" } };
     }
   },
-  adminList: async (_input, c: HonoContext) => {
+  adminList: async (_input: unknown, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");
@@ -155,7 +155,7 @@ const sponsorHandlers: any = {
       return { status: 500, body: { error: "Failed to delete sponsor" } };
     }
   },
-  getAdminTokens: async (_input, c: HonoContext) => {
+  getAdminTokens: async (_input: unknown, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");

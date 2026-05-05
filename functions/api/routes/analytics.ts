@@ -9,7 +9,7 @@ import type { HonoContext } from "@shared/types/api";
 export const analyticsRouter = new Hono<AppEnv>();
 
 const analyticsHandlers = {
-  trackPageView: async (input, c: HonoContext) => {
+  trackPageView: async (input: unknown, c: HonoContext) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
     if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `track:${ip}`, ua, 20, 600))) {
@@ -36,7 +36,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { success: false } };
     }
   },
-  trackSponsorClick: async (input, c: HonoContext) => {
+  trackSponsorClick: async (input: unknown, c: HonoContext) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
     if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `click:${ip}`, ua, 10, 600))) {
@@ -82,7 +82,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { success: false } };
     }
   },
-  getPlatformAnalytics: async (_input, c: HonoContext) => {
+  getPlatformAnalytics: async (_input: unknown, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [
@@ -180,7 +180,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch platform metrics" } };
     }
   },
-  getRosterStats: async (_input, c: HonoContext) => {
+  getRosterStats: async (_input: unknown, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user_profiles as u")
@@ -226,7 +226,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { roster: [] } };
     }
   },
-  getLeaderboard: async (_input, c: HonoContext) => {
+  getLeaderboard: async (_input: unknown, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user as u")
@@ -265,7 +265,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch leaderboard" } };
     }
   },
-  getStats: async (_input, c: HonoContext) => {
+  getStats: async (_input: unknown, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [postsCount, eventsCount, docsCount, securityBlocksRow, dbSettings] = await Promise.all([
@@ -299,7 +299,7 @@ const analyticsHandlers = {
     }
   },
 
-  search: async (input, c: HonoContext) => {
+  search: async (input: unknown, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     const { q } = input.query;
     try {

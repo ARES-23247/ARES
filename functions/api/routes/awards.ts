@@ -12,7 +12,7 @@ const saveAwardSchema = awardContract.saveAward.body;
 export const awardsRouter = new Hono<AppEnv>();
 
 const awardsTsRestRouter = s.router(awardContract, {
-  getAwards: async (input, c: HonoContext) => {
+  getAwards: async (input: unknown, c: HonoContext) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = input.query;
@@ -43,7 +43,7 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to fetch awards" } };
     }
   },
-  saveAward: async (input, c: HonoContext) => {
+  saveAward: async (input: unknown, c: HonoContext) => {
     try {
       // Validate input against schema
       const validationResult = saveAwardSchema.safeParse(input.body);
@@ -139,7 +139,7 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to save award", success: false } };
     }
   },
-  deleteAward: async (input, c: HonoContext) => {
+  deleteAward: async (input: unknown, c: HonoContext) => {
 
     try {
                   const db = c.get("db") as Kysely<DB>;

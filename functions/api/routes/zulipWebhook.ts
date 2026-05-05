@@ -12,6 +12,7 @@ export const zulipWebhookRouter = new Hono<AppEnv>();
 interface ZulipOutgoingPayload {
   token: string;
   message: {
+    id: number;
     sender_id: number;
     sender_email: string;
     sender_full_name: string;
@@ -474,7 +475,7 @@ zulipWebhookRouter.post("/", async (c: Context<AppEnv>) => {
                   target_id: targetId,
                   user_id: userId,
                   content: rawContent,
-                  zulip_message_id: String(body.trigger === "message" ? (body ).message_id || 0 : 0),
+                  zulip_message_id: String(body.trigger === "message" ? body.message.id : 0),
                   // @ts-expect-error obsolete column
                   zulip_sender_id: body.message.sender_id || 0,
                   created_at: new Date().toISOString()

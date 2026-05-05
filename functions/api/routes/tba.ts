@@ -51,7 +51,7 @@ async function getTBA(path: string, c: HonoContext) {
 }
 
 const tbaTsRestRouter = s.router(tbaContract, {
-  getRankings: async (input, c: HonoContext) => {
+  getRankings: async (input: unknown, c: HonoContext) => {
     try {
       const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -64,7 +64,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch rankings" } };
     }
   },
-  getMatches: async (input, c: HonoContext) => {
+  getMatches: async (input: unknown, c: HonoContext) => {
     try {
       const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -78,7 +78,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch matches" } };
     }
   },
-  getFtcEvents: async (input, c: HonoContext) => {
+  getFtcEvents: async (input: unknown, c: HonoContext) => {
     try {
       const { season, eventCode, type } = input.params;
       const path = `/${season}/events/${eventCode}/${type}`;

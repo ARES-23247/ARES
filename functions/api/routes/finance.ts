@@ -12,7 +12,7 @@ const financeRouter = new Hono<AppEnv>();
 
 
 const financeTsRestRouterObj = {
-  getSummary: async (input, c: HonoContext) => {
+  getSummary: async (input: unknown, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -62,7 +62,7 @@ const financeTsRestRouterObj = {
     }
   },
 
-  listPipeline: async (input, c: HonoContext) => {
+  listPipeline: async (input: unknown, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -99,7 +99,7 @@ const financeTsRestRouterObj = {
     }
   },
 
-  savePipeline: async (input, c: HonoContext) => {
+  savePipeline: async (input: unknown, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;

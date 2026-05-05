@@ -35,12 +35,14 @@ if (import.meta.env.PROD) {
 // Content-Security-Policy: script-src 'self' https://cdn.jsdelivr.net; worker-src 'self' blob:
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
+const MonacoDiffEditor = lazy(() => import("@monaco-editor/react").then(mod => ({ default: mod.DiffEditor })));
 const SimPreviewFrame = lazy(() => import("./editor/SimPreviewFrame"));
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
 import { SIM_TEMPLATES } from "./editor/SimTemplates";
 import { TelemetryPanel } from "./editor/TelemetryPanel";
 import { SimFileExplorer } from "./editor/SimFileExplorer";
 import { SimConsole, LogEntry } from "./editor/SimConsole";
+
 import JSZip from "jszip";
 import prettier from "prettier/standalone";
 import prettierPluginEstree from "prettier/plugins/estree";
@@ -85,6 +87,7 @@ export default function SimulationPlayground() {
   const [activeFile, setActiveFile] = useState("SimComponent.tsx");
   const [compiledFiles, setCompiledFiles] = useState<Record<string, string>>({});
   const [compileError, setCompileError] = useState<string | null>(null);
+  const [pendingAiChanges, setPendingAiChanges] = useState<Record<string, string> | null>(null);
   const [isCompiling, setIsCompiling] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -180,6 +183,7 @@ export default function SimulationPlayground() {
     activeFile,
     compileCode,
     setFiles,
+    setPendingAiChanges,
     examples: {
       arm: ArmKgSimRaw,
       elevator: ElevatorPidSimRaw
@@ -196,6 +200,7 @@ export default function SimulationPlayground() {
     compileCode(SIM_TEMPLATES["Blank Canvas"]);
     setSimId(null);
     setSimName("Untitled Simulation");
+    setPendingAiChanges(null);
 
     resetChat();
   }, [compileCode, resetChat]);
@@ -205,6 +210,20 @@ export default function SimulationPlayground() {
     setConsoleLogs([]); // clear logs on run
     compileCode(files);
   }, [files, compileCode]);
+
+  const handleAcceptAiChanges = useCallback(() => {
+    if (!pendingAiChanges) return;
+    const updatedFiles = { ...files, ...pendingAiChanges };
+    setFiles(updatedFiles);
+    setPendingAiChanges(null);
+    compileCode(updatedFiles);
+    setChatMessages(prev => [...prev, { role: "assistant", content: "✅ Changes accepted and compiled successfully!" }]);
+  }, [pendingAiChanges, files, compileCode, setChatMessages]);
+
+  const handleRejectAiChanges = useCallback(() => {
+    setPendingAiChanges(null);
+    setChatMessages(prev => [...prev, { role: "assistant", content: "❌ Changes rejected. The original code has been restored." }]);
+  }, [setChatMessages]);
 
   const fetchSavedSims = useCallback(async () => {
     setIsLoadingSims(true);
@@ -1069,33 +1088,66 @@ export default function SimulationPlayground() {
                   {isCompiling && <div className="ml-auto pr-3"><Loader2 className="w-3 h-3 animate-spin text-ares-gold" /></div>}
                 </div>
                 
-                <div className="flex-1 flex min-h-0 bg-[#1e1e1e]">
+                <div className="flex-1 flex min-h-0 bg-[#1e1e1e] flex-col">
+                  {pendingAiChanges && pendingAiChanges[activeFile] && (
+                    <div className="flex items-center justify-between px-4 py-2 bg-ares-gold/10 border-b border-ares-gold/20 shrink-0">
+                      <span className="text-xs text-ares-gold/80 font-medium">✨ AI suggested changes for {activeFile}</span>
+                      <div className="flex items-center gap-2">
+                        <button onClick={handleRejectAiChanges} className="px-3 py-1 text-xs text-red-400 hover:bg-red-400/10 rounded transition-colors">
+                          Reject
+                        </button>
+                        <button onClick={handleAcceptAiChanges} className="px-3 py-1 text-xs bg-ares-gold/20 text-ares-gold hover:bg-ares-gold/30 rounded transition-colors flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Accept
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {/* Monaco Editor */}
                   <div className="flex-1 min-h-0 min-w-0 relative">
                     <Suspense fallback={<textarea className="w-full h-full bg-[#1e1e1e] text-white/80 text-sm font-mono p-4 resize-none border-0 outline-none" value={files[activeFile] || ''} readOnly placeholder="Loading code editor..." />}>
-                      <MonacoEditor
-                        height="100%"
-                        language={activeFile.endsWith('.ts') || activeFile.endsWith('.tsx') ? 'typescript' : activeFile.endsWith('.css') ? 'css' : activeFile.endsWith('.json') ? 'json' : 'javascript'}
-                        theme="vs-dark"
-                        path={`file:///${activeFile}`}
-                        value={files[activeFile] || ''}
-                        onChange={handleCodeChange}
-                        onMount={handleEditorDidMount}
-                        options={{
-                          minimap: { enabled: isMinimap },
-                          fontSize: 13,
-                          fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                          padding: { top: 12 },
-                          scrollBeyondLastLine: false,
-                          automaticLayout: true,
-                          tabSize: 2,
-                          wordWrap: isWordWrap ? "on" : "off",
-                          lineNumbers: "on",
-                          renderLineHighlight: "gutter",
-                          bracketPairColorization: { enabled: true },
-                          guides: { indentation: true },
-                        }}
-                      />
+                      {pendingAiChanges && pendingAiChanges[activeFile] ? (
+                        <MonacoDiffEditor
+                          height="100%"
+                          language={activeFile.endsWith('.ts') || activeFile.endsWith('.tsx') ? 'typescript' : activeFile.endsWith('.css') ? 'css' : activeFile.endsWith('.json') ? 'json' : 'javascript'}
+                          theme="vs-dark"
+                          original={files[activeFile] || ''}
+                          modified={pendingAiChanges[activeFile]}
+                          options={{
+                            minimap: { enabled: isMinimap },
+                            fontSize: 13,
+                            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                            padding: { top: 12 },
+                            scrollBeyondLastLine: false,
+                            automaticLayout: true,
+                            renderSideBySide: true,
+                            readOnly: true // Diff view should be read-only until accepted
+                          }}
+                        />
+                      ) : (
+                        <MonacoEditor
+                          height="100%"
+                          language={activeFile.endsWith('.ts') || activeFile.endsWith('.tsx') ? 'typescript' : activeFile.endsWith('.css') ? 'css' : activeFile.endsWith('.json') ? 'json' : 'javascript'}
+                          theme="vs-dark"
+                          path={`file:///${activeFile}`}
+                          value={files[activeFile] || ''}
+                          onChange={handleCodeChange}
+                          onMount={handleEditorDidMount}
+                          options={{
+                            minimap: { enabled: isMinimap },
+                            fontSize: 13,
+                            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                            padding: { top: 12 },
+                            scrollBeyondLastLine: false,
+                            automaticLayout: true,
+                            tabSize: 2,
+                            wordWrap: isWordWrap ? "on" : "off",
+                            lineNumbers: "on",
+                            renderLineHighlight: "gutter",
+                            bracketPairColorization: { enabled: true },
+                            guides: { indentation: true },
+                          }}
+                        />
+                      )}
                     </Suspense>
                   </div>
                 </div>

@@ -12,7 +12,7 @@ import { siteConfig } from "../../utils/site.config";
 export const tasksRouter = new Hono<AppEnv>();
 
 const tasksTsRestRouter = s.router(taskContract, {
-  list: async (input, c: HonoContext) => {
+  list: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -89,7 +89,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  create: async (input, c: HonoContext) => {
+  create: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -210,7 +210,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  reorder: async (input, c: HonoContext) => {
+  reorder: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -243,7 +243,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  update: async (input, c: HonoContext) => {
+  update: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -348,7 +348,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  delete: async (input, c: HonoContext) => {
+  delete: async (input: unknown, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);

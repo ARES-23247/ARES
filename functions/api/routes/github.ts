@@ -19,7 +19,7 @@ interface WeekData {
 }
 
 const githubHandlers = {
-  getBoard: async (_input, c: HonoContext) => {
+  getBoard: async (_input: unknown, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
@@ -50,7 +50,7 @@ const githubHandlers = {
       return { status: 200 as const, body: { success: false, board: [] as any[] } };
     }
   },
-  createItem: async (input, c: HonoContext) => {
+  createItem: async (input: unknown, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
@@ -68,7 +68,7 @@ const githubHandlers = {
       return { status: 500 as const, body: { error: "Failed to create project item" } as any };
     }
   },
-  getActivity: async (_input, c: HonoContext) => {
+  getActivity: async (_input: unknown, c: HonoContext) => {
     // WR-01: Add rate limiting to prevent abuse of GitHub API calls
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";

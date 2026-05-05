@@ -22,6 +22,7 @@ interface UseSimulationChatOptions {
   activeFile: string;
   compileCode: (files: Record<string, string>) => Promise<string | null>;
   setFiles: (files: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
+  setPendingAiChanges: (changes: Record<string, string> | null) => void;
   examples: {
     arm: string;
     elevator: string;
@@ -36,6 +37,7 @@ export function useSimulationChat({
   activeFile,
   compileCode,
   setFiles,
+  setPendingAiChanges,
   examples,
   consoleLogs,
   compileError
@@ -258,7 +260,6 @@ USER REQUEST: ${msg}`;
                 
                 if (Object.keys(newFiles).length > 0) {
                   finalFiles = newFiles;
-                  setFiles({ ...initialFiles, ...newFiles });
                 }
               }
             } catch { /* ignore */ }
@@ -267,17 +268,12 @@ USER REQUEST: ${msg}`;
       }
 
       const reply = accumulatedText.trim();
-      setChatMessages(prev => [...prev, { role: "assistant", content: reply }]);
-
+      
       if (Object.keys(finalFiles).length > 0) {
-        const fullFiles = { ...files, ...finalFiles };
-        const err = await compileCode(fullFiles);
-
-        if (err) {
-          setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Compilation Error:\n\`\`\`text\n${err}\n\`\`\`\n\nThe code is in the editor. You can fix it manually or ask me to correct it.` }]);
-        } else {
-          setChatMessages(prev => [...prev, { role: "assistant", content: "✅ Code generated and compiled successfully!" }]);
-        }
+        setPendingAiChanges(finalFiles);
+        setChatMessages(prev => [...prev, { role: "assistant", content: reply + "\n\nI've drafted the changes. Review the diff above and Accept or Reject." }]);
+      } else {
+        setChatMessages(prev => [...prev, { role: "assistant", content: reply }]);
       }
 
     } catch (e: unknown) {
@@ -286,7 +282,7 @@ USER REQUEST: ${msg}`;
     } finally {
       setIsChatLoading(false);
     }
-  }, [chatMessages, files, attachedImage, activeFile, compileCode, chatInput, isChatLoading, examples, setFiles]);
+  }, [chatMessages, files, attachedImage, activeFile, compileCode, chatInput, isChatLoading, examples, setFiles, setPendingAiChanges]);
 
   const handleFixWithAI = useCallback(() => {
     const errorLogs = consoleLogs.filter(l => l.level === "error");
