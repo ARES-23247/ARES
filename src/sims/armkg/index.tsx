@@ -27,26 +27,31 @@ export default function ArmKgSim() {
     
     let frameId: number;
 
+    // Physics constants
+    const GRAVITY_COEFF = 0.6; // Gravity compensation coefficient
+    const DT = 0.02; // 20ms timestep (50Hz)
+    const FRICTION_COEFF = 0.85; // Damping factor for arm velocity
+
     function simArm() {
       const { armSet: setTarget, armKg: kG, armKp: kP } = stateRef.current;
-      
+
       const error = setTarget - armAng;
-      
+
       const radians = armAng * (Math.PI / 180);
       const cosTheta = Math.cos(radians);
-      
+
       const ffVoltage = kG * cosTheta;
       const pidVoltage = kP * error;
-      
+
       const voltage = ffVoltage + pidVoltage;
-      
-      const GRAVITY_PULL = -0.6 * cosTheta; 
-      const MOTOR_PUSH = voltage * 1.0; 
-      
+
+      const GRAVITY_PULL = -GRAVITY_COEFF * cosTheta;
+      const MOTOR_PUSH = voltage * 1.0;
+
       const accel = MOTOR_PUSH + GRAVITY_PULL;
-      armVel += accel * 0.02;
-      armVel *= 0.85; 
-      
+      armVel += accel * DT;
+      armVel *= FRICTION_COEFF;
+
       armAng += armVel;
 
       // Update React state loosely for the UI panel (every 2 frames to avoid mega React re-renders)
