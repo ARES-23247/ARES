@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Calendar, MapPin, Plus } from "lucide-react";
+import { X, Calendar, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../../api/client";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ const DEFAULT_FORM_DATA: FormData = {
 };
 
 import { CreateLocationModal } from "../CreateLocationModal";
+import { LocationCombobox } from "../LocationCombobox";
 
 // Fetch locations from registry (only when modal is open)
 export function QuickAddEventModal({
@@ -287,35 +288,19 @@ export function QuickAddEventModal({
 
               {/* Location */}
               <div>
-                <label htmlFor="quick-event-location" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <MapPin size={14} />
-                    Location
-                  </span>
-                  <span className="text-xs text-white/60 font-normal normal-case">Pick from registry</span>
-                </label>
-                <div className="relative group">
-                  <select
-                    id="quick-event-location"
-                    value={formData.location}
-                    onChange={(e) => {
-                      updateField("location", e.target.value);
-                      if (e.target.value === "CUSTOM") {
-                        setIsLocationModalOpen(true);
-                      }
-                    }}
-                    className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all appearance-none pr-10"
-                  >
-                    <option value="" className="bg-obsidian text-marble">-- Select a Venue --</option>
-                    {locations.map((loc) => (
-                      <option key={loc.id} value={loc.name} className="bg-obsidian text-white">
-                        {loc.name} ({loc.address})
-                      </option>
-                    ))}
-                    <option value="CUSTOM" className="bg-obsidian text-ares-gold">--- Manual Entry / New Venue ---</option>
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/60 group-hover:text-ares-red transition-colors">
-                    <MapPin size={16} />
+                <div className="col-span-2">
+                  <label htmlFor="quick-event-location" className="text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Location</span>
+                    <span className="text-xs text-white/60 font-normal normal-case">Pick from registry</span>
+                  </label>
+                  <div className="relative group">
+                    <LocationCombobox
+                      id="quick-event-location"
+                      locations={locations}
+                      value={formData.location || ''}
+                      onChange={(val) => updateField("location", val)}
+                      onCustomClick={() => setIsLocationModalOpen(true)}
+                    />
                   </div>
                 </div>
               </div>

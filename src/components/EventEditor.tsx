@@ -3,7 +3,7 @@ import { useRichEditor } from "./editor/useRichEditor";
 import RichEditorToolbar from "./editor/RichEditorToolbar";
 import { CopilotMenu } from "./editor/CopilotMenu";
 import AssetPickerModal from "./AssetPickerModal";
-import { MapPin, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import EventPotluckVolunteerFlags from "./events/EventPotluckVolunteerFlags";
 import SocialSyndicationGrid from "./editor/SocialSyndicationGrid";
 import CoverAssetPicker from "./editor/CoverAssetPicker";
@@ -32,6 +32,7 @@ import { CollaborativeEditorRoom, useCollaborativeEditor } from "./editor/Collab
 import VersionHistorySidebar from "./editor/VersionHistorySidebar";
 import ZulipThread from "./ZulipThread";
 import { CreateLocationModal } from "./CreateLocationModal";
+import { LocationCombobox } from "./LocationCombobox";
 
 function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: string | unknown, roomId?: string | null }) {
   const navigate = useNavigate();
@@ -395,28 +396,13 @@ function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: st
             <span className="text-xs text-white/60 font-normal normal-case">Pick from registry</span>
           </label>
           <div className="relative group">
-            <select
+            <LocationCombobox
               id="event-location"
-              {...register("location", {
-                onChange: (e) => {
-                  if (e.target.value === "CUSTOM") {
-                    setIsLocationModalOpen(true);
-                  }
-                }
-              })}
-              className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/60 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all shadow-inner appearance-none pr-10"
-            >
-              <option value="">-- Select a Venue --</option>
-              {locations.map(loc => (
-                <option key={loc.id} value={loc.name}>
-                  {loc.name} ({loc.address})
-                </option>
-              ))}
-              <option value="CUSTOM">--- Manual Entry / New Venue ---</option>
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/60 group-hover:text-ares-red transition-colors">
-              <MapPin size={16} />
-            </div>
+              locations={locations}
+              value={formValues.location || ''}
+              onChange={(val) => setValue("location", val, { shouldValidate: true })}
+              onCustomClick={() => setIsLocationModalOpen(true)}
+            />
           </div>
         </div>
       </div>
