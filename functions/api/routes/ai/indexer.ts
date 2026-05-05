@@ -27,6 +27,16 @@ interface IndexableDocument {
 const BATCH_SIZE = 100;
 const KV_KEY = "rag_last_indexed";
 
+/**
+ * Indexes site content (events, blog posts, docs) for RAG search using Vectorize.
+ * Performs incremental indexing by default, only reindexing content modified since last run.
+ * @param db - Database instance
+ * @param ai - Cloudflare AI binding for embeddings
+ * @param vectorize - Vectorize index for storing embeddings
+ * @param kv - KV namespace for tracking last index timestamp (optional)
+ * @param options.force - If true, performs full reindex instead of incremental
+ * @returns Statistics about indexed, skipped, and errors
+ */
 export async function indexSiteContent(
   db: Kysely<DB>,
   ai: { run: (model: string, input: unknown) => Promise<unknown> },
