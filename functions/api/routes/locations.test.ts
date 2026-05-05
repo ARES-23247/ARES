@@ -99,7 +99,7 @@ describe("Hono Backend - /locations Router", () => {
   it("POST /admin/save - handles update with existing id", async () => {
     const res = await testApp.request("/admin/save", {
       method: "POST",
-      body: JSON.stringify({ id: "123", name: "Shop", address: "123 Main St", maps_url: "http", is_deleted: 1 }),
+      body: JSON.stringify({ id: "123", name: "Shop", address: "123 Main St", maps_url: "https://maps.google.com", is_deleted: 1 }),
       headers: { "Content-Type": "application/json" }
     }, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);

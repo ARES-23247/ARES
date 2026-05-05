@@ -11,7 +11,7 @@ vi.mock("../middleware", async (importOriginal) => {
     ensureAdmin: async (c: any, next: any) => next(),
     rateLimitMiddleware: () => (c: any, next: any) => next(),
     logAuditAction: vi.fn(),
-    getSessionUser: vi.fn().mockResolvedValue({ id: "user-123" }),
+    getSessionUser: vi.fn().mockResolvedValue({ id: "user-123", role: "admin", member_type: "mentor" }),
   };
 });
 
@@ -72,6 +72,7 @@ describe("Hono Backend - /finance Router", () => {
     testApp.use("*", async (c, next) => {
       c.set("db", mockDb as unknown as Kysely<any>);
       c.set("executionCtx", mockExecutionContext);
+      c.set("sessionUser", { id: "admin-123", role: "admin", email: "admin@test.com" });
       await next();
     });
     testApp.route("/", financeRouter);
