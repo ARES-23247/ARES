@@ -1,17 +1,19 @@
- 
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
     getDbSettings: vi.fn().mockResolvedValue({}),
-    ensureAdmin: async (c: any, next: any) => next(),
+    ensureAdmin: async (c: Context<TestEnv>, next: () => Promise<void>) => next(),
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", role: "admin", email: "admin@test.com" }),
     logAuditAction: vi.fn().mockResolvedValue(true),
-    rateLimitMiddleware: () => async (c: any, next: any) => next(),
+    rateLimitMiddleware: () => async (c: Context<TestEnv>, next: () => Promise<void>) => next(),
     checkRateLimit: vi.fn().mockReturnValue(true),
   };
 });
@@ -28,9 +30,9 @@ vi.mock("./_profileUtils", () => ({
 import { usersRouter } from "./users";
 
 describe("Hono Backend - /users Router", () => {
-  let mockDb: any;
-  let testApp: Hono<any>;
-  let env: any;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
+  let env: TestEnv["Bindings"];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -56,13 +58,12 @@ describe("Hono Backend - /users Router", () => {
 
     env = {
       DEV_BYPASS: "true",
-      ENCRYPTION_SECRET: "test-secret",
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
-      c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com" });
+      c.set("sessionUser", { id: "1", role: "admin", email: "admin@test.com", name: null, member_type: "mentor" });
       await next();
     });
     testApp.route("/", usersRouter);
@@ -82,7 +83,7 @@ describe("Hono Backend - /users Router", () => {
 
     const res = await testApp.request("/admin/1", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, any>;
+    const body = await res.json() as { user: { id: string; email: string } };
     expect(body.user.id).toBe("1");
     expect(body.user.email).toBe("test@test.com");
   });
@@ -154,7 +155,7 @@ describe("Hono Backend - /users Router", () => {
 
     const res = await testApp.request("/admin/1/profile", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, any>;
+    const body = await res.json() as { profile: { nickname: string } };
     expect(body.profile.nickname).toBe("Admin User");
   });
 
@@ -199,7 +200,7 @@ describe("Hono Backend - /users Router", () => {
 
   it("PUT /admin/:id/profile - handles error", async () => {
     const { upsertProfile } = await import("./_profileUtils");
-    (upsertProfile as any).mockRejectedValueOnce(new Error("Fail"));
+    vi.mocked(upsertProfile).mockRejectedValueOnce(new Error("Fail"));
     const res = await testApp.request("/admin/1/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -222,7 +223,7 @@ describe("Hono Backend - /users Router", () => {
 
     const res = await testApp.request("/admin/1/profile", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, any>;
+    const body = await res.json() as { profile: { nickname: string } };
     expect(body.profile.nickname).toBe("Admin");
   });
 
@@ -236,13 +237,13 @@ describe("Hono Backend - /users Router", () => {
     mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Student", email: "student123@test.com", member_type: "student", role: "user" }]);
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, any>;
+    const body = await res.json() as { users: Array<{ email: string }> };
     expect(body.users[0].email).toBe("student123@test.com");
   });
 
   it("GET /admin/:id/profile - handles decryption error", async () => {
     const { decrypt } = await import("../../utils/crypto");
-    (decrypt as any).mockRejectedValueOnce(new Error("Decryption failed"));
+    vi.mocked(decrypt).mockRejectedValueOnce(new Error("Decryption failed"));
 
     mockDb.executeTakeFirst.mockResolvedValueOnce({
       id: "1", name: "Admin", email: "admin@test.com", image: null, role: "admin"
@@ -253,7 +254,7 @@ describe("Hono Backend - /users Router", () => {
 
     const res = await testApp.request("/admin/1/profile", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as Record<string, any>;
+    const body = await res.json() as { profile: { emergency_contact_name: string } };
     expect(body.profile.emergency_contact_name).toBe("[Decryption Failed]");
   });
 });
