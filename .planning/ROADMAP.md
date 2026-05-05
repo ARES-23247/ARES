@@ -11,9 +11,10 @@
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 21 | v6.6 | 1/1 | ✅ Done | 2026-05-05 |
-| 22 | v6.6 | 0/1 | Pending | - |
+| 22 | v6.6 | 1/1 | Complete    | 2026-05-05 |
 | 23 | v6.6 | 0/1 | Pending | - |
 | 24 | v6.6 | 0/1 | Pending | - |
+| 25 | v6.6 | 1/1 | ✅ Done | 2026-05-05 |
 
 ## Phase Details
 
@@ -32,6 +33,12 @@
 ### Phase 24: ESLint Lockdown & CI Validation
 **Goal:** Enable `@typescript-eslint/no-explicit-any` globally and validate types via TSC without bypassing.
 **Status:** Pending
+
+### Phase 25: Calendar Quick-Add Event Modal
+**Goal:** Add a quick-add modal to the calendar for creating events by clicking on day cells.
+**Status:** Complete
+**Commits:** `45df07f`
+**Summary:** Created QuickAddEventModal component with pre-filled date/times, category selector with ARES colors, and keyboard accessibility.
 
 ---
 
