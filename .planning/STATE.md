@@ -6,11 +6,11 @@ status: Ready for 30-05 (Events/Logistics Test Migration)
 last_updated: "2026-05-05T22:32:17.560Z"
 last_activity: 2026-05-05
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 6
   total_plans: 30
   completed_plans: 27
-  percent: 90
+  percent: 82
 ---
 
 # System State
@@ -213,6 +213,22 @@ Eliminate all `any` violations in React components and hooks through proper prop
 | requirement | MON-03 (usage metrics dashboard) | v5.7 | In progress |
 | investigation | 3D Hardware Visualizer headless WebGL optimization | v4.1 | Pending |
 
+## Completed (Outside GSD)
+
+### Sim Playground IDE Enhancement — 2026-05-05
+
+Shipped 8 improvements to the Simulation Playground (commit `05c23339`), outside GSD tracking:
+1. Keyboard shortcuts (Ctrl+S/Enter/Shift+F/Esc) + cheatsheet tooltip
+2. "Fix with AI" button on preview error overlay
+3. localStorage version snapshots (5-slot ring buffer + resume toast)
+4. CSS file support (sandbox injection + Monaco syntax highlighting)
+5. FPS performance profiler (requestAnimationFrame counter in preview)
+6. Shareable links (playground + SimManager cards/dialog)
+7. Local file import (drag-and-drop files/ZIPs + Upload button)
+8. Multi-file module resolution (nested paths, index files, helpful errors)
+
+Files modified: `SimulationPlayground.tsx`, `SimPreviewFrame.tsx`, `SimManager.tsx`
+
 ## Accumulated Context
 
 ### Key Decisions (v6.7)
@@ -237,8 +253,12 @@ Eliminate all `any` violations in React components and hooks through proper prop
 - ts-rest-hono provides full contract inference when properly configured
 - No new dependencies required — TypeScript 5.8+ has all needed utilities
 
+### Roadmap Evolution
+
+- Phase 33 added: Simulation Playground AI Diff View (depends on 31-04)
+
 ## Session Continuity
 
-**Last session**: Production hotfix — PartyKit CSP, Roster API triple schema mismatch, Pa11y contrast (2026-05-05)
-**This session**: See `.planning/logs/2026-05-05-hotfix-partykit-roster-a11y.md`
-**Next step**: Resume Phase 30 with `/gsd-execute-phase 30` (Test Types — 30-06 next)
+**Last session**: Sim Playground IDE Enhancement — 8 features shipped (commit `05c23339`) + Phase 33 (AI Diff View) added to roadmap
+**This session**: See `.planning/logs/2026-05-05-sim-playground-ide-improvements.md`
+**Next step**: Resume Phase 30 with `/gsd-execute-phase 30` (Test Types — 30-06 next), or plan Phase 33 with `/gsd-plan-phase 33`

@@ -35,6 +35,7 @@
 - [ ] **Phase 30: Test Types** — Mock factories and typed test helpers (8/8 plans ready)
 - [ ] **Phase 31: Frontend Components** — React prop interfaces and event handler types (5/5 plans ready)
 - [ ] **Phase 32: Final Validation** — ESLint enforcement and legitimate use justifications (6/6 plans ready)
+- [ ] **Phase 33: Simulation Playground AI Diff View** — Monaco diff editor for AI code proposals (not yet planned)
 
 ## Phase Details
 
@@ -238,6 +239,16 @@ Plans:
 - [ ] 31-04-PLAN.md — Fix SimulationPlayground Monaco Editor callbacks to use monaco-editor package types (TODO)
 - [ ] 31-05-PLAN.md — Create Window interface augmentation for Playwright test globals, fix CollaborativeEditorRoom (TODO)
 
+### Phase 33: Simulation Playground AI Diff View
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 32
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 33 to break down)
+
 ---
 
 ### Phase 32: Final Validation
@@ -274,3 +285,39 @@ Plans:
 - [ ] 32-04-PLAN.md — Add HonoContext to 19 ts-rest route files, remove @ts-nocheck (TODO)
 - [ ] 32-05-PLAN.md — Add proper type annotations to 22 non-ts-rest route files, remove @ts-nocheck (TODO)
 - [ ] 32-06-PLAN.md — Remove @ts-nocheck from 35 test files, verify all tests pass (TODO)
+
+---
+
+### Phase 33: Simulation Playground AI Diff View
+
+**Goal**: When z.AI generates or modifies simulation code, show a before/after diff view using Monaco's built-in diff editor instead of blindly replacing the file. This lets students understand what the AI changed before accepting.
+
+**Depends on**: Phase 31-04 (SimulationPlayground Monaco callback types will be cleaned up)
+
+**Background**: The Simulation Playground IDE was enhanced with 8 improvements (keyboard shortcuts, error recovery, localStorage snapshots, CSS support, FPS profiler, shareable links, drag-and-drop import, multi-file module resolution) in commit `05c23339`. The AI Diff View was deferred as the most complex remaining feature.
+
+**Success Criteria** (what must be TRUE):
+1. When AI generates code via z.AI chat, changes are stored in a `pendingAiChanges` state instead of immediately applied
+2. A diff banner appears below editor tabs showing "AI suggested changes" with Accept / Reject buttons
+3. Monaco diff editor (`monaco.editor.createDiffEditor`) shows side-by-side comparison of original vs AI-proposed code
+4. Streaming code responses are buffered until complete before showing the diff
+5. Accepting changes applies them to the file and triggers recompilation
+6. Rejecting changes discards the proposal and restores the original code
+7. Inline completions (Ctrl+Space ghost text) are NOT affected — they still apply directly
+8. All existing tests still pass
+
+**Architecture Notes**:
+- `useSimulationChat.ts` currently calls `setFiles()` directly during streaming. Must change to return a `pendingProposal` object.
+- The `SimulationPlayground.tsx` must intercept proposals and render a diff editor when `pendingAiChanges` is set.
+- Monaco diff editor lifecycle (create/dispose) must be carefully managed to avoid memory leaks.
+- The streaming parser must buffer the complete response before creating the diff — partial diffs are confusing.
+
+**Key Files**:
+- `src/hooks/useSimulationChat.ts` — AI response streaming and file mutation logic
+- `src/components/SimulationPlayground.tsx` — Editor UI, Monaco editor instance, file state
+- `src/components/editor/SimPreviewFrame.tsx` — Preview pane (no changes expected)
+
+**Plans**: 0/0 planned — requires `/gsd-plan-phase 33`
+
+Plans:
+- [ ] (Not yet planned)
