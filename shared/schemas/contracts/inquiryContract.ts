@@ -18,7 +18,7 @@ export const inquirySchema = z.object({
 export const inquiryInputSchema = z.object({
   type: z.enum(["sponsor", "student", "mentor", "outreach", "support"]),
   name: z.string().min(1),
-  email: z.string().email(),
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address (e.g., user@example.com)").max(320, "Email is too long"),
   metadata: z.record(z.string(), z.unknown()).optional(),
   turnstileToken: z.string().optional(),
 });
