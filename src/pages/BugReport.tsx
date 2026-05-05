@@ -88,9 +88,9 @@ export default function BugReport() {
                       id="repo-select"
                       value={repoStr}
                       onChange={(e) => {
-                        const selected = e.target.value;
+                        const selected = e.target.value as AllowedRepo;
                         // SEC-WR-02: Validate against whitelist to prevent phishing redirects
-                        if (ALLOWED_REPOS.includes(selected as any)) {
+                        if (ALLOWED_REPOS.includes(selected)) {
                           setRepoStr(selected);
                         }
                       }}
