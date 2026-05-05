@@ -29,7 +29,7 @@
 
 ### 🚧 v6.5 Zulip Sync & Social Media Manager Formalization (In Progress)
 
-- [ ] Phase 17: Zulip Account Sync Investigation & Fix
+- [x] Phase 17: Zulip Account Sync Investigation & Fix
 - [ ] Phase 18: Social Media Manager Documentation
 
 ## Progress
@@ -40,6 +40,8 @@
 | 13. Interactive Tools Foundation | v6.3 | 2/2 | Complete | 2026-05-04 |
 | 14. Data Schema & Document Editor Updates | v6.4 | 1/1 | Complete | 2026-05-04 |
 | 15. Math Corner Foundation & Hub Integrations | v6.4 | 2/2 | Complete | 2026-05-04 |
+| 16. Save AI Scouting Analyses | v6.4 | 1/1 | Complete | 2026-05-04 |
+| 17. Zulip Account Sync Investigation & Fix | v6.5 | 1/1 | Complete | 2026-05-04 |
 
 ## Phase Details
 

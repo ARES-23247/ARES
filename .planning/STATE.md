@@ -20,16 +20,16 @@ progress:
 
 ## Current Position
 
-Phase: 17. Zulip Account Sync Investigation & Fix
+Phase: 18. Social Media Manager Documentation
 Plan: —
 Status: Planning
-Last activity: 2026-05-04 — Milestone v6.5 started
+Last activity: 2026-05-04 — Phase 17 completed
 
 ## Completed This Session
 
 | Phase | Plan | Description | Commits |
 |-------|------|-------------|---------|
-| 17 | - | - | - |
+| 17 | 01 | Fix Zulip sync dot-mismatches | `fe4768a` |
 | 18 | - | - | - |
 
 ## Key Decisions
