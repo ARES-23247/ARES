@@ -14,7 +14,7 @@ export default class YjsServer implements Party.Server {
    * Handle HTTP requests (health checks, status probes).
    * Without this handler, PartyKit returns 500 for non-WebSocket requests.
    */
-  async onRequest(req: Party.Request) {
+  async onRequest() {
     return new Response(
       JSON.stringify({
         status: "ok",
