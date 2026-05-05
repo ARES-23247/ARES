@@ -3,7 +3,6 @@ import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
-import type { AppRouteInput } from "@shared/types/api";
 import { logisticsContract } from "../../../shared/schemas/contracts/logisticsContract";
 import { decrypt } from "../../utils/crypto";
 
@@ -12,7 +11,7 @@ import type { HonoContext } from "@shared/types/api";
 const logisticsRouter = new Hono<AppEnv>();
 
 const logisticsHandlers = {
-  getSummary: async (_input: AppRouteInput<typeof logisticsContract.getSummary>, c: HonoContext) => {
+  getSummary: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
 
     try {
@@ -58,7 +57,7 @@ const logisticsHandlers = {
       return { status: 500 as const, body: { error: "Logistics fetch failed" } as any };
     }
   },
-  exportEmails: async (_input: AppRouteInput<typeof logisticsContract.exportEmails>, c: HonoContext) => {
+  exportEmails: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     const secret = c.env.ENCRYPTION_SECRET;
 

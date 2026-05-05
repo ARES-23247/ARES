@@ -3,7 +3,6 @@ import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings, rateLimitMiddleware, s } from "../middleware";
 import { createHonoEndpoints } from "ts-rest-hono";
-import type { AppRouteInput } from "@shared/types/api";
 import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
 import { z } from "zod";
 
@@ -34,7 +33,7 @@ const settingsSchema = z.record(z.string(), z.string().max(10000));
 
 const settingsHandlers = {
 
-  getSettings: async (_input: AppRouteInput<typeof settingsContract.getSettings>, c: HonoContext) => {
+  getSettings: async (_input, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const masked: Record<string, string> = {};
@@ -50,7 +49,7 @@ const settingsHandlers = {
     }
   },
    
-  updateSettings: async (input: AppRouteInput<typeof settingsContract.updateSettings>, c: HonoContext) => {
+  updateSettings: async (input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const body = input.body;
@@ -115,7 +114,7 @@ const settingsHandlers = {
     }
   },
    
-  getStats: async (_input: AppRouteInput<typeof settingsContract.getStats>, c: HonoContext) => {
+  getStats: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [posts, events, docs, inquiries, users] = await Promise.all([
@@ -143,7 +142,7 @@ const settingsHandlers = {
     }
   },
    
-  getPublicSettings: async (_input: AppRouteInput<typeof settingsContract.getPublicSettings>, c: HonoContext) => {
+  getPublicSettings: async (_input, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const publicKeys = ["COMMUNITY_PHOTO_DRIVE_URL", "COMMUNITY_DOCS_URL"];

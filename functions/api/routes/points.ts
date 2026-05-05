@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
-import type { AppRouteInput } from "@shared/types/api";
 import { pointsContract } from "../../../shared/schemas/contracts/pointsContract";
 import type { AppEnv } from "../middleware/utils";
 import { s } from "../middleware";
@@ -13,7 +12,7 @@ const app = new Hono<AppEnv>();
 
 
 const pointsHandlers = {
-  getBalance: async (input: AppRouteInput<typeof pointsContract.getBalance>, c: HonoContext) => {
+  getBalance: async (input, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
@@ -44,7 +43,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getHistory: async (input: AppRouteInput<typeof pointsContract.getHistory>, c: HonoContext) => {
+  getHistory: async (input, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
@@ -78,7 +77,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  awardPoints: async (input: AppRouteInput<typeof pointsContract.awardPoints>, c: HonoContext) => {
+  awardPoints: async (input, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
@@ -119,7 +118,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getLeaderboard: async (_input: AppRouteInput<typeof pointsContract.getLeaderboard>, c: HonoContext) => {
+  getLeaderboard: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user as u")

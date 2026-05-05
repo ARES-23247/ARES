@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
-import type { AppRouteInput } from "@shared/types/api";
 import { communicationsContract } from "../../../shared/schemas/contracts/communicationsContract";
 import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError, s } from "../middleware";
 
@@ -13,7 +12,7 @@ communicationsRouter.use("/admin/*", ensureAdmin);
 // WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad
 
 const handlers = {
-  getStats: async (_input: AppRouteInput<typeof communicationsContract.getStats>, c: HonoContext) => {
+  getStats: async (_input, c: HonoContext) => {
     try {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const db = c.get("db") as any;
@@ -32,7 +31,7 @@ const handlers = {
     }
   },
 
-  sendMassEmail: async (input: AppRouteInput<typeof communicationsContract.sendMassEmail>, c: HonoContext) => {
+  sendMassEmail: async (input, c: HonoContext) => {
     try {
       const { subject, htmlContent } = input.body;
       const socialConfig = await getSocialConfig(c);

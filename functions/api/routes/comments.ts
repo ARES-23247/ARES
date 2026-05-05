@@ -15,7 +15,7 @@ export const commentsRouter = new Hono<AppEnv>();
 
 
 const commentHandlers = {
-  list: async (input, c: HonoContext) => {
+  list: async (_input, c: HonoContext) => {
     const { targetType, targetId } = input.params;
     const user = await getSessionUser(c);
     const db = c.get("db") as Kysely<DB>;
@@ -138,7 +138,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to submit comment" } };
     }
   },
-  update: async (input: AppRouteInput<typeof commentContract.update>, c: HonoContext) => {
+  update: async (input, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };
@@ -191,7 +191,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to update comment" } };
     }
   },
-  delete: async (input: AppRouteInput<typeof commentContract.delete>, c: HonoContext) => {
+  delete: async (input, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };
