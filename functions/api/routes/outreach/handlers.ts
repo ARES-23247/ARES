@@ -171,7 +171,7 @@ export const outreachHandlers: any = {
             mentor_count: validatedData.mentor_count || 0,
             mentor_hours: validatedData.mentor_hours || 0,
           })
-          .where("id", "=", validatedData.id)
+          .where("id", "=", Number(validatedData.id))
           .execute();
         result = validatedData.id;
       } else {

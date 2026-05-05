@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { sanitizeHtml } from '../utils/security';
+import { sanitizeHtml, signTutorialProgress, verifyTutorialProgress } from '../utils/security';
 import { api } from '../api/client';
 import './InteractiveTutorial.css';
 
@@ -49,12 +49,19 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
     if (currentStepData.checkpoint) {
       const next = new Set(completedSteps);
       next.add(currentStepData.id);
-      
+
       setCompletedSteps(next);
 
-      // Save progress to localStorage
+      // Save progress to localStorage with HMAC signature for integrity
       const progressArray = [...next];
-      localStorage.setItem(`tutorial-${title}-progress`, JSON.stringify(progressArray));
+      try {
+        const signedData = await signTutorialProgress(progressArray);
+        localStorage.setItem(`tutorial-${title}-progress`, JSON.stringify(signedData));
+      } catch (e) {
+        console.error("Failed to sign tutorial progress", e);
+        // Fallback to unsigned storage if signing fails
+        localStorage.setItem(`tutorial-${title}-progress`, JSON.stringify(progressArray));
+      }
 
       // Sync to Cloudflare conditionally
       if (syncId) {
@@ -90,19 +97,30 @@ export default function InteractiveTutorial({ title, description, steps, onCompl
     }
   };
 
-  // Load saved progress
+  // Load saved progress with signature verification
   useEffect(() => {
-    const saved = localStorage.getItem(`tutorial-${title}-progress`);
-    if (saved) {
-      setTimeout(() => {
+    const loadProgress = async () => {
+      const saved = localStorage.getItem(`tutorial-${title}-progress`);
+      if (saved) {
         try {
-          setCompletedSteps(new Set(JSON.parse(saved)));
+          const parsed = JSON.parse(saved);
+          // SEC-WR-04: Verify HMAC signature to detect tampering
+          const verifiedProgress = await verifyTutorialProgress(parsed);
+          if (verifiedProgress) {
+            setCompletedSteps(new Set(verifiedProgress));
+          } else {
+            // Signature verification failed - data may be tampered
+            console.warn("Tutorial progress signature verification failed, resetting progress");
+            localStorage.removeItem(`tutorial-${title}-progress`);
+            setCompletedSteps(new Set());
+          }
         } catch (e) {
           console.error("Failed to parse tutorial progress", e);
           setCompletedSteps(new Set());
         }
-      }, 0);
-    }
+      }
+    };
+    loadProgress();
   }, [title]);
 
   // Check if tutorial is complete

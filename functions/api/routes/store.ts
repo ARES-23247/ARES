@@ -3,7 +3,7 @@ import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { storeContract } from "../../../shared/schemas/contracts/storeContract";
 import type { AppEnv } from "../middleware/utils";
 import Stripe from "stripe";
-import { logSystemError, ensureAdmin } from "../middleware/utils";
+import { logSystemError, ensureAdmin } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";

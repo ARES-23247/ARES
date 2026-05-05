@@ -49,8 +49,9 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(({ onVerify, onExpire
         window.turnstile.reset(widgetIdRef.current);
       } else {
         // If bypassed, fire again
+        const isDev = import.meta.env.DEV;
         const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-        if (isLocal || window.ARES_E2E_BYPASS) {
+        if ((isLocal && isDev) || window.ARES_E2E_BYPASS) {
           setTimeout(() => onVerify("test-bypass-token"), 200);
         }
       }
@@ -79,10 +80,14 @@ const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(({ onVerify, onExpire
   }, [onVerify, onExpire, theme, size]);
 
   useEffect(() => {
-    // SEC-03: Bypass Turnstile for E2E tests and local development
+    // SEC-WR-07: Bypass Turnstile for E2E tests and local development only
+    // Check both hostname AND development environment to prevent bypass in production
+    const isDev = import.meta.env.DEV;
     const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     const hasBypass = window.ARES_E2E_BYPASS;
-    if (isLocal || hasBypass) {
+
+    // Only allow bypass if we're in development mode AND on localhost OR explicit E2E bypass
+    if ((isLocal && isDev) || hasBypass) {
       setTimeout(() => onVerify("test-bypass-token"), 200);
       return;
     }

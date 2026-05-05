@@ -31,6 +31,12 @@ mediaRouter.post("/admin/upload", async (c) => {
       return c.json({ error: "No file uploaded" }, 400);
     }
 
+    // WR-03: Add maximum file size validation (50MB limit)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return c.json({ error: `File too large (max ${MAX_FILE_SIZE / 1024 / 1024}MB)` }, 400);
+    }
+
     const isLarge = file.size > 10 * 1024 * 1024;
     let buffer: ArrayBuffer | null = null;
     let headerBuffer: ArrayBuffer;
@@ -49,7 +55,7 @@ mediaRouter.post("/admin/upload", async (c) => {
     const key = folder ? `${folder}/${file.name}` : file.name;
     if (c.env.ARES_STORAGE) {
       if (isLarge) {
-        await c.env.ARES_STORAGE.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
+        await c.env.ARES_STORAGE.put(key, file.stream() as any, { httpMetadata: { contentType: file.type } });
       } else {
         await c.env.ARES_STORAGE.put(key, buffer!, { httpMetadata: { contentType: file.type } });
       }
@@ -139,12 +145,12 @@ mediaRouter.get("/:key{.+$}", async (c) => {
     if (!object || !object.body) return c.text("Not Found", 404);
 
     const headers = new Headers();
-    object.writeHttpMetadata(headers);
+    object.writeHttpMetadata(headers as any);
     headers.set("etag", object.httpEtag);
     if (publicFolders.includes(folder)) headers.set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=86400");
     else headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
 
-    const response = new Response(object.body, { headers });
+    const response = new Response(object.body as any, { headers });
     if (cache && publicFolders.includes(folder) && c.executionCtx) {
       c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
     }

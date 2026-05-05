@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { Context } from "hono";
 import { siteConfig } from "../../utils/site.config";
-import { AppEnv, ensureAdmin, getSocialConfig } from "../middleware";
+import { AppEnv, ensureAdmin, getSocialConfig, checkRateLimit } from "../middleware";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem } from "../../utils/githubProjects";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { githubContract } from "../../../shared/schemas/contracts/githubContract";
@@ -60,11 +60,18 @@ const githubHandlers = {
     }
   },
   getActivity: async (_: any, c: Context<AppEnv>) => {
+    // WR-01: Add rate limiting to prevent abuse of GitHub API calls
+    const ip = c.req.header("CF-Connecting-IP") || "unknown";
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!(await checkRateLimit(c.env.ARES_KV, `github-activity:${ip}`, ua, 10, 60))) {
+      return { status: 429 as const, body: { error: "Rate limit exceeded" } };
+    }
+
     const org = siteConfig.urls.githubOrg;
     const cacheUrl = new URL(c.req.url);
     const cacheKey = new Request(cacheUrl.toString(), c.req.raw);
     const cache = await caches.open("ares-github-activity-v3"); // Bumped cache version
-    
+
     const cachedResponse = await cache.match(cacheKey);
     if (cachedResponse) {
       const data = await cachedResponse.json() as any;

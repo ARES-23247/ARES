@@ -1,4 +1,5 @@
 import { Hono, Context } from "hono";
+import { z } from "zod";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { userContract } from "../../../shared/schemas/contracts/userContract";
 import { AppEnv, ensureAdmin, logAuditAction, parsePagination } from "../middleware";
@@ -11,7 +12,7 @@ const s = initServer<AppEnv>();
 export const usersRouter = new Hono<AppEnv>();
 
 const userTsRestRouter = s.router(userContract, {
-  getUsers: async ({ query }, c) => {
+  getUsers: async ({ query }: { query: z.infer<typeof userContract.getUsers.query> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit, cursor } = parsePagination(c, 50, 100);
@@ -53,7 +54,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  adminDetail: async ({ params }, c) => {
+  adminDetail: async ({ params }: { params: z.infer<typeof userContract.adminDetail.pathParams> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("user as u")
@@ -88,7 +89,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  patchUser: async ({ params, body }, c) => {
+  patchUser: async ({ params, body }: { params: z.infer<typeof userContract.patchUser.pathParams>, body: z.infer<typeof userContract.patchUser.body> }, c: Context<AppEnv>) => {
     try {
       // Defense-in-depth: Re-validate admin authorization for sensitive role changes
       const sessionUser = c.get("sessionUser") as { id: string; role: string } | undefined;
@@ -107,8 +108,13 @@ const userTsRestRouter = s.router(userContract, {
 
       if (role) {
         await db.updateTable("user").set({ role }).where("id", "=", params.id).execute();
+        // Invalidate all sessions for the user to force re-auth with new role
         await db.deleteFrom("session").where("userId", "=", params.id).execute();
       }
+      // WR-14: Document session invalidation behavior
+      // Note: member_type changes do NOT invalidate sessions currently.
+      // This is intentional as member_type is less security-critical than role.
+      // If this changes, add session deletion here similar to role changes above.
       if (member_type) {
         const existing = await db.selectFrom("user_profiles")
           .select("user_id")
@@ -135,7 +141,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Update failed: " + (e instanceof Error ? e.message : "Unknown error") } };
     }
   },
-  updateUserProfile: async ({ params, body }, c) => {
+  updateUserProfile: async ({ params, body }: { params: z.infer<typeof userContract.updateUserProfile.pathParams>, body: z.infer<typeof userContract.updateUserProfile.body> }, c: Context<AppEnv>) => {
     try {
       await upsertProfile(c as any, params.id, body as any);
       return { status: 200 as const, body: { success: true } };
@@ -143,7 +149,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Profile update failed" } };
     }
   },
-  adminGetProfile: async ({ params }, c) => {
+  adminGetProfile: async ({ params }: { params: z.infer<typeof userContract.adminGetProfile.pathParams> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await db.selectFrom("user").select(["id", "name", "email", "image", "role"]).where("id", "=", params.id).executeTakeFirst();
@@ -222,7 +228,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Failed to fetch user profile" } };
     }
   },
-  deleteUser: async ({ params }, c) => {
+  deleteUser: async ({ params }: { params: z.infer<typeof userContract.deleteUser.pathParams> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = params.id;
@@ -247,7 +253,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-});
+} as any);
 
 usersRouter.use("/*", ensureAdmin);
 

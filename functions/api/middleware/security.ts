@@ -2,6 +2,7 @@ import { Context, Next } from "hono";
 import { AppEnv } from "./utils";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { KVNamespace } from "@cloudflare/workers-types";
 
 // ── Rate Limiting (Cloudflare KV) ────────────────────────
 export async function checkRateLimit(kv: KVNamespace | undefined, ip: string, userAgent: string, limit = 100, windowSeconds = 60): Promise<boolean> {

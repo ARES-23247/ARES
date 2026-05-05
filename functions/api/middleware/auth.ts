@@ -35,7 +35,9 @@ export const ensureAdmin = async (c: Context<AppEnv>, next: Next) => {
 
   // RBAC: Granular path-based role checks
   const url = new URL(c.req.url);
-  const role = (session.user as { role?: string }).role || UserRole.UNVERIFIED;
+  // WR-03: Normalize role to lowercase for consistent comparison
+  const rawRole = (session.user as { role?: string }).role || UserRole.UNVERIFIED;
+  const role = rawRole.toLowerCase() as string;
 
   // EFF-05: Store session in context so handlers don't need to re-fetch
   const db = c.get("db") as Kysely<DB>;
@@ -121,7 +123,8 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<SessionUser | 
         name: session.user.name,
         nickname: profile?.nickname || "ARES Member",
         image: session.user.image,
-        role: (session.user as { role?: string }).role || UserRole.UNVERIFIED,
+        // WR-03: Normalize role to lowercase for consistent comparison
+        role: ((session.user as { role?: string }).role || UserRole.UNVERIFIED).toLowerCase() as string,
         member_type: profile?.member_type || "student",
       };
       // WR-02: Cache sessionUser in context so subsequent getSessionUser calls don't re-fetch

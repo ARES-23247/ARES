@@ -10,7 +10,7 @@
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 21 | v6.6 | 0/1 | Active | - |
+| 21 | v6.6 | 1/1 | ✅ Done | 2026-05-05 |
 | 22 | v6.6 | 0/1 | Pending | - |
 | 23 | v6.6 | 0/1 | Pending | - |
 | 24 | v6.6 | 0/1 | Pending | - |

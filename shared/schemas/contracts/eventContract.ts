@@ -1,6 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
-import { eventSchema } from "../eventSchema";
+import { eventSchema, EventCategoryEnum } from "../eventSchema";
 
 const c = initContract();
 
@@ -13,7 +13,7 @@ export const eventResponseSchema = z.object({
   description: z.string().nullish(),
   cover_image: z.string().nullish(),
   status: z.string().nullish(),
-  category: z.string().nullish(),
+  category: EventCategoryEnum.nullish(),
   is_deleted: z.number().nullish(),
   season_id: z.coerce.number().nullish(),
   meeting_notes: z.string().nullish(),

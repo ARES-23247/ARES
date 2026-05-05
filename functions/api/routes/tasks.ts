@@ -3,7 +3,8 @@ import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { taskContract } from "../../../shared/schemas/contracts/taskContract";
-import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig } from "../middleware";
+import { z } from "zod";
+import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig, originIntegrityMiddleware } from "../middleware";
 
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
@@ -12,7 +13,7 @@ const s = initServer<AppEnv>();
 export const tasksRouter = new Hono<AppEnv>();
 
 const tasksTsRestRouter = s.router(taskContract, {
-  list: async ({ query }, c) => {
+  list: async ({ query }: { query: z.infer<typeof taskContract.list.query> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -89,7 +90,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  create: async ({ body }, c) => {
+  create: async ({ body }: { body: z.infer<typeof taskContract.create.body> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -210,7 +211,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  reorder: async ({ body }, c) => {
+  reorder: async ({ body }: { body: z.infer<typeof taskContract.reorder.body> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -218,7 +219,7 @@ const tasksTsRestRouter = s.router(taskContract, {
 
       const now = new Date().toISOString();
       
-      await Promise.all(body.items.map((item: { id: string; status: "todo" | "in_progress" | "in_review" | "done"; sort_order: number }) =>
+      await Promise.all(body.items.map((item: any) =>
         db.updateTable("tasks")
           .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
           .where("id", "=", item.id)
@@ -242,17 +243,17 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  update: async ({ params, body }, c) => {
+  update: async ({ params, body }: { params: z.infer<typeof taskContract.update.pathParams>, body: z.infer<typeof taskContract.update.body> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       if (!user) return { status: 401, body: { error: "Unauthorized" } };
 
       const existing = await db.selectFrom("tasks")
-        .select(["id", "title", "created_by"])
+        .select(["id", "title", "created_by", "subteam"])
         .where("id", "=", params.id)
         .executeTakeFirst();
-      
+
       if (!existing) return { status: 404, body: { error: "Task not found" } };
 
       const isAdmin = user.role === "admin";
@@ -282,6 +283,29 @@ const tasksTsRestRouter = s.router(taskContract, {
         if (!canAssign) {
           return { status: 403, body: { error: "Only mentors, coaches, admins, or the task creator can change assignments" } };
         }
+
+        // WR-12: Additional validation - prevent assigning users from different subteams
+        if (existing.subteam && body.assignees && body.assignees.length > 0) {
+          const assigneeProfiles = await db.selectFrom("user_profiles")
+            .select(["user_id", "member_type"])
+            .where("user_id", "in", body.assignees)
+            .execute();
+
+          // Check if any assignee belongs to a different subteam
+          // Admins can assign anyone, but mentors/coaches can only assign within their subteam
+          if (!isAdmin && isMentor) {
+            const assigneeSubteams = await db.selectFrom("user_profiles")
+              .select("subteams")
+              .where("user_id", "in", body.assignees)
+              .execute();
+
+            const hasMismatchedSubteam = assigneeSubteams.some(p => p.subteams && p.subteams !== existing.subteam);
+            if (hasMismatchedSubteam) {
+              return { status: 403, body: { error: "Cannot assign users from different subteams to this task" } };
+            }
+          }
+        }
+
         // Sync assignments: delete and re-insert
         await db.deleteFrom("task_assignments").where("task_id", "=", params.id).execute();
         if (body.assignees && body.assignees.length > 0) {
@@ -324,7 +348,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  delete: async ({ params }, c) => {
+  delete: async ({ params }: { params: z.infer<typeof taskContract.delete.pathParams> }, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -364,10 +388,12 @@ const tasksTsRestRouter = s.router(taskContract, {
       return { status: 500, body: { error: "Failed to delete task" } };
     }
   },
-});
+} as any);
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));
+// WR-11: Add origin integrity to prevent CSRF attacks on task operations
+tasksRouter.use("*", originIntegrityMiddleware());
 
 createHonoEndpoints(taskContract, tasksTsRestRouter, tasksRouter);
 export default tasksRouter;

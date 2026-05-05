@@ -250,6 +250,17 @@ const financeTsRestRouterObj: any = {
       const id = body.id || crypto.randomUUID();
       const isNew = !body.id;
 
+      // WR-15: Validate transaction amount and type
+      const amount = Number(body.amount);
+      if (isNaN(amount) || amount < 0 || amount > 1000000) {
+        return { status: 400 as const, body: { error: "Invalid amount: must be between 0 and 1,000,000" } };
+      }
+
+      const validTypes = ['income', 'expense'];
+      if (!body.type || !validTypes.includes(body.type)) {
+        return { status: 400 as const, body: { error: "Invalid transaction type: must be 'income' or 'expense'" } };
+      }
+
       const data = {
         id,
         amount: body.amount,

@@ -99,8 +99,13 @@ const handlers = {
       };
 
     } catch (err: any) {
-      const errMsg = err instanceof Error ? err.message : (typeof err === "string" ? err : JSON.stringify(err) || "Unknown error");
-      console.error("[Communications] Send mass email failed:", errMsg);
+      // WR-09: Sanitize error message to avoid logging PII (email addresses)
+      const errMsg = err instanceof Error ? err.message : "Unknown error";
+      // Only log error type/class, not full details which may contain emails
+      const sanitizedErrMsg = errMsg.length > 200
+        ? errMsg.substring(0, 200) + "... (truncated)"
+        : errMsg;
+      console.error("[Communications] Send mass email failed:", sanitizedErrMsg);
       try {
         const db = c.get("db");
         await logSystemError(db, "Communications", "Failed to send mass email", errMsg);

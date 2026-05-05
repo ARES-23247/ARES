@@ -45,8 +45,19 @@ export default function AvatarEditor({ currentImage, onClose, onSave }: AvatarEd
     try {
       if (!currentImage) return new URLSearchParams();
       const url = new URL(currentImage);
+      // SEC-WR-12: Validate URL is from allowed DiceBear domain to prevent malicious avatar URLs
+      if (!url.hostname.endsWith('dicebear.com') && !url.hostname.endsWith('api.dicebear.com')) {
+        console.warn('Avatar URL must be from dicebear.com domain');
+        return new URLSearchParams();
+      }
+      // Ensure it's https
+      if (url.protocol !== 'https:') {
+        console.warn('Avatar URL must use HTTPS');
+        return new URLSearchParams();
+      }
       return new URLSearchParams(url.search);
     } catch {
+      console.warn('Invalid avatar URL format');
       return new URLSearchParams();
     }
   };

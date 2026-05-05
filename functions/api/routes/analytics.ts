@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { analyticsContract } from "../../../shared/schemas/contracts/analyticsContract";
-import { AppEnv, ensureAdmin, checkRateLimit, rateLimitMiddleware, turnstileMiddleware, getDbSettings  } from "../middleware";
+import { AppEnv, ensureAuth, ensureAdmin, checkRateLimit, rateLimitMiddleware, turnstileMiddleware, getDbSettings  } from "../middleware";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
@@ -48,8 +48,24 @@ const analyticsHandlers = {
     const db = c.get("db") as Kysely<DB>;
     try {
       const { sponsor_id } = body;
+
+      // WR-04: Validate sponsor exists to prevent database pollution
+      if (!sponsor_id || typeof sponsor_id !== 'string') {
+        return { status: 400 as const, body: { error: "Invalid sponsor ID" } };
+      }
+
+      const sponsor = await db.selectFrom("sponsors")
+        .select("id")
+        .where("id", "=", sponsor_id)
+        .where("is_active", "=", 1)
+        .executeTakeFirst();
+
+      if (!sponsor) {
+        return { status: 400 as const, body: { error: "Invalid sponsor" } };
+      }
+
       const yearMonth = new Date().toISOString().slice(0, 7);
-      
+
       await db.insertInto("sponsor_metrics")
         .values({
           id: crypto.randomUUID(),

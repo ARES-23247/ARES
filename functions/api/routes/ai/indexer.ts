@@ -2,6 +2,7 @@ import { Kysely, sql } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import { fetchGithubRepoFiles } from "./external/githubFetcher";
 import { chunkText } from "./external/chunker";
+import type { KVNamespace, VectorizeIndex, Ai } from "@cloudflare/workers-types";
 
 /**
  * Incremental Vectorize indexer for the RAG chatbot knowledge base.

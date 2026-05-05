@@ -6,6 +6,9 @@ import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { awardContract } from "../../../shared/schemas/contracts/awardContract";
 
+// Validation schema for saveAward (derived from contract)
+const saveAwardSchema = awardContract.saveAward.body;
+
 const s = initServer<AppEnv>();
 export const awardsRouter = new Hono<AppEnv>();
 
@@ -43,13 +46,24 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
   },
     saveAward: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     try {
+      // Validate input against schema
+      const validationResult = saveAwardSchema.safeParse(body);
+      if (!validationResult.success) {
+        return { status: 400 as const, body: { error: "Invalid input", details: validationResult.error.flatten() } };
+      }
+      const validatedData = validationResult.data;
+
                   const db = c.get("db") as Kysely<DB>;
-      const { id, title, year, event_name, description, image_url, season_id } = body;
+      const { id, title, year, event_name, description, image_url, season_id } = validatedData;
 
       let finalId: string | undefined = id;
       let exists = false;
       if (id) {
-        const row = await db.selectFrom("awards").select("id").where("id", "=", Number(id) as any).executeTakeFirst();
+        const numericId = Number(id);
+        if (isNaN(numericId) || numericId <= 0) {
+          return { status: 400 as const, body: { error: "Invalid award ID", success: false } };
+        }
+        const row = await db.selectFrom("awards").select("id").where("id", "=", numericId).executeTakeFirst();
         if (row) {
           exists = true;
           finalId = String(row.id);
@@ -83,7 +97,11 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
       } as const;
 
       if (exists && finalId) {
-        await db.updateTable("awards").set(values).where("id", "=", Number(finalId) as any).execute();
+        const updateId = Number(finalId);
+        if (isNaN(updateId) || updateId <= 0) {
+          return { status: 400 as const, body: { error: "Invalid award ID for update", success: false } };
+        }
+        await db.updateTable("awards").set(values).where("id", "=", updateId).execute();
         c.executionCtx.waitUntil(logAuditAction(c, "award_updated", "awards", finalId, `Award "${title}" (${year}) updated`));
       } else {
         // Attempt insert with duplicate handling for race condition
@@ -125,7 +143,11 @@ const awardsTsRestRouter: any = s.router(awardContract as any, {
 
     try {
                   const db = c.get("db") as Kysely<DB>;
-      await db.updateTable("awards").set({ is_deleted: 1 }).where("id", "=", Number(params.id) as any).execute();
+      const numericId = Number(params.id);
+      if (isNaN(numericId) || numericId <= 0) {
+        return { status: 400 as const, body: { error: "Invalid award ID", success: false } };
+      }
+      await db.updateTable("awards").set({ is_deleted: 1 }).where("id", "=", numericId).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "award_deleted", "awards", params.id, "Award soft-deleted"));
       return { status: 200 as const, body: { success: true } };
     } catch (e) {

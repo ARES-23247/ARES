@@ -1,5 +1,6 @@
 import React from 'react';
 import { useExperimentState } from '../../hooks/useExperimentState';
+import { z } from 'zod';
 import { MatterEngine } from './engines/MatterEngine';
 import { CustomCanvasEngine } from './engines/CustomCanvasEngine';
 import { Dyn4jEngine } from './engines/Dyn4jEngine';
@@ -18,7 +19,7 @@ export const HybridSimulationWrapper: React.FC<HybridSimulationWrapperProps> = (
   description
 }) => {
   // Use our local storage persistence hook
-  const [state, setState] = useExperimentState(experimentId, {});
+  const [state, setState] = useExperimentState(experimentId, z.any(), {});
 
   const renderEngine = () => {
     switch (engineType) {

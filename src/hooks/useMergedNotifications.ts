@@ -43,7 +43,7 @@ export function useMergedNotifications(
 
     return [
       ...filteredRawNotifications,
-      ...pendingInquiries.map((i) => ({
+      ...pendingInquiries.map((i: { id: string | number; type?: string; name?: string }) => ({
         id: `inquiry-${i.id}`,
         title: `New ${i.type === 'support' ? 'Support' : i.type === 'outreach' ? 'Outreach' : i.type === 'sponsor' ? 'Sponsor' : 'Inquiry'} Request`,
         message: `From ${i.name}`,
@@ -51,7 +51,7 @@ export function useMergedNotifications(
         link: '/dashboard/inquiries',
         is_inquiry: true
       })),
-      ...pendingPosts.map((p) => ({
+      ...pendingPosts.map((p: { slug: string; title: string; author_nickname?: string }) => ({
         id: `post-${p.slug}`,
         title: `New Pending Post`,
         message: `"${p.title}" by ${p.author_nickname || 'Student'}`,
@@ -59,7 +59,7 @@ export function useMergedNotifications(
         link: '/dashboard/manage_blog',
         is_inquiry: true // Treat as action item (cannot be marked read)
       })),
-      ...pendingEvents.map((e) => ({
+      ...pendingEvents.map((e: { id: string | number; title: string }) => ({
         id: `event-${e.id}`,
         title: `New Pending Event`,
         message: `"${e.title}"`,
@@ -67,7 +67,7 @@ export function useMergedNotifications(
         link: '/dashboard/manage_event',
         is_inquiry: true
       })),
-      ...pendingDocs.map((d) => ({
+      ...pendingDocs.map((d: { slug: string; title: string }) => ({
         id: `doc-${d.slug}`,
         title: `New Pending Doc`,
         message: `"${d.title}"`,

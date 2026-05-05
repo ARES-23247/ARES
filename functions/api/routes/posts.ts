@@ -4,6 +4,7 @@ import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { postContract } from "../../../shared/schemas/contracts/postContract";
+import { z } from "zod";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, validateLength, MAX_INPUT_LENGTHS, logAuditAction } from "../middleware";
 import { getStandardDate } from "../../utils/content";
@@ -34,8 +35,8 @@ const sanitizeFtsQuery = (query: string): string => {
   return `"${cleanQ.replace(/"/g, '""')}*`;
 };
 
-const postTsRestRouterObj: any = {
-  getPosts: async (input: any, c: Context<AppEnv>) => {
+const postTsRestRouterObj = {
+  getPosts: async (input: { query: z.infer<typeof postContract.getPosts.query> }, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -123,7 +124,7 @@ const postTsRestRouterObj: any = {
       return { status: 200, body: { posts: [] } }; // Graceful degradation
     }
   },
-  getPost: async (input: any, c: Context<AppEnv>) => {
+  getPost: async (input: { params: z.infer<typeof postContract.getPost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -180,10 +181,10 @@ const postTsRestRouterObj: any = {
       };
     } catch (e) {
       console.error("[Posts:Detail] Error", e);
-      return { status: 404, body: { error: "Database error" } };
+      return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  getAdminPosts: async (input: any, c: Context<AppEnv>) => {
+  getAdminPosts: async (input: { query: z.infer<typeof postContract.getAdminPosts.query> }, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -220,7 +221,7 @@ const postTsRestRouterObj: any = {
       return { status: 200, body: { posts: [] } };
     }
   },
-  getAdminPost: async (input: any, c: Context<AppEnv>) => {
+  getAdminPost: async (input: { params: z.infer<typeof postContract.getAdminPost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -246,10 +247,10 @@ const postTsRestRouterObj: any = {
       };
     } catch (e) {
       console.error("[Posts:AdminDetail] Error", e);
-      return { status: 404, body: { error: "Database error" } };
+      return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  savePost: async (input: any, c: Context<AppEnv>) => {
+  savePost: async (input: { body: z.infer<typeof postContract.savePost.body> }, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -299,7 +300,7 @@ const postTsRestRouterObj: any = {
           title: body.title,
           author: "ARES Team", 
           date: dateStr,
-          thumbnail: body.coverImageUrl || "",
+          thumbnail: body.thumbnail || "",
           snippet,
           ast: astStr,
           cf_email: email,
@@ -325,7 +326,7 @@ const postTsRestRouterObj: any = {
 
       c.executionCtx.waitUntil(pruneHistory(c, slug, 10));
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
 
       const warnings: string[] = [];
 
@@ -337,12 +338,12 @@ const postTsRestRouterObj: any = {
         c.executionCtx.waitUntil((async () => {
           try {
             await dispatchSocials(
-              c.env.DB,
+              c.get("db") as Kysely<DB>,
               {
                 title: body.title,
                 url: `${baseUrl}/blog/${slug}`,
                 snippet: snippet || "Read the latest engineering update from ARES 23247!",
-                thumbnail: body.coverImageUrl || "/gallery_1.png",
+                thumbnail: body.thumbnail || "/gallery_1.png",
                 baseUrl: baseUrl
               },
               socialConfig,
@@ -394,7 +395,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  updatePost: async (input: any, c: Context<AppEnv>) => {
+  updatePost: async (input: { params: z.infer<typeof postContract.updatePost.pathParams>, body: z.infer<typeof postContract.updatePost.body> }, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     try {
@@ -407,11 +408,11 @@ const postTsRestRouterObj: any = {
         const revSlug = await createShadowRevision(c, slug, user!, {
           title: body.title,
           author: "ARES Team",
-          thumbnail: body.coverImageUrl,
+          thumbnail: body.thumbnail,
           snippet,
           astStr,
           publishedAt: body.publishedAt,
-          seasonId: body.seasonId
+          seasonId: body.seasonId as any
         });
         return { status: 200, body: { success: true, slug: revSlug } };
       }
@@ -431,7 +432,7 @@ const postTsRestRouterObj: any = {
       await db.updateTable("posts")
         .set({
           title: body.title,
-          thumbnail: body.coverImageUrl || "",
+          thumbnail: body.thumbnail || "",
           snippet,
           ast: astStr,
           status,
@@ -456,28 +457,28 @@ const postTsRestRouterObj: any = {
       );
 
       c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${body.title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
       return { status: 200, body: { success: true, slug } };
     } catch (e) {
       console.error("[Posts:Update] Error", e);
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async (input: any, c: Context<AppEnv>) => {
+  deletePost: async (input: { params: z.infer<typeof postContract.deletePost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("posts").set({ is_deleted: 1, status: "draft", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_POST", "posts", slug));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB, c.env.ARES_KV as any);
       return { status: 200, body: { success: true } };
     } catch (e) {
       console.error("[Posts:Delete] Error", e);
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undeletePost: async (input: any, c: Context<AppEnv>) => {
+  undeletePost: async (input: { params: z.infer<typeof postContract.undeletePost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -490,7 +491,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Undelete failed" } };
     }
   },
-  purgePost: async (input: any, c: Context<AppEnv>) => {
+  purgePost: async (input: { params: z.infer<typeof postContract.purgePost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -519,7 +520,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-  approvePost: async (input: any, c: Context<AppEnv>) => {
+  approvePost: async (input: { params: z.infer<typeof postContract.approvePost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -531,7 +532,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async (input: any, c: Context<AppEnv>) => {
+  rejectPost: async (input: { params: z.infer<typeof postContract.rejectPost.pathParams>, body: z.infer<typeof postContract.rejectPost.body> }, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     const { reason } = body;
@@ -560,7 +561,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async (input: any, c: Context<AppEnv>) => {
+  getPostHistory: async (input: { params: z.infer<typeof postContract.getPostHistory.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -575,7 +576,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Failed to fetch history" } };
     }
   },
-  restorePostHistory: async (input: any, c: Context<AppEnv>) => {
+  restorePostHistory: async (input: { params: z.infer<typeof postContract.restorePostHistory.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug, id } = params;
     const user = await getSessionUser(c);
@@ -583,7 +584,7 @@ const postTsRestRouterObj: any = {
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async (input: any, c: Context<AppEnv>) => {
+  repushSocials: async (input: { params: z.infer<typeof postContract.repushSocials.pathParams>, body: z.infer<typeof postContract.repushSocials.body> }, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     const { socials } = body;
@@ -597,14 +598,14 @@ const postTsRestRouterObj: any = {
       
       c.executionCtx.waitUntil(
         dispatchSocials(
-          c.env.DB,
+          c.get("db") as Kysely<DB>,
           {
             title: String(post.title),
             url: `${baseUrl}/blog/${slug}`,
             snippet: post.snippet || "Read the latest update from ARES 23247!",
             thumbnail: post.thumbnail || "",
             baseUrl: baseUrl
-          }, socialConfig, socials).catch(err => console.error("[Repush] Social dispatch failed:", err))
+          }, socialConfig, socials ? socials.reduce((acc: Record<string, boolean>, curr: string) => ({...acc, [curr]: true}), {}) : null).catch(err => console.error("[Repush] Social dispatch failed:", err))
       );
       return { status: 200, body: { success: true } };
     } catch (err) {
@@ -613,7 +614,7 @@ const postTsRestRouterObj: any = {
   },
 };
 
-const postTsRestRouter = s.router(postContract, postTsRestRouterObj);
+const postTsRestRouter = s.router(postContract, postTsRestRouterObj as any);
 
 export const postsRouter = new Hono<AppEnv>();
 

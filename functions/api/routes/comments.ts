@@ -1,7 +1,7 @@
 import { Hono, Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, persistentRateLimitMiddleware, ensureAuth } from "../middleware";
+import { AppEnv, getSessionUser, MAX_INPUT_LENGTHS, getSocialConfig, persistentRateLimitMiddleware, ensureAuth, originIntegrityMiddleware } from "../middleware";
 import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../utils/zulipSync";
 import { emitNotification } from "../../utils/notifications";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
@@ -228,10 +228,21 @@ commentsRouter.use("/:id", async (c, next) => {
   return next();
 });
 
+// WR-11: Add origin integrity check to prevent CSRF attacks on state-changing operations
+commentsRouter.use("/submit/*", originIntegrityMiddleware());
 commentsRouter.use("/submit/*", persistentRateLimitMiddleware(10, 60));
+
 commentsRouter.use("/:id", (c, next) => {
   if (c.req.method === "POST" || c.req.method === "PUT" || c.req.method === "DELETE") {
     return persistentRateLimitMiddleware(10, 60)(c, next);
+  }
+  return next();
+});
+
+// Also apply origin integrity to update and delete operations
+commentsRouter.use("/:id", (c, next) => {
+  if (c.req.method === "PATCH" || c.req.method === "DELETE" || c.req.method === "PUT") {
+    return originIntegrityMiddleware()(c, next);
   }
   return next();
 });

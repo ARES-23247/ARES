@@ -17,7 +17,16 @@ export function ContactForm({ profile, setProfile, isMinor, inputClass, labelCla
         </div>
         <div>
           <label htmlFor="pe-contact-email" className={labelClass}>Contact Email</label>
-          <input id="pe-contact-email" className={inputClass} placeholder="Optional. Replaces login email." value={profile.contact_email} onChange={e => setProfile({...profile, contact_email: e.target.value})} />
+          <input
+            id="pe-contact-email"
+            type="email"
+            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+            title="Please enter a valid email address"
+            className={inputClass}
+            placeholder="Optional. Replaces login email."
+            value={profile.contact_email}
+            onChange={e => setProfile({...profile, contact_email: e.target.value})}
+          />
           <label className="flex items-center gap-2 mt-2 text-xs text-ares-gray">
             <input type="checkbox" checked={profile.show_email} onChange={e => setProfile({...profile, show_email: e.target.checked})} className="accent-ares-red" />
             Show email on public profile

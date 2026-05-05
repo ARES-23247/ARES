@@ -1,5 +1,61 @@
 import DOMPurify from 'dompurify';
 
+// SEC-WR-04: HMAC secret for tutorial progress integrity validation.
+// In production, this should be server-provided or use a proper signature scheme.
+// This provides basic tamper detection for client-side stored progress.
+const TUTORIAL_SIGNATURE_SECRET = "ares-tutorial-hmac-2025";
+
+/**
+ * Creates HMAC-SHA256 signature for data integrity verification.
+ * Used for validating that stored data hasn't been tampered with.
+ */
+async function createHmacSignature(data: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(TUTORIAL_SIGNATURE_SECRET);
+  const messageData = encoder.encode(data);
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign('HMAC', key, messageData);
+  const signatureArray = Array.from(new Uint8Array(signature));
+  return signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Verifies HMAC-SHA256 signature for data integrity.
+ */
+async function verifyHmacSignature(data: string, signature: string): Promise<boolean> {
+  const expectedSignature = await createHmacSignature(data);
+  return expectedSignature === signature;
+}
+
+/**
+ * Signs tutorial progress data with HMAC for integrity protection.
+ */
+export async function signTutorialProgress(progress: string[]): Promise<{ progress: string[]; signature: string }> {
+  const progressStr = JSON.stringify(progress);
+  const signature = await createHmacSignature(progressStr);
+  return { progress, signature };
+}
+
+/**
+ * Verifies and returns tutorial progress if signature is valid.
+ * Returns null if signature verification fails.
+ */
+export async function verifyTutorialProgress(signedData: { progress?: string[]; signature?: string } | null): Promise<string[] | null> {
+  if (!signedData || !signedData.progress || !signedData.signature) {
+    return null;
+  }
+  const isValid = await verifyHmacSignature(JSON.stringify(signedData.progress), signedData.signature);
+  return isValid ? signedData.progress : null;
+}
+
 /**
  * Sanitizes HTML to prevent XSS attacks while allowing safe tags.
  */

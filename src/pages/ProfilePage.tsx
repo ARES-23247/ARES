@@ -74,7 +74,7 @@ export default function ProfilePage() {
     api.profiles.getPublicProfile.query({ params: { userId: validatedUserId } })
       .then((res: { status: number; body: unknown }) => {
         if (cancelled || res.status !== 200) return;
-        const data = res.body as { profile: ProfilePublic; badges; badges?: BadgeDef[] };
+        const data = res.body as { profile: ProfilePublic; badges?: BadgeDef[] };
 
         setProfile(data.profile);
         setBadges(data.badges || []);

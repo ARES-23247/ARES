@@ -101,7 +101,7 @@ export const badgeContract = c.router({
           user_id: z.string(),
           nickname: z.string().nullable(),
           member_type: z.string().nullable(),
-          badge_count: z.number().or(z.string()),
+          badge_count: z.number(), // Always return number for consistency
         })),
       }),
       500: z.object({ error: z.string() }),

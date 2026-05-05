@@ -12,8 +12,6 @@ async function verifyGitHubSignature(
   signature: string
 ): Promise<boolean> {
   try {
-    if (!signature.startsWith("sha256=")) return false;
-    
     const enc = new TextEncoder();
     const key = await crypto.subtle.importKey(
       "raw",
@@ -23,9 +21,22 @@ async function verifyGitHubSignature(
       ["verify"]
     );
 
-    const sigHex = signature.slice(7); // remove "sha256="
-    const sigBytes = new Uint8Array(sigHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-    
+    // WR-10: Use constant-time comparison for prefix check to prevent timing attacks
+    const PREFIX = "sha256=";
+    // Always extract signature hex, even if prefix doesn't match
+    const sigHex = signature.length >= PREFIX.length ? signature.slice(PREFIX.length) : signature;
+    const sigBytes = new Uint8Array((sigHex.match(/.{1,2}/g) || []).map(byte => parseInt(byte, 16)));
+
+    // Check prefix matches AFTER doing the work (constant-time)
+    const prefixMatches = signature.length >= PREFIX.length &&
+      signature.substring(0, PREFIX.length) === PREFIX;
+
+    if (!prefixMatches || sigBytes.length === 0) {
+      // Still do HMAC verification to normalize timing
+      await crypto.subtle.verify("HMAC", key, new Uint8Array(64), enc.encode(payload));
+      return false;
+    }
+
     return await crypto.subtle.verify(
       "HMAC",
       key,

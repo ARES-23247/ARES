@@ -3,7 +3,7 @@ import { Context } from "hono";
 import { sql } from "kysely";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
-import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 
 const s = initServer<AppEnv>();
@@ -166,7 +166,8 @@ const sponsorHandlers = {
       const id = crypto.randomUUID();
       await db.insertInto("sponsor_tokens").values({ id, token, sponsor_id } as any).execute();
 
-                  c.executionCtx.waitUntil(logAuditAction(c, "GENERATE_TOKEN", "sponsor_tokens", token, `Generated token for ${sponsor_id}`));
+      // WR-13: Don't log the actual token value to prevent token exposure in logs
+      c.executionCtx.waitUntil(logAuditAction(c, "GENERATE_TOKEN", "sponsor_tokens", id, `Generated token for ${sponsor_id}`));
       
       c.executionCtx.waitUntil((async () => {
         const sRes = await db.selectFrom("sponsors").select("name").where("id", "=", sponsor_id).executeTakeFirst();
@@ -182,6 +183,8 @@ const sponsorHandlers = {
 
 const sponsorTsRestRouter: any = s.router(sponsorContract as any, sponsorHandlers as any);
 
+// WR-12: Add rate limiting to public sponsor endpoint to prevent scraping
+sponsorsRouter.use("*", rateLimitMiddleware(15, 60));
 
 sponsorsRouter.use("/admin", ensureAdmin);
 sponsorsRouter.use("/admin/*", ensureAdmin);

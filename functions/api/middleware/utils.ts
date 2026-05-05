@@ -4,6 +4,7 @@ import { parseAstToText } from "../../utils/content";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { safeJSONParse } from "../../utils/json";
+import type { D1Database, R2Bucket, VectorizeIndex, KVNamespace } from "@cloudflare/workers-types";
 
 // ── Cloudflare Bindings ──────────────────────────────────────────────
 export type Bindings = {

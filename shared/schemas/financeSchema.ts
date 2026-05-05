@@ -24,7 +24,7 @@ export const financeTransactionSchema = z.object({
   category: z.string().min(1, "Category is required"),
   date: z.string().min(1, "Date is required"),
   description: z.string().nullable().optional(),
-  receipt_url: z.string().url().nullable().optional().or(z.literal("")),
+  receipt_url: z.string().url().nullable().optional(),
   season_id: z.coerce.number().nullable().optional(),
   logged_by: z.string().nullable().optional(),
 });

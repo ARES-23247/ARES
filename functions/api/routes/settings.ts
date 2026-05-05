@@ -2,7 +2,7 @@
 import { Hono, Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings  } from "../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings, rateLimitMiddleware  } from "../middleware";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
 import { z } from "zod";
@@ -63,7 +63,19 @@ const settingsHandlers = {
 
       const entries = Object.entries(validationResult.data) as [string, string][];
       let updatedCount = 0;
+      const sensitiveKeysUpdated: string[] = [];
       for (const [key, value] of entries) {
+        // WR-14: Explicit protection - prevent updating sensitive keys via API
+        if (SENSITIVE_KEYS.has(key)) {
+          return {
+            status: 403 as const,
+            body: {
+              success: false,
+              error: `Cannot update ${key} via API. Please use the admin console.`
+            } as any
+          };
+        }
+
         // SEC-03: Prevent overwriting secrets with the masked versions passed back by the frontend
         if (SENSITIVE_KEYS.has(key) && value.startsWith('••••')) {
           continue;
@@ -76,8 +88,16 @@ const settingsHandlers = {
           .onConflict((oc: any) => oc.column("key").doUpdateSet({ value, updated_at: new Date().toISOString() }))
           .execute();
         updatedCount++;
+        // WR-09: Track sensitive key updates for audit logging
+        if (SENSITIVE_KEYS.has(key)) {
+          sensitiveKeysUpdated.push(key);
+        }
       }
-      c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, `Updated ${updatedCount} integration keys.`));
+      // WR-09: Enhanced audit logging for sensitive setting changes
+      const auditMessage = sensitiveKeysUpdated.length > 0
+        ? `Updated ${updatedCount} integration keys (sensitive: ${sensitiveKeysUpdated.join(", ")})`
+        : `Updated ${updatedCount} integration keys.`;
+      c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, auditMessage));
       return { status: 200 as const, body: { success: true, updated: updatedCount } as any };
     } catch (e) {
       console.error("UPDATE_SETTINGS ERROR", e);
@@ -136,8 +156,9 @@ const settingsTsRestRouter = s.router(settingsContract, settingsHandlers as any)
 // Admin protection - Apply only to admin routes
 settingsRouter.use("/admin/*", ensureAdmin);
 
+// WR-16: Add rate limiting to backup endpoint to prevent DoS
 // Backup route remains manual as it's a file export
-settingsRouter.get("/admin/backup", async (c: Context<AppEnv>) => {
+settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: Context<AppEnv>) => {
   const db = c.get("db");
   try {
     const SAFE_TABLES = [
