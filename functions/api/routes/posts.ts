@@ -218,7 +218,7 @@ const postTsRestRouterObj = {
       return { status: 200, body: { posts } };
     } catch (e) {
       console.error("[Posts:AdminList] Error", e);
-      return { status: 200, body: { posts: [] } };
+      return { status: 500, body: { error: "Failed to fetch posts" } };
     }
   },
   getAdminPost: async (input: { params: z.infer<typeof postContract.getAdminPost.pathParams> }, c: Context<AppEnv>) => {
