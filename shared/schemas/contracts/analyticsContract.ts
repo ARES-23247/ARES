@@ -73,23 +73,6 @@ export const analyticsContract = c.router({
     },
     summary: "Log a sponsor link click",
   },
-  getSummary: {
-    method: "GET",
-    path: "/admin/summary",
-    responses: {
-      200: z.object({
-        topPages: z.array(topPageSchema),
-        recentViews: z.array(recentViewSchema),
-        totals: z.array(totalSchema),
-      }),
-      500: z.object({
-        topPages: z.array(topPageSchema),
-        recentViews: z.array(recentViewSchema),
-        totals: z.array(totalSchema),
-      }),
-    },
-    summary: "Get analytics summary for dashboard",
-  },
   getRosterStats: {
     method: "GET",
     path: "/admin/roster-stats",
@@ -134,45 +117,50 @@ export const analyticsContract = c.router({
       500: z.object({ error: z.string() }),
     },
   },
-  getUsageMetrics: {
+  getPlatformAnalytics: {
     method: "GET",
-    path: "/admin/usage-metrics",
+    path: "/admin/platform-analytics",
     responses: {
       200: z.object({
-        summary: z.object({
-          totalPageViews: z.number(),
-          uniqueVisitors: z.number(),
-          avgSessionDuration: z.number(),
-          topPages: z.array(z.object({
-            path: z.string(),
-            views: z.number(),
-            uniqueVisitors: z.number(),
-          })),
-          topReferrers: z.array(z.object({
-            referrer: z.string(),
-            visits: z.number(),
-          })),
-          userActivity: z.array(z.object({
-            date: z.string(),
-            pageViews: z.number(),
-            uniqueVisitors: z.number(),
-          })),
-          latency: z.array(z.object({
-            date: z.string(),
-            avg_latency: z.number(),
-          })).optional(),
-          resourceUsage: z.object({
-            totalAssets: z.number(),
-            totalStorage: z.number(),
-            apiCalls: z.number(),
-          }),
+        totalPageViews: z.number(),
+        uniqueVisitors: z.number(),
+        topPages: z.array(z.object({
+          path: z.string(),
+          category: z.string(),
+          views: z.number(),
+        })),
+        topReferrers: z.array(z.object({
+          referrer: z.string(),
+          visits: z.number(),
+        })),
+        recentViews: z.array(z.object({
+          path: z.string(),
+          category: z.string(),
+          user_agent: z.string(),
+          referrer: z.string(),
+          timestamp: z.string(),
+        })),
+        totals: z.array(z.object({
+          category: z.string(),
+          total: z.number(),
+        })),
+        userActivity: z.array(z.object({
+          date: z.string(),
+          pageViews: z.number(),
+        })),
+        latency: z.array(z.object({
+          date: z.string(),
+          avg_latency: z.number(),
+        })).optional(),
+        resourceUsage: z.object({
+          totalAssets: z.number(),
+          totalStorage: z.number(),
+          apiCalls: z.number(),
         }),
       }),
-      401: z.object({ error: z.string() }),
-      403: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
     },
-    summary: "Get detailed usage metrics for admin dashboard",
+    summary: "Get comprehensive platform analytics",
   },
   search: {
     method: "GET",

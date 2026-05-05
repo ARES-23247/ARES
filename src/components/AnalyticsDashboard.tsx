@@ -1,26 +1,24 @@
-
-import { BarChart3, TrendingUp, Clock, ExternalLink } from "lucide-react";
+import { BarChart3, TrendingUp, Clock, ExternalLink, Activity, Users, Database, Server } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import { BarList, Card, Title, Text, DonutChart, Flex } from "@tremor/react";
+import { BarList, Card, Title, Text, DonutChart, Flex, LineChart } from "@tremor/react";
 
 import DashboardPageHeader from "./dashboard/DashboardPageHeader";
 
 export default function AnalyticsDashboard() {
-  const { data: analyticsData, isLoading, isError } = api.analytics.getSummary.useQuery(["analytics-summary"], {});
+  const { data: analyticsData, isLoading, isError } = api.analytics.getPlatformAnalytics.useQuery(["platform-analytics"], {});
 
-  interface AnalyticsData {
-    totals: { category: string; total: number }[];
-    topPages: { path: string; views: number; category: string }[];
-    recentViews: { path: string; timestamp: string; category: string; referrer: string }[];
-  }
-  const rawBody = (analyticsData as unknown as { body?: AnalyticsData | unknown[] })?.body;
-  const data = analyticsData?.status === 200 && rawBody && !Array.isArray(rawBody) ? (rawBody as AnalyticsData) : null;
+  const data = analyticsData?.status === 200 ? analyticsData.body : null;
 
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6 animate-pulse">
         <div className="h-32 bg-white/5 ares-cut-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="h-32 bg-white/5 ares-cut-lg" />
+          <div className="h-32 bg-white/5 ares-cut-lg" />
+          <div className="h-32 bg-white/5 ares-cut-lg" />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="h-64 bg-white/5 ares-cut-lg" />
           <div className="h-64 bg-white/5 ares-cut-lg" />
@@ -32,27 +30,102 @@ export default function AnalyticsDashboard() {
   return (
     <div className="space-y-8">
       <DashboardPageHeader 
-        title="Engagement Analytics" 
-        subtitle="Real-time visibility into platform traffic and content performance."
+        title="Platform Analytics" 
+        subtitle="Real-time visibility into platform traffic, engagement, and performance."
         icon={<BarChart3 className="text-ares-cyan" />}
       />
 
       {isError && (
         <div className="bg-ares-red/10 border border-ares-red/30 p-4 ares-cut-sm text-ares-red text-xs font-bold mb-6 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-ares-red animate-pulse" />
-          TELEMETRY FAULT: Failed to synchronize engagement metrics.
+          TELEMETRY FAULT: Failed to synchronize platform metrics.
         </div>
       )}
 
-      {/* Overview Stats */}
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-black/40 border-white/5 ares-cut-lg">
+          <Flex alignItems="start">
+            <div className="truncate">
+              <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Total Views</Text>
+              <Title className="text-white text-3xl font-black">{data?.totalPageViews?.toLocaleString() || 0}</Title>
+            </div>
+            <Activity className="text-ares-cyan" size={24} />
+          </Flex>
+        </Card>
+        <Card className="bg-black/40 border-white/5 ares-cut-lg">
+          <Flex alignItems="start">
+            <div className="truncate">
+              <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Unique Visitors</Text>
+              <Title className="text-white text-3xl font-black">{data?.uniqueVisitors?.toLocaleString() || 0}</Title>
+            </div>
+            <Users className="text-ares-gold" size={24} />
+          </Flex>
+        </Card>
+        <Card className="bg-black/40 border-white/5 ares-cut-lg">
+          <Flex alignItems="start">
+            <div className="truncate">
+              <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Total Assets</Text>
+              <Title className="text-white text-3xl font-black">{data?.resourceUsage?.totalAssets?.toLocaleString() || 0}</Title>
+            </div>
+            <Database className="text-marble/80" size={24} />
+          </Flex>
+        </Card>
+        <Card className="bg-black/40 border-white/5 ares-cut-lg">
+          <Flex alignItems="start">
+            <div className="truncate">
+              <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">API Calls</Text>
+              <Title className="text-white text-3xl font-black">{data?.resourceUsage?.apiCalls?.toLocaleString() || 0}</Title>
+            </div>
+            <Server className="text-marble/80" size={24} />
+          </Flex>
+        </Card>
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="bg-black/40 border-white/5 ares-cut-lg">
+          <Title className="text-white font-bold mb-4 flex items-center gap-2">
+            <Activity size={20} className="text-ares-cyan" />
+            30-Day Activity
+          </Title>
+          <LineChart
+            className="h-72 mt-4"
+            data={data?.userActivity || []}
+            index="date"
+            categories={["pageViews"]}
+            colors={["cyan"]}
+            yAxisWidth={40}
+            showAnimation={true}
+          />
+        </Card>
+
+        <Card className="bg-black/40 border-white/5 ares-cut-lg">
+          <Title className="text-white font-bold mb-4 flex items-center gap-2">
+            <Server size={20} className="text-marble/50" />
+            API Latency (ms)
+          </Title>
+          <LineChart
+            className="h-72 mt-4"
+            data={data?.latency || []}
+            index="date"
+            categories={["avg_latency"]}
+            colors={["amber"]}
+            yAxisWidth={40}
+            showAnimation={true}
+            valueFormatter={(number) => `${number.toFixed(1)}ms`}
+          />
+        </Card>
+      </div>
+
+      {/* Distribution Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          <Card className="bg-black/40 border-white/5 ares-cut-lg">
             <Flex alignItems="start">
               <div className="truncate">
                 <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px]">Traffic Distribution</Text>
-                <Title className="text-white text-3xl font-black">{(data?.totals || []).reduce((acc: number, t: { total: number }) => acc + t.total, 0).toLocaleString()}</Title>
+                <Title className="text-white text-3xl font-black">{(data?.totals || []).reduce((acc, t) => acc + t.total, 0).toLocaleString()}</Title>
               </div>
-              <BarChart3 className="text-ares-cyan" size={24} />
             </Flex>
             <DonutChart
               className="mt-6 h-40"
@@ -65,15 +138,16 @@ export default function AnalyticsDashboard() {
          </Card>
          
          <Card className="md:col-span-2 bg-black/40 border-white/5 ares-cut-lg">
-            <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px] mb-4">Top Performing Endpoints</Text>
+            <Text className="text-marble/40 uppercase tracking-widest font-black text-[10px] mb-4">Top Referrers</Text>
             <BarList
-              data={(data?.topPages || []).map((p: { path: string; views: number }) => ({ name: p.path, value: p.views }))}
+              data={(data?.topReferrers || []).map((p) => ({ name: p.referrer.replace(/https?:\/\//, '').split('/')[0], value: p.visits }))}
               className="mt-2"
               color="amber"
             />
          </Card>
       </div>
 
+      {/* Details Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Activity */}
         <Card className="bg-black/40 border-white/5 ares-cut-lg p-6">
@@ -82,7 +156,7 @@ export default function AnalyticsDashboard() {
             Real-time Feed
           </h3>
           <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {(data?.recentViews || []).map((view: { path: string; timestamp: string; category: string; referrer: string }, idx: number) => (
+            {(data?.recentViews || []).map((view, idx) => (
               <div key={idx} className="flex flex-col gap-1 border-l border-white/5 pl-4 py-1 relative">
                 <div className="absolute left-[-4px] top-2 w-2 h-2 rounded-full bg-ares-red shadow-[0_0_8px_rgba(192,0,0,0.5)]" />
                 <div className="flex justify-between items-start">
@@ -110,7 +184,7 @@ export default function AnalyticsDashboard() {
             Impact Breakdown
           </h3>
           <div className="space-y-3">
-            {(data?.topPages || []).map((page: { path: string; views: number; category: string }, idx: number) => (
+            {(data?.topPages || []).map((page, idx) => (
               <div key={page.path} className="flex items-center justify-between group">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <span className="text-xs font-mono text-marble/40 w-4">0{idx + 1}</span>

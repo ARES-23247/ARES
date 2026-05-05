@@ -7,6 +7,8 @@ import { sql, Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import { initServer } from "ts-rest-hono";
 import { rrulestr } from 'rrule';
+import type { HandlerInput, HonoContext } from "@shared/types/api";
+
 
 const _s = initServer<AppEnv>();
 
@@ -19,8 +21,8 @@ const sanitizeFtsQuery = (query: string): string => {
   return query.replace(/["\\^*-:]/g, ' ').trim().split(/\s+/).filter(Boolean).join(' ');
 };
 
-export const eventHandlers: any = {
-  getEvents: async (input: any, c: any) => {
+export const eventHandlers = {
+  getEvents: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -98,15 +100,15 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch events" } };
     }
   },
-  getCalendarSettings: async (_input: any, c: any) => {
+  getCalendarSettings: async (_input: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("settings")
         .select(["key", "value"])
         .where("key", "in", ["CALENDAR_ID", "CALENDAR_ID_INTERNAL", "CALENDAR_ID_OUTREACH", "CALENDAR_ID_EXTERNAL"])
         .execute();
-            
-      const map: any = results.reduce((acc, row) => ({ ...acc, [(row.key as any)]: row.value || "" }), {});
+
+      const map = results.reduce<Record<string, string>>((acc, row) => ({ ...acc, [row.key ?? ""]: row.value ?? "" }), {});
       
       return { status: 200 as const, body: { 
         calendarIdInternal: map["CALENDAR_ID_INTERNAL"] || map["CALENDAR_ID"] || "",
@@ -118,7 +120,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: {} };
     }
   },
-  getEvent: async (input: any, c: any) => {
+  getEvent: async (input: HandlerInput, c: HonoContext) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -161,7 +163,7 @@ export const eventHandlers: any = {
       return { status: 404 as const, body: { error: "Database error" } };
     }
   },
-  getAdminEvents: async (input: any, c: any) => {
+  getAdminEvents: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -203,7 +205,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch events" } };
     }
   },
-  adminDetail: async (input: any, c: any) => {
+  adminDetail: async (input: HandlerInput, c: HonoContext) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -241,7 +243,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  saveEvent: async (input: any, c: any) => {
+  saveEvent: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -282,7 +284,32 @@ export const eventHandlers: any = {
       const MAX_RRULE_LENGTH = 200;
       const ALLOWED_RRULE_KEYS = ['FREQ', 'INTERVAL', 'UNTIL', 'COUNT', 'BYDAY', 'BYMONTHDAY', 'BYMONTH', 'BYSETPOS'];
 
-      let instances: any[] = [];
+      let instances: Array<{
+        id: string;
+        title: string;
+        category: string;
+        date_start: string;
+        date_end: string | null;
+        location: string;
+        description: string;
+        cover_image: string;
+        gcal_event_id: string | null;
+        status: string;
+        is_potluck: number;
+        is_volunteer: number;
+        tba_event_key: string | null;
+        published_at: string | null;
+        season_id: number | null;
+        meeting_notes: string | null;
+        recurring_group_id: string | null;
+        rrule: string | null;
+        recurring_exception: number;
+        recurrence_rule: string | null;
+        parent_event_id: string | null;
+        original_start_time: string | null;
+        zulip_stream: string;
+        zulip_topic: string;
+      }> = [];
       if (body.rrule) {
         if (typeof body.rrule !== 'string' || body.rrule.length > MAX_RRULE_LENGTH) {
           return { status: 400 as const, body: { error: "Invalid recurrence rule: exceeds maximum length" } };
@@ -379,12 +406,13 @@ export const eventHandlers: any = {
       triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
 
       return { status: 200 as const, body: { success: true, id: genId } };
-    } catch (e: any) {
+    } catch (e) {
       console.error("[Events:Save] Error", e);
-      return { status: 500 as const, body: { success: false, error: e.message || "Write failed" } };
+      const errorMessage = e instanceof Error ? e.message : "Write failed";
+      return { status: 500 as const, body: { success: false, error: errorMessage } };
     }
   },
-  updateEvent: async (input: any, c: any) => {
+  updateEvent: async (input: HandlerInput, c: HonoContext) => {
     const { params, body } = input;
     const { id } = params;
     try {
@@ -530,7 +558,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
-  deleteEvent: async (input: any, c: any) => {
+  deleteEvent: async (input: HandlerInput, c: HonoContext) => {
     const { params, body } = input;
     const { id } = params;
     try {
@@ -597,7 +625,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Delete failed" } };
     }
   },
-  approveEvent: async (input: any, c: any) => {
+  approveEvent: async (input: HandlerInput, c: HonoContext) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -647,7 +675,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Approval failed" } };
     }
   },
-  rejectEvent: async (input: any, c: any) => {
+  rejectEvent: async (input: HandlerInput, c: HonoContext) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -659,7 +687,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Rejection failed" } };
     }
   },
-  undeleteEvent: async (input: any, c: any) => {
+  undeleteEvent: async (input: HandlerInput, c: HonoContext) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -694,7 +722,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Restore failed" } };
     }
   },
-  purgeEvent: async (input: any, c: any) => {
+  purgeEvent: async (input: HandlerInput, c: HonoContext) => {
     const { params } = input;
     const { id } = params;
     try {
@@ -727,7 +755,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Purge failed" } };
     }
   },
-  syncEvents: async (_input: any, c: any) => {
+  syncEvents: async (_input: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const dbSettings = await getDbSettings(c);
@@ -798,7 +826,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Sync failed" } };
     }
   },
-  getSignups: async (input: any, c: any) => {
+  getSignups: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { params } = input;
       const eventId = params.id;
@@ -851,7 +879,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch signups" } };
     }
   },
-  submitSignup: async (input: any, c: any) => {
+  submitSignup: async (input: HandlerInput, c: HonoContext) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -867,7 +895,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Signup failed" } };
     }
   },
-  deleteMySignup: async (input: any, c: any) => {
+  deleteMySignup: async (input: HandlerInput, c: HonoContext) => {
     const { params } = input;
     try {
       const user = await getSessionUser(c);
@@ -880,7 +908,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Delete failed" } };
     }
   },
-  updateMyAttendance: async (input: any, c: any) => {
+  updateMyAttendance: async (input: HandlerInput, c: HonoContext) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -896,7 +924,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
-  updateUserAttendance: async (input: any, c: any) => {
+  updateUserAttendance: async (input: HandlerInput, c: HonoContext) => {
     const { params, body } = input;
     try {
       const user = await getSessionUser(c);
@@ -912,7 +940,7 @@ export const eventHandlers: any = {
       return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
-  repushEvent: async (input: any, c: any) => {
+  repushEvent: async (input: HandlerInput, c: HonoContext) => {
     const { params, body } = input;
     const user = await getSessionUser(c);
     if (user?.role !== "admin" && user?.role !== "author") return { status: 401 as const, body: { error: "Unauthorized" } };

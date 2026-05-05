@@ -84,34 +84,59 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { success: false } };
     }
   },
-  getSummary: async (_: unknown, c: Context<AppEnv>) => {
+  getPlatformAnalytics: async (_: unknown, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
-      const [topPagesRow, recentViewsRow, totalsRow] = await Promise.all([
-        db.selectFrom("page_analytics")
-          .select(["path", "category", (eb) => eb.fn.count("path").as("views")])
-          .groupBy(["path", "category"])
-          .orderBy("views", "desc")
-          .limit(10)
-          .execute(),
-        db.selectFrom("page_analytics")
-          .select(["path", "category", "user_agent", "referrer", "timestamp"])
-          .orderBy("timestamp", "desc")
-          .limit(20)
-          .execute(),
-        db.selectFrom("page_analytics")
-          .select(["category", (eb) => eb.fn.count("category").as("total")])
-          .groupBy("category")
-          .execute()
+      const [
+        totalViewsData,
+        uniqueVisitorsData,
+        topPagesDataRow,
+        referrersDataRow,
+        recentViewsDataRow,
+        totalsDataRow,
+        activityData,
+      ] = await Promise.all([
+        db.selectFrom("page_analytics").select((eb) => eb.fn.count("path").as("total")).executeTakeFirst(),
+        sql<{ unique: number }>`SELECT COUNT(DISTINCT user_agent) as unique FROM page_analytics`.execute(db).then(r => r.rows[0]),
+        db.selectFrom("page_analytics").select(["path", "category", (eb) => eb.fn.count("path").as("views")]).groupBy(["path", "category"]).orderBy("views", "desc").limit(10).execute(),
+        db.selectFrom("page_analytics").select(["referrer", (eb) => eb.fn.count("referrer").as("visits")]).where("referrer", "!=", "").groupBy("referrer").orderBy("visits", "desc").limit(10).execute(),
+        db.selectFrom("page_analytics").select(["path", "category", "user_agent", "referrer", "timestamp"]).orderBy("timestamp", "desc").limit(20).execute(),
+        db.selectFrom("page_analytics").select(["category", (eb) => eb.fn.count("category").as("total")]).groupBy("category").execute(),
+        sql<{ date: string, pageViews: number }>`
+          SELECT
+            date(timestamp, 'localtime') as date,
+            COUNT(*) as pageViews
+          FROM page_analytics
+          WHERE timestamp >= datetime('now', '-30 days')
+          GROUP BY date(timestamp, 'localtime')
+          ORDER BY date ASC
+        `.execute(db)
       ]);
 
-      const topPages = topPagesRow.map(p => ({
+      const assetsCount = await db.selectFrom("media_tags").select((eb) => eb.fn.count("key").as("total")).executeTakeFirst();
+      const apiCount = await db.selectFrom("usage_metrics").select((eb) => eb.fn.count("id").as("total")).executeTakeFirst().catch(() => ({ total: 0 }));
+      const latencyData = await sql<{ date: string, avg_latency: number }>`
+          SELECT
+            date(timestamp, 'localtime') as date,
+            AVG(latency_ms) as avg_latency
+          FROM usage_metrics
+          WHERE timestamp >= datetime('now', '-30 days')
+          GROUP BY date(timestamp, 'localtime')
+          ORDER BY date ASC
+        `.execute(db).catch(() => ({ rows: [] }));
+
+      const topPages = topPagesDataRow.map(p => ({
         path: String(p.path),
         category: String(p.category),
         views: Number(p.views)
       }));
 
-      const recentViews = recentViewsRow.map(v => ({
+      const topReferrers = referrersDataRow.map(r => ({
+        referrer: String(r.referrer),
+        visits: Number(r.visits),
+      }));
+
+      const recentViews = recentViewsDataRow.map(v => ({
         path: String(v.path),
         category: String(v.category),
         user_agent: String(v.user_agent || ""),
@@ -119,14 +144,42 @@ const analyticsHandlers = {
         timestamp: String(v.timestamp)
       }));
 
-      const totals = totalsRow.map(t => ({
+      const totals = totalsDataRow.map(t => ({
         category: String(t.category),
         total: Number(t.total)
       }));
 
-      return { status: 200 as const, body: { topPages, recentViews, totals } };
-    } catch {
-      return { status: 500 as const, body: { topPages: [], recentViews: [], totals: [] } };
+      const userActivity = activityData.rows?.map(a => ({
+        date: String(a.date),
+        pageViews: Number(a.pageViews),
+      })) || [];
+
+      const latency = latencyData.rows?.map(l => ({
+        date: String(l.date),
+        avg_latency: Number(l.avg_latency)
+      })) || [];
+
+      return {
+        status: 200 as const,
+        body: {
+          totalPageViews: Number(totalViewsData?.total || 0),
+          uniqueVisitors: Number(uniqueVisitorsData?.unique || 0),
+          topPages,
+          topReferrers,
+          recentViews,
+          totals,
+          userActivity,
+          latency,
+          resourceUsage: {
+            totalAssets: Number(assetsCount?.total || 0),
+            totalStorage: 0,
+            apiCalls: Number(apiCount?.total || 0),
+          }
+        }
+      };
+    } catch (err) {
+      console.error("[Analytics] Platform metrics error:", err);
+      return { status: 500 as const, body: { error: "Failed to fetch platform metrics" } };
     }
   },
   getRosterStats: async (_: unknown, c: Context<AppEnv>) => {
@@ -247,100 +300,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch stats" } };
     }
   },
-  getUsageMetrics: async (_: unknown, c: Context<AppEnv>) => {
-    const db = c.get("db") as Kysely<DB>;
-    try {
-      // Page views summary
-      const [totalViews, uniqueVisitors, topPagesData, referrersData, activityData] = await Promise.all([
-        db.selectFrom("page_analytics")
-          .select((eb) => eb.fn.count("path").as("total"))
-          .executeTakeFirst(),
-        sql<{ unique: number }>`SELECT COUNT(DISTINCT user_agent) as unique FROM page_analytics`.execute(db).then(r => r.rows[0]),
-        db.selectFrom("page_analytics")
-          .select(["path", (eb) => eb.fn.count("path").as("views")])
-          .groupBy("path")
-          .orderBy("views", "desc")
-          .limit(10)
-          .execute(),
-        db.selectFrom("page_analytics")
-          .select(["referrer", (eb) => eb.fn.count("referrer").as("visits")])
-          .where("referrer", "!=", "")
-          .groupBy("referrer")
-          .orderBy("visits", "desc")
-          .limit(10)
-          .execute(),
-        // Last 30 days activity
-        sql<{ date: string, pageViews: number, uniqueVisitors: number }>`
-          SELECT
-            date(timestamp, 'localtime') as date,
-            COUNT(*) as pageViews,
-            COUNT(DISTINCT user_agent) as uniqueVisitors
-          FROM page_analytics
-          WHERE timestamp >= datetime('now', '-30 days')
-          GROUP BY date(timestamp, 'localtime')
-          ORDER BY date DESC
-          LIMIT 30
-        `.execute(db)
-      ]);
 
-      // Resource usage from media tags (R2 assets tracked in media_tags)
-      const assetsCount = await db.selectFrom("media_tags")
-        .select((eb) => eb.fn.count("key").as("total"))
-        .executeTakeFirst();
-
-      const [apiCount, latencyData] = await Promise.all([
-        // Gracefully handle if usage_metrics table doesn't exist yet
-        db.selectFrom("usage_metrics")
-          .select((eb) => eb.fn.count("id").as("total"))
-          .executeTakeFirst()
-          .catch(() => ({ total: 0 })),
-        sql<{ date: string, avg_latency: number }>`
-          SELECT
-            date(timestamp, 'localtime') as date,
-            AVG(latency_ms) as avg_latency
-          FROM usage_metrics
-          WHERE timestamp >= datetime('now', '-30 days')
-          GROUP BY date(timestamp, 'localtime')
-          ORDER BY date ASC
-        `.execute(db)
-          .catch(() => ({ rows: [] }))
-      ]);
-
-      const summary = {
-        totalPageViews: Number(totalViews?.total || 0),
-        uniqueVisitors: Number(uniqueVisitors?.unique || 0),
-        avgSessionDuration: 0, // Placeholder - requires session tracking
-        topPages: topPagesData.map(p => ({
-          path: String(p.path),
-          views: Number(p.views),
-          uniqueVisitors: 0, // Simplified - would require additional query
-        })),
-        topReferrers: referrersData.map(r => ({
-          referrer: String(r.referrer),
-          visits: Number(r.visits),
-        })),
-        userActivity: activityData.rows?.map(a => ({
-          date: String(a.date),
-          pageViews: Number(a.pageViews),
-          uniqueVisitors: Number(a.uniqueVisitors),
-        })) || [],
-        latency: latencyData.rows?.map(l => ({
-          date: String(l.date),
-          avg_latency: Number(l.avg_latency)
-        })) || [],
-        resourceUsage: {
-          totalAssets: Number(assetsCount?.total || 0),
-          totalStorage: 0, // R2 storage would require external API
-          apiCalls: Number(apiCount?.total || 0),
-        },
-      };
-
-      return { status: 200 as const, body: { summary } };
-    } catch (err) {
-      console.error("[Analytics] Usage metrics error:", err);
-      return { status: 500 as const, body: { error: "Failed to fetch usage metrics" } };
-    }
-  },
   search: async ({ query }: { query: { q: string } }, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     const { q } = query;
@@ -373,9 +333,8 @@ const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as a
 
 // CR-01 FIX: Apply authentication to all analytics routes
 // Public routes (page view tracking, search) have rate limiting only
-analyticsRouter.use("/summary", ensureAuth);
+analyticsRouter.use("/platform-analytics", ensureAuth);
 analyticsRouter.use("/stats", ensureAuth);
-analyticsRouter.use("/usage-metrics", ensureAuth);
 analyticsRouter.use("/roster-stats", ensureAuth);
 analyticsRouter.use("/leaderboard", ensureAuth);
 

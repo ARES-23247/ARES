@@ -27,7 +27,7 @@
 
 **Goal**: Eliminate 983 `@typescript-eslint/no-explicit-any` violations through shared type infrastructure and systematic fixes.
 
-- [ ] **Phase 27: Type Foundation** — Create `shared/types/` with core generics and handler types
+- [x] **Phase 27: Type Foundation** — Create `shared/types/` with core generics and handler types (completed 2026-05-05)
 - [ ] **Phase 28: High-Impact Handlers** — Fix top 4 violation files (~192 any, ~60% of total)
 - [ ] **Phase 29: Contract Inference** — Full ts-rest contract inference with Zod boundaries
 - [ ] **Phase 30: Test Types** — Mock factories and typed test helpers
@@ -59,7 +59,7 @@
 
 Plans:
 - [x] 27-01-PLAN.md — Create shared/types/ directory with D1Row<T>, HonoContext, handler types, contracts, utility, and barrel export (COMPLETED 2026-05-05)
-- [ ] 27-02-PLAN.md — Import HandlerInput/HandlerOutput into docs.ts and sponsors.ts to demonstrate type adoption pattern
+- [x] 27-02-PLAN.md — Import HandlerInput/HandlerOutput into docs.ts and sponsors.ts to demonstrate type adoption pattern (COMPLETED 2026-05-05)
 
 ---
 
@@ -78,7 +78,13 @@ Plans:
 4. `functions/api/routes/sponsors.ts` reduced from 31 to 0 violations
 5. All 4 files compile with strict TypeScript and tests pass unchanged
 
-**Plans**: TBD
+**Plans**: 1/1 planned
+
+**Wave Structure**:
+- Wave 1: 28-01 (High-Impact Handlers) — autonomous, depends on 27-01, 27-02
+
+Plans:
+- [ ] 28-01-PLAN.md — Eliminate all `any` violations in events/handlers.ts, docs.ts, comments.ts, and sponsors.ts using HandlerInput, HonoContext, and D1Row types from Phase 27
 
 ---
 

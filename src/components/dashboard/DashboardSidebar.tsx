@@ -1,7 +1,7 @@
 import { Suspense, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, History, Activity,
+  PenTool, Calendar, Book, Image, AppWindow, PlusCircle, Edit3, Settings, History,
   User, Users, Utensils, BarChart3, Gem, Target, Trophy, Menu, X, Folders, Award, MapPin, MessageSquare, Radio, LayoutDashboard, LogOut, ShieldAlert, Mail, DollarSign, Package, Sparkles, Crosshair, Puzzle, Share2,
   type LucideIcon
 } from "lucide-react";
@@ -259,8 +259,7 @@ export default function DashboardSidebar({
                 {isAdmin && <NavButton tab="finance" icon={DollarSign} label="Finance & Budget" currentPath={location.pathname} />}
                 <NavButton tab="sponsors" icon={Gem} label="Sponsors & Funding" currentPath={location.pathname} />
                 {isAdmin && <NavButton tab="sponsor_tokens" icon={Gem} label="Sponsor ROI Tokens" currentPath={location.pathname} />}
-                <NavButton tab="analytics" icon={BarChart3} label="Analytics" currentPath={location.pathname} />
-                {isAdmin && <NavButton tab="metrics" icon={Activity} label="Usage Metrics" currentPath={location.pathname} />}
+                <NavButton tab="analytics" icon={BarChart3} label="Platform Analytics" currentPath={location.pathname} />
               </div>
             </div>
           )}
