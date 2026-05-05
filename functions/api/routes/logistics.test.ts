@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context } from "hono";
+import { MockKysely, TestEnv } from "~/src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
 
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
+    ensureAdmin: async (_c: Context<TestEnv>, next: () => Promise<void>) => next(),
   };
 });
 
@@ -17,8 +19,8 @@ vi.mock("../../utils/crypto", () => ({
 import logisticsRouter from "./logistics";
 
 describe("Hono Backend - /logistics Router", () => {
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
   let env: Record<string, unknown>;
 
   beforeEach(() => {
@@ -37,8 +39,8 @@ describe("Hono Backend - /logistics Router", () => {
       ENCRYPTION_SECRET: "test-secret"
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("db", mockDb);
       await next();
     });
@@ -54,7 +56,12 @@ describe("Hono Backend - /logistics Router", () => {
 
     const res = await testApp.request("/admin/summary", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as {
+      totalCount: number;
+      memberCounts: Record<string, number>;
+      dietary: Record<string, number>;
+      tshirts: Record<string, number>;
+    };
     expect(body.totalCount).toBe(3);
     expect(body.memberCounts).toEqual({ student: 2, mentor: 1 });
     expect(body.dietary).toEqual({ "Vegan": 2, "Nut Allergy": 1 });
@@ -70,7 +77,9 @@ describe("Hono Backend - /logistics Router", () => {
 
     const res = await testApp.request("/admin/export-emails", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as {
+      users: Array<{ name: string; email: string; role: string; emergencyName: string; emergencyPhone: string }>;
+    };
     expect(body.users).toHaveLength(2);
     expect(body.users[0]).toEqual({ name: "Alice", email: "alice@test.com", role: "student", emergencyName: "—", emergencyPhone: "—" });
     expect(body.users[1]).toEqual({ name: "Bob", email: "bob@test.com", role: "mentor", emergencyName: "—", emergencyPhone: "—" });
