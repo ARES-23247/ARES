@@ -5,7 +5,6 @@ import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { judgeContract } from "../../../shared/schemas/contracts/judgeContract";
 import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction } from "../middleware";
-import type { AppRouteInput } from "../../../shared/types/contracts";
 
 const s = initServer<AppEnv>();
 export const judgesRouter = new Hono<AppEnv>();
@@ -192,10 +191,10 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500 as const, body: { error: "Create failed" } };
     }
   },
-    deleteCode: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+    deleteCode: async (input, c) => {
     const db = c.get("db") as Kysely<DB>;
     try {
-      await db.deleteFrom("judge_access_codes").where("id", "=", params.id).execute();
+      await db.deleteFrom("judge_access_codes").where("id", "=", input.params.id).execute();
 
       // WR-08: Invalidate cache when content changes
       portfolioCacheVersion++;
@@ -206,9 +205,20 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-} as any);
+});
 
 judgesRouter.use("/admin/*", ensureAdmin);
-createHonoEndpoints(judgeContract, judgesTsRestRouter, judgesRouter);
+createHonoEndpoints(
+  judgeContract,
+  judgesTsRestRouter,
+  judgesRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default judgesRouter;
