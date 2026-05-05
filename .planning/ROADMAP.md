@@ -1,40 +1,26 @@
-﻿# Milestone Roadmap
+# Milestone Roadmap
 
 ## Current Overview
 
 - 🎯 **Goal:** TBD
 - 🛑 **Blockers:** None
-- 🚧 **v6.5** — Zulip Sync & Social Media Manager Formalization (Active)
-- 📋 **v6.6** — Next Iteration (Planning)
+- 🚧 **v6.6** — Next Iteration (Active)
 
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 17 | v6.5 | 1/1 | Complete | 2026-05-04 |
-| 18 | v6.5 | 1/1 | Complete | 2026-05-04 |
-| 19 | v6.5 | 1/1 | Complete | 2026-05-04 |
-| 20 | v6.5 | 1/1 | Complete | 2026-05-04 |
+| - | - | - | - | - |
 
 ## Phase Details
 
-### Phase 17: Zulip Account Sync Investigation & Fix
-**Goal:** Investigate and fix Zulip account email synchronization issues.
-**Status:** Complete
-**Commits:** `fe4768a`
+No active phases for v6.6 yet. Run `/gsd-new-milestone` to begin.
 
-### Phase 18: Social Media Manager Documentation
-**Goal:** Formally document the Social Media Manager architecture.
-**Status:** Complete
-**Commits:** (documentation only)
+---
 
-### Phase 19: Sim Registry Refactoring
-**Goal:** Reorganize all sims into subfolder structure with automated registration.
-**Status:** Complete
-**Commits:** `9cb94af`, `7bcaaa0`
-**Summary:** Moved 21 sims to subfolders, created auto-generation script, added admin UI at `/dashboard/sims`
+### Archived Milestones
 
-### Phase 20: v6.5 Infrastructure Stabilization & PWA Audit
-**Goal:** Stabilize PWA rendering, resolve accessibility regressions, fix Tiptap JSON AST rendering in Docs, and remove unsupported edge functions.
-**Status:** Complete
-**Commits:** `dbc4cb1`, `c0d40f5`, `05c858c`
+- [**v6.5** — Zulip Sync & Social Media Formalization](./milestones/v6.5-ROADMAP.md) (Completed: 2026-05-04)
+- [**v6.4** — Web App Architecture](./milestones/v6.4-ROADMAP.md) (Completed: 2026-04-20)
+- [**v6.2** — Frontend Upgrades](./milestones/v6.2-ROADMAP.md) (Completed: 2026-04-05)
+- [**v6.0** — Legacy Rewrite](./milestones/v6.0-ROADMAP.md) (Completed: 2026-03-15)

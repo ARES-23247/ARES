@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-milestone: v6.5
-milestone_name: Zulip Sync & Social Media Manager Formalization
-status: active
-last_updated: "2026-05-04T20:02:00.000Z"
+milestone: v6.6
+milestone_name: TBD
+status: planning
+last_updated: "2026-05-04T21:14:00.000Z"
 last_activity: 2026-05-04
 progress:
-  total_phases: 2
+  total_phases: 0
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
