@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import SEO from "../components/SEO";
 import { GreekMeander } from "../components/GreekMeander";
+import { sanitizeHtml } from "../utils/security";
 
 export default function Home() {
   return (
@@ -88,7 +89,7 @@ export default function Home() {
             ].map((card) => (
               <div key={card.title} className="bg-white/5 border border-white/10 hero-card p-10 flex flex-col h-full group backdrop-blur-sm hover:border-ares-red/30 transition-colors">
                 <h3 className="text-white text-2xl font-bold mb-6 font-heading group-hover:text-ares-gold transition-colors">{card.title}</h3>
-                <p className="text-marble/70 text-base leading-relaxed mb-8 flex-grow" dangerouslySetInnerHTML={{ __html: card.body }} />
+                <p className="text-marble/70 text-base leading-relaxed mb-8 flex-grow" dangerouslySetInnerHTML={{ __html: sanitizeHtml(card.body) }} />
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                   <Link to={card.link} className="text-white font-bold text-sm tracking-widest uppercase hover:translate-x-2 transition-transform inline-flex items-center gap-2">
                     <span className="text-white">{card.linkText}</span> <ArrowRight size={16} className="text-ares-red" />
