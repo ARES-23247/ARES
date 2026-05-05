@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
 import { mockExecutionContext, flushWaitUntil } from "../../../src/test/utils";
 import tasksRouter from "./tasks";
 
@@ -24,8 +25,8 @@ import { getSessionUser } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
 describe("Hono Backend - /tasks Router", () => {
-  let mockDb: ReturnType<typeof createMockDb>;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
 
   function createMockDb() {
     return {
@@ -56,8 +57,8 @@ describe("Hono Backend - /tasks Router", () => {
 
     mockDb = createMockDb();
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       c.set("executionCtx", mockExecutionContext);
       c.env.DEV_BYPASS = "true";
@@ -67,7 +68,7 @@ describe("Hono Backend - /tasks Router", () => {
 
     // Wrap request method to always include DEV_BYPASS in env
     const originalRequest = testApp.request.bind(testApp);
-    testApp.request = async (input: string | URL | Request, init?: RequestInit, env?: Record<string, any>, execCtx?: ExecutionContext) => {
+    testApp.request = async (input: string | URL | Request, init?: RequestInit, env?: Record<string, unknown>, execCtx?: ExecutionContext) => {
       return originalRequest(input, init, { ...env, DEV_BYPASS: "true" }, execCtx);
     };
   });
