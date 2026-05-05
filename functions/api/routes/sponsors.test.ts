@@ -3,13 +3,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import type { MockKysely, TestEnv } from "../../../src/test/types";
+import { createMockSponsor } from "../../../src/test/factories/logisticsFactory";
 
 // Mock middleware
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
-    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
+    ensureAdmin: async (_c: unknown, next?: () => Promise<void>) => {
+      if (next) return next();
+      return Promise.resolve();
+    },
     getSessionUser: vi.fn().mockResolvedValue({ id: "1", email: "admin@test.com", role: "admin" }),
   };
 });
@@ -17,10 +22,8 @@ vi.mock("../middleware", async (importOriginal) => {
 import sponsorsRouter from "./sponsors";
 
 describe("Hono Backend - /sponsors Router", () => {
-  
-   
-  let mockDb: any;
-  let testApp: Hono<any>;
+  let mockDb: MockKysely;
+  let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -55,8 +58,8 @@ describe("Hono Backend - /sponsors Router", () => {
       }),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       await next();
     });
