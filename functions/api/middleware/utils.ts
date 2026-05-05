@@ -48,6 +48,7 @@ export type Bindings = {
   TOA_API_KEY?: string;
   FTC_EVENTS_USERNAME?: string;
   FTC_EVENTS_API_KEY?: string;
+  AUDIT_LOG_RETENTION_DAYS?: string;
 };
 
 export type Variables = {
