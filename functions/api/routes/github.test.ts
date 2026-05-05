@@ -2,13 +2,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
+import { TestEnv } from "../../../src/test/types";
 
 vi.mock("../middleware", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../middleware")>();
   return {
     ...actual,
     getDbSettings: vi.fn().mockResolvedValue({}),
-    ensureAdmin: async (_c: unknown, next: any) => next(),
+    ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
     getSocialConfig: vi.fn().mockResolvedValue({
       GITHUB_PAT: "ghp_test123",
       GITHUB_PROJECT_ID: "PVT_test123",
@@ -38,13 +39,13 @@ import githubRouter from "./github";
 
 describe("Hono Backend - /github Router", () => {
   
-  let testApp: Hono<any>;
+  let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    testApp = new Hono<any>();
-    testApp.onError((err, c: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.onError((err, c) => {
       console.error("Test App Error:", err);
       return c.json({ error: err.message }, 500);
     });
