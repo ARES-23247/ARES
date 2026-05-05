@@ -16,6 +16,17 @@ outreachRouter.use("/admin", ensureAdmin);
 outreachRouter.use("/admin/*", ensureAdmin);
 outreachRouter.use("/admin", rateLimitMiddleware(15, 60));
 
-createHonoEndpoints(outreachContract, outreachTsRestRouter, outreachRouter);
+createHonoEndpoints(
+  outreachContract,
+  outreachTsRestRouter,
+  outreachRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default outreachRouter;

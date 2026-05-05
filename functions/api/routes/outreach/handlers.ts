@@ -44,8 +44,8 @@ async function fetchVolunteerEvents(db: Kysely<DB>, existingEventIds: string[]) 
   }
 }
 
-export const outreachHandlers: any = {
-  list: async (_input: any, c: any) => {
+export const outreachHandlers = {
+  list: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("outreach_logs")
@@ -91,7 +91,7 @@ export const outreachHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-  adminList: async (_input: any, c: any) => {
+  adminList: async (_input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("outreach_logs")
@@ -137,7 +137,7 @@ export const outreachHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-  save: async (input: any, c: any) => {
+  save: async (input, c) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -210,7 +210,7 @@ export const outreachHandlers: any = {
       return { status: 500 as const, body: { error: "Save failed" } };
     }
   },
-  delete: async (input: any, c: any) => {
+  delete: async (input, c) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
