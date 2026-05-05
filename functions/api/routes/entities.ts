@@ -9,10 +9,10 @@ import { AppEnv, ensureAuth, logAuditAction } from "../middleware";
 export const entitiesRouter = new Hono<AppEnv>();
 
 const entityHandlers = {
-  getLinks: async ({ query }: any, c: Context<AppEnv>) => {
+  getLinks: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      const { type, id } = query;
+      const { type, id } = input.query;
 
       const rawLinks = await db.selectFrom("entity_links")
         .select(["id", "source_type", "source_id", "target_type", "target_id", "link_type"])

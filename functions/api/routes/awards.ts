@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
@@ -13,10 +12,10 @@ const s = initServer<AppEnv>();
 export const awardsRouter = new Hono<AppEnv>();
 
 const awardsTsRestRouter = s.router(awardContract, {
-  getAwards: async ({ query }: { query: { limit?: number; offset?: number } }, c: Context<AppEnv>) => {
+  getAwards: async (input, c) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
-      const { limit = 50, offset = 0 } = query;
+      const { limit = 50, offset = 0 } = input.query;
       const results = await db.selectFrom("awards")
         .select(["id", "title", "date", "event_name", "description", "icon_type as image_url", "season_id", "created_at"])
         .where("is_deleted", "=", 0)
@@ -44,10 +43,10 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to fetch awards" } };
     }
   },
-  saveAward: async ({ body }: { body: { id?: string; title: string; year: number; event_name?: string | null; description?: string | null; image_url?: string | null; season_id?: number | null } }, c: Context<AppEnv>) => {
+  saveAward: async (input, c) => {
     try {
       // Validate input against schema
-      const validationResult = saveAwardSchema.safeParse(body);
+      const validationResult = saveAwardSchema.safeParse(input.body);
       if (!validationResult.success) {
         return { status: 400 as const, body: { error: "Invalid input", details: validationResult.error.flatten() } };
       }
@@ -140,25 +139,36 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to save award", success: false } };
     }
   },
-  deleteAward: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
+  deleteAward: async (input, c) => {
 
     try {
                   const db = c.get("db") as Kysely<DB>;
-      const numericId = Number(params.id);
+      const numericId = Number(input.params.id);
       if (isNaN(numericId) || numericId <= 0) {
         return { status: 400 as const, body: { error: "Invalid award ID", success: false } };
       }
       await db.updateTable("awards").set({ is_deleted: 1 }).where("id", "=", numericId).execute();
-      c.executionCtx.waitUntil(logAuditAction(c, "award_deleted", "awards", params.id, "Award soft-deleted"));
+      c.executionCtx.waitUntil(logAuditAction(c, "award_deleted", "awards", input.params.id, "Award soft-deleted"));
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("DELETE_AWARD ERROR", e);
       return { status: 500 as const, body: { error: "Failed to delete award", success: false } };
     }
   },
-} as any);
+});
 
 awardsRouter.use("/admin/*", ensureAdmin);
-createHonoEndpoints(awardContract, awardsTsRestRouter, awardsRouter);
+createHonoEndpoints(
+  awardContract,
+  awardsTsRestRouter,
+  awardsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default awardsRouter;

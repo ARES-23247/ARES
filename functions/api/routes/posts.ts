@@ -12,14 +12,15 @@ import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { emitNotification, notifyByRole } from "../../utils/notifications";
 import { triggerBackgroundReindex } from "./ai/autoReindex";
-import { 
-  approvePost, 
-  getPostHistory, 
+import {
+  approvePost,
+  getPostHistory,
   restorePostFromHistory,
   createShadowRevision,
   captureHistory,
   pruneHistory
 } from "../../utils/postHistory";
+import type { AppRouteInput } from "../../../shared/types/contracts";
 
 const s = initServer<AppEnv>();
 
@@ -35,12 +36,11 @@ const sanitizeFtsQuery = (query: string): string => {
   return `"${cleanQ.replace(/"/g, '""')}*`;
 };
 
-const postTsRestRouterObj: any = {
-  getPosts: async (input: { query: z.infer<typeof postContract.getPosts.query> }, c: Context<AppEnv>) => {
+const postTsRestRouterObj = {
+  getPosts: async (input, c) => {
     try {
-      const { query } = input;
       const db = c.get("db") as Kysely<DB>;
-      const { limit = 10, offset = 0, q } = query;
+      const { limit = 10, offset = 0, q } = input.query;
 
       if (q) {
         // Sanitize FTS query to prevent SQL injection via SQLite FTS syntax
@@ -124,9 +124,8 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Failed to fetch posts" } };
     }
   },
-  getPost: async (input: { params: z.infer<typeof postContract.getPost.pathParams> }, c: Context<AppEnv>) => {
-    const { params } = input;
-    const { slug } = params;
+  getPost: async (input, c) => {
+    const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -184,11 +183,10 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  getAdminPosts: async (input: { query: z.infer<typeof postContract.getAdminPosts.query> }, c: Context<AppEnv>) => {
+  getAdminPosts: async (input, c) => {
     try {
-      const { query } = input;
       const db = c.get("db") as Kysely<DB>;
-      const { limit = 50, offset = 0 } = query;
+      const { limit = 50, offset = 0 } = input.query;
       
       let results;
       try {
@@ -224,9 +222,8 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Failed to fetch posts" } };
     }
   },
-  getAdminPost: async (input: { params: z.infer<typeof postContract.getAdminPost.pathParams> }, c: Context<AppEnv>) => {
-    const { params } = input;
-    const { slug } = params;
+  getAdminPost: async (input, c) => {
+    const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("posts")
