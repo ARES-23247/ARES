@@ -42,7 +42,8 @@ aiRouter.get("/status", ensureAdmin, async (c) => {
 // ── Liveblocks AI Copilot Endpoint ────────────────────────────────────────
 // Premium: uses z.ai (Claude) if Z_AI_API_KEY is set, otherwise falls back to Workers AI (Llama 3.1)
 
-aiRouter.post("/liveblocks-copilot", async (c) => {
+// WR-07: Add rate limiting to prevent abuse of AI endpoints
+aiRouter.post("/liveblocks-copilot", persistentRateLimitMiddleware(30, 60), async (c) => {
   const body = await c.req.json();
   const { documentContext, action, imageUrl } = body;
 
@@ -200,7 +201,7 @@ aiRouter.post("/liveblocks-copilot", async (c) => {
 });
 
 // ── Simulation Playground IDE Endpoint ──────────────────────────────────
-aiRouter.post("/sim-playground", async (c) => {
+aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c) => {
   const body = await c.req.json();
   const { systemPrompt, messages, imageUrl } = body;
 
@@ -366,7 +367,7 @@ aiRouter.post("/sim-playground", async (c) => {
 });
 
 // ── Editor AI Chat Endpoint ──────────────────────────────────────────────
-aiRouter.post("/editor-chat", async (c) => {
+aiRouter.post("/editor-chat", persistentRateLimitMiddleware(30, 60), async (c) => {
   const body = await c.req.json();
   const { systemPrompt, messages, editorContent } = body;
 
