@@ -4,8 +4,9 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
-import type { HandlerInput, HonoContext } from "@shared/types/api";
-import type { D1Row, SelectableRow, InsertableRow } from "@shared/types/database";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
+import type { SelectableRow } from "@shared/types/database";
 
 const s = initServer<AppEnv>();
 export const sponsorsRouter = new Hono<AppEnv>();
@@ -48,7 +49,7 @@ type SponsorTokenResult = {
 };
 
 const sponsorHandlers = {
-  getSponsors: async (_: HandlerInput, c: HonoContext) => {
+  getSponsors: async (_input, c: HonoContext) => {
             try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -70,10 +71,10 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch sponsors" } };
     }
   },
-  getRoi: async ({ params }: HandlerInput, c: HonoContext) => {
+  getRoi: async (input, c: HonoContext) => {
     try {
       const db = c.get("db");
-      const { token } = params;
+      const { token } = input.params;
       const tokens = await db.selectFrom("sponsor_tokens")
         .select("sponsor_id")
         .where("token", "=", token)
@@ -115,7 +116,7 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch ROI" } };
     }
   },
-  adminList: async (_: HandlerInput, c: HonoContext) => {
+  adminList: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -137,10 +138,10 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch sponsors" } };
     }
   },
-  saveSponsor: async ({ body }: HandlerInput<SponsorSaveBody>, c: HonoContext) => {
+  saveSponsor: async (input, c: HonoContext) => {
     try {
       const db = c.get("db");
-      const { id, name, tier, logo_url, website_url, is_active } = body;
+      const { id, name, tier, logo_url, website_url, is_active } = input.body;
 
       if (!name) {
         return { status: 400 as const, body: { error: "name is required" } };
@@ -173,18 +174,19 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to save sponsor" } };
     }
   },
-  deleteSponsor: async ({ params }: HandlerInput, c: HonoContext) => {
+  deleteSponsor: async (input, c: HonoContext) => {
     try {
       const db = c.get("db");
-      await db.updateTable("sponsors").set({ is_active: 0 }).where("id", "=", params.id).execute();
-      c.executionCtx.waitUntil(logAuditAction(c, "DEACTIVATE_SPONSOR", "sponsors", params.id, `Deactivated sponsor ${params.id}`));
+      const { id } = input.params;
+      await db.updateTable("sponsors").set({ is_active: 0 }).where("id", "=", id).execute();
+      c.executionCtx.waitUntil(logAuditAction(c, "DEACTIVATE_SPONSOR", "sponsors", id, `Deactivated sponsor ${id}`));
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Sponsors:Delete] Error", e);
       return { status: 500 as const, body: { error: "Failed to deactivate sponsor" } };
     }
   },
-  getAdminTokens: async (_: HandlerInput, c: HonoContext) => {
+  getAdminTokens: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsor_tokens as t")
@@ -206,10 +208,10 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch tokens" } };
     }
   },
-  generateToken: async ({ body }: HandlerInput<SponsorTokenBody>, c: HonoContext) => {
+  generateToken: async (input, c: HonoContext) => {
     try {
       const db = c.get("db");
-      const { sponsor_id } = body;
+      const { sponsor_id } = input.body;
 
       if (!sponsor_id) {
         return { status: 400 as const, body: { error: "sponsor_id is required" } };
@@ -233,7 +235,7 @@ const sponsorHandlers = {
   },
 };
 
-const sponsorTsRestRouter = s.router(sponsorContract, sponsorHandlers as any);
+const sponsorTsRestRouter = s.router(sponsorContract, sponsorHandlers);
 
 // WR-12: Add rate limiting to public sponsor endpoint to prevent scraping
 sponsorsRouter.use("*", rateLimitMiddleware(15, 60));
@@ -241,5 +243,16 @@ sponsorsRouter.use("*", rateLimitMiddleware(15, 60));
 // WR-01 FIX: Standardize on /admin/* pattern (remove redundant /admin patterns)
 sponsorsRouter.use("/admin/*", ensureAdmin);
 
-createHonoEndpoints(sponsorContract, sponsorTsRestRouter, sponsorsRouter);
+createHonoEndpoints(
+  sponsorContract,
+  sponsorTsRestRouter,
+  sponsorsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 export default sponsorsRouter;

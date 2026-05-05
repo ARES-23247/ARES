@@ -1,15 +1,17 @@
 import { AppEnv, ensureAdmin } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { logisticsContract } from "../../../shared/schemas/contracts/logisticsContract";
 import { decrypt } from "../../utils/crypto";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 const s = initServer<AppEnv>();
 const logisticsRouter = new Hono<AppEnv>();
 
 const logisticsHandlers = {
-  getSummary: async (_: any, c: Context<AppEnv>) => {
+  getSummary: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
 
     try {
@@ -53,7 +55,7 @@ const logisticsHandlers = {
       return { status: 500 as const, body: { error: "Logistics fetch failed" } as any };
     }
   },
-  exportEmails: async (_: any, c: Context<AppEnv>) => {
+  exportEmails: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     const secret = c.env.ENCRYPTION_SECRET;
 
@@ -104,9 +106,20 @@ const logisticsHandlers = {
   },
 };
 
-const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers as any);
+const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers);
 
 logisticsRouter.use("/admin/*", ensureAdmin);
-createHonoEndpoints(logisticsContract, logisticsTsRestRouter, logisticsRouter);
+createHonoEndpoints(
+  logisticsContract,
+  logisticsTsRestRouter,
+  logisticsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default logisticsRouter;

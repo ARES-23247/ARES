@@ -105,7 +105,7 @@ export function useAcademy(slug: string | undefined) {
 
   useEffect(() => {
     if (currentDoc) {
-      trackPageView(`/academy/${currentDoc.slug}`, 'academy');
+      trackPageView(`/academy/${currentDoc.slug}`, 'doc');
     }
   }, [currentDoc]);
 

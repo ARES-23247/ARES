@@ -748,8 +748,8 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Reject failed" } };
     }
   },
-    undeleteDoc: async ({ params }: HandlerInput, c: HonoContext) => {
-    const { slug } = params;
+    undeleteDoc: async (input, c: HonoContext) => {
+    const { slug } = input.params;
             try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("docs").set({ is_deleted: 0, status: "draft" }).where("slug", "=", slug).execute();
@@ -759,8 +759,8 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Undelete failed" } };
     }
   },
-    purgeDoc: async ({ params }: HandlerInput, c: HonoContext) => {
-    const { slug } = params;
+    purgeDoc: async (input, c: HonoContext) => {
+    const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
       
@@ -790,7 +790,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Purge failed" } };
     }
   },
-} as any);
+});
 
 
 
@@ -817,5 +817,16 @@ adminPrivilegedPaths.forEach(path => {
   docsRouter.use(path, ensureAdmin);
 });
 
-createHonoEndpoints(docContract, docTsRestRouter, docsRouter);
+createHonoEndpoints(
+  docContract,
+  docTsRestRouter,
+  docsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 export default docsRouter;
