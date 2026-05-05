@@ -4,6 +4,13 @@ import { X, Calendar, MapPin, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../../api/client";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+
+interface LocationRow {
+  id: string;
+  name: string;
+  address: string;
+}
 
 interface QuickAddEventModalProps {
   isOpen: boolean;
@@ -17,6 +24,7 @@ interface FormData {
   dateStart: string;
   dateEnd: string;
   location: string;
+  customLocation: string;
   category: "internal" | "outreach" | "external";
 }
 
@@ -25,6 +33,7 @@ const DEFAULT_FORM_DATA: FormData = {
   dateStart: "",
   dateEnd: "",
   location: "",
+  customLocation: "",
   category: "internal",
 };
 
@@ -39,6 +48,24 @@ export function QuickAddEventModal({
   const [formData, setFormData] = useState<FormData>(DEFAULT_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Fetch locations from registry
+  const { data: locations = [] } = useQuery<LocationRow[]>({
+    queryKey: ["locations"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/locations");
+        if (res.ok) {
+          const data = (await res.json()) as { locations?: LocationRow[] };
+          return data.locations || [];
+        }
+        return [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   // Initialize form with selected date when modal opens or date changes
   useEffect(() => {
@@ -89,12 +116,17 @@ export function QuickAddEventModal({
     setIsSubmitting(true);
 
     try {
+      // Use custom location if "CUSTOM" is selected, otherwise use the selected location
+      const locationValue = formData.location === "CUSTOM"
+        ? formData.customLocation
+        : formData.location;
+
       const result = await api.events.saveEvent.mutate({
         body: {
           title: formData.title,
           dateStart: formData.dateStart,
           dateEnd: formData.dateEnd || undefined,
-          location: formData.location || undefined,
+          location: locationValue || undefined,
           category: formData.category,
           description: "",
           isDraft: false,
@@ -251,18 +283,42 @@ export function QuickAddEventModal({
 
               {/* Location */}
               <div>
-                <label htmlFor="quick-event-location" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <MapPin size={14} />
-                  Location
+                <label htmlFor="quick-event-location" className="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <MapPin size={14} />
+                    Location
+                  </span>
+                  <span className="text-xs text-white/60 font-normal normal-case">Pick from registry</span>
                 </label>
-                <input
-                  id="quick-event-location"
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => updateField("location", e.target.value)}
-                  placeholder="e.g., Robotics Lab, Community Center"
-                  className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all"
-                />
+                <div className="relative group">
+                  <select
+                    id="quick-event-location"
+                    value={formData.location}
+                    onChange={(e) => updateField("location", e.target.value)}
+                    className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all appearance-none pr-10"
+                  >
+                    <option value="">-- Select a Venue --</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.name}>
+                        {loc.name} ({loc.address})
+                      </option>
+                    ))}
+                    <option value="CUSTOM">--- Manual Entry / New Venue ---</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/60 group-hover:text-ares-red transition-colors">
+                    <MapPin size={16} />
+                  </div>
+                </div>
+                {formData.location === "CUSTOM" && (
+                  <input
+                    id="quick-event-custom-location"
+                    type="text"
+                    value={formData.customLocation}
+                    onChange={(e) => updateField("customLocation", e.target.value)}
+                    placeholder="Enter custom location..."
+                    className="mt-2 w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all"
+                  />
+                )}
               </div>
 
               {/* Actions */}
