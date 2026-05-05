@@ -117,7 +117,18 @@ mediaRouter.delete("/admin/:key{.+$}", async (c) => {
   }
 });
 
-createHonoEndpoints(mediaContract, mediaTsRestRouter, mediaRouter);
+createHonoEndpoints(
+  mediaContract,
+  mediaTsRestRouter,
+  mediaRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 // GET /media/:key — Serve raw object from R2 (Must be after createHonoEndpoints to avoid catching /admin)
 mediaRouter.get("/:key{.+$}", async (c) => {
