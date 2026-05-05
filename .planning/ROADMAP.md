@@ -34,7 +34,7 @@
 - [x] **Phase 29.1: Remaining Route Contract Inference** — Migrate remaining 11 route files to contract inference (4/4 plans ready, 4/4 complete)
 - [ ] **Phase 30: Test Types** — Mock factories and typed test helpers (8/8 plans ready)
 - [ ] **Phase 31: Frontend Components** — React prop interfaces and event handler types (5/5 plans ready)
-- [ ] **Phase 32: Final Validation** — ESLint enforcement and legitimate use justifications (2/2 plans ready)
+- [ ] **Phase 32: Final Validation** — ESLint enforcement and legitimate use justifications (6/6 plans ready)
 
 ## Phase Details
 
@@ -242,26 +242,35 @@ Plans:
 
 ### Phase 32: Final Validation
 
-**Goal**: Enable ESLint `no-explicit-any` enforcement and document all legitimate `any` uses with justification comments.
+**Goal**: Remove all `@ts-nocheck` directives, enable ESLint `no-explicit-any` enforcement, and document all legitimate `any` uses with justification comments.
 
 **Depends on**: Phase 31 (all violations fixed)
 
 **Requirements**: Validation Checklist, Legitimate Any Cases
 
 **Success Criteria** (what must be TRUE):
-1. `eslint.config.js` has `"@typescript-eslint/no-explicit-any": "error"`
-2. `eslint.config.js` has no API router override block
-3. `src/components/generated/**` remains in ignores
-4. Zero `any` violations without inline justification comments
-5. All justification comments follow format: `// eslint-disable-next-line @typescript-eslint/no-explicit-any -- [Category]: [Reason]`
-6. Final violation count documented in phase summary
+1. All `@ts-nocheck` directives removed from 86 files
+2. `eslint.config.js` has `"@typescript-eslint/no-explicit-any": "error"`
+3. `eslint.config.js` has no API router override block
+4. `src/components/generated/**` remains in ignores
+5. Zero `any` violations without inline justification comments
+6. All justification comments follow format: `// eslint-disable-next-line @typescript-eslint/no-explicit-any -- [Category]: [Reason]`
+7. Final violation count documented in phase summary
 
-**Plans**: 2/2 planned
+**Plans**: 6/6 planned
 
 **Wave Structure**:
 - Wave 1: 32-01 (ESLint Enforcement) — autonomous, changes rule from "warn" to "error", removes API override
 - Wave 2: 32-02 (Justification Audit) — autonomous, depends on 32-01, adds justification comments to remaining uses
+- Wave 3: 32-03 (Already-Typed Routes) — autonomous, removes @ts-nocheck from 10 already-typed files
+- Wave 4: 32-04 (ts-rest Routes) — autonomous, depends on 32-03, adds HonoContext to 19 ts-rest files
+- Wave 5: 32-05 (Non-ts-rest Routes) — autonomous, depends on 32-04, types 22 non-ts-rest files
+- Wave 6: 32-06 (Test Files) — autonomous, depends on 32-05, removes @ts-nocheck from 35 test files
 
 Plans:
-- [ ] 32-01-PLAN.md — Enable ESLint no-explicit-any enforcement, remove API router override, count remaining violations (TODO)
-- [ ] 32-02-PLAN.md — Audit remaining violations, add justification comments to legitimate uses, document final count (TODO)
+- [x] 32-01-PLAN.md — Enable ESLint no-explicit-any enforcement, remove API router override, count remaining violations (COMPLETED 2026-05-05)
+- [x] 32-02-PLAN.md — Audit remaining violations, add justification comments to legitimate uses, document final count (COMPLETED 2026-05-05)
+- [ ] 32-03-PLAN.md — Remove @ts-nocheck from 10 already-typed route files (TODO)
+- [ ] 32-04-PLAN.md — Add HonoContext to 19 ts-rest route files, remove @ts-nocheck (TODO)
+- [ ] 32-05-PLAN.md — Add proper type annotations to 22 non-ts-rest route files, remove @ts-nocheck (TODO)
+- [ ] 32-06-PLAN.md — Remove @ts-nocheck from 35 test files, verify all tests pass (TODO)

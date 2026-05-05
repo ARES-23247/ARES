@@ -75,7 +75,7 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="py-3 text-center text-xs font-bold uppercase tracking-widest text-zinc-400"
+            className="py-3 text-center text-xs font-bold uppercase tracking-widest text-zinc-300"
           >
             {day}
           </div>
@@ -102,7 +102,7 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
                     isCurrentDay
                       ? "bg-[#A30000] text-white"
                       : !isCurrentMonth
-                      ? "text-zinc-400"
+                      ? "text-zinc-300"
                       : "text-marble"
                   }`}
                 >
