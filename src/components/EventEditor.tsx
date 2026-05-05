@@ -615,8 +615,8 @@ function EventEditorInner({ editId, userRole }: { editId?: string, userRole?: st
         onSuccess={(newName) => {
           setIsLocationModalOpen(false);
           // Add temporary option so it is immediately selectable before query refetch
-          const selectEl = document.getElementById('event-location') as HTMLSelectElement;
-          if (selectEl && !Array.from(selectEl.options).some(opt => opt.value === newName)) {
+          const selectEl = document.getElementById('event-location');
+          if (selectEl instanceof HTMLSelectElement && !Array.from(selectEl.options).some(opt => opt.value === newName)) {
             const tempOpt = new Option(newName, newName);
             selectEl.add(tempOpt, selectEl.options[selectEl.options.length - 1]);
           }
