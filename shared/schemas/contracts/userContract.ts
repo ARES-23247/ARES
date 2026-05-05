@@ -225,8 +225,8 @@ export const profileContract = c.router({
             bio: z.string().nullable().optional(),
             fun_fact: z.string().nullable().optional(),
             favorite_first_thing: z.string().nullable().optional(),
-            colleges: z.array(z.string()).optional(),
-            employers: z.array(z.string()).optional(),
+            colleges: z.array(z.unknown()).optional(),
+            employers: z.array(z.unknown()).optional(),
             email: z.string().nullable().optional(),
             phone: z.string().nullable().optional(),
             // Extra fields from sanitizeProfileForPublic that were causing validation failures
