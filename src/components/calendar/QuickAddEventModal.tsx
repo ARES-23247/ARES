@@ -37,6 +37,9 @@ const DEFAULT_FORM_DATA: FormData = {
   category: "internal",
 };
 
+import { CreateLocationModal } from "../CreateLocationModal";
+
+// Fetch locations from registry (only when modal is open)
 export function QuickAddEventModal({
   isOpen,
   onClose,
@@ -48,6 +51,7 @@ export function QuickAddEventModal({
   const [formData, setFormData] = useState<FormData>(DEFAULT_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   // Fetch locations from registry (only when modal is open)
   const { data: locations = [] } = useQuery<LocationRow[]>({
@@ -295,7 +299,12 @@ export function QuickAddEventModal({
                   <select
                     id="quick-event-location"
                     value={formData.location}
-                    onChange={(e) => updateField("location", e.target.value)}
+                    onChange={(e) => {
+                      updateField("location", e.target.value);
+                      if (e.target.value === "CUSTOM") {
+                        setIsLocationModalOpen(true);
+                      }
+                    }}
                     className="w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all appearance-none pr-10"
                   >
                     <option value="">-- Select a Venue --</option>
@@ -310,17 +319,26 @@ export function QuickAddEventModal({
                     <MapPin size={16} />
                   </div>
                 </div>
-                {formData.location === "CUSTOM" && (
-                  <input
-                    id="quick-event-custom-location"
-                    type="text"
-                    value={formData.customLocation}
-                    onChange={(e) => updateField("customLocation", e.target.value)}
-                    placeholder="Enter custom location..."
-                    className="mt-2 w-full bg-obsidian border border-white/10 ares-cut-sm px-4 py-3 text-white placeholder-white/40 focus:border-ares-red focus:outline-none focus:ring-1 focus:ring-ares-red transition-all"
-                  />
-                )}
               </div>
+
+              <CreateLocationModal
+                isOpen={isLocationModalOpen}
+                onClose={() => {
+                  setIsLocationModalOpen(false);
+                  if (formData.location === "CUSTOM") {
+                    updateField("location", "");
+                  }
+                }}
+                onSuccess={(newName) => {
+                  setIsLocationModalOpen(false);
+                  const selectEl = document.getElementById('quick-event-location') as HTMLSelectElement;
+                  if (selectEl && !Array.from(selectEl.options).some(opt => opt.value === newName)) {
+                    const tempOpt = new Option(newName, newName);
+                    selectEl.add(tempOpt, selectEl.options[selectEl.options.length - 1]);
+                  }
+                  updateField("location", newName);
+                }}
+              />
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
