@@ -57,12 +57,14 @@ ARESWEB is a brownfield project built heavily on Cloudflare Pages and D1 using H
 
 (None currently active)
 
-## Current Milestone: v6.6 Next Iteration
+## Current Milestone: v6.7 TypeScript Any Elimination
 
-**Goal:** Determine next steps and roadmap execution items.
+**Goal:** Systematically eliminate all `@typescript-eslint/no-explicit-any` violations across the codebase through shared type creation and parallel agent execution.
 
 **Target features:**
-- Next iteration features will be planned in the upcoming session.
+- Create shared types (HonoEnv binding, D1Row<T> generic) — ~60% impact
+- Fix violations in big files (events/handlers.ts: 77, docs.ts: 51, comments.ts: 33, sponsors.ts: 31)
+- Fix test files with `as unknown as T` patterns
 
 ## Current State
 
