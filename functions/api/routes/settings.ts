@@ -63,6 +63,7 @@ const settingsHandlers = {
 
       const entries = Object.entries(validationResult.data) as [string, string][];
       let updatedCount = 0;
+      const sensitiveKeysUpdated: string[] = [];
       for (const [key, value] of entries) {
         // SEC-03: Prevent overwriting secrets with the masked versions passed back by the frontend
         if (SENSITIVE_KEYS.has(key) && value.startsWith('••••')) {
@@ -76,8 +77,16 @@ const settingsHandlers = {
           .onConflict((oc: any) => oc.column("key").doUpdateSet({ value, updated_at: new Date().toISOString() }))
           .execute();
         updatedCount++;
+        // WR-09: Track sensitive key updates for audit logging
+        if (SENSITIVE_KEYS.has(key)) {
+          sensitiveKeysUpdated.push(key);
+        }
       }
-      c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, `Updated ${updatedCount} integration keys.`));
+      // WR-09: Enhanced audit logging for sensitive setting changes
+      const auditMessage = sensitiveKeysUpdated.length > 0
+        ? `Updated ${updatedCount} integration keys (sensitive: ${sensitiveKeysUpdated.join(", ")})`
+        : `Updated ${updatedCount} integration keys.`;
+      c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, auditMessage));
       return { status: 200 as const, body: { success: true, updated: updatedCount } as any };
     } catch (e) {
       console.error("UPDATE_SETTINGS ERROR", e);
