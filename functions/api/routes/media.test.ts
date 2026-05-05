@@ -213,9 +213,9 @@ describe("Hono Backend - /media Router", () => {
     expect(res.body.error).toContain("Invalid file type");
   });
 
-  it("POST /admin/upload - large file (>10MB)", async () => {
+  it("POST /admin/upload - large file (>2.5MB, skips AI)", async () => {
     const { mediaHandlers } = await import("./media/handlers");
-    const largeContent = new Uint8Array(11 * 1024 * 1024);
+    const largeContent = new Uint8Array(3 * 1024 * 1024);
     largeContent.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
     const file = new File([largeContent], "large.png", { type: "image/png" });
     if (!file.stream) {
