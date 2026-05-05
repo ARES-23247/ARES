@@ -65,7 +65,7 @@ export const userResponseSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   nickname: z.string().nullable().optional(),
-  member_type: z.string().nullable().optional(),
+  member_type: MemberTypeEnum.nullable().optional(),
 });
 
 export const userContract = c.router({
@@ -163,7 +163,7 @@ export const profileContract = c.router({
             role: z.string(),
           })
           .nullable(),
-        member_type: z.string(),
+        member_type: MemberTypeEnum,
         first_name: z.string().optional().nullable(),
         last_name: z.string().optional().nullable(),
         nickname: z.string().optional().nullable(),
@@ -219,7 +219,7 @@ export const profileContract = c.router({
             avatar: z.string().nullable(),
             pronouns: z.string().nullable().optional(),
             subteams: z.array(z.string()).optional(),
-            member_type: z.string(),
+            member_type: MemberTypeEnum,
             bio: z.string().nullable().optional(),
             fun_fact: z.string().nullable().optional(),
             favorite_first_thing: z.string().nullable().optional(),
