@@ -3,9 +3,37 @@ import { AppEnv, ensureAuth, isAdmin } from "../middleware";
 import { z } from "zod";
 
 // Validation schema for simulation save
+// SECURITY: Enforce limits to prevent DoS via large payloads
+const MAX_FILES = 10;
+const MAX_TOTAL_SIZE = 2 * 1024 * 1024; // 2MB total
+const MAX_FILE_SIZE = 500000; // 500KB per file
+const SIM_ID_PATTERN = /^[a-zA-Z0-9_\-\.]+\.(tsx?|jsx?|json)$/;
+
 const saveSimulationSchema = z.object({
   name: z.string().max(100).optional(),
-  files: z.record(z.string(), z.string().max(500000)), // 500KB max per file
+  files: z.record(z.string(), z.string().max(MAX_FILE_SIZE)).refine(
+    (files) => {
+      const fileCount = Object.keys(files).length;
+      if (fileCount > MAX_FILES) {
+        throw new Error(`Too many files: ${fileCount} (max ${MAX_FILES})`);
+      }
+
+      const totalSize = Object.values(files).reduce((sum, content) => sum + content.length, 0);
+      if (totalSize > MAX_TOTAL_SIZE) {
+        throw new Error(`Total size too large: ${totalSize} bytes (max ${MAX_TOTAL_SIZE})`);
+      }
+
+      // Validate filename patterns to prevent path traversal
+      for (const filename of Object.keys(files)) {
+        if (!SIM_ID_PATTERN.test(filename)) {
+          throw new Error(`Invalid filename: ${filename}. Must match ${SIM_ID_PATTERN.source}`);
+        }
+      }
+
+      return true;
+    },
+    { message: "Files validation failed" }
+  ),
 });
 
 export const simulationsRouter = new Hono<AppEnv>();
