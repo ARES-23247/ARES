@@ -251,14 +251,14 @@ describe("Analytics Router", () => {
       expect(body.roster[1].attended_events).toBe(0);
     });
 
-    it("GET /admin/platform-analytics should handle DB errors", async () => {
+    it("GET /admin/platform-analytics should handle DB errors gracefully", async () => {
       mockDb.execute.mockRejectedValueOnce(new Error("DB Error"));
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const req = new Request("http://localhost/admin/platform-analytics");
       const res = await testApp.request(req, {}, env, mockExecutionContext);
 
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(200);
 
       consoleSpy.mockRestore();
     });

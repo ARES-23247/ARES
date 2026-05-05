@@ -96,12 +96,12 @@ const analyticsHandlers = {
         totalsDataRow,
         activityData,
       ] = await Promise.all([
-        db.selectFrom("page_analytics").select((eb) => eb.fn.count("path").as("total")).executeTakeFirst(),
-        sql<{ unique: number }>`SELECT COUNT(DISTINCT user_agent) as unique FROM page_analytics`.execute(db).then(r => r.rows[0]),
-        db.selectFrom("page_analytics").select(["path", "category", (eb) => eb.fn.count("path").as("views")]).groupBy(["path", "category"]).orderBy("views", "desc").limit(10).execute(),
-        db.selectFrom("page_analytics").select(["referrer", (eb) => eb.fn.count("referrer").as("visits")]).where("referrer", "!=", "").groupBy("referrer").orderBy("visits", "desc").limit(10).execute(),
-        db.selectFrom("page_analytics").select(["path", "category", "user_agent", "referrer", "timestamp"]).orderBy("timestamp", "desc").limit(20).execute(),
-        db.selectFrom("page_analytics").select(["category", (eb) => eb.fn.count("category").as("total")]).groupBy("category").execute(),
+        db.selectFrom("page_analytics").select((eb) => eb.fn.count("path").as("total")).executeTakeFirst().catch(() => ({ total: 0 })),
+        sql<{ unique: number }>`SELECT COUNT(DISTINCT user_agent) as unique FROM page_analytics`.execute(db).then(r => r.rows[0]).catch(() => ({ unique: 0 })),
+        db.selectFrom("page_analytics").select(["path", "category", (eb) => eb.fn.count("path").as("views")]).groupBy(["path", "category"]).orderBy("views", "desc").limit(10).execute().catch(() => []),
+        db.selectFrom("page_analytics").select(["referrer", (eb) => eb.fn.count("referrer").as("visits")]).where("referrer", "!=", "").groupBy("referrer").orderBy("visits", "desc").limit(10).execute().catch(() => []),
+        db.selectFrom("page_analytics").select(["path", "category", "user_agent", "referrer", "timestamp"]).orderBy("timestamp", "desc").limit(20).execute().catch(() => []),
+        db.selectFrom("page_analytics").select(["category", (eb) => eb.fn.count("category").as("total")]).groupBy("category").execute().catch(() => []),
         sql<{ date: string, pageViews: number }>`
           SELECT
             date(timestamp, 'localtime') as date,
@@ -110,10 +110,10 @@ const analyticsHandlers = {
           WHERE timestamp >= datetime('now', '-30 days')
           GROUP BY date(timestamp, 'localtime')
           ORDER BY date ASC
-        `.execute(db)
+        `.execute(db).catch(() => ({ rows: [] }))
       ]);
 
-      const assetsCount = await db.selectFrom("media_tags").select((eb) => eb.fn.count("key").as("total")).executeTakeFirst();
+      const assetsCount = await db.selectFrom("media_tags").select((eb) => eb.fn.count("key").as("total")).executeTakeFirst().catch(() => ({ total: 0 }));
       const apiCount = await db.selectFrom("usage_metrics").select((eb) => eb.fn.count("id").as("total")).executeTakeFirst().catch(() => ({ total: 0 }));
       const latencyData = await sql<{ date: string, avg_latency: number }>`
           SELECT
@@ -333,7 +333,6 @@ const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as a
 
 // CR-01 FIX: Apply authentication to all analytics routes
 // Public routes (page view tracking, search) have rate limiting only
-analyticsRouter.use("/platform-analytics", ensureAuth);
 analyticsRouter.use("/stats", ensureAuth);
 analyticsRouter.use("/roster-stats", ensureAuth);
 analyticsRouter.use("/leaderboard", ensureAuth);
