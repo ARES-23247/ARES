@@ -1,13 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { upsertProfile } from "./_profileUtils";
+import type { MockKysely } from "../../../src/test/types";
 
 vi.mock("../../utils/crypto", () => ({
   encrypt: vi.fn((val) => Promise.resolve("encrypted_" + val)),
 }));
 
 describe("Profile Utils", () => {
-  let mockDb: any;
-  let mockContext: any;
+  let mockDb: MockKysely;
+  let mockContext: {
+    env: { ENCRYPTION_SECRET: string };
+    get: ReturnType<typeof vi.fn>;
+    var: {
+      session: {
+        user: {
+          id: string;
+          role: string;
+          member_type: string;
+        };
+      };
+    };
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
