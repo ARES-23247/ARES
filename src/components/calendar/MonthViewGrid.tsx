@@ -92,19 +92,9 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-[120px] p-2 border-r border-b border-white/5 transition-colors cursor-pointer group ${
+              className={`min-h-[120px] p-2 border-r border-b border-white/5 transition-colors group ${
                 !isCurrentMonth ? "bg-black/40" : "bg-transparent"
               } ${idx % 7 === 6 ? "border-r-0" : ""} hover:bg-white/5`}
-              onClick={() => openQuickAdd(day)}
-              role="button"
-              tabIndex={0}
-              aria-label={`Add event on ${format(day, "MMMM d, yyyy")}`}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  openQuickAdd(day);
-                }
-              }}
             >
               <div className="flex justify-between items-start mb-2">
                 <span
@@ -123,8 +113,8 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
                     e.stopPropagation();
                     openQuickAdd(day);
                   }}
-                  aria-label="Add event"
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-ares-red/20 rounded transition-all"
+                  aria-label={`Add event on ${format(day, "MMMM d, yyyy")}`}
+                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 hover:bg-ares-red/20 rounded transition-all"
                 >
                   <Plus size={14} className="text-ares-red" />
                 </button>
