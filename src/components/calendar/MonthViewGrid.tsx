@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   startOfMonth,
   endOfMonth,
@@ -12,7 +12,9 @@ import {
 } from "date-fns";
 import { CalendarEvent } from "./EventMockData";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
+import { QuickAddEventModal } from "./QuickAddEventModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MonthViewGridProps {
   currentDate: Date;
@@ -21,6 +23,23 @@ interface MonthViewGridProps {
 
 export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
   const [overflowData, setOverflowData] = useState<{ day: Date, events: CalendarEvent[] } | null>(null);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const queryClient = useQueryClient();
+
+  const handleQuickAddSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["events"] });
+  }, [queryClient]);
+
+  const openQuickAdd = useCallback((day: Date) => {
+    setSelectedDate(day);
+    setIsQuickAddOpen(true);
+  }, []);
+
+  const closeQuickAdd = useCallback(() => {
+    setIsQuickAddOpen(false);
+    setSelectedDate(null);
+  }, []);
 
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentDate));
@@ -73,9 +92,19 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-[120px] p-2 border-r border-b border-white/5 transition-colors ${
+              className={`min-h-[120px] p-2 border-r border-b border-white/5 transition-colors cursor-pointer group ${
                 !isCurrentMonth ? "bg-black/40" : "bg-transparent"
               } ${idx % 7 === 6 ? "border-r-0" : ""} hover:bg-white/5`}
+              onClick={() => openQuickAdd(day)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Add event on ${format(day, "MMMM d, yyyy")}`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openQuickAdd(day);
+                }
+              }}
             >
               <div className="flex justify-between items-start mb-2">
                 <span
@@ -89,12 +118,23 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
                 >
                   {format(day, "d")}
                 </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openQuickAdd(day);
+                  }}
+                  aria-label="Add event"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-ares-red/20 rounded transition-all"
+                >
+                  <Plus size={14} className="text-ares-red" />
+                </button>
               </div>
               <div className="flex flex-col gap-1 relative z-10">
                 {dayEvents.slice(0, 3).map((event) => (
                   <Link
                     to={`/events/${event.id}`}
                     key={event.id}
+                    onClick={(e) => e.stopPropagation()}
                     className={`relative z-10 text-[10px] font-bold px-1.5 py-0.5 rounded-sm truncate block transition-all hover:scale-105 hover:z-50 hover:shadow-lg origin-left ${getEventColor(
                       event.type
                     )}`}
@@ -105,9 +145,9 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
                   </Link>
                 ))}
                 {dayEvents.length > 3 && (
-                  <button 
+                  <button
                     onClick={(e) => {
-                      e.preventDefault();
+                      e.stopPropagation();
                       setOverflowData({ day, events: dayEvents });
                     }}
                     className="text-[10px] font-bold text-marble/50 px-1 hover:text-white transition-colors text-left w-full mt-1"
@@ -125,7 +165,7 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
       {overflowData && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-obsidian border border-white/10 ares-cut p-6 max-w-sm w-full max-h-[80vh] flex flex-col gap-4 relative animate-in fade-in zoom-in-95 duration-200">
-            <button 
+            <button
               onClick={() => setOverflowData(null)}
               className="absolute top-4 right-4 text-white/60 hover:text-white"
             >
@@ -158,6 +198,14 @@ export const MonthViewGrid = ({ currentDate, events }: MonthViewGridProps) => {
           </div>
         </div>
       )}
+
+      {/* Quick Add Event Modal */}
+      <QuickAddEventModal
+        isOpen={isQuickAddOpen}
+        onClose={closeQuickAdd}
+        selectedDate={selectedDate}
+        onSuccess={handleQuickAddSuccess}
+      />
     </div>
   );
 };
