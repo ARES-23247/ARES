@@ -23,6 +23,18 @@ function setCache(key: string, value: { data: { results: any[] }; expiresAt: num
   docSearchCache.set(key, value);
 }
 
+/**
+ * Sanitize FTS query to prevent SQL injection via SQLite FTS syntax.
+ * Allows alphanumeric, spaces, hyphens, and periods. Uses proper FTS5 phrase search.
+ */
+const sanitizeFtsQuery = (query: string): string => {
+  // Allow only alphanumeric, spaces, hyphens, and periods
+  const cleanQ = (query || "").replace(/[^\w\s\-\.]/g, "").trim();
+  if (!cleanQ) return "";
+  // Escape double quotes for FTS5 phrase search and use prefix search
+  return `"${cleanQ.replace(/"/g, '""')}*`;
+};
+
 async function pruneDocHistory(c: Context<AppEnv>, slug: string, limit = 10) {
   try {
     const db = c.get("db") as Kysely<DB>;
@@ -119,18 +131,22 @@ const docTsRestRouter: any = s.router(docContract as any, {
   },
   searchDocs: async ({ query }: { query: any }, c: Context<AppEnv>) => {
     const { q } = query;
-            if (!q || q.length < 3) return { status: 200 as const, body: { results: [] } };
+    if (!q || q.length < 3) return { status: 200 as const, body: { results: [] } };
     try {
       const now = Date.now();
       const cached = docSearchCache.get(q);
       if (cached && cached.expiresAt > now) return { status: 200 as const, body: cached.data };
 
+      // Sanitize FTS query to prevent SQL injection
+      const cleanQ = sanitizeFtsQuery(String(q));
+      if (!cleanQ) return { status: 200 as const, body: { results: [] } };
+
       const db = c.get("db") as Kysely<DB>;
       const results = await sql<{ slug: string, title: string, category: string, description: string | null }>`
-        SELECT f.slug, f.title, f.category, f.description 
-        FROM docs_fts f 
-        JOIN docs d ON f.slug = d.slug 
-        WHERE d.is_deleted = 0 AND d.status = 'published' AND f.docs_fts MATCH ${`"${q.replace(/"/g, '""')}"*`} 
+        SELECT f.slug, f.title, f.category, f.description
+        FROM docs_fts f
+        JOIN docs d ON f.slug = d.slug
+        WHERE d.is_deleted = 0 AND d.status = 'published' AND f.docs_fts MATCH ${cleanQ}
         ORDER BY f.rank LIMIT 20
       `.execute(db);
 
@@ -140,8 +156,7 @@ const docTsRestRouter: any = s.router(docContract as any, {
           title: String(row.title),
           category: String(row.category),
           description: row.description || null,
-          // eslint-disable-next-line security/detect-non-literal-regexp
-          snippet: String(row.description || "").replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi"), "**$1**")
+          snippet: String(row.description || "")
         };
       });
 

@@ -24,11 +24,14 @@ const s = initServer<AppEnv>();
 
 /**
  * Sanitize FTS query to prevent SQL injection via SQLite FTS syntax.
- * Removes special characters that could be used to manipulate FTS queries.
+ * Allows alphanumeric, spaces, hyphens, and periods. Uses proper FTS5 phrase search.
  */
 const sanitizeFtsQuery = (query: string): string => {
-  // Remove double quotes, backslashes, and other FTS special chars
-  return query.replace(/["\\\^\*\-\:]/g, ' ').trim().split(/\s+/).filter(Boolean).join(' ');
+  // Allow only alphanumeric, spaces, hyphens, and periods
+  const cleanQ = (query || "").replace(/[^\w\s\-\.]/g, "").trim();
+  if (!cleanQ) return "";
+  // Escape double quotes for FTS5 phrase search and use prefix search
+  return `"${cleanQ.replace(/"/g, '""')}*`;
 };
 
 const postTsRestRouterObj: any = {
@@ -41,6 +44,9 @@ const postTsRestRouterObj: any = {
       if (q) {
         // Sanitize FTS query to prevent SQL injection via SQLite FTS syntax
         const cleanQ = sanitizeFtsQuery(String(q || ''));
+        // Return empty results if sanitized query is empty (only special chars)
+        if (!cleanQ) return { status: 200, body: { posts: [] } };
+
         const results = await sql<{
           slug: string;
           title: string;
