@@ -186,7 +186,7 @@ const sponsorTsRestRouter: any = s.router(sponsorContract as any, sponsorHandler
 // WR-12: Add rate limiting to public sponsor endpoint to prevent scraping
 sponsorsRouter.use("*", rateLimitMiddleware(15, 60));
 
-sponsorsRouter.use("/admin", ensureAdmin);
+// WR-01 FIX: Standardize on /admin/* pattern (remove redundant /admin patterns)
 sponsorsRouter.use("/admin/*", ensureAdmin);
 
 createHonoEndpoints(sponsorContract, sponsorTsRestRouter, sponsorsRouter);

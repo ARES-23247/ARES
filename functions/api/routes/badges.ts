@@ -173,11 +173,7 @@ export const badgesRouter = new Hono<AppEnv>();
 
 // Middlewares
 badgesRouter.use("/", ensureAuth);
+// WR-01 FIX: Standardize on /admin/* pattern (remove redundant /admin patterns)
 badgesRouter.use("/admin/*", ensureAdmin);
-badgesRouter.use("/admin", ensureAdmin);
 badgesRouter.use("/admin/*", rateLimitMiddleware(15, 60));
-badgesRouter.use("/admin", rateLimitMiddleware(15, 60));
 
-createHonoEndpoints(badgeContract, badgesTsRestRouter, badgesRouter);
-
-export default badgesRouter;

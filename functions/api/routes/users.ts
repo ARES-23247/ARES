@@ -257,7 +257,8 @@ const userTsRestRouter: any = s.router(userContract, {
   },
 });
 
-usersRouter.use("/*", ensureAdmin);
+usersRouter.use("/admin/*", ensureAdmin);
+// WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad
 
 createHonoEndpoints(userContract, userTsRestRouter, usersRouter);
 

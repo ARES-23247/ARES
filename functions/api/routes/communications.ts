@@ -8,7 +8,8 @@ const s = initServer<AppEnv>();
 export const communicationsRouter = new Hono<AppEnv>();
 
 // Require admin for all communications endpoints
-communicationsRouter.use("/*", ensureAdmin);
+communicationsRouter.use("/admin/*", ensureAdmin);
+// WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad
 
 const handlers = {
   getStats: async (_args: any, c: Context<AppEnv>) => {
