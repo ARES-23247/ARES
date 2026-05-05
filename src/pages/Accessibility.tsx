@@ -110,11 +110,11 @@ export default function Accessibility() {
         >
           <div className="flex gap-6 justify-center items-center mb-6 border-b border-white/5 pb-4 max-w-sm mx-auto">
             <span className="font-mono text-sm tracking-widest text-marble mr-2">SCANNED BY</span>
-            <a href="https://pa11y.org/" target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100 transition-opacity flex items-center font-bold text-sm gap-1.5" title="pa11y CI Integrated">
+            <a href="https://pa11y.org/" target="_blank" rel="noopener noreferrer" className="text-marble hover:text-white transition-colors flex items-center font-bold text-sm gap-1.5" title="pa11y CI Integrated">
               <svg className="w-5 h-5 text-ares-cyan" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/>
               </svg>
-              <span className="text-white">pa11y</span>
+              <span>pa11y</span>
             </a>
             <a href="https://wave.webaim.org/" target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100 transition-opacity" title="Validated by WAVE Web Accessibility Evaluation Tool">
               <img src="https://wave.webaim.org/img/wavelogo.svg" alt="WAVE Logo" className="h-4" />
