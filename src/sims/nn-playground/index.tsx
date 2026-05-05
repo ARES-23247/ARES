@@ -427,8 +427,32 @@ export default function NeuralPlayground() {
 
            {/* Weight Connections (SVG) */}
            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-              {/* Dynamic SVG lines would go here - for now simplified static or just rendering logic */}
-              {/* Real implementation would calculate node positions for all layers */}
+              {weights.map((layerWeights, lIdx) => {
+                const totalLayers = layers.length + 2;
+                const x1 = ((lIdx + 1) / totalLayers) * 100;
+                const x2 = ((lIdx + 2) / totalLayers) * 100;
+                
+                const fromSize = lIdx === 0 ? 2 : layers[lIdx - 1];
+                const toSize = layerWeights.length;
+
+                return layerWeights.map((neuronWeights, nIdx) => {
+                  return neuronWeights.map((w, wIdx) => {
+                    const y1 = ((wIdx + 0.5) / fromSize) * 100;
+                    const y2 = ((nIdx + 0.5) / toSize) * 100;
+                    
+                    return (
+                      <line 
+                        key={`${lIdx}-${nIdx}-${wIdx}`}
+                        x1={`${x1}%`} y1={`${y1}%`}
+                        x2={`${x2}%`} y2={`${y2}%`}
+                        stroke={w > 0 ? '#3b82f6' : '#f59e0b'}
+                        strokeWidth={Math.abs(w) * 2}
+                        strokeOpacity={0.4 + Math.abs(w) * 0.4}
+                      />
+                    );
+                  });
+                });
+              })}
            </svg>
         </div>
 

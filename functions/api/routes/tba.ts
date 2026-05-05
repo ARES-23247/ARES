@@ -1,10 +1,9 @@
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { AppEnv, ensureAuth, rateLimitMiddleware } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { tbaContract } from "../../../shared/schemas/contracts/tbaContract";
-import { z } from "zod";
 
 const s = initServer<AppEnv>();
 export const tbaRouter = new Hono<AppEnv>();
@@ -24,7 +23,7 @@ function setTbaCache(key: string, value: { data: unknown; expiresAt: number }) {
   tbaCache.set(key, value);
 }
 
-async function getTBA(path: string, c: Context<AppEnv>) {
+async function getTBA(path: string, c: any) {
   const now = Date.now();
   const cached = tbaCache.get(path);
   if (cached && cached.expiresAt > now) return cached.data;
@@ -51,9 +50,9 @@ async function getTBA(path: string, c: Context<AppEnv>) {
 }
 
 const tbaTsRestRouter = s.router(tbaContract, {
-  getRankings: async ({ params }: { params: z.infer<typeof tbaContract.getRankings.pathParams> }, c: Context<AppEnv>) => {
+  getRankings: async (input, c) => {
     try {
-      const eventKey = String(params.eventKey);
+      const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
         return { status: 400 as const, body: { error: "Invalid eventKey" } };
       }
@@ -64,9 +63,9 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch rankings" } };
     }
   },
-  getMatches: async ({ params }: { params: z.infer<typeof tbaContract.getMatches.pathParams> }, c: Context<AppEnv>) => {
+  getMatches: async (input, c) => {
     try {
-      const eventKey = String(params.eventKey);
+      const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
         return { status: 400 as const, body: { error: "Invalid eventKey" } };
       }
@@ -78,9 +77,9 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch matches" } };
     }
   },
-  getFtcEvents: async ({ params }: { params: z.infer<typeof tbaContract.getFtcEvents.pathParams> }, c: Context<AppEnv>) => {
+  getFtcEvents: async (input, c) => {
     try {
-      const { season, eventCode, type } = params;
+      const { season, eventCode, type } = input.params;
       const path = `/${season}/events/${eventCode}/${type}`;
       
       const now = Date.now();
@@ -110,7 +109,18 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch official event data" } };
     }
   }
-} as any);
+});
 
-createHonoEndpoints(tbaContract, tbaTsRestRouter, tbaRouter);
+createHonoEndpoints(
+  tbaContract,
+  tbaTsRestRouter,
+  tbaRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 export default tbaRouter;

@@ -3,7 +3,7 @@ import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { taskContract } from "../../../shared/schemas/contracts/taskContract";
-import { z } from "zod";
+
 import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig, originIntegrityMiddleware } from "../middleware";
 
 import { sendZulipMessage } from "../../utils/zulipSync";

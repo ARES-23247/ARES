@@ -1,8 +1,7 @@
-import { Hono, Context } from "hono";
-import { z } from "zod";
+import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { userContract } from "../../../shared/schemas/contracts/userContract";
-import { AppEnv, ensureAdmin, logAuditAction, parsePagination } from "../middleware";
+import { AppEnv, logAuditAction, parsePagination } from "../middleware";
 import { upsertProfile } from "./_profileUtils";
 import { decrypt } from "../../utils/crypto";
 import { Kysely } from "kysely";
