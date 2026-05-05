@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { TestEnv, MockKysely } from "../../../src/test/types";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import entitiesRouter from "./entities";
@@ -15,7 +16,7 @@ vi.mock("../middleware", async (importOriginal) => {
 import { logAuditAction } from "../middleware";
 
 describe("Hono Backend - /entities Router", () => {
-  let mockDb: any;
+  let mockDb: MockKysely;
   let testApp: Hono<any>;
 
   beforeEach(() => {
@@ -42,8 +43,8 @@ describe("Hono Backend - /entities Router", () => {
       execute: vi.fn().mockResolvedValue([]),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       await next();
     });
