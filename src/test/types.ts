@@ -131,11 +131,11 @@ export interface MockExpressionBuilder {
   val: ReturnType<typeof vi.fn>;
   // Function helpers - use loose mock typing for flexibility
   fn: {
-    count: ReturnType<typeof vi.fn>;
-    sum: ReturnType<typeof vi.fn>;
-    max: ReturnType<typeof vi.fn>;
-    min: ReturnType<typeof vi.fn>;
-    coalesce: ReturnType<typeof vi.fn>;
+    count: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+    sum: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+    max: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+    min: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
+    coalesce: ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> };
     as: ReturnType<typeof vi.fn>;
   };
   // Case expressions - use loose mock typing for flexibility

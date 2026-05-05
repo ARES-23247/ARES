@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import zulipWebhookRouter from "./zulipWebhook";
 import { mockExecutionContext, flushWaitUntil, createMockExpressionBuilder } from "../../../src/test/utils";
+import { TestEnv, MockKysely } from "../../../src/test/types";
 
 vi.mock("../../utils/zulipSync", () => ({
   sendZulipMessage: vi.fn().mockResolvedValue(1),
@@ -11,7 +12,7 @@ vi.mock("../middleware/utils", async (importOriginal) => {
   const mod = await importOriginal<typeof import("../middleware/utils")>();
   return {
     ...mod,
-    getSocialConfig: vi.fn().mockImplementation(async (c: any) => ({
+    getSocialConfig: vi.fn().mockImplementation(async (c) => ({
       ZULIP_WEBHOOK_TOKEN: c.env.ZULIP_WEBHOOK_TOKEN,
       ZULIP_BOT_EMAIL: c.env.ZULIP_BOT_EMAIL,
       ZULIP_API_KEY: c.env.ZULIP_API_KEY,
@@ -32,8 +33,8 @@ describe("Zulip Webhook Router", () => {
     },
   };
 
-  let testApp: Hono<any>;
-  let mockDb: any;
+  let testApp: Hono<TestEnv>;
+  let mockDb: MockKysely;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,8 +60,8 @@ describe("Zulip Webhook Router", () => {
       leftJoin: vi.fn().mockReturnThis(),
     };
 
-    testApp = new Hono<any>();
-    testApp.use("*", async (c: any, next: any) => {
+    testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
       await next();
     });

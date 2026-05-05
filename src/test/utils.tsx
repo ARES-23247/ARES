@@ -45,16 +45,22 @@ export async function flushWaitUntil() {
  */
 export function createMockExpressionBuilder(): MockExpressionBuilder {
   const fnAs = vi.fn().mockReturnThis();
-  const ebMock = {
+  // Create function mocks with .as chaining
+  const createFnWithAs = () => {
+    const fn = vi.fn().mockReturnThis();
+    (fn as ReturnType<typeof vi.fn> & { as: ReturnType<typeof vi.fn> }).as = fnAs;
+    return fn;
+  };
+  const ebMock = Object.assign(vi.fn().mockReturnThis(), {
     or: vi.fn().mockReturnThis(),
     and: vi.fn().mockReturnThis(),
     val: vi.fn().mockReturnThis(),
     fn: {
-      count: vi.fn().mockReturnValue(fnAs),
-      sum: vi.fn().mockReturnValue(fnAs),
-      max: vi.fn().mockReturnValue(fnAs),
-      min: vi.fn().mockReturnValue(fnAs),
-      coalesce: vi.fn().mockReturnValue(fnAs),
+      count: createFnWithAs(),
+      sum: createFnWithAs(),
+      max: createFnWithAs(),
+      min: createFnWithAs(),
+      coalesce: createFnWithAs(),
       as: fnAs,
     },
     case: Object.assign(
@@ -71,7 +77,7 @@ export function createMockExpressionBuilder(): MockExpressionBuilder {
     select: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     execute: vi.fn().mockResolvedValue([]),
-  } as MockExpressionBuilder;
+  }) as unknown as MockExpressionBuilder;
 
   return ebMock;
 }
