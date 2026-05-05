@@ -3,7 +3,7 @@ import { Context } from "hono";
 import { sql } from "kysely";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
-import { AppEnv, ensureAdmin, logAuditAction } from "../middleware";
+import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 
 const s = initServer<AppEnv>();
