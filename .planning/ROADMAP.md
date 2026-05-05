@@ -183,7 +183,30 @@ Plans:
 
 **Requirements**: Anti-pattern 1 (Over-Genericizing Types), Frontend Checklist
 
-**Plans**: TBD
+**Success Criteria** (what must be TRUE):
+1. `src/types/components.ts` exists with IconComponent type and getLucideIcon utility
+2. Zero `any` violations in BadgeManager.tsx (icon lookup)
+3. Zero `any` violations in GenericKanbanBoard.tsx (icon prop)
+4. Zero `any` violations in ErrorBoundary.tsx (error type)
+5. Zero `any` violations in FinanceManager.tsx (mutation types)
+6. Zero `any` violations in Blog.tsx (response types)
+7. Zero `any` violations in SimulationPlayground.tsx (Monaco callbacks)
+8. Zero `any` violations in CollaborativeEditorRoom.tsx (window globals)
+9. All existing tests still pass
+
+**Plans**: 5/5 planned
+
+**Wave Structure**:
+- Wave 1: 31-01 (Icon Types), 31-02 (ErrorBoundary) — parallel execution
+- Wave 2: 31-03 (Contract Types), 31-04 (Monaco Types) — depends on Phase 29
+- Wave 3: 31-05 (Window Globals) — autonomous
+
+Plans:
+- [ ] 31-01-PLAN.md — Create src/types/components.ts with IconComponent type and getLucideIcon utility, fix BadgeManager and GenericKanbanBoard icon types (TODO)
+- [ ] 31-02-PLAN.md — Fix ErrorBoundary to use `unknown` with type narrowing instead of `any` (TODO)
+- [ ] 31-03-PLAN.md — Fix FinanceManager and Blog.tsx to use proper contract types from Phase 29 (TODO)
+- [ ] 31-04-PLAN.md — Fix SimulationPlayground Monaco Editor callbacks to use monaco-editor package types (TODO)
+- [ ] 31-05-PLAN.md — Create Window interface augmentation for Playwright test globals, fix CollaborativeEditorRoom (TODO)
 
 ---
 

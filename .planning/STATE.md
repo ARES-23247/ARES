@@ -3,27 +3,27 @@ gsd_state_version: 1.0
 milestone: v6.7
 milestone_name: TypeScript Any Elimination
 status: executing
-last_updated: "2026-05-05T18:45:00.000Z"
+last_updated: "2026-05-05T19:00:00.000Z"
 last_activity: 2026-05-05
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 8
-  percent: 89
+  total_plans: 14
+  completed_plans: 10
+  percent: 71
 ---
 
 # System State
 
 **Current Milestone**: v6.7 — TypeScript Any Elimination
-**Status**: Phase 29 complete, ready for Phase 30
+**Status**: Phase 29 complete, Phase 31 planned
 
 ## Current Position
 
-Phase: 29 (Contract Inference) — EXECUTING
-Plan: 2 of 2
-Next: Phase 30 — Test Types (needs planning)
-Status: Ready to plan Phase 30
+Phase: 31 (Frontend Components) — PLANNED
+Plan: 5 of 5 plans ready
+Next: Execute Phase 31
+Status: Plans created, awaiting execution
 Last activity: 2026-05-05
 
 ## Project Reference
@@ -31,7 +31,7 @@ Last activity: 2026-05-05
 See: .planning/PROJECT.md (updated 2026-05-05)
 
 **Core value:** Championship-grade FIRST Robotics team management platform
-**Current focus:** Phase 29 — Contract Inference
+**Current focus:** Phase 31 — Frontend Components
 
 ## Milestone v6.7: TypeScript Any Elimination
 
@@ -106,6 +106,55 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 - (Plan 29-01) Type infrastructure and analytics.ts reference
 - (Plan 29-02) Batch migration of 14 routes and contract exports
 
+## Phase 30: Test Types — PLANNED
+
+### Status
+
+Research complete, 8 plans created.
+
+### Plans
+
+- 30-01: Type Infrastructure (src/test/types.ts)
+- 30-02: Factory Migration (6 factory files)
+- 30-03 through 30-07: Backend Test Migration (parallel)
+- 30-08: E2E Test Fix
+
+## Phase 31: Frontend Components — PLANNED
+
+### Status
+
+Research complete, 5 plans created.
+
+### Goal
+
+Eliminate all `any` violations in React components and hooks through proper prop interfaces and event handler types.
+
+### Success Criteria
+
+1. `src/types/components.ts` exists with IconComponent type and getLucideIcon utility
+2. Zero `any` violations in BadgeManager.tsx (icon lookup)
+3. Zero `any` violations in GenericKanbanBoard.tsx (icon prop)
+4. Zero `any` violations in ErrorBoundary.tsx (error type)
+5. Zero `any` violations in FinanceManager.tsx (mutation types)
+6. Zero `any` violations in Blog.tsx (response types)
+7. Zero `any` violations in SimulationPlayground.tsx (Monaco callbacks)
+8. Zero `any` violations in CollaborativeEditorRoom.tsx (window globals)
+9. All existing tests still pass
+
+### Wave Structure
+
+- **Wave 1**: 31-01 (Icon Types), 31-02 (ErrorBoundary) — parallel execution
+- **Wave 2**: 31-03 (Contract Types), 31-04 (Monaco Types) — depends on Phase 29
+- **Wave 3**: 31-05 (Window Globals) — autonomous
+
+### Plans
+
+- [ ] 31-01-PLAN.md — Create src/types/components.ts with IconComponent type and getLucideIcon utility, fix BadgeManager and GenericKanbanBoard icon types
+- [ ] 31-02-PLAN.md — Fix ErrorBoundary to use `unknown` with type narrowing instead of `any`
+- [ ] 31-03-PLAN.md — Fix FinanceManager and Blog.tsx to use proper contract types from Phase 29
+- [ ] 31-04-PLAN.md — Fix SimulationPlayground Monaco Editor callbacks to use monaco-editor package types
+- [ ] 31-05-PLAN.md — Create Window interface augmentation for Playwright test globals, fix CollaborativeEditorRoom
+
 ## Deferred Items
 
 | Category | Item | Source | Status |
@@ -140,4 +189,5 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 ## Session Continuity
 
 **Last session**: Completed Phase 29 (Contract Inference) — 2/2 plans verified PASS
-**Next step**: Phase 30 needs planning — Test mock types and factories
+**This session**: Planned Phase 31 (Frontend Components) — 5/5 plans ready
+**Next step**: Execute Phase 31 with `/gsd-execute-phase 31`
