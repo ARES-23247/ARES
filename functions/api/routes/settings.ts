@@ -5,6 +5,7 @@ import { DB } from "../../../shared/schemas/database";
 import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings  } from "../middleware";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
+import { z } from "zod";
 
 export const settingsRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
@@ -26,8 +27,11 @@ function maskSecret(value: string): string {
 
 
 
+// Schema for settings: keys and values must be strings, values max 10000 chars
+const settingsSchema = z.record(z.string(), z.string().max(10000));
+
 const settingsHandlers = {
-   
+
   getSettings: async (_: any, c: Context<AppEnv>) => {
     try {
       const settings = await getDbSettings(c);
@@ -45,11 +49,23 @@ const settingsHandlers = {
   updateSettings: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const db = c.get("db") as Kysely<DB>;
     try {
-      const entries = Object.entries(body) as [string, string][];
+      // Validate input: ensure body is a record of string keys to string values
+      const validationResult = settingsSchema.safeParse(body);
+      if (!validationResult.success) {
+        return {
+          status: 400 as const,
+          body: {
+            success: false,
+            error: "Invalid settings format: " + validationResult.error.issues.map(i => i.message).join(", ")
+          } as any
+        };
+      }
+
+      const entries = Object.entries(validationResult.data) as [string, string][];
       let updatedCount = 0;
       for (const [key, value] of entries) {
         // SEC-03: Prevent overwriting secrets with the masked versions passed back by the frontend
-        if (SENSITIVE_KEYS.has(key) && typeof value === 'string' && value.startsWith('••••')) {
+        if (SENSITIVE_KEYS.has(key) && value.startsWith('••••')) {
           continue;
         }
 
