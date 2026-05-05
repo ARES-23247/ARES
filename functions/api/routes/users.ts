@@ -11,8 +11,8 @@ import { DB } from "../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 export const usersRouter = new Hono<AppEnv>();
 
-const userTsRestRouter: any = s.router(userContract, {
-  getUsers: async ({ query: _query }: { query: z.infer<typeof userContract.getUsers.query> }, c: Context<AppEnv>) => {
+const userTsRestRouter = s.router(userContract, {
+  getUsers: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit, cursor } = parsePagination(c, 50, 100);
@@ -54,7 +54,7 @@ const userTsRestRouter: any = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  adminDetail: async ({ params }: { params: z.infer<typeof userContract.adminDetail.pathParams> }, c: Context<AppEnv>) => {
+  adminDetail: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("user as u")
@@ -63,7 +63,7 @@ const userTsRestRouter: any = s.router(userContract, {
           "u.id", "u.name", "u.email", "u.emailVerified", "u.image", "u.role", "u.createdAt", "u.updatedAt",
           "p.nickname", "p.member_type"
         ])
-        .where("u.id", "=", params.id)
+        .where("u.id", "=", input.params.id)
         .executeTakeFirst();
 
       if (!row) return { status: 404 as const, body: { error: "User not found" } };
@@ -89,7 +89,7 @@ const userTsRestRouter: any = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  patchUser: async ({ params, body }: { params: z.infer<typeof userContract.patchUser.pathParams>, body: z.infer<typeof userContract.patchUser.body> }, c: Context<AppEnv>) => {
+  patchUser: async (input, c) => {
     try {
       // Defense-in-depth: Re-validate admin authorization for sensitive role changes
       const sessionUser = c.get("sessionUser") as { id: string; role: string } | undefined;
@@ -98,7 +98,7 @@ const userTsRestRouter: any = s.router(userContract, {
       }
 
       const { patchUserSchema } = await import("../../../shared/schemas/contracts/userContract");
-      const validationResult = patchUserSchema.safeParse(body);
+      const validationResult = patchUserSchema.safeParse(input.body);
       if (!validationResult.success) {
         return { status: 400 as const, body: { error: "Invalid input: " + validationResult.error.issues.map(i => i.message).join(", ") } };
       }
@@ -107,11 +107,11 @@ const userTsRestRouter: any = s.router(userContract, {
       const { role, member_type } = validationResult.data;
 
       if (role) {
-        await db.updateTable("user").set({ role }).where("id", "=", params.id).execute();
+        await db.updateTable("user").set({ role }).where("id", "=", input.params.id).execute();
         // Invalidate all sessions for the user to force re-auth with new role
-        await db.deleteFrom("session").where("userId", "=", params.id).execute();
+        await db.deleteFrom("session").where("userId", "=", input.params.id).execute();
         // IN-08: Audit log role changes
-        c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_ROLE", "user", params.id, `Changed role to ${role}`));
+        c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_ROLE", "user", input.params.id, `Changed role to ${role}`));
       }
       // WR-14: Document session invalidation behavior
       // Note: member_type changes do NOT invalidate sessions currently.
@@ -120,22 +120,22 @@ const userTsRestRouter: any = s.router(userContract, {
       if (member_type) {
         const existing = await db.selectFrom("user_profiles")
           .select("user_id")
-          .where("user_id", "=", params.id)
+          .where("user_id", "=", input.params.id)
           .executeTakeFirst();
-        
+
         if (existing) {
           await db.updateTable("user_profiles")
             .set({ member_type })
-            .where("user_id", "=", params.id)
+            .where("user_id", "=", input.params.id)
             .execute();
         } else {
           await db.insertInto("user_profiles")
-            .values({ user_id: params.id, member_type })
+            .values({ user_id: input.params.id, member_type })
             .execute();
         }
       }
 
-      c.executionCtx.waitUntil(logAuditAction(c, "PATCH_USER", "user", params.id, `Updated user ${params.id}: role=${role}, type=${member_type}`));
+      c.executionCtx.waitUntil(logAuditAction(c, "PATCH_USER", "user", input.params.id, `Updated user ${input.params.id}: role=${role}, type=${member_type}`));
 
       return { status: 200 as const, body: { success: true } };
     } catch (e: unknown) {
@@ -143,31 +143,31 @@ const userTsRestRouter: any = s.router(userContract, {
       return { status: 500 as const, body: { error: "Update failed: " + (e instanceof Error ? e.message : "Unknown error") } };
     }
   },
-  updateUserProfile: async ({ params, body }: { params: z.infer<typeof userContract.updateUserProfile.pathParams>, body: z.infer<typeof userContract.updateUserProfile.body> }, c: Context<AppEnv>) => {
+  updateUserProfile: async (input, c) => {
     try {
-      await upsertProfile(c, params.id, body as Record<string, unknown>);
+      await upsertProfile(c, input.params.id, input.body as Record<string, unknown>);
       return { status: 200 as const, body: { success: true } };
     } catch {
       return { status: 500 as const, body: { error: "Profile update failed" } };
     }
   },
-  adminGetProfile: async ({ params }: { params: z.infer<typeof userContract.adminGetProfile.pathParams> }, c: Context<AppEnv>) => {
+  adminGetProfile: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      const user = await db.selectFrom("user").select(["id", "name", "email", "image", "role"]).where("id", "=", params.id).executeTakeFirst();
+      const user = await db.selectFrom("user").select(["id", "name", "email", "image", "role"]).where("id", "=", input.params.id).executeTakeFirst();
       if (!user) return { status: 404 as const, body: { error: "User not found" } };
 
       const profileRow = await db.selectFrom("user_profiles as p")
         .select([
-          "p.user_id", "p.nickname", "p.first_name", "p.last_name", "p.bio", "p.pronouns", 
+          "p.user_id", "p.nickname", "p.first_name", "p.last_name", "p.bio", "p.pronouns",
           "p.subteams", "p.member_type", "p.grade_year", "p.favorite_food", "p.dietary_restrictions",
           "p.favorite_first_thing", "p.fun_fact", "p.show_email", "p.contact_email", "p.show_phone", "p.phone",
           "p.show_on_about", "p.favorite_robot_mechanism", "p.pre_match_superstition", "p.leadership_role",
           "p.rookie_year", "p.colleges", "p.employers", "p.tshirt_size",
-          "p.emergency_contact_name", "p.emergency_contact_phone", 
+          "p.emergency_contact_name", "p.emergency_contact_phone",
           "p.parents_name", "p.parents_email", "p.students_name", "p.students_email"
         ])
-        .where("p.user_id", "=", params.id)
+        .where("p.user_id", "=", input.params.id)
         .executeTakeFirst();
 
       const p = { 
@@ -230,10 +230,10 @@ const userTsRestRouter: any = s.router(userContract, {
       return { status: 500 as const, body: { error: "Failed to fetch user profile" } };
     }
   },
-  deleteUser: async ({ params }: { params: z.infer<typeof userContract.deleteUser.pathParams> }, c: Context<AppEnv>) => {
+  deleteUser: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
-      const id = params.id;
+      const id = input.params.id;
       
       // Atomicity Fix: Delete all related records in parallel, then the user
       await Promise.all([
@@ -255,11 +255,22 @@ const userTsRestRouter: any = s.router(userContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-} as any);
+});
 
 usersRouter.use("/admin/*", ensureAdmin);
 // WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad
 
-createHonoEndpoints(userContract, userTsRestRouter, usersRouter);
+createHonoEndpoints(
+  userContract,
+  userTsRestRouter,
+  usersRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default usersRouter;

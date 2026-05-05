@@ -1,10 +1,8 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { postContract } from "../../../shared/schemas/contracts/postContract";
-import { z } from "zod";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, validateLength, MAX_INPUT_LENGTHS, logAuditAction } from "../middleware";
 import { getStandardDate } from "../../utils/content";
@@ -20,7 +18,6 @@ import {
   captureHistory,
   pruneHistory
 } from "../../utils/postHistory";
-import type { AppRouteInput } from "../../../shared/types/contracts";
 
 const s = initServer<AppEnv>();
 
@@ -79,7 +76,7 @@ const postTsRestRouterObj = {
           is_portfolio: 0
         }));
 
-        return { status: 200 as const, body: { posts: posts as any } };
+        return { status: 200, body: { posts } };
       }
 
       const results = await db.selectFrom("posts")
@@ -118,7 +115,7 @@ const postTsRestRouterObj = {
 
       c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=600");
 
-      return { status: 200 as const, body: { posts: posts as any } };
+      return { status: 200, body: { posts } };
     } catch (e) {
       console.error("[Posts:List] Error", e);
       return { status: 500, body: { error: "Failed to fetch posts" } };
@@ -159,9 +156,9 @@ const postTsRestRouterObj = {
 
       if (!row) return { status: 404, body: { error: "Post not found" } };
 
-      return { 
-        status: 200 as const, 
-        body: { 
+      return {
+        status: 200,
+        body: {
           post: {
             ...row,
             season_id: row.season_id ? Number(row.season_id) : null,
@@ -176,7 +173,7 @@ const postTsRestRouterObj = {
             image: row.author_avatar || null,
             role: "author"
           }
-        } as any
+        }
       };
     } catch (e) {
       console.error("[Posts:Detail] Error", e);
@@ -250,17 +247,16 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  savePost: async (input: { body: z.infer<typeof postContract.savePost.body> }, c: Context<AppEnv>) => {
+  savePost: async (input, c) => {
     try {
-      const { body } = input;
       const db = c.get("db") as Kysely<DB>;
 
-      if (body.slug) {
+      if (input.body.slug) {
         // Redirect to updatePost
-        return postTsRestRouterObj.updatePost({ params: { slug: body.slug }, body }, c);
+        return postTsRestRouterObj.updatePost({ params: { slug: input.body.slug }, body: input.body }, c);
       }
 
-      const titleError = validateLength(body.title, MAX_INPUT_LENGTHS.title, "Title");
+      const titleError = validateLength(input.body.title, MAX_INPUT_LENGTHS.title, "Title");
       if (titleError) return { status: 400, body: { error: titleError } };
 
       const user = await getSessionUser(c);
@@ -269,7 +265,7 @@ const postTsRestRouterObj = {
 
       const recent = await db.selectFrom("posts")
         .select("slug")
-        .where("title", "=", body.title)
+        .where("title", "=", input.body.title)
         .where("cf_email", "=", email)
         .where("date", "=", dateStr)
         .executeTakeFirst();
@@ -278,7 +274,7 @@ const postTsRestRouterObj = {
         return { status: 409, body: { error: "A post with this title already exists for today" } };
       }
 
-      let slug = body.title
+      let slug = input.body.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "") || `untitled-${Date.now()}`;
@@ -289,26 +285,26 @@ const postTsRestRouterObj = {
         slug = `${slug}-${suffix}`;
       }
 
-      const astStr = JSON.stringify(body.ast);
-      const snippet = extractAstText(body.ast).substring(0, 200);
-      
-      const status = body.isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
+      const astStr = JSON.stringify(input.body.ast);
+      const snippet = extractAstText(input.body.ast).substring(0, 200);
+
+      const status = input.body.isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
       await db.insertInto("posts")
         .values({
           slug,
-          title: body.title,
-          author: "ARES Team", 
+          title: input.body.title,
+          author: "ARES Team",
           date: dateStr,
-          thumbnail: body.thumbnail || "",
+          thumbnail: input.body.thumbnail || "",
           snippet,
           ast: astStr,
           cf_email: email,
           status,
-          published_at: body.publishedAt || null,
-          season_id: body.seasonId ? Number(body.seasonId) : null,
+          published_at: input.body.publishedAt || null,
+          season_id: input.body.seasonId ? Number(input.body.seasonId) : null,
           zulip_stream: "blog",
-          zulip_topic: `Blog: ${body.title}`
+          zulip_topic: `Blog: ${input.body.title}`
         })
         .execute();
 
@@ -325,14 +321,14 @@ const postTsRestRouterObj = {
       );
 
       c.executionCtx.waitUntil(pruneHistory(c, slug, 10));
-      c.executionCtx.waitUntil(logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${body.title} (${status})`));
+      c.executionCtx.waitUntil(logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${input.body.title} (${status})`));
       triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
 
       const warnings: string[] = [];
 
       if (status === "published") {
         const socialConfig = await getSocialConfig(c);
-        const socialsFilter = body.socials || null;
+        const socialsFilter = input.body.socials || null;
         const baseUrl = new URL(c.req.url).origin;
 
         c.executionCtx.waitUntil((async () => {
@@ -340,10 +336,10 @@ const postTsRestRouterObj = {
             await dispatchSocials(
               c.get("db") as Kysely<DB>,
               {
-                title: body.title,
+                title: input.body.title,
                 url: `${baseUrl}/blog/${slug}`,
                 snippet: snippet || "Read the latest engineering update from ARES 23247!",
-                thumbnail: body.thumbnail || "/gallery_1.png",
+                thumbnail: input.body.thumbnail || "/gallery_1.png",
                 baseUrl: baseUrl
               },
               socialConfig,
@@ -358,8 +354,8 @@ const postTsRestRouterObj = {
           c.executionCtx.waitUntil(sendZulipMessage(
             socialConfig,
             "blog",
-            `Blog: ${body.title}`,
-            `🚀 **New Blog Post Published:** [${body.title}](${siteConfig.urls.base}/blog/${slug})\n\n${snippet.substring(0, 300)}`
+            `Blog: ${input.body.title}`,
+            `🚀 **New Blog Post Published:** [${input.body.title}](${siteConfig.urls.base}/blog/${slug})\n\n${snippet.substring(0, 300)}`
           ).catch(err => {
             console.error("[Posts] Zulip announcement failed:", err);
             warnings.push("Zulip Notification Failed");
@@ -373,7 +369,7 @@ const postTsRestRouterObj = {
       if (status === "pending") {
         const notifyPromise = notifyByRole(c, ["admin", "coach", "mentor"], {
           title: "📝 Pending Blog Post",
-          message: `"${body.title}" submitted by ${email} needs review.`,
+          message: `"${input.body.title}" submitted by ${email} needs review.`,
           link: "/dashboard/manage_blog",
           external: true,
           priority: "medium"
@@ -395,29 +391,28 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  updatePost: async (input: { params: z.infer<typeof postContract.updatePost.pathParams>, body: z.infer<typeof postContract.updatePost.body> }, c: Context<AppEnv>) => {
-    const { params, body } = input;
-    const { slug } = params;
+  updatePost: async (input, c) => {
+    const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
-      const astStr = JSON.stringify(body.ast);
-      const snippet = extractAstText(body.ast).substring(0, 200);
+      const astStr = JSON.stringify(input.body.ast);
+      const snippet = extractAstText(input.body.ast).substring(0, 200);
       const user = await getSessionUser(c);
-      
+
       if (user?.role !== "admin") {
         const revSlug = await createShadowRevision(c, slug, user!, {
-          title: body.title,
+          title: input.body.title,
           author: "ARES Team",
-          thumbnail: body.thumbnail,
+          thumbnail: input.body.thumbnail,
           snippet,
           astStr,
-          publishedAt: body.publishedAt,
-          seasonId: body.seasonId
+          publishedAt: input.body.publishedAt,
+          seasonId: input.body.seasonId
         });
         return { status: 200, body: { success: true, slug: revSlug } };
       }
 
-      const status = body.isDraft ? "pending" : "published";
+      const status = input.body.isDraft ? "pending" : "published";
       
       const current = await db.selectFrom("posts")
         .select(["title", "author", "thumbnail", "snippet", "ast", "cf_email", "season_id"])
@@ -431,14 +426,14 @@ const postTsRestRouterObj = {
 
       await db.updateTable("posts")
         .set({
-          title: body.title,
-          thumbnail: body.thumbnail || "",
+          title: input.body.title,
+          thumbnail: input.body.thumbnail || "",
           snippet,
           ast: astStr,
           status,
           content_draft: null,
-          published_at: body.publishedAt || null,
-          season_id: body.seasonId ? Number(body.seasonId) : null,
+          published_at: input.body.publishedAt || null,
+          season_id: input.body.seasonId ? Number(input.body.seasonId) : null,
           updated_at: new Date().toISOString()
         })
         .where("slug", "=", slug)
@@ -456,7 +451,7 @@ const postTsRestRouterObj = {
           .execute()
       );
 
-      c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${body.title} (${status})`));
+      c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${input.body.title} (${status})`));
       triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB, c.env.ARES_KV);
       return { status: 200, body: { success: true, slug } };
     } catch (e) {
@@ -464,9 +459,8 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async (input: { params: z.infer<typeof postContract.deletePost.pathParams> }, c: Context<AppEnv>) => {
-    const { params } = input;
-    const { slug } = params;
+  deletePost: async (input, c) => {
+    const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("posts").set({ is_deleted: 1, status: "draft", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
@@ -478,9 +472,8 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undeletePost: async (input: { params: z.infer<typeof postContract.undeletePost.pathParams> }, c: Context<AppEnv>) => {
-    const { params } = input;
-    const { slug } = params;
+  undeletePost: async (input, c) => {
+    const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("posts").set({ is_deleted: 0, status: "draft", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
@@ -491,9 +484,8 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Undelete failed" } };
     }
   },
-  purgePost: async (input: { params: z.infer<typeof postContract.purgePost.pathParams> }, c: Context<AppEnv>) => {
-    const { params } = input;
-    const { slug } = params;
+  purgePost: async (input, c) => {
+    const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
       
@@ -520,9 +512,8 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-  approvePost: async (input: { params: z.infer<typeof postContract.approvePost.pathParams> }, c: Context<AppEnv>) => {
-    const { params } = input;
-    const { slug } = params;
+  approvePost: async (input, c) => {
+    const { slug } = input.params;
     try {
       const result = await approvePost(c, slug);
       if (!result.success) return { status: 404, body: { error: result.error || "Approval failed" } };
@@ -532,10 +523,9 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async (input: { params: z.infer<typeof postContract.rejectPost.pathParams>, body: z.infer<typeof postContract.rejectPost.body> }, c: Context<AppEnv>) => {
-    const { params, body } = input;
-    const { slug } = params;
-    const { reason } = body;
+  rejectPost: async (input, c) => {
+    const { slug } = input.params;
+    const { reason } = input.body;
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("posts").select(["title", "cf_email"]).where("slug", "=", slug).executeTakeFirst();
@@ -561,9 +551,8 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async (input: { params: z.infer<typeof postContract.getPostHistory.pathParams> }, c: Context<AppEnv>) => {
-    const { params } = input;
-    const { slug } = params;
+  getPostHistory: async (input, c) => {
+    const { slug } = input.params;
     try {
       const historyRows = await getPostHistory(c, slug);
       const history = historyRows.map(h => ({
@@ -576,18 +565,16 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch history" } };
     }
   },
-  restorePostHistory: async (input: { params: z.infer<typeof postContract.restorePostHistory.pathParams> }, c: Context<AppEnv>) => {
-    const { params } = input;
-    const { slug, id } = params;
+  restorePostHistory: async (input, c) => {
+    const { slug, id } = input.params;
     const user = await getSessionUser(c);
     const result = await restorePostFromHistory(c, slug, String(id), user?.email || "anonymous_admin");
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async (input: { params: z.infer<typeof postContract.repushSocials.pathParams>, body: z.infer<typeof postContract.repushSocials.body> }, c: Context<AppEnv>) => {
-    const { params, body } = input;
-    const { slug } = params;
-    const { socials } = body;
+  repushSocials: async (input, c) => {
+    const { slug } = input.params;
+    const { socials } = input.body;
     try {
       const db = c.get("db") as Kysely<DB>;
       const post = await db.selectFrom("posts").select(["title", "snippet", "thumbnail"]).where("slug", "=", slug).executeTakeFirst();
@@ -617,7 +604,7 @@ const postTsRestRouterObj = {
   },
 };
 
-const postTsRestRouter: any = s.router(postContract, postTsRestRouterObj);
+const postTsRestRouter = s.router(postContract, postTsRestRouterObj);
 
 export const postsRouter = new Hono<AppEnv>();
 
@@ -630,6 +617,17 @@ postsRouter.use("/admin/:slug/history", ensureAuth);
 postsRouter.use("/admin/:slug/history/*", ensureAuth);
 postsRouter.use("/admin/*", ensureAdmin);
 
-createHonoEndpoints(postContract, postTsRestRouter, postsRouter);
+createHonoEndpoints(
+  postContract,
+  postTsRestRouter,
+  postsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default postsRouter;
