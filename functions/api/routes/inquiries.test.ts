@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
  
 import { TestEnv, MockKysely } from "../../../src/test/types";
 declare const global: typeof globalThis;

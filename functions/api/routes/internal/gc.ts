@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { AppEnv } from "../../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -8,7 +7,7 @@ import { DB } from "../../../../shared/schemas/database";
 export const gcRouter = new Hono<AppEnv>();
 
 // This is an internal cron trigger endpoint
-gcRouter.post("/", async (c) => {
+gcRouter.post("/", async (c: Context<AppEnv>) => {
   try {
     const cronSecret = c.env.CRON_SECRET;
     const providedSecret = c.req.header("x-cron-secret");

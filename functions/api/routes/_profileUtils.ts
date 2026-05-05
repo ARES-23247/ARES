@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
-
 import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -73,68 +70,40 @@ export async function upsertProfile(
     memberType = "student";
   }
 
-  const values = {
+  // Values object needs to match database column types which are mixed (string, number, JSON columns)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Kysely insert requires mixed types matching DB schema
+  const values: Record<string, string | number | null> = {
     user_id: userId,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    nickname: await getMergedValue("nickname") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    first_name: await getMergedValue("first_name") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    last_name: await getMergedValue("last_name") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pronouns: await getMergedValue("pronouns") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    phone: await getMergedValue("phone", true) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    contact_email: await getMergedValue("contact_email", true) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    bio: await getMergedValue("bio") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subteams: await getMergedValue("subteams", false, "[]") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dietary_restrictions: await getMergedValue("dietary_restrictions", false, "[]") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    show_on_about: await getMergedValue("show_on_about", false, 1) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    show_email: await getMergedValue("show_email", false, 0) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    show_phone: await getMergedValue("show_phone", false, 0) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    member_type: memberType as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    grade_year: await getMergedValue("grade_year") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    colleges: await getMergedValue("colleges", false, "[]") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    employers: await getMergedValue("employers", false, "[]") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    favorite_first_thing: await getMergedValue("favorite_first_thing") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    fun_fact: await getMergedValue("fun_fact") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    favorite_robot_mechanism: await getMergedValue("favorite_robot_mechanism") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pre_match_superstition: await getMergedValue("pre_match_superstition") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    leadership_role: await getMergedValue("leadership_role") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rookie_year: await getMergedValue("rookie_year") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tshirt_size: await getMergedValue("tshirt_size") as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    emergency_contact_name: await getMergedValue("emergency_contact_name", true) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    emergency_contact_phone: await getMergedValue("emergency_contact_phone", true) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parents_name: await getMergedValue("parents_name", true) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parents_email: await getMergedValue("parents_email", true) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    students_name: await getMergedValue("students_name", true) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    students_email: await getMergedValue("students_email", true) as any,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    favorite_food: await getMergedValue("favorite_food") as any
+    nickname: await getMergedValue("nickname") as string,
+    first_name: await getMergedValue("first_name") as string,
+    last_name: await getMergedValue("last_name") as string,
+    pronouns: await getMergedValue("pronouns") as string,
+    phone: await getMergedValue("phone", true) as string,
+    contact_email: await getMergedValue("contact_email", true) as string,
+    bio: await getMergedValue("bio") as string,
+    subteams: await getMergedValue("subteams", false, "[]") as string,
+    dietary_restrictions: await getMergedValue("dietary_restrictions", false, "[]") as string,
+    show_on_about: await getMergedValue("show_on_about", false, 1) as number,
+    show_email: await getMergedValue("show_email", false, 0) as number,
+    show_phone: await getMergedValue("show_phone", false, 0) as number,
+    member_type: memberType as string,
+    grade_year: await getMergedValue("grade_year") as string,
+    colleges: await getMergedValue("colleges", false, "[]") as string,
+    employers: await getMergedValue("employers", false, "[]") as string,
+    favorite_first_thing: await getMergedValue("favorite_first_thing") as string,
+    fun_fact: await getMergedValue("fun_fact") as string,
+    favorite_robot_mechanism: await getMergedValue("favorite_robot_mechanism") as string,
+    pre_match_superstition: await getMergedValue("pre_match_superstition") as string,
+    leadership_role: await getMergedValue("leadership_role") as string,
+    rookie_year: await getMergedValue("rookie_year") as string,
+    tshirt_size: await getMergedValue("tshirt_size") as string,
+    emergency_contact_name: await getMergedValue("emergency_contact_name", true) as string,
+    emergency_contact_phone: await getMergedValue("emergency_contact_phone", true) as string,
+    parents_name: await getMergedValue("parents_name", true) as string,
+    parents_email: await getMergedValue("parents_email", true) as string,
+    students_name: await getMergedValue("students_name", true) as string,
+    students_email: await getMergedValue("students_email", true) as string,
+    favorite_food: await getMergedValue("favorite_food") as string
   };
 
   const { user_id: _, ...updateSet } = values;

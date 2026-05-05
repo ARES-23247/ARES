@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
  
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import githubWebhookRouter from "./githubWebhook";

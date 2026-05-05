@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { upsertProfile } from "./_profileUtils";
 import type { MockKysely } from "../../../src/test/types";
