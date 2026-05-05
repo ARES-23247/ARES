@@ -2,28 +2,28 @@
 gsd_state_version: 1.0
 milestone: v6.7
 milestone_name: TypeScript Any Elimination
-status: verifying
-last_updated: "2026-05-05T17:55:26.216Z"
+status: in_progress
+last_updated: "2026-05-05T18:40:00.000Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 25
-  completed_plans: 9
-  percent: 36
+  total_plans: 34
+  completed_plans: 11
+  percent: 32
 ---
 
 # System State
 
 **Current Milestone**: v6.7 — TypeScript Any Elimination
-**Status**: Phase 29.1 in progress — 4/4 plans executed
+**Status**: Phase 30 in progress — 1/8 plans executed
 **Last activity**: 2026-05-05
 
 ## Current Position
 
-Phase: 29.1 (Remaining Route Contract Inference) — COMPLETE
-Plan: 29.1-01 executed (awards, entities, locations, tasks, tba migrated to contract inference)
-Status: Phase 29.1 complete, ready for next phase
+Phase: 30 (Test Types) — IN PROGRESS
+Plan: 30-01 executed (Type Infrastructure complete)
+Status: Ready for 30-02 (Factory Migration)
 Last activity: 2026-05-05
 
 ## Project Reference
@@ -142,15 +142,21 @@ Migrate the remaining 11 route files to ts-rest contract inference, eliminating 
 
 ---
 
-## Phase 30: Test Types — PLANNED
+## Phase 30: Test Types — IN PROGRESS
 
 ### Status
 
-Research complete, 8 plans created.
+Research complete, 8 plans created. 1/8 plans executed.
 
-### Plans
+### Completed Plans
 
-- 30-01: Type Infrastructure (src/test/types.ts)
+- [x] 30-01-PLAN.md — Type Infrastructure (src/test/types.ts) — Complete
+  - Created src/test/types.ts with MockKysely, TestEnv, MockExecutionContext, MockExpressionBuilder
+  - Eliminated all 3 `any` violations from src/test/utils.tsx
+  - Requirements completed: TEST-01, TEST-02, TEST-03, TEST-04
+
+### Remaining Plans
+
 - 30-02: Factory Migration (6 factory files)
 - 30-03 through 30-07: Backend Test Migration (parallel)
 - 30-08: E2E Test Fix
