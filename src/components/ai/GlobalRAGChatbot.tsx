@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { v4 as uuidv4 } from "uuid";
 import { useUIStore } from "../../store/uiStore";
+import { z } from "zod";
 
 export function GlobalRAGChatbot() {
   const { isChatbotOpen, setChatbotOpen } = useUIStore();
@@ -24,20 +25,37 @@ export function GlobalRAGChatbot() {
     return uuidv4();
   });
 
+  // SEC-WR-08: Zod schema for validating chat session API response
+  const chatSessionSchema = z.object({
+    messages: z.array(z.object({
+      role: z.enum(['user', 'assistant']),
+      content: z.string().max(10000) // Limit message size to prevent DoS
+    }))
+  });
+
   useEffect(() => {
     if (sessionId && messages.length === 0) {
       fetch(`/api/ai/chat-session/${sessionId}`)
-        .then(res => res.json())
-        .then((data: unknown) => {
-          const parsed = data as { messages?: { role: string; content: string }[] };
-          if (parsed && parsed.messages && parsed.messages.length > 0) {
-            setMessages(parsed.messages.map(m => ({
-              role: m.role === "assistant" ? "ai" : (m.role as "ai" | "user"),
+        .then(async (res) => {
+          if (!res.ok) {
+            throw new Error(`Failed to load chat history: ${res.status}`);
+          }
+          const data = await res.json();
+
+          // SEC-WR-08: Validate response structure before using
+          const validated = chatSessionSchema.safeParse(data);
+          if (validated.success) {
+            setMessages(validated.data.messages.map(m => ({
+              role: m.role === "assistant" ? "ai" : "user",
               content: m.content
             })));
           }
+          // If validation fails, silently start with empty messages
         })
-        .catch(e => console.error("Failed to load chat history", e));
+        .catch(e => {
+          console.error("Failed to load chat history", e);
+          // Don't show toast for session load failures - just start fresh
+        });
     }
   }, [sessionId, messages.length]);
   
