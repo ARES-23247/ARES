@@ -218,4 +218,20 @@ Plans:
 
 **Requirements**: Validation Checklist, Legitimate Any Cases
 
-**Plans**: TBD
+**Success Criteria** (what must be TRUE):
+1. `eslint.config.js` has `"@typescript-eslint/no-explicit-any": "error"`
+2. `eslint.config.js` has no API router override block
+3. `src/components/generated/**` remains in ignores
+4. Zero `any` violations without inline justification comments
+5. All justification comments follow format: `// eslint-disable-next-line @typescript-eslint/no-explicit-any -- [Category]: [Reason]`
+6. Final violation count documented in phase summary
+
+**Plans**: 2/2 planned
+
+**Wave Structure**:
+- Wave 1: 32-01 (ESLint Enforcement) — autonomous, changes rule from "warn" to "error", removes API override
+- Wave 2: 32-02 (Justification Audit) — autonomous, depends on 32-01, adds justification comments to remaining uses
+
+Plans:
+- [ ] 32-01-PLAN.md — Enable ESLint no-explicit-any enforcement, remove API router override, count remaining violations (TODO)
+- [ ] 32-02-PLAN.md — Audit remaining violations, add justification comments to legitimate uses, document final count (TODO)
