@@ -66,7 +66,7 @@ describe("Hono Backend - /settings Router", () => {
   it("GET / - list settings (masked)", async () => {
     const res = await testApp.request("/admin/settings", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { settings: Record<string, string>; success: boolean };
     expect(body.settings.site_name).toBe("ARES");
     expect(body.settings.BETTER_AUTH_SECRET).toContain("••••");
   });
@@ -87,7 +87,7 @@ describe("Hono Backend - /settings Router", () => {
     mockDb.executeTakeFirst.mockResolvedValue({ count: 10 });
     const res = await testApp.request("/admin/stats", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { posts: number; users: number; events: number; docs: number };
     expect(body.posts).toBe(10);
   });
 
@@ -95,7 +95,7 @@ describe("Hono Backend - /settings Router", () => {
     mockDb.executeTakeFirst.mockResolvedValue(null);
     const res = await testApp.request("/admin/stats", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { posts: number; users: number; events: number; docs: number };
     expect(body.posts).toBe(0);
     expect(body.users).toBe(0);
   });
@@ -117,7 +117,7 @@ describe("Hono Backend - /settings Router", () => {
     expect(res.status).toBe(200);
     // Should only have inserted site_name
     expect(mockDb.insertInto).toHaveBeenCalledTimes(1);
-    const body = await res.json() as any;
+    const body = await res.json() as { updated: number; success: boolean };
     expect(body.updated).toBe(1);
   });
 
@@ -148,10 +148,10 @@ describe("Hono Backend - /settings Router", () => {
 
     const res = await testApp.request("/admin/backup", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { success: boolean; backup: Record<string, unknown[]> };
     expect(body.success).toBe(true);
     expect(body.backup).toBeDefined();
-    
+
     // Verify inquiries masking
     expect(body.backup.inquiries[0].name).toBe("B***");
     expect(body.backup.inquiries[0].email).toBe("***@***.***");
@@ -183,7 +183,7 @@ describe("Hono Backend - /settings Router", () => {
     }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { updated: number; success: boolean };
     expect(body.updated).toBe(1); // Only NORMAL_KEY updated
   });
 
@@ -222,7 +222,7 @@ describe("Hono Backend - /settings Router", () => {
 
     const res = await testApp.request("/admin/backup", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { success: boolean; backup: Record<string, unknown[]> };
     expect(body.success).toBe(true);
     expect(body.backup.posts).toEqual([]);
   });
