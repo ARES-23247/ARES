@@ -4,6 +4,7 @@ import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { postContract } from "../../../shared/schemas/contracts/postContract";
+import { z } from "zod";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, validateLength, MAX_INPUT_LENGTHS, logAuditAction } from "../middleware";
 import { getStandardDate } from "../../utils/content";
@@ -34,8 +35,8 @@ const sanitizeFtsQuery = (query: string): string => {
   return `"${cleanQ.replace(/"/g, '""')}*`;
 };
 
-const postTsRestRouterObj: any = {
-  getPosts: async (input: any, c: Context<AppEnv>) => {
+const postTsRestRouterObj = {
+  getPosts: async (input: { query: z.infer<typeof postContract.getPosts.query> }, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -123,7 +124,7 @@ const postTsRestRouterObj: any = {
       return { status: 200, body: { posts: [] } }; // Graceful degradation
     }
   },
-  getPost: async (input: any, c: Context<AppEnv>) => {
+  getPost: async (input: { params: z.infer<typeof postContract.getPost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -180,10 +181,10 @@ const postTsRestRouterObj: any = {
       };
     } catch (e) {
       console.error("[Posts:Detail] Error", e);
-      return { status: 404, body: { error: "Database error" } };
+      return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  getAdminPosts: async (input: any, c: Context<AppEnv>) => {
+  getAdminPosts: async (input: { query: z.infer<typeof postContract.getAdminPosts.query> }, c: Context<AppEnv>) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -220,7 +221,7 @@ const postTsRestRouterObj: any = {
       return { status: 200, body: { posts: [] } };
     }
   },
-  getAdminPost: async (input: any, c: Context<AppEnv>) => {
+  getAdminPost: async (input: { params: z.infer<typeof postContract.getAdminPost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -246,10 +247,10 @@ const postTsRestRouterObj: any = {
       };
     } catch (e) {
       console.error("[Posts:AdminDetail] Error", e);
-      return { status: 404, body: { error: "Database error" } };
+      return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  savePost: async (input: any, c: Context<AppEnv>) => {
+  savePost: async (input: { body: z.infer<typeof postContract.savePost.body> }, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -394,7 +395,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  updatePost: async (input: any, c: Context<AppEnv>) => {
+  updatePost: async (input: { params: z.infer<typeof postContract.updatePost.pathParams>, body: z.infer<typeof postContract.updatePost.body> }, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     try {
@@ -463,7 +464,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async (input: any, c: Context<AppEnv>) => {
+  deletePost: async (input: { params: z.infer<typeof postContract.deletePost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -477,7 +478,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undeletePost: async (input: any, c: Context<AppEnv>) => {
+  undeletePost: async (input: { params: z.infer<typeof postContract.undeletePost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -490,7 +491,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Undelete failed" } };
     }
   },
-  purgePost: async (input: any, c: Context<AppEnv>) => {
+  purgePost: async (input: { params: z.infer<typeof postContract.purgePost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -519,7 +520,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-  approvePost: async (input: any, c: Context<AppEnv>) => {
+  approvePost: async (input: { params: z.infer<typeof postContract.approvePost.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -531,7 +532,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async (input: any, c: Context<AppEnv>) => {
+  rejectPost: async (input: { params: z.infer<typeof postContract.rejectPost.pathParams>, body: z.infer<typeof postContract.rejectPost.body> }, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     const { reason } = body;
@@ -560,7 +561,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async (input: any, c: Context<AppEnv>) => {
+  getPostHistory: async (input: { params: z.infer<typeof postContract.getPostHistory.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug } = params;
     try {
@@ -575,7 +576,7 @@ const postTsRestRouterObj: any = {
       return { status: 500, body: { error: "Failed to fetch history" } };
     }
   },
-  restorePostHistory: async (input: any, c: Context<AppEnv>) => {
+  restorePostHistory: async (input: { params: z.infer<typeof postContract.restorePostHistory.pathParams> }, c: Context<AppEnv>) => {
     const { params } = input;
     const { slug, id } = params;
     const user = await getSessionUser(c);
@@ -583,7 +584,7 @@ const postTsRestRouterObj: any = {
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async (input: any, c: Context<AppEnv>) => {
+  repushSocials: async (input: { params: z.infer<typeof postContract.repushSocials.pathParams>, body: z.infer<typeof postContract.repushSocials.body> }, c: Context<AppEnv>) => {
     const { params, body } = input;
     const { slug } = params;
     const { socials } = body;
@@ -613,7 +614,7 @@ const postTsRestRouterObj: any = {
   },
 };
 
-const postTsRestRouter = s.router(postContract, postTsRestRouterObj);
+const postTsRestRouter = s.router(postContract, postTsRestRouterObj as any);
 
 export const postsRouter = new Hono<AppEnv>();
 
