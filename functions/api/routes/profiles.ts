@@ -4,7 +4,7 @@ import { getAuth } from "../../utils/auth";
 import { decrypt } from "../../utils/crypto";
 import { upsertProfile } from "./_profileUtils";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
-import { profileContract } from "../../../shared/schemas/contracts/userContract";
+import { profileContract, updateUserProfileSchema } from "../../../shared/schemas/contracts/userContract";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
@@ -104,7 +104,18 @@ const profileHandlers = {
   updateMe: async ({ body }: { body: any }, c: Context<AppEnv>) => {
     const user = (await getSessionUser(c))!;
     try {
-      await upsertProfile(c as any, user.id, body as any);
+      // Validate input against schema before updating profile
+      const validationResult = updateUserProfileSchema.safeParse(body);
+      if (!validationResult.success) {
+        return {
+          status: 400 as const,
+          body: {
+            error: "Invalid profile data: " + validationResult.error.issues.map(i => i.message).join(", ")
+          } as any
+        };
+      }
+
+      await upsertProfile(c, user.id, validationResult.data);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Profile:UpdateMe] Error", e);

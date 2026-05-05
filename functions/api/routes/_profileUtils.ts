@@ -1,4 +1,4 @@
- 
+
 import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -9,7 +9,7 @@ import { safeJSONStringify } from "../../utils/json";
 export async function upsertProfile(
   c: Context<AppEnv>,
   userId: string,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ) {
   const secret = c.env.ENCRYPTION_SECRET;
   const sessionUser = await getSessionUser(c);
@@ -25,7 +25,7 @@ export async function upsertProfile(
   const isAdmin = sessionUser?.role === "admin" || sessionUser?.member_type === "coach" || sessionUser?.member_type === "mentor";
 
   // Robust Merge Helper: Only overwrite if key is present in data, otherwise keep existing or use default
-  const getMergedValue = async (key: keyof typeof data, isEncrypted: boolean = false, defaultValue: unknown = "") => {
+  const getMergedValue = async (key: string, isEncrypted: boolean = false, defaultValue: unknown = "") => {
     if (key in data) {
       const val = data[key];
       if (isEncrypted) return await encrypt(String(val || ""), secret);
@@ -33,7 +33,7 @@ export async function upsertProfile(
         return safeJSONStringify(val, defaultValue as string);
       }
       if (key === 'show_on_about' || key === 'show_email' || key === 'show_phone') {
-        return data[key] ? 1 : 0;
+        return (val === true || val === 1) ? 1 : 0;
       }
       return val ?? defaultValue;
     }
