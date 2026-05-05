@@ -355,6 +355,14 @@ const analyticsHandlers = {
 
 const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as any);
 
+// CR-01 FIX: Apply authentication to all analytics routes
+// Public routes (page view tracking, search) have rate limiting only
+analyticsRouter.use("/summary", ensureAuth);
+analyticsRouter.use("/stats", ensureAuth);
+analyticsRouter.use("/usage-metrics", ensureAuth);
+analyticsRouter.use("/roster-stats", ensureAuth);
+analyticsRouter.use("/leaderboard", ensureAuth);
+
 // Apply ensureAdmin ONLY to administrative routes
 analyticsRouter.use("/admin/*", ensureAdmin);
 
