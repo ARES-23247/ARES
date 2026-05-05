@@ -26,8 +26,8 @@ function normalizeEmail(email: string): string {
   return `${local.replace(/\./g, "")}@${domain}`;
 }
 
-const zulipHandlers = {
-  getPresence: async (_: any, c: Context<AppEnv>) => {
+const zulipTsRestRouter = s.router(zulipContract, {
+  getPresence: async (_, c) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -66,12 +66,12 @@ const zulipHandlers = {
       }
 
       const data = await res.json() as { result: string; presences: z.infer<typeof zulipPresenceSchema> };
-      return { status: 200 as const, body: { success: true, presence: data.presences, userNames } as any };
+      return { status: 200 as const, body: { success: true, presence: data.presences, userNames } };
     } catch (err) {
-      return { status: 500 as const, body: { success: false, error: (err as Error).message } as any };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  sendMessage: async ({ body }: any, c: Context<AppEnv>) => {
+  sendMessage: async ({ body }, c) => {
     try {
       const { sendZulipMessage } = await import("../../utils/zulipSync");
       const config = await getSocialConfig(c);
@@ -94,15 +94,15 @@ const zulipHandlers = {
       );
 
       if (!res) {
-        return { status: 500 as const, body: { success: false, error: "Failed to send message" } as any };
+        return { status: 500 as const, body: { success: false, error: "Failed to send message" } };
       }
 
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch (err) {
-      return { status: 500 as const, body: { success: false, error: (err as Error).message } as any };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  getTopicMessages: async ({ query }: any, c: Context<AppEnv>) => {
+  getTopicMessages: async ({ query }, c) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -130,18 +130,18 @@ const zulipHandlers = {
 
       if (!res.ok) {
         if (res.status === 403) {
-          return { status: 403 as const, body: { success: false, error: "Zulip bot is not subscribed to this stream." } as any };
+          return { status: 403 as const, body: { success: false, error: "Zulip bot is not subscribed to this stream." } };
         }
-        return { status: 500 as const, body: { success: false, error: await res.text() } as any };
+        return { status: 500 as const, body: { success: false, error: await res.text() } };
       }
 
-      const data = await res.json() as { result: string; messages: any[] };
-      return { status: 200 as const, body: { success: true, messages: data.messages } as any };
+      const data = await res.json() as { result: string; messages: unknown[] };
+      return { status: 200 as const, body: { success: true, messages: data.messages } };
     } catch (err) {
-      return { status: 500 as const, body: { success: false, error: (err as Error).message } as any };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  auditMissingUsers: async (_: any, c: Context<AppEnv>) => {
+  auditMissingUsers: async (_, c) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -175,14 +175,14 @@ const zulipHandlers = {
         if (!zulipRes.ok) {
           const errText = await zulipRes.text().catch(() => "(no body)");
           console.error(`[Zulip:Audit] Failed to fetch users page ${page}: ${zulipRes.status} — ${errText}`);
-          return { status: 500 as const, body: { success: false, error: `Zulip API returned ${zulipRes.status}: ${errText.slice(0, 200)}` } as any };
+          return { status: 500 as const, body: { success: false, error: `Zulip API returned ${zulipRes.status}: ${errText.slice(0, 200)}` } };
         }
 
         const zulipData = await zulipRes.json() as { members: Array<{ email: string; delivery_email?: string | null; is_bot?: boolean; is_active?: boolean }> };
 
         if (!zulipData.members || !Array.isArray(zulipData.members)) {
           console.error("[Zulip:Audit] No members array in response:", JSON.stringify(zulipData).slice(0, 500));
-          return { status: 500 as const, body: { success: false, error: "Zulip returned invalid data — no members array" } as any };
+          return { status: 500 as const, body: { success: false, error: "Zulip returned invalid data — no members array" } };
         }
 
         // Add emails from this page
@@ -234,22 +234,22 @@ const zulipHandlers = {
           sampleZulipEmails: sampleZulip,
           sampleMissingEmails: sampleMissing
         }
-      } as any };
+      } };
     } catch (err) {
       console.error("[Zulip:Audit] Unexpected error:", err);
-      return { status: 500 as const, body: { success: false, error: (err as Error).message } as any };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  inviteUsers: async ({ body }: any, c: Context<AppEnv>) => {
+  inviteUsers: async ({ body }, c) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
-        return { status: 500 as const, body: { success: false, error: "Zulip not configured." } as any };
+        return { status: 500 as const, body: { success: false, error: "Zulip not configured." } };
       }
 
       const { emails } = body;
       if (!emails || emails.length === 0) {
-        return { status: 200 as const, body: { success: true, invitedCount: 0 } as any };
+        return { status: 200 as const, body: { success: true, invitedCount: 0 } };
       }
 
       const credentials = `${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`;
@@ -334,18 +334,16 @@ const zulipHandlers = {
       }
 
       if (allErrors.length > 0 && totalInvited === 0) {
-        return { status: 500 as const, body: { success: false, error: allErrors.join("; ") } as any };
+        return { status: 500 as const, body: { success: false, error: allErrors.join("; ") } };
       }
 
-      return { status: 200 as const, body: { success: true, invitedCount: totalInvited } as any };
+      return { status: 200 as const, body: { success: true, invitedCount: totalInvited } };
     } catch (err) {
       console.error("[Zulip:Invite] Unexpected error:", err);
-      return { status: 500 as const, body: { success: false, error: (err as Error).message } as any };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-};
-
-const zulipTsRestRouter = s.router(zulipContract, zulipHandlers as any);
+});
 
 zulipRouter.use("/presence", ensureAdmin);
 zulipRouter.use("/invites/*", ensureAdmin);

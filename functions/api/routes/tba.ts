@@ -8,9 +8,9 @@ import { tbaContract } from "../../../shared/schemas/contracts/tbaContract";
 const s = initServer<AppEnv>();
 export const tbaRouter = new Hono<AppEnv>();
 
-const tbaCache = new Map<string, { data: any; expiresAt: number }>();
+const tbaCache = new Map<string, { data: unknown; expiresAt: number }>();
 
-function setTbaCache(key: string, value: { data: any; expiresAt: number }) {
+function setTbaCache(key: string, value: { data: unknown; expiresAt: number }) {
   if (tbaCache.size >= 100) {
     const firstKey = tbaCache.keys().next().value;
     if (firstKey !== undefined) tbaCache.delete(firstKey);
@@ -44,35 +44,35 @@ async function getTBA(path: string, c: Context<AppEnv>) {
   return data;
 }
 
-const tbaHandlers = {
-  getRankings: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+const tbaTsRestRouter = s.router(tbaContract, {
+  getRankings: async ({ params }, c) => {
     try {
       const eventKey = String(params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
-        return { status: 400 as const, body: { error: "Invalid eventKey" } as any };
+        return { status: 400 as const, body: { error: "Invalid eventKey" } };
       }
       const data = await getTBA(`/event/${eventKey}/rankings`, c);
-      return { status: 200 as const, body: { rankings: (data as any)?.rankings as any[] || [] } as any };
+      return { status: 200 as const, body: { rankings: (data as { rankings?: unknown[] })?.rankings || [] } };
     } catch (e) {
       console.error("GET_TBA_RANKINGS ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to fetch rankings" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch rankings" } };
     }
   },
-  getMatches: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  getMatches: async ({ params }, c) => {
     try {
       const eventKey = String(params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
-        return { status: 400 as const, body: { error: "Invalid eventKey" } as any };
+        return { status: 400 as const, body: { error: "Invalid eventKey" } };
       }
-      const data = await getTBA(`/event/${eventKey}/matches/simple`, c) as any[];
+      const data = await getTBA(`/event/${eventKey}/matches/simple`, c) as Array<{ time?: number }>;
       const sorted = (data || []).sort((a, b) => (a.time || 0) - (b.time || 0));
-      return { status: 200 as const, body: { matches: sorted as any[] } as any };
+      return { status: 200 as const, body: { matches: sorted as unknown[] } };
     } catch (e) {
       console.error("GET_TBA_MATCHES ERROR", e);
-      return { status: 500 as const, body: { error: "Failed to fetch matches" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch matches" } };
     }
   },
-  getFtcEvents: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  getFtcEvents: async ({ params }, c) => {
     try {
       const { season, eventCode, type } = params;
       const path = `/${season}/events/${eventCode}/${type}`;
@@ -80,7 +80,7 @@ const tbaHandlers = {
       const now = Date.now();
       const cacheKey = `ftc_${path}`;
       const cached = tbaCache.get(cacheKey);
-      if (cached && cached.expiresAt > now) return { status: 200 as const, body: cached.data };
+      if (cached && cached.expiresAt > now) return { status: 200 as const, body: cached.data as never }; // TS-Rest handles validation
 
       const db = c.get("db") as Kysely<DB>;
       const settingsRow = await db.selectFrom("settings").select("value").where("key", "=", "FTC_EVENTS_API_KEY").executeTakeFirst();
@@ -98,15 +98,13 @@ const tbaHandlers = {
       
       const data = await r.json();
       setTbaCache(cacheKey, { data, expiresAt: now + 300000 });
-      return { status: 200 as const, body: data };
+      return { status: 200 as const, body: data as never };
     } catch (e) {
       console.error("GET_FTC_EVENTS ERROR", e);
       return { status: 500 as const, body: { error: "Failed to fetch official event data" } };
     }
   }
-};
-
-const tbaTsRestRouter = s.router(tbaContract, tbaHandlers as any);
+});
 
 createHonoEndpoints(tbaContract, tbaTsRestRouter, tbaRouter);
 export default tbaRouter;

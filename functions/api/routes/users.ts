@@ -10,13 +10,13 @@ import { DB } from "../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 export const usersRouter = new Hono<AppEnv>();
 
-const userHandlers = {
-  getUsers: async ({ query: _query }: { query: any }, c: Context<AppEnv>) => {
+const userTsRestRouter = s.router(userContract, {
+  getUsers: async ({ query }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit, cursor } = parsePagination(c, 50, 100);
       
-      let query = db.selectFrom("user as u")
+      let dbQuery = db.selectFrom("user as u")
         .leftJoin("user_profiles as p", "u.id", "p.user_id")
         .select([
           "u.id", "u.name", "u.email", "u.emailVerified", "u.image", "u.role", "u.createdAt", "u.updatedAt",
@@ -26,10 +26,10 @@ const userHandlers = {
         .limit(limit);
 
       if (cursor) {
-        query = query.where("u.createdAt", "<", Number(cursor));
+        dbQuery = dbQuery.where("u.createdAt", "<", Number(cursor));
       }
 
-      const results = await query.execute();
+      const results = await dbQuery.execute();
 
       const users = results.map((u) => {
         return {
@@ -38,7 +38,7 @@ const userHandlers = {
           email: u.email,
           emailVerified: !!u.emailVerified,
           image: u.image || null,
-          role: u.role || "user",
+          role: String(u.role || "user"),
           createdAt: Number(u.createdAt),
           updatedAt: Number(u.updatedAt),
           nickname: u.nickname || null,
@@ -48,12 +48,12 @@ const userHandlers = {
 
       const nextCursor = results.length === limit ? String(results[results.length - 1].createdAt) : null;
 
-      return { status: 200 as const, body: { users, nextCursor } as any };
+      return { status: 200 as const, body: { users, nextCursor } };
     } catch {
-      return { status: 500 as const, body: { error: "Database error" } as any };
+      return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  adminDetail: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  adminDetail: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("user as u")
@@ -65,7 +65,7 @@ const userHandlers = {
         .where("u.id", "=", params.id)
         .executeTakeFirst();
 
-      if (!row) return { status: 404 as const, body: { error: "User not found" } as any };
+      if (!row) return { status: 404 as const, body: { error: "User not found" } };
 
       return { 
         status: 200 as const, 
@@ -76,24 +76,24 @@ const userHandlers = {
             email: row.email,
             emailVerified: !!row.emailVerified,
             image: row.image || null,
-            role: row.role || "user",
+            role: String(row.role || "user"),
             createdAt: Number(row.createdAt),
             updatedAt: Number(row.updatedAt),
             nickname: row.nickname || null,
             member_type: row.member_type || null
           }
-        } as any
+        }
       };
     } catch {
-      return { status: 500 as const, body: { error: "Database error" } as any };
+      return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  patchUser: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
+  patchUser: async ({ params, body }, c) => {
     try {
       const { patchUserSchema } = await import("../../../shared/schemas/contracts/userContract");
       const validationResult = patchUserSchema.safeParse(body);
       if (!validationResult.success) {
-        return { status: 400 as const, body: { error: "Invalid input: " + validationResult.error.issues.map(i => i.message).join(", ") } as any };
+        return { status: 400 as const, body: { error: "Invalid input: " + validationResult.error.issues.map(i => i.message).join(", ") } };
       }
 
       const db = c.get("db") as Kysely<DB>;
@@ -123,25 +123,25 @@ const userHandlers = {
 
       c.executionCtx.waitUntil(logAuditAction(c, "PATCH_USER", "user", params.id, `Updated user ${params.id}: role=${role}, type=${member_type}`));
 
-      return { status: 200 as const, body: { success: true } as any };
-    } catch (e: any) {
+      return { status: 200 as const, body: { success: true } };
+    } catch (e: unknown) {
       console.error("patchUser failed:", e);
-      return { status: 500 as const, body: { error: "Update failed: " + (e.message || "Unknown error") } as any };
+      return { status: 500 as const, body: { error: "Update failed: " + (e instanceof Error ? e.message : "Unknown error") } };
     }
   },
-  updateUserProfile: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>) => {
+  updateUserProfile: async ({ params, body }, c) => {
     try {
       await upsertProfile(c as any, params.id, body as any);
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch {
-      return { status: 500 as const, body: { error: "Profile update failed" } as any };
+      return { status: 500 as const, body: { error: "Profile update failed" } };
     }
   },
-  adminGetProfile: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  adminGetProfile: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await db.selectFrom("user").select(["id", "name", "email", "image", "role"]).where("id", "=", params.id).executeTakeFirst();
-      if (!user) return { status: 404 as const, body: { error: "User not found" } as any };
+      if (!user) return { status: 404 as const, body: { error: "User not found" } };
 
       const profileRow = await db.selectFrom("user_profiles as p")
         .select([
@@ -168,7 +168,7 @@ const userHandlers = {
 
       if (profileRow) {
         const secret = c.env.ENCRYPTION_SECRET;
-        const safeDecrypt = async (val: any) => {
+        const safeDecrypt = async (val: unknown) => {
           if (!val) return null;
           try {
             return await decrypt(val as string, secret);
@@ -207,16 +207,16 @@ const userHandlers = {
             first_name: String(p.first_name || ""),
             last_name: String(p.last_name || ""),
             nickname: String(p.nickname || ""),
-            auth: { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role }
+            auth: { id: user.id, email: user.email, name: user.name, image: user.image, role: String(user.role || "user") }
           }
-        } as any
+        }
       };
     } catch (err) {
       console.error("[Admin:GetProfile] Error", err);
-      return { status: 500 as const, body: { error: "Failed to fetch user profile" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch user profile" } };
     }
   },
-  deleteUser: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  deleteUser: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = params.id;
@@ -235,15 +235,13 @@ const userHandlers = {
 
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_USER", "user", id, `Deleted user ${id}`));
 
-      return { status: 200 as const, body: { success: true } as any };
-    } catch (e: any) {
+      return { status: 200 as const, body: { success: true } };
+    } catch (e: unknown) {
       console.error("Delete user failed:", e);
-      return { status: 500 as const, body: { error: "Delete failed" } as any };
+      return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-};
-
-const userTsRestRouter = s.router(userContract, userHandlers as any);
+});
 
 usersRouter.use("/*", ensureAdmin);
 

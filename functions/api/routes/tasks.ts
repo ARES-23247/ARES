@@ -11,8 +11,8 @@ import { siteConfig } from "../../utils/site.config";
 const s = initServer<AppEnv>();
 export const tasksRouter = new Hono<AppEnv>();
 
-const taskHandlers = {
-  list: async ({ query }: { query: any }, c: Context<AppEnv>): Promise<any> => {
+const tasksTsRestRouter = s.router(taskContract, {
+  list: async ({ query }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -53,7 +53,7 @@ const taskHandlers = {
         try {
           assignees = r.assignees_json ? JSON.parse(r.assignees_json) : [];
           // Filter out null results from left join if any
-          assignees = assignees.filter((a: any) => a.id !== null);
+          assignees = assignees.filter((a: { id?: string | null }) => a.id !== null);
         } catch (e) {
           console.error("Failed to parse assignees JSON", e);
         }
@@ -89,7 +89,7 @@ const taskHandlers = {
     }
   },
 
-  create: async ({ body }: { body: any }, c: Context<AppEnv>): Promise<any> => {
+  create: async ({ body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -185,7 +185,7 @@ const taskHandlers = {
       c.executionCtx.waitUntil((async () => {
         try {
           const env = await getSocialConfig(c);
-          const assigneeNames = assigneeProfiles.map((a: any) => a.nickname || "Unknown").join(", ");
+          const assigneeNames = assigneeProfiles.map((a: { nickname?: string | null }) => a.nickname || "Unknown").join(", ");
           const taskUrl = `${siteConfig.urls.base}/dashboard?tab=tasks`;
           const threadContent = [
             `📋 **New Task Created** by ${user.nickname || user.name || "ARES Member"}`,
@@ -210,7 +210,7 @@ const taskHandlers = {
     }
   },
 
-  reorder: async ({ body }: { body: any }, c: Context<AppEnv>): Promise<any> => {
+  reorder: async ({ body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -218,7 +218,7 @@ const taskHandlers = {
 
       const now = new Date().toISOString();
       
-      await Promise.all(body.items.map((item: any) =>
+      await Promise.all(body.items.map((item: { id: string; status: "todo" | "in_progress" | "in_review" | "done"; sort_order: number }) =>
         db.updateTable("tasks")
           .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
           .where("id", "=", item.id)
@@ -242,7 +242,7 @@ const taskHandlers = {
     }
   },
 
-  update: async ({ params, body }: { params: any, body: any }, c: Context<AppEnv>): Promise<any> => {
+  update: async ({ params, body }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -261,7 +261,7 @@ const taskHandlers = {
       const canAssign = isAdmin || isMentor || isOwner;
 
       // Any authenticated user can update task fields
-      const updates: any = { updated_at: new Date().toISOString() };
+      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (body.title !== undefined) updates.title = body.title;
       if (body.description !== undefined) updates.description = body.description;
       if (body.status !== undefined) updates.status = body.status;
@@ -324,7 +324,7 @@ const taskHandlers = {
     }
   },
 
-  delete: async ({ params }: { params: any }, c: Context<AppEnv>): Promise<any> => {
+  delete: async ({ params }, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -364,12 +364,10 @@ const taskHandlers = {
       return { status: 500, body: { error: "Failed to delete task" } };
     }
   },
-};
+});
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));
-
-const tasksTsRestRouter = s.router(taskContract, taskHandlers as any);
 
 createHonoEndpoints(taskContract, tasksTsRestRouter, tasksRouter);
 export default tasksRouter;
