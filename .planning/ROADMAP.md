@@ -4,17 +4,18 @@
 
 - 🎯 **Goal:** TBD
 - 🛑 **Blockers:** None
-- 🚧 **v6.6** — Next Iteration (Active)
+- 🚧 **v6.6** — TypeScript Strictness (Active)
 
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 21 | v6.6 | 1/1 | ✅ Done | 2026-05-05 |
-| 22 | v6.6 | 1/1 | Complete    | 2026-05-05 |
+| 22 | v6.6 | 1/1 | Complete | 2026-05-05 |
 | 23 | v6.6 | 0/1 | Pending | - |
 | 24 | v6.6 | 0/1 | Pending | - |
-| 25 | v6.6 | 1/1 | ✅ Done | 2026-05-05 |
+| 25 | v6.6 | 1/1 | ✅ Done | 2026-05-04 |
+| 26 | v6.6 | 1/1 | ✅ Done | 2026-05-05 |
 
 ## Phase Details
 
@@ -34,16 +35,23 @@
 **Goal:** Enable `@typescript-eslint/no-explicit-any` globally and validate types via TSC without bypassing.
 **Status:** Pending
 
-### Phase 25: Calendar & Event Editor Enhancements
-**Goal:** Add a quick-add modal to the calendar, replace native location selects with a searchable combobox, fix collaborative editing connectivity, and update E2E tests.
+### Phase 25: Comprehensive Security Audit
+**Goal:** Conduct full security audit across API routes, frontend, authentication, simulation, and data validation layers.
 **Status:** ✅ Done
-**Commits:** `45df07f`, `d59542d`, `cca8dc5`, `88e13ae`
+**Completed:** 2026-05-04
+**Summary:** 137 security issues resolved across two audit rounds using parallel AI agents. Fixed SQL injection, XSS vulnerabilities, authentication gaps, input validation, and rate limiting. Created 11 new utility files for sanitization, logging, and security.
+
+### Phase 26: Calendar & Event Editor Enhancements
+**Goal:** Add quick-add modal to calendar, replace native selects with searchable combobox, fix collaborative editing, and update E2E tests.
+**Status:** ✅ Done
+**Completed:** 2026-05-05
+**Commits:** `45df07f`, `d59542d`, `cca8dc5`, `88e13ae`, `06f1ca0`, `5ce99b4`, `7add4e2`, `e760fe7`
 **Summary:**
-- Created `QuickAddEventModal` component with pre-filled date/times, category selector with ARES colors, and keyboard accessibility.
-- Built `LocationCombobox` component (`@headlessui/react`) replacing native `<select>` in both `EventEditor` and `QuickAddEventModal` with searchable/autocomplete venue selection.
-- Integrated `CreateLocationModal` into both event forms for inline "Add New Venue" workflow.
-- Fixed collaborative editing WebSocket connection failure caused by incorrect `/party` path suffix appended to the PartyKit host (y-partykit already appends `/parties/main/`).
-- Updated E2E test (`EventEditor.spec.ts`) to use combobox interactions (`fill` + `getByRole("option")`) instead of `selectOption`.
+- Created `QuickAddEventModal` with pre-filled date/times, category selector, and keyboard accessibility
+- Built `LocationCombobox` using HeadlessUI, replacing native `<select>` in both event forms
+- Integrated `CreateLocationModal` for inline venue creation
+- Fixed PartyKit WebSocket connection (removed incorrect `/party` suffix)
+- Updated E2E tests for combobox interactions
 
 ---
 
