@@ -8,6 +8,7 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { commentContract } from "../../../shared/schemas/contracts/commentContract";
 
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 
 export const commentsRouter = new Hono<AppEnv>();
@@ -15,7 +16,7 @@ export const commentsRouter = new Hono<AppEnv>();
 
 
 const commentHandlers = {
-  list: async (_input: unknown, c: HonoContext) => {
+  list: async (_input: any, c: HonoContext) => {
     const { targetType, targetId } = input.params;
     const user = await getSessionUser(c);
     const db = c.get("db") as Kysely<DB>;
@@ -57,7 +58,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch comments" } };
     }
   },
-  submit: async (input: unknown, c: HonoContext) => {
+  submit: async (input: any, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) {
       return { status: 401 as const, body: { error: "Unauthorized" } };
@@ -138,7 +139,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to submit comment" } };
     }
   },
-  update: async (input: unknown, c: HonoContext) => {
+  update: async (input: any, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };
@@ -191,7 +192,7 @@ const commentHandlers = {
       return { status: 500 as const, body: { error: "Failed to update comment" } };
     }
   },
-  delete: async (input: unknown, c: HonoContext) => {
+  delete: async (input: any, c: HonoContext) => {
     const user = await getSessionUser(c);
     if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
     if (user.role === "unverified") return { status: 403 as const, body: { error: "Unverified" } };

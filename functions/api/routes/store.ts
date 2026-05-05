@@ -7,6 +7,7 @@ import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const app = new Hono<AppEnv>();
 
@@ -16,7 +17,7 @@ app.use("/orders/*", ensureAdmin);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const storeHandlers: any = {
-  getProducts: async (_input: unknown, c: HonoContext) => {
+  getProducts: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const products = await db
@@ -121,7 +122,7 @@ const storeHandlers: any = {
     }
   },
   // Extracted webhook handler below
-  getOrders: async (_input: unknown, c: HonoContext) => {
+  getOrders: async (_input: any, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db") as Kysely<DB>;

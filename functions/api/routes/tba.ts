@@ -5,6 +5,7 @@ import { AppEnv, ensureAuth, rateLimitMiddleware } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { tbaContract } from "../../../shared/schemas/contracts/tbaContract";
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const s = initServer<AppEnv>();
 export const tbaRouter = new Hono<AppEnv>();
@@ -51,7 +52,7 @@ async function getTBA(path: string, c: HonoContext) {
 }
 
 const tbaTsRestRouter = s.router(tbaContract, {
-  getRankings: async (input: unknown, c: HonoContext) => {
+  getRankings: async (input: any, c: HonoContext) => {
     try {
       const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -64,7 +65,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch rankings" } };
     }
   },
-  getMatches: async (input: unknown, c: HonoContext) => {
+  getMatches: async (input: any, c: HonoContext) => {
     try {
       const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -78,7 +79,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch matches" } };
     }
   },
-  getFtcEvents: async (input: unknown, c: HonoContext) => {
+  getFtcEvents: async (input: any, c: HonoContext) => {
     try {
       const { season, eventCode, type } = input.params;
       const path = `/${season}/events/${eventCode}/${type}`;

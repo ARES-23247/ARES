@@ -41,7 +41,8 @@ import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "reac
 import { SIM_TEMPLATES } from "./editor/SimTemplates";
 import { TelemetryPanel } from "./editor/TelemetryPanel";
 import { SimFileExplorer } from "./editor/SimFileExplorer";
-import { SimConsole, LogEntry } from "./editor/SimConsole";
+import { SimComponentLibrary } from "./editor/SimComponentLibrary";
+import { SimConsole, LogEntry, TestResult } from "./editor/SimConsole";
 
 import JSZip from "jszip";
 import prettier from "prettier/standalone";
@@ -90,12 +91,15 @@ export default function SimulationPlayground() {
   const [pendingAiChanges, setPendingAiChanges] = useState<Record<string, string> | null>(null);
   const [isCompiling, setIsCompiling] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSharingGist, setIsSharingGist] = useState(false);
   const [copied, setCopied] = useState(false);
   const [simName, setSimName] = useState("Untitled Simulation");
   const [simId, setSimId] = useState<string | null>(null);
   const [savedSims, setSavedSims] = useState<SavedSim[]>([]);
   const [showLibrary, setShowLibrary] = useState(false);
   const [isLoadingSims, setIsLoadingSims] = useState(false);
+  const [showComponentLibrary, setShowComponentLibrary] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [_isLoadingSim, setIsLoadingSim] = useState(false);
   const [_isLoadingGithubSim, setIsLoadingGithubSim] = useState(false);
   const [isAutoRun, setIsAutoRun] = useState(() => localStorage.getItem("ares_sim_autorun") === "true");
@@ -119,9 +123,8 @@ export default function SimulationPlayground() {
   const [fps, setFps] = useState<number | null>(null);
 
   // Version Snapshot state
-  const [showHistory, setShowHistory] = useState(false);
-
-
+  // const [showHistory, setShowHistory] = useState(false); // Removed duplicate
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
 
   // Editor Refs - use Monaco Editor types from @monaco-editor/react
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -137,6 +140,7 @@ export default function SimulationPlayground() {
   const compileCode = useCallback(async (sourceFiles: Record<string, string>): Promise<string | null> => {
     setIsCompiling(true);
     setCompileError(null);
+    setTestResults([]); // Clear tests on compile
     try {
       const babel = await loadBabel();
       const compiled: Record<string, string> = {};
@@ -197,6 +201,7 @@ export default function SimulationPlayground() {
     setActiveFile("SimComponent.tsx");
     setTelemetry({});
     setConsoleLogs([]);
+    setTestResults([]);
     compileCode(SIM_TEMPLATES["Blank Canvas"]);
     setSimId(null);
     setSimName("Untitled Simulation");
@@ -208,8 +213,13 @@ export default function SimulationPlayground() {
   const handleRun = useCallback(() => {
     setTelemetry({}); // clear telemetry on run
     setConsoleLogs([]); // clear logs on run
+    setTestResults([]); // clear tests on run
     compileCode(files);
   }, [files, compileCode]);
+
+  const handleTestResult = useCallback((result: TestResult) => {
+    setTestResults(prev => [...prev, result]);
+  }, []);
 
   const handleAcceptAiChanges = useCallback(() => {
     if (!pendingAiChanges) return;
@@ -499,14 +509,53 @@ export default function SimulationPlayground() {
 
 
 
+  const handleLoadGist = useCallback(async (id: string) => {
+    setIsLoadingSim(true);
+    try {
+      const res = await fetch(`/api/simulations/gist/${id}`);
+      if (!res.ok) throw new Error("Not found");
+      const data = await res.json() as { simulation: { id: string; name: string; files: Record<string, string> } };
+      const sim = data.simulation;
+      const parsedFiles = sim.files;
+
+      if (Object.keys(parsedFiles).length === 0) {
+        parsedFiles["SimComponent.jsx"] = "";
+      }
+
+      setFiles(parsedFiles);
+      setActiveFile(Object.keys(parsedFiles)[0]);
+      setSimName(sim.name);
+      setSimId(sim.id);
+      compileCode(parsedFiles);
+      setShowLibrary(false);
+
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("simId");
+      newUrl.searchParams.set("gist", id);
+      window.history.replaceState({}, "", newUrl.toString());
+
+      const { toast } = await import("sonner");
+      toast.success(`Loaded Gist: ${sim.name}`);
+    } catch (e) {
+      logger.error("[SimPlayground] Gist Load failed:", e);
+      const { toast } = await import("sonner");
+      toast.error("Failed to load Gist simulation");
+    } finally {
+      setIsLoadingSim(false);
+    }
+  }, [compileCode]);
+
   // Check URL for shared simulation on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const idParam = params.get("simId");
-    if (idParam) {
+    const gistParam = params.get("gist");
+    if (gistParam) {
+      setTimeout(() => handleLoadGist(gistParam), 0);
+    } else if (idParam) {
       setTimeout(() => handleLoadSim(idParam), 0);
     }
-  }, [handleLoadSim]);
+  }, [handleLoadSim, handleLoadGist]);
 
   const handleEditorDidMount = useCallback(async (
     editor: editor.IStandaloneCodeEditor,
@@ -669,6 +718,22 @@ export default function SimulationPlayground() {
    */
 
 
+  // ── Component Library ──
+  const handleInsertCode = useCallback((code: string) => {
+    if (editorRef.current) {
+      const editor = editorRef.current;
+      const position = editor.getPosition();
+      if (position) {
+        editor.executeEdits("component-library", [{
+          range: new window.monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+          text: code,
+          forceMoveMarkers: true
+        }]);
+        editor.focus();
+      }
+    }
+  }, []);
+
   // ── Save ──
   const handleSave = async () => {
     if (!simName.trim()) return;
@@ -701,6 +766,37 @@ export default function SimulationPlayground() {
       toast.error("Network error while saving simulation");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleShareGist = async () => {
+    setIsSharingGist(true);
+    try {
+      const res = await fetch("/api/simulations/gist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: simName, files }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { gistId: string, url: string };
+        const shareUrl = `${window.location.origin}/academy/playground?gist=${encodeURIComponent(data.gistId)}`;
+        await navigator.clipboard.writeText(shareUrl);
+        setSimId(`gist:${data.gistId}`);
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete("simId");
+        newUrl.searchParams.set("gist", data.gistId);
+        window.history.replaceState({}, "", newUrl.toString());
+        const { toast } = await import("sonner");
+        toast.success("Shareable link generated and copied!");
+      } else {
+        throw new Error("Failed to create Gist");
+      }
+    } catch (e) {
+      logger.error("[SimPlayground] Gist Share failed:", e);
+      const { toast } = await import("sonner");
+      toast.error("Failed to generate shareable link");
+    } finally {
+      setIsSharingGist(false);
     }
   };
 
@@ -895,6 +991,10 @@ export default function SimulationPlayground() {
               </label>
             </div>
           </div>
+          
+          <button onClick={() => setShowComponentLibrary(!showComponentLibrary)} className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${showComponentLibrary ? 'bg-ares-gold/20 text-ares-gold border-ares-gold/30' : 'bg-white/5 text-white/80 border-white/10 hover:bg-white/10'}`}>
+            Components
+          </button>
 
           <button onClick={handleRun} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-emerald-600/30 transition-colors">
             <Play className="w-3.5 h-3.5" /> Run
@@ -909,21 +1009,15 @@ export default function SimulationPlayground() {
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             {simId ? 'Update' : 'Save'}
           </button>
-          {simId && (
-            <button
-              onClick={async () => {
-                const shareUrl = `${window.location.origin}/academy/playground?simId=${encodeURIComponent(simId)}`;
-                await navigator.clipboard.writeText(shareUrl);
-                const { toast } = await import("sonner");
-                toast.success("Shareable link copied!");
-              }}
-              title="Copy shareable link"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-indigo-600/30 transition-colors"
-            >
-              <Link2 className="w-3.5 h-3.5" />
-              Share
-            </button>
-          )}
+          <button
+            onClick={handleShareGist}
+            disabled={isSharingGist}
+            title="Generate shareable link via Gist"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-indigo-600/30 transition-colors disabled:opacity-50"
+          >
+            {isSharingGist ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />}
+            Share
+          </button>
           {/* History dropdown */}
           <div className="relative">
             <button
@@ -1032,6 +1126,17 @@ export default function SimulationPlayground() {
                   readOnlyFiles={readOnlyFiles}
                 />
               </Panel>
+
+              {showComponentLibrary && (
+                <>
+                  <PanelResizeHandle className="w-1.5 bg-white/5 hover:bg-ares-gold/30 flex items-center justify-center transition-colors group">
+                    <GripVertical className="w-3 h-3 text-white/20 group-hover:text-ares-gold/60" />
+                  </PanelResizeHandle>
+                  <Panel defaultSize={20} minSize={15} className="flex flex-col min-w-0">
+                    <SimComponentLibrary onInsertCode={handleInsertCode} />
+                  </Panel>
+                </>
+              )}
 
               <PanelResizeHandle className="w-1.5 bg-white/5 hover:bg-ares-gold/30 flex items-center justify-center transition-colors group">
                 <GripVertical className="w-3 h-3 text-white/20 group-hover:text-ares-gold/60" />
@@ -1272,7 +1377,12 @@ export default function SimulationPlayground() {
                 <div className="flex-1 min-h-0 relative flex flex-col">
                   <div className="flex-1 min-h-0">
                     <Suspense fallback={<div className="flex items-center justify-center h-full bg-[#0d1117] text-white/40 text-sm">Loading preview...</div>}>
-                      <SimPreviewFrame compiledFiles={compiledFiles} compileError={compileError} onFixWithAI={handleFixWithAI} />
+                      <SimPreviewFrame 
+                        compiledFiles={compiledFiles} 
+                        compileError={compileError} 
+                        onFixWithAI={handleFixWithAI}
+                        onTestResult={handleTestResult}
+                      />
                     </Suspense>
                   </div>
                   <TelemetryPanel data={telemetry} />
@@ -1285,8 +1395,12 @@ export default function SimulationPlayground() {
 
               <Panel defaultSize={40} minSize={20} className="flex flex-col min-w-0 bg-[#0d0f14]">
                 <SimConsole 
-                  logs={consoleLogs} 
-                  onClear={() => setConsoleLogs([])} 
+                  logs={consoleLogs}
+                  testResults={testResults}
+                  onClear={() => {
+                    setConsoleLogs([]);
+                    setTestResults([]);
+                  }} 
                   onFixWithAI={handleFixWithAI}
                 />
               </Panel>

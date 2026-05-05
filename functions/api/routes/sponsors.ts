@@ -5,6 +5,7 @@ import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContra
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware, s } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 export const sponsorsRouter = new Hono<AppEnv>();
 
 type SponsorSelectedRow = {
@@ -18,7 +19,7 @@ type SponsorSelectedRow = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sponsorHandlers: any = {
-  getSponsors: async (_input: unknown, c: HonoContext) => {
+  getSponsors: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -89,7 +90,7 @@ const sponsorHandlers: any = {
       return { status: 500, body: { error: "Failed to fetch ROI" } };
     }
   },
-  adminList: async (_input: unknown, c: HonoContext) => {
+  adminList: async (_input: any, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");
@@ -155,7 +156,7 @@ const sponsorHandlers: any = {
       return { status: 500, body: { error: "Failed to delete sponsor" } };
     }
   },
-  getAdminTokens: async (_input: unknown, c: HonoContext) => {
+  getAdminTokens: async (_input: any, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");

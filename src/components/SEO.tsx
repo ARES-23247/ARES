@@ -11,7 +11,7 @@ interface SEOProps {
 
 export default function SEO({ 
   title, 
-  description = "ARES 23247 - Appalachian Robotics & Engineering Society. FIRST® Tech Challenge Team based in Morgantown, WV.", 
+  description = "ARES 23247 - Appalachian Robotics & Engineering Society. A FIRST® Tech Challenge Team offering youth robotics in Morgantown, WV.", 
   image = `${siteConfig.urls.base}/ares_hero.png`, 
   url,
   type = "website"

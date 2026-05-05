@@ -7,6 +7,7 @@ import { AppEnv, getSessionUser, originIntegrityMiddleware } from "../middleware
 import { nanoid } from "nanoid";
 import { dispatchQueuePost } from "../../utils/socialSync";
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
   id: String(r.id),

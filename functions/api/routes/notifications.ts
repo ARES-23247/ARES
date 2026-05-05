@@ -6,12 +6,13 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { notificationContract } from "../../../shared/schemas/contracts/notificationContract";
 
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 
 export const notificationsRouter = new Hono<AppEnv>();
 
 const notificationHandlers = {
-  getNotifications: async (_input: unknown, c: HonoContext) => {
+  getNotifications: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -45,7 +46,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Fetch failed", notifications: [] } as any };
     }
   },
-  markAsRead: async (input: unknown, c: HonoContext) => {
+  markAsRead: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -66,7 +67,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } as any };
     }
   },
-  markAllAsRead: async (_input: unknown, c: HonoContext) => {
+  markAllAsRead: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -85,7 +86,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } as any };
     }
   },
-  deleteNotification: async (input: unknown, c: HonoContext) => {
+  deleteNotification: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -105,7 +106,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Delete failed" } as any };
     }
   },
-  getPendingCounts: async (_input: unknown, c: HonoContext) => {
+  getPendingCounts: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -146,7 +147,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Count failed" } as any };
     }
   },
-  getDashboardActionItems: async (_input: unknown, c: HonoContext) => {
+  getDashboardActionItems: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);

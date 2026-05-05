@@ -32,7 +32,7 @@ const sanitizeFtsQuery = (query: string): string => {
 };
 
 const postTsRestRouterObj = {
-  getPosts: async (input, c) => {
+  getPosts: async (input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit = 10, offset = 0, q } = input.query;
@@ -119,7 +119,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch posts" } };
     }
   },
-  getPost: async (input, c) => {
+  getPost: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -178,7 +178,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  getAdminPosts: async (input, c) => {
+  getAdminPosts: async (input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = input.query;
@@ -217,7 +217,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch posts" } };
     }
   },
-  getAdminPost: async (input, c) => {
+  getAdminPost: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -245,7 +245,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  savePost: async (input, c) => {
+  savePost: async (input: any, c: Context<AppEnv>) => {
     try {
       const db = c.get("db") as Kysely<DB>;
 
@@ -389,7 +389,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  updatePost: async (input, c) => {
+  updatePost: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -457,7 +457,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async (input, c) => {
+  deletePost: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -471,7 +471,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undeletePost: async (input, c) => {
+  undeletePost: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -483,7 +483,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Undelete failed" } };
     }
   },
-  purgePost: async (input, c) => {
+  purgePost: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -511,7 +511,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-  approvePost: async (input, c) => {
+  approvePost: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     try {
       const result = await approvePost(c, slug);
@@ -522,7 +522,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async (input, c) => {
+  rejectPost: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     const { reason } = input.body;
     try {
@@ -550,7 +550,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async (input, c) => {
+  getPostHistory: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     try {
       const historyRows = await getPostHistory(c, slug);
@@ -564,14 +564,14 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch history" } };
     }
   },
-  restorePostHistory: async (input, c) => {
+  restorePostHistory: async (input: any, c: Context<AppEnv>) => {
     const { slug, id } = input.params;
     const user = await getSessionUser(c);
     const result = await restorePostFromHistory(c, slug, String(id), user?.email || "anonymous_admin");
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async (input, c) => {
+  repushSocials: async (input: any, c: Context<AppEnv>) => {
     const { slug } = input.params;
     const { socials } = input.body;
     try {

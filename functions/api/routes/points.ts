@@ -7,12 +7,13 @@ import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const app = new Hono<AppEnv>();
 
 
 const pointsHandlers = {
-  getBalance: async (input: unknown, c: HonoContext) => {
+  getBalance: async (input: any, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
@@ -43,7 +44,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getHistory: async (input: unknown, c: HonoContext) => {
+  getHistory: async (input: any, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
@@ -77,7 +78,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  awardPoints: async (input: unknown, c: HonoContext) => {
+  awardPoints: async (input: any, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
@@ -118,7 +119,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getLeaderboard: async (_input: unknown, c: HonoContext) => {
+  getLeaderboard: async (_input: any, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user as u")

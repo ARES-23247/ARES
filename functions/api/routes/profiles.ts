@@ -103,7 +103,7 @@ const profileHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch your profile" } };
     }
   },
-  updateMe: async (input, c) => {
+  updateMe: async (input: any, c: Context<AppEnv>) => {
     const user = (await getSessionUser(c))!;
     try {
       // Validate input against schema before updating profile
@@ -187,7 +187,7 @@ const profileHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch team roster" } };
     }
   },
-  getPublicProfile: async (input, c) => {
+  getPublicProfile: async (input: any, c: Context<AppEnv>) => {
     const { userId } = input.params;
     const db = c.get("db") as Kysely<DB>;
     try {

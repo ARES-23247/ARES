@@ -5,11 +5,12 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { entityContract } from "../../../shared/schemas/contracts/entityContract";
 import { AppEnv, ensureAuth, logAuditAction } from "../middleware";
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 export const entitiesRouter = new Hono<AppEnv>();
 
 const entityHandlers = {
-  getLinks: async (input: unknown, c: HonoContext) => {
+  getLinks: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { type, id } = input.query;
@@ -73,7 +74,7 @@ const entityHandlers = {
     }
   },
 
-  saveLink: async (input: unknown, c: HonoContext) => {
+  saveLink: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = crypto.randomUUID();
@@ -97,7 +98,7 @@ const entityHandlers = {
     }
   },
 
-  deleteLink: async (input: unknown, c: HonoContext) => {
+  deleteLink: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("entity_links").where("id", "=", input.params.id).execute();

@@ -8,11 +8,12 @@ import type { HonoContext } from "@shared/types/api";
 
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 export const tasksRouter = new Hono<AppEnv>();
 
 const tasksTsRestRouter = s.router(taskContract, {
-  list: async (input: unknown, c: HonoContext) => {
+  list: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -89,7 +90,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  create: async (input: unknown, c: HonoContext) => {
+  create: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -210,7 +211,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  reorder: async (input: unknown, c: HonoContext) => {
+  reorder: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -243,7 +244,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  update: async (input: unknown, c: HonoContext) => {
+  update: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -348,7 +349,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  delete: async (input: unknown, c: HonoContext) => {
+  delete: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);

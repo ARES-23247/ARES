@@ -533,3 +533,124 @@ simulationsRouter.delete("/:id", async (c: Context<AppEnv>) => {
     return c.json({ error: "Failed to delete simulation" }, 500);
   }
 });
+
+// Create a new GitHub Gist for a simulation
+simulationsRouter.post("/gist", async (c: Context<AppEnv>) => {
+  try {
+    const body = await c.req.json();
+    const validationResult = saveSimulationSchema.safeParse(body);
+    if (!validationResult.success) {
+      return c.json({ error: "Invalid input: " + validationResult.error.issues.map(i => i.message).join(", ") }, 400);
+    }
+
+    const { name, files } = validationResult.data;
+    if (Object.keys(files).length === 0) {
+      return c.json({ error: "No files provided" }, 400);
+    }
+
+    const db = c.get("db");
+    const config = await db.selectFrom("settings").selectAll().execute();
+    const patSetting = config.find(s => s.key === "GITHUB_PAT");
+    const pat = patSetting?.value || c.env.GITHUB_PAT;
+    
+    if (!pat) {
+      return c.json({ error: "GitHub PAT not configured" }, 500);
+    }
+
+    const headers: Record<string, string> = {
+      "User-Agent": "ARES-Cloudflare-Worker",
+      "Authorization": `Bearer ${pat}`,
+      "Accept": "application/vnd.github.v3+json",
+      "Content-Type": "application/json"
+    };
+
+    // Format files for GitHub Gist API
+    const gistFiles: Record<string, { content: string }> = {};
+    for (const [filename, content] of Object.entries(files)) {
+      gistFiles[filename] = { content: content || "// Empty file" };
+    }
+
+    const gistData = {
+      description: name ? `ARESWEB Simulation: ${name}` : "ARESWEB Simulation Playground Export",
+      public: true,
+      files: gistFiles
+    };
+
+    const res = await fetch("https://api.github.com/gists", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(gistData)
+    });
+
+    if (!res.ok) {
+      console.error("[Simulations] Gist creation failed:", await res.text());
+      return c.json({ error: "Failed to create GitHub Gist" }, 500);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gistResponse = await res.json() as any;
+    return c.json({ success: true, gistId: gistResponse.id, url: gistResponse.html_url });
+  } catch (e) {
+    console.error("[Simulations] Gist POST error:", e);
+    return c.json({ error: "Failed to create Gist" }, 500);
+  }
+});
+
+// Fetch a GitHub Gist by ID
+simulationsRouter.get("/gist/:id", async (c: Context<AppEnv>) => {
+  const id = c.req.param("id");
+  if (!/^[a-zA-Z0-9]+$/.test(id)) {
+    return c.json({ error: "Invalid Gist ID" }, 400);
+  }
+
+  try {
+    const db = c.get("db");
+    let pat = c.env.GITHUB_PAT;
+    try {
+      const config = await db.selectFrom("settings").selectAll().execute();
+      const patSetting = config.find(s => s.key === "GITHUB_PAT");
+      if (patSetting?.value) pat = patSetting.value;
+    } catch (e) {
+      console.warn("[Simulations] DB Settings fetch failed:", e);
+    }
+
+    const headers: Record<string, string> = {
+      "User-Agent": "ARES-Cloudflare-Worker",
+      "Accept": "application/vnd.github.v3+json"
+    };
+    if (pat) headers["Authorization"] = `Bearer ${pat}`;
+
+    const res = await fetch(`https://api.github.com/gists/${id}`, { headers });
+    
+    if (!res.ok) {
+      if (res.status === 404) return c.json({ error: "Gist not found" }, 404);
+      return c.json({ error: "Failed to fetch from GitHub API" }, 500);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gist = await res.json() as any;
+    
+    // Convert gist files object to simple Record<string, string>
+    const files: Record<string, string> = {};
+    for (const [filename, fileObj] of Object.entries(gist.files)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      files[filename] = (fileObj as any).content || "";
+    }
+
+    return c.json({
+      simulation: {
+        id: `gist:${id}`,
+        name: gist.description || "Gist Simulation",
+        type: "gist",
+        files: files,
+        author_id: gist.owner?.login || "anonymous",
+        is_public: gist.public,
+        created_at: gist.created_at,
+        updated_at: gist.updated_at
+      }
+    });
+  } catch (e) {
+    console.error("[Simulations] Gist GET error:", e);
+    return c.json({ error: "Failed to fetch Gist" }, 500);
+  }
+});

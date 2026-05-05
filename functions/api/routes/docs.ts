@@ -10,6 +10,7 @@ import { DB } from "../../../shared/schemas/database";
 
 import type { HonoContext } from "@shared/types/api";
 import type { SelectableRow } from "@shared/types/database";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 export const docsRouter = new Hono<AppEnv>();
 
@@ -97,7 +98,7 @@ async function pruneDocHistory(c: HonoContext, slug: string, limit = 10) {
 }
 
 const docTsRestRouter = s.router(docContract, {
-  getDocs: async (_input: unknown, c: HonoContext) => {
+  getDocs: async (_input: any, c: HonoContext) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       let results;
@@ -169,7 +170,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Failed to fetch documents" } };
     }
   },
-  searchDocs: async (input: unknown, c: HonoContext) => {
+  searchDocs: async (input: any, c: HonoContext) => {
     const { q } = input.query;
     if (!q || q.length < 3) return { status: 200 as const, body: { results: [] } };
 
@@ -214,7 +215,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Search failed" } };
     }
   },
-    getDoc: async (input: unknown, c: HonoContext) => {
+    getDoc: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -313,7 +314,7 @@ const docTsRestRouter = s.router(docContract, {
     }
   },
 
-    adminList: async (_input: unknown, c: HonoContext) => {
+    adminList: async (_input: any, c: HonoContext) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       let results;
@@ -350,7 +351,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Failed to fetch docs" } };
     }
   },
-    adminDetail: async (input: unknown, c: HonoContext) => {
+    adminDetail: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -389,7 +390,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-    deleteDoc: async (input: unknown, c: HonoContext) => {
+    deleteDoc: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -405,7 +406,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-    saveDoc: async (input: unknown, c: HonoContext) => {
+    saveDoc: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { slug, title, category, sortOrder, description, content, isPortfolio, isExecutiveSummary, isDraft, displayInAreslib, displayInMathCorner, displayInScienceCorner } = input.body;
@@ -552,7 +553,7 @@ const docTsRestRouter = s.router(docContract, {
     }
 
   },
-    updateSort: async (input: unknown, c: HonoContext) => {
+    updateSort: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
             const { sortOrder } = input.body;
     try {
@@ -564,7 +565,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Sort update failed" } };
     }
   },
-    submitFeedback: async (input: unknown, c: HonoContext) => {
+    submitFeedback: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
             const { isHelpful, comment, turnstileToken } = input.body;
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
@@ -585,7 +586,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Feedback failed" } };
     }
   },
-    getHistory: async (input: unknown, c: HonoContext) => {
+    getHistory: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -607,7 +608,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Failed to fetch history" } };
     }
   },
-    restoreHistory: async (input: unknown, c: HonoContext) => {
+    restoreHistory: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     const { id } = input.query;
     try {
@@ -660,7 +661,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Restore failed" } };
     }
   },
-    approveDoc: async (input: unknown, c: HonoContext) => {
+    approveDoc: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -702,7 +703,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Approve failed" } };
     }
   },
-    rejectDoc: async (input: unknown, c: HonoContext) => {
+    rejectDoc: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
             const { reason } = input.body;
     try {
@@ -719,7 +720,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Reject failed" } };
     }
   },
-    undeleteDoc: async (input: unknown, c: HonoContext) => {
+    undeleteDoc: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
             try {
       const db = c.get("db") as Kysely<DB>;
@@ -730,7 +731,7 @@ const docTsRestRouter = s.router(docContract, {
       return { status: 500 as const, body: { error: "Undelete failed" } };
     }
   },
-    purgeDoc: async (input: unknown, c: HonoContext) => {
+    purgeDoc: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;

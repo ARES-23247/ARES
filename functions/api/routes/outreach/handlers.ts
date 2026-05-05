@@ -131,7 +131,7 @@ export const outreachHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch outreach logs" } };
     }
   },
-  save: async (input, c) => {
+  save: async (input: any, c: Context<AppEnv>) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -204,7 +204,7 @@ export const outreachHandlers = {
       return { status: 500 as const, body: { error: "Save failed" } };
     }
   },
-  delete: async (input, c) => {
+  delete: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;

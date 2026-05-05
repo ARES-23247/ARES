@@ -11,7 +11,7 @@ import type { HonoContext } from "@shared/types/api";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const seasonsTsRestRouterObj: any = {
-  list: async (_input: unknown, c: HonoContext) => {
+  list: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -35,7 +35,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch seasons" } };
     }
   },
-  adminList: async (_input: unknown, c: HonoContext) => {
+  adminList: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("seasons")
@@ -57,7 +57,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to list seasons" } };
     }
   },
-  adminDetail: async (input: unknown, c: HonoContext) => {
+  adminDetail: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(input.params.id);
@@ -85,7 +85,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch season" } };
     }
   },
-  getDetail: async (input: unknown, c: HonoContext) => {
+  getDetail: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const year = parseInt(input.params.year);
@@ -125,7 +125,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Failed to fetch season details" } };
     }
   },
-  save: async (input: unknown, c: HonoContext) => {
+  save: async (input: any, c: HonoContext) => {
     try {
       const body = input.body;
       const db = c.get("db") as Kysely<DB>;
@@ -189,7 +189,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Save failed" } };
     }
   },
-  delete: async (input: unknown, c: HonoContext) => {
+  delete: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { id } = input.params;
@@ -207,7 +207,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-  undelete: async (input: unknown, c: HonoContext) => {
+  undelete: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { id } = input.params;
@@ -223,7 +223,7 @@ const seasonsTsRestRouterObj: any = {
       return { status: 500 as const, body: { error: "Restore failed" } };
     }
   },
-  purge: async (input: unknown, c: HonoContext) => {
+  purge: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { id } = input.params;
@@ -244,6 +244,7 @@ const seasonsTsRestRouter = s.router(seasonContract, seasonsTsRestRouterObj);
 export const seasonsRouter = new Hono<AppEnv>();
 
 import { edgeCacheMiddleware } from "../middleware/cache";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 seasonsRouter.use("/", edgeCacheMiddleware(300, 60)); // Cache list
 seasonsRouter.use("/:year", edgeCacheMiddleware(300, 60)); // Cache detail

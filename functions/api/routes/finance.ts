@@ -7,12 +7,13 @@ import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser, s } f
 import { AppEnv } from "../middleware";
 
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const financeRouter = new Hono<AppEnv>();
 
 
 const financeTsRestRouterObj = {
-  getSummary: async (input: unknown, c: HonoContext) => {
+  getSummary: async (input: any, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -62,7 +63,7 @@ const financeTsRestRouterObj = {
     }
   },
 
-  listPipeline: async (input: unknown, c: HonoContext) => {
+  listPipeline: async (input: any, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -99,7 +100,7 @@ const financeTsRestRouterObj = {
     }
   },
 
-  savePipeline: async (input: unknown, c: HonoContext) => {
+  savePipeline: async (input: any, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;

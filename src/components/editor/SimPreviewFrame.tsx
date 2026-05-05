@@ -8,6 +8,8 @@ interface SimPreviewFrameProps {
   compileError: string | null;
   /** Callback to trigger AI error fixing from the preview overlay */
   onFixWithAI?: () => void;
+  /** Callback for test runner results */
+  onTestResult?: (result: { name: string; passed: boolean; error?: string }) => void;
 }
 
 /**
@@ -15,7 +17,7 @@ interface SimPreviewFrameProps {
  * Uses srcdoc with React CDN + the user's component. Runtime errors
  * are captured via postMessage and displayed in the parent.
  */
-export default function SimPreviewFrame({ compiledFiles, compileError, onFixWithAI }: SimPreviewFrameProps) {
+export default function SimPreviewFrame({ compiledFiles, compileError, onFixWithAI, onTestResult }: SimPreviewFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
 
@@ -34,6 +36,7 @@ export default function SimPreviewFrame({ compiledFiles, compileError, onFixWith
     'ARES_SCREENSHOT',
     'sim-console',
     'sim-fps',
+    'sim-test-result'
   ]), []);
 
   /**
@@ -83,6 +86,10 @@ export default function SimPreviewFrame({ compiledFiles, compileError, onFixWith
         // Limit data URL size to prevent DoS (5MB max)
         if (messageData.dataUrl.length > 5 * 1024 * 1024) return null;
         break;
+
+      case 'sim-test-result':
+        if (!messageData.result || typeof messageData.result !== 'object') return null;
+        break;
     }
 
     return messageData as { type: string; [key: string]: unknown };
@@ -109,6 +116,11 @@ export default function SimPreviewFrame({ compiledFiles, compileError, onFixWith
         break;
       case 'sim-ready':
         setRuntimeError(null);
+        break;
+      case 'sim-test-result':
+        if (onTestResult) {
+          onTestResult(sanitizedData.result as { name: string; passed: boolean; error?: string });
+        }
         break;
       // ARES_TELEMETRY and sim-console are logged but not processed further
       // ARES_SCREENSHOT is handled by screenshot request handler
@@ -204,6 +216,31 @@ export default function SimPreviewFrame({ compiledFiles, compileError, onFixWith
     window.__modules = {};
     window.__cache = {};
     window.__virtualModules = {};
+
+    // Test runner harness
+    window.test = function(name, fn) {
+      try {
+        fn();
+        window.parent.postMessage({ type: 'sim-test-result', result: { name, passed: true } }, '*');
+      } catch (e) {
+        window.parent.postMessage({ type: 'sim-test-result', result: { name, passed: false, error: e.message } }, '*');
+      }
+    };
+    
+    window.expect = function(actual) {
+      return {
+        toBe: function(expected) {
+          if (actual !== expected) throw new Error('Expected ' + expected + ' but got ' + actual);
+        },
+        toEqual: function(expected) {
+          if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Expected ' + JSON.stringify(expected) + ' but got ' + JSON.stringify(actual));
+        },
+        toBeCloseTo: function(expected, precision = 2) {
+          const pass = Math.abs(expected - actual) < Math.pow(10, -precision) / 2;
+          if (!pass) throw new Error('Expected ' + expected + ' to be close to ' + actual);
+        }
+      };
+    };
     
     function require(name) {
       if (name === 'react') return window.React;

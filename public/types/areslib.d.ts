@@ -56,3 +56,23 @@ declare namespace ARESLib {
     calculate(measurement: number, setpoint: number): number;
   }
 }
+
+/**
+ * Define a test case in the Simulation Test Runner.
+ * @param name The name of the test.
+ * @param fn The function containing the assertions.
+ */
+declare function test(name: string, fn: () => void): void;
+
+/**
+ * Assert a value in a test case.
+ * @param actual The actual value being tested.
+ */
+declare function expect(actual: any): {
+  /** Assert exact equality (===) */
+  toBe(expected: any): void;
+  /** Assert deep equality */
+  toEqual(expected: any): void;
+  /** Assert numeric equality within a given precision */
+  toBeCloseTo(expected: number, precision?: number): void;
+};

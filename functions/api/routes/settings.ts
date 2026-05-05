@@ -7,6 +7,7 @@ import { settingsContract } from "../../../shared/schemas/contracts/settingsCont
 import { z } from "zod";
 
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 export const settingsRouter = new Hono<AppEnv>();
 
@@ -33,7 +34,7 @@ const settingsSchema = z.record(z.string(), z.string().max(10000));
 
 const settingsHandlers = {
 
-  getSettings: async (_input: unknown, c: HonoContext) => {
+  getSettings: async (_input: any, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const masked: Record<string, string> = {};
@@ -49,7 +50,7 @@ const settingsHandlers = {
     }
   },
    
-  updateSettings: async (input: unknown, c: HonoContext) => {
+  updateSettings: async (input: any, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const body = input.body;
@@ -114,7 +115,7 @@ const settingsHandlers = {
     }
   },
    
-  getStats: async (_input: unknown, c: HonoContext) => {
+  getStats: async (_input: any, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [posts, events, docs, inquiries, users] = await Promise.all([
@@ -142,7 +143,7 @@ const settingsHandlers = {
     }
   },
    
-  getPublicSettings: async (_input: unknown, c: HonoContext) => {
+  getPublicSettings: async (_input: any, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const publicKeys = ["COMMUNITY_PHOTO_DRIVE_URL", "COMMUNITY_DOCS_URL"];

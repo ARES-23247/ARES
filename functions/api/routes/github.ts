@@ -8,6 +8,7 @@ import { type Kysely } from "kysely";
 import { type DB } from "@shared/types/db";
 
 import type { HonoContext } from "@shared/types/api";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 
 export const githubRouter = new Hono<AppEnv>();
@@ -19,7 +20,7 @@ interface WeekData {
 }
 
 const githubHandlers = {
-  getBoard: async (_input: unknown, c: HonoContext) => {
+  getBoard: async (_input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
@@ -50,7 +51,7 @@ const githubHandlers = {
       return { status: 200 as const, body: { success: false, board: [] as any[] } };
     }
   },
-  createItem: async (input: unknown, c: HonoContext) => {
+  createItem: async (input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
@@ -68,7 +69,7 @@ const githubHandlers = {
       return { status: 500 as const, body: { error: "Failed to create project item" } as any };
     }
   },
-  getActivity: async (_input: unknown, c: HonoContext) => {
+  getActivity: async (_input: any, c: HonoContext) => {
     // WR-01: Add rate limiting to prevent abuse of GitHub API calls
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
