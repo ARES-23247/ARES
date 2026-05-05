@@ -78,6 +78,9 @@ const judgesTsRestRouter: any = s.router(judgeContract as any, {
         .executeTakeFirst();
       if (!valid) return { status: 403 as const, body: { error: "Invalid or expired access code" } };
 
+      // WR-10: Audit log judge portfolio access for security monitoring
+      c.executionCtx.waitUntil(logAuditAction(c, "JUDGE_PORTFOLIO_ACCESS", "judge_access", code, `Judge portfolio accessed via code ${code}`));
+
       const now = Date.now();
       const cached = portfolioCache.get("portfolio");
       if (cached && cached.expiresAt > now) return { status: 200 as const, body: cached.data };
