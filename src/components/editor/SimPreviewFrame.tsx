@@ -19,6 +19,12 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
 
   // Listen for runtime errors from the iframe
   const handleMessage = useCallback((event: MessageEvent) => {
+    // Validate origin - only accept messages from same origin
+    if (event.origin !== window.location.origin) {
+      console.warn('SimPreviewFrame: rejected message from unexpected origin:', event.origin);
+      return;
+    }
+
     if (event.data?.type === "sim-error") {
       setRuntimeError(event.data.message);
     }
@@ -136,7 +142,7 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
   <div id="root"><div class="sim-loading">Loading Environment...</div></div>
   <script>
     window.onerror = function(msg, source, line, col, error) {
-      parent.postMessage({ type: 'sim-error', message: String(msg) + (line ? ' (line ' + line + ')' : '') }, '*');
+      window.parent.postMessage({ type: 'sim-error', message: String(msg) + (line ? ' (line ' + line + ')' : '') }, '${window.location.origin}');
       document.getElementById('root').innerHTML = '<div class="sim-error">' + msg + '</div>';
       return true;
     };
@@ -144,12 +150,12 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
     ['log', 'warn', 'error', 'info'].forEach(level => {
       const original = console[level];
       console[level] = function(...args) {
-        parent.postMessage({
+        window.parent.postMessage({
           type: 'sim-console',
           level,
           args: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)),
           timestamp: Date.now()
-        }, '*');
+        }, '${window.location.origin}');
         original.apply(console, args);
       };
     });
@@ -159,7 +165,7 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       exports: {
         useTelemetry: function(key, value) {
           React.useEffect(() => {
-            window.parent.postMessage({ type: "ARES_TELEMETRY", key, value, timestamp: performance.now() }, "*");
+            window.parent.postMessage({ type: "ARES_TELEMETRY", key, value, timestamp: performance.now() }, "${window.location.origin}");
           }, [key, value]);
         }
       }
@@ -216,21 +222,24 @@ export default function SimPreviewFrame({ compiledFiles, compileError }: SimPrev
       if (typeof SimComponent !== 'undefined') {
         var root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(SimComponent));
-        parent.postMessage({ type: 'sim-ready' }, '*');
+        window.parent.postMessage({ type: 'sim-ready' }, '${window.location.origin}');
       } else {
         throw new Error('SimComponent is not defined. Your code must export a default React component.');
       }
     } catch(e) {
-      parent.postMessage({ type: 'sim-error', message: e.message }, '*');
+      window.parent.postMessage({ type: 'sim-error', message: e.message }, '${window.location.origin}');
       document.getElementById('root').innerHTML = '<div class="sim-error">' + e.message + '</div>';
     }
 
     // Listen for screenshot requests
     window.addEventListener('message', async (e) => {
+      // Validate origin - only accept messages from parent window
+      if (e.origin !== '${window.location.origin}') return;
+
       if (e.data?.type === 'ARES_REQUEST_SCREENSHOT' && window.html2canvas) {
         try {
           const canvas = await window.html2canvas(document.body, { useCORS: true, logging: false });
-          window.parent.postMessage({ type: 'ARES_SCREENSHOT', dataUrl: canvas.toDataURL('image/png') }, '*');
+          window.parent.postMessage({ type: 'ARES_SCREENSHOT', dataUrl: canvas.toDataURL('image/png') }, '${window.location.origin}');
         } catch(err) {
           console.error("Screenshot failed inside sandbox:", err);
         }
