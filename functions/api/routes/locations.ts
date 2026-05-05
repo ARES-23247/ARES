@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { Kysely } from "kysely";
 import { z } from "zod";
 import { DB } from "../../../shared/schemas/database";
@@ -14,7 +13,7 @@ const s = initServer<AppEnv>();
 export const locationsRouter = new Hono<AppEnv>();
 
 const locationsTsRestRouter = s.router(locationContract, {
-    list: async (_input: any, c: Context<AppEnv>) => {
+    list: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -36,7 +35,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to fetch locations" } };
     }
   },
-    adminList: async (_input: any, c: Context<AppEnv>) => {
+    adminList: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -57,10 +56,10 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to fetch locations" } };
     }
   },
-    save: async ({ body }: { body: unknown }, c: Context<AppEnv>) => {
+    save: async (input, c) => {
     try {
       // Validate input against schema before database insertion
-      const validationResult = locationSchema.safeParse(body);
+      const validationResult = locationSchema.safeParse(input.body);
       if (!validationResult.success) {
         return {
           status: 400 as const,
@@ -97,23 +96,34 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to save location", success: false } };
     }
   },
-    delete: async ({ params }: { params: { id: string } }, c: Context<AppEnv>) => {
+    delete: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("locations")
         .set({ is_deleted: 1 })
-        .where("id", "=", params.id)
+        .where("id", "=", input.params.id)
         .execute();
-      c.executionCtx.waitUntil(logAuditAction(c, "delete_location", "locations", params.id, "Location soft-deleted"));
+      c.executionCtx.waitUntil(logAuditAction(c, "delete_location", "locations", input.params.id, "Location soft-deleted"));
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("DELETE_LOCATION ERROR", e);
       return { status: 500 as const, body: { error: "Failed to delete location", success: false } };
     }
   },
-} as any);
+});
 
 locationsRouter.use("/admin/*", ensureAdmin);
-createHonoEndpoints(locationContract, locationsTsRestRouter, locationsRouter);
+createHonoEndpoints(
+  locationContract,
+  locationsTsRestRouter,
+  locationsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default locationsRouter;

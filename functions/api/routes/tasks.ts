@@ -1,4 +1,4 @@
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
@@ -13,7 +13,7 @@ const s = initServer<AppEnv>();
 export const tasksRouter = new Hono<AppEnv>();
 
 const tasksTsRestRouter = s.router(taskContract, {
-  list: async ({ query }: { query: z.infer<typeof taskContract.list.query> }, c: Context<AppEnv>) => {
+  list: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -35,15 +35,15 @@ const tasksTsRestRouter = s.router(taskContract, {
         .orderBy("t.sort_order", "asc")
         .orderBy("t.created_at", "desc");
 
-      if (query?.status) {
-        q = q.where("t.status", "=", query.status);
+      if (input.query?.status) {
+        q = q.where("t.status", "=", input.query.status);
       }
-      
-      if (query?.parent_id !== undefined) {
-        if (query.parent_id === "null") {
+
+      if (input.query?.parent_id !== undefined) {
+        if (input.query.parent_id === "null") {
           q = q.where("t.parent_id", "is", null);
         } else {
-          q = q.where("t.parent_id", "=", query.parent_id);
+          q = q.where("t.parent_id", "=", input.query.parent_id);
         }
       }
 
@@ -90,7 +90,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  create: async ({ body }: { body: z.infer<typeof taskContract.create.body> }, c: Context<AppEnv>) => {
+  create: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -102,25 +102,25 @@ const tasksTsRestRouter = s.router(taskContract, {
       await db.insertInto("tasks")
         .values({
           id,
-          title: body.title,
-          description: body.description || null,
-          status: body.status || "todo",
-          priority: body.priority || "normal",
-          subteam: body.subteam || null,
+          title: input.body.title,
+          description: input.body.description || null,
+          status: input.body.status || "todo",
+          priority: input.body.priority || "normal",
+          subteam: input.body.subteam || null,
           sort_order: 0,
           created_by: user.id,
-          due_date: body.due_date || null,
+          due_date: input.body.due_date || null,
           zulip_stream: "kanban",
-          zulip_topic: `Task-${id.split("-")[0]}: ${body.title}`,
-          parent_id: body.parent_id || null,
-          time_spent_seconds: body.time_spent_seconds || 0,
+          zulip_topic: `Task-${id.split("-")[0]}: ${input.body.title}`,
+          parent_id: input.body.parent_id || null,
+          time_spent_seconds: input.body.time_spent_seconds || 0,
           created_at: now,
           updated_at: now,
         })
         .execute();
 
-      if (body.assignees && body.assignees.length > 0) {
-        const assignments = body.assignees.map((userId: string) => ({
+      if (input.body.assignees && input.body.assignees.length > 0) {
+        const assignments = input.body.assignees.map((userId: string) => ({
           task_id: id,
           user_id: userId
         }));
@@ -133,48 +133,48 @@ const tasksTsRestRouter = s.router(taskContract, {
         action: "create_task",
         resource_type: "task",
         resource_id: id,
-        details: `Created task: ${body.title} with ${body.assignees?.length || 0} assignees`,
+        details: `Created task: ${input.body.title} with ${input.body.assignees?.length || 0} assignees`,
         created_at: now,
       }).execute();
 
       // Fetch assignee names for the response
-      const assigneeProfiles = body.assignees && body.assignees.length > 0
+      const assigneeProfiles = input.body.assignees && input.body.assignees.length > 0
         ? await db.selectFrom("user_profiles")
             .select(["user_id as id", "nickname"])
-            .where("user_id", "in", body.assignees)
+            .where("user_id", "in", input.body.assignees)
             .execute()
         : [];
 
       const task = {
         id,
-        title: body.title,
-        description: body.description || null,
-        status: body.status || "todo",
-        priority: body.priority || "normal",
-        subteam: body.subteam || null,
+        title: input.body.title,
+        description: input.body.description || null,
+        status: input.body.status || "todo",
+        priority: input.body.priority || "normal",
+        subteam: input.body.subteam || null,
         sort_order: 0,
         assignees: assigneeProfiles,
         created_by: user.id,
         creator_name: user.nickname || user.name || null,
-        due_date: body.due_date || null,
+        due_date: input.body.due_date || null,
         zulip_stream: "kanban",
-        zulip_topic: `Task-${id.split("-")[0]}: ${body.title}`,
-        parent_id: body.parent_id || null,
-        time_spent_seconds: body.time_spent_seconds || 0,
+        zulip_topic: `Task-${id.split("-")[0]}: ${input.body.title}`,
+        parent_id: input.body.parent_id || null,
+        time_spent_seconds: input.body.time_spent_seconds || 0,
         created_at: now,
         updated_at: now,
-        assigned_to: body.assignees?.[0] || null,
+        assigned_to: input.body.assignees?.[0] || null,
         assignee_name: assigneeProfiles[0]?.nickname || null,
       };
 
-      if (body.assignees && body.assignees.length > 0) {
+      if (input.body.assignees && input.body.assignees.length > 0) {
         try {
-          const users = await db.selectFrom("user").select("email").where("id", "in", body.assignees).execute();
+          const users = await db.selectFrom("user").select("email").where("id", "in", input.body.assignees).execute();
           const emails = users.map(u => u.email).filter(Boolean);
           if (emails.length > 0) {
             const env = await getSocialConfig(c);
             for (const email of emails) {
-              await sendZulipMessage(env, email, null, `You have been assigned a new task: **${body.title}**\n\n[Open Task Dashboard](${siteConfig.urls.base}/dashboard?tab=tasks)`, "private").catch((e) => console.error("[Tasks] Zulip assign error:", e));
+              await sendZulipMessage(env, email, null, `You have been assigned a new task: **${input.body.title}**\n\n[Open Task Dashboard](${siteConfig.urls.base}/dashboard?tab=tasks)`, "private").catch((e) => console.error("[Tasks] Zulip assign error:", e));
             }
           }
         } catch (e) {
@@ -191,14 +191,14 @@ const tasksTsRestRouter = s.router(taskContract, {
           const threadContent = [
             `📋 **New Task Created** by ${user.nickname || user.name || "ARES Member"}`,
             ``,
-            `**Priority:** ${(body.priority || "normal").toUpperCase()}`,
-            body.description ? `**Description:** ${body.description}` : null,
+            `**Priority:** ${(input.body.priority || "normal").toUpperCase()}`,
+            input.body.description ? `**Description:** ${input.body.description}` : null,
             assigneeProfiles.length > 0 ? `**Assigned to:** ${assigneeNames}` : null,
-            body.due_date ? `**Due:** ${body.due_date}` : null,
+            input.body.due_date ? `**Due:** ${input.body.due_date}` : null,
             ``,
             `[Open Task Board](${taskUrl})`,
           ].filter(Boolean).join("\n");
-          await sendZulipMessage(env, "kanban", `Task-${id.split("-")[0]}: ${body.title}`, threadContent);
+          await sendZulipMessage(env, "kanban", `Task-${id.split("-")[0]}: ${input.body.title}`, threadContent);
         } catch (e) {
           console.error("[Tasks:ZulipThread] Error creating discussion thread", e);
         }
@@ -211,7 +211,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  reorder: async ({ body }: { body: z.infer<typeof taskContract.reorder.body> }, c: Context<AppEnv>) => {
+  reorder: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -219,7 +219,7 @@ const tasksTsRestRouter = s.router(taskContract, {
 
       const now = new Date().toISOString();
       
-      await Promise.all(body.items.map((item: any) =>
+      await Promise.all(input.body.items.map((item: any) =>
         db.updateTable("tasks")
           .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
           .where("id", "=", item.id)
@@ -232,7 +232,7 @@ const tasksTsRestRouter = s.router(taskContract, {
         action: "reorder_tasks",
         resource_type: "task",
         resource_id: "multiple",
-        details: `Reordered ${body.items.length} tasks`,
+        details: `Reordered ${input.body.items.length} tasks`,
         created_at: now,
       }).execute());
 
@@ -243,7 +243,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  update: async ({ params, body }: { params: z.infer<typeof taskContract.update.pathParams>, body: z.infer<typeof taskContract.update.body> }, c: Context<AppEnv>) => {
+  update: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -251,7 +251,7 @@ const tasksTsRestRouter = s.router(taskContract, {
 
       const existing = await db.selectFrom("tasks")
         .select(["id", "title", "created_by", "subteam"])
-        .where("id", "=", params.id)
+        .where("id", "=", input.params.id)
         .executeTakeFirst();
 
       if (!existing) return { status: 404, body: { error: "Task not found" } };
@@ -263,32 +263,32 @@ const tasksTsRestRouter = s.router(taskContract, {
 
       // Any authenticated user can update task fields
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-      if (body.title !== undefined) updates.title = body.title;
-      if (body.description !== undefined) updates.description = body.description;
-      if (body.status !== undefined) updates.status = body.status;
-      if (body.priority !== undefined) updates.priority = body.priority;
-      if (body.subteam !== undefined) updates.subteam = body.subteam;
-      if (body.due_date !== undefined) updates.due_date = body.due_date;
-      if (body.sort_order !== undefined) updates.sort_order = body.sort_order;
-      if (body.parent_id !== undefined) updates.parent_id = body.parent_id;
-      if (body.time_spent_seconds !== undefined) updates.time_spent_seconds = body.time_spent_seconds;
+      if (input.body.title !== undefined) updates.title = input.body.title;
+      if (input.body.description !== undefined) updates.description = input.body.description;
+      if (input.body.status !== undefined) updates.status = input.body.status;
+      if (input.body.priority !== undefined) updates.priority = input.body.priority;
+      if (input.body.subteam !== undefined) updates.subteam = input.body.subteam;
+      if (input.body.due_date !== undefined) updates.due_date = input.body.due_date;
+      if (input.body.sort_order !== undefined) updates.sort_order = input.body.sort_order;
+      if (input.body.parent_id !== undefined) updates.parent_id = input.body.parent_id;
+      if (input.body.time_spent_seconds !== undefined) updates.time_spent_seconds = input.body.time_spent_seconds;
 
       await db.updateTable("tasks")
         .set(updates)
-        .where("id", "=", params.id)
+        .where("id", "=", input.params.id)
         .execute();
 
       // Only admins, mentors/coaches, and the task creator can change assignments
-      if (body.assignees !== undefined) {
+      if (input.body.assignees !== undefined) {
         if (!canAssign) {
           return { status: 403, body: { error: "Only mentors, coaches, admins, or the task creator can change assignments" } };
         }
 
         // WR-12: Additional validation - prevent assigning users from different subteams
-        if (existing.subteam && body.assignees && body.assignees.length > 0) {
+        if (existing.subteam && input.body.assignees && input.body.assignees.length > 0) {
           const _assigneeProfiles = await db.selectFrom("user_profiles")
             .select(["user_id", "member_type"])
-            .where("user_id", "in", body.assignees)
+            .where("user_id", "in", input.body.assignees)
             .execute();
 
           // Check if any assignee belongs to a different subteam
@@ -296,7 +296,7 @@ const tasksTsRestRouter = s.router(taskContract, {
           if (!isAdmin && isMentor) {
             const assigneeSubteams = await db.selectFrom("user_profiles")
               .select("subteams")
-              .where("user_id", "in", body.assignees)
+              .where("user_id", "in", input.body.assignees)
               .execute();
 
             const hasMismatchedSubteam = assigneeSubteams.some(p => p.subteams && p.subteams !== existing.subteam);
@@ -307,17 +307,17 @@ const tasksTsRestRouter = s.router(taskContract, {
         }
 
         // Sync assignments: delete and re-insert
-        await db.deleteFrom("task_assignments").where("task_id", "=", params.id).execute();
-        if (body.assignees && body.assignees.length > 0) {
-          const assignments = body.assignees.map((userId: string) => ({
-            task_id: params.id,
+        await db.deleteFrom("task_assignments").where("task_id", "=", input.params.id).execute();
+        if (input.body.assignees && input.body.assignees.length > 0) {
+          const assignments = input.body.assignees.map((userId: string) => ({
+            task_id: input.params.id,
             user_id: userId
           }));
           await db.insertInto("task_assignments").values(assignments).execute();
-          
+
           // Notify new assignees (simplified logic: notify all currently assigned)
           try {
-            const users = await db.selectFrom("user").select("email").where("id", "in", body.assignees).execute();
+            const users = await db.selectFrom("user").select("email").where("id", "in", input.body.assignees).execute();
             const emails = users.map(u => u.email).filter(Boolean);
             if (emails.length > 0) {
               const env = await getSocialConfig(c);
@@ -336,7 +336,7 @@ const tasksTsRestRouter = s.router(taskContract, {
         actor: user.id,
         action: "update_task",
         resource_type: "task",
-        resource_id: params.id,
+        resource_id: input.params.id,
         details: "Updated task and assignments",
         created_at: new Date().toISOString(),
       }).execute();
@@ -348,7 +348,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  delete: async ({ params }: { params: z.infer<typeof taskContract.delete.pathParams> }, c: Context<AppEnv>) => {
+  delete: async (input, c) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -356,7 +356,7 @@ const tasksTsRestRouter = s.router(taskContract, {
 
       const existing = await db.selectFrom("tasks")
         .select(["created_by"])
-        .where("id", "=", params.id)
+        .where("id", "=", input.params.id)
         .executeTakeFirst();
       
       if (!existing) return { status: 404, body: { error: "Task not found" } };
@@ -377,7 +377,7 @@ const tasksTsRestRouter = s.router(taskContract, {
         actor: user.id,
         action: "delete_task",
         resource_type: "task",
-        resource_id: params.id,
+        resource_id: input.params.id,
         details: "Deleted task",
         created_at: new Date().toISOString(),
       }).execute();
@@ -388,12 +388,23 @@ const tasksTsRestRouter = s.router(taskContract, {
       return { status: 500, body: { error: "Failed to delete task" } };
     }
   },
-} as any);
+});
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));
 // WR-11: Add origin integrity to prevent CSRF attacks on task operations
 tasksRouter.use("*", originIntegrityMiddleware());
 
-createHonoEndpoints(taskContract, tasksTsRestRouter, tasksRouter);
+createHonoEndpoints(
+  taskContract,
+  tasksTsRestRouter,
+  tasksRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 export default tasksRouter;
