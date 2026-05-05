@@ -65,6 +65,17 @@ const settingsHandlers = {
       let updatedCount = 0;
       const sensitiveKeysUpdated: string[] = [];
       for (const [key, value] of entries) {
+        // WR-14: Explicit protection - prevent updating sensitive keys via API
+        if (SENSITIVE_KEYS.has(key)) {
+          return {
+            status: 403 as const,
+            body: {
+              success: false,
+              error: `Cannot update ${key} via API. Please use the admin console.`
+            } as any
+          };
+        }
+
         // SEC-03: Prevent overwriting secrets with the masked versions passed back by the frontend
         if (SENSITIVE_KEYS.has(key) && value.startsWith('••••')) {
           continue;
