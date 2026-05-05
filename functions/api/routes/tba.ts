@@ -24,7 +24,6 @@ function setTbaCache(key: string, value: { data: unknown; expiresAt: number }) {
   tbaCache.set(key, value);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getTBA(path: string, c: HonoContext) {
   const now = Date.now();
   const cached = tbaCache.get(path);
