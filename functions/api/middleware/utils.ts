@@ -227,6 +227,55 @@ export function parsePagination(c: Context<AppEnv>, defaultLimit = 50, maxLimit 
   return { limit, offset, cursor };
 }
 
+// ── Request ID Tracing (IN-09) ────────────────────────────────
+/**
+ * Get or generate a request ID for tracing and debugging.
+ *
+ * IN-09: Request ID middleware for correlation across logs and error tracking.
+ *
+ * Usage in route handlers:
+ *   const requestId = getRequestId(c);
+ *   console.error(`[${requestId}] Error processing request`);
+ *
+ * The request ID is also available via the X-Request-ID response header.
+ */
+export function getRequestId(c: Context<AppEnv>): string {
+  // Check if request ID was already set by middleware
+  const existing = c.get("requestId") as string | undefined;
+  if (existing) return existing;
+
+  // Check for client-provided request ID
+  const clientRequestId = c.req.header("X-Request-ID");
+  if (clientRequestId) {
+    c.set("requestId", clientRequestId);
+    c.header("X-Request-ID", clientRequestId);
+    return clientRequestId;
+  }
+
+  // Generate new request ID
+  const generatedId = crypto.randomUUID();
+  c.set("requestId", generatedId);
+  c.header("X-Request-ID", generatedId);
+  return generatedId;
+}
+
+/**
+ * Hono middleware that adds request ID tracing to all requests.
+ *
+ * IN-09: Request ID middleware for correlation across logs.
+ *
+ * Usage:
+ *   app.use("*", requestIdMiddleware);
+ *
+ * After this middleware, use getRequestId(c) to retrieve the request ID.
+ */
+export async function requestIdMiddleware(c: Context<AppEnv>, next: () => Promise<void>) {
+  const id = c.req.header("X-Request-ID") || crypto.randomUUID();
+  c.set("requestId", id);
+  c.header("X-Request-ID", id);
+  await next();
+}
+
 // ── Centralized Settings Fetch ──────────────────────────────
 export async function getDbSettings(c: Context<AppEnv>): Promise<Record<string, string>> {
   const keys = [
