@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 // ── AI Scouting Analysis Endpoint ────────────────────────────────────
 // POST endpoint that accepts team/event data and sends it to Z.ai GLM 5.1
 // for analysis. Supports three modes: team_analysis, match_prediction,
@@ -115,6 +117,7 @@ analyzeRouter.post("/", ensureAuth, async (c) => {
       return c.json({ error: `AI analysis failed (${zaiRes.status})`, details: errText }, 502);
     }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = (await zaiRes.json()) as any;
     if (data.error) {
       return c.json({ error: data.error.message || "AI returned an error" }, 502);

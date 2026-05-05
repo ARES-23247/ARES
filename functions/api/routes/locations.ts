@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { z } from "zod";

@@ -113,7 +113,7 @@ export default function SponsorshipEditModal({ item, onClose, onSave, onDelete }
               <select
                 id="status"
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(e) => setStatus(e.target.value as import("@shared/schemas/financeSchema").SponsorshipStatus)}
                 className="w-full bg-white/5 border border-white/10 ares-cut-sm p-2.5 text-sm text-white focus:border-ares-red outline-none"
               >
                 {PIPELINE_COLUMNS.map(c => (

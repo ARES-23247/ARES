@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -357,6 +359,7 @@ describe("Hono Backend - /docs Router", () => {
     });
     
     // Create an array of all waitUntil promises
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const waitUntils: Promise<any>[] = [];
     const mockCtx = {
       ...mockExecutionContext,

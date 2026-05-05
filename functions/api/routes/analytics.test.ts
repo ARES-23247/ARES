@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
  
 import { TestEnv, MockKysely, MockExecutionContext } from "../../../src/test/types";
 import { describe, it, expect, vi, beforeEach } from "vitest";

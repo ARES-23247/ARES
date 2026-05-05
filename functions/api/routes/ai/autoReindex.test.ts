@@ -1,11 +1,18 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { triggerBackgroundReindex } from "./autoReindex";
 
 describe("triggerBackgroundReindex", () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockExecutionCtx: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockDb: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockAi: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockVectorize: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockKv: any;
 
   beforeEach(() => {

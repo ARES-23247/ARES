@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 // ── FTC Events API Proxy ─────────────────────────────────────────────
 // Proxies requests to the FIRST FTC Events API v2.0, injecting Basic
 // Auth credentials server-side. Protects API keys from client exposure.

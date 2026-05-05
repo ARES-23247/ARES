@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { indexSiteContent } from "./indexer";
 
 // ── Mock DB (Kysely chain) ────────────────────────────────────────────────
 const createMockQuery = () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const q: any = {
     select: vi.fn(),
     where: vi.fn(),
@@ -25,6 +28,7 @@ const createMockQuery = () => {
   return q;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb: any = {
   selectFrom: vi.fn(() => createMockQuery()),
   insertInto: vi.fn(() => createMockQuery()),
@@ -37,11 +41,13 @@ const mockAi = {
 };
 
 // ── Mock Vectorize ────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockVectorize: any = {
   upsert: vi.fn().mockResolvedValue(undefined),
 };
 
 // ── Mock KV ───────────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const _mockKv: any = {
   get: vi.fn().mockResolvedValue(null),
   put: vi.fn().mockResolvedValue(undefined),

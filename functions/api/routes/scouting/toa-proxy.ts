@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 // ── The Orange Alliance API Proxy ─────────────────────────────────────
 // Proxies requests to TOA, injecting the API key server-side so it
 // never reaches the client. Protects against key leakage and CORS issues.

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
  
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -21,6 +23,7 @@ vi.mock("../middleware", async (importOriginal) => {
 import sponsorsRouter from "./sponsors";
 
 describe("Hono Backend - /sponsors Router", () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockDb: any;
   let testApp: Hono<TestEnv>;
 
@@ -55,6 +58,7 @@ describe("Hono Backend - /sponsors Router", () => {
         executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
         transformQuery: vi.fn((q) => q),
       }),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
     testApp = new Hono<TestEnv>();

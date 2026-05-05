@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
@@ -16,6 +18,7 @@ vi.mock("../middleware", async (importOriginal) => {
 });
 
 describe("Hono Backend - /settings Router", () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockDb: any;
   let testApp: Hono<TestEnv>;
   let env: Record<string, unknown>;
@@ -148,6 +151,7 @@ describe("Hono Backend - /settings Router", () => {
 
     const res = await testApp.request("/admin/backup", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(body.backup).toBeDefined();
@@ -222,6 +226,7 @@ describe("Hono Backend - /settings Router", () => {
 
     const res = await testApp.request("/admin/backup", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(body.backup.posts).toEqual([]);

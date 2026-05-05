@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const sponsorshipStatusSchema = z.enum(["potential", "contacted", "pledged", "secured", "lost"]);
+export type SponsorshipStatus = z.infer<typeof sponsorshipStatusSchema>;
 
 export const sponsorshipPipelineSchema = z.object({
   id: z.string().optional(),

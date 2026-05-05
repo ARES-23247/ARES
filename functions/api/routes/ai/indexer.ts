@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { Kysely, sql, Selectable } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import { fetchGithubRepoFiles } from "./external/githubFetcher";

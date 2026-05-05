@@ -50,6 +50,8 @@ export type MockKysely = {
   /** Execution methods */
   execute: ReturnType<typeof vi.fn>;
   executeTakeFirst: ReturnType<typeof vi.fn>;
+  run?: ReturnType<typeof vi.fn>;
+  getExecutor?: ReturnType<typeof vi.fn>;
 };
 
 // ── TestEnv ───────────────────────────────────────────────────────────────────

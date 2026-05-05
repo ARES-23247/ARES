@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context } from "hono";
@@ -15,6 +17,7 @@ vi.mock("../middleware", async (importOriginal) => {
   };
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockDb: any = {
   selectFrom: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),

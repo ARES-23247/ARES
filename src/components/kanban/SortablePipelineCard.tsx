@@ -3,16 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Trash2, GripVertical, DollarSign, User } from "lucide-react";
 
-interface PipelineItem {
-  id?: string;
-  company_name: string;
-  status: string;
-  estimated_value: number;
-  notes?: string | null;
-  contact_person?: string | null;
-  zulip_message_id?: string | null;
-  assignees?: string[];
-}
+import type { PipelineItem } from "../../types/finance";
 
 interface SortablePipelineCardProps {
   item: PipelineItem;

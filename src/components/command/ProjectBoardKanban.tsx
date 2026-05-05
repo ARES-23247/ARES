@@ -146,7 +146,7 @@ export default function ProjectBoardKanban({
       <GenericKanbanBoard<TaskItem>
         items={tasks}
         columns={COLUMNS}
-        columnConfig={statusConfig}
+        columnConfig={statusConfig as unknown as Record<string, import("../kanban/GenericKanbanBoard").KanbanColumnConfig>}
         getId={(task) => String(task.id)}
         getStatus={(task) => task.status}
         getSortOrder={(task) => task.sort_order}
