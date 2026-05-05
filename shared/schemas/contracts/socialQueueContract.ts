@@ -218,3 +218,4 @@ export const socialQueueContract = c.router({
     summary: "Get analytics for social media posts",
   },
 });
+export type SocialQueueContract = typeof socialQueueContract;

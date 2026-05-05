@@ -1,22 +1,25 @@
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { pointsContract } from "../../../shared/schemas/contracts/pointsContract";
 import type { AppEnv } from "../middleware/utils";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 const app = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
 const pointsHandlers = {
-  getBalance: async ({ params }: any, c: Context<AppEnv>) => {
+  getBalance: async (input, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
         return { status: 401 as const, body: { error: "Unauthorized" } };
       }
 
-      if (sessionUser.role !== "admin" && sessionUser.id !== params.user_id) {
+      const { user_id } = input.params;
+      if (sessionUser.role !== "admin" && sessionUser.id !== user_id) {
         return { status: 403 as const, body: { error: "Forbidden" } };
       }
 
@@ -24,28 +27,29 @@ const pointsHandlers = {
       const ledger = await db
         .selectFrom("points_ledger")
         .select(["points_delta"])
-        .where("user_id", "=", params.user_id)
+        .where("user_id", "=", user_id)
         .execute();
 
       const balance = ledger.reduce((sum, tx) => sum + tx.points_delta, 0);
 
       return {
         status: 200 as const,
-        body: { user_id: params.user_id, balance }
+        body: { user_id, balance }
       };
     } catch (err: any) {
       console.error("[Points] Get balance failed:", err);
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getHistory: async ({ params }: any, c: Context<AppEnv>) => {
+  getHistory: async (input, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
         return { status: 401 as const, body: { error: "Unauthorized" } };
       }
 
-      if (sessionUser.role !== "admin" && sessionUser.id !== params.user_id) {
+      const { user_id } = input.params;
+      if (sessionUser.role !== "admin" && sessionUser.id !== user_id) {
         return { status: 403 as const, body: { error: "Forbidden" } };
       }
 
@@ -53,7 +57,7 @@ const pointsHandlers = {
       const history = await db
         .selectFrom("points_ledger")
         .selectAll()
-        .where("user_id", "=", params.user_id)
+        .where("user_id", "=", user_id)
         .orderBy("created_at", "desc")
         .execute();
 
@@ -70,14 +74,14 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  awardPoints: async ({ body }: any, c: Context<AppEnv>) => {
+  awardPoints: async (input, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
         return { status: 401 as const, body: { error: "Unauthorized" } };
       }
 
-      const { user_id, points_delta, reason } = body;
+      const { user_id, points_delta, reason } = input.body;
       const db = c.get("db") as Kysely<DB>;
 
       const id =
@@ -110,7 +114,7 @@ const pointsHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getLeaderboard: async (_: any, c: Context<AppEnv>) => {
+  getLeaderboard: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user as u")
@@ -153,7 +157,18 @@ const pointsHandlers = {
   }
 };
 
-const pointsTsRestRouter = s.router(pointsContract, pointsHandlers as any);
-createHonoEndpoints(pointsContract, pointsTsRestRouter, app);
+const pointsTsRestRouter = s.router(pointsContract, pointsHandlers);
+createHonoEndpoints(
+  pointsContract,
+  pointsTsRestRouter,
+  app,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default app;

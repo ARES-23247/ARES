@@ -118,3 +118,4 @@ export const taskContract = c.router({
     summary: "Delete a task",
   },
 });
+export type TaskContract = typeof taskContract;

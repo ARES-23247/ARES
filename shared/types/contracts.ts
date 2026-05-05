@@ -8,6 +8,32 @@ import type { HonoContext } from "./api";
 import type { AppRouteImplementation, AppRouteInput, ServerInferResponses, RecursiveRouterObj } from "ts-rest-hono";
 
 /**
+ * ## Contract Inference Pattern (Phase 29)
+ *
+ * Use ts-rest-hono's inferred types instead of custom HandlerInput:
+ *
+ * @example
+ * import { initServer } from 'ts-rest-hono';
+ * import type { AppRouteInput } from '@shared/types/contracts';
+ * import { myContract } from '~/shared/schemas/contracts/myContract';
+ * import type { AppEnv } from '../middleware/utils';
+ *
+ * const s = initServer<AppEnv>();
+ *
+ * const handlers = {
+ *   // Types are inferred from myContract - no manual annotations needed
+ *   myEndpoint: async (input, c) => {
+ *     const { field } = input.body;  // Fully typed from contract
+ *     return { status: 200, body: { result: field } };
+ *   }
+ * };
+ *
+ * // No 'as any' cast needed
+ * const router = s.router(myContract, handlers);
+ */
+
+
+/**
  * Input type inferred from a ts-rest contract definition.
  */
 export type ContractInput<T extends AppRoute> = T extends {

@@ -102,3 +102,4 @@ export const financeContract = c.router({
     summary: "Delete a financial transaction",
   },
 });
+export type FinanceContract = typeof financeContract;

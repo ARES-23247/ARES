@@ -56,3 +56,4 @@ export const githubContract = c.router({
     summary: "Get team GitHub contribution heatmap data",
   },
 });
+export type GithubContract = typeof githubContract;

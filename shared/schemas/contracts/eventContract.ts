@@ -274,3 +274,4 @@ export const eventContract = c.router({
     summary: "Update user attendance (admin/manager)",
   },
 });
+export type EventContract = typeof eventContract;

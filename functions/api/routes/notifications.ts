@@ -1,15 +1,17 @@
 import { AppEnv, getSessionUser, ensureAuth, rateLimitMiddleware } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { notificationContract } from "../../../shared/schemas/contracts/notificationContract";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const notificationsRouter = new Hono<AppEnv>();
 
 const notificationHandlers = {
-  getNotifications: async (_: any, c: Context<AppEnv>) => {
+  getNotifications: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -39,15 +41,16 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Fetch failed", notifications: [] } as any };
     }
   },
-  markAsRead: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  markAsRead: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
 
+      const { id } = input.params;
       await db.updateTable("notifications")
         .set({ is_read: 1 })
-        .where("id", "=", params.id)
+        .where("id", "=", id)
         .where("user_id", "=", user.id)
         .execute();
 
@@ -56,7 +59,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } as any };
     }
   },
-  markAllAsRead: async (_: any, c: Context<AppEnv>) => {
+  markAllAsRead: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -72,14 +75,15 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } as any };
     }
   },
-  deleteNotification: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  deleteNotification: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
       if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
 
+      const { id } = input.params;
       await db.deleteFrom("notifications")
-        .where("id", "=", params.id)
+        .where("id", "=", id)
         .where("user_id", "=", user.id)
         .execute();
 
@@ -88,7 +92,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Delete failed" } as any };
     }
   },
-  getPendingCounts: async (_: any, c: Context<AppEnv>) => {
+  getPendingCounts: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -127,7 +131,7 @@ const notificationHandlers = {
       return { status: 500 as const, body: { error: "Count failed" } as any };
     }
   },
-  getDashboardActionItems: async (_: any, c: Context<AppEnv>) => {
+  getDashboardActionItems: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -182,12 +186,23 @@ const notificationHandlers = {
   },
 };
 
-const notificationTsRestRouter = s.router(notificationContract, notificationHandlers as any);
+const notificationTsRestRouter = s.router(notificationContract, notificationHandlers);
 
 notificationsRouter.use("*", ensureAuth);
 notificationsRouter.use("/:id/read", rateLimitMiddleware(20, 60));
 notificationsRouter.use("/read-all", rateLimitMiddleware(10, 60));
 
-createHonoEndpoints(notificationContract, notificationTsRestRouter, notificationsRouter);
+createHonoEndpoints(
+  notificationContract,
+  notificationTsRestRouter,
+  notificationsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default notificationsRouter;

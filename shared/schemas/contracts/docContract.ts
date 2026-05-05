@@ -196,3 +196,4 @@ export const docContract = c.router({
     },
   },
 });
+export type DocContract = typeof docContract;

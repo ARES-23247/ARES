@@ -41,3 +41,4 @@ export const tbaContract = c.router({
     summary: "Fetch official data from FTC Events API",
   },
 });
+export type TbaContract = typeof tbaContract;

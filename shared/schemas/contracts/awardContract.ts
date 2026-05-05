@@ -57,3 +57,4 @@ export const awardContract = c.router({
     summary: "Soft-delete an award",
   },
 });
+export type AwardContract = typeof awardContract;

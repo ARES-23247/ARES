@@ -85,3 +85,4 @@ export const pointsContract = c.router({
     summary: "Get global points leaderboard",
   },
 });
+export type PointsContract = typeof pointsContract;

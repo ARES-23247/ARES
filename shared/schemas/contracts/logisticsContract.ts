@@ -34,3 +34,4 @@ export const logisticsContract = c.router({
     summary: "Get all active member emails for mass communication",
   },
 });
+export type LogisticsContract = typeof logisticsContract;

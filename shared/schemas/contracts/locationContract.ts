@@ -53,3 +53,4 @@ export const locationContract = c.router({
     summary: "Delete a location",
   },
 });
+export type LocationContract = typeof locationContract;

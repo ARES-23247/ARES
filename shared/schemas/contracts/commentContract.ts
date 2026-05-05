@@ -75,3 +75,4 @@ export const commentContract = c.router({
     summary: "Delete a comment",
   },
 });
+export type CommentContract = typeof commentContract;

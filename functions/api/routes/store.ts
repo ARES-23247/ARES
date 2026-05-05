@@ -1,4 +1,4 @@
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { storeContract } from "../../../shared/schemas/contracts/storeContract";
 import type { AppEnv } from "../middleware/utils";
@@ -7,6 +7,8 @@ import { logSystemError, ensureAdmin } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 const app = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
@@ -16,7 +18,7 @@ app.use("/orders", ensureAdmin);
 app.use("/orders/*", ensureAdmin);
 
 const storeHandlers = {
-  getProducts: async (_input: any, c: Context<AppEnv>) => {
+  getProducts: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const products = await db
@@ -42,9 +44,9 @@ const storeHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  createCheckoutSession: async ({ body }: any, c: Context<AppEnv>) => {
+  createCheckoutSession: async (input, c: HonoContext) => {
     try {
-      const { items, successUrl, cancelUrl } = body;
+      const { items, successUrl, cancelUrl } = input.body;
       const stripeKey = c.env.STRIPE_SECRET_KEY;
       if (!stripeKey) {
         throw new Error("STRIPE_SECRET_KEY is not configured.");
@@ -109,7 +111,7 @@ const storeHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  getOrders: async (_input: any, c: Context<AppEnv>) => {
+  getOrders: async (_input, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
@@ -149,7 +151,7 @@ const storeHandlers = {
       return { status: 500 as const, body: { error: err.message } };
     }
   },
-  updateOrderStatus: async ({ body, params }: any, c: Context<AppEnv>) => {
+  updateOrderStatus: async (input, c: HonoContext) => {
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
@@ -159,8 +161,8 @@ const storeHandlers = {
       const db = c.get("db") as Kysely<DB>;
       await db
         .updateTable("orders")
-        .set({ fulfillment_status: body.fulfillment_status })
-        .where("id", "=", params.id)
+        .set({ fulfillment_status: input.body.fulfillment_status })
+        .where("id", "=", input.params.id)
         .execute();
 
       return {
@@ -174,9 +176,20 @@ const storeHandlers = {
   },
 };
 
-const storeTsRestRouter = s.router(storeContract, storeHandlers as any);
+const storeTsRestRouter = s.router(storeContract, storeHandlers);
 
-createHonoEndpoints(storeContract, storeTsRestRouter, app);
+createHonoEndpoints(
+  storeContract,
+  storeTsRestRouter,
+  app,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 // We define the webhook separately from ts-rest because webhooks require raw body parsing.
 app.post("/webhook", async (c) => {

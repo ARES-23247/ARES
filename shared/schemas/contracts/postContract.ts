@@ -210,3 +210,4 @@ export const postContract = c.router({
     summary: "Re-broadcast post to social media",
   },
 });
+export type PostContract = typeof postContract;

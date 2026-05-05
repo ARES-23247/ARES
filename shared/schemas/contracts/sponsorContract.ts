@@ -101,3 +101,4 @@ export const sponsorContract = c.router({
     },
   },
 });
+export type SponsorContract = typeof sponsorContract;

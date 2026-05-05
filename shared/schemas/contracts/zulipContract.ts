@@ -94,3 +94,4 @@ export const zulipContract = c.router({
     summary: "Send Zulip invitations to the specified emails",
   },
 });
+export type ZulipContract = typeof zulipContract;

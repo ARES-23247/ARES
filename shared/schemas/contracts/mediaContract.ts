@@ -125,3 +125,4 @@ export const mediaContract = c.router({
     },
   },
 });
+export type MediaContract = typeof mediaContract;

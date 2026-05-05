@@ -24,6 +24,10 @@ export type HonoContext = Context<AppEnv>;
 /**
  * Standard handler input structure with typed body and params.
  *
+ * @deprecated Use AppRouteInput from ts-rest-hono for ts-rest handlers.
+ * This type is still useful for non-ts-rest Hono middleware.
+ * @see Migration guide in Phase 29 summary.
+ *
  * @example
  * interface CreateSponsorInput extends HandlerInput<SponsorCreateBody, {}> {}
  */

@@ -1,4 +1,4 @@
-import { Hono, Context } from "hono";
+import { Hono } from "hono";
 import { AppEnv, getSessionUser, sanitizeProfileForPublic, persistentRateLimitMiddleware, rateLimitMiddleware, ensureAuth } from "../middleware";
 import { getAuth } from "../../utils/auth";
 import { decrypt } from "../../utils/crypto";
@@ -7,12 +7,14 @@ import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { profileContract, updateUserProfileSchema } from "../../../shared/schemas/contracts/userContract";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const profilesRouter = new Hono<AppEnv>();
 
 const profileHandlers = {
-  getMe: async (_: any, c: Context<AppEnv>) => {
+  getMe: async (_input, c: HonoContext) => {
     const user = (await getSessionUser(c))!;
     const db = c.get("db") as Kysely<DB>;
 
@@ -101,11 +103,11 @@ const profileHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch your profile" } };
     }
   },
-  updateMe: async ({ body }: { body: unknown }, c: Context<AppEnv>) => {
+  updateMe: async (input, c: HonoContext) => {
     const user = (await getSessionUser(c))!;
     try {
       // Validate input against schema before updating profile
-      const validationResult = updateUserProfileSchema.safeParse(body);
+      const validationResult = updateUserProfileSchema.safeParse(input.body);
       if (!validationResult.success) {
         return {
           status: 400 as const,
@@ -122,7 +124,7 @@ const profileHandlers = {
       return { status: 500 as const, body: { error: "Failed to update profile" } };
     }
   },
-  getTeamRoster: async (_: any, c: Context<AppEnv>) => {
+  getTeamRoster: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       // SEC-F04: Only show verified users or those who have explicitly opted in via profile.
@@ -185,8 +187,8 @@ const profileHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch team roster" } as any };
     }
   },
-  getPublicProfile: async ({ params }: { params: any }, c: Context<AppEnv>) => {
-    const { userId } = params;
+  getPublicProfile: async (input, c: HonoContext) => {
+    const { userId } = input.params;
     const db = c.get("db") as Kysely<DB>;
     try {
       const profileRow = await db.selectFrom("user_profiles as p")
@@ -247,19 +249,30 @@ const profileHandlers = {
   },
 };
 
-const profileTsRestRouter = s.router(profileContract, profileHandlers as any);
+const profileTsRestRouter = s.router(profileContract, profileHandlers);
 
 profilesRouter.use("/me", ensureAuth);
 profilesRouter.use("/update-me", ensureAuth);
 profilesRouter.use("/avatar", ensureAuth);
 
-createHonoEndpoints(profileContract, profileTsRestRouter, profilesRouter);
+createHonoEndpoints(
+  profileContract,
+  profileTsRestRouter,
+  profilesRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 profilesRouter.use("/team-roster", rateLimitMiddleware(100, 60));
 profilesRouter.use("/:userId", rateLimitMiddleware(100, 60));
 
 profilesRouter.use("/update-me", persistentRateLimitMiddleware(10, 60));
-profilesRouter.put("/avatar", persistentRateLimitMiddleware(15, 60), async (c: Context<AppEnv>) => {
+profilesRouter.put("/avatar", persistentRateLimitMiddleware(15, 60), async (c: HonoContext) => {
   try {
     const body = await c.req.json();
     const { image } = body;

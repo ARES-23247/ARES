@@ -94,3 +94,4 @@ export const storeContract = c.router({
     summary: "Update order fulfillment status (Admin)",
   },
 });
+export type StoreContract = typeof storeContract;

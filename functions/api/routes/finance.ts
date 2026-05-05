@@ -1,17 +1,18 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { financeContract } from "../../../shared/schemas/contracts/financeContract";
 import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser } from "../middleware";
 import { AppEnv } from "../middleware";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 const financeRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
 
-const financeTsRestRouterObj: any = {
-  getSummary: async (input: any, c: Context<AppEnv>) => {
+const financeTsRestRouterObj = {
+  getSummary: async (input, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -59,7 +60,7 @@ const financeTsRestRouterObj: any = {
     }
   },
 
-  listPipeline: async (input: any, c: Context<AppEnv>) => {
+  listPipeline: async (input, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -92,7 +93,7 @@ const financeTsRestRouterObj: any = {
     }
   },
 
-  savePipeline: async (input: any, c: Context<AppEnv>) => {
+  savePipeline: async (input, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -321,11 +322,22 @@ const financeTsRestRouterObj: any = {
   },
 };
 
-const financeTsRestRouter = s.router(financeContract, financeTsRestRouterObj as any);
+const financeTsRestRouter = s.router(financeContract, financeTsRestRouterObj);
 
 financeRouter.use("*", ensureAdmin);
 financeRouter.use("*", rateLimitMiddleware(30, 60));
 
-createHonoEndpoints(financeContract, financeTsRestRouter, financeRouter);
+createHonoEndpoints(
+  financeContract,
+  financeTsRestRouter,
+  financeRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default financeRouter;

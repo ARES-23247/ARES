@@ -42,3 +42,4 @@ export const aiContract = c.router({
     summary: "Query the Global RAG Chatbot via SSE",
   },
 });
+export type AiContract = typeof aiContract;

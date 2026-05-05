@@ -1,10 +1,11 @@
 import { Hono } from "hono";
-import { Context } from "hono";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, getSocialConfig, checkRateLimit } from "../middleware";
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem } from "../../utils/githubProjects";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { githubContract } from "../../../shared/schemas/contracts/githubContract";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const githubRouter = new Hono<AppEnv>();
@@ -16,7 +17,7 @@ interface WeekData {
 }
 
 const githubHandlers = {
-  getBoard: async (_: any, c: Context<AppEnv>) => {
+  getBoard: async (_input, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
@@ -43,7 +44,7 @@ const githubHandlers = {
       return { status: 200 as const, body: { success: false, board: [] as any[] } };
     }
   },
-  createItem: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  createItem: async (input, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       const ghConfig = buildGitHubConfig(config);
@@ -51,15 +52,15 @@ const githubHandlers = {
         console.error("[GitHub:Create] Configuration missing");
         return { status: 500 as const, body: { error: "GitHub configuration missing" } as any };
       }
-      
-      await createProjectItem(ghConfig, body.title);
+
+      await createProjectItem(ghConfig, input.body.title);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[GitHub:Create] Error", e);
       return { status: 500 as const, body: { error: "Failed to create project item" } as any };
     }
   },
-  getActivity: async (_: any, c: Context<AppEnv>) => {
+  getActivity: async (_input, c: HonoContext) => {
     // WR-01: Add rate limiting to prevent abuse of GitHub API calls
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
@@ -169,11 +170,22 @@ const githubHandlers = {
   }
 };
 
-const githubTsRestRouter: any = s.router(githubContract as any, githubHandlers as any);
+const githubTsRestRouter = s.router(githubContract, githubHandlers);
 
 
 githubRouter.use("/projects/*", ensureAdmin);
 
 
-createHonoEndpoints(githubContract, githubTsRestRouter, githubRouter);
+createHonoEndpoints(
+  githubContract,
+  githubTsRestRouter,
+  githubRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 export default githubRouter;

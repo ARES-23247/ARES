@@ -1,11 +1,13 @@
- 
-import { Hono, Context } from "hono";
+
+import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS, getDbSettings, rateLimitMiddleware  } from "../middleware";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
 import { z } from "zod";
+import type { AppRouteInput } from "../../../shared/types/contracts";
+import type { HonoContext } from "@shared/types/api";
 
 export const settingsRouter = new Hono<AppEnv>();
 const s = initServer<AppEnv>();
@@ -32,7 +34,7 @@ const settingsSchema = z.record(z.string(), z.string().max(10000));
 
 const settingsHandlers = {
 
-  getSettings: async (_: any, c: Context<AppEnv>) => {
+  getSettings: async (_input, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const masked: Record<string, string> = {};
@@ -46,9 +48,10 @@ const settingsHandlers = {
     }
   },
    
-  updateSettings: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  updateSettings: async (input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
+      const body = input.body;
       // Validate input: ensure body is a record of string keys to string values
       const validationResult = settingsSchema.safeParse(body);
       if (!validationResult.success) {
@@ -104,7 +107,7 @@ const settingsHandlers = {
     }
   },
    
-  getStats: async (_: any, c: Context<AppEnv>) => {
+  getStats: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [posts, events, docs, inquiries, users] = await Promise.all([
@@ -130,7 +133,7 @@ const settingsHandlers = {
     }
   },
    
-  getPublicSettings: async (_: any, c: Context<AppEnv>) => {
+  getPublicSettings: async (_input, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const publicKeys = ["COMMUNITY_PHOTO_DRIVE_URL", "COMMUNITY_DOCS_URL"];
@@ -148,7 +151,7 @@ const settingsHandlers = {
   }
 };
 
-const settingsTsRestRouter = s.router(settingsContract, settingsHandlers as any);
+const settingsTsRestRouter = s.router(settingsContract, settingsHandlers);
 
 
 
@@ -157,7 +160,7 @@ settingsRouter.use("/admin/*", ensureAdmin);
 
 // WR-16: Add rate limiting to backup endpoint to prevent DoS
 // Backup route remains manual as it's a file export
-settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: Context<AppEnv>) => {
+settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: HonoContext) => {
   const db = c.get("db");
   try {
     const SAFE_TABLES = [
@@ -219,7 +222,18 @@ settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: Conte
 });
 
 
-createHonoEndpoints(settingsContract, settingsTsRestRouter, settingsRouter);
+createHonoEndpoints(
+  settingsContract,
+  settingsTsRestRouter,
+  settingsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 export default settingsRouter;
 
 

@@ -78,3 +78,4 @@ export const outreachContract = c.router({
     summary: "Delete an outreach log",
   },
 });
+export type OutreachContract = typeof outreachContract;

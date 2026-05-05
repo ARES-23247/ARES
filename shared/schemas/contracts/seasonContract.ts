@@ -140,3 +140,4 @@ export const seasonContract = c.router({
     summary: "Permanently delete a season",
   },
 });
+export type SeasonContract = typeof seasonContract;

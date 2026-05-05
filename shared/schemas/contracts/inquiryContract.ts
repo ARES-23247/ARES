@@ -120,3 +120,4 @@ export const inquiryContract = c.router({
     summary: "Delete an inquiry",
   },
 });
+export type InquiryContract = typeof inquiryContract;

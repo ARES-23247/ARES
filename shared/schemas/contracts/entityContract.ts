@@ -53,3 +53,4 @@ export const entityContract = c.router({
     summary: "Remove a link from the knowledge graph",
   },
 });
+export type EntityContract = typeof entityContract;

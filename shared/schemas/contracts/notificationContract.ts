@@ -119,3 +119,4 @@ export const notificationContract = c.router({
     summary: "Get detailed action items (pending requests) in a single batch",
   },
 });
+export type NotificationContract = typeof notificationContract;

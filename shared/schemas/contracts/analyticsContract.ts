@@ -183,3 +183,4 @@ export const analyticsContract = c.router({
     },
   },
 });
+export type AnalyticsContract = typeof analyticsContract;

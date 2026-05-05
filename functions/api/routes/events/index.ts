@@ -10,7 +10,7 @@ import { DB } from "../../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 const eventsRouter = new Hono<AppEnv>();
 
-const eventTsRestRouter = s.router(eventContract, eventHandlers as any);
+const eventTsRestRouter = s.router(eventContract, eventHandlers);
 
 import { edgeCacheMiddleware } from "../../middleware/cache";
 
@@ -88,6 +88,17 @@ eventsRouter.patch("/admin/:id/history/:historyId/restore", async (c) => {
   }
 });
 
-createHonoEndpoints(eventContract, eventTsRestRouter, eventsRouter);
+createHonoEndpoints(
+  eventContract,
+  eventTsRestRouter,
+  eventsRouter,
+  {
+    responseValidation: true,
+    responseValidationErrorHandler: (err, _c) => {
+      console.error('[Contract] Response validation failed:', err.cause);
+      return { error: { message: 'Internal server error' }, status: 500 };
+    }
+  }
+);
 
 export default eventsRouter;

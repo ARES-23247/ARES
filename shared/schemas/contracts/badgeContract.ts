@@ -109,3 +109,4 @@ export const badgeContract = c.router({
     summary: "Get public badge leaderboard",
   },
 });
+export type BadgeContract = typeof badgeContract;

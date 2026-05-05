@@ -53,3 +53,4 @@ export const settingsContract = c.router({
     summary: "Get public integration settings",
   },
 });
+export type SettingsContract = typeof settingsContract;

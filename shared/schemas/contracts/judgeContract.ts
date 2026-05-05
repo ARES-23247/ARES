@@ -95,3 +95,4 @@ export const judgeContract = c.router({
     summary: "Delete an access code (admin)",
   },
 });
+export type JudgeContract = typeof judgeContract;

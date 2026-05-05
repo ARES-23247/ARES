@@ -247,3 +247,4 @@ export const profileContract = c.router({
     summary: "Get public user profile",
   },
 });
+export type UserContract = typeof userContract;

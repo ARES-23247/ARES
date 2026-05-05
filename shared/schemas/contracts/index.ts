@@ -65,3 +65,45 @@ export const apiContract = c.router({
   points: c.router(pointsContract, { pathPrefix: "/points" }),
   socialQueue: c.router(socialQueueContract, { pathPrefix: "/social-queue" }),
 });
+
+// Export all contract types for frontend consumption
+export type { AiContract } from './aiContract';
+export type { AnalyticsContract } from './analyticsContract';
+export type { AwardContract } from './awardContract';
+export type { BadgeContract } from './badgeContract';
+export type { CommentContract } from './commentContract';
+export type { CommunicationsContract } from './communicationsContract';
+export type { DocContract } from './docContract';
+export type { EntityContract } from './entityContract';
+export type { EventContract } from './eventContract';
+export type { FinanceContract } from './financeContract';
+export type { GithubContract } from './githubContract';
+export type { InquiryContract } from './inquiryContract';
+export type { JudgeContract } from './judgeContract';
+export type { LocationContract } from './locationContract';
+export type { LogisticsContract } from './logisticsContract';
+export type { MediaContract } from './mediaContract';
+export type { NotificationContract } from './notificationContract';
+export type { OutreachContract } from './outreachContract';
+export type { PointsContract } from './pointsContract';
+export type { PostContract } from './postContract';
+export type { SeasonContract } from './seasonContract';
+export type { SettingsContract } from './settingsContract';
+export type { SocialQueueContract } from './socialQueueContract';
+export type { SponsorContract } from './sponsorContract';
+export type { StoreContract } from './storeContract';
+export type { TaskContract } from './taskContract';
+export type { TbaContract } from './tbaContract';
+export type { UserContract } from './userContract';
+export type { ZulipContract } from './zulipContract';
+
+/**
+ * Type helper for inferring contract types in frontend code.
+ * @example
+ * import { initClient } from '@ts-rest/core';
+ * import { analyticsContract, type AnalyticsContract } from '~/shared/schemas/contracts';
+ *
+ * const client = initClient(analyticsContract, { baseUrl: '/api' });
+ * // client.trackPageView.body is now typed from AnalyticsContract
+ */
+export type ContractInfer<T> = T extends { _contract: infer C } ? C : T;
