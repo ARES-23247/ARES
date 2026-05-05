@@ -5,7 +5,7 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { badgeContract } from "../../../shared/schemas/contracts/badgeContract";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, rateLimitMiddleware } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 
 const s = initServer<AppEnv>();
 

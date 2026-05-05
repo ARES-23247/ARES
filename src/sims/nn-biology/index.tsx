@@ -1,6 +1,6 @@
 /** @sim {"name": "Sim 0: The Single Neuron", "requiresContext": false} */
-import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCcw, ArrowRight, Brain, Zap, Code } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Play, RotateCcw, Brain, Zap, Code } from 'lucide-react';
 
 type Mode = 'single' | 'network';
 
@@ -47,7 +47,7 @@ export default function NnBiologySim() {
   const oOut = sigmoid(oSum);
   const netError = netTarget - oOut;
 
-  const stepSingleLearning = () => {
+  const stepSingleLearning = useCallback(() => {
     setWeights(prev => {
       const gradient = singleError * sigmoidDerivative(singleOut);
       return [
@@ -57,9 +57,9 @@ export default function NnBiologySim() {
     });
     setBias(prev => prev + (learningRate * singleError * sigmoidDerivative(singleOut)));
     setEpochs(e => e + 1);
-  };
+  }, [singleError, singleOut, learningRate, inputs]);
 
-  const stepNetworkLearning = () => {
+  const stepNetworkLearning = useCallback(() => {
     // Backprop for simple network
     const oGradient = netError * sigmoidDerivative(oOut);
     
@@ -87,7 +87,7 @@ export default function NnBiologySim() {
     ]);
     
     setEpochs(e => e + 1);
-  };
+  }, [netError, oOut, oWeights, h1Out, h2Out, learningRate, netInputs]);
 
   useEffect(() => {
     if (isLearning) {
@@ -101,7 +101,7 @@ export default function NnBiologySim() {
     return () => {
       if (learningInterval.current) clearInterval(learningInterval.current);
     };
-  }, [isLearning, mode, inputs, singleOut, singleError, netInputs, oOut, netError]); // Dependencies to ensure latest state is used
+  }, [isLearning, mode, stepSingleLearning, stepNetworkLearning]); 
 
   const toggleLearning = () => setIsLearning(!isLearning);
   const resetSingle = () => {

@@ -92,19 +92,68 @@ export default function NnIntroSim() {
           <h3 style={{ margin: 0, color: '#60a5fa' }}>Input Layer (7)</h3>
           <div style={{ position: 'relative', width: '120px', height: '200px' }}>
             {/* Top (0) */}
-            <div onClick={() => toggleSegment(0)} style={{ position: 'absolute', top: '10px', left: '20px', width: '80px', height: '20px', background: inputs[0] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[0] ? '0 0 15px #ef4444' : 'none' }} />
+            <div 
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleSegment(0)} 
+              onKeyDown={(e) => e.key === 'Enter' && toggleSegment(0)}
+              aria-label="Toggle top segment"
+              style={{ position: 'absolute', top: '10px', left: '20px', width: '80px', height: '20px', background: inputs[0] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[0] ? '0 0 15px #ef4444' : 'none' }} 
+            />
             {/* TR (1) */}
-            <div onClick={() => toggleSegment(1)} style={{ position: 'absolute', top: '30px', right: '0', width: '20px', height: '60px', background: inputs[1] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[1] ? '0 0 15px #ef4444' : 'none' }} />
+            <div 
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleSegment(1)} 
+              onKeyDown={(e) => e.key === 'Enter' && toggleSegment(1)}
+              aria-label="Toggle top right segment"
+              style={{ position: 'absolute', top: '30px', right: '0', width: '20px', height: '60px', background: inputs[1] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[1] ? '0 0 15px #ef4444' : 'none' }} 
+            />
             {/* BR (2) */}
-            <div onClick={() => toggleSegment(2)} style={{ position: 'absolute', bottom: '30px', right: '0', width: '20px', height: '60px', background: inputs[2] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[2] ? '0 0 15px #ef4444' : 'none' }} />
+            <div 
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleSegment(2)} 
+              onKeyDown={(e) => e.key === 'Enter' && toggleSegment(2)}
+              aria-label="Toggle bottom right segment"
+              style={{ position: 'absolute', bottom: '30px', right: '0', width: '20px', height: '60px', background: inputs[2] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[2] ? '0 0 15px #ef4444' : 'none' }} 
+            />
             {/* Bot (3) */}
-            <div onClick={() => toggleSegment(3)} style={{ position: 'absolute', bottom: '10px', left: '20px', width: '80px', height: '20px', background: inputs[3] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[3] ? '0 0 15px #ef4444' : 'none' }} />
+            <div 
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleSegment(3)} 
+              onKeyDown={(e) => e.key === 'Enter' && toggleSegment(3)}
+              aria-label="Toggle bottom segment"
+              style={{ position: 'absolute', bottom: '10px', left: '20px', width: '80px', height: '20px', background: inputs[3] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[3] ? '0 0 15px #ef4444' : 'none' }} 
+            />
             {/* BL (4) */}
-            <div onClick={() => toggleSegment(4)} style={{ position: 'absolute', bottom: '30px', left: '0', width: '20px', height: '60px', background: inputs[4] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[4] ? '0 0 15px #ef4444' : 'none' }} />
+            <div 
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleSegment(4)} 
+              onKeyDown={(e) => e.key === 'Enter' && toggleSegment(4)}
+              aria-label="Toggle bottom left segment"
+              style={{ position: 'absolute', bottom: '30px', left: '0', width: '20px', height: '60px', background: inputs[4] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[4] ? '0 0 15px #ef4444' : 'none' }} 
+            />
             {/* TL (5) */}
-            <div onClick={() => toggleSegment(5)} style={{ position: 'absolute', top: '30px', left: '0', width: '20px', height: '60px', background: inputs[5] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[5] ? '0 0 15px #ef4444' : 'none' }} />
+            <div 
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleSegment(5)} 
+              onKeyDown={(e) => e.key === 'Enter' && toggleSegment(5)}
+              aria-label="Toggle top left segment"
+              style={{ position: 'absolute', top: '30px', left: '0', width: '20px', height: '60px', background: inputs[5] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[5] ? '0 0 15px #ef4444' : 'none' }} 
+            />
             {/* Mid (6) */}
-            <div onClick={() => toggleSegment(6)} style={{ position: 'absolute', top: '90px', left: '20px', width: '80px', height: '20px', background: inputs[6] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[6] ? '0 0 15px #ef4444' : 'none' }} />
+            <div 
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleSegment(6)} 
+              onKeyDown={(e) => e.key === 'Enter' && toggleSegment(6)}
+              aria-label="Toggle middle segment"
+              style={{ position: 'absolute', top: '90px', left: '20px', width: '80px', height: '20px', background: inputs[6] ? '#ef4444' : '#374151', borderRadius: '10px', cursor: 'pointer', transition: '0.2s', boxShadow: inputs[6] ? '0 0 15px #ef4444' : 'none' }} 
+            />
           </div>
           <div style={{ display: 'flex', gap: '4px' }}>
             <button onClick={() => setInputs([0,0,0,0,0,0,0])} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #4b5563', color: '#9ca3af', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Clear</button>

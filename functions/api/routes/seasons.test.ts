@@ -54,13 +54,13 @@ describe("Seasons Router", () => {
   });
 
   it("GET /admin/list - returns all seasons", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ start_year: 2023, status: "draft" }]);
+    mockDb.execute.mockResolvedValueOnce([{ start_year: 2023, end_year: 2024, challenge_name: "Centerstage", status: "draft" }]);
     const res = await app.request("/admin/list", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
 
   it("GET /:year - returns season details with relations", async () => {
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2023, status: "published" });
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2023, end_year: 2024, challenge_name: "Centerstage", status: "published" });
     mockDb.execute.mockResolvedValue([]); // for awards, events, posts, outreach
     const res = await app.request("/2023", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
@@ -73,7 +73,7 @@ describe("Seasons Router", () => {
   });
 
   it("GET /admin/:id - returns details", async () => {
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2023, status: "draft" });
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ start_year: 2023, end_year: 2024, challenge_name: "Centerstage", status: "draft" });
     const res = await app.request("/admin/2023", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });

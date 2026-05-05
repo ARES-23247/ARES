@@ -124,7 +124,7 @@ describe("Hono Backend - /store Router", () => {
   describe("GET /api/store/products", () => {
     it("returns active products", async () => {
       mockDb.execute.mockResolvedValueOnce([
-        { id: "prod_1", name: "T-Shirt", active: 1, price_cents: 2000 }
+        { id: "prod_1", name: "T-Shirt", active: 1, price_cents: 2000, description: "Cool shirt", image_url: null, stock_count: 10, created_at: null }
       ]);
       const res = await app.request("/api/store/products");
       expect(res.status).toBe(200);
@@ -137,7 +137,7 @@ describe("Hono Backend - /store Router", () => {
   describe("POST /api/store/checkout", () => {
     it("creates a checkout session", async () => {
       mockDb.execute.mockResolvedValueOnce([
-        { id: "prod_1", name: "T-Shirt", active: 1, price_cents: 2000 }
+        { id: "prod_1", name: "T-Shirt", active: 1, price_cents: 2000, description: "Cool shirt", image_url: null, stock_count: 10, created_at: null }
       ]);
 
       const res = await app.request("/api/store/checkout", {

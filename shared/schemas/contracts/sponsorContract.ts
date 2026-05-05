@@ -5,18 +5,17 @@ import { sponsorSchema } from "../sponsorSchema";
 const c = initContract();
 
 export const sponsorRoiMetricSchema = z.object({
-  id: z.string(),
+  id: z.string().nullable(),
   sponsor_id: z.string(),
-  metric_key: z.string(),
-  metric_value: z.number(),
-  date: z.string(),
+  clicks: z.number().nullable(),
+  impressions: z.number().nullable(),
+  year_month: z.string(),
 });
 
 export const sponsorTokenSchema = z.object({
-  id: z.string(),
   sponsor_id: z.string(),
   token: z.string(),
-  created_at: z.string(),
+  created_at: z.string().nullable(),
   last_used: z.string().nullable(),
 });
 

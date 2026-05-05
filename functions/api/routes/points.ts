@@ -4,7 +4,7 @@ import { pointsContract } from "../../../shared/schemas/contracts/pointsContract
 import type { AppEnv } from "../middleware/utils";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const app = new Hono<AppEnv>();

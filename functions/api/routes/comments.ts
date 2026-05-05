@@ -6,19 +6,13 @@ import { sendZulipMessage, updateZulipMessage, deleteZulipMessage } from "../../
 import { emitNotification } from "../../utils/notifications";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { commentContract } from "../../../shared/schemas/contracts/commentContract";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const commentsRouter = new Hono<AppEnv>();
 
-type CommentSubmitBody = {
-  content?: string;
-};
 
-type CommentUpdateBody = {
-  content?: string;
-};
 
 const commentHandlers = {
   list: async (input, c: HonoContext) => {

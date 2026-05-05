@@ -68,7 +68,7 @@ describe("Hono Backend - /sponsors Router", () => {
   });
 
   it("GET / - list sponsors", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Google", tier: "Gold", logo_url: "..." }]);
+    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Google", tier: "Gold", logo_url: null, website_url: null, is_active: 1 }]);
     const res = await testApp.request("/", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
   });
@@ -121,8 +121,8 @@ describe("Hono Backend - /sponsors Router", () => {
 
   it("GET /roi/:token - normal path", async () => {
     mockDb.execute.mockResolvedValueOnce([{ sponsor_id: "1" }]); // Token found
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", name: "Google" }); // Sponsor found
-    mockDb.execute.mockResolvedValueOnce([{ id: "m1", metric_value: "100" }]); // Metrics
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", name: "Google", tier: "Gold", logo_url: null, website_url: null, is_active: 1 }); // Sponsor found
+    mockDb.execute.mockResolvedValueOnce([{ id: "m1", sponsor_id: "1", clicks: 100, impressions: 1000, year_month: "2023-01" }]); // Metrics
     const res = await testApp.request("/roi/good-token", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
   });
@@ -134,7 +134,7 @@ describe("Hono Backend - /sponsors Router", () => {
   });
 
   it("GET /admin/list - normal path", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ id: "1", is_active: 1 }]);
+    mockDb.execute.mockResolvedValueOnce([{ id: "1", name: "Sponsor 1", tier: "Gold", is_active: 1 }]);
     const res = await testApp.request("/admin/list", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
   });
@@ -177,7 +177,7 @@ describe("Hono Backend - /sponsors Router", () => {
   });
 
   it("GET /admin/tokens - normal path", async () => {
-    mockDb.execute.mockResolvedValueOnce([{ id: "1" }]);
+    mockDb.execute.mockResolvedValueOnce([{ id: "t1", sponsor_id: "s1", token: "good-token", created_at: "2023-01-01", last_used: null }]);
     const res = await testApp.request("/admin/tokens", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res.status).toBe(200);
   });

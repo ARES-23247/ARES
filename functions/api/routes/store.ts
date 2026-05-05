@@ -7,7 +7,7 @@ import { logSystemError, ensureAdmin } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const app = new Hono<AppEnv>();
@@ -36,6 +36,7 @@ const storeHandlers = {
           price_cents: p.price_cents || 0,
           image_url: p.image_url || null,
           active: p.active || 1,
+          stock_count: p.stock_count ?? null,
           created_at: p.created_at || null,
         })),
       };

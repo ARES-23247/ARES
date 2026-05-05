@@ -47,7 +47,7 @@ export default function ActivationVisualizer() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="col-span-1 space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-ares-red uppercase tracking-widest">Select Function</label>
+            <span className="text-xs font-bold text-ares-red uppercase tracking-widest block mb-2">Select Function</span>
             <div className="flex flex-col gap-2">
               {(['linear', 'step', 'sigmoid', 'tanh', 'relu'] as const).map(type => (
                 <button
@@ -71,7 +71,9 @@ export default function ActivationVisualizer() {
                 <span>Input (x)</span>
                 <span className="font-mono text-ares-cyan">{inputX.toFixed(2)}</span>
               </div>
+              <label htmlFor="input-x-range" className="sr-only">Input X value</label>
               <input 
+                id="input-x-range"
                 type="range" min="-5" max="5" step="0.1" 
                 value={inputX} onChange={e => setInputX(parseFloat(e.target.value))}
                 className="w-full accent-ares-cyan"

@@ -4,7 +4,7 @@ import { analyticsContract } from "../../../shared/schemas/contracts/analyticsCo
 import { AppEnv, ensureAuth, ensureAdmin, checkRateLimit, rateLimitMiddleware, turnstileMiddleware, getDbSettings  } from "../middleware";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 
 const s = initServer<AppEnv>();
 export const analyticsRouter = new Hono<AppEnv>();

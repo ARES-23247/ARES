@@ -5,7 +5,7 @@ import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../mid
 import { triggerBackgroundReindex } from "./ai/autoReindex";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const _s = initServer<AppEnv>();

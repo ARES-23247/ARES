@@ -4,25 +4,14 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
-import type { SelectableRow } from "@shared/types/database";
+
 
 const s = initServer<AppEnv>();
 export const sponsorsRouter = new Hono<AppEnv>();
 
-type SponsorSaveBody = {
-  id?: string;
-  name?: string;
-  tier?: string;
-  logo_url?: string;
-  website_url?: string;
-  is_active?: boolean;
-};
 
-type SponsorTokenBody = {
-  sponsor_id?: string;
-};
 
 type SponsorSelectedRow = {
   id: string | null;
@@ -61,8 +50,8 @@ const sponsorHandlers = {
             const sponsors = results.map((s: SponsorSelectedRow) => ({
         ...s,
         id: s.id ?? "",
-        is_active: !!s.is_active,
-        tier: s.tier ?? "unknown"
+        is_active: s.is_active ? 1 : 0,
+        tier: s.tier || "In-Kind"
       }));
 
       return { status: 200 as const, body: { sponsors } };
@@ -99,8 +88,8 @@ const sponsorHandlers = {
       const sponsor = {
         ...sponsorRow,
         id: sponsorRow.id ?? "",
-        is_active: !!sponsorRow.is_active,
-        tier: sponsorRow.tier ?? "unknown"
+        is_active: sponsorRow.is_active ? 1 : 0,
+        tier: sponsorRow.tier || "In-Kind"
       };
             const metrics = metricsRow.map((m) => ({
         id: m.id ?? "",
@@ -128,8 +117,8 @@ const sponsorHandlers = {
             const sponsors = results.map((s: SponsorSelectedRow) => ({
         ...s,
         id: s.id ?? "",
-        is_active: !!s.is_active,
-        tier: s.tier ?? "unknown"
+        is_active: s.is_active ? 1 : 0,
+        tier: s.tier || "In-Kind"
       }));
 
       return { status: 200 as const, body: { sponsors } };

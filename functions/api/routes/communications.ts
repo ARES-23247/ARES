@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { communicationsContract } from "../../../shared/schemas/contracts/communicationsContract";
 import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError } from "../middleware";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();

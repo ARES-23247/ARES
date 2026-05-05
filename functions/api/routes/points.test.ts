@@ -84,7 +84,7 @@ describe("Hono Backend - /points Router", () => {
 
     it("returns history list", async () => {
       mockDb.execute.mockResolvedValueOnce([
-        { id: "tx1", points_delta: 10, reason: "Meeting", created_by: "admin-1" }
+        { id: "tx1", user_id: "user-1", points_delta: 10, reason: "Meeting", created_by: "admin-1", created_at: new Date().toISOString() }
       ]);
       const res = await app.request("/api/points/history/user-1");
       expect(res.status).toBe(200);

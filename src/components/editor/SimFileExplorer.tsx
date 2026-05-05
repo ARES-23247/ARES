@@ -1,11 +1,12 @@
 import { useState, useMemo, ReactNode } from "react";
-import { Folder, FolderPlus, File, FileCode, Plus, Trash2, Edit2, ChevronRight } from "lucide-react";
+import { Folder, FolderPlus, File, FileCode, Plus, Trash2, Edit2, ChevronRight, Lock } from "lucide-react";
 
 interface SimFileExplorerProps {
   files: Record<string, string>;
   activeFile: string;
   setActiveFile: (f: string) => void;
   setFiles: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
+  readOnlyFiles?: string[];
 }
 
 type FileNode = {
@@ -36,7 +37,7 @@ function buildTree(filePaths: string[]): FileNode {
   return root;
 }
 
-export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: SimFileExplorerProps) {
+export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles, readOnlyFiles = [] }: SimFileExplorerProps) {
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ "": true });
 
   const tree = useMemo(() => buildTree(Object.keys(files)), [files]);
@@ -73,6 +74,7 @@ export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: 
 
   const handleDelete = (path: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (readOnlyFiles.includes(path)) return alert("This file is read-only.");
     if (!confirm(`Delete ${path}?`)) return;
     setFiles(prev => {
       const next = { ...prev };
@@ -91,6 +93,7 @@ export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: 
 
   const handleRename = (oldPath: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (readOnlyFiles.includes(oldPath)) return alert("This file is read-only.");
     const parts = oldPath.split("/");
     const oldName = parts.pop();
     const folderPath = parts.join("/");
@@ -171,6 +174,7 @@ export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: 
               </>
             )}
             <span className="truncate">{node.name}</span>
+            {readOnlyFiles.includes(node.path) && <Lock className="w-2.5 h-2.5 text-zinc-500 ml-1 shrink-0" />}
           </div>
 
           <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -192,20 +196,24 @@ export function SimFileExplorer({ files, activeFile, setActiveFile, setFiles }: 
                 </button>
               </>
             )}
-            <button
-              onClick={(e) => handleRename(node.path, e)}
-              className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white"
-              title="Rename"
-            >
-              <Edit2 className="w-3 h-3" />
-            </button>
-            <button
-              onClick={(e) => handleDelete(node.path, e)}
-              className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-red-400"
-              title="Delete"
-            >
-              <Trash2 className="w-3 h-3" />
-              </button>
+            {!readOnlyFiles.includes(node.path) && (
+              <>
+                <button
+                  onClick={(e) => handleRename(node.path, e)}
+                  className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white"
+                  title="Rename"
+                >
+                  <Edit2 className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={(e) => handleDelete(node.path, e)}
+                  className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-red-400"
+                  title={isFolder ? "Delete Folder" : "Delete"}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 

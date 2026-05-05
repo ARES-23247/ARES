@@ -4,7 +4,7 @@ import { DB } from "../../../shared/schemas/database";
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { notificationContract } from "../../../shared/schemas/contracts/notificationContract";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();

@@ -447,8 +447,7 @@ export const eventHandlers = {
         if (status === "published") {
           const baseUrl = new URL(c.req.url).origin;
           if (socials) {
-            const socialsFilter: Record<string, boolean> = {};
-            for (const s of socials) socialsFilter[s] = true;
+            const socialsFilter: Record<string, boolean> = socials;
             await dispatchSocials(db, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", thumbnail: coverImage || "/gallery_1.png", baseUrl }, socialConfig, socialsFilter).catch(() => {});
           }
           const eventTopic = `Event: ${title}`;

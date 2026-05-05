@@ -7,7 +7,7 @@ import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { profileContract, updateUserProfileSchema } from "../../../shared/schemas/contracts/userContract";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();

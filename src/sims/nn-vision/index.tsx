@@ -118,7 +118,7 @@ export default function NnVisionSim() {
           Sim 2: Machine Vision (8x8 Grid)
         </h1>
         <p style={{ color: '#9ca3af', margin: 0, fontSize: '15px' }}>
-          Draw a digit (0-9) on the grid. Hover over the output nodes to inspect their learned "feature maps" (weights).
+          Draw a digit (0-9) on the grid. Hover over the output nodes to inspect their learned &quot;feature maps&quot; (weights).
         </p>
       </div>
 
@@ -173,7 +173,7 @@ export default function NnVisionSim() {
         <div style={{ flex: 1, height: '350px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '24px' }}>
           {inspectDigit !== null ? (
             <>
-              <h3 style={{ margin: '0 0 16px 0', color: '#60a5fa' }}>Weight Matrix for "{inspectDigit}"</h3>
+              <h3 style={{ margin: '0 0 16px 0', color: '#60a5fa' }}>Weight Matrix for &quot;{inspectDigit}&quot;</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '2px', background: '#374151', padding: '2px', borderRadius: '8px' }}>
                  {weights[inspectDigit].map((w, i) => (
                    <div 

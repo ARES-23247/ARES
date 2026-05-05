@@ -7,10 +7,9 @@ import { triggerBackgroundReindex } from "./ai/autoReindex";
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 import type { SelectableRow } from "@shared/types/database";
-import type { Bindings } from "../middleware/utils";
 
 const s = initServer<AppEnv>();
 export const docsRouter = new Hono<AppEnv>();
@@ -55,34 +54,7 @@ type DocSearchCacheEntry = {
 
 const docSearchCache = new Map<string, DocSearchCacheEntry>();
 
-type DocSaveBody = {
-  slug?: string;
-  title?: string;
-  category?: string;
-  sortOrder?: number;
-  description?: string;
-  content?: string;
-  isPortfolio?: boolean;
-  isExecutiveSummary?: boolean;
-  isDraft?: boolean;
-  displayInAreslib?: boolean;
-  displayInMathCorner?: boolean;
-  displayInScienceCorner?: boolean;
-};
 
-type DocSortBody = {
-  sortOrder?: number;
-};
-
-type DocFeedbackBody = {
-  isHelpful?: boolean;
-  comment?: string;
-  turnstileToken?: string;
-};
-
-type DocReasonBody = {
-  reason?: string;
-};
 
 function setCache(key: string, value: DocSearchCacheEntry) {
   if (docSearchCache.size >= MAX_CACHE_SIZE) {

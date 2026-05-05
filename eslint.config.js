@@ -24,6 +24,7 @@ export default ts.config(
       "src/components/generated/**", // Ignore auto-generated files
       "src/components/editor/physics/**", // Migrated from .eslintignore
       "migrations/**/*.sql", // Ignore SQL migration files
+      "tools/ares-sim-preview/out", // Ignore compiled VSCode extension output
     ],
   },
   js.configs.recommended,

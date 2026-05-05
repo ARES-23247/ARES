@@ -1,6 +1,6 @@
 /** @sim {"name": "Sim 3: LLM Attention", "requiresContext": false} */
 import React, { useState, useMemo } from 'react';
-import { Network, Search, MessageSquare } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 
 const SENTENCES = [
   "The robot passed the programming test.",
@@ -146,7 +146,7 @@ export default function NnLlmSim() {
 
           <div style={{ background: 'rgba(234, 179, 8, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(234, 179, 8, 0.2)', fontSize: '14px', lineHeight: 1.5 }}>
             <strong>How it works:</strong> In a transformer, the <span style={{ color: '#eab308' }}>Attention Mechanism</span> computes a weight between every pair of words. 
-            When you hover over a word (the "Query"), the highlighting shows which other words (the "Keys") it is focusing on to understand its own context. This allows words like "bank" to change meaning depending on whether they attend to "river" or "money".
+            When you hover over a word (the &quot;Query&quot;), the highlighting shows which other words (the &quot;Keys&quot;) it is focusing on to understand its own context. This allows words like &quot;bank&quot; to change meaning depending on whether they attend to &quot;river&quot; or &quot;money&quot;.
           </div>
         </div>
 

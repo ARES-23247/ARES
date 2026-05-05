@@ -1,5 +1,5 @@
 /** @sim {"name": "Sim 4: Reinforcement Learning", "description": "Watch an AI agent learn to navigate a maze using Q-Learning and rewards."} */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 // Grid settings
@@ -24,23 +24,22 @@ const ACTIONS = [
 
 export default function RLVisualizer() {
   const [agentPos, setAgentPos] = useState(START);
-  const [qTable, setQTable] = useState<Record<string, number[]>>({});
-  const [episode, setEpisode] = useState(0);
-  const [isTraining, setIsTraining] = useState(false);
-  const [epsilon, setEpsilon] = useState(1.0); // Exploration rate
-  
-  const trainingRef = useRef(false);
-
-  // Initialize Q-table
-  useEffect(() => {
+  const [qTable, setQTable] = useState<Record<string, number[]>>(() => {
     const initialQ: Record<string, number[]> = {};
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
         initialQ[`${r},${c}`] = [0, 0, 0, 0]; // up, down, left, right
       }
     }
-    setQTable(initialQ);
-  }, []);
+    return initialQ;
+  });
+  const [episode, setEpisode] = useState(0);
+  const [isTraining, setIsTraining] = useState(false);
+  const [epsilon, setEpsilon] = useState(1.0); // Exploration rate
+  
+  const trainingRef = useRef(false);
+
+
 
   const isObstacle = (r: number, c: number) => OBSTACLES.some(o => o.r === r && o.c === c);
   const isGoal = (r: number, c: number) => r === GOAL.r && c === GOAL.c;
@@ -51,9 +50,9 @@ export default function RLVisualizer() {
 
     let r = START.r;
     let c = START.c;
-    let currentEps = Math.max(0.01, 1.0 - (episode * 0.01)); // Decay exploration
+    const currentEps = Math.max(0.01, 1.0 - (episode * 0.01)); // Decay exploration
 
-    let newQ = { ...qTable };
+    const newQ = { ...qTable };
     let steps = 0;
     
     // Simulate one full episode instantly
@@ -127,8 +126,8 @@ export default function RLVisualizer() {
       const actionIdx = qVals.indexOf(Math.max(...qVals));
       const action = ACTIONS[actionIdx];
       
-      let nr = r + action.dr;
-      let nc = c + action.dc;
+      const nr = r + action.dr;
+      const nc = c + action.dc;
       
       if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && !isObstacle(nr, nc)) {
         r = nr;

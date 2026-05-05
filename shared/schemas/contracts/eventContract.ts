@@ -21,6 +21,7 @@ export const eventResponseSchema = z.object({
   rrule: z.string().nullish(),
   zulip_stream: z.string().nullable().optional(),
   zulip_topic: z.string().nullable().optional(),
+  location_address: z.string().nullish(),
 });
 
 export const eventSignupSchema = z.object({

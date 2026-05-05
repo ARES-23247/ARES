@@ -97,6 +97,8 @@ export default function SimulationPlayground() {
   const [isLoadingSims, setIsLoadingSims] = useState(false);
   const [_isLoadingSim, setIsLoadingSim] = useState(false);
   const [_isLoadingGithubSim, setIsLoadingGithubSim] = useState(false);
+  const [isAutoRun, setIsAutoRun] = useState(() => localStorage.getItem("ares_sim_autorun") === "true");
+  const [readOnlyFiles] = useState<string[]>(["areslib.d.ts", "physics.d.ts"]);
 
   const [githubSims, setGithubSims] = useState<GithubSim[]>([]);
   const [isLoadingGithubSims, setIsLoadingGithubSims] = useState(false);
@@ -153,6 +155,18 @@ export default function SimulationPlayground() {
   const vimRef = useRef<IVimMode | null>(null);
 
   const compileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("ares_sim_autorun", String(isAutoRun));
+  }, [isAutoRun]);
+
+  useEffect(() => {
+    if (!isAutoRun) return;
+    const timer = setTimeout(() => {
+      handleRun();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [files, isAutoRun, handleRun]);
 
   // Chat state
   // Use sessionStorage instead of localStorage for better security (clears on browser close)
@@ -441,11 +455,11 @@ export default function SimulationPlayground() {
     }
   }, [compileError]);
 
-  const handleRun = () => {
+  const handleRun = useCallback(() => {
     setTelemetry({}); // clear telemetry on run
     setConsoleLogs([]); // clear logs on run
     compileCode(files);
-  };
+  }, [files, compileCode]);
 
   const handleReset = () => {
     setFiles(SIM_TEMPLATES["Blank Canvas"]);
@@ -899,7 +913,7 @@ USER REQUEST: ${msg}`;
     } finally {
       setIsChatLoading(false);
     }
-  }, [chatMessages, files, simId, attachedImage, activeFile, compileCode]);
+  }, [chatMessages, files, attachedImage, activeFile, compileCode, chatInput, isChatLoading]);
 
   const handleChatKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -1093,18 +1107,34 @@ USER REQUEST: ${msg}`;
           <button onClick={() => setIsFullscreen(!isFullscreen)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/80 border border-white/10 rounded-md text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors ml-2">
             {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
           </button>
+          
+          <div className="ml-4 flex items-center gap-2 border-l border-white/10 pl-4">
+            <span className="text-[10px] font-bold text-white/30 uppercase tracking-tighter">Auto-Run</span>
+            <button 
+              onClick={() => setIsAutoRun(!isAutoRun)}
+              className={`w-8 h-4 rounded-full p-0.5 transition-colors ${isAutoRun ? 'bg-emerald-500' : 'bg-white/10'}`}
+            >
+              <div className={`w-3 h-3 rounded-full bg-white transition-transform ${isAutoRun ? 'translate-x-4' : 'translate-x-0'}`} />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Layout Split: Top/Bottom */}
       <div className="flex-1 flex flex-col min-h-0">
-        <PanelGroup orientation="vertical">
+        <PanelGroup orientation="vertical" autoSaveId="playground-main-v2">
           <Panel defaultSize={60} minSize={20}>
             {/* Top Row: Explorer, Code, Chat */}
-            <PanelGroup orientation="horizontal">
+            <PanelGroup orientation="horizontal" autoSaveId="playground-top-v2">
               {/* ── File Explorer Pane ── */}
               <Panel defaultSize={15} minSize={10} className="flex flex-col min-w-0">
-                <SimFileExplorer files={files} activeFile={activeFile} setActiveFile={setActiveFile} setFiles={setFiles} />
+                <SimFileExplorer 
+                  files={files} 
+                  activeFile={activeFile} 
+                  setActiveFile={setActiveFile} 
+                  setFiles={setFiles} 
+                  readOnlyFiles={readOnlyFiles}
+                />
               </Panel>
 
               <PanelResizeHandle className="w-1.5 bg-white/5 hover:bg-ares-gold/30 flex items-center justify-center transition-colors group">
@@ -1299,7 +1329,7 @@ USER REQUEST: ${msg}`;
 
           {/* ── Bottom Row: Preview & Console ── */}
           <Panel defaultSize={40} minSize={20} className="flex flex-col min-w-0 z-0">
-            <PanelGroup orientation="horizontal">
+            <PanelGroup orientation="horizontal" autoSaveId="playground-bottom-v2">
               <Panel defaultSize={60} minSize={20} className="flex flex-col min-w-0 bg-[#0d1117]">
                 <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d1117] flex items-center gap-2 shrink-0">
                   <span className="text-white/40 text-xs font-mono">Live Preview</span>

@@ -68,7 +68,7 @@ export default function CNNVisualizer() {
 
       <div className="mb-6 bg-black/30 p-4 ares-cut-sm border border-white/5">
         <div className="flex gap-4 items-center">
-          <label className="text-xs font-bold text-ares-red uppercase tracking-widest">Filter</label>
+          <span className="text-xs font-bold text-ares-red uppercase tracking-widest">Filter</span>
           <button 
             onClick={() => setFilterType('vertical')}
             className={`px-3 py-1 text-xs font-bold tracking-widest uppercase ares-cut-sm ${filterType === 'vertical' ? 'bg-ares-red text-white' : 'bg-white/10 text-white/60 hover:bg-white/20'}`}
@@ -84,7 +84,9 @@ export default function CNNVisualizer() {
           
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs font-bold text-ares-cyan uppercase">Step {step + 1}/36</span>
+            <label htmlFor="step-range" className="sr-only">Step range</label>
             <input 
+              id="step-range"
               type="range" min="0" max="35" step="1" 
               value={step} onChange={e => setStep(parseInt(e.target.value))}
               className="w-32 accent-ares-cyan"

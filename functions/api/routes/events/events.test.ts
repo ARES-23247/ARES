@@ -159,7 +159,7 @@ describe("Hono Backend - Events Router", () => {
   it("GET /admin/list - list admin events with items", async () => {
     mockDb.execute = vi.fn()
       .mockResolvedValueOnce([
-        { id: "1", title: "Admin", category: "internal", status: "published", location: "Lab" }
+        { id: "1", title: "Admin", category: "internal", status: "published", location: "Lab", date_start: "2026-01-01" }
       ])
       .mockResolvedValueOnce({ value: "2026-01-01" });
     const res = await testApp.request("/admin/list", {}, env, mockExecutionContext);
@@ -167,7 +167,7 @@ describe("Hono Backend - Events Router", () => {
   });
 
   it("GET /:id - detail view", async () => {
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Test" });
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Test", date_start: "2026-01-01" });
     const res = await testApp.request("/1", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
@@ -179,7 +179,7 @@ describe("Hono Backend - Events Router", () => {
   });
 
   it("GET /:id - handles location lookup error", async () => {
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "event1", title: "Test", location: "Lab" });
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "event1", title: "Test", location: "Lab", date_start: "2026-01-01" });
     // Location lookup fails:
     mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("No locations table"));
     const res = await testApp.request("/event1", {}, env, mockExecutionContext);
@@ -285,7 +285,7 @@ describe("Hono Backend - Events Router", () => {
     const res = await testApp.request("/admin/1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "Updated", category: "outreach" })
+      body: JSON.stringify({ title: "Updated", category: "outreach", dateStart: "2026-01-01T00:00:00Z" })
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
     expect(mockDb.updateTable).toHaveBeenCalledWith("events");
@@ -571,7 +571,7 @@ describe("Hono Backend - Events Router", () => {
 
   it("GET / - handles fallback to older schema", async () => {
     mockDb.execute.mockRejectedValueOnce(new Error("Column status missing"));
-    mockDb.execute.mockResolvedValueOnce([{ id: "1", title: "Legacy" }]);
+    mockDb.execute.mockResolvedValueOnce([{ id: "1", title: "Legacy", date_start: "2026-01-01" }]);
     const res = await testApp.request("/", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });
@@ -590,9 +590,9 @@ describe("Hono Backend - Events Router", () => {
 
   it("GET /:id/signups - handles complex diet summary", async () => {
     mockDb.execute.mockResolvedValueOnce([
-      { user_id: "1", nickname: "User1", dietary_restrictions: "Vegan, Nut-Free" },
-      { user_id: "2", nickname: "User2", dietary_restrictions: "Vegan" },
-      { user_id: "3", nickname: "User3", dietary_restrictions: null }
+      { user_id: "1", nickname: "User1", dietary_restrictions: "Vegan, Nut-Free", bringing: null, notes: null, prep_hours: 0 },
+      { user_id: "2", nickname: "User2", dietary_restrictions: "Vegan", bringing: null, notes: null, prep_hours: 0 },
+      { user_id: "3", nickname: "User3", dietary_restrictions: null, bringing: null, notes: null, prep_hours: 0 }
     ]);
     const res = await testApp.request("/1/signups", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
@@ -793,7 +793,7 @@ describe("Hono Backend - Events Router", () => {
     const res = await testApp.request("/admin/1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "New Title", category: "internal", date_start: "2026-01-01T00:00:00Z" })
+      body: JSON.stringify({ title: "New Title", category: "internal", dateStart: "2026-01-01T00:00:00Z" })
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
     expect(mockDb.insertInto).toHaveBeenCalledWith("events");
@@ -810,7 +810,7 @@ describe("Hono Backend - Events Router", () => {
     const res = await testApp.request("/admin/1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "New", category: "internal", date_start: "2026-01-01T00:00:00Z" })
+      body: JSON.stringify({ title: "New", category: "internal", dateStart: "2026-01-01T00:00:00Z" })
     }, env, mockExecutionContext);
     expect(res.status).toBe(200);
     await Promise.all(vi.mocked(mockExecutionContext.waitUntil).mock.results.map((r: any) => r.value));
@@ -823,7 +823,7 @@ describe("Hono Backend - Events Router", () => {
     const res = await testApp.request("/admin/1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "New", category: "internal", date_start: "2026-01-01T00:00:00Z" })
+      body: JSON.stringify({ title: "New", category: "internal", dateStart: "2026-01-01T00:00:00Z" })
     }, env, mockExecutionContext);
     expect(res.status).toBe(500);
   });
@@ -840,7 +840,7 @@ describe("Hono Backend - Events Router", () => {
 
   it("GET /admin/:id - handles error with fallback", async () => {
     mockDb.executeTakeFirst.mockRejectedValueOnce(new Error("Schema fail"));
-    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Fallback" });
+    mockDb.executeTakeFirst.mockResolvedValueOnce({ id: "1", title: "Fallback", date_start: "2026-01-01" });
     const res = await testApp.request("/admin/1", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
   });

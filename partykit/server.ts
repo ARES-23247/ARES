@@ -49,8 +49,11 @@ export default class YjsServer implements Party.Server {
     }
   }
 
-  async onMessage(message: string | ArrayBuffer, conn: Party.Connection) {
-    console.log(`[PartyKit-onMessage] message type: ${typeof message}, proto: ${Object.prototype.toString.call(message)}, constructor: ${message && (message as any).constructor ? (message as any).constructor.name : 'null'}`);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async onMessage(message: string | ArrayBuffer, _connection: Party.Connection) {
+    // @ts-expect-error -- message might have a constructor property at runtime
+    const constructorName = message && message.constructor ? message.constructor.name : 'null';
+    console.log(`[PartyKit-onMessage] message type: ${typeof message}, proto: ${Object.prototype.toString.call(message)}, constructor: ${constructorName}`);
     if (message instanceof ArrayBuffer) {
       console.log(`[PartyKit-onMessage] ArrayBuffer byteLength:`, message.byteLength);
     } else if (message instanceof Uint8Array) {

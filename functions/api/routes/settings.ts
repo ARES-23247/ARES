@@ -6,7 +6,7 @@ import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS,
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
 import { z } from "zod";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 export const settingsRouter = new Hono<AppEnv>();

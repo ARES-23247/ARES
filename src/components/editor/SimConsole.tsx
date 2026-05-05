@@ -1,4 +1,5 @@
-import { Terminal, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Terminal, Trash2, Info, AlertTriangle, XCircle } from "lucide-react";
 
 export interface LogEntry {
   level: "log" | "warn" | "error" | "info";
@@ -15,7 +16,19 @@ export function SimConsole({
   onClear: () => void;
   onFixWithAI?: () => void;
 }) {
+  const [filters, setFilters] = useState<Record<string, boolean>>({
+    log: true,
+    info: true,
+    warn: true,
+    error: true
+  });
+
+  const filteredLogs = logs.filter(log => filters[log.level]);
   const hasError = logs.some(l => l.level === "error");
+
+  const toggleFilter = (level: string) => {
+    setFilters(prev => ({ ...prev, [level]: !prev[level] }));
+  };
 
   return (
     <div className="flex flex-col h-full bg-[#0d0f14] border-t border-white/10 overflow-hidden">
@@ -33,6 +46,36 @@ export function SimConsole({
               <span>✨ Fix with AI</span>
             </button>
           )}
+          <div className="flex items-center gap-1.5 ml-2 border-l border-white/10 pl-4">
+            <button
+              onClick={() => toggleFilter("error")}
+              className={`p-1 rounded transition-colors ${filters.error ? "text-red-400 bg-red-400/10" : "text-white/20 hover:text-white/40"}`}
+              title="Toggle Errors"
+            >
+              <XCircle className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => toggleFilter("warn")}
+              className={`p-1 rounded transition-colors ${filters.warn ? "text-yellow-400 bg-yellow-400/10" : "text-white/20 hover:text-white/40"}`}
+              title="Toggle Warnings"
+            >
+              <AlertTriangle className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => toggleFilter("info")}
+              className={`p-1 rounded transition-colors ${filters.info ? "text-blue-400 bg-blue-400/10" : "text-white/20 hover:text-white/40"}`}
+              title="Toggle Info"
+            >
+              <Info className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => toggleFilter("log")}
+              className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors ${filters.log ? "text-zinc-300 bg-zinc-300/10" : "text-white/20 hover:text-white/40"}`}
+              title="Toggle Logs"
+            >
+              LOG
+            </button>
+          </div>
         </div>
         <button
           onClick={onClear}
@@ -43,10 +86,12 @@ export function SimConsole({
         </button>
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-white/10 font-mono text-[11px]">
-        {logs.length === 0 ? (
-          <div className="text-white/20 px-2 py-1">Console is empty...</div>
+        {filteredLogs.length === 0 ? (
+          <div className="text-white/20 px-2 py-1 italic">
+            {logs.length === 0 ? "Console is empty..." : "No logs match current filters."}
+          </div>
         ) : (
-          logs.map((log, i) => (
+          filteredLogs.map((log, i) => (
             <div
               key={i}
               className={`px-2 py-1 flex items-start gap-2 border-b border-white/5 last:border-0 ${

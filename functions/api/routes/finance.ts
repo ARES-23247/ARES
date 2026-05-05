@@ -5,7 +5,7 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { financeContract } from "../../../shared/schemas/contracts/financeContract";
 import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser } from "../middleware";
 import { AppEnv } from "../middleware";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const financeRouter = new Hono<AppEnv>();

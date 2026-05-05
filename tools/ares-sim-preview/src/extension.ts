@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import * as http from 'http';
 
 // We map simple IDs for previews
@@ -121,7 +120,8 @@ function getWebviewContent(url: string) {
 class SimCodeLensProvider implements vscode.CodeLensProvider {
   private regex = /\/\*\*\s*@sim/g;
 
-  public provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public provideCodeLenses(document: vscode.TextDocument, _token: vscode.CancellationToken): vscode.CodeLens[] {
     const codeLenses: vscode.CodeLens[] = [];
     const text = document.getText();
     let matches;

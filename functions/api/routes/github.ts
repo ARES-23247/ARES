@@ -4,7 +4,7 @@ import { AppEnv, ensureAdmin, getSocialConfig, checkRateLimit } from "../middlew
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem } from "../../utils/githubProjects";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { githubContract } from "../../../shared/schemas/contracts/githubContract";
-import type { AppRouteInput } from "../../../shared/types/contracts";
+
 import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
