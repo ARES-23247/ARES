@@ -10,6 +10,14 @@ import { rrulestr } from 'rrule';
 
 const _s = initServer<AppEnv>();
 
+/**
+ * Sanitize FTS query to prevent SQL injection via SQLite FTS syntax.
+ * Removes special characters that could be used to manipulate FTS queries.
+ */
+const sanitizeFtsQuery = (query: string): string => {
+  // Remove double quotes, backslashes, and other FTS special chars
+  return query.replace(/["\\\^\*\-\:]/g, ' ').trim().split(/\s+/).filter(Boolean).join(' ');
+};
 
 export const eventHandlers: any = {
   getEvents: async (input: any, c: any) => {
@@ -19,13 +27,15 @@ export const eventHandlers: any = {
       const { limit = 50, offset = 0, q } = query;
 
       if (q) {
+        // Sanitize FTS query to prevent SQL injection via SQLite FTS syntax
+        const cleanQ = sanitizeFtsQuery(String(q || ''));
         const results = await sql<{ id: string, title: string, category: string, date_start: string, date_end: string | null, location: string | null, description: string | null, cover_image: string | null, status: string, is_deleted: number, season_id: number | null, meeting_notes: string | null }>`
           SELECT e.id, e.title, e.category, e.date_start, e.date_end, e.location, e.description, e.cover_image, e.status, e.is_deleted, e.season_id, e.meeting_notes
            FROM events_fts f
            JOIN events e ON f.id = e.id
            WHERE e.is_deleted = 0 AND e.status = 'published' AND (e.published_at IS NULL OR datetime(e.published_at) <= datetime('now'))
-           AND f.events_fts MATCH ${q}
-           ORDER BY f.rank LIMIT ${limit} OFFSET ${offset}
+           AND f.events_fts MATCH ${cleanQ}
+           ORDER BY f.rank LIMIT ${Number(limit) || 50} OFFSET ${Number(offset) || 0}
         `.execute(db);
         
         const events = results.rows.map(e => ({
@@ -258,12 +268,14 @@ export const eventHandlers: any = {
 
       const cat = category || 'internal';
       const genId = crypto.randomUUID();
-      
+
       const socialConfig = await getSocialConfig(c);
       const calKey = `CALENDAR_ID_${cat.toUpperCase()}` as keyof typeof socialConfig;
       const calId = (socialConfig as any)[calKey] || (socialConfig as any)["CALENDAR_ID"];
-      
+
+      // CR-02 FIX: Require authentication for event creation
       const user = await getSessionUser(c);
+      if (!user) return { status: 401 as const, body: { success: false, error: "Authentication required" } };
       const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
       const recurringGroupId = body.rrule ? crypto.randomUUID() : null;
