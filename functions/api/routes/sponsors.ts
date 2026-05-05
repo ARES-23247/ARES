@@ -5,12 +5,13 @@ import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
+import type { HandlerInput, HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const sponsorsRouter = new Hono<AppEnv>();
 
 const sponsorHandlers = {
-  getSponsors: async (_: any, c: Context<AppEnv>) => {
+  getSponsors: async (_: HandlerInput, c: HonoContext) => {
             try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -32,7 +33,7 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch sponsors" } as any };
     }
   },
-  getRoi: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  getRoi: async ({ params }: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db");
       const { token } = params;
@@ -74,7 +75,7 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch ROI" } as any };
     }
   },
-  adminList: async (_: any, c: Context<AppEnv>) => {
+  adminList: async (_: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -96,7 +97,7 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch sponsors" } as any };
     }
   },
-  saveSponsor: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  saveSponsor: async ({ body }: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db");
       const { id, name, tier, logo_url, website_url, is_active } = body;
@@ -127,7 +128,7 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to save sponsor" } as any };
     }
   },
-  deleteSponsor: async ({ params }: { params: any }, c: Context<AppEnv>) => {
+  deleteSponsor: async ({ params }: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db");
       await db.updateTable("sponsors").set({ is_active: 0 }).where("id", "=", params.id).execute();
@@ -138,7 +139,7 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to deactivate sponsor" } as any };
     }
   },
-  getAdminTokens: async (_: any, c: Context<AppEnv>) => {
+  getAdminTokens: async (_: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db");
       const results = await (db.selectFrom("sponsor_tokens as t") as any)
@@ -158,7 +159,7 @@ const sponsorHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch tokens" } as any };
     }
   },
-  generateToken: async ({ body }: { body: any }, c: Context<AppEnv>) => {
+  generateToken: async ({ body }: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db");
       const { sponsor_id } = body;
