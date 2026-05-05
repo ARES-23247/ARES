@@ -11,13 +11,18 @@ import { Context } from "hono";
 import { z } from "zod";
 import { zulipPresenceSchema } from "../../../shared/schemas/contracts/zulipContract";
 
-// Normalize Gmail addresses by removing dots (john.doe@gmail.com -> johndoe@gmail.com)
+// Normalize emails by removing dots for Google Workspace / Gmail domains
 // Gmail ignores dots in the local part, so these are the same address
-function normalizeGmail(email: string): string {
-  if (!email.endsWith("@gmail.com") && !email.endsWith("@googlemail.com")) {
-    return email;
+function normalizeEmail(email: string): string {
+  const cleanEmail = email.trim().toLowerCase();
+  const isGoogleBacked = cleanEmail.endsWith("@gmail.com") || 
+                         cleanEmail.endsWith("@googlemail.com") || 
+                         cleanEmail.endsWith("@aresfirst.org");
+                         
+  if (!isGoogleBacked) {
+    return cleanEmail;
   }
-  const [local, domain] = email.split("@");
+  const [local, domain] = cleanEmail.split("@");
   return `${local.replace(/\./g, "")}@${domain}`;
 }
 
@@ -187,7 +192,7 @@ const zulipHandlers = {
             // With admin privileges, delivery_email should contain the real email address
             // delivery_email is the email Zulip actually uses for notifications
             // email may be the internal Zulip email for SSO users
-            const email = normalizeGmail((m.delivery_email || m.email || "").toLowerCase());
+            const email = normalizeEmail((m.delivery_email || m.email || ""));
             zulipEmails.add(email);
           }
         }
@@ -210,7 +215,7 @@ const zulipHandlers = {
         .map(u => u.email)
         .filter(email => {
           if (!email) return false;
-          const normalized = normalizeGmail(email.toLowerCase());
+          const normalized = normalizeEmail(email);
           return !zulipEmails.has(normalized);
         });
 

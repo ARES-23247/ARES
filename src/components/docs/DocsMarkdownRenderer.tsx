@@ -70,11 +70,8 @@ export default memo(function DocsMarkdownRenderer({ content }: DocsMarkdownRende
       components={{
         // @ts-expect-error Custom component tag names
         configvisualizer: () => <LazyWrap><ConfigVisualizer /></LazyWrap>,
-        // @ts-expect-error Custom component tag names
         simulationplayground: () => <LazyWrap><SimulationPlayground /></LazyWrap>,
-        // @ts-expect-error Custom component tag names
         codeplayground: () => <LazyWrap><CodePlayground /></LazyWrap>,
-        // @ts-expect-error Custom component tag names
         screenshotgallery: () => <LazyWrap><ScreenshotGallery /></LazyWrap>,
         // @ts-expect-error Custom component tag names
         interactivetutorial: () => <LazyWrap><InteractiveTutorial /></LazyWrap>,
