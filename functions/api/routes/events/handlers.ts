@@ -438,7 +438,9 @@ export const eventHandlers = {
         if (status === "published") {
           const baseUrl = new URL(c.req.url).origin;
           if (socials) {
-            await dispatchSocials(c.env.DB, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", thumbnail: coverImage || "/gallery_1.png", baseUrl }, socialConfig, socials).catch(() => {});
+            const socialsFilter: Record<string, boolean> = {};
+            for (const s of socials) socialsFilter[s] = true;
+            await dispatchSocials(db, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", thumbnail: coverImage || "/gallery_1.png", baseUrl }, socialConfig, socialsFilter).catch(() => {});
           }
           const eventTopic = `Event: ${title}`;
           const eventContent = `📅 **New Event Scheduled**\n\n**Title:** ${title}\n**Location:** ${location || "TBD"}\n\n[View Event](${baseUrl}/events)`;
@@ -462,8 +464,13 @@ export const eventHandlers = {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { title, category, dateStart, dateEnd, location, description, coverImage, tbaEventKey, isPotluck, isVolunteer, isDraft, publishedAt, seasonId, meetingNotes, recurrenceRule, parentEventId, originalStartTime } = body;
+
+      if (!dateStart) {
+        return { status: 400 as const, body: { error: "dateStart is required" } };
+      }
+
       const cat = category || 'internal';
-      
+
       const user = await getSessionUser(c);
       const status = isDraft ? "pending" : (user?.role === "admin" ? "published" : "pending");
 
@@ -471,7 +478,7 @@ export const eventHandlers = {
         const revId = `${id}-rev-${Math.random().toString(36).substring(2, 6)}`;
         await db.insertInto("events")
           .values({
-            id: revId, title: title || "", category: cat, date_start: dateStart!, date_end: dateEnd || null,
+            id: revId, title: title || "", category: cat, date_start: dateStart, date_end: dateEnd || null,
             location: location || "", description: description || "", cover_image: coverImage || "",
             tba_event_key: tbaEventKey || null, status: 'pending',
             is_potluck: isPotluck ? 1 : 0, is_volunteer: isVolunteer ? 1 : 0,
@@ -999,14 +1006,14 @@ export const eventHandlers = {
       }
 
       await dispatchSocials(
-        c.env.DB,
+        db,
         {
           title: event.title,
           url: `${baseUrl}/events/${event.id}`,
           snippet: event.description || "",
           thumbnail: event.cover_image || undefined,
         },
-        social as any,
+        social,
         socialsFilter
       );
 
@@ -1110,7 +1117,7 @@ export const eventHandlers = {
       return { status: 200 as const, body: { success: true, pushed, failed, errors: errors.length > 0 ? errors : undefined } };
     } catch (e) {
       console.error("[Events:RepairCalendar] Error", e);
-      return { status: 500 as const, body: { success: false, error: "Repair failed" } } as any;
+      return { status: 500 as const, body: { success: false, error: "Repair failed" } };
     }
   },
 };
