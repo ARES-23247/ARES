@@ -83,12 +83,12 @@ export default class ErrorBoundary extends Component<Props, State> {
 
           <div className="flex gap-4 mb-4">
             <div className="bg-black/40 px-3 py-1.5 ares-cut-sm border border-white/10 flex flex-col items-center">
-              <span className="text-[10px] uppercase text-white/40 font-bold tracking-widest">Correlation ID</span>
+              <span className="text-[10px] uppercase text-white/70 font-bold tracking-widest">Correlation ID</span>
               <span className="text-sm font-mono text-ares-gold">{this.state.correlationId}</span>
             </div>
             {this.state.statusCode && (
               <div className="bg-black/40 px-3 py-1.5 ares-cut-sm border border-white/10 flex flex-col items-center">
-                <span className="text-[10px] uppercase text-white/40 font-bold tracking-widest">HTTP Status</span>
+                <span className="text-[10px] uppercase text-white/70 font-bold tracking-widest">HTTP Status</span>
                 <span className="text-sm font-mono text-ares-red">{this.state.statusCode}</span>
               </div>
             )}
