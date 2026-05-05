@@ -182,6 +182,8 @@ const sponsorHandlers = {
 
 const sponsorTsRestRouter: any = s.router(sponsorContract as any, sponsorHandlers as any);
 
+// WR-12: Add rate limiting to public sponsor endpoint to prevent scraping
+sponsorsRouter.use("*", rateLimitMiddleware(15, 60));
 
 sponsorsRouter.use("/admin", ensureAdmin);
 sponsorsRouter.use("/admin/*", ensureAdmin);
