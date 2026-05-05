@@ -7,6 +7,7 @@ import { BrandLogo } from "../components/BrandLogo";
 import { api } from "../api/client";
 import SEO from "../components/SEO";
 import { validateIdParam } from "../utils/security";
+import { logger } from "../utils/logger";
 
 interface ProfilePublic {
   first_name?: string;
@@ -48,6 +49,16 @@ export default function ProfilePage() {
   const { userId } = useParams();
   const validatedUserId = validateIdParam(userId);
 
+  // All React hooks must be declared before any early returns
+  const [profile, setProfile] = useState<ProfilePublic | null>(null);
+  const [badges, setBadges] = useState<BadgeDef[]>([]);
+  const [points, setPoints] = useState<number | null>(null);
+  const [history, setHistory] = useState<{id: string, reason: string, points_delta: number, created_at: string}[]>([]);
+  const [error, setError] = useState<{ status: number; message: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [pointsLoading, setPointsLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
   // Early return if userId is invalid
   if (!userId || !validatedUserId) {
     return (
@@ -60,13 +71,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  const [profile, setProfile] = useState<ProfilePublic | null>(null);
-  const [badges, setBadges] = useState<BadgeDef[]>([]);
-  const [points, setPoints] = useState<number | null>(null);
-  const [history, setHistory] = useState<{id: string, reason: string, points_delta: number, created_at: string}[]>([]);
-  const [error, setError] = useState<{ status: number; message: string } | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,12 +94,24 @@ export default function ProfilePage() {
     api.points.getBalance.query({ params: { user_id: validatedUserId } })
       .then((res: { status: number; body: { balance: number } }) => {
         if (!cancelled && res.status === 200) setPoints(res.body.balance);
-      }).catch(() => {});
+        setPointsLoading(false);
+      }).catch((err: Error) => {
+        if (!cancelled) {
+          logger.error("Failed to load points balance:", err);
+          setPointsLoading(false);
+        }
+      });
 
     api.points.getHistory.query({ params: { user_id: validatedUserId } })
       .then((res: { status: number; body: { transactions: {id: string, reason: string, points_delta: number, created_at: string}[] } }) => {
         if (!cancelled && res.status === 200) setHistory(res.body.transactions);
-      }).catch(() => {});
+        setHistoryLoading(false);
+      }).catch((err: Error) => {
+        if (!cancelled) {
+          logger.error("Failed to load points history:", err);
+          setHistoryLoading(false);
+        }
+      });
 
     return () => { cancelled = true; };
   }, [validatedUserId]);
@@ -218,11 +234,20 @@ export default function ProfilePage() {
                   <LucideIcons.Zap className="text-ares-cyan" size={16} /> ARES Points Balance
                 </h3>
                 <div className="bg-ares-cyan/10 border border-ares-cyan/30 px-4 py-2 ares-cut-sm">
-                  <span className="text-xl font-black text-ares-cyan">{points} pts</span>
+                  {pointsLoading ? (
+                    <span className="text-xl font-black text-ares-cyan/60 animate-pulse">Loading...</span>
+                  ) : (
+                    <span className="text-xl font-black text-ares-cyan">{points} pts</span>
+                  )}
                 </div>
               </div>
-              
-              {history && history.length > 0 && (
+
+              {historyLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin w-5 h-5 border-2 border-ares-cyan border-t-transparent rounded-full" aria-hidden="true"></div>
+                  <span className="ml-2 text-sm text-marble">Loading activity...</span>
+                </div>
+              ) : history && history.length > 0 ? (
                 <div>
                   <h4 className="text-xs font-bold text-marble uppercase mb-3">Recent Activity</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
@@ -239,7 +264,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
 
