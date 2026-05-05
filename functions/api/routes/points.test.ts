@@ -51,7 +51,7 @@ describe("Hono Backend - /points Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ points_delta: 10 }, { points_delta: -5 }]);
       const res = await app.request("/api/points/balance/user-1");
       expect(res.status).toBe(200);
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as { balance: number };
       expect(data.balance).toBe(5);
     });
 
@@ -60,7 +60,7 @@ describe("Hono Backend - /points Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ points_delta: 20 }]);
       const res = await app.request("/api/points/balance/user-2");
       expect(res.status).toBe(200);
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as { balance: number };
       expect(data.balance).toBe(20);
     });
 
@@ -89,7 +89,7 @@ describe("Hono Backend - /points Router", () => {
       ]);
       const res = await app.request("/api/points/history/user-1");
       expect(res.status).toBe(200);
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as Array<{ id: string }>;
       expect(data).toHaveLength(1);
       expect(data[0].id).toBe("tx1");
     });
@@ -119,7 +119,7 @@ describe("Hono Backend - /points Router", () => {
         body: JSON.stringify({ user_id: "user-1", points_delta: 10, reason: "Test" })
       });
       expect(res.status).toBe(200);
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as { points_delta: number; reason: string };
       expect(data.points_delta).toBe(10);
       expect(data.reason).toBe("Test");
     });
