@@ -1,3 +1,4 @@
+/** @sim {"name": "Arm Kinematics Gravity Model", "requiresContext": false} */
 import { useEffect, useRef, useState } from 'react';
 
 export default function ArmKgSim() {

@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 /**
- * Auto-Generate Sim Registry
+ * Auto-Generate Sim Registry from Filesystem
  *
- * Reads simRegistry.json and generates:
+ * Scans src/sims/ for folders with index.tsx and generates:
  * 1. Lazy import declarations for all sims
  * 2. SIM_COMPONENTS mapping object
  * 3. SIM_TAG_NAMES array
+ * 4. SIM_METADATA array
+ * 5. simRegistry.json (for reference)
  *
- * This script keeps DocsMarkdownRenderer.tsx and TiptapRenderer.tsx
- * in sync with the actual sims in the codebase.
+ * To add a sim:
+ * 1. Create a folder in src/sims/my-sim/
+ * 2. Add index.tsx with optional metadata:
+ *    /** @sim {"name": "Display Name", "requiresContext": false} *\/
+ * 3. Run: npm run generate:sims
  */
 
 import fs from 'fs';
@@ -18,90 +23,118 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
+const SIMS_DIR = path.join(ROOT, 'src', 'sims');
 
-interface SimInfo {
+interface SimMetadata {
   id: string;
   name: string;
-  path: string;
+  folder: string;
   requiresContext: boolean;
 }
 
-interface SimRegistry {
-  simulators: SimInfo[];
-}
+// Parse frontmatter from a sim file
+// Format: /** @sim {"name": "Display Name", "requiresContext": false} */
+function parseSimMetadata(filePath: string, folderName: string): SimMetadata {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const defaultName = folderName
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 
-// Read simRegistry.json
-function readSimRegistry(): SimRegistry {
-  const registryPath = path.join(ROOT, 'src/sims/simRegistry.json');
-  const content = fs.readFileSync(registryPath, 'utf-8');
-  return JSON.parse(content);
-}
+  let name = defaultName;
+  let requiresContext = false;
 
-// Convert sim ID to lowercase tag name for markdown
-// The tag name is simply the lowercase id
-function toComponentTagName(id: string): string {
-  return id.toLowerCase();
-}
-
-// Generate lazy imports
-function generateLazyImports(registry: SimRegistry): string {
-  const imports: string[] = [];
-
-  for (const sim of registry.simulators) {
-    const folder = sim.path.replace('./', '');
-    // PascalCase component name from id
-    const componentName = sim.id;
-    imports.push(`const ${componentName} = lazy(() => import("../../sims/${folder}"));`);
+  // Look for @sim annotation in comments
+  const simCommentMatch = content.match(/\/\*\*?\s*@sim\s+(\{.*?\})\s*?\*\//);
+  if (simCommentMatch) {
+    try {
+      const metadata = JSON.parse(simCommentMatch[1]);
+      name = metadata.name || defaultName;
+      requiresContext = metadata.requiresContext === true;
+    } catch {
+      // Invalid JSON, use defaults
+    }
   }
 
-  return imports.join('\n');
-}
-
-// Generate SIM_COMPONENTS mapping
-function generateSimComponents(registry: SimRegistry): string {
-  const entries: string[] = [];
-
-  for (const sim of registry.simulators) {
-    const componentName = sim.id;
-    const tagName = toComponentTagName(sim.id);
-    entries.push(`  ${tagName}: ${componentName},`);
+  // Fallback: detect if file imports from sim context
+  if (content.includes('useSimContext') || content.includes('SimContext')) {
+    requiresContext = true;
   }
 
-  return `const SIM_COMPONENTS: Record<string, React.ComponentType<any>> = {\n${entries.join('\n')}\n};`;
+  // Generate ID from folder name (camelCase)
+  const id = folderName
+    .split('-')
+    .map((word, i) => i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
+
+  return { id, name, folder: folderName, requiresContext };
 }
 
-// Generate complete registry file content
-function generateRegistryContent(): string {
-  const registry = readSimRegistry();
-  const lazyImports = generateLazyImports(registry);
-  const simComponents = generateSimComponents(registry);
+// Scan for all sim folders
+function scanSims(): SimMetadata[] {
+  const sims: SimMetadata[] = [];
+
+  if (!fs.existsSync(SIMS_DIR)) {
+    console.error(`Sims directory not found: ${SIMS_DIR}`);
+    return sims;
+  }
+
+  const entries = fs.readdirSync(SIMS_DIR, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      const indexPath = path.join(SIMS_DIR, entry.name, 'index.tsx');
+      if (fs.existsSync(indexPath)) {
+        const metadata = parseSimMetadata(indexPath, entry.name);
+        sims.push(metadata);
+      }
+    }
+  }
+
+  return sims.sort((a, b) => a.folder.localeCompare(b.folder));
+}
+
+// Generate the TypeScript registry file
+function generateRegistry(sims: SimMetadata[]): string {
+  const imports = sims.map(
+    sim => `const ${sim.id} = lazy(() => import("../../sims/${sim.folder}"));`
+  ).join('\n');
+
+  const mappings = sims.map(
+    sim => `  ${sim.id.toLowerCase()}: ${sim.id},`
+  ).join('\n');
 
   return `// Auto-generated by scripts/generate-sim-registry.ts
-// DO NOT EDIT MANUALY - run: npm run generate:sims
+// DO NOT EDIT MANUALLY - run: npm run generate:sims
+// Generated: ${new Date().toISOString()}
 
 import { lazy } from "react";
 
 // ── Lazy-loaded Simulators ─────────────────────────────────────────────
-${lazyImports}
+${imports}
 
 // ── Sim Component Registry ───────────────────────────────────────────────
 // Maps sim component IDs to their lazy-loaded components
 // Tag names are lowercased versions of the component IDs
-${simComponents}
+const SIM_COMPONENTS: Record<string, React.ComponentType<any>> = {
+${mappings}
+};
 
 // Generate tag names and component mappings from SIM_COMPONENTS
 const SIM_TAG_NAMES = Object.keys(SIM_COMPONENTS);
 
-export { SIM_COMPONENTS, SIM_TAG_NAMES };
+// Full metadata for each sim (for management UI)
+const SIM_METADATA = ${JSON.stringify(sims, null, 2).replace(/"/g, "'")};
+
+export { SIM_COMPONENTS, SIM_TAG_NAMES, SIM_METADATA };
 `;
 }
 
-// Write the generated file
+// Write the generated TypeScript file
 function writeRegistryFile(content: string): void {
   const outputPath = path.join(ROOT, 'src/components/generated/sim-registry.ts');
   const outputDir = path.dirname(outputPath);
 
-  // Ensure directory exists
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
@@ -110,13 +143,42 @@ function writeRegistryFile(content: string): void {
   console.log(`✅ Generated: ${outputPath}`);
 }
 
+// Generate simRegistry.json for reference
+function writeRegistryJson(sims: SimMetadata[]): void {
+  const registryPath = path.join(SIMS_DIR, 'simRegistry.json');
+  const registry = {
+    simulators: sims.map(sim => ({
+      id: sim.id,
+      name: sim.name,
+      path: `./${sim.folder}`,
+      requiresContext: sim.requiresContext,
+    })),
+    _generated: new Date().toISOString(),
+  };
+
+  fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2));
+  console.log(`✅ Generated: ${registryPath}`);
+}
+
 // Main execution
 function main(): void {
   try {
-    console.log('🔨 Generating sim registry...');
-    const content = generateRegistryContent();
+    console.log('🔨 Scanning sims folder...');
+    const sims = scanSims();
+
+    if (sims.length === 0) {
+      console.warn('⚠️  No sims found in src/sims/');
+    } else {
+      console.log(`📦 Found ${sims.length} sims:`);
+      sims.forEach(sim => {
+        const ctxFlag = sim.requiresContext ? ' [ctx]' : '';
+        console.log(`   - ${sim.folder} → ${sim.name}${ctxFlag}`);
+      });
+    }
+
+    const content = generateRegistry(sims);
     writeRegistryFile(content);
-    console.log(`📦 Registered ${readSimRegistry().simulators.length} sims`);
+    writeRegistryJson(sims);
   } catch (error) {
     console.error('❌ Error generating sim registry:', error);
     process.exit(1);

@@ -37,6 +37,7 @@ export default function ScoutingTool() {
 
   useEffect(() => {
     if (!analysisEventKey) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEventAnalysis(null);
       return;
     }

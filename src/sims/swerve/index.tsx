@@ -1,3 +1,4 @@
+/** @sim {"name": "Swerve Kinematics Playground", "requiresContext": false} */
 import { useEffect, useRef, useState } from 'react';
 
 export default function SwerveSim() {

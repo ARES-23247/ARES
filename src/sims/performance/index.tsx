@@ -1,3 +1,4 @@
+/** @sim {"name": "AdvantageScope Telemetry Dashboard", "requiresContext": true} */
 import React, { useState, useCallback } from 'react';
 import {
   parseWPILog,

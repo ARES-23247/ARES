@@ -1,105 +1,15 @@
 {
   "simulators": [
     {
-      "id": "ArmKgSim",
+      "id": "armkg",
       "name": "Arm Kinematics Gravity Model",
       "path": "./armkg",
       "requiresContext": false
     },
     {
-      "id": "AutoSim",
+      "id": "auto",
       "name": "Autonomous Visualizer",
       "path": "./auto",
-      "requiresContext": true
-    },
-    {
-      "id": "ElevatorPidSim",
-      "name": "Elevator PID Tuning",
-      "path": "./elevatorpid",
-      "requiresContext": false
-    },
-    {
-      "id": "FaultSim",
-      "name": "Fault Tolerant State Manager",
-      "path": "./fault",
-      "requiresContext": true
-    },
-    {
-      "id": "FieldVisualizer",
-      "name": "PathPlanner Canvas Renderer",
-      "path": "./field",
-      "requiresContext": true
-    },
-    {
-      "id": "FlywheelKvSim",
-      "name": "Flywheel KV Optimization",
-      "path": "./flywheelkv",
-      "requiresContext": false
-    },
-    {
-      "id": "MontyHall",
-      "name": "Monty Hall Problem",
-      "path": "./montyhall",
-      "requiresContext": false
-    },
-    {
-      "id": "PerformanceDashboard",
-      "name": "AdvantageScope Telemetry Dashboard",
-      "path": "./performance",
-      "requiresContext": true
-    },
-    {
-      "id": "PhysicsSim",
-      "name": "Dyn4j Physics Subsystem",
-      "path": "./physics",
-      "requiresContext": true
-    },
-    {
-      "id": "PowerSheddingSim",
-      "name": "Brownout Protection Sandbox",
-      "path": "./powershedding",
-      "requiresContext": false
-    },
-    {
-      "id": "SotmSim",
-      "name": "Shoot-on-the-Move Analytics",
-      "path": "./sotm",
-      "requiresContext": true
-    },
-    {
-      "id": "StateMachineSim",
-      "name": "State Machine Hierarchy Visualizer",
-      "path": "./statemachine",
-      "requiresContext": false
-    },
-    {
-      "id": "SwerveSim",
-      "name": "Swerve Kinematics Playground",
-      "path": "./swerve",
-      "requiresContext": false
-    },
-    {
-      "id": "SysIdSim",
-      "name": "System Identification Optimizer",
-      "path": "./sysid",
-      "requiresContext": false
-    },
-    {
-      "id": "TroubleshootingWizard",
-      "name": "MARSLib Error Triage Engine",
-      "path": "./troubleshooting",
-      "requiresContext": true
-    },
-    {
-      "id": "VisionSim",
-      "name": "PhotonVision Pose Estimator",
-      "path": "./vision",
-      "requiresContext": true
-    },
-    {
-      "id": "ZeroAllocationSim",
-      "name": "Zero Allocation Memory Profiler",
-      "path": "./zeroallocation",
       "requiresContext": true
     },
     {
@@ -109,22 +19,113 @@
       "requiresContext": false
     },
     {
-      "id": "BeeSim",
-      "name": "Bee Game",
+      "id": "bee",
+      "name": "Bee",
       "path": "./bee",
       "requiresContext": false
     },
     {
-      "id": "UntitledSimulation",
-      "name": "Untitled Simulation",
+      "id": "elevatorpid",
+      "name": "Elevator PID Tuning",
+      "path": "./elevatorpid",
+      "requiresContext": false
+    },
+    {
+      "id": "fault",
+      "name": "Fault Tolerant State Manager",
+      "path": "./fault",
+      "requiresContext": true
+    },
+    {
+      "id": "field",
+      "name": "PathPlanner Canvas Renderer",
+      "path": "./field",
+      "requiresContext": true
+    },
+    {
+      "id": "flywheelkv",
+      "name": "Flywheel KV Optimization",
+      "path": "./flywheelkv",
+      "requiresContext": false
+    },
+    {
+      "id": "greatbee",
+      "name": "Greatbee",
+      "path": "./greatbee",
+      "requiresContext": false
+    },
+    {
+      "id": "montyhall",
+      "name": "Monty Hall Problem",
+      "path": "./montyhall",
+      "requiresContext": false
+    },
+    {
+      "id": "performance",
+      "name": "AdvantageScope Telemetry Dashboard",
+      "path": "./performance",
+      "requiresContext": true
+    },
+    {
+      "id": "physics",
+      "name": "Dyn4j Physics Subsystem",
+      "path": "./physics",
+      "requiresContext": true
+    },
+    {
+      "id": "powershedding",
+      "name": "Brownout Protection Sandbox",
+      "path": "./powershedding",
+      "requiresContext": false
+    },
+    {
+      "id": "sotm",
+      "name": "Shoot-on-the-Move Analytics",
+      "path": "./sotm",
+      "requiresContext": true
+    },
+    {
+      "id": "statemachine",
+      "name": "State Machine Hierarchy Visualizer",
+      "path": "./statemachine",
+      "requiresContext": false
+    },
+    {
+      "id": "swerve",
+      "name": "Swerve Kinematics Playground",
+      "path": "./swerve",
+      "requiresContext": false
+    },
+    {
+      "id": "sysid",
+      "name": "System Identification Optimizer",
+      "path": "./sysid",
+      "requiresContext": false
+    },
+    {
+      "id": "troubleshooting",
+      "name": "MARSLib Error Triage Engine",
+      "path": "./troubleshooting",
+      "requiresContext": true
+    },
+    {
+      "id": "untitled",
+      "name": "Untitled",
       "path": "./untitled",
       "requiresContext": false
     },
     {
-      "id": "TheGreatBeeAdventure",
-      "name": "The Great Bee Adventure",
-      "path": "./greatbee",
-      "requiresContext": false
+      "id": "vision",
+      "name": "PhotonVision Pose Estimator",
+      "path": "./vision",
+      "requiresContext": true
+    },
+    {
+      "id": "zeroallocation",
+      "name": "Zero Allocation Memory Profiler",
+      "path": "./zeroallocation",
+      "requiresContext": true
     }
-  ]
+  ],
+  "_generated": "2026-05-05T00:43:42.305Z"
 }

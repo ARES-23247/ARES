@@ -1,3 +1,4 @@
+/** @sim {"name": "Elevator PID Tuning", "requiresContext": false} */
 import { useEffect, useRef, useState } from 'react';
 
 export default function ElevatorPidSim() {

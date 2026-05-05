@@ -1,3 +1,4 @@
+/** @sim {"name": "Fault Tolerant State Manager", "requiresContext": true} */
 import { useState, useEffect, useRef } from 'react';
 
 export default function FaultSim() {

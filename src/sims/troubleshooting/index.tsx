@@ -1,3 +1,4 @@
+/** @sim {"name": "MARSLib Error Triage Engine", "requiresContext": true} */
 import { useState } from 'react';
 import '../TroubleshootingWizard.css';
 

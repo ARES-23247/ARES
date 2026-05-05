@@ -1,3 +1,4 @@
+/** @sim {"name": "Dyn4j Physics Subsystem", "requiresContext": true} */
 import { useEffect, useRef, useState } from 'react';
 
 export default function PhysicsSim() {

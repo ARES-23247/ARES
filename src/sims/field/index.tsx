@@ -1,3 +1,4 @@
+/** @sim {"name": "PathPlanner Canvas Renderer", "requiresContext": true} */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 // @ts-expect-error -- three/examples types not bundled

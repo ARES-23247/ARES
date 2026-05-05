@@ -34,6 +34,7 @@ const StoreOrders = lazy(() => import("../../pages/Dashboard/StoreOrders"));
 const SimulationPlayground = lazy(() => import("@/components/SimulationPlayground"));
 const SimManager = lazy(() => import("@/components/SimManager"));
 const ScoutingTool = lazy(() => import("@/components/tools/ScoutingTool"));
+const SocialHub = lazy(() => import("@/components/SocialHub"));
 
 // ── Suspense Spinner ─────────────────────────────────────────────────
 function TabLoader() {
@@ -103,6 +104,7 @@ export default function DashboardRoutes({
       <Route path="tasks" element={canSeeTasks ? <TaskBoardPage /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="tasks/:taskId" element={canSeeTasks ? <TaskDetailPage /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="mass_email" element={isAdmin ? <MassEmailComposer /> : <div className="text-center py-20">Access Denied</div>} />
+      <Route path="social" element={isAdmin ? <SocialHub /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="store_orders" element={isAdmin ? <StoreOrders /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="sims" element={isAdmin ? <SimManager /> : <div className="text-center py-20">Access Denied</div>} />
       <Route path="simulations" element={canSeeSimulations ? <SimulationPlayground /> : <div className="text-center py-20">Access Denied</div>} />

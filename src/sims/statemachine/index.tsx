@@ -1,3 +1,4 @@
+/** @sim {"name": "State Machine Hierarchy Visualizer", "requiresContext": false} */
 import { useEffect, useRef, useState } from 'react';
 
 export default function StateMachineSim() {

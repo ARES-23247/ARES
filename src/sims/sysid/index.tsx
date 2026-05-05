@@ -1,3 +1,4 @@
+/** @sim {"name": "System Identification Optimizer", "requiresContext": false} */
 import { useRef, useState, useEffect } from 'react';
 
 export default function SysIdSim() {

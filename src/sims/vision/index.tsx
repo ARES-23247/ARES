@@ -1,3 +1,4 @@
+/** @sim {"name": "PhotonVision Pose Estimator", "requiresContext": true} */
 import { useEffect, useRef, useState } from 'react';
 
 export default function VisionSim() {

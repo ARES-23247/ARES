@@ -1,3 +1,4 @@
+/** @sim {"name": "Brownout Protection Sandbox", "requiresContext": false} */
 import React, { useState } from 'react';
 
 export default function PowerSheddingSim() {

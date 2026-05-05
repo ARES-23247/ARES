@@ -1,3 +1,4 @@
+/** @sim {"name": "Monty Hall Problem", "requiresContext": false} */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 type DoorContent = 'car' | 'goat';

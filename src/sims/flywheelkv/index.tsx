@@ -1,3 +1,4 @@
+/** @sim {"name": "Flywheel KV Optimization", "requiresContext": false} */
 import { useEffect, useRef } from 'react';
 import { useControls, button, folder } from 'leva';
 

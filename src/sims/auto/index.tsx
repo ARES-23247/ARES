@@ -1,3 +1,4 @@
+/** @sim {"name": "Autonomous Visualizer", "requiresContext": true} */
 import { useEffect, useRef, useState } from 'react';
 
 type Point = { x: number, y: number };

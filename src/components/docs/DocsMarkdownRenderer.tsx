@@ -4,9 +4,6 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { Link as LinkIcon } from "lucide-react";
-import TiptapRenderer from "../TiptapRenderer";
-import { CodeBlock } from "./CodeBlock";
-// Auto-generated sim registry - run: npm run generate:sims
 import { SIM_COMPONENTS, SIM_TAG_NAMES } from "../generated/sim-registry";
 
 // ── Lazy-loaded Non-Sim Components ─────────────────────────────────────
