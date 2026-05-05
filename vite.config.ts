@@ -103,8 +103,12 @@ export default defineConfig({
     }
   },
   preview: {
-    // No proxy — E2E tests run without a backend; API calls return 502 instantly
-    proxy: {}
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8788',
+        changeOrigin: true
+      }
+    }
   },
   resolve: {
     alias: {

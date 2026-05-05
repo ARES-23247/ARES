@@ -4,8 +4,9 @@ import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical
 import { loader } from "@monaco-editor/react";
 import { validateIdParam } from "../utils/security";
 import { logger } from "../utils/logger";
-import { getSimChatKey } from "../utils/storageKeys";
 import { GITHUB_REPO } from "../utils/constants";
+import { useSimulationChat } from "../hooks/useSimulationChat";
+import { ChatMessage } from "../utils/ai";
 
 // Monaco Editor CDN Configuration
 // SECURITY: Version pinned to 0.52.2 for supply chain stability.
@@ -59,12 +60,7 @@ const loadBabel = async () => {
   return Babel!;
 };
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
 
-const DEFAULT_MESSAGE: ChatMessage = { role: "assistant", content: "I'm your z.AI simulation assistant. Describe what you want to build — a motor controller, sensor visualizer, PID tuner, field navigator — and I'll generate or modify the code for you." };
 
 interface SavedSim {
   id: string;
@@ -113,8 +109,7 @@ export default function SimulationPlayground() {
   const [isWordWrap, setIsWordWrap] = useState(true);
   const [isMinimap, setIsMinimap] = useState(false);
   
-  // Visual AI State
-  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+
 
   // Editor Refs - define interfaces for Monaco Editor types
   interface IMonacoEditor {
@@ -162,60 +157,6 @@ export default function SimulationPlayground() {
 
 
 
-  // Chat state
-  // Use sessionStorage instead of localStorage for better security (clears on browser close)
-  // Implement retention policy: max 50 messages, sanitize before storage
-  const MAX_CHAT_MESSAGES = 50;
-
-  const loadChatMessages = (simId: string | null): ChatMessage[] => {
-    try {
-      // Validate the simId from URL before using it
-      const rawIdParam = new URLSearchParams(window.location.search).get("simId");
-      const validatedId = rawIdParam ? validateIdParam(rawIdParam) : null;
-      const idParam = simId || (validatedId || 'new');
-      const stored = sessionStorage.getItem(getSimChatKey(idParam));
-      if (stored) {
-        const parsed = JSON.parse(stored) as ChatMessage[];
-        // Validate structure
-        if (Array.isArray(parsed) && parsed.every(m => typeof m.role === 'string' && typeof m.content === 'string')) {
-          return parsed.slice(0, MAX_CHAT_MESSAGES);
-        }
-      }
-    } catch (e) {
-      logger.error("[SimPlayground] Failed to load chat from storage:", e);
-    }
-    return [DEFAULT_MESSAGE];
-  };
-
-  const saveChatMessages = (messages: ChatMessage[], simId: string | null) => {
-    try {
-      // Validate the simId before using it for storage
-      const validatedSimId = simId ? validateIdParam(simId) : null;
-      const id = validatedSimId || 'new';
-      // Apply retention limit before saving
-      const limited = messages.slice(-MAX_CHAT_MESSAGES);
-      sessionStorage.setItem(getSimChatKey(id), JSON.stringify(limited));
-    } catch (e) {
-      logger.error("[SimPlayground] Failed to save chat to storage:", e);
-    }
-  };
-
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(loadChatMessages(null));
-  const [chatInput, setChatInput] = useState("");
-  const [isChatLoading, setIsChatLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const chatInputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Auto-scroll chat
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
-
-  // Persist chat to sessionStorage instead of localStorage (clears on browser close)
-  useEffect(() => {
-    saveChatMessages(chatMessages, simId);
-  }, [chatMessages, simId]);
-
   // ── Compile logic ──
   const compileCode = useCallback(async (sourceFiles: Record<string, string>): Promise<string | null> => {
     setIsCompiling(true);
@@ -244,6 +185,35 @@ export default function SimulationPlayground() {
       setIsCompiling(false);
     }
   }, []);
+
+  // z.AI Chat Logic
+  const {
+    chatMessages,
+    setChatMessages,
+    chatInput,
+    setChatInput,
+    isChatLoading,
+    attachedImage,
+    setAttachedImage,
+    chatEndRef,
+    chatInputRef,
+    handleChatSend,
+    handleFixWithAI,
+    handleChatKeyDown,
+    resetChat
+  } = useSimulationChat({
+    simId,
+    files,
+    activeFile,
+    compileCode,
+    setFiles,
+    examples: {
+      arm: ArmKgSimRaw,
+      elevator: ElevatorPidSimRaw
+    },
+    consoleLogs,
+    compileError
+  });
 
   const handleCodeChange = useCallback((value: string | undefined) => {
     const newCode = value || "";
@@ -460,8 +430,7 @@ export default function SimulationPlayground() {
     setSimId(null);
     setSimName("Untitled Simulation");
 
-    // Clear chat and reset to default
-    setChatMessages([DEFAULT_MESSAGE]);
+    resetChat();
   };
 
   // ── Library ──
@@ -525,8 +494,7 @@ export default function SimulationPlayground() {
       compileCode(parsedFiles);
       setShowLibrary(false);
 
-      // Load chat for this sim from sessionStorage
-      setChatMessages(loadChatMessages(sim.id));
+
 
       // Update URL to match loaded sim
       const newUrl = new URL(window.location.href);
@@ -563,8 +531,7 @@ export default function SimulationPlayground() {
       compileCode(parsedFiles);
       setShowLibrary(false);
 
-      // Load chat for this GitHub sim from sessionStorage
-      setChatMessages(loadChatMessages(`github:${sim.id}`));
+
 
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set("simId", `github:${sim.id}`);
@@ -642,289 +609,7 @@ export default function SimulationPlayground() {
    * Sanitize user input to prevent prompt injection attacks.
    * Removes control characters and limits length.
    */
-  const sanitizeUserInput = (input: string, maxLength: number = 5000): string => {
-    // Remove control characters except newlines and tabs (which are safe in code context)
-    // eslint-disable-next-line no-control-regex
-    let sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-    // Limit length to prevent DoS
-    if (sanitized.length > maxLength) {
-      sanitized = sanitized.slice(0, maxLength) + '... (truncated)';
-    }
-    return sanitized;
-  };
 
-  /**
-   * Sanitize file content for AI context.
-   * Removes control characters and limits individual file sizes.
-   */
-  const sanitizeFilesForAI = (files: Record<string, string>): Record<string, string> => {
-    const sanitized: Record<string, string> = {};
-    const MAX_FILE_SIZE = 10000; // 10KB max per file in AI context
-
-    for (const [filename, content] of Object.entries(files)) {
-      // Validate filename is safe (allow subfolders)
-      // eslint-disable-next-line no-useless-escape
-      if (!/^(?!.*?\.\.)[a-zA-Z0-9_\-\.\/]+\.(tsx?|jsx?|json)$/.test(filename)) {
-        continue; // Skip files with suspicious names
-      }
-
-      // Sanitize content
-      // eslint-disable-next-line no-control-regex
-      let sanitizedContent = content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-      if (sanitizedContent.length > MAX_FILE_SIZE) {
-        sanitizedContent = sanitizedContent.slice(0, MAX_FILE_SIZE) + '\n// ... (truncated for AI context)';
-      }
-      sanitized[filename] = sanitizedContent;
-    }
-
-    return sanitized;
-  };
-
-  /**
-   * Truncates chat history to keep within token limits while preserving context.
-   * Priority: System Message > Last 5 messages > Intermediate messages.
-   */
-  const truncateChatHistory = (messages: ChatMessage[], maxChars: number = 12000): ChatMessage[] => {
-    let currentChars = 0;
-    const result: ChatMessage[] = [];
-    
-    // Always iterate backwards to keep the most recent context
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const msg = messages[i];
-      if (currentChars + msg.content.length > maxChars && result.length >= 3) {
-        break; // Keep at least 3 messages if possible, otherwise stop at limit
-      }
-      result.unshift(msg);
-      currentChars += msg.content.length;
-    }
-    
-    return result;
-  };
-
-  const handleChatSend = useCallback(async (overrideMsg?: string) => {
-    const msg = sanitizeUserInput((overrideMsg || chatInput).trim());
-    if (!msg || isChatLoading) return;
-
-    const newMessages: ChatMessage[] = [...chatMessages, { role: "user", content: msg }];
-    setChatMessages(newMessages);
-    setChatInput("");
-    setIsChatLoading(true);
-
-    try {
-      // Sanitize files before sending to AI to prevent prompt injection
-      const sanitizedFiles = sanitizeFilesForAI(files);
-      const filesJson = JSON.stringify(sanitizedFiles, null, 2);
-      const includeExamples = filesJson.length < 15000;
-
-      // Build system context with sanitized inputs - all user content is escaped
-      const systemContext = `You are a z.AI simulation code assistant for ARES 23247, an FTC robotics team. The user is building interactive React simulations that run in a sandboxed iframe.
-RULES:
-- You MUST put EVERYTHING (all components, logic, and styling) into a SINGLE .tsx file. NEVER generate multiple files.
-- The entrypoint component MUST be a default export (e.g., export default function MySim() {...})
-- Use React.useState, React.useEffect, etc. (React is a global, don't import it)
-- Use standard ARESWEB UI classes: sim-container, sim-title, sim-label, sim-value, sim-slider, sim-canvas, sim-btn, sim-grid, sim-flex
-- Use Vite-style raw typescript format (.tsx).
-
-ARES ROBOTICS SIMULATION TIPS:
-- Physics: Matter.js is global as 'Matter'. Use for 2D rigid bodies.
-- Coordinate Mapping: Field is 144x144 inches. (0,0) is center. Use areslib.FieldMapping for translations.
-- Colors: ARES Red (#C00000), Dark (#0d0f14), Gold (#FFD700), White (#FFFFFF).
-- Input: Always include a 'Reset' button in your simulation UI.
-
-OUTPUT FORMAT:
-- You can either output the COMPLETE updated file or use a PATCH block to edit specific parts efficiently.
-- To output the COMPLETE file (e.g. for initial creation or major rewrites), use: \`\`\`tsx
-- To surgically edit an existing file, use: \`\`\`patch
-  Inside the patch block, use this EXACT format:
-<<<<
-old code to find (must match exactly)
-====
-new code to replace it with
->>>>
-
-${includeExamples ? `EXAMPLES OF REAL ARESWEB SIMULATIONS:
-
-\`\`\`tsx:ArmKgSim.tsx
-${ArmKgSimRaw}
-\`\`\`
-
-\`\`\`tsx:ElevatorPidSim.tsx
-${ElevatorPidSimRaw}
-\`\`\`
-` : ''}
-CURRENT FILES:
-\`\`\`json
-${filesJson}
-\`\`\`
-
-USER REQUEST: ${msg}`;
-
-      const history = truncateChatHistory(chatMessages);
-      const apiMessages = history.map(m => ({ role: m.role, content: sanitizeUserInput(m.content) }));
-      apiMessages.push({ role: "user", content: msg });
-
-      // Normalize for Anthropic: must start with user, must alternate roles
-      const normalizedMessages: {role: "user"|"assistant", content: string}[] = [];
-      for (const m of apiMessages) {
-        if (normalizedMessages.length === 0 && m.role === "assistant") {
-          continue; // Skip leading assistant messages
-        }
-        if (normalizedMessages.length > 0 && normalizedMessages[normalizedMessages.length - 1].role === m.role) {
-          normalizedMessages[normalizedMessages.length - 1].content += "\n\n" + m.content;
-        } else {
-          normalizedMessages.push({ ...m });
-        }
-      }
-
-      const res = await fetch("/api/ai/sim-playground", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ systemPrompt: systemContext, messages: normalizedMessages, imageUrl: attachedImage }),
-      });
-      setAttachedImage(null);
-
-      if (!res.ok || !res.body) throw new Error("AI request failed");
-
-      let accumulatedText = "";
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      
-      const initialFiles = { ...files };
-      let finalFiles: Record<string, string> = {};
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.chunk) {
-                accumulatedText += data.chunk;
-                
-                // Live parse markdown blocks
-                const blockLines = accumulatedText.split('\n');
-                const newFiles: Record<string, string> = {};
-                let currentFile: string | null = null;
-                let currentContent: string[] = [];
-                let isPatchBlock = false;
-                
-                for (let i = 0; i < blockLines.length; i++) {
-                  const l = blockLines[i];
-                  if (l.startsWith('```')) {
-                    if (currentFile) {
-                      if (isPatchBlock) {
-                        const patchStr = currentContent.join('\n');
-                        const originalCode = initialFiles[currentFile] || "";
-                        
-                        let patchedCode = originalCode;
-                        // Extract all completed <<<< ==== >>>> blocks
-                        const patchRegex = /<<<<\n([\s\S]*?)\n====\n([\s\S]*?)\n>>>>/g;
-                        let match;
-                        while ((match = patchRegex.exec(patchStr)) !== null) {
-                          const oldText = match[1];
-                          const newText = match[2];
-                          if (patchedCode.includes(oldText)) {
-                            patchedCode = patchedCode.replace(oldText, newText);
-                          }
-                        }
-                        newFiles[currentFile] = patchedCode;
-                      } else {
-                        newFiles[currentFile] = currentContent.join('\n');
-                      }
-                      currentFile = null;
-                      currentContent = [];
-                      isPatchBlock = false;
-                    } else {
-                      const match = l.match(/```(tsx|patch)[^\n]*/);
-                      if (match) {
-                        currentFile = activeFile;
-                        isPatchBlock = match[1] === "patch";
-                      }
-                    }
-                  } else if (currentFile) {
-                    currentContent.push(l);
-                  }
-                }
-                
-                if (currentFile) {
-                  if (isPatchBlock) {
-                    const patchStr = currentContent.join('\n');
-                    const originalCode = initialFiles[currentFile] || "";
-                    let patchedCode = originalCode;
-                    const patchRegex = /<<<<\n([\s\S]*?)\n====\n([\s\S]*?)\n>>>>/g;
-                    let match;
-                    while ((match = patchRegex.exec(patchStr)) !== null) {
-                      const oldText = match[1];
-                      const newText = match[2];
-                      if (patchedCode.includes(oldText)) {
-                        patchedCode = patchedCode.replace(oldText, newText);
-                      }
-                    }
-                    newFiles[currentFile] = patchedCode;
-                  } else {
-                    newFiles[currentFile] = currentContent.join('\n');
-                  }
-                }
-                
-                if (Object.keys(newFiles).length > 0) {
-                  finalFiles = newFiles;
-                  setFiles({ ...initialFiles, ...newFiles });
-                }
-              }
-            } catch { /* ignore */ }
-          }
-        }
-      }
-
-      const reply = accumulatedText.trim();
-      setChatMessages(prev => [...prev, { role: "assistant", content: reply }]);
-
-      // Compile code once generation completes
-      if (Object.keys(finalFiles).length > 0) {
-        const fullFiles = { ...files, ...finalFiles };
-        const err = await compileCode(fullFiles);
-
-        if (err) {
-          setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Compilation Error:\n\`\`\`text\n${err}\n\`\`\`\n\nThe code is in the editor. You can fix it manually or ask me to correct it.` }]);
-        } else {
-          setChatMessages(prev => [...prev, { role: "assistant", content: "✅ Code generated and compiled successfully!" }]);
-        }
-      }
-
-    } catch (e: unknown) {
-      logger.error("AI Chat error:", e);
-      setChatMessages(prev => [...prev, { role: "assistant", content: `⚠️ Error: ${(e as Error)?.message || "Network error"}` }]);
-    } finally {
-      setIsChatLoading(false);
-    }
-  }, [chatMessages, files, attachedImage, activeFile, compileCode, chatInput, isChatLoading]);
-
-  const handleFixWithAI = useCallback(() => {
-    const errorLogs = consoleLogs.filter(l => l.level === "error");
-    if (errorLogs.length === 0 && !compileError) return;
-
-    const errorContext = [
-      compileError ? `Compile Error:\n${compileError}` : "",
-      errorLogs.length > 0 ? `Runtime Errors:\n${errorLogs.map(l => l.args.join(" ")).join("\n")}` : ""
-    ].filter(Boolean).join("\n\n");
-
-    const fixPrompt = `I'm seeing these errors in the simulation:\n\n${errorContext}\n\nPlease help me fix them. Analyze the provided current files and errors, then suggest a patch or full file replacement to resolve the issue.`;
-    handleChatSend(fixPrompt);
-    chatInputRef.current?.focus();
-  }, [consoleLogs, compileError, handleChatSend]);
-
-  const handleChatKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleChatSend();
-    }
-  };
 
   // ── Save ──
   const handleSave = async () => {
@@ -1126,10 +811,10 @@ USER REQUEST: ${msg}`;
 
       {/* Layout Split: Top/Bottom */}
       <div className="flex-1 flex flex-col min-h-0">
-        <PanelGroup direction="vertical" autoSaveId="playground-main-v2">
+        <PanelGroup orientation="vertical" id="playground-main-v2">
           <Panel defaultSize={60} minSize={20}>
             {/* Top Row: Explorer, Code, Chat */}
-            <PanelGroup direction="horizontal" autoSaveId="playground-top-v2">
+            <PanelGroup orientation="horizontal" id="playground-top-v2">
               {/* ── File Explorer Pane ── */}
               <Panel defaultSize={15} minSize={10} className="flex flex-col min-w-0">
                 <SimFileExplorer 
@@ -1333,7 +1018,7 @@ USER REQUEST: ${msg}`;
 
           {/* ── Bottom Row: Preview & Console ── */}
           <Panel defaultSize={40} minSize={20} className="flex flex-col min-w-0 z-0">
-            <PanelGroup direction="horizontal" autoSaveId="playground-bottom-v2">
+            <PanelGroup orientation="horizontal" id="playground-bottom-v2">
               <Panel defaultSize={60} minSize={20} className="flex flex-col min-w-0 bg-[#0d1117]">
                 <div className="px-3 py-1.5 border-b border-white/10 bg-[#0d1117] flex items-center gap-2 shrink-0">
                   <span className="text-white/40 text-xs font-mono">Live Preview</span>

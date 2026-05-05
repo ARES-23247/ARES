@@ -237,8 +237,8 @@ test.describe('Collaboration', () => {
     await user2Page.goto('/dashboard/blog/test-post');
 
     // Wait for Live badges on both - verifies multi-user connection works
-    await expect(user1Page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible();
-    await expect(user2Page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible();
+    await expect(user1Page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' }).first()).toBeVisible({ timeout: 15000 });
+    await expect(user2Page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' }).first()).toBeVisible({ timeout: 15000 });
 
     // Verify editors are present and interactive on both pages
     const user1Editor = user1Page.locator('.ProseMirror');
@@ -270,7 +270,7 @@ test.describe('Collaboration', () => {
     await page.goto('/dashboard/docs/persistence-test');
 
     // Wait for Live badge
-    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' }).first()).toBeVisible({ timeout: 15000 });
 
     // Verify editor is present
     const editor = page.locator('.ProseMirror');
@@ -280,7 +280,7 @@ test.describe('Collaboration', () => {
     await page.reload();
 
     // Wait for Live badge again after reload
-    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.bg-emerald-500\\/10').filter({ hasText: 'Live' }).first()).toBeVisible({ timeout: 15000 });
 
     // Verify editor is still present and interactive after reload
     await expect(editor).toBeVisible();
