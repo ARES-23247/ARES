@@ -111,7 +111,7 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to delete location", success: false } };
     }
   },
-});
+} as any);
 
 locationsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(locationContract, locationsTsRestRouter, locationsRouter);

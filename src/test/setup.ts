@@ -1,17 +1,11 @@
 import "@testing-library/jest-dom";
 import { server } from "./mocks/server";
-import { beforeEach, afterEach } from "vitest";
 
 // Start MSW Server
-beforeEach(() => {
-  server.listen({ onUnhandledRequest: "warn" });
-});
+server.listen({ onUnhandledRequest: "warn" });
 
 // Reset handlers after each test to ensure test isolation
-afterEach(() => {
-  server.resetHandlers();
-  server.close();
-});
+// Note: Test isolation handled by individual test suites
 
 export { server };
 

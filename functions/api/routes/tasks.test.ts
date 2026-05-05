@@ -67,8 +67,8 @@ describe("Hono Backend - /tasks Router", () => {
 
     // Wrap request method to always include DEV_BYPASS in env
     const originalRequest = testApp.request.bind(testApp);
-    testApp.request = async (path: string, init?: RequestInit, env?: Record<string, any>, execCtx?: ExecutionContext) => {
-      return originalRequest(path, init, { ...env, DEV_BYPASS: "true" }, execCtx);
+    testApp.request = async (input: string | URL | Request, init?: RequestInit, env?: Record<string, any>, execCtx?: ExecutionContext) => {
+      return originalRequest(input, init, { ...env, DEV_BYPASS: "true" }, execCtx);
     };
   });
 

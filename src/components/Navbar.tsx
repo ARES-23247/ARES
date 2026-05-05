@@ -103,7 +103,7 @@ export default function Navbar() {
               onClick={() => toggleDropdown("team")}
               aria-haspopup="true"
               aria-expanded={activeDropdown === "team"}
-              className={`flex items-center gap-1.5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1 ${activeDropdown === "team" ? "text-ares-gold" : "text-marble hover:text-ares-gold"}`}
+              className={`flex items-center gap-1.5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1 ${activeDropdown === "team" ? "text-ares-gold" : "text-white hover:text-ares-gold"}`}
             >
               Team <ChevronDown size={14} className={`transition-transform duration-300 ${activeDropdown === "team" ? "rotate-180" : "group-focus-within/dropdown:rotate-180"}`} />
             </button>
@@ -125,7 +125,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <Link to="/events" className="flex items-center gap-2 text-marble hover:text-ares-gold transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
+          <Link to="/events" className="flex items-center gap-2 text-white hover:text-ares-gold transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
             <CalendarIcon size={14} /> Calendar
           </Link>
 
@@ -135,7 +135,7 @@ export default function Navbar() {
               onClick={() => toggleDropdown("content")}
               aria-haspopup="true"
               aria-expanded={activeDropdown === "content"}
-              className={`flex items-center gap-1.5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1 ${activeDropdown === "content" ? "text-ares-gold" : "text-marble hover:text-ares-gold"}`}
+              className={`flex items-center gap-1.5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1 ${activeDropdown === "content" ? "text-ares-gold" : "text-white hover:text-ares-gold"}`}
             >
               Content <ChevronDown size={14} className={`transition-transform duration-300 ${activeDropdown === "content" ? "rotate-180" : "group-focus-within/dropdown:rotate-180"}`} />
             </button>
@@ -157,7 +157,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <Link to="/store" className="flex items-center gap-2 text-marble hover:text-ares-gold transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
+          <Link to="/store" className="flex items-center gap-2 text-white hover:text-ares-gold transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
             <ShoppingBag size={14} /> Store
           </Link>
 

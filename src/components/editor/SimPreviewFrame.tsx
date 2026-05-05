@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
 
 interface SimPreviewFrameProps {

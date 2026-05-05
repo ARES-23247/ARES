@@ -164,10 +164,16 @@ describe("Hono Backend - /media Router", () => {
 
     const fileBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); // Valid PNG header
     const file = new File([fileBytes], "test.png", { type: "image/png" });
-    const mockFormData = { file, folder: "Gallery" };
+
+    // Create a proper FormData mock
+    const formData = {
+      get: vi.fn((key: string) => key === "file" ? file : "Gallery"),
+      has: vi.fn(() => true),
+    } as unknown as FormData;
+
     const mockC = { get: vi.fn().mockReturnValue(mockDb), env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn().mockReturnValue("127.0.0.1") }, executionCtx: mockExecutionContext };
 
-    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    const res = await (mediaHandlers.upload as any)({ body: formData }, mockC);
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(mockR2.put).toHaveBeenCalled();
@@ -177,10 +183,15 @@ describe("Hono Backend - /media Router", () => {
     const { mediaHandlers } = await import("./media/handlers");
     const heicBytes = new Uint8Array([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63]);
     const file = new File([heicBytes], "test.heic", { type: "image/heic" });
-    const mockFormData = { file, folder: "Gallery" };
+
+    const formData = {
+      get: vi.fn((key: string) => key === "file" ? file : "Gallery"),
+      has: vi.fn(() => true),
+    } as unknown as FormData;
+
     const mockC = { get: vi.fn().mockReturnValue(mockDb), env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() }, executionCtx: mockExecutionContext };
 
-    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    const res = await (mediaHandlers.upload as any)({ body: formData }, mockC);
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
@@ -189,10 +200,15 @@ describe("Hono Backend - /media Router", () => {
     const { mediaHandlers } = await import("./media/handlers");
     const invalidBytes = new Uint8Array([0x00, 0x01, 0x02, 0x03]);
     const file = new File([invalidBytes], "test.txt", { type: "text/plain" });
-    const mockFormData = { file };
+
+    const formData = {
+      get: vi.fn((key: string) => key === "file" ? file : null),
+      has: vi.fn((key: string) => key === "file"),
+    } as unknown as FormData;
+
     const mockC = { env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() } };
 
-    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    const res = await (mediaHandlers.upload as any)({ body: formData }, mockC);
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("Invalid file type");
   });
@@ -207,10 +223,13 @@ describe("Hono Backend - /media Router", () => {
         return { getReader: () => ({ read: () => Promise.resolve({ done: true, value: undefined }) }) };
       };
     }
-    const mockFormData = { file };
+    const formData = {
+      get: vi.fn((key: string) => key === "file" ? file : "Gallery"),
+      has: vi.fn(() => true),
+    } as unknown as FormData;
     const mockC = { get: vi.fn().mockReturnValue(mockDb), env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() }, executionCtx: mockExecutionContext };
 
-    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    const res = await (mediaHandlers.upload as any)({ body: formData }, mockC);
     expect(res.status).toBe(200);
   });
 
@@ -219,10 +238,13 @@ describe("Hono Backend - /media Router", () => {
     env.AI.run.mockRejectedValue(new Error("AI Down"));
     const fileBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     const file = new File([fileBytes], "test.png", { type: "image/png" });
-    const mockFormData = { file };
+    const formData = {
+      get: vi.fn((key: string) => key === "file" ? file : "Gallery"),
+      has: vi.fn(() => true),
+    } as unknown as FormData;
     const mockC = { get: vi.fn().mockReturnValue(mockDb), env, req: { url: "http://localhost/api/media/admin/upload", header: vi.fn() }, executionCtx: mockExecutionContext };
 
-    const res = await (mediaHandlers.upload as any)({ body: mockFormData }, mockC);
+    const res = await (mediaHandlers.upload as any)({ body: formData }, mockC);
     expect(res.status).toBe(200);
     expect(res.body.altText).toBe("ARES 23247 Team Media Image");
   });
