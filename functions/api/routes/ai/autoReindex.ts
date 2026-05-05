@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
-import type { VectorizeIndex } from "@cloudflare/workers-types";
+import type { VectorizeIndex, Ai } from "@cloudflare/workers-types";
 
 /**
  * Trigger an incremental re-index in the background after a content mutation.
@@ -20,8 +18,7 @@ import type { VectorizeIndex } from "@cloudflare/workers-types";
 export function triggerBackgroundReindex(
   executionCtx: ExecutionContext,
   db: Kysely<DB>,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ai: any,
+  ai: Ai | undefined,
   vectorize: VectorizeIndex | undefined
 ): void {
   if (!ai || !vectorize) return;
@@ -43,8 +40,7 @@ export function triggerBackgroundReindex(
 export function triggerExternalReindex(
   executionCtx: ExecutionContext,
   db: Kysely<DB>,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ai: any,
+  ai: Ai | undefined,
   vectorize: VectorizeIndex | undefined,
   zaiApiKey?: string,
   githubPat?: string

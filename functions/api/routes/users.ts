@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { userContract } from "../../../shared/schemas/contracts/userContract";
@@ -8,11 +6,12 @@ import { upsertProfile } from "./_profileUtils";
 import { decrypt } from "../../utils/crypto";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { HonoContext } from "@shared/types/api";
 
 export const usersRouter = new Hono<AppEnv>();
 
 const userTsRestRouter = s.router(userContract, {
-  getUsers: async (input, c) => {
+  getUsers: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit, cursor } = parsePagination(c, 50, 100);
@@ -40,8 +39,8 @@ const userTsRestRouter = s.router(userContract, {
           emailVerified: !!u.emailVerified,
           image: u.image || null,
           role: String(u.role || "user"),
-          createdAt: Number(u.createdAt),
-          updatedAt: Number(u.updatedAt),
+          createdAt: new Date(u.createdAt as string).getTime() || 0,
+          updatedAt: new Date(u.updatedAt as string).getTime() || 0,
           nickname: u.nickname || null,
           member_type: u.member_type || null
         };
@@ -55,7 +54,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  adminDetail: async (input, c) => {
+  adminDetail: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const row = await db.selectFrom("user as u")
@@ -79,8 +78,8 @@ const userTsRestRouter = s.router(userContract, {
             emailVerified: !!row.emailVerified,
             image: row.image || null,
             role: String(row.role || "user"),
-            createdAt: Number(row.createdAt),
-            updatedAt: Number(row.updatedAt),
+            createdAt: new Date(row.createdAt as string).getTime() || 0,
+            updatedAt: new Date(row.updatedAt as string).getTime() || 0,
             nickname: row.nickname || null,
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             member_type: row.member_type as any
@@ -92,7 +91,7 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Database error" } };
     }
   },
-  patchUser: async (input, c) => {
+  patchUser: async (input, c: HonoContext) => {
     try {
       // Defense-in-depth: Re-validate admin authorization for sensitive role changes
       const sessionUser = c.get("sessionUser") as { id: string; role: string } | undefined;

@@ -1,12 +1,21 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { indexSiteContent } from "./indexer";
 
 // ── Mock DB (Kysely chain) ────────────────────────────────────────────────
-const createMockQuery = () => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const q: any = {
+interface MockQuery {
+  select: ReturnType<typeof vi.fn>;
+  where: ReturnType<typeof vi.fn>;
+  orderBy: ReturnType<typeof vi.fn>;
+  limit: ReturnType<typeof vi.fn>;
+  execute: ReturnType<typeof vi.fn>;
+  executeTakeFirst: ReturnType<typeof vi.fn>;
+  values: ReturnType<typeof vi.fn>;
+  onConflict: ReturnType<typeof vi.fn>;
+  doUpdateSet: ReturnType<typeof vi.fn>;
+}
+
+const createMockQuery = (): MockQuery => {
+  const q: MockQuery = {
     select: vi.fn(),
     where: vi.fn(),
     orderBy: vi.fn(),
@@ -28,27 +37,43 @@ const createMockQuery = () => {
   return q;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockDb: any = {
+interface MockDB {
+  selectFrom: ReturnType<typeof vi.fn<(table?: string) => MockQuery>>;
+  insertInto: ReturnType<typeof vi.fn<(table?: string) => MockQuery>>;
+  deleteFrom: ReturnType<typeof vi.fn<(table?: string) => MockQuery>>;
+}
+
+const mockDb: MockDB = {
   selectFrom: vi.fn(() => createMockQuery()),
   insertInto: vi.fn(() => createMockQuery()),
   deleteFrom: vi.fn(() => createMockQuery()),
 };
 
 // ── Mock Workers AI ───────────────────────────────────────────────────────
-const mockAi = {
+interface MockAI {
+  run: ReturnType<typeof vi.fn>;
+}
+
+const mockAi: MockAI = {
   run: vi.fn(),
 };
 
 // ── Mock Vectorize ────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockVectorize: any = {
+interface MockVectorize {
+  upsert: ReturnType<typeof vi.fn>;
+}
+
+const mockVectorize: MockVectorize = {
   upsert: vi.fn().mockResolvedValue(undefined),
 };
 
 // ── Mock KV ───────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const _mockKv: any = {
+interface MockKV {
+  get: ReturnType<typeof vi.fn>;
+  put: ReturnType<typeof vi.fn>;
+}
+
+const _mockKv: MockKV = {
   get: vi.fn().mockResolvedValue(null),
   put: vi.fn().mockResolvedValue(undefined),
 };
@@ -165,7 +190,7 @@ describe("indexSiteContent", () => {
     failQuery.execute.mockRejectedValue(new Error("DB connection lost"));
 
     // settings works, but all 4 indexing queries fail
-    mockDb.selectFrom.mockImplementation((table: string) => {
+    mockDb.selectFrom.mockImplementation((table?: string) => {
       if (table === "settings") return settingsQuery;
       return failQuery;
     });

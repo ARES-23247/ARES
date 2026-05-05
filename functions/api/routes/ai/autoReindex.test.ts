@@ -1,19 +1,33 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { triggerBackgroundReindex } from "./autoReindex";
 
+// Mock ExecutionContext with waitUntil for fire-and-forget tasks
+interface MockExecutionContext {
+  waitUntil: ReturnType<typeof vi.fn>;
+}
+
+// Mock Cloudflare Workers AI binding
+interface MockAI {
+  run: ReturnType<typeof vi.fn>;
+}
+
+// Mock Vectorize binding
+interface MockVectorize {
+  upsert: ReturnType<typeof vi.fn>;
+}
+
+// Mock KV binding
+interface MockKV {
+  get: ReturnType<typeof vi.fn>;
+  put: ReturnType<typeof vi.fn>;
+}
+
 describe("triggerBackgroundReindex", () => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockExecutionCtx: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockDb: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockAi: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockVectorize: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockKv: any;
+  let mockExecutionCtx: MockExecutionContext;
+  let mockDb: Record<string, unknown>;
+  let mockAi: MockAI;
+  let mockVectorize: MockVectorize;
+  let mockKv: MockKV;
 
   beforeEach(() => {
     vi.clearAllMocks();

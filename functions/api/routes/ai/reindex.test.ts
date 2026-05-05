@@ -1,54 +1,76 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import type { Context, Next } from "hono";
 
 // Mock middleware
 vi.mock("../../middleware", () => ({
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ensureAdmin: (c: any, next: any) => next(),
+  ensureAdmin: async (_c: unknown, next: Next) => next(),
   logAuditAction: vi.fn().mockResolvedValue(true),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rateLimitMiddleware: () => (c: any, next: any) => next(),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  persistentRateLimitMiddleware: () => (c: any, next: any) => next(),
+  rateLimitMiddleware: () => async (_c: unknown, next: Next) => next(),
+  persistentRateLimitMiddleware: () => async (_c: unknown, next: Next) => next(),
 }));
 
 // Mock the dynamic import of indexer
 const mockIndexSiteContent = vi.fn();
 vi.mock("./indexer", () => ({
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  indexSiteContent: (...args: any[]) => mockIndexSiteContent(...args),
+  indexSiteContent: (...args: unknown[]) => mockIndexSiteContent(...args),
 }));
 
 // Import after mocks
 import aiRouter from "./index";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockDb: any = {
+interface MockDB {
+  selectFrom: ReturnType<typeof vi.fn>;
+  select: ReturnType<typeof vi.fn>;
+  where: ReturnType<typeof vi.fn>;
+  execute: ReturnType<typeof vi.fn>;
+}
+
+const mockDb: MockDB = {
   selectFrom: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
   execute: vi.fn().mockResolvedValue([]),
 };
 
+interface MockAI {
+  run: ReturnType<typeof vi.fn>;
+}
+
+interface MockVectorize {
+  upsert: ReturnType<typeof vi.fn>;
+}
+
+interface MockKV {
+  get: ReturnType<typeof vi.fn>;
+  put: ReturnType<typeof vi.fn>;
+}
+
+interface TestBindings {
+  AI?: MockAI;
+  VECTORIZE_DB?: MockVectorize;
+  ARES_KV?: MockKV;
+  DB: Record<string, unknown>;
+}
+
+interface MockExecutionContext {
+  waitUntil: ReturnType<typeof vi.fn>;
+}
+
 describe("AI Router - /reindex endpoint", () => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let app: Hono<any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const baseEnv: any = {
+  let app: Hono<{ Bindings: TestBindings }>;
+  const baseEnv: TestBindings = {
     AI: { run: vi.fn() },
     VECTORIZE_DB: { upsert: vi.fn() },
     ARES_KV: { get: vi.fn(), put: vi.fn() },
     DB: {},
   };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mockExecutionContext: any = { waitUntil: vi.fn() };
+  const mockExecutionContext: MockExecutionContext = { waitUntil: vi.fn() };
 
   beforeEach(() => {
     vi.clearAllMocks();
     app = new Hono();
-    app.use("*", async (c, next) => {
+    app.use("*", async (c: Context, next: Next) => {
       c.set("db", mockDb);
       await next();
     });
@@ -59,8 +81,7 @@ describe("AI Router - /reindex endpoint", () => {
   it("POST /reindex - incremental mode by default", async () => {
     const res = await app.request("/reindex", { method: "POST" }, baseEnv, mockExecutionContext);
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body = await res.json() as any;
+    const body = await res.json() as { success: boolean; mode: string; indexed: number };
     expect(body.success).toBe(true);
     expect(body.mode).toBe("incremental");
     expect(body.indexed).toBe(3);
@@ -75,8 +96,7 @@ describe("AI Router - /reindex endpoint", () => {
   it("POST /reindex?force=true - full rebuild mode", async () => {
     const res = await app.request("/reindex?force=true", { method: "POST" }, baseEnv, mockExecutionContext);
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body = await res.json() as any;
+    const body = await res.json() as { mode: string };
     expect(body.mode).toBe("full");
     expect(mockIndexSiteContent).toHaveBeenCalledWith(
       mockDb,
@@ -87,17 +107,16 @@ describe("AI Router - /reindex endpoint", () => {
   });
 
   it("POST /reindex - returns 500 when AI binding missing", async () => {
-    const envNoAi = { ...baseEnv, AI: undefined };
+    const envNoAi: TestBindings = { ...baseEnv, AI: undefined };
     const res = await app.request("/reindex", { method: "POST" }, envNoAi, mockExecutionContext);
     expect(res.status).toBe(500);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body = await res.json() as any;
+    const body = await res.json() as { error: string };
     expect(body.error).toContain("not configured");
   });
 
   it("POST /reindex - returns 500 when Vectorize binding missing", async () => {
-    const envNoVec = { ...baseEnv, VECTORIZE_DB: undefined };
-    const res = await app.request("/reindex", { method: "POST" }, envNoVec, mockExecutionContext);
+    const envNoVec: TestBindings = { ...baseEnv, VECTORIZE_DB: undefined };
+    const res = await app.request("/reindex?force=true", { method: "POST" }, envNoVec, mockExecutionContext);
     expect(res.status).toBe(500);
   });
 
@@ -105,8 +124,7 @@ describe("AI Router - /reindex endpoint", () => {
     mockIndexSiteContent.mockResolvedValue({ indexed: 1, skipped: 0, errors: ["Batch 0 failed"] });
     const res = await app.request("/reindex", { method: "POST" }, baseEnv, mockExecutionContext);
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body = await res.json() as any;
+    const body = await res.json() as { errors: string[] };
     expect(body.errors).toEqual(["Batch 0 failed"]);
   });
 });

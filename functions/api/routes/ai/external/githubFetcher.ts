@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 /**
  * Utility to fetch and parse external resources from GitHub (e.g. FTC Docs, ARESLIB).
  * 

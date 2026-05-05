@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { entityContract } from "../../../shared/schemas/contracts/entityContract";
 import { AppEnv, ensureAuth, logAuditAction } from "../middleware";
+import type { HonoContext } from "@shared/types/api";
 
 export const entitiesRouter = new Hono<AppEnv>();
 
 const entityHandlers = {
-  getLinks: async (input, c) => {
+  getLinks: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { type, id } = input.query;
@@ -74,7 +73,7 @@ const entityHandlers = {
     }
   },
 
-  saveLink: async (input, c) => {
+  saveLink: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const id = crypto.randomUUID();
@@ -98,7 +97,7 @@ const entityHandlers = {
     }
   },
 
-  deleteLink: async (input, c) => {
+  deleteLink: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("entity_links").where("id", "=", input.params.id).execute();

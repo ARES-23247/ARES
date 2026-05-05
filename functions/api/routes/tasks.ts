@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { taskContract } from "../../../shared/schemas/contracts/taskContract";
 import { AppEnv, ensureAuth, getSessionUser, rateLimitMiddleware, getSocialConfig, originIntegrityMiddleware, s } from "../middleware";
+import type { HonoContext } from "@shared/types/api";
 
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
@@ -13,7 +12,7 @@ import { siteConfig } from "../../utils/site.config";
 export const tasksRouter = new Hono<AppEnv>();
 
 const tasksTsRestRouter = s.router(taskContract, {
-  list: async (input, c) => {
+  list: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       let q = db.selectFrom("tasks as t")
@@ -90,7 +89,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  create: async (input, c) => {
+  create: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -211,7 +210,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  reorder: async (input, c) => {
+  reorder: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -244,7 +243,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  update: async (input, c) => {
+  update: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
@@ -349,7 +348,7 @@ const tasksTsRestRouter = s.router(taskContract, {
     }
   },
 
-  delete: async (input, c) => {
+  delete: async (input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);

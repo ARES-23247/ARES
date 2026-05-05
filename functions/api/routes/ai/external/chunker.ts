@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 /**
  * A utility to split large text into chunks of a given maximum size.
  * Uses a simple recursive character splitting strategy (paragraphs -> sentences -> words)

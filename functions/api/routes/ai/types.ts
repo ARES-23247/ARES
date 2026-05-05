@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 export type MessageContent = string | Array<{
   type: "text" | "image";
   text?: string;

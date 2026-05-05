@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { analyticsContract } from "../../../shared/schemas/contracts/analyticsContract";
 import { AppEnv, ensureAuth, ensureAdmin, rateLimitMiddleware, turnstileMiddleware, getDbSettings, s, checkPersistentRateLimit } from "../middleware";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { HonoContext } from "@shared/types/api";
 
 export const analyticsRouter = new Hono<AppEnv>();
 
 const analyticsHandlers = {
-  trackPageView: async (input, c) => {
+  trackPageView: async (input, c: HonoContext) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
     if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `track:${ip}`, ua, 20, 600))) {
@@ -37,7 +36,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { success: false } };
     }
   },
-  trackSponsorClick: async (input, c) => {
+  trackSponsorClick: async (input, c: HonoContext) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const ua = c.req.header("User-Agent") || "unknown";
     if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `click:${ip}`, ua, 10, 600))) {
@@ -83,7 +82,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { success: false } };
     }
   },
-  getPlatformAnalytics: async (_input, c) => {
+  getPlatformAnalytics: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [
@@ -181,7 +180,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch platform metrics" } };
     }
   },
-  getRosterStats: async (_input, c) => {
+  getRosterStats: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user_profiles as u")
@@ -227,7 +226,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { roster: [] } };
     }
   },
-  getLeaderboard: async (_input, c) => {
+  getLeaderboard: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("user as u")
@@ -266,7 +265,7 @@ const analyticsHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch leaderboard" } };
     }
   },
-  getStats: async (_input, c) => {
+  getStats: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [postsCount, eventsCount, docsCount, securityBlocksRow, dbSettings] = await Promise.all([
@@ -300,7 +299,7 @@ const analyticsHandlers = {
     }
   },
 
-  search: async (input, c) => {
+  search: async (input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     const { q } = input.query;
     try {

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { storeContract } from "../../../shared/schemas/contracts/storeContract";
@@ -8,6 +6,7 @@ import Stripe from "stripe";
 import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { HonoContext } from "@shared/types/api";
 
 const app = new Hono<AppEnv>();
 
@@ -17,7 +16,7 @@ app.use("/orders/*", ensureAdmin);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const storeHandlers: any = {
-  getProducts: async (_input, c) => {
+  getProducts: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const products = await db
@@ -46,7 +45,7 @@ const storeHandlers: any = {
     }
   },
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  createCheckoutSession: async ({ body }: any, c: any) => {
+  createCheckoutSession: async ({ body }: any, c: HonoContext) => {
     try {
       const { items, successUrl, cancelUrl } = body;
       const stripeKey = c.env.STRIPE_SECRET_KEY;
@@ -122,7 +121,7 @@ const storeHandlers: any = {
     }
   },
   // Extracted webhook handler below
-  getOrders: async (_input, c) => {
+  getOrders: async (_input, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db") as Kysely<DB>;
@@ -135,7 +134,7 @@ const storeHandlers: any = {
     }
   },
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  updateOrderStatus: async ({ params, body }: any, c: any) => {
+  updateOrderStatus: async ({ params, body }: any, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db") as Kysely<DB>;

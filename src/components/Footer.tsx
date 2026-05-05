@@ -65,7 +65,7 @@ export default function Footer() {
           </h4>
           <ul className="flex flex-col gap-3 text-[11px] font-bold uppercase tracking-widest text-marble/80">
             <li><Link to="/blog" className="hover:text-ares-gold transition-colors flex items-center gap-2">Team Blog</Link></li>
-            <li><Link to="/science-corner" className="hover:text-ares-gold transition-colors flex items-center gap-2">Science Corner</Link></li>
+            <li><Link to="/academy" className="hover:text-ares-gold transition-colors flex items-center gap-2">ARES Academy</Link></li>
             <li><Link to="/docs" className="hover:opacity-80 transition-colors flex items-center gap-2 group">
               <span className="flex items-center shadow-lg ares-cut-sm overflow-hidden border border-white/10">
                 <span className="bg-ares-red px-2 py-0.5 text-[9px] font-heading font-black uppercase text-white tracking-wider">ARES</span>

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Search, LayoutDashboard, LogIn, Bell, Check, X, ChevronDown, Users, Trophy, BookOpen, ShoppingBag, Calendar as CalendarIcon } from "lucide-react";
+import { Search, LayoutDashboard, LogIn, Bell, Check, X, ChevronDown, Users, Trophy, BookOpen, ShoppingBag, Calendar as CalendarIcon, GraduationCap } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -122,6 +122,11 @@ export default function Navbar() {
                 <Users size={14} className="text-ares-red group-hover/item:scale-110 transition-transform" />
                 Our Impact
               </Link>
+              <div className="my-1 h-px bg-white/10" />
+              <Link to="/blog" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item focus-visible:outline-none focus-visible:bg-white/10">
+                <BookOpen size={14} className="text-ares-gold group-hover/item:scale-110 transition-transform" />
+                Team Blog
+              </Link>
             </div>
           </div>
 
@@ -129,36 +134,15 @@ export default function Navbar() {
             <CalendarIcon size={14} /> Calendar
           </Link>
 
-          {/* Resources Dropdown */}
-          <div className="relative py-2 group/dropdown">
-            <button 
-              onClick={() => toggleDropdown("content")}
-              aria-haspopup="true"
-              aria-expanded={activeDropdown === "content"}
-              className={`flex items-center gap-1.5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1 ${activeDropdown === "content" ? "text-ares-gold" : "text-white hover:text-ares-gold"}`}
-            >
-              Content <ChevronDown size={14} className={`transition-transform duration-300 ${activeDropdown === "content" ? "rotate-180" : "group-focus-within/dropdown:rotate-180"}`} />
-            </button>
-            <div 
-              className={`absolute top-[calc(100%-4px)] left-0 w-56 bg-obsidian/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-lg p-1 transition-all duration-300 z-50 opacity-0 translate-y-2 pointer-events-none group-hover/dropdown:opacity-100 group-hover/dropdown:translate-y-0 group-hover/dropdown:pointer-events-auto group-focus-within/dropdown:opacity-100 group-focus-within/dropdown:translate-y-0 group-focus-within/dropdown:pointer-events-auto ${activeDropdown === "content" ? "!opacity-100 !translate-y-0 !pointer-events-auto" : ""}`}
-            >
-              <Link to="/blog" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item focus-visible:outline-none focus-visible:bg-white/10">
-                <BookOpen size={14} className="text-ares-gold group-hover/item:scale-110 transition-transform" />
-                Team Blog
-              </Link>
-              <Link to="/science-corner" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item focus-visible:outline-none focus-visible:bg-white/10">
-                <BookOpen size={14} className="text-ares-cyan group-hover/item:scale-110 transition-transform" />
-                Science Corner
-              </Link>
-              <Link to="/math-corner" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 text-[11px] text-marble hover:text-white hover:bg-white/5 rounded-md transition-colors group/item focus-visible:outline-none focus-visible:bg-white/10">
-                <BookOpen size={14} className="text-purple-400 group-hover/item:scale-110 transition-transform" />
-                Math Corner
-              </Link>
-            </div>
-          </div>
+
 
           <Link to="/store" className="flex items-center gap-2 text-white hover:text-ares-gold transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan rounded px-1">
             <ShoppingBag size={14} /> Store
+          </Link>
+
+          <Link to="/academy" aria-label="ARES Academy" className="h-9 hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-xl group/acad border border-white/5 bg-white/5">
+            <span className="bg-ares-red h-full px-3 flex items-center text-[10px] font-heading font-black uppercase text-white tracking-[0.15em] border-r border-white/10 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.2)]">ARES</span>
+            <span className="text-white h-full px-3 flex items-center text-[10px] font-heading font-bold uppercase tracking-[0.2em] group-hover/acad:bg-white/10 transition-colors"><GraduationCap size={12} className="mr-1" />ACADEMY</span>
           </Link>
 
           <Link to="/docs" aria-label="ARES Documentation Library" className="h-9 hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ares-cyan ares-cut-sm overflow-hidden flex items-center shadow-xl group/lib border border-white/5 bg-white/5">
@@ -315,8 +299,7 @@ export default function Navbar() {
           <Link to="/outreach" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">OUTREACH</Link>
           <Link to="/events" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">CALENDAR</Link>
           <Link to="/blog" onClick={() => setOpen(false)} className="text-xl font-black italic tracking-tighter text-ares-gold">TEAM BLOG</Link>
-          <Link to="/science-corner" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SCIENCE CORNER</Link>
-          <Link to="/math-corner" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">MATH CORNER</Link>
+          <Link to="/academy" onClick={() => setOpen(false)} className="text-xl font-black italic tracking-tighter text-ares-cyan">ARES ACADEMY</Link>
           <Link to="/store" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">STORE</Link>
           <Link to="/sponsors" onClick={() => setOpen(false)} className="text-xl font-black text-white italic tracking-tighter">SUPPORT US</Link>
         </div>

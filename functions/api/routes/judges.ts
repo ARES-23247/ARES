@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { judgeContract } from "../../../shared/schemas/contracts/judgeContract";
 import { AppEnv, ensureAdmin, verifyTurnstile, logAuditAction, s } from "../middleware";
+import type { HonoContext } from "@shared/types/api";
 
 
 export const judgesRouter = new Hono<AppEnv>();
@@ -31,7 +30,7 @@ const portfolioCache = new Map<string, { data: any; expiresAt: number; version: 
 // Helper to get the current portfolio cache key with version
 const getPortfolioCacheKey = () => `portfolio_v${portfolioCacheVersion}`;
 const judgesTsRestRouter = s.router(judgeContract, {
-    login: async (input, c) => {
+    login: async (input, c: HonoContext) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const { checkPersistentRateLimit } = await import("../middleware/security");
     const db = c.get("db") as Kysely<DB>;
@@ -64,7 +63,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500 as const, body: { error: "Login failed" } };
     }
   },
-    portfolio: async (input, c) => {
+    portfolio: async (input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const code = input.headers["x-judge-code"];
@@ -151,7 +150,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500 as const, body: { error: "Portfolio fetch failed" } };
     }
   },
-    listCodes: async (_input, c) => {
+    listCodes: async (_input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const results = await db.selectFrom("judge_access_codes")
@@ -172,7 +171,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500 as const, body: { error: "Failed to fetch codes" } };
     }
   },
-    createCode: async (input, c) => {
+    createCode: async (input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const { label, expiresAt } = input.body;
@@ -198,7 +197,7 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500 as const, body: { error: "Create failed" } };
     }
   },
-    deleteCode: async (input, c) => {
+    deleteCode: async (input, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       await db.deleteFrom("judge_access_codes").where("id", "=", input.params.id).execute();

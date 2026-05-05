@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { AppEnv, ensureAdmin, logAuditAction, s } from "../middleware";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { awardContract } from "../../../shared/schemas/contracts/awardContract";
+import type { HonoContext } from "@shared/types/api";
 
 // Validation schema for saveAward (derived from contract)
 const saveAwardSchema = awardContract.saveAward.body;
@@ -13,7 +12,7 @@ const saveAwardSchema = awardContract.saveAward.body;
 export const awardsRouter = new Hono<AppEnv>();
 
 const awardsTsRestRouter = s.router(awardContract, {
-  getAwards: async (input, c) => {
+  getAwards: async (input, c: HonoContext) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = input.query;
@@ -44,7 +43,7 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to fetch awards" } };
     }
   },
-  saveAward: async (input, c) => {
+  saveAward: async (input, c: HonoContext) => {
     try {
       // Validate input against schema
       const validationResult = saveAwardSchema.safeParse(input.body);
@@ -140,7 +139,7 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to save award", success: false } };
     }
   },
-  deleteAward: async (input, c) => {
+  deleteAward: async (input, c: HonoContext) => {
 
     try {
                   const db = c.get("db") as Kysely<DB>;

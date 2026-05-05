@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { Hono } from "hono";
 import { AppEnv, ensureAuth, rateLimitMiddleware } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { tbaContract } from "../../../shared/schemas/contracts/tbaContract";
+import type { HonoContext } from "@shared/types/api";
 
 const s = initServer<AppEnv>();
 export const tbaRouter = new Hono<AppEnv>();
@@ -26,7 +25,7 @@ function setTbaCache(key: string, value: { data: unknown; expiresAt: number }) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function getTBA(path: string, c: any) {
+async function getTBA(path: string, c: HonoContext) {
   const now = Date.now();
   const cached = tbaCache.get(path);
   if (cached && cached.expiresAt > now) return cached.data;
@@ -53,7 +52,7 @@ async function getTBA(path: string, c: any) {
 }
 
 const tbaTsRestRouter = s.router(tbaContract, {
-  getRankings: async (input, c) => {
+  getRankings: async (input, c: HonoContext) => {
     try {
       const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -66,7 +65,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch rankings" } };
     }
   },
-  getMatches: async (input, c) => {
+  getMatches: async (input, c: HonoContext) => {
     try {
       const eventKey = String(input.params.eventKey);
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
@@ -80,7 +79,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch matches" } };
     }
   },
-  getFtcEvents: async (input, c) => {
+  getFtcEvents: async (input, c: HonoContext) => {
     try {
       const { season, eventCode, type } = input.params;
       const path = `/${season}/events/${eventCode}/${type}`;

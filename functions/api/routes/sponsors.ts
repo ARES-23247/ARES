@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { sql } from "kysely";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware, s } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
+import type { HonoContext } from "@shared/types/api";
 export const sponsorsRouter = new Hono<AppEnv>();
 
 type SponsorSelectedRow = {
@@ -19,7 +18,7 @@ type SponsorSelectedRow = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sponsorHandlers: any = {
-  getSponsors: async (_input, c) => {
+  getSponsors: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db");
       const results = await db.selectFrom("sponsors")
@@ -43,7 +42,7 @@ const sponsorHandlers: any = {
     }
   },
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getRoi: async ({ params }: any, c: any) => {
+  getRoi: async ({ params }: any, c: HonoContext) => {
     try {
       const db = c.get("db");
       const { token } = params;
@@ -90,7 +89,7 @@ const sponsorHandlers: any = {
       return { status: 500, body: { error: "Failed to fetch ROI" } };
     }
   },
-  adminList: async (_input, c) => {
+  adminList: async (_input, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");
@@ -103,7 +102,7 @@ const sponsorHandlers: any = {
     }
   },
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  saveSponsor: async ({ body }: any, c: any) => {
+  saveSponsor: async ({ body }: any, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");
@@ -142,7 +141,7 @@ const sponsorHandlers: any = {
     }
   },
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deleteSponsor: async ({ params }: any, c: any) => {
+  deleteSponsor: async ({ params }: any, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");
@@ -156,7 +155,7 @@ const sponsorHandlers: any = {
       return { status: 500, body: { error: "Failed to delete sponsor" } };
     }
   },
-  getAdminTokens: async (_input, c) => {
+  getAdminTokens: async (_input, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");
@@ -181,7 +180,7 @@ const sponsorHandlers: any = {
     }
   },
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  generateToken: async ({ body }: any, c: any) => {
+  generateToken: async ({ body }: any, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db");

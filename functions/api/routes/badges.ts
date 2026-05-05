@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -7,12 +5,14 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { badgeContract } from "../../../shared/schemas/contracts/badgeContract";
 import { AppEnv, ensureAdmin, ensureAuth, getSessionUser, rateLimitMiddleware, s } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
+import type { HonoContext } from "@shared/types/api";
+
 
 
 
 
 const badgesTsRestRouterObj = {
-  list: async (_input, c) => {
+  list: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
@@ -36,7 +36,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to fetch badges" } };
     }
   },
-  create: async (input, c) => {
+  create: async (input, c: HonoContext) => {
     try {
       const { id, name, description, icon, color_theme } = input.body;
       const db = c.get("db") as Kysely<DB>;
@@ -56,7 +56,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to create badge" } };
     }
   },
-  grant: async (input, c) => {
+  grant: async (input, c: HonoContext) => {
     try {
       const { userId, badgeId } = input.body;
       const db = c.get("db") as Kysely<DB>;
@@ -119,7 +119,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to award badge" } };
     }
   },
-  revoke: async (input, c) => {
+  revoke: async (input, c: HonoContext) => {
     try {
       const { userId, badgeId } = input.params;
       const db = c.get("db") as Kysely<DB>;
@@ -134,7 +134,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to revoke badge" } };
     }
   },
-  delete: async (input, c) => {
+  delete: async (input, c: HonoContext) => {
     try {
       const { id } = input.params;
       const db = c.get("db") as Kysely<DB>;
@@ -145,7 +145,7 @@ const badgesTsRestRouterObj = {
       return { status: 500 as const, body: { error: err.message || "Failed to delete badge definition" } };
     }
   },
-  leaderboard: async (_input, c) => {
+  leaderboard: async (_input, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db
