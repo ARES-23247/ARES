@@ -49,7 +49,7 @@ const tasksHandlers: any = {
       const results = await q.execute();
 
       const tasks = results.map(r => {
-        let assignees = [];
+        let assignees: Array<{ id: string; nickname: string | null }> = [];
         try {
           assignees = r.assignees_json ? JSON.parse(r.assignees_json) : [];
           // Filter out null results from left join if any
@@ -219,7 +219,8 @@ const tasksHandlers: any = {
       const now = new Date().toISOString();
       
  
-      await Promise.all(input.body.items.map((item: any) =>
+      const items = input.body.items as Array<{ id: string; status: string; sort_order: number }>;
+      await Promise.all(items.map((item) =>
         db.updateTable("tasks")
           .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
           .where("id", "=", item.id)
