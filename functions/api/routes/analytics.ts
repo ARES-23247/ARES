@@ -96,7 +96,7 @@ const analyticsHandlers = {
         activityData,
       ] = await Promise.all([
         db.selectFrom("page_analytics").select((eb) => eb.fn.count("path").as("total")).executeTakeFirst().catch(() => ({ total: 0 })),
-        sql<{ unique: number }>`SELECT COUNT(DISTINCT user_agent) as unique FROM page_analytics`.execute(db).then(r => r.rows[0]).catch(() => ({ unique: 0 })),
+        sql<{ unique_count: number }>`SELECT COUNT(DISTINCT user_agent) as unique_count FROM page_analytics`.execute(db).then(r => r.rows[0]).catch(() => ({ unique_count: 0 })),
         db.selectFrom("page_analytics").select(["path", "category", (eb) => eb.fn.count("path").as("views")]).groupBy(["path", "category"]).orderBy("views", "desc").limit(10).execute().catch(() => []),
         db.selectFrom("page_analytics").select(["referrer", (eb) => eb.fn.count("referrer").as("visits")]).where("referrer", "!=", "").groupBy("referrer").orderBy("visits", "desc").limit(10).execute().catch(() => []),
         db.selectFrom("page_analytics").select(["path", "category", "user_agent", "referrer", "timestamp"]).orderBy("timestamp", "desc").limit(20).execute().catch(() => []),
@@ -162,7 +162,7 @@ const analyticsHandlers = {
         status: 200 as const,
         body: {
           totalPageViews: Number(totalViewsData?.total || 0),
-          uniqueVisitors: Number(uniqueVisitorsData?.unique || 0),
+          uniqueVisitors: Number(uniqueVisitorsData?.unique_count || 0),
           topPages,
           topReferrers,
           recentViews,
