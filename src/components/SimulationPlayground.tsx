@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
-import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize, Link2, Keyboard, History, Upload } from "lucide-react";
+import { Play, Save, Loader2, RotateCcw, Copy, Check, Send, Trash2, GripVertical, FolderOpen, Plus, ChevronDown, Camera, X, Maximize, Minimize, Link2, Keyboard, History, Upload, AlertTriangle } from "lucide-react";
 import { loader, type Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import type { languages } from "monaco-editor";
@@ -829,8 +829,11 @@ export default function SimulationPlayground() {
   }, [isFullscreen, handleRun, handleFormatCode]);
   const content = (
     <div
-      className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col p-4 md:p-6 overflow-hidden w-full h-full" : "flex flex-col h-[calc(100vh-80px)]"}
-      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      className={isFullscreen ? "fixed inset-0 z-[100] bg-obsidian flex flex-col w-full h-full overflow-hidden" : "w-full h-full"}
+    >
+      <div
+        className={isFullscreen ? "hidden md:flex flex-col w-full h-full p-4 md:p-6" : "hidden md:flex flex-col h-[calc(100vh-80px)]"}
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
       onDrop={async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1407,6 +1410,16 @@ export default function SimulationPlayground() {
             </PanelGroup>
           </Panel>
         </PanelGroup>
+      </div>
+      </div>
+      <div className="flex md:hidden flex-col items-center justify-center p-8 h-full min-h-[calc(100vh-80px)] text-center bg-obsidian">
+        <div className="bg-ares-red/10 p-4 rounded-full mb-4">
+          <AlertTriangle className="text-ares-red" size={48} />
+        </div>
+        <h2 className="text-2xl font-bold font-heading text-white mb-2">Desktop Recommended</h2>
+        <p className="text-white/60 mb-6">
+          The ARES Simulation IDE requires a larger screen and hardware acceleration to run optimally. Please open this page on a desktop or laptop device.
+        </p>
       </div>
     </div>
   );

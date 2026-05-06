@@ -23,8 +23,9 @@ function normalizeEmail(email: string): string {
   return `${local.replace(/\./g, "")}@${domain}`;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const zulipTsRestRouter = s.router(zulipContract, {
-  getPresence: async (_input: unknown, c: HonoContext) => {
+  getPresence: async (_input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -68,7 +69,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  sendMessage: async (input: unknown, c: HonoContext) => {
+  sendMessage: async (input: any, c: HonoContext) => {
     try {
       const { sendZulipMessage } = await import("../../utils/zulipSync");
       const config = await getSocialConfig(c);
@@ -99,7 +100,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  getTopicMessages: async (input: unknown, c: HonoContext) => {
+  getTopicMessages: async (input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -138,7 +139,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500, body: { success: false, error: (err as Error).message } };
     }
   },
-  auditMissingUsers: async (_input: unknown, c: HonoContext) => {
+  auditMissingUsers: async (_input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -237,7 +238,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  inviteUsers: async (input: unknown, c: HonoContext) => {
+  inviteUsers: async (input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {

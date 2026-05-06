@@ -1,5 +1,6 @@
 import { Suspense, lazy, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { SIM_METADATA } from '../components/generated/sim-registry';
 
 // Dynamic import map - must be top-level for static analysis and to avoid re-creation
@@ -49,7 +50,18 @@ const SimRunner = () => {
 
   return (
     <div className="w-full h-full min-h-screen bg-obsidian flex flex-col">
-      <SimComponentWrapper simId={simId} />
+      <div className="hidden md:flex flex-1 w-full h-full">
+        <SimComponentWrapper simId={simId} />
+      </div>
+      <div className="flex md:hidden flex-col items-center justify-center p-8 h-[calc(100vh-64px)] text-center">
+        <div className="bg-ares-red/10 p-4 rounded-full mb-4">
+          <AlertTriangle className="text-ares-red" size={48} />
+        </div>
+        <h2 className="text-2xl font-bold font-heading text-white mb-2">Desktop Recommended</h2>
+        <p className="text-white/60 mb-6">
+          The ARES Simulation tools require a larger screen and hardware acceleration to run optimally. Please open this page on a desktop or laptop device.
+        </p>
+      </div>
     </div>
   );
 };

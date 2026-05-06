@@ -70,9 +70,9 @@ const userTsRestRouter = s.router(userContract, {
 
       if (!row) return { status: 404 as const, body: { error: "User not found" } };
 
-      return { 
-        status: 200 as const, 
-        body: { 
+      return {
+        status: 200 as const,
+        body: {
           user: {
             id: String(row.id),
             name: row.name || null,
@@ -80,8 +80,8 @@ const userTsRestRouter = s.router(userContract, {
             emailVerified: !!row.emailVerified,
             image: row.image || null,
             role: String(row.role || "user"),
-            createdAt: new Date(row.createdAt as string).getTime() || 0,
-            updatedAt: new Date(row.updatedAt as string).getTime() || 0,
+            createdAt: typeof row.createdAt === 'number' ? row.createdAt : new Date(row.createdAt as string).getTime(),
+            updatedAt: typeof row.updatedAt === 'number' ? row.updatedAt : new Date(row.updatedAt as string).getTime(),
             nickname: row.nickname || null,
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             member_type: row.member_type as any

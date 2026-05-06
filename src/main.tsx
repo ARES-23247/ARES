@@ -1,7 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import { get, set, del } from "idb-keyval";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HelmetProvider } from "react-helmet-async";
 import { ModalProvider } from "./contexts/ModalContext";
@@ -28,9 +31,21 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60, // EFF-D01: Cache D1 reads for 1 min to reduce costs
+      gcTime: 1000 * 60 * 60 * 24 * 7, // Keep offline data for 7 days
       retry: 1,
       refetchOnWindowFocus: false,
     },
+  },
+});
+
+const persister = createAsyncStoragePersister({
+  storage: {
+    getItem: async (key) => {
+      const val = await get(key);
+      return val === undefined ? null : val;
+    },
+    setItem: set,
+    removeItem: del,
   },
 });
 
@@ -54,7 +69,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
         <BrowserRouter>
           <NuqsAdapter>
             <ModalProvider>
@@ -63,7 +78,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           </NuqsAdapter>
         </BrowserRouter>
         <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </HelmetProvider>
   </React.StrictMode>
 );

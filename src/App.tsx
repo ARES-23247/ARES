@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import CommandPalette from "./components/CommandPalette";
 import MobileQuickActions from "./components/MobileQuickActions";
 import ScrollToTop from "./components/ScrollToTop";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 import React, { Suspense } from "react";
 
@@ -65,6 +66,7 @@ export default function App() {
     <ErrorBoundary>
       <Toaster theme="dark" position="bottom-right" />
       <ScrollToTop />
+      <PWAInstallPrompt />
       <CommandPalette />
       <MobileQuickActions />
       <Suspense fallback={null}><GlobalRAGChatbot /></Suspense>

@@ -12,6 +12,7 @@ import type { HonoContext } from "@shared/types/api";
 
 export const profilesRouter = new Hono<AppEnv>();
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler type inference
 const profileHandlers: any = {
   getMe: async (_input, c) => {
@@ -247,8 +248,9 @@ const profileHandlers: any = {
     } catch {
       return { status: 500 as const, body: { error: "Profile fetch failed" } };
     }
-  },
+  }
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const profileTsRestRouter = s.router(profileContract, profileHandlers);
 

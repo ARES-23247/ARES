@@ -31,6 +31,7 @@ const sanitizeFtsQuery = (query: string): string => {
   return `"${cleanQ.replace(/"/g, '""')}*`;
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const postTsRestRouterObj = {
   getPosts: async (input: any, c: Context<AppEnv>) => {
     try {
@@ -600,8 +601,9 @@ const postTsRestRouterObj = {
     } catch (err) {
       return { status: 502, body: { error: (err as Error).message } };
     }
-  },
+  }
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const postTsRestRouter = s.router(postContract, postTsRestRouterObj);
 
