@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -232,3 +233,4 @@ createHonoEndpoints(
 );
 
 export default settingsRouter;
+

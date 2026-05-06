@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, ensureAdmin, getSocialConfig, checkPersistentRateLimit, s } from "../middleware";
@@ -18,7 +19,7 @@ interface WeekData {
   days: number[];
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const githubHandlers = {
   getBoard: async (_input: any, c: HonoContext) => {
     try {
@@ -27,12 +28,12 @@ const githubHandlers = {
       if (!ghConfig) {
         console.error("[GitHub:Board] Configuration missing — GITHUB_PAT or GITHUB_PROJECT_ID not set");
         // Return empty board instead of 500 so the frontend can distinguish "not configured"
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
         return { status: 200 as const, body: { success: false, board: [] as any[] } };
       }
       
       const boardResults = await fetchProjectBoard(ghConfig);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const board = (boardResults.items || []).map((i: any) => ({
         id: String(i.id),
         title: String(i.title),
@@ -42,12 +43,12 @@ const githubHandlers = {
         type: String(i.type || "DRAFT_ISSUE"),
       }));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       return { status: 200 as const, body: { success: true, board: board as any[] } };
     } catch (e) {
       console.error("[GitHub:Board] Error fetching board:", (e as Error).message, (e as Error).stack);
       // Return empty board with success:false so the frontend shows a meaningful error
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       return { status: 200 as const, body: { success: false, board: [] as any[] } };
     }
   },
@@ -57,7 +58,7 @@ const githubHandlers = {
       const ghConfig = buildGitHubConfig(config);
       if (!ghConfig) {
         console.error("[GitHub:Create] Configuration missing");
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
         return { status: 500 as const, body: { error: "GitHub configuration missing" } as any };
       }
 
@@ -65,7 +66,7 @@ const githubHandlers = {
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[GitHub:Create] Error", e);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       return { status: 500 as const, body: { error: "Failed to create project item" } as any };
     }
   },
@@ -84,7 +85,7 @@ const githubHandlers = {
 
     const cachedResponse = await cache.match(cacheKey);
     if (cachedResponse) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const data = await cachedResponse.json() as any;
       return { status: 200 as const, body: data };
     }
@@ -135,12 +136,12 @@ const githubHandlers = {
 
       const maxCount = Math.max(1, ...Array.from(dailyMap.values()));
       let totalCommits = 0;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const weeks: any[][] = [];
 
       const cursor = new Date(startDate);
       while (cursor <= today || weeks.length < 53) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
         const week: any[] = [];
         for (let d = 0; d < 7; d++) {
           const key = cursor.toISOString().split("T")[0];
@@ -174,16 +175,16 @@ const githubHandlers = {
         c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
       }
       
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       return { status: 200 as const, body: payload as any };
     } catch (e) {
       console.error("[GitHub:Activity] Error", e);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       return { status: 500 as const, body: { error: "Failed to fetch GitHub activity" } as any };
     }
   }
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 
 const githubTsRestRouter = s.router(githubContract, githubHandlers as any);
 
@@ -204,3 +205,4 @@ createHonoEndpoints(
   }
 );
 export default githubRouter;
+

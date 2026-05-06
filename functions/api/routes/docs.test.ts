@@ -1,5 +1,4 @@
-
-
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context } from "hono";
@@ -357,7 +356,7 @@ describe("Hono Backend - /docs Router", () => {
     });
     
     // Create an array of all waitUntil promises
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const waitUntils: Promise<any>[] = [];
     const mockCtx = {
       ...mockExecutionContext,
@@ -639,3 +638,4 @@ describe("Hono Backend - /docs Router", () => {
     expect(res.status).toBe(400);
   });
 });
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context, Next } from "hono";
@@ -128,3 +129,4 @@ describe("AI Router - /reindex endpoint", () => {
     expect(body.errors).toEqual(["Batch 0 failed"]);
   });
 });
+

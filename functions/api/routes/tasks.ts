@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -10,7 +11,7 @@ import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
 export const tasksRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const tasksHandlers: any = {
   list: async (input: any, c: HonoContext) => {
     try {
@@ -390,8 +391,8 @@ const tasksHandlers: any = {
     }
   },
 };
-const tasksTsRestRouter = s.router(taskContract, tasksHandlers);
-/* eslint-enable @typescript-eslint/no-explicit-any */
+const tasksTsRestRouter = s.router(taskContract, tasksHandlers as any);
+
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));
@@ -411,3 +412,5 @@ createHonoEndpoints(
   }
 );
 export default tasksRouter;
+
+

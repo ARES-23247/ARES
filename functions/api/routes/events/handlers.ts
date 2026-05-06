@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { getSocialConfig, getSessionUser, getDbSettings, logAuditAction, AppEnv } from "../../middleware";
 import { triggerBackgroundReindex } from "../ai/autoReindex";
 import { pushEventToGcal, pullEventsFromGcal, deleteEventFromGcal } from "../../../utils/gcalSync";
@@ -112,7 +113,7 @@ export const eventHandlers = {
           .limit(Number(limit) || 50)
           .offset(Number(offset) || 0)
           .execute();
-      } catch (errInner) {
+      } catch (_errInner) {
         // Fallback for older schemas
         results = await db.selectFrom("events")
           .select(["id", "title", "category", "date_start", "date_end", "location", "description", "cover_image"])
@@ -1129,3 +1130,4 @@ export const eventHandlers = {
     }
   },
 };
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { userContract } from "../../../shared/schemas/contracts/userContract";
@@ -7,11 +8,11 @@ import { decrypt } from "../../utils/crypto";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
+ 
 
 export const usersRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const userHandlers: any = {
   getUsers: async (input: any, c: HonoContext) => {
     try {
@@ -50,7 +51,7 @@ const userHandlers: any = {
 
       const nextCursor = results.length === limit ? String(results[results.length - 1].createdAt) : null;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       return { status: 200 as const, body: { users: users, nextCursor } };
     } catch {
       return { status: 500 as const, body: { error: "Database error" } };
@@ -83,9 +84,9 @@ const userHandlers: any = {
             createdAt: typeof row.createdAt === 'number' ? row.createdAt : new Date(row.createdAt as string).getTime(),
             updatedAt: typeof row.updatedAt === 'number' ? row.updatedAt : new Date(row.updatedAt as string).getTime(),
             nickname: row.nickname || null,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
             member_type: row.member_type 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
           } 
         }
       };
@@ -278,6 +279,7 @@ createHonoEndpoints(
     }
   }
 );
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 
 export default usersRouter;
+

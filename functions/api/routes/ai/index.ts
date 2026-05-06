@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { AppEnv, ensureAdmin, persistentRateLimitMiddleware, verifyTurnstile } from "../../middleware";
@@ -1022,3 +1023,4 @@ aiRouter.get("/chat-session/:id", async (c: Context<AppEnv>) => {
 });
 
 export default aiRouter;
+

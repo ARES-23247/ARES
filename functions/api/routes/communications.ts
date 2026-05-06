@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { communicationsContract } from "../../../shared/schemas/contracts/communicationsContract";
@@ -11,21 +12,21 @@ export const communicationsRouter = new Hono<AppEnv>();
 communicationsRouter.use("/admin/*", ensureAdmin);
 // WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const handlers = {
   getStats: async (_input: any, c: HonoContext) => {
     try {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const db = c.get("db") as any;
       if (!db) {
         console.error("[Communications] db context is null/undefined");
         return { status: 500 as const, body: { success: false as const, error: "Database not initialized" } };
       }
       const users = await db.selectFrom("user").select(["email"]).execute();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const activeMembers = users.filter((m: any) => m.email);
       return { status: 200 as const, body: { activeUsers: activeMembers.length } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (err: any) {
       console.error("[Communications] Error fetching stats:", err);
       return { status: 500 as const, body: { success: false as const, error: err?.message || "Internal server error" } };
@@ -44,10 +45,10 @@ const handlers = {
       const fromEmail = socialConfig.RESEND_FROM_EMAIL || "team@aresfirst.org";
 
       // Fetch users from database
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const db = c.get("db") as any;
       const users = await db.selectFrom("user").select(["email"]).execute();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const activeMembers = users.filter((m: any) => m.email);
 
       if (activeMembers.length === 0) {
@@ -106,7 +107,7 @@ const handlers = {
         } 
       };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (err: any) {
       // WR-09: Sanitize error message to avoid logging PII (email addresses)
       const errMsg = err instanceof Error ? err.message : "Unknown error";
@@ -123,7 +124,7 @@ const handlers = {
     }
   }
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 
 const communicationsTsRestRouter = s.router(communicationsContract, handlers as any);
 createHonoEndpoints(
@@ -140,3 +141,4 @@ createHonoEndpoints(
 );
 
 export default communicationsRouter;
+

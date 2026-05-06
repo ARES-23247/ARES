@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { indexSiteContent } from "./indexer";
 
@@ -277,3 +278,4 @@ describe("indexSiteContent", () => {
     expect(result.errors).toEqual([]);
   });
 });
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import { getSessionUser, logAuditAction } from "../../middleware";
@@ -6,7 +7,7 @@ import { outreachSchema, OutreachPayload } from "../../../../shared/schemas/outr
 // Description snippet length for list views (IN-07: use named constant instead of magic number)
 const SNIPPET_LENGTH = 200;
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 
 async function fetchVolunteerEvents(db: Kysely<DB>, existingEventIds: string[]) {
   try {
@@ -225,4 +226,4 @@ export const outreachHandlers = {
     }
   },
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
+

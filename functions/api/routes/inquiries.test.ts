@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { TestEnv, MockKysely } from "../../../src/test/types";
 declare const global: typeof globalThis;
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -446,13 +446,13 @@ describe("Hono Backend - /inquiries Router", () => {
     const { purgeOldInquiries } = await import("./inquiries/handlers");
     mockDb.execute.mockResolvedValueOnce([{ id: "1" }]);
      
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const res = await purgeOldInquiries(mockDb as any, 30);
     expect(res.deleted).toBe(1);
     expect(mockDb.deleteFrom).toHaveBeenCalledWith("inquiries");
 
      
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const res2 = await purgeOldInquiries(mockDb as any, 0);
     expect(res2.deleted).toBe(0);
   });
@@ -481,3 +481,4 @@ describe("Hono Backend - /inquiries Router", () => {
     }
   });
 });
+

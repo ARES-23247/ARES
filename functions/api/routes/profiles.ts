@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { AppEnv, getSessionUser, sanitizeProfileForPublic, persistentRateLimitMiddleware, rateLimitMiddleware, ensureAuth, s } from "../middleware";
 import { getAuth } from "../../utils/auth";
@@ -12,8 +13,8 @@ import type { HonoContext } from "@shared/types/api";
 
 export const profilesRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler type inference
+
+ 
 const profileHandlers: any = {
   getMe: async (_input: any, c: HonoContext) => {
     const user = (await getSessionUser(c))!;
@@ -243,16 +244,16 @@ const profileHandlers: any = {
         .orderBy("ub.awarded_at", "desc")
         .execute();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest contract type compatibility
+       
       return { status: 200 as const, body: { profile: sanitized as any, badges: rawBadges as any[] } as any };
     } catch {
       return { status: 500 as const, body: { error: "Profile fetch failed" } };
     }
   }
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
-const profileTsRestRouter = s.router(profileContract, profileHandlers);
+
+const profileTsRestRouter = s.router(profileContract, profileHandlers as any);
 
 profilesRouter.use("/me", ensureAuth);
 profilesRouter.use("/update-me", ensureAuth);
@@ -288,3 +289,5 @@ profilesRouter.put("/avatar", persistentRateLimitMiddleware(15, 60), async (c: H
 });
 
 export default profilesRouter;
+
+

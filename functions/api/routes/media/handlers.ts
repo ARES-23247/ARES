@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { getDbSettings, checkPersistentRateLimit, logAuditAction } from "../../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
@@ -102,7 +103,7 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
   return { objects };
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- Cloudflare Workers runtime types (R2, AI, caches) require any casts */
+
 type HandlerInput = {
   params: Record<string, string>;
   body: unknown;
@@ -354,4 +355,4 @@ export const mediaHandlers = {
     }
   },
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
+

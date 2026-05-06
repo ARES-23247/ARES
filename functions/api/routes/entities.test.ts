@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TestEnv, MockKysely } from "../../../src/test/types";
 import { Hono } from "hono";
@@ -143,3 +144,4 @@ describe("Hono Backend - /entities Router", () => {
     expect(res.status).toBe(500);
   });
 });
+

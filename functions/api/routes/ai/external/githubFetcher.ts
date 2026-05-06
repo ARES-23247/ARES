@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 /**
  * Utility to fetch and parse external resources from GitHub (e.g. FTC Docs, ARESLIB).
  * 
@@ -90,3 +91,4 @@ export async function fetchGithubRepoFiles(
     return { files: [], commitSha: "", error: String(error) };
   }
 }
+

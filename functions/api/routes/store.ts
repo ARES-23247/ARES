@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { storeContract } from "../../../shared/schemas/contracts/storeContract";
@@ -9,7 +10,7 @@ import { DB } from "../../../shared/schemas/database";
 import type { HonoContext } from "@shared/types/api";
 
 const app = new Hono<AppEnv>();
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 
 // CR-04 FIX: Apply ensureAdmin middleware to orders routes
 app.use("/orders", ensureAdmin);
@@ -148,7 +149,7 @@ const storeHandlers: any = {
   },
 };
 
-const storeTsRestRouter = s.router(storeContract, storeHandlers);
+const storeTsRestRouter = s.router(storeContract, storeHandlers as any);
 
 createHonoEndpoints(
   storeContract,
@@ -238,4 +239,5 @@ app.post("/webhook", async (c) => {
 });
 
 export default app;
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
+

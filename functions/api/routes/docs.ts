@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { docContract } from "../../../shared/schemas/contracts/docContract";
@@ -10,7 +11,7 @@ import { DB } from "../../../shared/schemas/database";
 
 import type { HonoContext } from "@shared/types/api";
 import type { SelectableRow } from "@shared/types/database";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
+ 
 
 export const docsRouter = new Hono<AppEnv>();
 
@@ -97,7 +98,7 @@ async function pruneDocHistory(c: HonoContext, slug: string, limit = 10) {
   } catch { /* ignore */ }
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const docHandlers: any = {
   getDocs: async (_input: any, c: HonoContext) => {
     try {
@@ -758,7 +759,7 @@ const docHandlers: any = {
       c.executionCtx?.waitUntil?.(logAuditAction(c, "PURGE_DOC", "docs", slug, JSON.stringify(doc)));
       
       return { status: 200 as const, body: { success: true } };
-    } catch (e) {
+    } catch (_e) {
       return { status: 500 as const, body: { error: "Purge failed" } };
     }
   }
@@ -802,5 +803,6 @@ createHonoEndpoints(
     }
   }
 );
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export default docsRouter;
+

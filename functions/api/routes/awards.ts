@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -11,11 +12,10 @@ const saveAwardSchema = awardContract.saveAward.body;
 
 export const awardsRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const awardsHandlers: any = {
-  getAwards: async (input: any, c: HonoContext) => {
+const awardsTsRestRouter = s.router(awardContract, {
+  getAwards: async (input: any, c: any) => {
     try {
-                  const db = c.get("db") as Kysely<DB>;
+      const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = input.query;
       const results = await db.selectFrom("awards")
         .select(["id", "title", "date", "event_name", "description", "icon_type as image_url", "season_id", "created_at"])
@@ -44,7 +44,7 @@ const awardsHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch awards" } };
     }
   },
-  saveAward: async (input: any, c: HonoContext) => {
+  saveAward: async (input: any, c: any) => {
     try {
       // Validate input against schema
       const validationResult = saveAwardSchema.safeParse(input.body);
@@ -53,7 +53,7 @@ const awardsHandlers: any = {
       }
       const validatedData = validationResult.data;
 
-                  const db = c.get("db") as Kysely<DB>;
+      const db = c.get("db") as Kysely<DB>;
       const { id, title, year, event_name, description, image_url, season_id } = validatedData;
 
       let finalId: string | undefined = id;
@@ -140,10 +140,10 @@ const awardsHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to save award", success: false } };
     }
   },
-  deleteAward: async (input: any, c: HonoContext) => {
+  deleteAward: async (input: any, c: any) => {
 
     try {
-                  const db = c.get("db") as Kysely<DB>;
+      const db = c.get("db") as Kysely<DB>;
       const numericId = Number(input.params.id);
       if (isNaN(numericId) || numericId <= 0) {
         return { status: 400 as const, body: { error: "Invalid award ID", success: false } };
@@ -156,9 +156,7 @@ const awardsHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to delete award", success: false } };
     }
   },
-};
-const awardsTsRestRouter = s.router(awardContract, awardsHandlers);
-/* eslint-enable @typescript-eslint/no-explicit-any */
+} as any);
 
 awardsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(
@@ -175,3 +173,4 @@ createHonoEndpoints(
 );
 
 export default awardsRouter;
+

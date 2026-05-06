@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono, Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
@@ -24,7 +25,7 @@ vi.mock("../middleware", async (importOriginal) => {
   return {
     ...actual,
     ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     ensureAuth: async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("sessionUser", { id: "test-user", email: "test@test.com", name: "Test User", nickname: "TestNick", image: null, role: "admin", member_type: "mentor" });
       return next();
@@ -158,7 +159,7 @@ describe("Hono Backend - /zulip Router", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as ZulipResponse;
     expect(body.messages).toHaveLength(1);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     expect((body.messages as any[])[0].content).toBe("hi");
   });
 
@@ -301,3 +302,4 @@ describe("Hono Backend - /zulip Router", () => {
     expect(body.invitedCount).toBe(1);
   });
 });
+

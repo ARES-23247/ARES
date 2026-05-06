@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import githubWebhookRouter from "./githubWebhook";
 import { mockExecutionContext, flushWaitUntil } from "../../../src/test/utils";
@@ -697,3 +697,4 @@ describe("GitHub Webhook Router", () => {
     expect(res.status).toBe(401);
   });
 });
+

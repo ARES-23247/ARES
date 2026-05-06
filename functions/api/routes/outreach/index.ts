@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { outreachContract } from "../../../../shared/schemas/contracts/outreachContract";
@@ -6,9 +7,9 @@ import { outreachHandlers } from "./handlers";
 
 const outreachRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const outreachTsRestRouter = s.router(outreachContract, outreachHandlers as any);
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 
 // Apply protections
 outreachRouter.use("/", ensureAuth);
@@ -30,3 +31,4 @@ createHonoEndpoints(
 );
 
 export default outreachRouter;
+

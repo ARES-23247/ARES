@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { AppEnv, ensureAuth } from "../middleware";
@@ -70,7 +71,7 @@ async function canModifySimulation(c: Context<AppEnv>, simId: string): Promise<b
     const db = c.get("db");
     const ghConfig = getGitHubConfig(c);
     const config = await db.selectFrom("settings").selectAll().execute();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const patSetting = config.find((s: any) => s.key === "GITHUB_PAT");
     const pat = patSetting?.value || c.env.GITHUB_PAT;
 
@@ -89,7 +90,7 @@ async function canModifySimulation(c: Context<AppEnv>, simId: string): Promise<b
     const res = await fetch(url, { headers });
     if (!res.ok) return false;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const commits = await res.json() as any[];
     if (!commits || commits.length === 0) return false;
 
@@ -316,7 +317,7 @@ simulationsRouter.post("/", ensureAuth, async (c: Context<AppEnv>) => {
     let sha: string | undefined;
     const getRes = await fetch(url, { headers });
     if (getRes.ok) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const getJson = (await getRes.json()) as any;
       sha = getJson.sha;
       // File exists - check ownership before allowing update
@@ -355,7 +356,7 @@ simulationsRouter.post("/", ensureAuth, async (c: Context<AppEnv>) => {
           break;
         }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const regJson = (await regGetRes.json()) as any;
         const regSha = regJson.sha;
         const regContentStr = decodeURIComponent(escape(atob(regJson.content)));
@@ -364,7 +365,7 @@ simulationsRouter.post("/", ensureAuth, async (c: Context<AppEnv>) => {
           const registry = JSON.parse(regContentStr);
 
           // Check if already registered (could be added by another concurrent request)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           if (!registry.simulators.some((s: any) => s.id === simIdStr)) {
             registry.simulators.push({
               id: simIdStr,
@@ -470,7 +471,7 @@ simulationsRouter.delete("/:id", async (c: Context<AppEnv>) => {
     let sha: string | undefined;
     const getRes = await fetch(url, { headers });
     if (getRes.ok) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const getJson = (await getRes.json()) as any;
       sha = getJson.sha;
     }
@@ -499,13 +500,13 @@ simulationsRouter.delete("/:id", async (c: Context<AppEnv>) => {
     const regUrl = `${ghConfig.apiBase}/contents/src/sims/simRegistry.json`;
     const regGetRes = await fetch(regUrl, { headers });
     if (regGetRes.ok) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const regJson = (await regGetRes.json()) as any;
       const regSha = regJson.sha;
       const regContentStr = decodeURIComponent(escape(atob(regJson.content)));
       try {
         const registry = JSON.parse(regContentStr);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const filtered = registry.simulators.filter((s: any) => s.id !== simIdStr);
         
         if (filtered.length !== registry.simulators.length) {
@@ -655,3 +656,4 @@ simulationsRouter.get("/gist/:id", async (c: Context<AppEnv>) => {
     return c.json({ error: "Failed to fetch Gist" }, 500);
   }
 });
+

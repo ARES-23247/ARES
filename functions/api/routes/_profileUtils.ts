@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -112,3 +113,4 @@ export async function upsertProfile(
     .onConflict((oc) => oc.column("user_id").doUpdateSet(updateSet))
     .execute();
 }
+

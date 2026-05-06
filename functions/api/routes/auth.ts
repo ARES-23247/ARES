@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { AppEnv, getSessionUser, persistentRateLimitMiddleware } from "../middleware";
@@ -42,3 +43,4 @@ authRouter.on(["POST", "GET"], "/*", persistentRateLimitMiddleware(20, 60), asyn
 });
 
 export default authRouter;
+

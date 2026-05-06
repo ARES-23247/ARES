@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { AppEnv, getSessionUser, ensureAuth, rateLimitMiddleware, s } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -10,7 +11,7 @@ import type { HonoContext } from "@shared/types/api";
 
 export const notificationsRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const notificationHandlers: any = {
   getNotifications: async (_input: any, c: HonoContext) => {
     try {
@@ -186,8 +187,8 @@ const notificationHandlers: any = {
     }
   },
 };
-const notificationTsRestRouter = s.router(notificationContract, notificationHandlers);
-/* eslint-enable @typescript-eslint/no-explicit-any */
+const notificationTsRestRouter = s.router(notificationContract, notificationHandlers as any);
+
 
 notificationsRouter.use("*", ensureAuth);
 notificationsRouter.use("/:id/read", rateLimitMiddleware(20, 60));
@@ -207,3 +208,5 @@ createHonoEndpoints(
 );
 
 export default notificationsRouter;
+
+

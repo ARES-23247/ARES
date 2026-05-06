@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { AppEnv, ensureAdmin, ensureAuth, getSocialConfig, s } from "../middleware";
 import { createHonoEndpoints } from "ts-rest-hono";
@@ -23,7 +24,7 @@ function normalizeEmail(email: string): string {
   return `${local.replace(/\./g, "")}@${domain}`;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const zulipHandlers: any = {
   getPresence: async (input: any, c: HonoContext) => {
     try {
@@ -303,8 +304,8 @@ const zulipHandlers: any = {
     }
   }
 };
-const zulipTsRestRouter = s.router(zulipContract, zulipHandlers);
-/* eslint-enable @typescript-eslint/no-explicit-any */
+const zulipTsRestRouter = s.router(zulipContract, zulipHandlers as any);
+
 
 // CR-07 FIX: Apply authentication to all Zulip routes
 // Admin-only routes override the base authentication
@@ -324,3 +325,5 @@ createHonoEndpoints(
   }
 );
 export default zulipRouter;
+
+

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- Test mocks require any casts */
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { TestEnv, MockKysely } from "../../../src/test/types";
@@ -136,3 +136,4 @@ describe("Hono Backend - /points Router", () => {
     });
   });
 });
+

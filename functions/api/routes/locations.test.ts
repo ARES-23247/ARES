@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context } from "hono";
@@ -154,3 +155,4 @@ describe("Hono Backend - /locations Router", () => {
     expect(res.status).toBe(500);
   });
 });
+

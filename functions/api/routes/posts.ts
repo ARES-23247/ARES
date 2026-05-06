@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -32,7 +33,7 @@ const sanitizeFtsQuery = (query: string): string => {
   return `"${cleanQ.replace(/"/g, '""')}*`;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const postTsRestRouterObj = {
   getPosts: async (input: any, c: HonoContext) => {
     try {
@@ -465,7 +466,7 @@ const postTsRestRouterObj = {
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("posts").set({ is_deleted: 1, status: "draft", updated_at: new Date().toISOString() }).where("slug", "=", slug).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "DELETE_POST", "posts", slug));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- System Boundary Type: Cloudflare AI binding
+       
       triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB);
       return { status: 200, body: { success: true } };
     } catch (e) {
@@ -604,7 +605,7 @@ const postTsRestRouterObj = {
     }
   }
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 
 const postTsRestRouter = s.router(postContract, postTsRestRouterObj as any);
 
@@ -633,3 +634,4 @@ createHonoEndpoints(
 );
 
 export default postsRouter;
+

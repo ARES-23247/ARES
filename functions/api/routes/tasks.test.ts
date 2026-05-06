@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { MockKysely, TestEnv } from "../../../src/test/types";
@@ -99,7 +100,7 @@ describe("Hono Backend - /tasks Router", () => {
 
     const res = await testApp.request("/", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.tasks).toHaveLength(2);
     expect(body.tasks[0].title).toBe("Test Task");
@@ -128,7 +129,7 @@ describe("Hono Backend - /tasks Router", () => {
     ]);
     const res = await testApp.request("/", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.tasks[0].assignees).toEqual([]);
   });
@@ -139,7 +140,7 @@ describe("Hono Backend - /tasks Router", () => {
     ]);
     const res = await testApp.request("/", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.tasks[0].assignees).toHaveLength(1);
     expect(body.tasks[0].assignees[0].id).toBe("u2");
@@ -151,7 +152,7 @@ describe("Hono Backend - /tasks Router", () => {
     ]);
     const res = await testApp.request("/", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.tasks[0].assignees).toEqual([]);
     expect(body.tasks[0].assigned_to).toBeNull();
@@ -179,7 +180,7 @@ describe("Hono Backend - /tasks Router", () => {
     expect(mockDb.insertInto).toHaveBeenCalledWith("tasks");
     expect(mockDb.insertInto).toHaveBeenCalledWith("task_assignments");
     
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(body.task.title).toBe("New Task");
@@ -196,7 +197,7 @@ describe("Hono Backend - /tasks Router", () => {
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(body.task.assignees).toEqual([]);
@@ -321,7 +322,7 @@ describe("Hono Backend - /tasks Router", () => {
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.success).toBe(true);
     expect(mockDb.updateTable).toHaveBeenCalledWith("tasks");
@@ -395,7 +396,7 @@ describe("Hono Backend - /tasks Router", () => {
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(403);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.error).toContain("assignments");
   });
@@ -562,7 +563,7 @@ describe("Hono Backend - /tasks Router", () => {
 
     const res = await testApp.request("/task1", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: "{}" }, {}, mockExecutionContext);
     expect(res.status).toBe(403);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const body = await res.json() as any;
     expect(body.error).toContain("not authorized");
   });
@@ -590,3 +591,4 @@ describe("Hono Backend - /tasks Router", () => {
     expect(res.status).toBe(500);
   });
 });
+

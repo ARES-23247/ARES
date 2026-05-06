@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono, Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -6,12 +7,11 @@ import { financeContract } from "../../../shared/schemas/contracts/financeContra
 import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser, s } from "../middleware";
 import { AppEnv } from "../middleware";
 
-import type { HonoContext } from "@shared/types/api";
 
 const financeRouter = new Hono<AppEnv>();
 
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const financeTsRestRouterObj = {
   getSummary: async (input: any, c: any) => {
     try {
@@ -36,7 +36,7 @@ const financeTsRestRouterObj = {
         .selectFrom("finance_transactions")
         .select([
           "type",
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
           (eb: any) => eb.fn.sum("amount").as("total")
         ])
         .where("season_id", "=", latestSeasonId.toString())
@@ -57,7 +57,7 @@ const financeTsRestRouterObj = {
           season_id: Number(latestSeasonId),
         },
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (e: any) {
       return { status: 500 as const, body: { error: e.stack || e.message } };
     }
@@ -74,7 +74,7 @@ const financeTsRestRouterObj = {
       const pipeline = await queryBuilder.orderBy("created_at", "desc").execute();
       const pipelineIds = pipeline.map(p => p.id).filter(Boolean);
       
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       let assignments: any[] = [];
       if (pipelineIds.length > 0) {
         assignments = await db.selectFrom("sponsorship_assignments").selectAll().where("sponsorship_id", "in", pipelineIds).execute();
@@ -87,14 +87,14 @@ const financeTsRestRouterObj = {
             ...p,
             season_id: p.season_id ? Number(p.season_id) : null,
             estimated_value: Number(p.estimated_value || 0),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
             status: (p.status || "potential").toLowerCase() as any,
             assignees: assignments.filter(a => a.sponsorship_id === p.id).map(a => a.user_id)
           })) 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
         } as any 
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (e: any) {
       return { status: 500 as const, body: { error: e.stack || e.message } };
     }
@@ -198,13 +198,13 @@ const financeTsRestRouterObj = {
 
       await logAuditAction(c, isNew ? "create" : "update", "sponsorship_pipeline", result.id);
       return { status: 200 as const, body: { success: true, id: result.id } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (e: any) {
       return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   deletePipeline: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input || {};
@@ -213,13 +213,13 @@ const financeTsRestRouterObj = {
       await db.deleteFrom("sponsorship_pipeline").where("id", "=", id).execute();
       await logAuditAction(c, "delete", "sponsorship_pipeline", id);
       return { status: 200 as const, body: { success: true } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (e: any) {
       return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   listTransactions: async (input: any, c: Context<AppEnv>) => {
     try {
       const { query } = input;
@@ -240,16 +240,16 @@ const financeTsRestRouterObj = {
             season_id: t.season_id ? Number(t.season_id) : null,
             amount: Number(t.amount)
           }))
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
         } as any 
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (e: any) {
       return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   saveTransaction: async (input: any, c: Context<AppEnv>) => {
     try {
       const { body } = input;
@@ -296,13 +296,13 @@ const financeTsRestRouterObj = {
 
       await logAuditAction(c, isNew ? "create" : "update", "finance_transactions", id);
       return { status: 200 as const, body: { success: true, id } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (e: any) {
       return { status: 500 as const, body: { error: e.stack || e.message } };
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   deleteTransaction: async (input: any, c: Context<AppEnv>) => {
     try {
       const { params } = input || {};
@@ -331,14 +331,14 @@ const financeTsRestRouterObj = {
 
       await logAuditAction(c, "delete", "finance_transactions", id);
       return { status: 200 as const, body: { success: true } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (e: any) {
       console.error("[Finance] Delete error:", e);
       return { status: 500 as const, body: { error: e.message } };
     }
   }
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 
 const financeTsRestRouter = s.router(financeContract, financeTsRestRouterObj as any);
 
@@ -359,3 +359,4 @@ createHonoEndpoints(
 );
 
 export default financeRouter;
+

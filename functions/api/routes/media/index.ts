@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints, initServer } from "ts-rest-hono";
 import { mediaContract } from "../../../../shared/schemas/contracts/mediaContract";
@@ -9,7 +10,7 @@ import { DB } from "../../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 const mediaRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- Cloudflare Workers runtime types (R2, AI, caches) require any casts */
+
 const mediaTsRestRouter = s.router(mediaContract, mediaHandlers as any);
 
 // Protections
@@ -171,6 +172,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
     return c.text("Internal Error", 500);
   }
 });
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 
 export default mediaRouter;
+

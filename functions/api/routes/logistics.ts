@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { AppEnv, ensureAdmin, s } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -10,9 +11,10 @@ import type { HonoContext } from "@shared/types/api";
 
 const logisticsRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const logisticsHandlers: any = {
-  getSummary: async (_input: any, c: HonoContext) => {
+import { ServerInferRequest } from "@ts-rest/core";
+
+const logisticsHandlers = {
+  getSummary: async (_input: ServerInferRequest<typeof logisticsContract["getSummary"]>, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
 
     try {
@@ -56,7 +58,7 @@ const logisticsHandlers: any = {
       return { status: 500 as const, body: { error: "Logistics fetch failed" } };
     }
   },
-  exportEmails: async (_input: any, c: HonoContext) => {
+  exportEmails: async (_input: ServerInferRequest<typeof logisticsContract["exportEmails"]>, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     const secret = c.env.ENCRYPTION_SECRET;
 
@@ -106,8 +108,7 @@ const logisticsHandlers: any = {
     }
   },
 };
-const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers);
-/* eslint-enable @typescript-eslint/no-explicit-any */
+const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers as any);
 
 logisticsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(
@@ -124,3 +125,4 @@ createHonoEndpoints(
 );
 
 export default logisticsRouter;
+

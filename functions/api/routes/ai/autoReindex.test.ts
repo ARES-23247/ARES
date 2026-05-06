@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MockExecutionContext, MockKysely } from "../../../../src/test/types";
 import { triggerBackgroundReindex } from "./autoReindex";
@@ -63,3 +64,4 @@ describe("triggerBackgroundReindex", () => {
     expect(mockExecutionCtx.waitUntil).toHaveBeenCalledTimes(1);
   });
 });
+

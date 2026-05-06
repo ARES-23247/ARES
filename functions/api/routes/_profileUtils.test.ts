@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { upsertProfile } from "./_profileUtils";
 import { Context } from "hono";
@@ -103,3 +104,4 @@ describe("Profile Utils", () => {
     expect(mockDb.insertInto).toHaveBeenCalled();
   });
 });
+

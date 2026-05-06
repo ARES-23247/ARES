@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 // TODO: users.ts implementation uses getProfile/updateProfile/listUsers/updateRole
 // but userContract exports getUsers/adminDetail/patchUser/updateUserProfile/adminGetProfile/deleteUser
 // The contract and implementation are misaligned - need to rewrite users.ts to match userContract
@@ -265,3 +266,4 @@ describe("Hono Backend - /users Router", () => {
     expect(body.profile.emergency_contact_name).toBe("[Decryption Failed]");
   });
 });
+

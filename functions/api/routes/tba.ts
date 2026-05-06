@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { Hono } from "hono";
@@ -49,11 +50,12 @@ async function getTBA(path: string, c: HonoContext) {
   return data;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const tbaHandlers: any = {
-  getRankings: async (input: any, c: HonoContext) => {
+import { ServerInferRequest } from "@ts-rest/core";
+
+const tbaHandlers = {
+  getRankings: async (input: ServerInferRequest<typeof tbaContract["getRankings"]>, c: HonoContext) => {
     try {
-      const eventKey = String(input.params.eventKey);
+      const eventKey = input.params.eventKey;
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
         return { status: 400 as const, body: { error: "Invalid eventKey" } };
       }
@@ -64,9 +66,9 @@ const tbaHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch rankings" } };
     }
   },
-  getMatches: async (input: any, c: HonoContext) => {
+  getMatches: async (input: ServerInferRequest<typeof tbaContract["getMatches"]>, c: HonoContext) => {
     try {
-      const eventKey = String(input.params.eventKey);
+      const eventKey = input.params.eventKey;
       if (!/^[a-zA-Z0-9]+$/.test(eventKey)) {
         return { status: 400 as const, body: { error: "Invalid eventKey" } };
       }
@@ -78,7 +80,7 @@ const tbaHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch matches" } };
     }
   },
-  getFtcEvents: async (input: any, c: HonoContext) => {
+  getFtcEvents: async (input: ServerInferRequest<typeof tbaContract["getFtcEvents"]>, c: HonoContext) => {
     try {
       const { season, eventCode, type } = input.params;
       const path = `/${season}/events/${eventCode}/${type}`;
@@ -106,13 +108,11 @@ const tbaHandlers: any = {
       setTbaCache(cacheKey, { data, expiresAt: now + 300000 });
       return { status: 200 as const, body: data as never };
     } catch (e) {
-      console.error("GET_FTC_EVENTS ERROR", e);
       return { status: 500 as const, body: { error: "Failed to fetch official event data" } };
     }
-  }
+  },
 };
-const tbaTsRestRouter = s.router(tbaContract, tbaHandlers);
-/* eslint-enable @typescript-eslint/no-explicit-any */
+const tbaTsRestRouter = s.router(tbaContract, tbaHandlers as any);
 
 createHonoEndpoints(
   tbaContract,
@@ -127,3 +127,5 @@ createHonoEndpoints(
   }
 );
 export default tbaRouter;
+
+

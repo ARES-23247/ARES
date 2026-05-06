@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import zulipWebhookRouter from "./zulipWebhook";
@@ -578,3 +579,4 @@ describe("Zulip Webhook Router", () => {
     expect(json.content).toBe("");
   });
 });
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { z } from "zod";
@@ -6,7 +7,7 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { locationContract, locationSchema } from "../../../shared/schemas/contracts/locationContract";
 import { AppEnv, ensureAdmin, logAuditAction, s } from "../middleware";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
+ 
 
 // IN-01: Type inference for location schema
 type LocationInput = z.infer<typeof locationSchema>;
@@ -14,7 +15,7 @@ type LocationInput = z.infer<typeof locationSchema>;
 
 export const locationsRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const locationsHandlers: any = {
   list: async (input: any, c: HonoContext) => {
     try {
@@ -129,6 +130,7 @@ createHonoEndpoints(
     }
   }
 );
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
 
 export default locationsRouter;
+
