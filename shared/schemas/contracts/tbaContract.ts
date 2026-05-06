@@ -12,6 +12,8 @@ export const tbaContract = c.router({
     }),
     responses: {
       200: z.object({ rankings: z.array(z.any()) }),
+      400: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
     },
     summary: "Get TBA rankings for an event",
   },
@@ -23,6 +25,8 @@ export const tbaContract = c.router({
     }),
     responses: {
       200: z.object({ matches: z.array(z.any()) }),
+      400: z.object({ error: z.string() }),
+      500: z.object({ error: z.string() }),
     },
     summary: "Get TBA matches for an event",
   },

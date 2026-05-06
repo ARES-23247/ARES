@@ -32,9 +32,10 @@ describe("storageKeys", () => {
       expect(key).toBe("sim_chat_v2_new");
     });
 
-    it("should return key with empty string when simId is empty", () => {
+    it("should return key with 'new' when simId is empty string (falsy check)", () => {
       const key = getSimChatKey("");
-      expect(key).toBe("sim_chat_v2_"); // getSimChatKey uses falsy check, empty string is falsy but not null
+      // Empty string is falsy, so defaults to 'new'
+      expect(key).toBe("sim_chat_v2_new");
     });
 
     it("should handle special characters in simId", () => {

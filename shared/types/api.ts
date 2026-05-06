@@ -19,7 +19,7 @@ export type AppEnv = MiddlewareAppEnv;
 /**
  * Hono context with ARES-specific environment bindings.
  */
-export type HonoContext = Context<AppEnv>;
+export type HonoContext = Context<AppEnv, any, {}>;
 
 /**
  * Standard handler input structure with typed body and params.

@@ -49,8 +49,8 @@ describe("Hono Backend - /zulip Router", () => {
 
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
-      if (c.env && (c.env ).db) {
-        c.set("db", (c.env ).db);
+      if (c.env && (c.env).DB) {
+        c.set("db", (c.env).DB);
       }
       await next();
     });
@@ -115,7 +115,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_URL: "https://test.zulip.com"
     } as ZulipConfig);
 
-    vi.mocked(sendZulipMessage).mockResolvedValueOnce(true );
+    vi.mocked(sendZulipMessage).mockResolvedValueOnce(true as any);
 
     const res = await testApp.request("/message", {
       method: "POST",
@@ -134,7 +134,7 @@ describe("Hono Backend - /zulip Router", () => {
       ZULIP_URL: "https://test.zulip.com"
     } as ZulipConfig);
 
-    vi.mocked(sendZulipMessage).mockResolvedValueOnce(false );
+    vi.mocked(sendZulipMessage).mockResolvedValueOnce(false as any);
 
     const res = await testApp.request("/message", {
       method: "POST",
@@ -255,7 +255,7 @@ describe("Hono Backend - /zulip Router", () => {
       ])
     };
 
-    const res = await testApp.request("/invites/audit", {}, { db: mockDb }, mockExecutionContext);
+    const res = await testApp.request("/invites/audit", {}, { DB: mockDb }, mockExecutionContext);
     if (res.status === 500) {
       console.log(await res.text());
     }

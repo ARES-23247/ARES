@@ -25,11 +25,11 @@ function normalizeEmail(email: string): string {
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const zulipTsRestRouter = s.router(zulipContract, {
-  getPresence: async (_input: any, c: HonoContext) => {
+  getPresence: async (_input, c) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
-        return { status: 500, body: { success: false, error: "Zulip not configured." } };
+        return { status: 500 as const, body: { success: false, error: "Zulip not configured." } };
       }
       
       // Unicode-safe Base64 encoding to prevent "btoa() can only operate on characters in the Latin1 range" errors
@@ -44,7 +44,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       });
 
       if (!res.ok) {
-        return { status: 500, body: { success: false, error: await res.text() } };
+        return { status: 500 as const, body: { success: false, error: await res.text() } };
       }
 
       const usersRes = await fetch(`${config.ZULIP_URL || "https://aresfirst.zulipchat.com"}/api/v1/users`, {
@@ -64,18 +64,18 @@ const zulipTsRestRouter = s.router(zulipContract, {
       }
 
       const data = await res.json() as { result: string; presences: z.infer<typeof zulipPresenceSchema> };
-      return { status: 200, body: { success: true, presence: data.presences, userNames } };
+      return { status: 200 as const, body: { success: true, presence: data.presences, userNames } };
     } catch (err) {
-      return { status: 500, body: { success: false, error: (err as Error).message } };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  sendMessage: async (input: any, c: HonoContext) => {
+  sendMessage: async (input, c) => {
     try {
       const { sendZulipMessage } = await import("../../utils/zulipSync");
       const config = await getSocialConfig(c);
       
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
-        return { status: 500, body: { success: false, error: "Zulip not configured." } };
+        return { status: 500 as const, body: { success: false, error: "Zulip not configured." } };
       }
 
       // Attribute message to the logged-in ARES user instead of showing as "ARES Bot"
@@ -92,19 +92,19 @@ const zulipTsRestRouter = s.router(zulipContract, {
       );
 
       if (!res) {
-        return { status: 500, body: { success: false, error: "Failed to send message" } };
+        return { status: 500 as const, body: { success: false, error: "Failed to send message" } };
       }
 
-      return { status: 200, body: { success: true } };
+      return { status: 200 as const, body: { success: true } };
     } catch (err) {
-      return { status: 500, body: { success: false, error: (err as Error).message } };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  getTopicMessages: async (input: any, c: HonoContext) => {
+  getTopicMessages: async (input, c) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
-        return { status: 500, body: { success: false, error: "Zulip not configured." } };
+        return { status: 500 as const, body: { success: false, error: "Zulip not configured." } };
       }
 
       const credentials = `${config.ZULIP_BOT_EMAIL}:${config.ZULIP_API_KEY}`;
@@ -128,18 +128,18 @@ const zulipTsRestRouter = s.router(zulipContract, {
 
       if (!res.ok) {
         if (res.status === 403) {
-          return { status: 403, body: { success: false, error: "Zulip bot is not subscribed to this stream." } };
+          return { status: 403 as const, body: { success: false, error: "Zulip bot is not subscribed to this stream." } };
         }
-        return { status: 500, body: { success: false, error: await res.text() } };
+        return { status: 500 as const, body: { success: false, error: await res.text() } };
       }
 
       const data = await res.json() as { result: string; messages: unknown[] };
-      return { status: 200, body: { success: true, messages: data.messages } };
+      return { status: 200 as const, body: { success: true, messages: data.messages } };
     } catch (err) {
-      return { status: 500, body: { success: false, error: (err as Error).message } };
+      return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  auditMissingUsers: async (_input: any, c: HonoContext) => {
+  auditMissingUsers: async (_input, c) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -238,7 +238,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  inviteUsers: async (input: any, c: HonoContext) => {
+  inviteUsers: async (input, c) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {

@@ -109,6 +109,7 @@ export const userContract = c.router({
     responses: {
       200: z.object({ success: z.boolean() }),
       400: z.object({ error: z.string() }),
+      403: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
     },
     summary: "Update user role or type",

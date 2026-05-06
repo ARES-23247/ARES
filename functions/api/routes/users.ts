@@ -41,8 +41,8 @@ const userTsRestRouter = s.router(userContract, {
           emailVerified: !!u.emailVerified,
           image: u.image || null,
           role: String(u.role || "user"),
-          createdAt: new Date(u.createdAt as string).getTime() || 0,
-          updatedAt: new Date(u.updatedAt as string).getTime() || 0,
+          createdAt: typeof u.createdAt === 'number' ? u.createdAt : new Date(u.createdAt as string).getTime() || 0,
+          updatedAt: typeof u.updatedAt === 'number' ? u.updatedAt : new Date(u.updatedAt as string).getTime() || 0,
           nickname: u.nickname || null,
           member_type: u.member_type || null
         };
