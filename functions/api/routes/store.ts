@@ -15,7 +15,7 @@ const app = new Hono<AppEnv>();
 app.use("/orders", ensureAdmin);
 app.use("/orders/*", ensureAdmin);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const storeHandlers: any = {
   getProducts: async (_input: any, c: HonoContext) => {
     try {
@@ -39,13 +39,13 @@ const storeHandlers: any = {
           created_at: p.created_at || null,
         })),
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (err: any) {
       console.error("[Store] Get products failed:", err);
       return { status: 500, body: { error: err.message } };
     }
   },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   createCheckoutSession: async ({ body }: any, c: HonoContext) => {
     try {
       const { items, successUrl, cancelUrl } = body;
@@ -54,12 +54,12 @@ const storeHandlers: any = {
         throw new Error("STRIPE_SECRET_KEY is not configured.");
       }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" as any });
       const db = c.get("db") as Kysely<DB>;
 
       // Fetch product details
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const productIds = items.map((i: any) => i.productId);
       const products = await db
         .selectFrom("products")
@@ -70,7 +70,7 @@ const storeHandlers: any = {
 
       const productMap = new Map(products.map((p) => [p.id, p]));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       const lineItems = items.map((item: any) => {
         const product = productMap.get(item.productId);
         if (!product) {
@@ -93,7 +93,7 @@ const storeHandlers: any = {
         payment_method_types: ["card"],
         line_items: lineItems,
         metadata: {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
           cartItems: JSON.stringify(items.map((i: any) => ({ id: i.productId, q: i.quantity })))
         },
         mode: "payment",
@@ -115,7 +115,7 @@ const storeHandlers: any = {
           url: session.url,
         },
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (err: any) {
       console.error("[Store] Checkout failed:", err);
       return { status: 500, body: { error: err.message } };
@@ -127,21 +127,21 @@ const storeHandlers: any = {
       await ensureAdmin(c, async () => {});
       const db = c.get("db") as Kysely<DB>;
       const orders = await db.selectFrom("orders").selectAll().orderBy("created_at", "desc").execute();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
       return { status: 200, body: { orders: orders as any } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (err: any) {
       return { status: 500, body: { error: err.message } };
     }
   },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   updateOrderStatus: async ({ params, body }: any, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
       const db = c.get("db") as Kysely<DB>;
       await db.updateTable("orders").set({ status: body.status }).where("id", "=", params.id).execute();
       return { status: 200, body: { success: true } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (err: any) {
       return { status: 500, body: { error: err.message } };
     }
@@ -173,7 +173,7 @@ app.post("/webhook", async (c) => {
       return c.json({ error: "Missing stripe signature" }, 400);
     }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" as any });
     let event: Stripe.Event;
 
@@ -184,7 +184,7 @@ app.post("/webhook", async (c) => {
         signature,
         endpointSecret
       );
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
     } catch (err: any) {
       console.error(`[Webhook] Signature verification failed: ${err.message}`);
       return c.json({ error: `Invalid signature` }, 400);
@@ -206,7 +206,6 @@ app.post("/webhook", async (c) => {
           customer_email: session.customer_details?.email || "unknown",
           shipping_name: (session as any).shipping_details?.name || null,
           total_cents: session.amount_total || 0,
-/* eslint-enable @typescript-eslint/no-explicit-any */
           status: "paid",
           items_json: JSON.stringify(cartItems),
           created_at: new Date().toISOString(),
@@ -231,7 +230,7 @@ app.post("/webhook", async (c) => {
     }
 
     return c.json({ success: true }, 200);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   } catch (err: any) {
     logSystemError(c.get("db") as Kysely<DB>, "webhook_error", err);
     return c.json({ error: "Webhook fulfillment failed" }, 500);
@@ -239,3 +238,4 @@ app.post("/webhook", async (c) => {
 });
 
 export default app;
+/* eslint-enable @typescript-eslint/no-explicit-any */

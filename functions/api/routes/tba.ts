@@ -5,8 +5,6 @@ import { AppEnv, ensureAuth, rateLimitMiddleware } from "../middleware";
 import { initServer, createHonoEndpoints } from "ts-rest-hono";
 import { tbaContract } from "../../../shared/schemas/contracts/tbaContract";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
-
 const s = initServer<AppEnv>();
 export const tbaRouter = new Hono<AppEnv>();
 
@@ -52,7 +50,7 @@ async function getTBA(path: string, c: HonoContext) {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const tbaTsRestRouter = s.router(tbaContract, {
+const tbaHandlers: any = {
   getRankings: async (input: any, c: HonoContext) => {
     try {
       const eventKey = String(input.params.eventKey);
@@ -112,7 +110,9 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch official event data" } };
     }
   }
-} as any);
+};
+const tbaTsRestRouter = s.router(tbaContract, tbaHandlers);
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 createHonoEndpoints(
   tbaContract,
@@ -126,5 +126,4 @@ createHonoEndpoints(
     }
   }
 );
-/* eslint-enable @typescript-eslint/no-explicit-any */
 export default tbaRouter;

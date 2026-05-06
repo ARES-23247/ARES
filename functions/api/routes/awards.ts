@@ -12,7 +12,7 @@ const saveAwardSchema = awardContract.saveAward.body;
 export const awardsRouter = new Hono<AppEnv>();
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const awardsTsRestRouter = s.router(awardContract, {
+const awardsHandlers: any = {
   getAwards: async (input: any, c: HonoContext) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
@@ -156,7 +156,9 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to delete award", success: false } };
     }
   },
-} as any);
+};
+const awardsTsRestRouter = s.router(awardContract, awardsHandlers);
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 awardsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(
@@ -171,6 +173,5 @@ createHonoEndpoints(
     }
   }
 );
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export default awardsRouter;

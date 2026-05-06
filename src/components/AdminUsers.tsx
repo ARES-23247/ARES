@@ -187,8 +187,8 @@ export default function AdminUsers() {
             onChange={e => changeRole(info.row.original.id, e.target.value)}
             title="Change user role"
             className={`appearance-none bg-transparent border ares-cut-sm px-3 py-1 pr-7 text-xs font-bold cursor-pointer focus:outline-none ${
-              info.getValue() === "admin" ? "border-ares-red/50 text-ares-red" :
-              info.getValue() === "author" ? "border-ares-gold/50 text-ares-gold" :
+              info.getValue() === "admin" ? "border-ares-red text-ares-red" :
+              info.getValue() === "author" ? "border-ares-gold text-ares-gold" :
               "border-white/20 text-white/60"
             }`}
           >
@@ -363,7 +363,7 @@ export default function AdminUsers() {
           <button
             onClick={() => setCursor(nextCursor)}
             disabled={isFetching}
-            className="px-6 py-2 bg-obsidian border border-white/10 text-marble/60 hover:text-white hover:border-ares-red/50 ares-cut transition-all disabled:opacity-50"
+            className="px-6 py-2 bg-obsidian border border-white/10 text-marble/60 hover:text-white hover:border-ares-red ares-cut transition-all disabled:opacity-50"
           >
             {isFetching ? "Loading..." : "Load More Users"}
           </button>

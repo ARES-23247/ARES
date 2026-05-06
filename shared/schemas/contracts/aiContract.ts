@@ -13,7 +13,7 @@ export const aiContract = c.router({
       ...standardErrors,
       // Server-Sent Events (SSE) don't have a standard ts-rest response type,
       // but we define the expected success response for completeness.
-      200: z.any(),
+      200: z.unknown(),
       400: errorSchema,
       401: errorSchema,
       429: errorSchema,
@@ -31,7 +31,7 @@ export const aiContract = c.router({
     path: "/rag-chatbot",
     responses: {
       ...standardErrors,
-      200: z.any(),
+      200: z.unknown(),
       400: errorSchema,
       401: errorSchema,
       429: errorSchema,
