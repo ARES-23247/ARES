@@ -1,81 +1,352 @@
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { analyticsContract } from "../../../shared/schemas/contracts/analyticsContract";
-import type { AppEnv, HonoContext } from "../../../shared/types/api";
-import { s } from "../middleware";
-import { Kysely } from "kysely";
+import { AppEnv, ensureAuth, ensureAdmin, rateLimitMiddleware, turnstileMiddleware, getDbSettings, s, checkPersistentRateLimit } from "../middleware";
+import { sql, Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
+import type { HonoContext } from "@shared/types/api";
 
-const app = new Hono<AppEnv>();
+export const analyticsRouter = new Hono<AppEnv>();
 
-type HandlerInput = {
-  params: Record<string, string>;
-  body: unknown;
-  query: Record<string, string>;
-};
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+const analyticsHandlers = {
+  trackPageView: async (input: any, c: HonoContext) => {
+    const ip = c.req.header("CF-Connecting-IP") || "unknown";
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `track:${ip}`, ua, 20, 600))) {
+      return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } };
+    }
 
-const analyticsTsRestRouter = s.router(analyticsContract, {
-  trackPage: async (input: HandlerInput, c: HonoContext) => {
-    const { path, referrer, user_agent } = input.body as { path: string; referrer?: string; user_agent?: string };
+    const db = c.get("db") as Kysely<DB>;
     try {
-      const db = c.get("db") as Kysely<DB>;
-      await db
-        .insertInto("page_analytics")
+      const { path, category, referrer } = input.body;
+      const userAgent = c.req.header("user-agent") || ua;
+      
+      await db.insertInto("page_analytics")
         .values({
-          path,
-          referrer: referrer || null,
-          user_agent: user_agent || null,
+          path: path || "/",
+          category: category || "system",
+          referrer: referrer || "",
+          user_agent: userAgent,
           timestamp: new Date().toISOString()
         })
         .execute();
 
-      return { status: 201, body: { success: true } };
-    } catch (err: unknown) {
-      const error = err as Error;
-      console.error("[Analytics] Track page failed:", error);
-      return { status: 500, body: { error: error.message } };
+      return { status: 200 as const, body: { success: true } };
+    } catch {
+      return { status: 500 as const, body: { success: false } };
+    }
+  },
+  trackSponsorClick: async (input: any, c: HonoContext) => {
+    const ip = c.req.header("CF-Connecting-IP") || "unknown";
+    const ua = c.req.header("User-Agent") || "unknown";
+    if (!(await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `click:${ip}`, ua, 10, 600))) {
+      return { status: 429 as const, body: { success: false, error: "Rate limit exceeded" } };
+    }
+
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const { sponsor_id } = input.body;
+
+      // WR-04: Validate sponsor exists to prevent database pollution
+      if (!sponsor_id || typeof sponsor_id !== 'string') {
+        return { status: 400 as const, body: { error: "Invalid sponsor ID" } };
+      }
+
+      const sponsor = await db.selectFrom("sponsors")
+        .select("id")
+        .where("id", "=", sponsor_id)
+        .where("is_active", "=", 1)
+        .executeTakeFirst();
+
+      if (!sponsor) {
+        return { status: 400 as const, body: { error: "Invalid sponsor" } };
+      }
+
+      const yearMonth = new Date().toISOString().slice(0, 7);
+
+      await db.insertInto("sponsor_metrics")
+        .values({
+          id: crypto.randomUUID(),
+          sponsor_id,
+          year_month: yearMonth,
+          clicks: 1,
+          impressions: 0
+        })
+        .onConflict((oc) => oc.columns(["sponsor_id", "year_month"]).doUpdateSet({
+          clicks: sql`clicks + 1`
+        }))
+        .execute();
+
+      return { status: 200 as const, body: { success: true } };
+    } catch {
+      return { status: 500 as const, body: { success: false } };
+    }
+  },
+  getPlatformAnalytics: async (_input: any, c: HonoContext) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const [
+        totalViewsData,
+        uniqueVisitorsData,
+        topPagesDataRow,
+        referrersDataRow,
+        recentViewsDataRow,
+        totalsDataRow,
+        activityData,
+      ] = await Promise.all([
+        db.selectFrom("page_analytics").select((eb) => eb.fn.count("path").as("total")).executeTakeFirst().catch(() => ({ total: 0 })),
+        sql<{ unique_count: number }>`SELECT COUNT(DISTINCT user_agent) as unique_count FROM page_analytics`.execute(db).then(r => r.rows[0]).catch(() => ({ unique_count: 0 })),
+        db.selectFrom("page_analytics").select(["path", "category", (eb) => eb.fn.count("path").as("views")]).groupBy(["path", "category"]).orderBy("views", "desc").limit(10).execute().catch(() => []),
+        db.selectFrom("page_analytics").select(["referrer", (eb) => eb.fn.count("referrer").as("visits")]).where("referrer", "!=", "").groupBy("referrer").orderBy("visits", "desc").limit(10).execute().catch(() => []),
+        db.selectFrom("page_analytics").select(["path", "category", "user_agent", "referrer", "timestamp"]).orderBy("timestamp", "desc").limit(20).execute().catch(() => []),
+        db.selectFrom("page_analytics").select(["category", (eb) => eb.fn.count("category").as("total")]).groupBy("category").execute().catch(() => []),
+        sql<{ date: string, pageViews: number }>`
+          SELECT
+            date(timestamp, 'localtime') as date,
+            COUNT(*) as pageViews
+          FROM page_analytics
+          WHERE timestamp >= datetime('now', '-30 days')
+          GROUP BY date(timestamp, 'localtime')
+          ORDER BY date ASC
+        `.execute(db).catch(() => ({ rows: [] }))
+      ]);
+
+      const assetsCount = await db.selectFrom("media_tags").select((eb) => eb.fn.count("key").as("total")).executeTakeFirst().catch(() => ({ total: 0 }));
+      const apiCount = await db.selectFrom("usage_metrics").select((eb) => eb.fn.count("id").as("total")).executeTakeFirst().catch(() => ({ total: 0 }));
+      const latencyData = await sql<{ date: string, avg_latency: number }>`
+          SELECT
+            date(timestamp, 'localtime') as date,
+            AVG(latency_ms) as avg_latency
+          FROM usage_metrics
+          WHERE timestamp >= datetime('now', '-30 days')
+          GROUP BY date(timestamp, 'localtime')
+          ORDER BY date ASC
+        `.execute(db).catch(() => ({ rows: [] }));
+
+      const topPages = topPagesDataRow.map(p => ({
+        path: String(p.path),
+        category: String(p.category),
+        views: Number(p.views)
+      }));
+
+      const topReferrers = referrersDataRow.map(r => ({
+        referrer: String(r.referrer),
+        visits: Number(r.visits),
+      }));
+
+      const recentViews = recentViewsDataRow.map(v => ({
+        path: String(v.path),
+        category: String(v.category),
+        user_agent: String(v.user_agent || ""),
+        referrer: String(v.referrer || ""),
+        timestamp: String(v.timestamp)
+      }));
+
+      const totals = totalsDataRow.map(t => ({
+        category: String(t.category),
+        total: Number(t.total)
+      }));
+
+      const userActivity = activityData.rows?.map(a => ({
+        date: String(a.date),
+        pageViews: Number(a.pageViews),
+      })) || [];
+
+      const latency = latencyData.rows?.map(l => ({
+        date: String(l.date),
+        avg_latency: Number(l.avg_latency)
+      })) || [];
+
+      return {
+        status: 200 as const,
+        body: {
+          totalPageViews: Number(totalViewsData?.total || 0),
+          uniqueVisitors: Number(uniqueVisitorsData?.unique_count || 0),
+          topPages,
+          topReferrers,
+          recentViews,
+          totals,
+          userActivity,
+          latency,
+          resourceUsage: {
+            totalAssets: Number(assetsCount?.total || 0),
+            totalStorage: 0,
+            apiCalls: Number(apiCount?.total || 0),
+          }
+        }
+      };
+    } catch (err) {
+      console.error("[Analytics] Platform metrics error:", err);
+      return { status: 500 as const, body: { error: "Failed to fetch platform metrics" } };
+    }
+  },
+  getRosterStats: async (_input: any, c: HonoContext) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const results = await db.selectFrom("user_profiles as u")
+        .innerJoin("user as auth_user", "auth_user.id", "u.user_id")
+        .leftJoin("event_signups as s", "u.user_id", "s.user_id")
+        .leftJoin("events as e", (join) => join
+          .onRef("s.event_id", "=", "e.id")
+          .on("e.status", "=", "published")
+          .on("e.is_deleted", "=", 0)
+        )
+        .select([
+          "u.user_id",
+          "u.nickname",
+          "u.member_type",
+          "auth_user.image as avatar",
+          (eb) => eb.fn.sum(eb.case().when("s.attended", "=", 1).then(1).else(0).end()).as("attended_events"),
+          (eb) => eb.fn.coalesce(eb.fn.sum(eb.case().when("s.attended", "=", 1).then("s.prep_hours").else(0).end()), sql`0`).as("manual_prep_hours"),
+          (eb) => eb.fn.coalesce(
+            eb.fn.sum(eb.case()
+              .when(eb.and([eb("s.attended", "=", 1), eb("e.is_volunteer", "=", 1)]))
+              .then(sql`(strftime('%s', e.date_end) - strftime('%s', e.date_start)) / 3600.0`)
+              .else(0)
+              .end()
+            ), sql`0`
+          ).as("event_volunteer_hours")
+        ])
+        .groupBy(["u.user_id", "u.nickname", "u.member_type", "auth_user.image"])
+        .orderBy("u.nickname", "asc")
+        .execute();
+
+      const roster = results.map(r => ({
+        user_id: String(r.user_id),
+        nickname: r.nickname || null,
+        member_type: r.member_type || null,
+        attended_events: Number(r.attended_events || 0),
+        manual_prep_hours: Number(r.manual_prep_hours || 0),
+        event_volunteer_hours: Number(r.event_volunteer_hours || 0),
+        avatar: r.avatar ? String(r.avatar) : null
+      }));
+
+      return { status: 200 as const, body: { roster } };
+    } catch {
+      return { status: 500 as const, body: { roster: [] } };
+    }
+  },
+  getLeaderboard: async (_input: any, c: HonoContext) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const results = await db.selectFrom("user as u")
+        .innerJoin("user_profiles as p", "u.id", "p.user_id")
+        .innerJoin("user_badges as ub", "u.id", "ub.user_id")
+        .select([
+          "u.id as user_id",
+          "u.name as first_name",
+          "p.last_name",
+          "p.nickname",
+          "p.member_type",
+          "u.image as avatar",
+          (eb) => eb.fn.count("ub.id").as("badge_count")
+        ])
+        .where("p.show_on_about", "=", 1)
+        .groupBy(["u.id", "u.name", "p.last_name", "p.nickname", "p.member_type", "u.image"])
+        .orderBy("badge_count", "desc")
+        .limit(50)
+        .execute();
+
+      const leaderboard = results.map(r => {
+        const isMinor = r.member_type === "student";
+        return {
+          user_id: String(r.user_id),
+          first_name: isMinor ? "ARES Member" : String(r.first_name || "ARES"),
+          last_name: isMinor ? null : (r.last_name || null),
+          nickname: r.nickname || null,
+          member_type: String(r.member_type || "student"),
+          badge_count: Number(r.badge_count),
+          avatar: r.avatar ? String(r.avatar) : null
+        };
+      });
+
+      return { status: 200 as const, body: { leaderboard } };
+    } catch {
+      return { status: 500 as const, body: { error: "Failed to fetch leaderboard" } };
+    }
+  },
+  getStats: async (_input: any, c: HonoContext) => {
+    const db = c.get("db") as Kysely<DB>;
+    try {
+      const [postsCount, eventsCount, docsCount, securityBlocksRow, dbSettings] = await Promise.all([
+        db.selectFrom("posts").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("events").select((eb) => eb.fn.count("id").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("docs").select((eb) => eb.fn.count("slug").as("total")).where("is_deleted", "=", 0).executeTakeFirst(),
+        db.selectFrom("audit_log").select((eb) => eb.fn.count("id").as("total")).where("action", "=", "SECURITY_BLOCK").executeTakeFirst(),
+        getDbSettings(c)
+      ]);
+
+      return {
+        status: 200 as const,
+        body: {
+          posts: Number(postsCount?.total || 0),
+          events: Number(eventsCount?.total || 0),
+          docs: Number(docsCount?.total || 0),
+          integrations: {
+            zulip: !!dbSettings["ZULIP_API_KEY"],
+            github: !!dbSettings["GITHUB_PAT"],
+            discord: !!dbSettings["DISCORD_WEBHOOK_URL"],
+            bluesky: !!dbSettings["BLUESKY_APP_PASSWORD"],
+            band: !!dbSettings["BAND_ACCESS_TOKEN"],
+            slack: !!dbSettings["SLACK_WEBHOOK_URL"],
+            gcal: !!dbSettings["GCAL_PRIVATE_KEY"]
+          },
+          securityBlocks: Number(securityBlocksRow?.total || 0)
+        }
+      };
+    } catch {
+      return { status: 500 as const, body: { error: "Failed to fetch stats" } };
     }
   },
 
-  getStats: async (_: HandlerInput, c: HonoContext) => {
+  search: async (input: any, c: HonoContext) => {
+    const db = c.get("db") as Kysely<DB>;
+    const { q } = input.query;
     try {
-      const sessionUser = c.get("sessionUser");
-      if (!sessionUser || sessionUser.role !== "admin") {
-        return { status: 403, body: { error: "Forbidden" } };
-      }
+      // SCA-FTS-01: Sanitize FTS5 query
+      const qClean = (q || "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
+      if (!qClean) return { status: 200 as const, body: { results: [] } };
+      const ftsQ = `"${qClean}"*`;
 
-      const db = c.get("db") as Kysely<DB>;
-      const stats = await db
-        .selectFrom("page_analytics")
-        .select([
-          "path",
-          (eb) => eb.fn.count("id").as("visits")
-        ])
-        .groupBy("path")
-        .orderBy("visits", "desc")
-        .execute();
+      const [postsReq, eventsReq, docsReq] = await Promise.all([
+        sql<{ id: string, title: string }>`SELECT f.slug as id, f.title FROM posts_fts f JOIN posts p ON f.slug = p.slug WHERE p.is_deleted = 0 AND p.status = 'published' AND f.posts_fts MATCH ${ftsQ} LIMIT 5`.execute(db),
+        sql<{ id: string, title: string }>`SELECT f.id, f.title FROM events_fts f JOIN events e ON f.id = e.id WHERE e.is_deleted = 0 AND e.status = 'published' AND f.events_fts MATCH ${ftsQ} LIMIT 5`.execute(db),
+        sql<{ id: string, title: string }>`SELECT f.slug as id, f.title FROM docs_fts f JOIN docs d ON f.slug = d.slug WHERE d.status = 'published' AND d.is_deleted = 0 AND f.docs_fts MATCH ${ftsQ} LIMIT 5`.execute(db)
+      ]);
 
-      return {
-        status: 200,
-        body: {
-          stats: stats.map((s) => ({
-            path: s.path,
-            visits: Number(s.visits)
-          }))
-        }
-      };
-    } catch (err: unknown) {
-      const error = err as Error;
-      console.error("[Analytics] Get stats failed:", error);
-      return { status: 500, body: { error: error.message } };
+      const results = [
+        ...(postsReq.rows || []).map(r => ({ type: "blog" as const, id: r.id, title: r.title })),
+        ...(eventsReq.rows || []).map(r => ({ type: "event" as const, id: r.id, title: r.title })),
+        ...(docsReq.rows || []).map(r => ({ type: "doc" as const, id: r.id, title: r.title }))
+      ];
+
+      return { status: 200 as const, body: { results } };
+    } catch {
+      return { status: 500 as const, body: { error: "Search failed" } };
     }
   }
-} as any);
+};
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as any);
+
+// CR-01 FIX: Apply authentication to all analytics routes
+// Public routes (page view tracking, search) have rate limiting only
+analyticsRouter.use("/stats", ensureAuth);
+analyticsRouter.use("/roster-stats", ensureAuth);
+analyticsRouter.use("/leaderboard", ensureAuth);
+
+// Apply ensureAdmin ONLY to administrative routes
+analyticsRouter.use("/admin/*", ensureAdmin);
+
+analyticsRouter.use("/sponsor-click", turnstileMiddleware());
+analyticsRouter.use("/search", rateLimitMiddleware(100, 60));
 
 createHonoEndpoints(
   analyticsContract,
   analyticsTsRestRouter,
-  app,
+  analyticsRouter,
   {
     responseValidation: true,
     responseValidationErrorHandler: (err, _c) => {
@@ -85,4 +356,4 @@ createHonoEndpoints(
   }
 );
 
-export default app;
+export default analyticsRouter;
