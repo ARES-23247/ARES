@@ -30,8 +30,9 @@ const portfolioCache = new Map<string, { data: any; expiresAt: number; version: 
 
 // Helper to get the current portfolio cache key with version
 const getPortfolioCacheKey = () => `portfolio_v${portfolioCacheVersion}`;
-const judgesTsRestRouter = s.router(judgeContract, {
-    login: async (input: any, c: HonoContext) => {
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+const judgeTsRestRouter = s.router(judgeContract, {
+  login: async (input: any, c: HonoContext) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const { checkPersistentRateLimit } = await import("../middleware/security");
     const db = c.get("db") as Kysely<DB>;
@@ -227,5 +228,6 @@ createHonoEndpoints(
     }
   }
 );
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export default judgesRouter;

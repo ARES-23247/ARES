@@ -7,11 +7,11 @@ import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const app = new Hono<AppEnv>();
 
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const pointsHandlers = {
   getBalance: async (input: any, c: HonoContext) => {
     try {
@@ -162,6 +162,7 @@ const pointsHandlers = {
     }
   }
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const pointsTsRestRouter = s.router(pointsContract, pointsHandlers);
 createHonoEndpoints(

@@ -4,7 +4,6 @@ import { communicationsContract } from "../../../shared/schemas/contracts/commun
 import { AppEnv, ensureAdmin, getSocialConfig, logAuditAction, logSystemError, s } from "../middleware";
 
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 export const communicationsRouter = new Hono<AppEnv>();
 
@@ -12,6 +11,7 @@ export const communicationsRouter = new Hono<AppEnv>();
 communicationsRouter.use("/admin/*", ensureAdmin);
 // WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const handlers = {
   getStats: async (_input: any, c: HonoContext) => {
     try {
@@ -123,6 +123,7 @@ const handlers = {
     }
   }
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const communicationsTsRestRouter = s.router(communicationsContract, handlers);
 createHonoEndpoints(

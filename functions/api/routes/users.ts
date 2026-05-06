@@ -11,6 +11,7 @@ import type { HonoContext } from "@shared/types/api";
 
 export const usersRouter = new Hono<AppEnv>();
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const userTsRestRouter = s.router(userContract, {
   getUsers: async (input: any, c: HonoContext) => {
     try {
@@ -275,5 +276,6 @@ createHonoEndpoints(
     }
   }
 );
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export default usersRouter;

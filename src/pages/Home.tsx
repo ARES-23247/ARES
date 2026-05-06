@@ -7,7 +7,7 @@ import { sanitizeHtml } from "../utils/security";
 export default function Home() {
   return (
     <div className="flex flex-col w-full">
-      <SEO title="Home" description="Building the future of West Virginia robotics with the Mountaineer Mindset. ARES 23247." />
+      <SEO title="Home" description="Building the future of robotics in Morgantown, West Virginia with the Mountaineer Mindset. ARES 23247." />
       {/* ─── HERO ─── */}
       <section className="relative w-full min-h-[95vh] flex items-center overflow-hidden bg-obsidian">
         {/* Motif Background Isolated Layer */}

@@ -8,7 +8,6 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { commentContract } from "../../../shared/schemas/contracts/commentContract";
 
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 
 export const commentsRouter = new Hono<AppEnv>();
@@ -16,6 +15,7 @@ export const commentsRouter = new Hono<AppEnv>();
 
 
 const commentHandlers = {
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
   list: async (_input: any, c: HonoContext) => {
     const { targetType, targetId } = input.params;
     const user = await getSessionUser(c);
@@ -232,6 +232,7 @@ const commentHandlers = {
     }
   },
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const commentTsRestRouter = s.router(commentContract, commentHandlers);
 

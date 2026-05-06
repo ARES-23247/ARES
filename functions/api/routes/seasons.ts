@@ -10,6 +10,7 @@ import type { HonoContext } from "@shared/types/api";
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const seasonsTsRestRouterObj: any = {
   list: async (_input: any, c: HonoContext) => {
     try {
@@ -241,10 +242,10 @@ const seasonsTsRestRouterObj: any = {
 };
 
 const seasonsTsRestRouter = s.router(seasonContract, seasonsTsRestRouterObj);
+/* eslint-enable @typescript-eslint/no-explicit-any */
 export const seasonsRouter = new Hono<AppEnv>();
 
 import { edgeCacheMiddleware } from "../middleware/cache";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 seasonsRouter.use("/", edgeCacheMiddleware(300, 60)); // Cache list
 seasonsRouter.use("/:year", edgeCacheMiddleware(300, 60)); // Cache detail

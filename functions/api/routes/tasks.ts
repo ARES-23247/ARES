@@ -12,7 +12,8 @@ import { siteConfig } from "../../utils/site.config";
 
 export const tasksRouter = new Hono<AppEnv>();
 
-const tasksTsRestRouter = s.router(taskContract, {
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+const taskTsRestRouter = s.router(taskContract, {
   list: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -408,4 +409,5 @@ createHonoEndpoints(
     }
   }
 );
+/* eslint-enable @typescript-eslint/no-explicit-any */
 export default tasksRouter;

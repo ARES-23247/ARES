@@ -321,3 +321,55 @@ Plans:
 
 Plans:
 - [x] 33-01-PLAN.md — AI Diff View Implementation (DONE)
+
+ - - - 
+ 
+ # # #   P h a s e   3 5 :   L o c a l   S E O   &   P u b l i c   D i s c o v e r y 
+ 
+ * * G o a l : * *   E s t a b l i s h   a   s t r o n g   s e a r c h   p r e s e n c e   f o r    
+ r o b o t i c s  
+ i n  
+ M o r g a n t o w n   t o   i n c r e a s e   l o c a l   v i s i b i l i t y   a n d   t r a f f i c   f o r   t h e   A R E S W E B   p l a t f o r m . 
+ * * D e p e n d s   o n : * *   N o n e 
+ * * R e q u i r e m e n t s : * *   T B D 
+ * * S u c c e s s   C r i t e r i a : * * 
+ 1 .   D y n a m i c   S c h e m a . o r g   s t r u c t u r e d   d a t a   o n   a l l   p u b l i c   r o u t e s 
+ 2 .   M e t a   t a g s   u p d a t e d   f o r   a l l   p u b l i c   r o u t e s 
+ 3 .   A u t o m a t e d   s i t e m a p . x m l   g e n e r a t e d   f r o m   D 1 
+ 4 .   A b o u t   p a g e   e n h a n c e d   f o r   g e o g r a p h i c   r e l e v a n c e 
+ 
+ * * P l a n s : * *   0   p l a n s 
+ -   [   ]   T B D   ( r u n   / g s d - p l a n - p h a s e   3 5   t o   b r e a k   d o w n ) 
+ 
+ - - - 
+ 
+ # # #   P h a s e   3 6 :   M o b i l e   P W A   E n h a n c e m e n t s 
+ 
+ * * G o a l : * *   B u i l d   r o b u s t   P W A   o f f l i n e   s u p p o r t   a n d   s p e c i a l i z e d   m o b i l e   l a y o u t s   t o   i m p r o v e   m o b i l e   u s a b i l i t y   w i t h o u t   a   f u l l   R e a c t   N a t i v e   r e w r i t e . 
+ * * D e p e n d s   o n : * *   P h a s e   3 5 
+ * * R e q u i r e m e n t s : * *   T B D 
+ * * S u c c e s s   C r i t e r i a : * * 
+ 1 .   O f f l i n e   s u p p o r t   u s i n g   I n d e x e d D B   f o r   c o r e   r o s t e r / c a l e n d a r / t a s k   f e a t u r e s 
+ 2 .   S p e c i a l i z e d   m o b i l e   l a y o u t   t h a t   h i d e s   c o m p l e x   I D E / S i m u l a t i o n   t o o l s 
+ 3 .   P W A   i n s t a l l a b i l i t y   p r o m p t 
+ 
+ * * P l a n s : * *   0   p l a n s 
+ -   [   ]   T B D   ( r u n   / g s d - p l a n - p h a s e   3 6   t o   b r e a k   d o w n ) 
+ 
+ - - - 
+ 
+ # # #   P h a s e   3 7 :   H a r d w a r e   &   I n v e n t o r y   T r a c k i n g 
+ 
+ * * G o a l : * *   I m p l e m e n t   a   d e d i c a t e d   I n v e n t o r y   M a n a g e r   t o   t r a c k   m o t o r s ,   s e n s o r s ,   s t r u c t u r a l   p a r t s ,   a n d   s t u d e n t   c h e c k - o u t s . 
+ * * D e p e n d s   o n : * *   P h a s e   3 6 
+ * * R e q u i r e m e n t s : * *   T B D 
+ * * S u c c e s s   C r i t e r i a : * * 
+ 1 .   I n v e n t o r y   t r a c k i n g   U I   a n d   b a c k e n d   s c h e m a 
+ 2 .   C h e c k - i n / c h e c k - o u t   l o g s   l i n k e d   t o   s t u d e n t   a c c o u n t s 
+ 3 .   L o w - s t o c k   a l e r t s   i n t e g r a t e d   w i t h   Z u l i p 
+ 4 .   I n t e g r a t i o n   w i t h   S t o r e f r o n t / F i n a n c e   l e d g e r 
+ 
+ * * P l a n s : * *   0   p l a n s 
+ -   [   ]   T B D   ( r u n   / g s d - p l a n - p h a s e   3 7   t o   b r e a k   d o w n ) 
+  
+ 

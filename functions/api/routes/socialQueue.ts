@@ -7,9 +7,9 @@ import { AppEnv, getSessionUser, originIntegrityMiddleware } from "../middleware
 import { nanoid } from "nanoid";
 import { dispatchQueuePost } from "../../utils/socialSync";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
   id: String(r.id),
   content: String(r.content),
   media_urls: r.media_urls ? JSON.parse(String(r.media_urls)) : undefined,
@@ -113,6 +113,7 @@ const socialQueueRouterObj: any = {
         platforms: JSON.stringify(body.platforms),
         media_urls: body.media_urls ? JSON.stringify(body.media_urls) : null,
         scheduled_for: body.scheduled_for,
+/* eslint-enable @typescript-eslint/no-explicit-any */
         status: "pending",
         created_at: createdAt,
         created_by: user.id,

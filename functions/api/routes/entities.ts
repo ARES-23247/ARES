@@ -5,11 +5,11 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { entityContract } from "../../../shared/schemas/contracts/entityContract";
 import { AppEnv, ensureAuth, logAuditAction } from "../middleware";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 export const entitiesRouter = new Hono<AppEnv>();
 
-const entityHandlers = {
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+const entityTsRestRouter = s.router(entityContract, {
   getLinks: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -108,13 +108,14 @@ const entityHandlers = {
       console.error("DELETE_LINK ERROR", e);
       return { status: 500 as const, body: { error: "Failed to delete link" } };
     }
-  },
-};
+  }
+});
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 entitiesRouter.use("*", ensureAuth);
 createHonoEndpoints(
   entityContract,
-  entityHandlers,
+  entityTsRestRouter,
   entitiesRouter,
   {
     responseValidation: true,

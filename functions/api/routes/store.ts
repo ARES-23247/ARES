@@ -7,9 +7,9 @@ import { sendZulipMessage } from "../../utils/zulip";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const app = new Hono<AppEnv>();
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 
 // CR-04 FIX: Apply ensureAdmin middleware to orders routes
 app.use("/orders", ensureAdmin);
@@ -206,6 +206,7 @@ app.post("/webhook", async (c) => {
           customer_email: session.customer_details?.email || "unknown",
           shipping_name: (session ).shipping_details?.name || null,
           total_cents: session.amount_total || 0,
+/* eslint-enable @typescript-eslint/no-explicit-any */
           status: "paid",
           items_json: JSON.stringify(cartItems),
           created_at: new Date().toISOString(),

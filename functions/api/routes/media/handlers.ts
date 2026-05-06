@@ -3,7 +3,6 @@ import { initServer } from "ts-rest-hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const _s = initServer<AppEnv>();
 
@@ -14,6 +13,7 @@ const MAX_FILE_SIZE_FOR_AI = 2.5 * 1024 * 1024;
 
 // IN-11: File extension mapping for validation and normalization
 // Maps MIME types to their canonical file extensions
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const MIME_TO_EXTENSION: Record<string, string> = {
   'image/png': '.png',
   'image/jpeg': '.jpg',
@@ -102,6 +102,7 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
   while (result.truncated) {
     result = await bucket.list({ ...options, cursor: result.cursor, limit: 100 });
     objects.push(...result.objects);
+/* eslint-enable @typescript-eslint/no-explicit-any */
   }
   return { objects };
 }

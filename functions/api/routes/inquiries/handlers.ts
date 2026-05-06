@@ -7,9 +7,9 @@ import { encrypt, decrypt } from "../../../utils/crypto";
 import { safeJSONStringify } from "../../../utils/json";
 import { sendZulipMessage } from "../../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../../utils/notifications";
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { buildGitHubConfig, createProjectItem } from "../../../utils/githubProjects";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 /**
  * Deletes old inquiries that have been resolved or rejected.
@@ -142,6 +142,7 @@ export const inquiryHandlers = {
           }
         } catch { /* ignore */ }
       }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
       const id = crypto.randomUUID();
       const encryptedName = await encrypt(name, secret);

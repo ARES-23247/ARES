@@ -5,11 +5,11 @@ import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContra
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware, s } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 export const sponsorsRouter = new Hono<AppEnv>();
 
 type SponsorSelectedRow = {
   id: string | null;
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
   name: string;
   tier: string;
   logo_url: string | null;
@@ -224,3 +224,5 @@ createHonoEndpoints(
   }
 );
 export default sponsorsRouter;
+
+/* eslint-enable @typescript-eslint/no-explicit-any */

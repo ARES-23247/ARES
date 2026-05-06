@@ -97,6 +97,7 @@ async function pruneDocHistory(c: HonoContext, slug: string, limit = 10) {
   } catch { /* ignore */ }
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const docTsRestRouter = s.router(docContract, {
   getDocs: async (_input: any, c: HonoContext) => {
     try {
@@ -761,7 +762,7 @@ const docTsRestRouter = s.router(docContract, {
       console.error("[Docs:Purge] Error", e);
       return { status: 500 as const, body: { error: "Purge failed" } };
     }
-  },
+  }
 });
 
 
@@ -801,4 +802,5 @@ createHonoEndpoints(
     }
   }
 );
+/* eslint-enable @typescript-eslint/no-explicit-any */
 export default docsRouter;

@@ -11,6 +11,7 @@ const saveAwardSchema = awardContract.saveAward.body;
 
 export const awardsRouter = new Hono<AppEnv>();
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const awardsTsRestRouter = s.router(awardContract, {
   getAwards: async (input: any, c: HonoContext) => {
     try {
@@ -170,5 +171,6 @@ createHonoEndpoints(
     }
   }
 );
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export default awardsRouter;

@@ -21,8 +21,8 @@ sitemapRouter.get(".xml", async (c: Context<AppEnv>) => {
 
     const baseUrl = siteConfig.urls.base;
     
-    // Fetch published docs and posts
-    const [docs, posts] = await Promise.all([
+    // Fetch published docs, posts, and events
+    const [docs, posts, events] = await Promise.all([
       db.selectFrom("docs")
         .select("slug")
         .where("is_deleted", "=", 0)
@@ -32,6 +32,12 @@ sitemapRouter.get(".xml", async (c: Context<AppEnv>) => {
         .select("slug")
         .where("is_deleted", "=", 0)
         .where("status", "=", "published")
+        .execute(),
+      db.selectFrom("events")
+        .select("id")
+        .where("is_deleted", "=", 0)
+        // Ensure visibility is public if such a field exists, or simply include all non-deleted events
+        // Based on typical schema we assume all non-deleted events are public unless otherwise restricted
         .execute()
     ]);
 
@@ -43,6 +49,15 @@ sitemapRouter.get(".xml", async (c: Context<AppEnv>) => {
       "/about",
       "/sponsors",
       "/inquiry",
+      "/seasons",
+      "/outreach",
+      "/gallery",
+      "/tech-stack",
+      "/academy",
+      "/sim-runner",
+      "/join",
+      "/store",
+      "/leaderboard"
     ];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -61,6 +76,11 @@ sitemapRouter.get(".xml", async (c: Context<AppEnv>) => {
     // Posts
     for (const post of posts) {
       xml += `  <url><loc>${baseUrl}/blog/${post.slug}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>\n`;
+    }
+
+    // Events
+    for (const event of events) {
+      xml += `  <url><loc>${baseUrl}/events/${event.id}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n`;
     }
 
     xml += `</urlset>`;

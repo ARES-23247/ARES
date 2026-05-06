@@ -14,8 +14,9 @@ type LocationInput = z.infer<typeof locationSchema>;
 
 export const locationsRouter = new Hono<AppEnv>();
 
-const locationsTsRestRouter = s.router(locationContract, {
-    list: async (input: any, c: HonoContext) => {
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+const locationTsRestRouter = s.router(locationContract, {
+  list: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("locations")
@@ -127,5 +128,6 @@ createHonoEndpoints(
     }
   }
 );
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export default locationsRouter;

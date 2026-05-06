@@ -22,11 +22,17 @@ export default function SEO({
 
   const organizationSchema = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "EducationalOrganization",
     "name": "ARES 23247 (Appalachian Robotics & Engineering Society)",
     "url": siteConfig.urls.base,
     "logo": `${siteConfig.urls.base}/ares_hero.png`,
     "description": "FIRST® Tech Challenge (FTC) Robotics Team based in Morgantown, West Virginia.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Morgantown",
+      "addressRegion": "WV",
+      "addressCountry": "US"
+    },
     "sameAs": [
       "https://github.com/ARES23247"
     ]

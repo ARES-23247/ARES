@@ -6,11 +6,11 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { notificationContract } from "../../../shared/schemas/contracts/notificationContract";
 
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 
 export const notificationsRouter = new Hono<AppEnv>();
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const notificationHandlers = {
   getNotifications: async (_input: any, c: HonoContext) => {
     try {
@@ -207,6 +207,7 @@ const notificationHandlers = {
     }
   },
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const notificationTsRestRouter = s.router(notificationContract, notificationHandlers);
 

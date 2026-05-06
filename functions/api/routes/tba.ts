@@ -51,6 +51,7 @@ async function getTBA(path: string, c: HonoContext) {
   return data;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const tbaTsRestRouter = s.router(tbaContract, {
   getRankings: async (input: any, c: HonoContext) => {
     try {
@@ -125,4 +126,5 @@ createHonoEndpoints(
     }
   }
 );
+/* eslint-enable @typescript-eslint/no-explicit-any */
 export default tbaRouter;

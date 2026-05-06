@@ -7,11 +7,11 @@ import { ensureAdmin, rateLimitMiddleware, logAuditAction, getSessionUser, s } f
 import { AppEnv } from "../middleware";
 
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 const financeRouter = new Hono<AppEnv>();
 
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const financeTsRestRouterObj = {
   getSummary: async (input: any, c: HonoContext) => {
     try {
@@ -336,8 +336,9 @@ const financeTsRestRouterObj = {
       console.error("[Finance] Delete error:", e);
       return { status: 500 as const, body: { error: e.message } };
     }
-  },
+  }
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const financeTsRestRouter = s.router(financeContract, financeTsRestRouterObj);
 

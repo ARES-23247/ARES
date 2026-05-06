@@ -8,7 +8,6 @@ import { type Kysely } from "kysely";
 import { type DB } from "@shared/types/db";
 
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 
 export const githubRouter = new Hono<AppEnv>();
@@ -19,6 +18,7 @@ interface WeekData {
   days: number[];
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const githubHandlers = {
   getBoard: async (_input: any, c: HonoContext) => {
     try {
@@ -183,6 +183,7 @@ const githubHandlers = {
     }
   }
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const githubTsRestRouter = s.router(githubContract, githubHandlers);
 

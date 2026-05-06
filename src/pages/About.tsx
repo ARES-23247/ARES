@@ -50,7 +50,7 @@ export default function About() {
 
   return (
     <div className="flex flex-col w-full bg-obsidian">
-      <SEO title="About Us" description="Learn about ARES 23247, our mission, and the students driving FIRST Robotics forward in West Virginia." />
+      <SEO title="About Us" description="Learn about ARES 23247, our mission, and the students driving FIRST Robotics forward in Morgantown, West Virginia." />
       {/* ─── HERO ─── */}
       <section className="py-32 bg-obsidian text-marble relative overflow-hidden">
         <GreekMeander variant="thin" opacity="opacity-40" className="absolute top-0 left-0" />

@@ -7,7 +7,6 @@ import { settingsContract } from "../../../shared/schemas/contracts/settingsCont
 import { z } from "zod";
 
 import type { HonoContext } from "@shared/types/api";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
 
 export const settingsRouter = new Hono<AppEnv>();
 
@@ -32,8 +31,8 @@ function maskSecret(value: string): string {
 // Schema for settings: keys and values must be strings, values max 10000 chars
 const settingsSchema = z.record(z.string(), z.string().max(10000));
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const settingsHandlers = {
-
   getSettings: async (_input: any, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
@@ -162,6 +161,7 @@ const settingsHandlers = {
     }
   }
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const settingsTsRestRouter = s.router(settingsContract, settingsHandlers);
 
