@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -8,6 +9,7 @@ export const settingsContract = c.router({
     method: "GET",
     path: "/admin/settings",
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         settings: z.record(z.string(), z.string()),
@@ -20,6 +22,7 @@ export const settingsContract = c.router({
     path: "/admin/settings",
     body: z.record(z.string(), z.string()),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         updated: z.number(),
@@ -31,6 +34,7 @@ export const settingsContract = c.router({
     method: "GET",
     path: "/admin/stats",
     responses: {
+      ...standardErrors,
       200: z.object({
         posts: z.number(),
         events: z.number(),
@@ -45,6 +49,7 @@ export const settingsContract = c.router({
     method: "GET",
     path: "/public/settings",
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         settings: z.record(z.string(), z.string()),

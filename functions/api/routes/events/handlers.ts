@@ -447,7 +447,7 @@ export const eventHandlers = {
         if (status === "published") {
           const baseUrl = new URL(c.req.url).origin;
           if (socials) {
-            const socialsFilter: Record<string, boolean> = socials;
+            const socialsFilter: any = socials;
             await dispatchSocials(db, { title: title || "", url: `${baseUrl}/events`, snippet: "New event scheduled!", thumbnail: coverImage || "/gallery_1.png", baseUrl }, socialConfig, socialsFilter).catch(() => {});
           }
           const eventTopic = `Event: ${title}`;
@@ -457,7 +457,7 @@ export const eventHandlers = {
       })());
 
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_EVENT", "events", genId, `Created event: ${title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), (c.env.AI as any), c.env.VECTORIZE_DB);
 
       return { status: 200 as const, body: { success: true, id: genId } };
     } catch (e) {
@@ -610,7 +610,7 @@ export const eventHandlers = {
         }
       })());
 
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), (c.env.AI as any), c.env.VECTORIZE_DB);
       return { status: 200 as const, body: { success: true, id } };
     } catch (e) {
       console.error("[Events:Update] Error", e);
@@ -676,7 +676,7 @@ export const eventHandlers = {
         }
       })());
 
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), (c.env.AI as any), c.env.VECTORIZE_DB);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Events:Delete] Error", e);

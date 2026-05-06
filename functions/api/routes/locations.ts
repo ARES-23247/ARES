@@ -15,7 +15,7 @@ type LocationInput = z.infer<typeof locationSchema>;
 export const locationsRouter = new Hono<AppEnv>();
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const locationsTsRestRouter = s.router(locationContract, {
+const locationsHandlers: any = {
   list: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -113,7 +113,8 @@ const locationsTsRestRouter = s.router(locationContract, {
       return { status: 500 as const, body: { error: "Failed to delete location", success: false } };
     }
   },
-});
+};
+const locationsTsRestRouter = s.router(locationContract, locationsHandlers as any);
 
 locationsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(

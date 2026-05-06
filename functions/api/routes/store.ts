@@ -204,13 +204,13 @@ app.post("/webhook", async (c) => {
           id: session.id,
           stripe_session_id: session.id,
           customer_email: session.customer_details?.email || "unknown",
-          shipping_name: (session ).shipping_details?.name || null,
+          shipping_name: (session as any).shipping_details?.name || null,
           total_cents: session.amount_total || 0,
 /* eslint-enable @typescript-eslint/no-explicit-any */
           status: "paid",
           items_json: JSON.stringify(cartItems),
           created_at: new Date().toISOString(),
-        } )
+        } as any)
         .execute();
 
       // Deplete inventory

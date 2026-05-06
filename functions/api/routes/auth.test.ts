@@ -24,7 +24,7 @@ describe("Auth Router", () => {
 
   describe("GET /auth-check", () => {
     it("should return 200 and user data when authenticated", async () => {
-      const mockUser = { id: "u1", email: "test@example.com", name: "Test User", role: "admin", member_type: "mentor" };
+      const mockUser = { id: "u1", email: "test@example.com", name: "Test User", nickname: "Test", image: null, role: "admin", member_type: "mentor" };
       vi.mocked(shared.getSessionUser).mockResolvedValue(mockUser);
 
       const req = new Request("http://localhost/auth-check");
@@ -53,7 +53,7 @@ describe("Auth Router", () => {
       const mockHandler = vi.fn().mockResolvedValue(new Response("auth response", { status: 200 as const }));
       vi.mocked(authUtils.getAuth).mockReturnValue({
         handler: mockHandler,
-      } as ReturnType<typeof authUtils.getAuth>);
+      } as any);
 
       const req = new Request("http://localhost/signin", { method: "POST" });
       const res = await authRouter.request(req, {}, { DB: {} as D1Database, BETTER_AUTH_SECRET: "test" }, mockExecutionContext);
@@ -67,7 +67,7 @@ describe("Auth Router", () => {
       const error = new Error("Auth failed");
       vi.mocked(authUtils.getAuth).mockReturnValue({
         handler: vi.fn().mockRejectedValue(error),
-      } as ReturnType<typeof authUtils.getAuth>);
+      } as any);
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const req = new Request("http://localhost/error", {
@@ -87,7 +87,7 @@ describe("Auth Router", () => {
         const error = new Error("Auth failed");
         vi.mocked(authUtils.getAuth).mockReturnValue({
           handler: vi.fn().mockRejectedValue(error),
-        } as ReturnType<typeof authUtils.getAuth>);
+        } as any);
 
         const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
         const req = new Request("http://localhost/error");
@@ -104,7 +104,7 @@ describe("Auth Router", () => {
       const error = new Error("");
       vi.mocked(authUtils.getAuth).mockReturnValue({
         handler: vi.fn().mockRejectedValue(error),
-      } as ReturnType<typeof authUtils.getAuth>);
+      } as any);
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const req = new Request("http://localhost/error");

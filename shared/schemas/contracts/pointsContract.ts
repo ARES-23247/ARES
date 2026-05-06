@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -37,6 +38,7 @@ export const pointsContract = c.router({
     path: "/balance/:user_id",
     pathParams: z.object({ user_id: z.string() }),
     responses: {
+      ...standardErrors,
       200: PointsBalanceSchema,
       401: ErrorSchema,
       403: ErrorSchema,
@@ -49,6 +51,7 @@ export const pointsContract = c.router({
     path: "/history/:user_id",
     pathParams: z.object({ user_id: z.string() }),
     responses: {
+      ...standardErrors,
       200: z.array(PointsTransactionSchema),
       401: ErrorSchema,
       403: ErrorSchema,
@@ -65,6 +68,7 @@ export const pointsContract = c.router({
       reason: z.string().min(1),
     }),
     responses: {
+      ...standardErrors,
       200: PointsTransactionSchema,
       400: ErrorSchema,
       401: ErrorSchema,
@@ -77,6 +81,7 @@ export const pointsContract = c.router({
     method: "GET",
     path: "/leaderboard",
     responses: {
+      ...standardErrors,
       200: z.object({
         leaderboard: z.array(PointsLeaderboardEntrySchema),
       }),

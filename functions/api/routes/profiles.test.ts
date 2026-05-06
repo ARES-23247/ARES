@@ -76,7 +76,7 @@ describe("Hono Backend - /profiles Router", () => {
         first: vi.fn(),
         all: vi.fn(),
         run: vi.fn(),
-      } as D1Database,
+      } as unknown as D1Database,
       DEV_BYPASS: "true",
     };
 
@@ -115,7 +115,7 @@ describe("Hono Backend - /profiles Router", () => {
   });
 
   it("should update /me profile", async () => {
-    mockDb.run.mockResolvedValue({ success: true });
+    (mockDb as any).run.mockResolvedValue({ success: true });
 
     const res = await testApp.request("/me", {
       method: "PUT",
@@ -158,7 +158,7 @@ describe("Hono Backend - /profiles Router", () => {
     const { getAuth } = await import("../../utils/auth");
     vi.mocked(getAuth).mockReturnValueOnce({
       api: { updateUser: vi.fn().mockRejectedValueOnce(new Error("API Error")) }
-    } );
+    } as any);
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await testApp.request("/avatar", {
@@ -313,7 +313,7 @@ describe("Hono Backend - /profiles Router", () => {
   it("should handle empty results in team-roster with warning", async () => {
     mockDb.execute.mockResolvedValueOnce([{ user_id: "1", show_on_about: 1 }]);
 
-    vi.mocked(shared.sanitizeProfileForPublic).mockReturnValueOnce(null );
+    vi.mocked(shared.sanitizeProfileForPublic).mockReturnValueOnce(null as any);
 
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const res = await testApp.request("/team-roster", {}, env, mockExecutionContext);

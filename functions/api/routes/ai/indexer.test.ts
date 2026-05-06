@@ -88,7 +88,7 @@ describe("indexSiteContent", () => {
   });
 
   it("returns 0 indexed when DB has no public content", async () => {
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(result.indexed).toBe(0);
     expect(result.skipped).toBe(0);
@@ -113,7 +113,7 @@ describe("indexSiteContent", () => {
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2, 0.3]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(result.indexed).toBe(1);
     expect(mockAi.run).toHaveBeenCalledWith("@cf/baai/bge-base-en-v1.5", expect.any(Object));
@@ -137,7 +137,7 @@ describe("indexSiteContent", () => {
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2, 0.3]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(result.indexed).toBe(1);
     expect(result.errors).toEqual([]);
@@ -162,7 +162,7 @@ describe("indexSiteContent", () => {
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2, 0.3]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(result.indexed).toBe(1);
     // Verify incremental: D1 setting was read
@@ -175,7 +175,7 @@ describe("indexSiteContent", () => {
     const settingsQuery = createMockQuery();
     mockDb.selectFrom.mockImplementationOnce(() => settingsQuery);
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize, { force: true });
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any, { force: true });
 
     // DB should NOT be queried for settings in force mode
     expect(settingsQuery.executeTakeFirst).not.toHaveBeenCalled();
@@ -195,7 +195,7 @@ describe("indexSiteContent", () => {
       return failQuery;
     });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(result.indexed).toBe(0);
     expect(result.errors.length).toBe(4);
@@ -219,7 +219,7 @@ describe("indexSiteContent", () => {
     // Return only 1 embedding for 2 documents
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(result.errors).toContainEqual(expect.stringContaining("mismatched results"));
     expect(mockVectorize.upsert).not.toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe("indexSiteContent", () => {
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2]] });
     mockVectorize.upsert.mockRejectedValue(new Error("Vectorize quota exceeded"));
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(result.errors).toContainEqual(expect.stringContaining("upsert failed"));
     expect(result.indexed).toBe(0);
@@ -271,7 +271,7 @@ describe("indexSiteContent", () => {
 
     mockAi.run.mockResolvedValue({ data: [[0.1, 0.2, 0.3]] });
 
-    const result = await indexSiteContent(mockDb, mockAi, mockVectorize);
+    const result = await indexSiteContent(mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(result.indexed).toBe(1);
     expect(result.errors).toEqual([]);

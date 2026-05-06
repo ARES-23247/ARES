@@ -5,6 +5,7 @@ import { createHonoEndpoints } from "ts-rest-hono";
 import { postContract } from "../../../shared/schemas/contracts/postContract";
 import { siteConfig } from "../../utils/site.config";
 import { AppEnv, getSocialConfig, extractAstText, getSessionUser, ensureAdmin, ensureAuth, validateLength, MAX_INPUT_LENGTHS, logAuditAction, s } from "../middleware";
+import type { HonoContext } from "@shared/types/api";
 import { getStandardDate } from "../../utils/content";
 import { dispatchSocials } from "../../utils/socialSync";
 import { sendZulipMessage } from "../../utils/zulipSync";
@@ -33,7 +34,7 @@ const sanitizeFtsQuery = (query: string): string => {
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const postTsRestRouterObj = {
-  getPosts: async (input: any, c: Context<AppEnv>) => {
+  getPosts: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit = 10, offset = 0, q } = input.query;
@@ -120,7 +121,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch posts" } };
     }
   },
-  getPost: async (input: any, c: Context<AppEnv>) => {
+  getPost: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -179,7 +180,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  getAdminPosts: async (input: any, c: Context<AppEnv>) => {
+  getAdminPosts: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const { limit = 50, offset = 0 } = input.query;
@@ -218,7 +219,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch posts" } };
     }
   },
-  getAdminPost: async (input: any, c: Context<AppEnv>) => {
+  getAdminPost: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -246,7 +247,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch post" } };
     }
   },
-  savePost: async (input: any, c: Context<AppEnv>) => {
+  savePost: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
 
@@ -321,7 +322,7 @@ const postTsRestRouterObj = {
 
       c.executionCtx.waitUntil(pruneHistory(c, slug, 10));
       c.executionCtx.waitUntil(logAuditAction(c, "CREATE_POST", "posts", slug, `Created post: ${input.body.title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB);
 
       const warnings: string[] = [];
 
@@ -390,7 +391,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  updatePost: async (input: any, c: Context<AppEnv>) => {
+  updatePost: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -451,14 +452,14 @@ const postTsRestRouterObj = {
       );
 
       c.executionCtx.waitUntil(logAuditAction(c, "UPDATE_POST", "posts", slug, `Updated post: ${input.body.title} (${status})`));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB);
       return { status: 200, body: { success: true, slug } };
     } catch (e) {
       console.error("[Posts:Update] Error", e);
       return { status: 500, body: { error: "Database write failed" } };
     }
   },
-  deletePost: async (input: any, c: Context<AppEnv>) => {
+  deletePost: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -472,7 +473,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  undeletePost: async (input: any, c: Context<AppEnv>) => {
+  undeletePost: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -484,7 +485,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Undelete failed" } };
     }
   },
-  purgePost: async (input: any, c: Context<AppEnv>) => {
+  purgePost: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -512,7 +513,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Purge failed" } };
     }
   },
-  approvePost: async (input: any, c: Context<AppEnv>) => {
+  approvePost: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const result = await approvePost(c, slug);
@@ -523,7 +524,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Approval failed" } };
     }
   },
-  rejectPost: async (input: any, c: Context<AppEnv>) => {
+  rejectPost: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     const { reason } = input.body;
     try {
@@ -551,7 +552,7 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Reject failed" } };
     }
   },
-  getPostHistory: async (input: any, c: Context<AppEnv>) => {
+  getPostHistory: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     try {
       const historyRows = await getPostHistory(c, slug);
@@ -565,14 +566,14 @@ const postTsRestRouterObj = {
       return { status: 500, body: { error: "Failed to fetch history" } };
     }
   },
-  restorePostHistory: async (input: any, c: Context<AppEnv>) => {
+  restorePostHistory: async (input: any, c: HonoContext) => {
     const { slug, id } = input.params;
     const user = await getSessionUser(c);
     const result = await restorePostFromHistory(c, slug, String(id), user?.email || "anonymous_admin");
     if (!result.success) return { status: 404, body: { error: result.error || "Restore failed" } };
     return { status: 200, body: { success: true } };
   },
-  repushSocials: async (input: any, c: Context<AppEnv>) => {
+  repushSocials: async (input: any, c: HonoContext) => {
     const { slug } = input.params;
     const { socials } = input.body;
     try {
@@ -605,7 +606,7 @@ const postTsRestRouterObj = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const postTsRestRouter = s.router(postContract, postTsRestRouterObj);
+const postTsRestRouter = s.router(postContract, postTsRestRouterObj as any);
 
 export const postsRouter = new Hono<AppEnv>();
 

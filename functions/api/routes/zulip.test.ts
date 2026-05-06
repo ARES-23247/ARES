@@ -50,7 +50,7 @@ describe("Hono Backend - /zulip Router", () => {
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
       if (c.env && (c.env).DB) {
-        c.set("db", (c.env).DB);
+        c.set("db", (c.env).DB as any);
       }
       await next();
     });

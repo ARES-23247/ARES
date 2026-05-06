@@ -31,7 +31,7 @@ const portfolioCache = new Map<string, { data: any; expiresAt: number; version: 
 // Helper to get the current portfolio cache key with version
 const getPortfolioCacheKey = () => `portfolio_v${portfolioCacheVersion}`;
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const judgesTsRestRouter = s.router(judgeContract, {
+const judgesHandlers: any = {
   login: async (input: any, c: HonoContext) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
     const { checkPersistentRateLimit } = await import("../middleware/security");
@@ -213,7 +213,8 @@ const judgesTsRestRouter = s.router(judgeContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-});
+};
+const judgesTsRestRouter = s.router(judgeContract, judgesHandlers as any);
 
 judgesRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(

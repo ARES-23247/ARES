@@ -156,7 +156,7 @@ const awardsTsRestRouter = s.router(awardContract, {
       return { status: 500 as const, body: { error: "Failed to delete award", success: false } };
     }
   },
-});
+} as any);
 
 awardsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(

@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 import { docSchema } from "../docSchema";
 
 const c = initContract();
@@ -45,6 +46,7 @@ export const docContract = c.router({
     method: "GET",
     path: "/",
     responses: {
+      ...standardErrors,
       200: z.object({
         docs: z.array(docResponseSchema),
       }),
@@ -58,6 +60,7 @@ export const docContract = c.router({
       q: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         results: z.array(
           z.object({
@@ -76,6 +79,7 @@ export const docContract = c.router({
     method: "GET",
     path: "/admin/list",
     responses: {
+      ...standardErrors,
       200: z.object({
         docs: z.array(docResponseSchema),
       }),
@@ -85,6 +89,7 @@ export const docContract = c.router({
     method: "GET",
     path: "/admin/:slug/detail",
     responses: {
+      ...standardErrors,
       200: z.object({
         doc: docDetailResponseSchema,
       }),
@@ -95,6 +100,7 @@ export const docContract = c.router({
     method: "GET",
     path: "/:slug",
     responses: {
+      ...standardErrors,
       200: z.object({
         doc: docDetailResponseSchema,
         contributors: z.array(
@@ -113,6 +119,7 @@ export const docContract = c.router({
     path: "/admin/:slug",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
   },
@@ -121,6 +128,7 @@ export const docContract = c.router({
     path: "/admin/save",
     body: docSchema,
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), slug: z.string() }),
       400: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
@@ -131,6 +139,7 @@ export const docContract = c.router({
     path: "/admin/:slug/sort",
     body: z.object({ sortOrder: z.number() }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
   },
@@ -143,6 +152,7 @@ export const docContract = c.router({
       turnstileToken: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       403: z.object({ error: z.string() }),
       429: z.object({ error: z.string() }),
@@ -152,6 +162,7 @@ export const docContract = c.router({
     method: "GET",
     path: "/admin/:slug/history",
     responses: {
+      ...standardErrors,
       200: z.object({
         history: z.array(docHistorySchema),
       }),
@@ -162,6 +173,7 @@ export const docContract = c.router({
     path: "/admin/:slug/history/:id/restore",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       404: z.object({ error: z.string() }),
     },
@@ -171,6 +183,7 @@ export const docContract = c.router({
     path: "/admin/:slug/approve",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
   },
@@ -179,6 +192,7 @@ export const docContract = c.router({
     path: "/admin/:slug/reject",
     body: z.object({ reason: z.string().optional() }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
   },
@@ -187,6 +201,7 @@ export const docContract = c.router({
     path: "/admin/:slug/undelete",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
   },
@@ -195,6 +210,7 @@ export const docContract = c.router({
     path: "/admin/:slug/purge",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
   },

@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -11,6 +12,7 @@ export const tbaContract = c.router({
       eventKey: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ rankings: z.array(z.any()) }),
       400: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
@@ -24,6 +26,7 @@ export const tbaContract = c.router({
       eventKey: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ matches: z.array(z.any()) }),
       400: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
@@ -39,6 +42,7 @@ export const tbaContract = c.router({
       type: z.enum(["matches", "rankings", "alliances"]),
     }),
     responses: {
+      ...standardErrors,
       200: z.any(),
       500: z.object({ error: z.string() }),
     },

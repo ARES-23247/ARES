@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -26,6 +27,7 @@ export const outreachContract = c.router({
     method: "GET",
     path: "/",
     responses: {
+      ...standardErrors,
       200: z.object({
         logs: z.array(outreachSchema),
       }),
@@ -37,6 +39,7 @@ export const outreachContract = c.router({
     method: "GET",
     path: "/admin/list",
     responses: {
+      ...standardErrors,
       200: z.object({
         logs: z.array(outreachSchema),
       }),
@@ -52,6 +55,7 @@ export const outreachContract = c.router({
       id: z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         id: z.string().optional(),
@@ -69,6 +73,7 @@ export const outreachContract = c.router({
     }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),

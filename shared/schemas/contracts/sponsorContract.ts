@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 import { sponsorSchema } from "../sponsorSchema";
 
 const c = initContract();
@@ -25,6 +26,7 @@ export const sponsorContract = c.router({
     method: "GET",
     path: "/",
     responses: {
+      ...standardErrors,
       200: z.object({
         sponsors: z.array(sponsorSchema),
       }),
@@ -35,6 +37,7 @@ export const sponsorContract = c.router({
     method: "GET",
     path: "/roi/:token",
     responses: {
+      ...standardErrors,
       200: z.object({
         sponsor: sponsorSchema,
         metrics: z.array(sponsorRoiMetricSchema),
@@ -50,6 +53,7 @@ export const sponsorContract = c.router({
     method: "GET",
     path: "/admin/list",
     responses: {
+      ...standardErrors,
       200: z.object({
         sponsors: z.array(sponsorSchema),
       }),
@@ -61,6 +65,7 @@ export const sponsorContract = c.router({
     path: "/admin/save",
     body: sponsorSchema,
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         id: z.string().optional(),
@@ -73,6 +78,7 @@ export const sponsorContract = c.router({
     path: "/admin/:id",
     body: z.object({}),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -83,6 +89,7 @@ export const sponsorContract = c.router({
     method: "GET",
     path: "/admin/tokens",
     responses: {
+      ...standardErrors,
       200: z.object({
         tokens: z.array(sponsorTokenSchema),
       }),
@@ -94,6 +101,7 @@ export const sponsorContract = c.router({
     path: "/admin/tokens/generate",
     body: z.object({ sponsor_id: z.string() }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), token: z.string().optional() }),
       400: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),

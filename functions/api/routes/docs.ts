@@ -98,7 +98,7 @@ async function pruneDocHistory(c: HonoContext, slug: string, limit = 10) {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const docTsRestRouter = s.router(docContract, {
+const docHandlers: any = {
   getDocs: async (_input: any, c: HonoContext) => {
     try {
                   const db = c.get("db") as Kysely<DB>;
@@ -400,7 +400,7 @@ const docTsRestRouter = s.router(docContract, {
 
       await db.updateTable("docs").set({ is_deleted: 1 }).where("slug", "=", slug).execute();
       c.executionCtx?.waitUntil?.(logAuditAction(c, "DELETE_DOC", "docs", slug, JSON.stringify(existing)));
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), (c.env.AI as any), c.env.VECTORIZE_DB);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Docs:Delete] Error", e);
@@ -546,7 +546,7 @@ const docTsRestRouter = s.router(docContract, {
           }));
         }
 
-        triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+        triggerBackgroundReindex(c.executionCtx, c.get("db"), (c.env.AI as any), c.env.VECTORIZE_DB);
         return { status: 200 as const, body: { success: true, slug } };
     } catch (e) {
       console.error("[Docs:Save] Error", e);
@@ -759,11 +759,11 @@ const docTsRestRouter = s.router(docContract, {
       
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
-      console.error("[Docs:Purge] Error", e);
       return { status: 500 as const, body: { error: "Purge failed" } };
     }
   }
-});
+};
+const docTsRestRouter = s.router(docContract, docHandlers as any);
 
 
 

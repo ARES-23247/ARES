@@ -11,7 +11,7 @@ import type { HonoContext } from "@shared/types/api";
 const logisticsRouter = new Hono<AppEnv>();
 
 const logisticsHandlers = {
-  getSummary: async (_input, c: HonoContext) => {
+  getSummary: async (_input: any, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
 
     try {
@@ -57,7 +57,7 @@ const logisticsHandlers = {
       return { status: 500 as const, body: { error: "Logistics fetch failed" } as any };
     }
   },
-  exportEmails: async (_input, c: HonoContext) => {
+  exportEmails: async (_input: any, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     const secret = c.env.ENCRYPTION_SECRET;
 
@@ -109,7 +109,7 @@ const logisticsHandlers = {
   },
 };
 
-const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers);
+const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers as any);
 
 logisticsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(

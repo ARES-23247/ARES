@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -12,6 +13,7 @@ export const communicationsContract = c.router({
       htmlContent: z.string().min(1, "Content is required"),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         message: z.string(),
@@ -35,6 +37,7 @@ export const communicationsContract = c.router({
     method: "GET",
     path: "/stats",
     responses: {
+      ...standardErrors,
       200: z.object({
         activeUsers: z.number(),
       }),

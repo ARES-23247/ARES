@@ -335,7 +335,7 @@ aiRouter.post("/sim-playground", persistentRateLimitMiddleware(20, 60), async (c
         if (Array.isArray(m.content)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External Library Type Gap: MessageContent union type
           const textPart = m.content.find((p: any) => p.type === "text");
-          return { role: m.role, content: textPart ? truncateForFallback(textPart.text) : "" };
+          return { role: m.role, content: textPart ? truncateForFallback(textPart.text || "") : "" };
         }
         return { role: m.role, content: truncateForFallback(m.content as string) };
       });

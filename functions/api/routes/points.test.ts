@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { AppEnv } from "../middleware/utils";
-import { TestEnv, MockKysely } from "../../src/test/types";
+import { TestEnv, MockKysely } from "../../../src/test/types";
 import pointsRouter from "./points";
 
 describe("Hono Backend - /points Router", () => {
@@ -20,15 +20,15 @@ describe("Hono Backend - /points Router", () => {
       execute: vi.fn().mockResolvedValue([]),
       insertInto: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis()
-    };
+    } as any;
 
     sessionUser = { id: "user-1", role: "user" };
 
-    app = new Hono<AppEnv>();
+    app = new Hono<TestEnv>();
     app.use("*", async (c, next) => {
       c.set("db", mockDb);
       if (sessionUser) {
-        c.set("sessionUser", sessionUser);
+        c.set("sessionUser", sessionUser as any);
       }
       await next();
     });
@@ -56,7 +56,7 @@ describe("Hono Backend - /points Router", () => {
     });
 
     it("allows admin to get another user's balance", async () => {
-      sessionUser.role = "admin";
+      sessionUser!.role = "admin";
       mockDb.execute.mockResolvedValueOnce([{ points_delta: 20 }]);
       const res = await app.request("/api/points/balance/user-2");
       expect(res.status).toBe(200);
@@ -112,7 +112,7 @@ describe("Hono Backend - /points Router", () => {
     });
 
     it("awards points as admin", async () => {
-      sessionUser.role = "admin";
+      sessionUser!.role = "admin";
       const res = await app.request("/api/points/transaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,7 +125,7 @@ describe("Hono Backend - /points Router", () => {
     });
 
     it("returns 500 on db error", async () => {
-      sessionUser.role = "admin";
+      sessionUser!.role = "admin";
       mockDb.execute.mockRejectedValueOnce(new Error("DB Error"));
       const res = await app.request("/api/points/transaction", {
         method: "POST",

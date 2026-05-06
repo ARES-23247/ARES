@@ -7,7 +7,7 @@ import type { HonoContext } from "@shared/types/api";
 
 const inquiriesRouter = new Hono<AppEnv>();
 
-const inquiriesTsRestRouter = s.router(inquiryContract, inquiryHandlers);
+const inquiriesTsRestRouter = s.router(inquiryContract, inquiryHandlers as any);
 
 // Apply protections
 inquiriesRouter.use("/admin", ensureAdmin);

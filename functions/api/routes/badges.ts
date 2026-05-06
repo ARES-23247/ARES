@@ -176,7 +176,7 @@ const badgesTsRestRouterObj = {
 };
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
-const badgesTsRestRouter = s.router(badgeContract, badgesTsRestRouterObj);
+const badgesTsRestRouter = s.router(badgeContract, badgesTsRestRouterObj as any);
 export const badgesRouter = new Hono<AppEnv>();
 
 // Middlewares

@@ -25,7 +25,7 @@ import { getSessionUser } from "../middleware";
 import { sendZulipMessage } from "../../utils/zulipSync";
 
 describe("Hono Backend - /tasks Router", () => {
-  let mockDb: MockKysely;
+  let mockDb: any;
   let testApp: Hono<TestEnv>;
 
   function createMockDb() {
@@ -60,7 +60,7 @@ describe("Hono Backend - /tasks Router", () => {
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
-      (c.set )("executionCtx", mockExecutionContext);
+      (c.set as any)("executionCtx", mockExecutionContext);
       c.env.DEV_BYPASS = "true";
       await next();
     });
@@ -216,7 +216,7 @@ describe("Hono Backend - /tasks Router", () => {
 
   it("POST / - handles create error", async () => {
     vi.mocked(getSessionUser).mockResolvedValueOnce({ id: "user1", role: "student" } as any);
-    (mockDb.insertInto ).mockImplementationOnce(() => { throw new Error("Create fail"); });
+    (mockDb.insertInto as any).mockImplementationOnce(() => { throw new Error("Create fail"); });
 
     const res = await testApp.request("/", {
       method: "POST",

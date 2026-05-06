@@ -35,7 +35,7 @@ const mockEnv = {
 
 describe("Hono Backend - /finance Router", () => {
   let testApp: Hono<TestEnv>;
-  let mockDb: MockKysely;
+  let mockDb: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,7 +73,7 @@ describe("Hono Backend - /finance Router", () => {
     });
 
     testApp = new Hono<TestEnv>();
-    testApp.use("*", async (c, next) => {
+    testApp.use("*", async (c: any, next) => {
       c.set("db", mockDb);
       c.set("executionCtx", mockExecutionContext);
       c.set("sessionUser", { id: "admin-123", role: "admin", email: "admin@test.com", name: null, member_type: "mentor" });
@@ -87,7 +87,7 @@ describe("Hono Backend - /finance Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ type: "income", total: 1000 }, { type: "expense", total: 400 }]);
       const res = await testApp.request("/summary?season_id=2024", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as FinanceResponse;
+      const body = await res.json() as any;
       expect(body.total_income).toBe(1000);
       expect(body.total_expenses).toBe(400);
       expect(mockDb.where).toHaveBeenCalledWith("season_id", "=", "2024");
@@ -99,7 +99,7 @@ describe("Hono Backend - /finance Router", () => {
       
       const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as FinanceResponse;
+      const body = await res.json() as any;
       expect(body.season_id).toBe(2024);
     });
 
@@ -107,7 +107,7 @@ describe("Hono Backend - /finance Router", () => {
       mockDb.executeTakeFirst.mockResolvedValueOnce(null);
       const res = await testApp.request("/summary", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as FinanceResponse;
+      const body = await res.json() as any;
       expect(body.season_id).toBe(null);
     });
 
@@ -123,7 +123,7 @@ describe("Hono Backend - /finance Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ id: "lead-1", company_name: "Test Corp", status: "potential", estimated_value: 500 }]);
       const res = await testApp.request("/sponsorship?season_id=2024", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as FinanceResponse;
+      const body = await res.json() as any;
       expect(body.pipeline).toHaveLength(1);
     });
 
@@ -234,7 +234,7 @@ describe("Hono Backend - /finance Router", () => {
       mockDb.execute.mockResolvedValueOnce([{ id: "tx-1", amount: 100, type: "income", category: "Donation", date: "2024-01-01" }]);
       const res = await testApp.request("/transactions?season_id=2024&type=income", {}, mockEnv, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as FinanceResponse;
+      const body = await res.json() as any;
       expect(body.transactions).toHaveLength(1);
     });
 

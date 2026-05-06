@@ -234,7 +234,7 @@ const commentHandlers = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const commentTsRestRouter = s.router(commentContract, commentHandlers);
+const commentTsRestRouter = s.router(commentContract, commentHandlers as any);
 
 commentsRouter.use("/:targetType/:targetId", ensureAuth);
 

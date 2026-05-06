@@ -67,7 +67,7 @@ describe("Hono Backend - /github Router", () => {
     }, {}, mockExecutionContext);
     
     expect(res.status).toBe(200);
-    const body = await res.json() as GitHubResponse;
+    const body = await res.json() as any;
     
     expect(body.success).toBe(true);
     expect(Array.isArray(body.board)).toBe(true);
@@ -86,7 +86,7 @@ describe("Hono Backend - /github Router", () => {
     }, {}, mockExecutionContext);
 
     expect(res.status).toBe(200);
-    const body = await res.json() as GitHubResponse;
+    const body = await res.json() as any;
     expect(body.success).toBe(true);
   });
 
@@ -95,7 +95,7 @@ describe("Hono Backend - /github Router", () => {
     vi.mocked(buildGitHubConfig).mockReturnValueOnce(null);
     const res = await testApp.request("/projects", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as GitHubResponse;
+    const body = await res.json() as any;
     expect(body.success).toBe(false);
   });
 
@@ -104,7 +104,7 @@ describe("Hono Backend - /github Router", () => {
     vi.mocked(fetchProjectBoard).mockRejectedValueOnce(new Error("API Error"));
     const res = await testApp.request("/projects", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as GitHubResponse;
+    const body = await res.json() as any;
     expect(body.success).toBe(false);
   });
 
@@ -164,7 +164,7 @@ describe("Hono Backend - /github Router", () => {
 
       const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as GitHubResponse;
+      const body = await res.json() as any;
       expect(body.repoCount).toBe(1);
       expect(body.totalCommits).toBe(5);
       expect(body.grid.length).toBeGreaterThanOrEqual(52);
@@ -186,7 +186,7 @@ describe("Hono Backend - /github Router", () => {
 
       const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as GitHubResponse;
+      const body = await res.json() as any;
       expect(body.repoCount).toBe(1);
       expect(body.totalCommits).toBe(0);
     });

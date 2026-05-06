@@ -465,7 +465,7 @@ describe("GitHub Webhook Router", () => {
         props: {},
       };
 
-      const res = await githubWebhookRouter.request(req, {}, env, badCtx);
+      const res = await githubWebhookRouter.request(req, {}, env, badCtx as any);
       expect(res.status).toBe(200);
       expect(consoleSpy).toHaveBeenCalled();
     });

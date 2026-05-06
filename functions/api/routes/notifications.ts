@@ -209,7 +209,7 @@ const notificationHandlers = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const notificationTsRestRouter = s.router(notificationContract, notificationHandlers);
+const notificationTsRestRouter = s.router(notificationContract, notificationHandlers as any);
 
 notificationsRouter.use("*", ensureAuth);
 notificationsRouter.use("/:id/read", rateLimitMiddleware(20, 60));

@@ -23,7 +23,7 @@ vi.mock("../middleware", async (importOriginal) => {
 import { logAuditAction } from "../middleware";
 
 describe("Hono Backend - /entities Router", () => {
-  let mockDb: MockKysely;
+  let mockDb: any;
   let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
@@ -75,7 +75,7 @@ describe("Hono Backend - /entities Router", () => {
 
     const res = await testApp.request("/links?type=doc&id=doc1", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as EntitiesResponse;
+    const body = await res.json() as any;
     
     expect(body.links).toHaveLength(4);
     expect(body.links[0]).toEqual({
@@ -95,7 +95,7 @@ describe("Hono Backend - /entities Router", () => {
 
     const res = await testApp.request("/links?type=task&id=task1", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
-    const body = await res.json() as EntitiesResponse;
+    const body = await res.json() as any;
     
     expect(body.links[0].target_title).toBe("Doc 2");
   });

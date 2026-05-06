@@ -24,8 +24,8 @@ function normalizeEmail(email: string): string {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const zulipTsRestRouter = s.router(zulipContract, {
-  getPresence: async (_input, c) => {
+const zulipHandlers: any = {
+  getPresence: async (_input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -69,7 +69,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  sendMessage: async (input, c) => {
+  sendMessage: async (input: any, c: HonoContext) => {
     try {
       const { sendZulipMessage } = await import("../../utils/zulipSync");
       const config = await getSocialConfig(c);
@@ -100,7 +100,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  getTopicMessages: async (input, c) => {
+  getTopicMessages: async (input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -139,7 +139,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  auditMissingUsers: async (_input, c) => {
+  auditMissingUsers: async (_input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -238,7 +238,7 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   },
-  inviteUsers: async (input, c) => {
+  inviteUsers: async (input: any, c: HonoContext) => {
     try {
       const config = await getSocialConfig(c);
       if (!config.ZULIP_BOT_EMAIL || !config.ZULIP_API_KEY) {
@@ -341,7 +341,8 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   }
-});
+};
+const zulipTsRestRouter = s.router(zulipContract, zulipHandlers as any);
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 // CR-07 FIX: Apply authentication to all Zulip routes

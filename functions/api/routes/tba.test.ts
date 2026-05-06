@@ -217,7 +217,7 @@ describe("Hono Backend - /tba Router", () => {
     const res = await testApp.request("/rankings/2023fallback", {}, {}, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as TBAResponse;
-    expect((body ).rankings[0].team_key).toBe("frc999");
+    expect((body as any).rankings[0].team_key).toBe("frc999");
     vi.useRealTimers();
   });
 

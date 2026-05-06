@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 import { commentSchema as commentInputSchema } from "../commentSchema";
 
 const c = initContract();
@@ -27,6 +28,7 @@ export const commentContract = c.router({
       targetId: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         comments: z.array(commentSchema),
         authenticated: z.boolean(),
@@ -45,6 +47,7 @@ export const commentContract = c.router({
     // IN-03: Use shared input schema instead of duplicating definition
     body: commentInputSchema,
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
     summary: "Submit a new comment",
@@ -58,6 +61,7 @@ export const commentContract = c.router({
     // IN-03: Use shared input schema instead of duplicating definition
     body: commentInputSchema,
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
     summary: "Update an existing comment",
@@ -70,6 +74,7 @@ export const commentContract = c.router({
     }),
     body: z.object({}),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
     summary: "Delete a comment",

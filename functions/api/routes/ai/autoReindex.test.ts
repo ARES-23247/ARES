@@ -39,19 +39,19 @@ describe("triggerBackgroundReindex", () => {
   });
 
   it("no-ops when AI binding is undefined", () => {
-    triggerBackgroundReindex(mockExecutionCtx, mockDb, undefined, mockVectorize, mockKv);
+    triggerBackgroundReindex(mockExecutionCtx as any, mockDb as any, undefined, mockVectorize as any);
 
     expect(mockExecutionCtx.waitUntil).not.toHaveBeenCalled();
   });
 
   it("no-ops when Vectorize binding is undefined", () => {
-    triggerBackgroundReindex(mockExecutionCtx, mockDb, mockAi, undefined, mockKv);
+    triggerBackgroundReindex(mockExecutionCtx as any, mockDb as any, mockAi as any, undefined);
 
     expect(mockExecutionCtx.waitUntil).not.toHaveBeenCalled();
   });
 
   it("calls waitUntil with a promise when bindings are present", () => {
-    triggerBackgroundReindex(mockExecutionCtx, mockDb, mockAi, mockVectorize, mockKv);
+    triggerBackgroundReindex(mockExecutionCtx as any, mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(mockExecutionCtx.waitUntil).toHaveBeenCalledTimes(1);
     expect(mockExecutionCtx.waitUntil).toHaveBeenCalledWith(expect.any(Promise));
@@ -59,12 +59,12 @@ describe("triggerBackgroundReindex", () => {
 
   it("does not throw when AI and Vectorize are present (fire-and-forget)", () => {
     expect(() => {
-      triggerBackgroundReindex(mockExecutionCtx, mockDb, mockAi, mockVectorize, mockKv);
+      triggerBackgroundReindex(mockExecutionCtx as any, mockDb as any, mockAi as any, mockVectorize as any);
     }).not.toThrow();
   });
 
   it("works without KV (optional parameter)", () => {
-    triggerBackgroundReindex(mockExecutionCtx, mockDb, mockAi, mockVectorize);
+    triggerBackgroundReindex(mockExecutionCtx as any, mockDb as any, mockAi as any, mockVectorize as any);
 
     expect(mockExecutionCtx.waitUntil).toHaveBeenCalledTimes(1);
   });

@@ -12,7 +12,7 @@ import type { HonoContext } from "@shared/types/api";
 export const usersRouter = new Hono<AppEnv>();
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const userTsRestRouter = s.router(userContract, {
+const userHandlers: any = {
   getUsers: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -44,14 +44,14 @@ const userTsRestRouter = s.router(userContract, {
           createdAt: typeof u.createdAt === 'number' ? u.createdAt : new Date(u.createdAt as string).getTime() || 0,
           updatedAt: typeof u.updatedAt === 'number' ? u.updatedAt : new Date(u.updatedAt as string).getTime() || 0,
           nickname: u.nickname || null,
-          member_type: u.member_type || null
+          member_type: (u.member_type as "student" | "mentor" | "coach" | "parent" | "alumnus" | "alumni" | "sponsor" | "other") || null
         };
       });
 
       const nextCursor = results.length === limit ? String(results[results.length - 1].createdAt) : null;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { users: users as any, nextCursor } };
+      return { status: 200 as const, body: { users: users, nextCursor } };
     } catch {
       return { status: 500 as const, body: { error: "Database error" } };
     }
@@ -84,9 +84,9 @@ const userTsRestRouter = s.router(userContract, {
             updatedAt: typeof row.updatedAt === 'number' ? row.updatedAt : new Date(row.updatedAt as string).getTime(),
             nickname: row.nickname || null,
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            member_type: row.member_type as any
+            member_type: row.member_type 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any
+          } 
         }
       };
     } catch {
@@ -259,7 +259,9 @@ const userTsRestRouter = s.router(userContract, {
       return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
-} );
+};
+
+const userTsRestRouter = s.router(userContract, userHandlers as any);
 
 usersRouter.use("/admin/*", ensureAdmin);
 // WR-01 FIX: Change from /* to /admin/* - /* pattern was too broad

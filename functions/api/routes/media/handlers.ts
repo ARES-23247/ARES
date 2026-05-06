@@ -102,7 +102,6 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
   while (result.truncated) {
     result = await bucket.list({ ...options, cursor: result.cursor, limit: 100 });
     objects.push(...result.objects);
-/* eslint-enable @typescript-eslint/no-explicit-any */
   }
   return { objects };
 }
@@ -117,7 +116,7 @@ export const mediaHandlers = {
     }
 
     try {
-      const cache = typeof caches !== 'undefined' ? (caches ).default : null;
+      const cache = typeof caches !== 'undefined' ? (caches as any).default : null;
       const url = new URL(c.req.url);
       url.search = "";
       const cacheKey = new Request(url.toString(), { method: "GET" });
@@ -130,7 +129,7 @@ export const mediaHandlers = {
 
       const db = c.get("db") as Kysely<DB>;
       const [objects, results] = await Promise.all([
-        listAllObjects(c.env.ARES_STORAGE),
+        listAllObjects(c.env.ARES_STORAGE as any),
         db.selectFrom("media_tags").select(["key", "folder", "tags"]).where("folder", "=", "Gallery").execute()
       ]);
 
@@ -171,7 +170,7 @@ export const mediaHandlers = {
     try {
       const db = c.get("db") as Kysely<DB>;
       const [objects, results] = await Promise.all([
-        listAllObjects(c.env.ARES_STORAGE),
+        listAllObjects(c.env.ARES_STORAGE as any),
         db.selectFrom("media_tags").select(["key", "folder", "tags"]).execute()
       ]);
 
@@ -249,9 +248,9 @@ export const mediaHandlers = {
       const finalFolder = folder || "Library";
       if (c.env.ARES_STORAGE) {
         if (isLarge) {
-          await c.env.ARES_STORAGE.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
+          await (c.env.ARES_STORAGE as any).put(key, file.stream(), { httpMetadata: { contentType: file.type } });
         } else {
-          await c.env.ARES_STORAGE.put(key, buffer!, { httpMetadata: { contentType: file.type } });
+          await (c.env.ARES_STORAGE as any).put(key, buffer!, { httpMetadata: { contentType: file.type } });
         }
       }
 
@@ -280,7 +279,7 @@ export const mediaHandlers = {
         c.executionCtx.waitUntil(logAuditAction(c, "media_upload", "media", key, `Uploaded to ${finalFolder}`));
         
         if (typeof caches !== 'undefined') {
-          c.executionCtx.waitUntil((caches ).default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
+          c.executionCtx.waitUntil((caches as any).default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
         }
       }
 
@@ -358,3 +357,4 @@ export const mediaHandlers = {
     }
   },
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */

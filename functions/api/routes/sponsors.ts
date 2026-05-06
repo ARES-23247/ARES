@@ -120,7 +120,7 @@ const sponsorHandlers: any = {
           })
           .where("id", "=", body.id)
           .execute();
-        await (logAuditAction )(c, "update_sponsor", { id });
+        c.executionCtx.waitUntil(logAuditAction(c, "update_sponsor", "sponsors", id));
       } else {
         await db.insertInto("sponsors")
           .values({
@@ -132,7 +132,7 @@ const sponsorHandlers: any = {
             is_active: body.is_active ? 1 : 0,
           })
           .execute();
-        await (logAuditAction )(c, "create_sponsor", { id, name: body.name });
+        c.executionCtx.waitUntil(logAuditAction(c, "create_sponsor", "sponsors", id, `Created sponsor ${body.name}`));
       }
 
       return { status: 200, body: { success: true, id } };
@@ -149,7 +149,7 @@ const sponsorHandlers: any = {
       const { id } = params;
 
       await db.deleteFrom("sponsors").where("id", "=", id).execute();
-      await (logAuditAction )(c, "delete_sponsor", { id });
+      c.executionCtx.waitUntil(logAuditAction(c, "delete_sponsor", "sponsors", id));
       return { status: 200, body: { success: true } };
     } catch (e) {
       console.error("[Sponsors:Delete] Error", e);
@@ -190,7 +190,7 @@ const sponsorHandlers: any = {
       const token = crypto.randomUUID();
       await db.insertInto("sponsor_tokens").values({ token, sponsor_id }).execute();
 
-      await (logAuditAction )(c, "generate_token", { sponsor_id });
+      c.executionCtx.waitUntil(logAuditAction(c, "generate_token", "sponsor_tokens", sponsor_id));
       
       const sRes = await db.selectFrom("sponsors").select("name").where("id", "=", sponsor_id).executeTakeFirst();
       if (sRes) await sendZulipAlert(c.env, "Sponsor", "ROI Token Generated", `ROI token for **${sRes.name}**.`);

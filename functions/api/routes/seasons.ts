@@ -183,7 +183,7 @@ const seasonsTsRestRouterObj: any = {
           .execute();
         c.executionCtx.waitUntil(logAuditAction(c, "season_created", "seasons", body.start_year.toString(), `Season "${body.start_year}" created`));
       }
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any , c.env.VECTORIZE_DB);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Seasons:Save] Error", e);
@@ -201,7 +201,7 @@ const seasonsTsRestRouterObj: any = {
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "season_deleted", "seasons", id, `Season "${id}" soft-deleted`));
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any , c.env.VECTORIZE_DB);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Seasons:Delete] Error", e);

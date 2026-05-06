@@ -182,7 +182,7 @@ describe("Hono Backend - /users Router", () => {
   });
 
   it("PATCH /admin/:id - error", async () => {
-    (mockDb.updateTable ).mockImplementationOnce(() => { throw new Error("DB error") });
+    (mockDb.updateTable as any).mockImplementationOnce(() => { throw new Error("DB error") });
     const res = await testApp.request("/admin/1", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -192,7 +192,7 @@ describe("Hono Backend - /users Router", () => {
   });
 
   it("DELETE /admin/:id - error", async () => {
-    (mockDb.deleteFrom ).mockImplementationOnce(() => { throw new Error("DB error") });
+    (mockDb.deleteFrom as any).mockImplementationOnce(() => { throw new Error("DB error") });
     const res = await testApp.request("/admin/1", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },

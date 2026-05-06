@@ -32,7 +32,7 @@ function maskSecret(value: string): string {
 const settingsSchema = z.record(z.string(), z.string().max(10000));
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const settingsHandlers = {
+const settingsHandlers: any = {
   getSettings: async (_input: any, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
@@ -41,11 +41,11 @@ const settingsHandlers = {
         masked[key] = SENSITIVE_KEYS.has(key) ? maskSecret(value) : value;
       }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true, settings: masked } as any };
+      return { status: 200 as const, body: { success: true, settings: masked }  };
     } catch (e) {
       console.error("GET_SETTINGS ERROR", e);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { success: false, error: "Failed to fetch settings" } as any };
+      return { status: 500 as const, body: { success: false, error: "Failed to fetch settings" }  };
     }
   },
    
@@ -62,7 +62,7 @@ const settingsHandlers = {
             success: false,
             error: "Invalid settings format: " + validationResult.error.issues.map(i => i.message).join(", ")
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any
+          } 
         };
       }
 
@@ -82,13 +82,13 @@ const settingsHandlers = {
               success: false,
               error: `Cannot update ${key} via API. Please use the admin console.`
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any
+            } 
           };
         }
 
         const error = validateLength(value, MAX_INPUT_LENGTHS.generic, key);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (error) return { status: 400 as const, body: { success: false, updated: 0 } as any };
+        if (error) return { status: 400 as const, body: { success: false, updated: 0 }  };
         await db.insertInto("settings")
           .values({ key, value, updated_at: new Date().toISOString() })
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -106,11 +106,11 @@ const settingsHandlers = {
         : `Updated ${updatedCount} integration keys.`;
       c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, auditMessage));
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true, updated: updatedCount } as any };
+      return { status: 200 as const, body: { success: true, updated: updatedCount }  };
     } catch (e) {
       console.error("UPDATE_SETTINGS ERROR", e);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { success: false, error: "Update failed" } as any };
+      return { status: 500 as const, body: { success: false, error: "Update failed" }  };
     }
   },
    
@@ -133,12 +133,12 @@ const settingsHandlers = {
           inquiries: Number(inquiries?.count || 0),
           users: Number(users?.count || 0),
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any
+        } 
       };
     } catch (e) {
       console.error("GET_STATS ERROR", e);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Failed to fetch stats" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch stats" }  };
     }
   },
    
@@ -153,17 +153,17 @@ const settingsHandlers = {
         }
       }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true, settings: publicSettings } as any };
+      return { status: 200 as const, body: { success: true, settings: publicSettings }  };
     } catch (e) {
       console.error("GET_PUBLIC_SETTINGS ERROR", e);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { success: false, error: "Failed to fetch public settings" } as any };
+      return { status: 500 as const, body: { success: false, error: "Failed to fetch public settings" }  };
     }
   }
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const settingsTsRestRouter = s.router(settingsContract, settingsHandlers);
+const settingsTsRestRouter = s.router(settingsContract, settingsHandlers as any);
 
 
 
@@ -195,7 +195,7 @@ settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: HonoC
       try {
         const cols = TABLE_COLUMNS[tableName];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let q: any = db.selectFrom(tableName );
+        let q: any = db.selectFrom(tableName as keyof DB);
         if (cols) {
           q = q.select(cols);
         } else {

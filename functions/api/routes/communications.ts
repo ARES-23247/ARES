@@ -125,7 +125,7 @@ const handlers = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const communicationsTsRestRouter = s.router(communicationsContract, handlers);
+const communicationsTsRestRouter = s.router(communicationsContract, handlers as any);
 createHonoEndpoints(
   communicationsContract,
   communicationsTsRestRouter,

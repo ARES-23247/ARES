@@ -105,9 +105,9 @@ export type TestEnv = {
  */
 export interface MockExecutionContext {
   /** Registers a promise to execute in the background */
-  waitUntil: ((promise: Promise<unknown>) => void) & ReturnType<typeof vi.fn>;
+  waitUntil: any;
   /** Passes through exceptions to the runtime */
-  passThroughOnException: (() => void) & ReturnType<typeof vi.fn>;
+  passThroughOnException: any;
   /** Execution Context Props */
   props: Record<string, unknown>;
 }

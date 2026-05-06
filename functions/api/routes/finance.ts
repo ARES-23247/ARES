@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, Context } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints } from "ts-rest-hono";
@@ -13,7 +13,7 @@ const financeRouter = new Hono<AppEnv>();
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const financeTsRestRouterObj = {
-  getSummary: async (input: any, c: HonoContext) => {
+  getSummary: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -63,7 +63,7 @@ const financeTsRestRouterObj = {
     }
   },
 
-  listPipeline: async (input: any, c: HonoContext) => {
+  listPipeline: async (input: any, c: any) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -100,7 +100,7 @@ const financeTsRestRouterObj = {
     }
   },
 
-  savePipeline: async (input: any, c: HonoContext) => {
+  savePipeline: async (input: any, c: any) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -340,7 +340,7 @@ const financeTsRestRouterObj = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const financeTsRestRouter = s.router(financeContract, financeTsRestRouterObj);
+const financeTsRestRouter = s.router(financeContract, financeTsRestRouterObj as any);
 
 financeRouter.use("*", ensureAdmin);
 financeRouter.use("*", rateLimitMiddleware(30, 60));

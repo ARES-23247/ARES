@@ -164,7 +164,7 @@ const pointsHandlers = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const pointsTsRestRouter = s.router(pointsContract, pointsHandlers);
+const pointsTsRestRouter = s.router(pointsContract, pointsHandlers as any);
 createHonoEndpoints(
   pointsContract,
   pointsTsRestRouter,

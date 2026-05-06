@@ -9,7 +9,9 @@ import { DB } from "../../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 const mediaRouter = new Hono<AppEnv>();
 
-const mediaTsRestRouter = s.router(mediaContract, mediaHandlers);
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+const mediaTsRestRouter = s.router(mediaContract, mediaHandlers as any);
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Protections
 mediaRouter.use("/admin/*", ensureAdmin);
@@ -85,7 +87,7 @@ mediaRouter.post("/admin/upload", async (c) => {
       c.executionCtx.waitUntil(logAuditAction(c, "media_upload", "media", key, `Uploaded to ${folder}`));
 
       if (typeof caches !== 'undefined') {
-        c.executionCtx.waitUntil((caches ).default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
+        c.executionCtx.waitUntil((caches as any).default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
       }
     }
 
@@ -141,7 +143,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
       const user = await getSessionUser(c);
       if (!user) return c.text("Unauthorized", 401);
     }
-    const cache = typeof caches !== 'undefined' ? (caches ).default : null;
+    const cache = typeof caches !== 'undefined' ? (caches as any).default : null;
     const url = new URL(c.req.url);
     url.search = "";
     const cacheKey = new Request(url.toString(), { method: "GET" });
@@ -157,7 +159,7 @@ mediaRouter.get("/:key{.+$}", async (c) => {
     if (!object || !object.body) return c.text("Not Found", 404);
 
     const headers = new Headers();
-    object.writeHttpMetadata(headers );
+    object.writeHttpMetadata(headers as any);
     headers.set("etag", object.httpEtag);
     if (publicFolders.includes(folder)) headers.set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=86400");
     else headers.set("Cache-Control", "no-store, no-cache, must-revalidate");

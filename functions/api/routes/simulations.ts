@@ -600,7 +600,7 @@ simulationsRouter.post("/gist", async (c: Context<AppEnv>) => {
 // Fetch a GitHub Gist by ID
 simulationsRouter.get("/gist/:id", async (c: Context<AppEnv>) => {
   const id = c.req.param("id");
-  if (!/^[a-zA-Z0-9]+$/.test(id)) {
+  if (!id || !/^[a-zA-Z0-9]+$/.test(id)) {
     return c.json({ error: "Invalid Gist ID" }, 400);
   }
 

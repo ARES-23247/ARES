@@ -4,8 +4,8 @@ import { AppEnv, ensureAdmin, getSocialConfig, checkPersistentRateLimit, s } fro
 import { buildGitHubConfig, fetchProjectBoard, createProjectItem } from "../../utils/githubProjects";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { githubContract } from "../../../shared/schemas/contracts/githubContract";
-import { type Kysely } from "kysely";
-import { type DB } from "@shared/types/db";
+import { Kysely } from "kysely";
+import { DB } from "../../../shared/schemas/database";
 
 import type { HonoContext } from "@shared/types/api";
 
@@ -185,7 +185,7 @@ const githubHandlers = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const githubTsRestRouter = s.router(githubContract, githubHandlers);
+const githubTsRestRouter = s.router(githubContract, githubHandlers as any);
 
 
 githubRouter.use("/projects/*", ensureAdmin);

@@ -55,7 +55,7 @@ describe("Profile Utils", () => {
   });
 
   it("upserts profile with new data", async () => {
-    await upsertProfile(mockContext, "1", { nickname: "New Nickname", phone: "123", subteams: ["Programming"], show_email: true });
+    await upsertProfile(mockContext as any, "1", { nickname: "New Nickname", phone: "123", subteams: ["Programming"], show_email: true });
     expect(mockDb.insertInto).toHaveBeenCalledWith("user_profiles");
     expect(mockDb.values).toHaveBeenCalled();
   });
@@ -64,7 +64,7 @@ describe("Profile Utils", () => {
     mockContext.var.session.user = { id: "2", role: "user", member_type: "student" };
     mockDb.executeTakeFirst.mockResolvedValueOnce({ member_type: "student" });
     
-    await upsertProfile(mockContext, "2", { member_type: "mentor" });
+    await upsertProfile(mockContext as any, "2", { member_type: "mentor" });
     
     expect(mockDb.insertInto).toHaveBeenCalled();
   });
@@ -73,7 +73,7 @@ describe("Profile Utils", () => {
     mockContext.var.session.user = { id: "2", role: "user", member_type: "student" };
     mockDb.executeTakeFirst.mockResolvedValueOnce({}); // No member_type
     
-    await upsertProfile(mockContext, "2", { member_type: "mentor" });
+    await upsertProfile(mockContext as any, "2", { member_type: "mentor" });
     
     expect(mockDb.insertInto).toHaveBeenCalled();
   });
@@ -82,20 +82,20 @@ describe("Profile Utils", () => {
     mockContext.var.session.user = { id: "2", role: "user", member_type: "student" };
     mockDb.executeTakeFirst.mockResolvedValueOnce(null);
     
-    await upsertProfile(mockContext, "2", { member_type: "mentor" });
+    await upsertProfile(mockContext as any, "2", { member_type: "mentor" });
     
     expect(mockDb.insertInto).toHaveBeenCalled();
   });
 
   it("uses default values if JSON is invalid in DB", async () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({ subteams: "invalid_json" });
-    await upsertProfile(mockContext, "3", { nickname: "Test" });
+    await upsertProfile(mockContext as any, "3", { nickname: "Test" });
     expect(mockDb.insertInto).toHaveBeenCalled();
   });
 
   it("handles valid JSON in DB", async () => {
     mockDb.executeTakeFirst.mockResolvedValueOnce({ subteams: '["Marketing"]' });
-    await upsertProfile(mockContext, "4", {});
+    await upsertProfile(mockContext as any, "4", {});
     expect(mockDb.insertInto).toHaveBeenCalled();
   });
 });

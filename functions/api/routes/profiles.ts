@@ -15,7 +15,7 @@ export const profilesRouter = new Hono<AppEnv>();
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler type inference
 const profileHandlers: any = {
-  getMe: async (_input, c) => {
+  getMe: async (_input: any, c: HonoContext) => {
     const user = (await getSessionUser(c))!;
     const db = c.get("db") as Kysely<DB>;
 
@@ -68,14 +68,14 @@ const profileHandlers: any = {
           students_name,
           students_email
         ] = await Promise.all([
-          safeDecrypt(p.emergency_contact_name),
-          safeDecrypt(p.emergency_contact_phone),
-          safeDecrypt(p.phone),
-          safeDecrypt(p.contact_email),
-          safeDecrypt(p.parents_name),
-          safeDecrypt(p.parents_email),
-          safeDecrypt(p.students_name),
-          safeDecrypt(p.students_email)
+          safeDecrypt(p.emergency_contact_name as string | null),
+          safeDecrypt(p.emergency_contact_phone as string | null),
+          safeDecrypt(p.phone as string | null),
+          safeDecrypt(p.contact_email as string | null),
+          safeDecrypt(p.parents_name as string | null),
+          safeDecrypt(p.parents_email as string | null),
+          safeDecrypt(p.students_name as string | null),
+          safeDecrypt(p.students_email as string | null)
         ]);
 
         p.emergency_contact_name = emergency_contact_name;
@@ -104,7 +104,7 @@ const profileHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch your profile" } };
     }
   },
-  updateMe: async (input: any, c: Context<AppEnv>) => {
+  updateMe: async (input: any, c: HonoContext) => {
     const user = (await getSessionUser(c))!;
     try {
       // Validate input against schema before updating profile
@@ -125,7 +125,7 @@ const profileHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to update profile" } };
     }
   },
-  getTeamRoster: async (_input, c) => {
+  getTeamRoster: async (_input: any, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       // SEC-F04: Only show verified users or those who have explicitly opted in via profile.
@@ -160,7 +160,7 @@ const profileHandlers: any = {
         
         // Mentors/Coaches might have encrypted contact info
         if (row.contact_email && (memberType === "mentor" || memberType === "coach")) {
-          row.contact_email = await safeDecrypt(row.contact_email);
+          row.contact_email = await safeDecrypt(row.contact_email as string | null);
         }
 
         const sanitized = sanitizeProfileForPublic(row, memberType);
@@ -188,7 +188,7 @@ const profileHandlers: any = {
       return { status: 500 as const, body: { error: "Failed to fetch team roster" } };
     }
   },
-  getPublicProfile: async (input: any, c: Context<AppEnv>) => {
+  getPublicProfile: async (input: any, c: HonoContext) => {
     const { userId } = input.params;
     const db = c.get("db") as Kysely<DB>;
     try {

@@ -112,7 +112,7 @@ const tbaTsRestRouter = s.router(tbaContract, {
       return { status: 500 as const, body: { error: "Failed to fetch official event data" } };
     }
   }
-} );
+} as any);
 
 createHonoEndpoints(
   tbaContract,

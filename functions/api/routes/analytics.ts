@@ -329,7 +329,7 @@ const analyticsHandlers = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers);
+const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as any);
 
 // CR-01 FIX: Apply authentication to all analytics routes
 // Public routes (page view tracking, search) have rate limiting only

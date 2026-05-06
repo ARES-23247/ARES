@@ -126,7 +126,7 @@ describe("Hono Backend - /store Router", () => {
       expect(mockDb.values).toHaveBeenCalled();
       expect(mockDb.execute).toHaveBeenCalled();
       
-      const valuesArg = (mockDb.values ).mock.calls[0][0];
+      const valuesArg = (mockDb.values as any).mock.calls[0][0];
       expect(valuesArg.stripe_session_id).toBe("cs_test_123");
       expect(valuesArg.customer_email).toBe("test@example.com");
       expect(valuesArg.total_cents).toBe(1500);

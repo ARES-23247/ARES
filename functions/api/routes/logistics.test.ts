@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { MockKysely, TestEnv } from "~/src/test/types";
+import { MockKysely, TestEnv } from "../../../src/test/types";
 import { mockExecutionContext } from "../../../src/test/utils";
 
 vi.mock("../middleware", async (importOriginal) => {
@@ -33,7 +33,8 @@ describe("Hono Backend - /logistics Router", () => {
       select: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       execute: vi.fn().mockResolvedValue([]),
-    };
+      executeTakeFirst: vi.fn().mockResolvedValue(null),
+    } as any;
 
     env = {
       ENCRYPTION_SECRET: "test-secret"

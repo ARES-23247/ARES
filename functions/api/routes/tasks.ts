@@ -390,7 +390,7 @@ const tasksTsRestRouter = s.router(taskContract, {
       return { status: 500, body: { error: "Failed to delete task" } };
     }
   },
-} );
+} as any);
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));

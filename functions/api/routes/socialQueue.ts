@@ -159,7 +159,7 @@ const socialQueueRouterObj: any = {
         .executeTakeFirst();
 
       if (!existing) return { status: 500, body: { error: "Post not found" } };
-      if (user.role !== "admin" && (existing ).created_by !== user.id) {
+      if (user.role !== "admin" && (existing as any).created_by !== user.id) {
         return { status: 401, body: { error: "Unauthorized" } };
       }
 
@@ -198,7 +198,7 @@ const socialQueueRouterObj: any = {
         .executeTakeFirst();
 
       if (!existing) return { status: 500, body: { error: "Post not found" } };
-      if (user.role !== "admin" && (existing ).created_by !== user.id) {
+      if (user.role !== "admin" && (existing as any).created_by !== user.id) {
         return { status: 401, body: { error: "Unauthorized" } };
       }
 
@@ -233,13 +233,13 @@ const socialQueueRouterObj: any = {
       const post = toSocialQueuePost(record );
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const config: any = {
-        twitter: !!c.env.TWITTER_API_KEY,
-        bluesky: !!c.env.BLUESKY_HANDLE,
-        facebook: !!c.env.FACEBOOK_ACCESS_TOKEN,
-        instagram: !!c.env.INSTAGRAM_ACCESS_TOKEN,
-        discord: !!c.env.DISCORD_WEBHOOK_URL,
-        slack: !!c.env.SLACK_WEBHOOK_URL,
-        linkedin: !!c.env.LINKEDIN_ACCESS_TOKEN,
+        twitter: !!(c.env as any).TWITTER_API_KEY,
+        bluesky: !!(c.env as any).BLUESKY_HANDLE,
+        facebook: !!(c.env as any).FACEBOOK_ACCESS_TOKEN,
+        instagram: !!(c.env as any).INSTAGRAM_ACCESS_TOKEN,
+        discord: !!(c.env as any).DISCORD_WEBHOOK_URL,
+        slack: !!(c.env as any).SLACK_WEBHOOK_URL,
+        linkedin: !!(c.env as any).LINKEDIN_ACCESS_TOKEN,
       };
 
       await dispatchQueuePost(db, post, config);

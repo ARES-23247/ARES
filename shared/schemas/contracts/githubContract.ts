@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -23,6 +24,7 @@ export const githubContract = c.router({
     method: "GET",
     path: "/projects",
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         board: z.array(githubProjectItemSchema),
@@ -37,6 +39,7 @@ export const githubContract = c.router({
       title: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -47,6 +50,7 @@ export const githubContract = c.router({
     method: "GET",
     path: "/activity",
     responses: {
+      ...standardErrors,
       200: z.object({
         grid: z.array(z.array(githubHeatmapDaySchema)),
         totalCommits: z.number(),

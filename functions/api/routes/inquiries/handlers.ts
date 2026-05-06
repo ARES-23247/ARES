@@ -135,20 +135,19 @@ export const inquiryHandlers = {
         try {
           const decryptedEmail = await decrypt(r.email, secret);
           if (decryptedEmail === email) {
-            const currentMeta = safeJSONStringify(metadata, null );
+            const currentMeta = safeJSONStringify(metadata, undefined);
             if (r.metadata === currentMeta) {
               return { status: 200 as const, body: { success: true, id: r.id } };
             }
           }
         } catch { /* ignore */ }
       }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
       const id = crypto.randomUUID();
       const encryptedName = await encrypt(name, secret);
       const encryptedEmail = await encrypt(email, secret);
       
-      let metadataStr = safeJSONStringify(metadata, null );
+      let metadataStr = safeJSONStringify(metadata, undefined);
       if (metadataStr && metadataStr.length > 5000) {
         metadataStr = metadataStr.substring(0, 5000);
       }
@@ -270,3 +269,4 @@ export const inquiryHandlers = {
     }
   },
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */

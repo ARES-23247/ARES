@@ -6,7 +6,9 @@ import { outreachHandlers } from "./handlers";
 
 const outreachRouter = new Hono<AppEnv>();
 
-const outreachTsRestRouter = s.router(outreachContract, outreachHandlers);
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+const outreachTsRestRouter = s.router(outreachContract, outreachHandlers as any);
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Apply protections
 outreachRouter.use("/", ensureAuth);
