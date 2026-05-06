@@ -1,4 +1,5 @@
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- Test mocks require any casts for handler signatures and mock contexts */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context } from "hono";

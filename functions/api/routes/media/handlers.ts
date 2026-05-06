@@ -1,4 +1,4 @@
-import { AppEnv, getDbSettings, checkPersistentRateLimit, logAuditAction } from "../../middleware";
+import { getDbSettings, checkPersistentRateLimit, logAuditAction } from "../../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import type { HonoContext } from "@shared/types/api";
@@ -102,10 +102,11 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
   return { objects };
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- Cloudflare Workers runtime types (R2, AI, caches) require any casts */
 type HandlerInput = {
   params: Record<string, string>;
-  body: any;
-  query: Record<string, any>;
+  body: unknown;
+  query: Record<string, string | undefined>;
 };
 
 export const mediaHandlers = {
@@ -289,7 +290,7 @@ export const mediaHandlers = {
   move: async (input: HandlerInput, c: HonoContext) => {
     const { params, body } = input;
     const oldKey = params.key;
-    const { folder } = body;
+    const { folder } = body as { folder: string };
     try {
       const fileName = oldKey.split("/").pop();
       const newKey = `${folder}/${fileName}`;
@@ -339,7 +340,7 @@ export const mediaHandlers = {
   syndicate: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { body } = input;
-      const { key, caption } = body;
+      const { key, caption } = body as { key: string; caption?: string };
       const config = await getDbSettings(c);
       const baseUrl = new URL(c.req.url).origin;
       const imageUrl = `${baseUrl}/api/media/${key}`;
@@ -353,3 +354,4 @@ export const mediaHandlers = {
     }
   },
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */

@@ -10,7 +10,8 @@ import type { HonoContext } from "@shared/types/api";
 
 const logisticsRouter = new Hono<AppEnv>();
 
-const logisticsHandlers = {
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+const logisticsHandlers: any = {
   getSummary: async (_input: any, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
 
@@ -49,12 +50,10 @@ const logisticsHandlers = {
           memberCounts,
           dietary: summary,
           tshirts: tshirtSummary,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any
+        }
       };
     } catch {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Logistics fetch failed" } as any };
+      return { status: 500 as const, body: { error: "Logistics fetch failed" } };
     }
   },
   exportEmails: async (_input: any, c: HonoContext) => {
@@ -74,8 +73,7 @@ const logisticsHandlers = {
         .where("u.role", "!=", "unverified")
         .execute();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const users: any[] = [];
+      const users: Array<{ name: string; email: string; role: string; emergencyName: string; emergencyPhone: string }> = [];
       for (const r of results) {
         let email = String(r.email);
         let emergencyPhone = r.emergency_contact_phone;
@@ -108,8 +106,8 @@ const logisticsHandlers = {
     }
   },
 };
-
-const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers as any);
+const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers);
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 logisticsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(
