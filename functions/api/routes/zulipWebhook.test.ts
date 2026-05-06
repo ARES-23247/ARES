@@ -21,7 +21,7 @@ vi.mock("../middleware/utils", async (importOriginal) => {
 });
 
 describe("Zulip Webhook Router", () => {
-  const env = {
+  const env: TestEnv["Bindings"] = {
     ZULIP_WEBHOOK_TOKEN: "test-token",
     ZULIP_BOT_EMAIL: "test@test.com",
     ZULIP_API_KEY: "test-key",
@@ -30,7 +30,7 @@ describe("Zulip Webhook Router", () => {
       bind: vi.fn().mockReturnThis(),
       first: vi.fn().mockResolvedValue(null),
       run: vi.fn().mockResolvedValue({ success: true }),
-    },
+    } as unknown as D1Database,
   };
 
   let testApp: Hono<TestEnv>;
@@ -58,6 +58,7 @@ describe("Zulip Webhook Router", () => {
       orderBy: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
       leftJoin: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(), // Added missing required method
     };
 
     testApp = new Hono<TestEnv>();

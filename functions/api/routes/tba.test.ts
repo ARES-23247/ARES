@@ -34,6 +34,11 @@ describe("Hono Backend - /tba Router", () => {
       where: vi.fn().mockReturnThis(),
       executeTakeFirst: vi.fn().mockResolvedValue({ value: "test-api-key" }),
       execute: vi.fn().mockResolvedValue([]),
+      insertInto: vi.fn().mockReturnThis(),
+      updateTable: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(),
+      values: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
     };
 
     testApp = new Hono<TestEnv>();

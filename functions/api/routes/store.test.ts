@@ -52,7 +52,9 @@ describe("Hono Backend - /store Router", () => {
       insertInto: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis(),
       updateTable: vi.fn().mockReturnThis(),
-      set: vi.fn().mockReturnThis()
+      set: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(), // Added missing required method
+      select: vi.fn().mockReturnThis(), // Added missing required method
     };
 
     app = new Hono<TestEnv>();
@@ -62,12 +64,10 @@ describe("Hono Backend - /store Router", () => {
       c.env = {
         STRIPE_SECRET_KEY: "sk_test_123",
         STRIPE_WEBHOOK_SECRET: "whsec_123",
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        DB: {} as any,
+        DB: {} as unknown as D1Database,
         ENVIRONMENT: "test",
         DEV_BYPASS: "true",
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      } as TestEnv["Bindings"];
       await next();
     });
     app.route("/", storeRouter);

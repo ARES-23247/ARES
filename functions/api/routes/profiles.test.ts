@@ -61,6 +61,7 @@ describe("Hono Backend - /profiles Router", () => {
       updateTable: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(), // Added missing required method
       run: vi.fn().mockResolvedValue({ success: true }),
       getExecutor: vi.fn().mockReturnValue({
         compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Hono } from "hono";
+import { Hono, Context } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
 import { TestEnv, MockKysely } from "../../../src/test/types";
 import zulipRouter from "./zulip";
@@ -25,7 +25,7 @@ vi.mock("../middleware", async (importOriginal) => {
     ...actual,
     ensureAdmin: async (_c: unknown, next: () => Promise<void>) => next(),
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ensureAuth: async (c: any, next: () => Promise<void>) => {
+    ensureAuth: async (c: Context<TestEnv>, next: () => Promise<void>) => {
       c.set("sessionUser", { id: "test-user", email: "test@test.com", name: "Test User", nickname: "TestNick", image: null, role: "admin", member_type: "mentor" });
       return next();
     },
@@ -50,7 +50,7 @@ describe("Hono Backend - /zulip Router", () => {
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
       if (c.env && (c.env).DB) {
-        c.set("db", (c.env).DB as any);
+        c.set("db", (c.env).DB as unknown as MockKysely);
       }
       await next();
     });
@@ -252,7 +252,12 @@ describe("Hono Backend - /zulip Router", () => {
       execute: vi.fn().mockResolvedValue([
         { email: "alice@test.com" },
         { email: "charlie@test.com" }
-      ])
+      ]),
+      insertInto: vi.fn().mockReturnThis(),
+      updateTable: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(),
+      values: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
     };
 
     const res = await testApp.request("/invites/audit", {}, { DB: mockDb }, mockExecutionContext);

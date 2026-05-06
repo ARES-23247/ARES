@@ -10,7 +10,7 @@
  * All types use vi.fn mock types and avoid `any` for compile-time safety.
  */
 
-import type { vi } from "vitest";
+import type { vi, Mock } from "vitest";
 
 // ── MockKysely ────────────────────────────────────────────────────────────────
 /**
@@ -52,6 +52,7 @@ export type MockKysely = {
   executeTakeFirst: ReturnType<typeof vi.fn>;
   run?: ReturnType<typeof vi.fn>;
   getExecutor?: ReturnType<typeof vi.fn>;
+  fn?: unknown; // Kysely's function builder is complex to type accurately in mocks
 };
 
 // ── TestEnv ───────────────────────────────────────────────────────────────────
@@ -76,6 +77,8 @@ export type TestEnv = {
       id: string;
       email: string;
       name: string | null;
+      nickname?: string | null;
+      image?: string | null;
       role: string;
       member_type: string;
     };
@@ -86,6 +89,7 @@ export type TestEnv = {
     DEV_BYPASS?: string;
     DB: D1Database;
     ENVIRONMENT?: string;
+    [key: string]: unknown;
   };
 };
 
@@ -103,11 +107,11 @@ export type TestEnv = {
  *   await flushWaitUntil(); // Awaits all waitUntil promises
  * });
  */
-export interface MockExecutionContext {
+export interface MockExecutionContext extends ExecutionContext {
   /** Registers a promise to execute in the background */
-  waitUntil: ReturnType<typeof vi.fn> & ((promise: Promise<unknown>) => void);
+  waitUntil: Mock<(promise: Promise<unknown>) => void | Promise<unknown>>;
   /** Passes through exceptions to the runtime */
-  passThroughOnException: ReturnType<typeof vi.fn> & (() => void);
+  passThroughOnException: Mock<() => void>;
   /** Execution Context Props */
   props: Record<string, unknown>;
 }

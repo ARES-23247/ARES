@@ -23,8 +23,8 @@ vi.mock("../contexts/ModalContext", async (importOriginal) => {
 
 // Mock ExecutionContext for Hono request testing
 export const mockExecutionContext: MockExecutionContext = {
-  waitUntil: vi.fn((promise: Promise<unknown>) => promise),
-  passThroughOnException: vi.fn(),
+  waitUntil: vi.fn((promise: Promise<unknown>) => promise) as unknown as MockExecutionContext["waitUntil"],
+  passThroughOnException: vi.fn() as unknown as MockExecutionContext["passThroughOnException"],
   props: {},
 };
 
