@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { AppEnv, ensureAuth } from "../middleware";
 import { z } from "zod";
+import { logger } from "../../../src/utils/logger";
 
 // GitHub repository configuration
 // Centralized to avoid hardcoded references throughout the codebase
@@ -205,7 +206,7 @@ simulationsRouter.get("/:id", async (c: Context<AppEnv>) => {
 
     // WR-17: Log PAT status without exposing the token value
     const patStatus = pat ? `configured (ends with ${String(pat).slice(-4)})` : "missing";
-    console.log("[Simulations] Using GitHub PAT:", patStatus);
+    logger.debug("[Simulations] Using GitHub PAT:", patStatus);
 
     const headers: Record<string, string> = {
       "User-Agent": "ARES-Cloudflare-Worker",
@@ -387,7 +388,7 @@ simulationsRouter.post("/", ensureAuth, async (c: Context<AppEnv>) => {
 
             if (regPutRes.ok) {
               // Success - break out of retry loop
-              console.log(`[Simulations] Registered ${simIdStr} in simRegistry.json`);
+              logger.debug(`[Simulations] Registered ${simIdStr} in simRegistry.json`);
               break;
             } else if (regPutRes.status === 409 && attempt < maxRetries - 1) {
               // Conflict - another request modified the registry, retry with fresh data
@@ -401,7 +402,7 @@ simulationsRouter.post("/", ensureAuth, async (c: Context<AppEnv>) => {
             }
           } else {
             // Already registered by another request - no action needed
-            console.log(`[Simulations] ${simIdStr} already registered, skipping`);
+            logger.debug(`[Simulations] ${simIdStr} already registered, skipping`);
             break;
           }
         } catch (e) {
