@@ -1,3 +1,7 @@
+// TODO: users.ts implementation uses getProfile/updateProfile/listUsers/updateRole
+// but userContract exports getUsers/adminDetail/patchUser/updateUserProfile/adminGetProfile/deleteUser
+// The contract and implementation are misaligned - need to rewrite users.ts to match userContract
+// or create a separate usersContract that matches the existing implementation
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";

@@ -9,9 +9,7 @@ import { DB } from "../../../../shared/schemas/database";
 const s = initServer<AppEnv>();
 const mediaRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const mediaTsRestRouter = s.router(mediaContract, mediaHandlers as any);
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // Protections
 mediaRouter.use("/admin/*", ensureAdmin);
@@ -56,10 +54,9 @@ mediaRouter.post("/admin/upload", async (c) => {
     const key = folder ? `${folder}/${file.name}` : file.name;
     if (c.env.ARES_STORAGE) {
       if (isLarge) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await c.env.ARES_STORAGE.put(key, file.stream() as any, { httpMetadata: { contentType: file.type } });
+        await (c.env.ARES_STORAGE as any).put(key, file.stream(), { httpMetadata: { contentType: file.type } });
       } else {
-        await c.env.ARES_STORAGE.put(key, buffer!, { httpMetadata: { contentType: file.type } });
+        await (c.env.ARES_STORAGE as any).put(key, buffer!, { httpMetadata: { contentType: file.type } });
       }
     }
 
@@ -69,7 +66,6 @@ mediaRouter.post("/admin/upload", async (c) => {
       try {
         if (!buffer) buffer = await file.arrayBuffer();
         const uint8 = new Uint8Array(buffer);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const aiRes = await c.env.AI.run('@cf/llava-1.5-7b-hf', { prompt: 'Describe for screen reader', image: uint8 as any }) as { description?: string };
         if (aiRes?.description) altText = String(aiRes.description).trim();
       } catch (err) {
@@ -164,7 +160,6 @@ mediaRouter.get("/:key{.+$}", async (c) => {
     if (publicFolders.includes(folder)) headers.set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=86400");
     else headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = new Response(object.body as any, { headers });
     if (cache && publicFolders.includes(folder) && c.executionCtx) {
       c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));

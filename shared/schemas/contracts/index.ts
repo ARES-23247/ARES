@@ -85,7 +85,7 @@ export type { LogisticsContract } from './logisticsContract';
 export type { MediaContract } from './mediaContract';
 export type { NotificationContract } from './notificationContract';
 export type { OutreachContract } from './outreachContract';
-export type { PointsContract } from './pointsContract';
+export type PointsContract = typeof pointsContract;
 export type { PostContract } from './postContract';
 export type { SeasonContract } from './seasonContract';
 export type { SettingsContract } from './settingsContract';

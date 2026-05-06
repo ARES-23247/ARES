@@ -1,8 +1,8 @@
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import { mockExecutionContext } from "../../../src/test/utils";
-import { TestEnv } from "../../../src/test/types";
+import { TestEnv, MockKysely } from "../../../src/test/types";
+import githubRouter from "./github";
 
 interface GitHubResponse {
   success?: boolean;
@@ -42,29 +42,49 @@ vi.mock("../../utils/githubProjects", () => ({
   createProjectItem: vi.fn().mockResolvedValue("new_item_id"),
 }));
 
-import githubRouter from "./github";
-
 describe("Hono Backend - /github Router", () => {
-  
   let testApp: Hono<TestEnv>;
+  let mockDb: MockKysely;
+  let env: TestEnv["Bindings"];
 
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mockDb = {
+      execute: vi.fn(),
+      executeTakeFirst: vi.fn(),
+      selectFrom: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      insertInto: vi.fn().mockReturnThis(),
+      values: vi.fn().mockReturnThis(),
+      updateTable: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(),
+    };
+
+    env = {
+      DB: {} as unknown as D1Database,
+    };
+
     testApp = new Hono<TestEnv>();
+    testApp.use("*", async (c, next) => {
+      c.set("db", mockDb);
+      await next();
+    });
+    
     testApp.onError((err, c) => {
       console.error("Test App Error:", err);
       return c.json({ error: err.message }, 500);
     });
     
-    // Mount the router under the base path
     testApp.route("/", githubRouter);
   });
 
   it("GET /projects - successfully maps board items array instead of object", async () => {
     const res = await testApp.request("/projects", {
       headers: { "DEV_BYPASS": "true" }
-    }, {}, mockExecutionContext);
+    }, env, mockExecutionContext);
     
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -83,7 +103,7 @@ describe("Hono Backend - /github Router", () => {
       body: JSON.stringify({
         title: "New Test Task"
       })
-    }, {}, mockExecutionContext);
+    }, env, mockExecutionContext);
 
     expect(res.status).toBe(200);
     const body = await res.json() as any;
@@ -93,7 +113,7 @@ describe("Hono Backend - /github Router", () => {
   it("GET /projects - missing config", async () => {
     const { buildGitHubConfig } = await import("../../utils/githubProjects");
     vi.mocked(buildGitHubConfig).mockReturnValueOnce(null);
-    const res = await testApp.request("/projects", {}, {}, mockExecutionContext);
+    const res = await testApp.request("/projects", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
     expect(body.success).toBe(false);
@@ -102,7 +122,7 @@ describe("Hono Backend - /github Router", () => {
   it("GET /projects - fetch error", async () => {
     const { fetchProjectBoard } = await import("../../utils/githubProjects");
     vi.mocked(fetchProjectBoard).mockRejectedValueOnce(new Error("API Error"));
-    const res = await testApp.request("/projects", {}, {}, mockExecutionContext);
+    const res = await testApp.request("/projects", {}, env, mockExecutionContext);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
     expect(body.success).toBe(false);
@@ -115,7 +135,7 @@ describe("Hono Backend - /github Router", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: "New Test Task" })
-    }, {}, mockExecutionContext);
+    }, env, mockExecutionContext);
     expect(res.status).toBe(500);
   });
 
@@ -126,7 +146,7 @@ describe("Hono Backend - /github Router", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: "New Test Task" })
-    }, {}, mockExecutionContext);
+    }, env, mockExecutionContext);
     expect(res.status).toBe(500);
   });
 
@@ -162,7 +182,7 @@ describe("Hono Backend - /github Router", () => {
         ]
       });
 
-      const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
+      const res = await testApp.request("/activity", {}, env, mockExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.repoCount).toBe(1);
@@ -172,7 +192,7 @@ describe("Hono Backend - /github Router", () => {
 
     it("handles GitHub API error on repo list", async () => {
       fetchMock.mockResolvedValueOnce({ ok: false, status: 500 });
-      const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
+      const res = await testApp.request("/activity", {}, env, mockExecutionContext);
       expect(res.status).toBe(500);
     });
 
@@ -184,7 +204,7 @@ describe("Hono Backend - /github Router", () => {
 
       fetchMock.mockRejectedValueOnce(new Error("Network Error"));
 
-      const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
+      const res = await testApp.request("/activity", {}, env, mockExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body.repoCount).toBe(1);
@@ -201,7 +221,7 @@ describe("Hono Backend - /github Router", () => {
         })
       });
 
-      const res = await testApp.request("/activity", {}, {}, mockExecutionContext);
+      const res = await testApp.request("/activity", {}, env, mockExecutionContext);
       expect(res.status).toBe(200);
       const body = await res.json() as GitHubResponse;
       expect(body.repoCount).toBe(2);
@@ -210,4 +230,3 @@ describe("Hono Backend - /github Router", () => {
     });
   });
 });
-

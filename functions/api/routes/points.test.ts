@@ -118,10 +118,10 @@ describe("Hono Backend - /points Router", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: "user-1", points_delta: 10, reason: "Test" })
       });
-      expect(res.status).toBe(200);
-      const data = (await res.json()) as { points_delta: number; reason: string };
-      expect(data.points_delta).toBe(10);
-      expect(data.reason).toBe("Test");
+      expect(res.status).toBe(201);
+      const data = (await res.json()) as { success: boolean; transaction_id: string };
+      expect(data.success).toBe(true);
+      expect(data.transaction_id).toBeDefined();
     });
 
     it("returns 500 on db error", async () => {

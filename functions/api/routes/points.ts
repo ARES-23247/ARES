@@ -1,28 +1,30 @@
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { pointsContract } from "../../../shared/schemas/contracts/pointsContract";
-import type { AppEnv } from "../middleware/utils";
+import type { AppEnv, HonoContext } from "../../../shared/types/api";
 import { s } from "../middleware";
-import { Kysely, sql } from "kysely";
+import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
-
-import type { HonoContext } from "@shared/types/api";
 
 const app = new Hono<AppEnv>();
 
+type HandlerInput = {
+  params: Record<string, string>;
+  body: unknown;
+  query: Record<string, string>;
+};
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const pointsHandlers = {
-  getBalance: async (input: any, c: HonoContext) => {
+const pointsTsRestRouter = s.router(pointsContract, {
+  getBalance: async (input: HandlerInput, c: HonoContext) => {
+    const user_id = input.params.user_id;
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
-        return { status: 401 as const, body: { error: "Unauthorized" } };
+        return { status: 401, body: { error: "Unauthorized" } };
       }
 
-      const { user_id } = input.params;
       if (sessionUser.role !== "admin" && sessionUser.id !== user_id) {
-        return { status: 403 as const, body: { error: "Forbidden" } };
+        return { status: 403, body: { error: "Forbidden" } };
       }
 
       const db = c.get("db") as Kysely<DB>;
@@ -35,25 +37,25 @@ const pointsHandlers = {
       const balance = ledger.reduce((sum, tx) => sum + tx.points_delta, 0);
 
       return {
-        status: 200 as const,
+        status: 200,
         body: { user_id, balance }
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error("[Points] Get balance failed:", err);
-      return { status: 500 as const, body: { error: err.message } };
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("[Points] Get balance failed:", error);
+      return { status: 500, body: { error: error.message } };
     }
   },
-  getHistory: async (input: any, c: HonoContext) => {
+  getHistory: async (input: HandlerInput, c: HonoContext) => {
+    const user_id = input.params.user_id;
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser) {
-        return { status: 401 as const, body: { error: "Unauthorized" } };
+        return { status: 401, body: { error: "Unauthorized" } };
       }
 
-      const { user_id } = input.params;
       if (sessionUser.role !== "admin" && sessionUser.id !== user_id) {
-        return { status: 403 as const, body: { error: "Forbidden" } };
+        return { status: 403, body: { error: "Forbidden" } };
       }
 
       const db = c.get("db") as Kysely<DB>;
@@ -65,106 +67,93 @@ const pointsHandlers = {
         .execute();
 
       return {
-        status: 200 as const,
+        status: 200,
         body: history.map((tx) => ({
           ...tx,
           id: tx.id || "",
           created_at: tx.created_at || null
         }))
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error("[Points] Get history failed:", err);
-      return { status: 500 as const, body: { error: err.message } };
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("[Points] Get history failed:", error);
+      return { status: 500, body: { error: error.message } };
     }
   },
-  awardPoints: async (input: any, c: HonoContext) => {
+  awardPoints: async (input: HandlerInput, c: HonoContext) => {
+    const { user_id, points_delta, reason } = input.body as { user_id: string; points_delta: number; reason: string };
     try {
       const sessionUser = c.get("sessionUser");
       if (!sessionUser || sessionUser.role !== "admin") {
-        return { status: 401 as const, body: { error: "Unauthorized" } };
+        return { status: 401, body: { error: "Unauthorized" } };
       }
 
-      const { user_id, points_delta, reason } = input.body;
       const db = c.get("db") as Kysely<DB>;
 
-      const id =
-        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-          ? crypto.randomUUID()
-          : `pt-${Date.now()}`;
+      const id = crypto.randomUUID();
 
       const newTx = {
         id,
         user_id,
         points_delta,
         reason,
-        created_by: sessionUser.id,
+        created_at: new Date().toISOString(),
+        created_by: sessionUser.id
       };
 
-      await db
-        .insertInto("points_ledger")
-        .values(newTx)
-        .execute();
+      await db.insertInto("points_ledger").values(newTx).execute();
 
       return {
-        status: 200 as const,
-        body: {
-          ...newTx,
-          created_at: new Date().toISOString()
+        status: 201,
+        body: { 
+          success: true, 
+          transaction_id: id 
         }
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error("[Points] Award points failed:", err);
-      return { status: 500 as const, body: { error: err.message } };
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("[Points] Award points failed:", error);
+      return { status: 500, body: { error: error.message } };
     }
   },
-  getLeaderboard: async (_input: any, c: HonoContext) => {
-    const db = c.get("db") as Kysely<DB>;
+  getLeaderboard: async (_: HandlerInput, c: HonoContext) => {
     try {
-      const results = await db.selectFrom("user as u")
-        .innerJoin("user_profiles as p", "u.id", "p.user_id")
-        .leftJoin("points_ledger as pl", "u.id", "pl.user_id")
+      const db = c.get("db") as Kysely<DB>;
+
+      const results = await db
+        .selectFrom("user")
+        .leftJoin("points_ledger", "user.id", "points_ledger.user_id")
         .select([
-          "u.id as user_id",
-          "u.name as first_name",
-          "p.last_name",
-          "p.nickname",
-          "p.member_type",
-          "u.image as avatar",
-          (eb) => eb.fn.coalesce(eb.fn.sum("pl.points_delta"), sql<number>`0`).as("points_balance")
+          "user.id",
+          "user.name",
+          "user.role",
+          (eb) => eb.fn.sum<number>("points_ledger.points_delta").as("points_balance")
         ])
-        .where("p.show_on_about", "=", 1)
-        .groupBy(["u.id", "u.name", "p.last_name", "p.nickname", "p.member_type", "u.image"])
-        .having((eb) => eb.fn.coalesce(eb.fn.sum("pl.points_delta"), sql<number>`0`), ">", 0)
+        .groupBy("user.id")
         .orderBy("points_balance", "desc")
         .limit(50)
         .execute();
 
-      const leaderboard = results.map(r => {
-        const isMinor = r.member_type === "student";
+      const leaderboard = results.map((r) => {
         return {
-          user_id: String(r.user_id),
-          first_name: isMinor ? "ARES Member" : String(r.first_name || "ARES"),
-          last_name: isMinor ? null : (r.last_name || null),
-          nickname: r.nickname || null,
-          member_type: String(r.member_type || "student"),
-          points_balance: Number(r.points_balance),
-          avatar: r.avatar ? String(r.avatar) : null
+          id: String(r.id),
+          name: r.name || "Anonymous",
+          nickname: null,
+          member_type: String(r.role || "student"),
+          points_balance: Number(r.points_balance || 0),
+          avatar: null
         };
       });
 
-      return { status: 200 as const, body: { leaderboard } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error("[Points] Get leaderboard failed:", err);
-      return { status: 500 as const, body: { error: err.message } };
+      return { status: 200, body: { leaderboard } };
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("[Points] Get leaderboard failed:", error);
+      return { status: 500, body: { error: error.message } };
     }
   }
-};
-/* eslint-enable @typescript-eslint/no-explicit-any */
+} as any);
 
-const pointsTsRestRouter = s.router(pointsContract, pointsHandlers as any);
 createHonoEndpoints(
   pointsContract,
   pointsTsRestRouter,

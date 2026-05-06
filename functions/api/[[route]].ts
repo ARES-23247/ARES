@@ -137,8 +137,7 @@ apiRouter.use("*", async (c, next) => {
 
 // ── CORS ─────
 apiRouter.use("*", cors({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono CORS origin callback context is untyped
-  origin: (origin, c: any) => {
+  origin: (origin, c) => {
     if (!origin) return origin;
     const requestOrigin = new URL(c.req.url).origin;
     if (origin === requestOrigin) return origin;
@@ -283,8 +282,7 @@ apiRouter.get("/admin/audit-log", ensureAdmin, async (c) => {
   return c.json({ logs: results || [] });
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono error handler context requires any for env access
-app.onError(async (err, c: any) => {
+app.onError(async (err, c) => {
   console.error("Global API Error:", err);
   const db = c.get("db") as Kysely<DB>;
   if (c.env?.DB && db) {
@@ -311,8 +309,7 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
   await db.deleteFrom("audit_log")
     .where("id", "in", (eb) => eb.selectFrom("audit_log")
       .select("id")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- sql template literal type mismatch with Kysely
-      .where("created_at", "<", sql`datetime('now', '-${auditRetentionDays} days')` as any)
+      .where("created_at", "<", sql<string>`datetime('now', '-${sql.raw(String(auditRetentionDays))} days')`)
       .limit(100)
     )
     .execute();
@@ -418,8 +415,7 @@ export const scheduled = async (event: ScheduledEvent, env: Bindings) => {
     const nowIso = new Date().toISOString();
     await db.insertInto("settings")
       .values({ key: "cron_last_run", value: nowIso, updated_at: nowIso })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .onConflict((oc: any) => oc.column("key").doUpdateSet({ value: nowIso, updated_at: nowIso }))
+      .onConflict((oc) => oc.column("key").doUpdateSet({ value: nowIso, updated_at: nowIso }))
       .execute();
   } catch (err) {
     console.error("[Cron] Failed to update heartbeat in D1", err);
