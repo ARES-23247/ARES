@@ -15,7 +15,7 @@ type LocationInput = z.infer<typeof locationSchema>;
 export const locationsRouter = new Hono<AppEnv>();
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const locationTsRestRouter = s.router(locationContract, {
+const locationsTsRestRouter = s.router(locationContract, {
   list: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
