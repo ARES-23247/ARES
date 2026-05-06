@@ -79,13 +79,13 @@ const badgesTsRestRouterObj = {
             const userProfile = await db
               .selectFrom("user_profiles")
               .select(["first_name", "last_name", "nickname"])
-              .where("user_id", "=", body.userId)
+              .where("user_id", "=", input.body.userId)
               .executeTakeFirst();
 
             const badge = await db
               .selectFrom("badges")
               .select(["name", "icon"])
-              .where("id", "=", body.badgeId)
+              .where("id", "=", input.body.badgeId)
               .executeTakeFirst();
 
             if (userProfile && badge) {

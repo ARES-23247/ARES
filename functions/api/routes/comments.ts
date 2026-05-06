@@ -16,7 +16,7 @@ export const commentsRouter = new Hono<AppEnv>();
 
 const commentHandlers = {
 /* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-  list: async (_input: any, c: HonoContext) => {
+  list: async (input: any, c: HonoContext) => {
     const { targetType, targetId } = input.params;
     const user = await getSessionUser(c);
     const db = c.get("db") as Kysely<DB>;

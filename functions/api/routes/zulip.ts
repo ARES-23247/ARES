@@ -341,7 +341,8 @@ const zulipTsRestRouter = s.router(zulipContract, {
       return { status: 500 as const, body: { success: false, error: (err as Error).message } };
     }
   }
-} );
+});
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // CR-07 FIX: Apply authentication to all Zulip routes
 // Admin-only routes override the base authentication

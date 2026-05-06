@@ -88,8 +88,8 @@ const handlers = {
 
         const resData = await resendRes.json();
         // Batch returns an array of data or an error
-        if (resData && (resData ).error) {
-           throw new Error(`Resend Batch Error: ${(resData ).error.message}`);
+        if (resData && (resData as any).error) {
+           throw new Error(`Resend Batch Error: ${(resData as any).error.message}`);
         }
 
         sentCount += chunk.length;
