@@ -3,7 +3,7 @@ import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { entityContract } from "../../../shared/schemas/contracts/entityContract";
-import { AppEnv, ensureAuth, logAuditAction } from "../middleware";
+import { AppEnv, ensureAuth, logAuditAction, s } from "../middleware";
 import type { HonoContext } from "@shared/types/api";
 
 export const entitiesRouter = new Hono<AppEnv>();

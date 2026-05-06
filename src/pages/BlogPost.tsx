@@ -74,10 +74,14 @@ export default function BlogPost() {
         description={extractTextFromAst(parsedAst).slice(0, 160) + "..."} 
         image={post.thumbnail}
         type="article"
+        schemaData={{
+          authorName: post.author_nickname || "ARES Author",
+          datePublished: post.date,
+        }}
       />
       {/* ─── STANDALONE BLOG HERO ─── */}
       <section className="relative w-full h-[50vh] min-h-[400px] flex items-center overflow-hidden bg-obsidian border-b-4 border-ares-cyan">
-        <img src={post.thumbnail || "/api/media/1776551060548-favicon.webp"} alt={post.title} className={`absolute inset-0 w-full h-full opacity-60 mix-blend-luminosity ${post.thumbnail ? 'object-cover' : 'object-contain p-16 bg-black/80'}`} />
+        <img fetchpriority="high" src={post.thumbnail || "/api/media/1776551060548-favicon.webp"} alt={post.title} className={`absolute inset-0 w-full h-full opacity-60 mix-blend-luminosity ${post.thumbnail ? 'object-cover' : 'object-contain p-16 bg-black/80'}`} />
         <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/70 to-transparent"></div>
         
         {/* Motif: Glowing orb overlay */}

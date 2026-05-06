@@ -7,6 +7,8 @@ interface SEOProps {
   image?: string;
   url?: string;
   type?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schemaData?: Record<string, any>;
 }
 
 export default function SEO({ 
@@ -14,7 +16,8 @@ export default function SEO({
   description = "ARES 23247 - Appalachian Robotics & Engineering Society. A FIRST® Tech Challenge Team offering youth robotics in Morgantown, WV.", 
   image = `${siteConfig.urls.base}/ares_hero.png`, 
   url,
-  type = "website"
+  type = "website",
+  schemaData
 }: SEOProps) {
   
   const siteTitle = `${title} | ARES 23247`;
@@ -37,6 +40,55 @@ export default function SEO({
       "https://github.com/ARES23247"
     ]
   };
+
+  let additionalSchema = null;
+  if (type === "article" && schemaData) {
+    additionalSchema = {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": title,
+      "image": image,
+      "author": {
+        "@type": "Person",
+        "name": schemaData.authorName || "ARES Team"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "ARES 23247",
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${siteConfig.urls.base}/ares_hero.png`
+        }
+      },
+      "datePublished": schemaData.datePublished || new Date().toISOString(),
+      "description": description
+    };
+  } else if (type === "event" && schemaData) {
+    additionalSchema = {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "name": title,
+      "startDate": schemaData.startDate,
+      "endDate": schemaData.endDate || schemaData.startDate,
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "location": {
+        "@type": "Place",
+        "name": schemaData.locationName || "Location TBD",
+        "address": {
+          "@type": "Text",
+          "text": schemaData.locationAddress || "Morgantown, WV"
+        }
+      },
+      "image": image,
+      "description": description,
+      "organizer": {
+        "@type": "Organization",
+        "name": "ARES 23247",
+        "url": siteConfig.urls.base
+      }
+    };
+  }
 
   return (
     <Helmet>
@@ -66,6 +118,11 @@ export default function SEO({
       <script type="application/ld+json">
         {JSON.stringify(organizationSchema)}
       </script>
+      {additionalSchema && (
+        <script type="application/ld+json">
+          {JSON.stringify(additionalSchema)}
+        </script>
+      )}
     </Helmet>
   );
 }
