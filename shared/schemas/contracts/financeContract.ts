@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 import { financeTransactionSchema, sponsorshipPipelineSchema } from "../financeSchema";
 
 const c = initContract();
@@ -19,6 +20,7 @@ export const financeContract = c.router({
       season_id: z.coerce.number().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: financeSummarySchema,
       500: z.object({ error: z.string() }),
     },
@@ -33,6 +35,7 @@ export const financeContract = c.router({
       season_id: z.coerce.number().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         pipeline: z.array(sponsorshipPipelineSchema.extend({ id: z.string() })),
       }),
@@ -45,6 +48,7 @@ export const financeContract = c.router({
     path: "/sponsorship",
     body: sponsorshipPipelineSchema,
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), id: z.string() }),
       500: z.object({ error: z.string() }),
     },
@@ -56,6 +60,7 @@ export const financeContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       404: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
@@ -72,6 +77,7 @@ export const financeContract = c.router({
       type: z.enum(["income", "expense"]).optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         transactions: z.array(financeTransactionSchema.extend({ id: z.string() })),
       }),
@@ -84,6 +90,7 @@ export const financeContract = c.router({
     path: "/transactions",
     body: financeTransactionSchema,
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), id: z.string() }),
       500: z.object({ error: z.string() }),
     },
@@ -95,6 +102,7 @@ export const financeContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.literal(true) }),
       404: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -9,7 +10,7 @@ import { dispatchQueuePost } from "../../utils/socialSync";
 import type { HonoContext } from "@shared/types/api";
 
 const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
   id: String(r.id),
   content: String(r.content),
   media_urls: r.media_urls ? JSON.parse(String(r.media_urls)) : undefined,
@@ -25,9 +26,9 @@ const toSocialQueuePost = (r: Record<string, unknown>): SocialQueuePost => ({
   created_by: (r.created_by as string) || null,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const socialQueueRouterObj: any = {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   list: async ({ query }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
@@ -67,7 +68,7 @@ const socialQueueRouterObj: any = {
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   calendar: async ({ query }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
@@ -97,7 +98,7 @@ const socialQueueRouterObj: any = {
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
   create: async ({ body }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
@@ -113,7 +114,7 @@ const socialQueueRouterObj: any = {
         platforms: JSON.stringify(body.platforms),
         media_urls: body.media_urls ? JSON.stringify(body.media_urls) : null,
         scheduled_for: body.scheduled_for,
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
         status: "pending",
         created_at: createdAt,
         created_by: user.id,
@@ -144,7 +145,7 @@ const socialQueueRouterObj: any = {
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   update: async ({ params, body }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
@@ -159,11 +160,11 @@ const socialQueueRouterObj: any = {
         .executeTakeFirst();
 
       if (!existing) return { status: 500, body: { error: "Post not found" } };
-      if (user.role !== "admin" && (existing ).created_by !== user.id) {
+      if (user.role !== "admin" && (existing as any).created_by !== user.id) {
         return { status: 401, body: { error: "Unauthorized" } };
       }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const updates: any = { ...body };
       if (body.platforms) updates.platforms = JSON.stringify(body.platforms);
       if (body.media_urls) updates.media_urls = JSON.stringify(body.media_urls);
@@ -183,7 +184,7 @@ const socialQueueRouterObj: any = {
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   delete: async ({ params }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
@@ -198,7 +199,7 @@ const socialQueueRouterObj: any = {
         .executeTakeFirst();
 
       if (!existing) return { status: 500, body: { error: "Post not found" } };
-      if (user.role !== "admin" && (existing ).created_by !== user.id) {
+      if (user.role !== "admin" && (existing as any).created_by !== user.id) {
         return { status: 401, body: { error: "Unauthorized" } };
       }
 
@@ -211,7 +212,7 @@ const socialQueueRouterObj: any = {
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   sendNow: async ({ params }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
@@ -231,15 +232,15 @@ const socialQueueRouterObj: any = {
       if (!record) return { status: 500, body: { error: "Post not found" } };
 
       const post = toSocialQueuePost(record );
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const config: any = {
-        twitter: !!c.env.TWITTER_API_KEY,
-        bluesky: !!c.env.BLUESKY_HANDLE,
-        facebook: !!c.env.FACEBOOK_ACCESS_TOKEN,
-        instagram: !!c.env.INSTAGRAM_ACCESS_TOKEN,
-        discord: !!c.env.DISCORD_WEBHOOK_URL,
-        slack: !!c.env.SLACK_WEBHOOK_URL,
-        linkedin: !!c.env.LINKEDIN_ACCESS_TOKEN,
+        twitter: !!(c.env as any).TWITTER_API_KEY,
+        bluesky: !!(c.env as any).BLUESKY_HANDLE,
+        facebook: !!(c.env as any).FACEBOOK_ACCESS_TOKEN,
+        instagram: !!(c.env as any).INSTAGRAM_ACCESS_TOKEN,
+        discord: !!(c.env as any).DISCORD_WEBHOOK_URL,
+        slack: !!(c.env as any).SLACK_WEBHOOK_URL,
+        linkedin: !!(c.env as any).LINKEDIN_ACCESS_TOKEN,
       };
 
       await dispatchQueuePost(db, post, config);
@@ -251,7 +252,7 @@ const socialQueueRouterObj: any = {
     }
   },
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   analytics: async ({ query }: any, c: HonoContext) => {
     try {
       const user = await getSessionUser(c);
@@ -327,3 +328,4 @@ socialQueueRouter.use("*", originIntegrityMiddleware());
 createHonoEndpoints(socialQueueContract, socialQueueRouterObj, socialQueueRouter);
 
 export default socialQueueRouter;
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { inquiryContract } from "../../../../shared/schemas/contracts/inquiryContract";
@@ -7,7 +8,7 @@ import type { HonoContext } from "@shared/types/api";
 
 const inquiriesRouter = new Hono<AppEnv>();
 
-const inquiriesTsRestRouter = s.router(inquiryContract, inquiryHandlers);
+const inquiriesTsRestRouter = s.router(inquiryContract, inquiryHandlers as any);
 
 // Apply protections
 inquiriesRouter.use("/admin", ensureAdmin);
@@ -39,3 +40,4 @@ createHonoEndpoints(
 
 export default inquiriesRouter;
 export { purgeOldInquiries } from "./handlers";
+

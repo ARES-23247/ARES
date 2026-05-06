@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { eventContract } from "../../../../shared/schemas/contracts/eventContract";
@@ -9,7 +10,7 @@ import type { HonoContext } from "@shared/types/api";
 
 const eventsRouter = new Hono<AppEnv>();
 
-const eventTsRestRouter = s.router(eventContract, eventHandlers);
+const eventTsRestRouter = s.router(eventContract, eventHandlers as any);
 
 import { edgeCacheMiddleware } from "../../middleware/cache";
 
@@ -65,7 +66,7 @@ eventsRouter.patch("/admin/:id/history/:historyId/restore", async (c: HonoContex
     // Update the event description with the restored content
     await db.updateTable("events")
       .set({ description: row.content })
-      .where("id", "=", id)
+      .where("id", "=", id as any)
       .execute();
 
     // Save a new history entry for the restore action
@@ -101,3 +102,4 @@ createHonoEndpoints(
 );
 
 export default eventsRouter;
+

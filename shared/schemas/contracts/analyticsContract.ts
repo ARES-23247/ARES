@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -53,6 +54,7 @@ export const analyticsContract = c.router({
       "cf-turnstile-response": z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       429: z.object({ success: z.boolean(), error: z.string() }),
       500: z.object({ success: z.boolean() }),
@@ -67,6 +69,7 @@ export const analyticsContract = c.router({
       "cf-turnstile-response": z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       429: z.object({ success: z.boolean(), error: z.string() }),
       500: z.object({ success: z.boolean() }),
@@ -77,6 +80,7 @@ export const analyticsContract = c.router({
     method: "GET",
     path: "/admin/roster-stats",
     responses: {
+      ...standardErrors,
       200: z.object({
         roster: z.array(rosterStatSchema),
       }),
@@ -90,6 +94,7 @@ export const analyticsContract = c.router({
     method: "GET",
     path: "/leaderboard",
     responses: {
+      ...standardErrors,
       200: z.object({
         leaderboard: z.array(leaderboardEntrySchema),
       }),
@@ -100,6 +105,7 @@ export const analyticsContract = c.router({
     method: "GET",
     path: "/admin/stats",
     responses: {
+      ...standardErrors,
       200: z.object({
         posts: z.number(),
         events: z.number(),
@@ -121,6 +127,7 @@ export const analyticsContract = c.router({
     method: "GET",
     path: "/admin/platform-analytics",
     responses: {
+      ...standardErrors,
       200: z.object({
         totalPageViews: z.number(),
         uniqueVisitors: z.number(),
@@ -169,6 +176,7 @@ export const analyticsContract = c.router({
       q: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         results: z.array(
           z.object({

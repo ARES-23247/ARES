@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -12,6 +13,7 @@ export const entityContract = c.router({
       id: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         links: z.array(z.object({
           id: z.string(),
@@ -36,6 +38,7 @@ export const entityContract = c.router({
       link_type: z.string().default('reference'),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), id: z.string() }),
       500: z.object({ error: z.string() }),
     },
@@ -47,6 +50,7 @@ export const entityContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       500: z.object({ error: z.string() }),
     },

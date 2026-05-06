@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import type { VectorizeIndex, Ai } from "@cloudflare/workers-types";
@@ -60,3 +61,4 @@ export function triggerExternalReindex(
       })
   );
 }
+

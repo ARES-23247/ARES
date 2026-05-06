@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { AppEnv, ensureAdmin, s } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -10,8 +11,10 @@ import type { HonoContext } from "@shared/types/api";
 
 const logisticsRouter = new Hono<AppEnv>();
 
+import { ServerInferRequest } from "@ts-rest/core";
+
 const logisticsHandlers = {
-  getSummary: async (_input, c: HonoContext) => {
+  getSummary: async (_input: ServerInferRequest<typeof logisticsContract["getSummary"]>, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
 
     try {
@@ -49,15 +52,13 @@ const logisticsHandlers = {
           memberCounts,
           dietary: summary,
           tshirts: tshirtSummary,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any
+        }
       };
     } catch {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Logistics fetch failed" } as any };
+      return { status: 500 as const, body: { error: "Logistics fetch failed" } };
     }
   },
-  exportEmails: async (_input, c: HonoContext) => {
+  exportEmails: async (_input: ServerInferRequest<typeof logisticsContract["exportEmails"]>, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     const secret = c.env.ENCRYPTION_SECRET;
 
@@ -74,8 +75,7 @@ const logisticsHandlers = {
         .where("u.role", "!=", "unverified")
         .execute();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const users: any[] = [];
+      const users: Array<{ name: string; email: string; role: string; emergencyName: string; emergencyPhone: string }> = [];
       for (const r of results) {
         let email = String(r.email);
         let emergencyPhone = r.emergency_contact_phone;
@@ -108,8 +108,7 @@ const logisticsHandlers = {
     }
   },
 };
-
-const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers);
+const logisticsTsRestRouter = s.router(logisticsContract, logisticsHandlers as any);
 
 logisticsRouter.use("/admin/*", ensureAdmin);
 createHonoEndpoints(
@@ -126,3 +125,4 @@ createHonoEndpoints(
 );
 
 export default logisticsRouter;
+

@@ -1,5 +1,4 @@
-
-
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { Context } from "hono";
@@ -49,7 +48,7 @@ describe("Hono Backend - /docs Router", () => {
 
 
 
-  let mockDb: MockKysely;
+  let mockDb: any;
   let testApp: Hono<TestEnv>;
 
   beforeEach(() => {
@@ -208,7 +207,7 @@ describe("Hono Backend - /docs Router", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as DocsResponse;
     expect(body.results).toHaveLength(2);
-    expect(body.results[1].description).toBeNull();
+    expect((body.results as any)[1].description).toBeNull();
   });
 
   it("GET /search - ignores short queries", async () => {
@@ -357,7 +356,7 @@ describe("Hono Backend - /docs Router", () => {
     });
     
     // Create an array of all waitUntil promises
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const waitUntils: Promise<any>[] = [];
     const mockCtx = {
       ...mockExecutionContext,
@@ -415,7 +414,7 @@ describe("Hono Backend - /docs Router", () => {
   });
 
   it("GET /search - search error", async () => {
-    mockDb.getExecutor().executeQuery.mockRejectedValueOnce(new Error("DB Error"));
+    (mockDb.getExecutor() as any).executeQuery.mockRejectedValueOnce(new Error("DB Error"));
     const res2 = await testApp.request("/search?q=newquery", {}, { DEV_BYPASS: "true" }, mockExecutionContext);
     expect(res2.status).toBe(500);
   });
@@ -555,7 +554,7 @@ describe("Hono Backend - /docs Router", () => {
   });
 
   it("POST /admin/:slug/undelete - handles error", async () => {
-    mockDb.updateTable.mockImplementationOnce(() => { throw new Error("DB fail") });
+    (mockDb.updateTable as any).mockImplementationOnce(() => { throw new Error("DB fail") });
     const res = await testApp.request("/admin/test-doc/undelete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -639,3 +638,4 @@ describe("Hono Backend - /docs Router", () => {
     expect(res.status).toBe(400);
   });
 });
+

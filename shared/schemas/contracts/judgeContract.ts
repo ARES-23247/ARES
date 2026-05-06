@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -20,6 +21,7 @@ export const judgeContract = c.router({
       turnstileToken: z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         label: z.string().optional(),
@@ -40,6 +42,7 @@ export const judgeContract = c.router({
       "x-judge-code": z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.any(), // Complex payload
       401: z.object({ error: z.string() }),
       403: z.object({ error: z.string() }),
@@ -52,6 +55,7 @@ export const judgeContract = c.router({
     method: "GET",
     path: "/admin/codes",
     responses: {
+      ...standardErrors,
       200: z.object({
         codes: z.array(judgeAccessCodeSchema),
       }),
@@ -68,6 +72,7 @@ export const judgeContract = c.router({
       expiresAt: z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         code: z.string(),
@@ -86,6 +91,7 @@ export const judgeContract = c.router({
     }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),

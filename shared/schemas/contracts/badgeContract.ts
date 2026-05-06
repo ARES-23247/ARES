@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -23,6 +24,7 @@ export const badgeContract = c.router({
     method: "GET",
     path: "/",
     responses: {
+      ...standardErrors,
       200: z.object({
         badges: z.array(badgeSchema),
       }),
@@ -35,6 +37,7 @@ export const badgeContract = c.router({
     path: "/admin",
     body: badgeSchema.omit({ created_at: true }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -51,6 +54,7 @@ export const badgeContract = c.router({
       badgeId: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -68,6 +72,7 @@ export const badgeContract = c.router({
     }),
     body: c.type<null>(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -84,6 +89,7 @@ export const badgeContract = c.router({
     }),
     body: c.type<null>(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -96,6 +102,7 @@ export const badgeContract = c.router({
     method: "GET",
     path: "/leaderboard",
     responses: {
+      ...standardErrors,
       200: z.object({
         leaderboard: z.array(z.object({
           user_id: z.string(),

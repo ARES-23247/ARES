@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -16,6 +17,7 @@ export const locationContract = c.router({
     method: "GET",
     path: "/",
     responses: {
+      ...standardErrors,
       200: z.object({ locations: z.array(locationSchema) }),
       500: z.object({ error: z.string() }),
     },
@@ -25,6 +27,7 @@ export const locationContract = c.router({
     method: "GET",
     path: "/admin/list",
     responses: {
+      ...standardErrors,
       200: z.object({ locations: z.array(locationSchema) }),
       500: z.object({ error: z.string() }),
     },
@@ -35,6 +38,7 @@ export const locationContract = c.router({
     path: "/admin/save",
     body: locationSchema,
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), id: z.string().optional() }),
       400: z.object({ error: z.string() }),
       500: z.object({ error: z.string(), success: z.boolean() }),
@@ -47,6 +51,7 @@ export const locationContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       500: z.object({ error: z.string(), success: z.boolean() }),
     },

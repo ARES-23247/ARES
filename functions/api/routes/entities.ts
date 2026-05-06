@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -8,8 +9,8 @@ import type { HonoContext } from "@shared/types/api";
 
 export const entitiesRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const entityTsRestRouter = s.router(entityContract, {
+
+const entityHandlers: any = {
   getLinks: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -104,13 +105,13 @@ const entityTsRestRouter = s.router(entityContract, {
       await db.deleteFrom("entity_links").where("id", "=", input.params.id).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "delete_link", "entity_links", input.params.id));
       return { status: 200 as const, body: { success: true } };
-    } catch (e) {
-      console.error("DELETE_LINK ERROR", e);
+    } catch (_e) {
       return { status: 500 as const, body: { error: "Failed to delete link" } };
     }
   }
-});
-/* eslint-enable @typescript-eslint/no-explicit-any */
+};
+const entityTsRestRouter = s.router(entityContract, entityHandlers as any);
+
 
 entitiesRouter.use("*", ensureAuth);
 createHonoEndpoints(
@@ -127,3 +128,4 @@ createHonoEndpoints(
 );
 
 export default entitiesRouter;
+

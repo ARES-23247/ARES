@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -32,6 +33,7 @@ export const inquiryContract = c.router({
       offset: z.coerce.number().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         inquiries: z.array(inquirySchema),
       }),
@@ -46,6 +48,7 @@ export const inquiryContract = c.router({
     path: "/",
     body: inquiryInputSchema,
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         id: z.string(),
@@ -71,6 +74,7 @@ export const inquiryContract = c.router({
       status: z.enum(["pending", "approved", "resolved", "rejected"]),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         status: z
@@ -93,6 +97,7 @@ export const inquiryContract = c.router({
       notes: z.string().nullable(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -110,6 +115,7 @@ export const inquiryContract = c.router({
     }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),

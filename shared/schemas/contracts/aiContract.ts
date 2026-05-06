@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const errorSchema = z.object({ error: z.string() });
 const c = initContract();
@@ -9,9 +10,10 @@ export const aiContract = c.router({
     method: "POST",
     path: "/liveblocks-copilot",
     responses: {
+      ...standardErrors,
       // Server-Sent Events (SSE) don't have a standard ts-rest response type,
       // but we define the expected success response for completeness.
-      200: z.any(),
+      200: z.unknown(),
       400: errorSchema,
       401: errorSchema,
       429: errorSchema,
@@ -28,7 +30,8 @@ export const aiContract = c.router({
     method: "POST",
     path: "/rag-chatbot",
     responses: {
-      200: z.any(),
+      ...standardErrors,
+      200: z.unknown(),
       400: errorSchema,
       401: errorSchema,
       429: errorSchema,

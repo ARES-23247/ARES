@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -26,6 +27,7 @@ export const zulipContract = c.router({
     method: "GET",
     path: "/presence",
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         presence: zulipPresenceSchema,
@@ -44,6 +46,7 @@ export const zulipContract = c.router({
       content: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       500: z.object({ success: z.boolean(), error: z.string() }),
     },
@@ -57,6 +60,7 @@ export const zulipContract = c.router({
       topic: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), messages: z.array(z.unknown()) }),
       403: z.object({ success: z.boolean(), error: z.string() }),
       500: z.object({ success: z.boolean(), error: z.string() }),
@@ -67,6 +71,7 @@ export const zulipContract = c.router({
     method: "GET",
     path: "/invites/audit",
     responses: {
+      ...standardErrors,
       200: z.object({ 
         success: z.boolean(), 
         missingEmails: z.array(z.string()),
@@ -88,6 +93,7 @@ export const zulipContract = c.router({
       emails: z.array(z.string()),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), invitedCount: z.number() }),
       500: z.object({ success: z.boolean(), error: z.string() }),
     },

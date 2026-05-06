@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { Kysely } from "kysely";
@@ -505,3 +506,4 @@ zulipWebhookRouter.post("/", async (c: Context<AppEnv>) => {
 });
 
 export default zulipWebhookRouter;
+

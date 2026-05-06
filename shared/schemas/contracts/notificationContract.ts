@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -18,6 +19,7 @@ export const notificationContract = c.router({
     method: "GET",
     path: "/",
     responses: {
+      ...standardErrors,
       200: z.object({
         notifications: z.array(notificationSchema),
       }),
@@ -39,6 +41,7 @@ export const notificationContract = c.router({
     }),
     body: c.type<null>(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -56,6 +59,7 @@ export const notificationContract = c.router({
     path: "/read-all",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -76,6 +80,7 @@ export const notificationContract = c.router({
     }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -92,6 +97,7 @@ export const notificationContract = c.router({
     method: "GET",
     path: "/pending-counts",
     responses: {
+      ...standardErrors,
       200: z.object({
         inquiries: z.number(),
         posts: z.number(),
@@ -107,6 +113,7 @@ export const notificationContract = c.router({
     method: "GET",
     path: "/action-items",
     responses: {
+      ...standardErrors,
       200: z.object({
         inquiries: z.array(z.any()),
         posts: z.array(z.any()),

@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 const c = initContract();
 
 export const ErrorSchema = z.object({ error: z.string() });
@@ -41,6 +42,7 @@ export const storeContract = c.router({
     method: "GET",
     path: "/api/store/products",
     responses: {
+      ...standardErrors,
       200: z.array(ProductSchema),
       500: ErrorSchema,
     },
@@ -61,6 +63,7 @@ export const storeContract = c.router({
       cancelUrl: z.string().url(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         sessionId: z.string(),
         url: z.string(),
@@ -75,6 +78,7 @@ export const storeContract = c.router({
     method: "GET",
     path: "/api/store/orders",
     responses: {
+      ...standardErrors,
       200: z.array(OrderSchema),
       401: ErrorSchema,
       500: ErrorSchema,
@@ -87,6 +91,7 @@ export const storeContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: z.object({ fulfillment_status: z.string() }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       401: ErrorSchema,
       500: ErrorSchema,

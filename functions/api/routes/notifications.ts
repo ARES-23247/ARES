@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { AppEnv, getSessionUser, ensureAuth, rateLimitMiddleware, s } from "../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -10,14 +11,13 @@ import type { HonoContext } from "@shared/types/api";
 
 export const notificationsRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const notificationHandlers = {
+
+const notificationHandlers: any = {
   getNotifications: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
       const results = await db.selectFrom("notifications")
         .select(["id", "title", "message", "link", "priority", "is_read", "created_at"])
@@ -32,26 +32,22 @@ const notificationHandlers = {
         title: String(n.title),
         message: String(n.message),
         link: n.link || null,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        priority: (n.priority || "low") as any,
+        priority: (n.priority || "low") as string,
         is_read: Number(n.is_read || 0),
         created_at: String(n.created_at)
       }));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { notifications } as any };
+      return { status: 200 as const, body: { notifications } };
     } catch (e) {
       console.error("GET_NOTIFICATIONS ERROR", e);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Fetch failed", notifications: [] } as any };
+      return { status: 500 as const, body: { error: "Fetch failed", notifications: [] } };
     }
   },
   markAsRead: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
       const { id } = input.params;
       await db.updateTable("notifications")
@@ -60,38 +56,32 @@ const notificationHandlers = {
         .where("user_id", "=", user.id)
         .execute();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Update failed" } as any };
+      return { status: 500 as const, body: { error: "Update failed" } };
     }
   },
   markAllAsRead: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
       await db.updateTable("notifications")
         .set({ is_read: 1 })
         .where("user_id", "=", user.id)
         .execute();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Update failed" } as any };
+      return { status: 500 as const, body: { error: "Update failed" } };
     }
   },
   deleteNotification: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
       const { id } = input.params;
       await db.deleteFrom("notifications")
@@ -99,19 +89,16 @@ const notificationHandlers = {
         .where("user_id", "=", user.id)
         .execute();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true } as any };
+      return { status: 200 as const, body: { success: true } };
     } catch {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Delete failed" } as any };
+      return { status: 500 as const, body: { error: "Delete failed" } };
     }
   },
   getPendingCounts: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
       let filterOutreach = false;
       if (user.role !== "admin") {
@@ -143,16 +130,14 @@ const notificationHandlers = {
         }
       };
     } catch {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Count failed" } as any };
+      return { status: 500 as const, body: { error: "Count failed" } };
     }
   },
   getDashboardActionItems: async (_input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const user = await getSessionUser(c);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } as any };
+      if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
       let filterOutreach = false;
       if (user.role !== "admin") {
@@ -191,25 +176,19 @@ const notificationHandlers = {
       return {
         status: 200 as const,
         body: {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          inquiries: inquiries as any[],
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          posts: posts as any[],
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          events: events as any[],
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          docs: docs as any[],
+          inquiries,
+          posts,
+          events,
+          docs,
         }
       };
     } catch {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Action items fetch failed" } as any };
+      return { status: 500 as const, body: { error: "Action items fetch failed" } };
     }
   },
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
+const notificationTsRestRouter = s.router(notificationContract, notificationHandlers as any);
 
-const notificationTsRestRouter = s.router(notificationContract, notificationHandlers);
 
 notificationsRouter.use("*", ensureAuth);
 notificationsRouter.use("/:id/read", rateLimitMiddleware(20, 60));
@@ -229,3 +208,5 @@ createHonoEndpoints(
 );
 
 export default notificationsRouter;
+
+

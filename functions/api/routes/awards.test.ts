@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { TestEnv, MockKysely } from "../../../src/test/types";
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -39,6 +39,7 @@ describe("Hono Backend - /awards Router", () => {
       onConflict: vi.fn().mockReturnThis(),
       doUpdateSet: vi.fn().mockReturnThis(),
       updateTable: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
       getExecutor: vi.fn().mockReturnValue({
         compileQuery: vi.fn().mockReturnValue({ sql: "", parameters: [], query: { kind: "RawNode" } }),
@@ -199,3 +200,4 @@ describe("Hono Backend - /awards Router", () => {
     expect(res.status).toBe(500);
   });
 });
+

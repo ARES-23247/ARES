@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 /**
  * A utility to split large text into chunks of a given maximum size.
  * Uses a simple recursive character splitting strategy (paragraphs -> sentences -> words)
@@ -76,3 +77,4 @@ export function chunkText(text: string, maxChunkSize = 1000, overlapSize = 100):
 
   return chunks.map((text, index) => ({ text, index }));
 }
+

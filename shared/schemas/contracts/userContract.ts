@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -79,6 +80,7 @@ export const userContract = c.router({
       cursor: z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         users: z.array(userResponseSchema),
         nextCursor: z.string().nullable().optional(),
@@ -91,6 +93,7 @@ export const userContract = c.router({
     path: "/admin/:id",
     pathParams: z.object({ id: z.string() }),
     responses: {
+      ...standardErrors,
       200: z.object({
         user: userResponseSchema,
       }),
@@ -107,6 +110,7 @@ export const userContract = c.router({
       member_type: z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       400: z.object({ error: z.string() }),
       403: z.object({ error: z.string() }),
@@ -120,6 +124,7 @@ export const userContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: z.record(z.string(), z.unknown()),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       500: z.object({ error: z.string() }),
     },
@@ -130,6 +135,7 @@ export const userContract = c.router({
     path: "/admin/:id/profile",
     pathParams: z.object({ id: z.string() }),
     responses: {
+      ...standardErrors,
       200: z.object({
         profile: z.record(z.string(), z.unknown()),
       }),
@@ -144,6 +150,7 @@ export const userContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       500: z.object({ error: z.string() }),
     },
@@ -156,6 +163,7 @@ export const profileContract = c.router({
     method: "GET",
     path: "/me",
     responses: {
+      ...standardErrors,
       200: z.object({
         auth: z
           .object({
@@ -206,6 +214,7 @@ export const profileContract = c.router({
     path: "/me",
     body: z.record(z.string(), z.unknown()),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
     summary: "Update current user profile",
@@ -214,6 +223,7 @@ export const profileContract = c.router({
     method: "GET",
     path: "/team-roster",
     responses: {
+      ...standardErrors,
       200: z.object({
         members: z.array(
           z.object({
@@ -254,6 +264,7 @@ export const profileContract = c.router({
     path: "/:userId",
     pathParams: z.object({ userId: z.string() }),
     responses: {
+      ...standardErrors,
       200: z.object({
         profile: z.record(z.string(), z.unknown()),
         badges: z.array(z.record(z.string(), z.unknown())),

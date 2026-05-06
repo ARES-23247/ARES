@@ -19,7 +19,7 @@ export type AppEnv = MiddlewareAppEnv;
 /**
  * Hono context with ARES-specific environment bindings.
  */
-export type HonoContext = Context<AppEnv, any, {}>;
+export type HonoContext = Context<AppEnv>;
 
 /**
  * Standard handler input structure with typed body and params.
@@ -27,9 +27,6 @@ export type HonoContext = Context<AppEnv, any, {}>;
  * @deprecated Use AppRouteInput from ts-rest-hono for ts-rest handlers.
  * This type is still useful for non-ts-rest Hono middleware.
  * @see Migration guide in Phase 29 summary.
- *
- * @example
- * interface CreateSponsorInput extends HandlerInput<SponsorCreateBody, {}> {}
  */
 export type HandlerInput<
   TBody = unknown,
@@ -42,9 +39,6 @@ export type HandlerInput<
 
 /**
  * Standard handler output structure with status and typed body.
- *
- * @example
- * interface SponsorListOutput extends HandlerOutput<Sponsor[]> {}
  */
 export type HandlerOutput<TBody = unknown> = {
   status: number;

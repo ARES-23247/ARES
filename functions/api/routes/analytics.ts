@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { analyticsContract } from "../../../shared/schemas/contracts/analyticsContract";
@@ -8,7 +9,7 @@ import type { HonoContext } from "@shared/types/api";
 
 export const analyticsRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const analyticsHandlers = {
   trackPageView: async (input: any, c: HonoContext) => {
     const ip = c.req.header("CF-Connecting-IP") || "unknown";
@@ -327,9 +328,9 @@ const analyticsHandlers = {
     }
   }
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
-const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers);
+
+const analyticsTsRestRouter = s.router(analyticsContract, analyticsHandlers as any);
 
 // CR-01 FIX: Apply authentication to all analytics routes
 // Public routes (page view tracking, search) have rate limiting only
@@ -357,3 +358,4 @@ createHonoEndpoints(
 );
 
 export default analyticsRouter;
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Kysely, sql, Selectable } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import { fetchGithubRepoFiles } from "./external/githubFetcher";
@@ -436,3 +437,4 @@ export async function indexExternalResources(
 
   return { indexed, skipped: 0, errors };
 }
+

@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -38,6 +39,7 @@ export const taskContract = c.router({
       parent_id: z.string().optional(),
     }).optional(),
     responses: {
+      ...standardErrors,
       200: z.object({ tasks: z.array(taskSchema) }),
       500: z.object({ error: z.string() }),
     },
@@ -58,6 +60,7 @@ export const taskContract = c.router({
       time_spent_seconds: z.number().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), task: taskSchema }),
       401: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
@@ -75,6 +78,7 @@ export const taskContract = c.router({
       })),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       401: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
@@ -98,6 +102,7 @@ export const taskContract = c.router({
       time_spent_seconds: z.number().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       401: z.object({ error: z.string() }),
       404: z.object({ error: z.string() }),
@@ -111,6 +116,7 @@ export const taskContract = c.router({
     pathParams: z.object({ id: z.string() }),
     body: c.type<null>(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       401: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),

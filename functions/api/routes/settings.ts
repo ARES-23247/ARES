@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -5,11 +6,9 @@ import { AppEnv, ensureAdmin, logAuditAction, validateLength, MAX_INPUT_LENGTHS,
 import { createHonoEndpoints } from "ts-rest-hono";
 import { settingsContract } from "../../../shared/schemas/contracts/settingsContract";
 import { z } from "zod";
-
 import type { HonoContext } from "@shared/types/api";
 
 export const settingsRouter = new Hono<AppEnv>();
-
 
 // SEC-03: Infrastructure secrets that must never be returned in plaintext
 const SENSITIVE_KEYS = new Set([
@@ -26,34 +25,34 @@ function maskSecret(value: string): string {
   return '••••••••' + value.slice(-4);
 }
 
-
-
 // Schema for settings: keys and values must be strings, values max 10000 chars
 const settingsSchema = z.record(z.string(), z.string().max(10000));
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+type HandlerInput = {
+  params: Record<string, string>;
+  body: unknown;
+  query: Record<string, string>;
+};
+
 const settingsHandlers = {
-  getSettings: async (_input: any, c: HonoContext) => {
+  getSettings: async (_input: HandlerInput, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const masked: Record<string, string> = {};
       for (const [key, value] of Object.entries(settings)) {
         masked[key] = SENSITIVE_KEYS.has(key) ? maskSecret(value) : value;
       }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true, settings: masked } as any };
+      return { status: 200 as const, body: { success: true, settings: masked } };
     } catch (e) {
       console.error("GET_SETTINGS ERROR", e);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { success: false, error: "Failed to fetch settings" } as any };
+      return { status: 500 as const, body: { success: false, error: "Failed to fetch settings" } };
     }
   },
    
-  updateSettings: async (input: any, c: HonoContext) => {
+  updateSettings: async (input: HandlerInput, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const body = input.body;
-      // Validate input: ensure body is a record of string keys to string values
       const validationResult = settingsSchema.safeParse(body);
       if (!validationResult.success) {
         return {
@@ -61,8 +60,7 @@ const settingsHandlers = {
           body: {
             success: false,
             error: "Invalid settings format: " + validationResult.error.issues.map(i => i.message).join(", ")
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any
+          } 
         };
       }
 
@@ -70,51 +68,46 @@ const settingsHandlers = {
       let updatedCount = 0;
       const sensitiveKeysUpdated: string[] = [];
       for (const [key, value] of entries) {
-        // SEC-03: Prevent overwriting secrets with the masked versions passed back by the frontend
         if (SENSITIVE_KEYS.has(key)) {
           if (value.startsWith('••••')) {
-            continue; // Skip masked values
+            continue; 
           }
-          // WR-14: Explicit protection - prevent updating sensitive keys via API
           return {
             status: 403 as const,
             body: {
               success: false,
               error: `Cannot update ${key} via API. Please use the admin console.`
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any
+            } 
           };
         }
 
         const error = validateLength(value, MAX_INPUT_LENGTHS.generic, key);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (error) return { status: 400 as const, body: { success: false, updated: 0 } as any };
+        if (error) return { status: 400 as const, body: { success: false, updated: 0 } };
+        
         await db.insertInto("settings")
           .values({ key, value, updated_at: new Date().toISOString() })
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .onConflict((oc: any) => oc.column("key").doUpdateSet({ value, updated_at: new Date().toISOString() }))
+          .onConflict((oc) => oc.column("key").doUpdateSet({ value, updated_at: new Date().toISOString() }))
           .execute();
+        
         updatedCount++;
-        // WR-09: Track sensitive key updates for audit logging
         if (SENSITIVE_KEYS.has(key)) {
           sensitiveKeysUpdated.push(key);
         }
       }
-      // WR-09: Enhanced audit logging for sensitive setting changes
+      
       const auditMessage = sensitiveKeysUpdated.length > 0
         ? `Updated ${updatedCount} integration keys (sensitive: ${sensitiveKeysUpdated.join(", ")})`
         : `Updated ${updatedCount} integration keys.`;
+      
       c.executionCtx.waitUntil(logAuditAction(c, "updated_settings", "system_settings", null, auditMessage));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true, updated: updatedCount } as any };
+      return { status: 200 as const, body: { success: true, updated: updatedCount } };
     } catch (e) {
       console.error("UPDATE_SETTINGS ERROR", e);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { success: false, error: "Update failed" } as any };
+      return { status: 500 as const, body: { success: false, error: "Update failed" } };
     }
   },
    
-  getStats: async (_input: any, c: HonoContext) => {
+  getStats: async (_input: HandlerInput, c: HonoContext) => {
     const db = c.get("db") as Kysely<DB>;
     try {
       const [posts, events, docs, inquiries, users] = await Promise.all([
@@ -132,17 +125,15 @@ const settingsHandlers = {
           docs: Number(docs?.count || 0),
           inquiries: Number(inquiries?.count || 0),
           users: Number(users?.count || 0),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any
+        } 
       };
     } catch (e) {
       console.error("GET_STATS ERROR", e);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { error: "Failed to fetch stats" } as any };
+      return { status: 500 as const, body: { error: "Failed to fetch stats" } };
     }
   },
    
-  getPublicSettings: async (_input: any, c: HonoContext) => {
+  getPublicSettings: async (_input: HandlerInput, c: HonoContext) => {
     try {
       const settings = await getDbSettings(c);
       const publicKeys = ["COMMUNITY_PHOTO_DRIVE_URL", "COMMUNITY_DOCS_URL"];
@@ -152,28 +143,22 @@ const settingsHandlers = {
           publicSettings[key] = settings[key];
         }
       }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200 as const, body: { success: true, settings: publicSettings } as any };
+      return { status: 200 as const, body: { success: true, settings: publicSettings } };
     } catch (e) {
       console.error("GET_PUBLIC_SETTINGS ERROR", e);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 500 as const, body: { success: false, error: "Failed to fetch public settings" } as any };
+      return { status: 500 as const, body: { success: false, error: "Failed to fetch public settings" } };
     }
   }
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
-const settingsTsRestRouter = s.router(settingsContract, settingsHandlers);
-
-
+const settingsTsRestRouter = s.router(settingsContract, settingsHandlers as any);
 
 // Admin protection - Apply only to admin routes
 settingsRouter.use("/admin/*", ensureAdmin);
 
 // WR-16: Add rate limiting to backup endpoint to prevent DoS
-// Backup route remains manual as it's a file export
 settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: HonoContext) => {
-  const db = c.get("db");
+  const db = c.get("db") as Kysely<DB>;
   try {
     const SAFE_TABLES = [
       "posts", "events", "docs", "docs_history", "docs_feedback",
@@ -182,7 +167,7 @@ settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: HonoC
       "sponsor_metrics", "sponsor_tokens", "notifications",
       "sponsors", "comments", "awards",
       "page_analytics", "audit_log"
-    ];
+    ] as const;
     
     const TABLE_COLUMNS: Record<string, string[]> = {
       user_profiles: ["user_id", "nickname", "pronouns", "subteams", "member_type", "bio", "favorite_first_thing", "fun_fact", "show_on_about", "favorite_robot_mechanism", "pre_match_superstition", "leadership_role", "rookie_year", "updated_at"],
@@ -194,12 +179,12 @@ settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: HonoC
     const backupPromises = SAFE_TABLES.map(async (tableName) => {
       try {
         const cols = TABLE_COLUMNS[tableName];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let q: any = db.selectFrom(tableName );
+        let q: any;
+        const anyDb = db as any;
         if (cols) {
-          q = q.select(cols);
+          q = anyDb.selectFrom(tableName).select(cols);
         } else {
-          q = q.selectAll();
+          q = anyDb.selectFrom(tableName).selectAll();
         }
         const data = await q.limit(1000).execute() as unknown[];
         
@@ -234,7 +219,6 @@ settingsRouter.get("/admin/backup", rateLimitMiddleware(5, 300), async (c: HonoC
   }
 });
 
-
 createHonoEndpoints(
   settingsContract,
   settingsTsRestRouter,
@@ -247,6 +231,6 @@ createHonoEndpoints(
     }
   }
 );
-export default settingsRouter;
 
+export default settingsRouter;
 

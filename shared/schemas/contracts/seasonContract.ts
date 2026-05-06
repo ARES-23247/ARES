@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -26,6 +27,7 @@ export const seasonContract = c.router({
     method: "GET",
     path: "/",
     responses: {
+      ...standardErrors,
       200: z.object({
         seasons: z.array(seasonSchema),
       }),
@@ -37,6 +39,7 @@ export const seasonContract = c.router({
     method: "GET",
     path: "/admin/list",
     responses: {
+      ...standardErrors,
       200: z.object({
         seasons: z.array(seasonSchema),
       }),
@@ -52,6 +55,7 @@ export const seasonContract = c.router({
       id: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         season: seasonSchema,
       }),
@@ -68,12 +72,13 @@ export const seasonContract = c.router({
       year: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         season: seasonSchema,
-        awards: z.array(z.any()),
-        events: z.array(z.any()),
-        posts: z.array(z.any()),
-        outreach: z.array(z.any()),
+        awards: z.array(z.unknown()),
+        events: z.array(z.unknown()),
+        posts: z.array(z.unknown()),
+        outreach: z.array(z.unknown()),
       }),
       404: z.object({ error: z.string() }),
       500: z.object({ error: z.string() }),
@@ -85,6 +90,7 @@ export const seasonContract = c.router({
     path: "/admin/save",
     body: seasonSchema,
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -100,6 +106,7 @@ export const seasonContract = c.router({
       id: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -116,6 +123,7 @@ export const seasonContract = c.router({
     }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -131,6 +139,7 @@ export const seasonContract = c.router({
       id: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),

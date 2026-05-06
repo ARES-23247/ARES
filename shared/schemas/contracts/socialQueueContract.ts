@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -80,6 +81,7 @@ export const socialQueueContract = c.router({
       offset: z.coerce.number().min(0).default(0),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         posts: z.array(socialQueueSchema),
         total: z.number(),
@@ -97,6 +99,7 @@ export const socialQueueContract = c.router({
       end: z.string(), // ISO end date
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         posts: z.array(socialQueueSchema),
       }),
@@ -117,6 +120,7 @@ export const socialQueueContract = c.router({
       analytics: true,
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         post: socialQueueSchema,
@@ -138,6 +142,7 @@ export const socialQueueContract = c.router({
       created_by: true,
     }).partial(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         post: socialQueueSchema,
@@ -155,6 +160,7 @@ export const socialQueueContract = c.router({
     }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -171,6 +177,7 @@ export const socialQueueContract = c.router({
     }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -187,6 +194,7 @@ export const socialQueueContract = c.router({
       end: z.string().optional(), // ISO end date
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         total_posts: z.number(),
         total_sent: z.number(),

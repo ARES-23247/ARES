@@ -1,10 +1,8 @@
-import { AppEnv, getDbSettings, checkPersistentRateLimit, logAuditAction } from "../../middleware";
-import { initServer } from "ts-rest-hono";
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+import { getDbSettings, checkPersistentRateLimit, logAuditAction } from "../../middleware";
 import { Kysely } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 import type { HonoContext } from "@shared/types/api";
-
-const _s = initServer<AppEnv>();
 
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -13,7 +11,6 @@ const MAX_FILE_SIZE_FOR_AI = 2.5 * 1024 * 1024;
 
 // IN-11: File extension mapping for validation and normalization
 // Maps MIME types to their canonical file extensions
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 const MIME_TO_EXTENSION: Record<string, string> = {
   'image/png': '.png',
   'image/jpeg': '.jpg',
@@ -102,13 +99,19 @@ async function listAllObjects(bucket: R2Bucket | undefined, options?: R2ListOpti
   while (result.truncated) {
     result = await bucket.list({ ...options, cursor: result.cursor, limit: 100 });
     objects.push(...result.objects);
-/* eslint-enable @typescript-eslint/no-explicit-any */
   }
   return { objects };
 }
 
+
+type HandlerInput = {
+  params: Record<string, string>;
+  body: unknown;
+  query: Record<string, string | undefined>;
+};
+
 export const mediaHandlers = {
-  getMedia: async (_input: any, c: HonoContext) => {
+  getMedia: async (_input: HandlerInput, c: HonoContext) => {
     const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "unknown";
     const ua = c.req.header("user-agent") || "unknown";
     const rl = await checkPersistentRateLimit(c.get("db") as Kysely<DB>, `media_list_${ip}`, ua, 30, 60);
@@ -117,20 +120,19 @@ export const mediaHandlers = {
     }
 
     try {
-      const cache = typeof caches !== 'undefined' ? (caches ).default : null;
+      const cache = typeof caches !== 'undefined' ? (caches as any).default : null;
       const url = new URL(c.req.url);
       url.search = "";
       const cacheKey = new Request(url.toString(), { method: "GET" });
       
       if (cache) {
         const cached = await cache.match(cacheKey);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (cached) return cached as any;
       }
 
       const db = c.get("db") as Kysely<DB>;
       const [objects, results] = await Promise.all([
-        listAllObjects(c.env.ARES_STORAGE),
+        listAllObjects(c.env.ARES_STORAGE as any),
         db.selectFrom("media_tags").select(["key", "folder", "tags"]).where("folder", "=", "Gallery").execute()
       ]);
 
@@ -167,11 +169,11 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  adminList: async (_input: any, c: HonoContext) => {
+  adminList: async (_input: HandlerInput, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
       const [objects, results] = await Promise.all([
-        listAllObjects(c.env.ARES_STORAGE),
+        listAllObjects(c.env.ARES_STORAGE as any),
         db.selectFrom("media_tags").select(["key", "folder", "tags"]).execute()
       ]);
 
@@ -190,21 +192,19 @@ export const mediaHandlers = {
         tags: metaMap.get(obj.key)?.tags || ""
       }));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200, body: { media: media as any[] } };
+      return { status: 200, body: { media } };
     } catch (e) {
       console.error("[Media:AdminList] Error", e);
       return { status: 500, body: { error: "List failed", media: [] } };
     }
   },
-  upload: async (input: any, c: HonoContext) => {
+  upload: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { body } = input;
       const formData = body as FormData;
       const file = formData.get("file") as File | null;
       const folder = formData.get("folder") as string | null;
 
-      // CR-07: Validate FormData structure
       if (!file || !(file instanceof File)) {
         return { status: 400, body: { error: "No valid file uploaded" } };
       }
@@ -213,7 +213,6 @@ export const mediaHandlers = {
         return { status: 400, body: { error: "Invalid folder name" } };
       }
 
-      // CR-06: Enforce maximum file size to prevent DoS and excessive storage costs
       if (file.size > MAX_FILE_SIZE) {
         return {
           status: 413,
@@ -238,7 +237,6 @@ export const mediaHandlers = {
         return { status: 400, body: { error: "Invalid file type. Only standard images are supported." } };
       }
 
-      // IN-11: Validate and normalize file extension based on MIME type
       const canonicalExtension = getExtensionForMimeType(file.type);
       if (!canonicalExtension) {
         return { status: 400, body: { error: `Unsupported image type: ${file.type}` } };
@@ -247,22 +245,21 @@ export const mediaHandlers = {
       const normalizedName = normalizeFileNameExtension(file.name, file.type);
       const key = folder ? `${folder}/${normalizedName}` : normalizedName;
       const finalFolder = folder || "Library";
+      
       if (c.env.ARES_STORAGE) {
         if (isLarge) {
-          await c.env.ARES_STORAGE.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
+          await (c.env.ARES_STORAGE as any).put(key, file.stream(), { httpMetadata: { contentType: file.type } });
         } else {
-          await c.env.ARES_STORAGE.put(key, buffer!, { httpMetadata: { contentType: file.type } });
+          await (c.env.ARES_STORAGE as any).put(key, buffer!, { httpMetadata: { contentType: file.type } });
         }
       }
 
       let altText = "ARES 23247 Team Media Image";
       const isAiSupported = ["image/jpeg", "image/png"].includes(file.type);
-      // CR-06: Use MAX_FILE_SIZE_FOR_AI constant for AI processing threshold
       if (isAiSupported && !isLarge && c.env.AI) {
         try {
           if (!buffer) buffer = await file.arrayBuffer();
           const uint8 = new Uint8Array(buffer);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
           const aiRes = await c.env.AI.run('@cf/llava-1.5-7b-hf', { prompt: 'Describe for screen reader', image: uint8 as any }) as { description?: string };
           if (aiRes?.description) altText = String(aiRes.description).trim();
         } catch (err) {
@@ -280,21 +277,21 @@ export const mediaHandlers = {
         c.executionCtx.waitUntil(logAuditAction(c, "media_upload", "media", key, `Uploaded to ${finalFolder}`));
         
         if (typeof caches !== 'undefined') {
-          c.executionCtx.waitUntil((caches ).default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
+          c.executionCtx.waitUntil((caches as any).default.delete(new Request(new URL("/api/media", c.req.url).href, { method: "GET" })));
         }
       }
 
       return { status: 200, body: { success: true, key, url: `/api/media/${key}`, altText } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error("[Media:Upload] Error", err.stack || err);
-      return { status: 500, body: { error: "Upload failed: " + (err.message || String(err)) } };
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("[Media:Upload] Error", error.stack || error);
+      return { status: 500, body: { error: "Upload failed: " + (error.message || String(error)) } };
     }
   },
-  move: async (input: any, c: HonoContext) => {
+  move: async (input: HandlerInput, c: HonoContext) => {
     const { params, body } = input;
     const oldKey = params.key;
-    const { folder } = body;
+    const { folder } = body as { folder: string };
     try {
       const fileName = oldKey.split("/").pop();
       const newKey = `${folder}/${fileName}`;
@@ -326,7 +323,7 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "Move failed" } };
     }
   },
-  delete: async (input: any, c: HonoContext) => {
+  delete: async (input: HandlerInput, c: HonoContext) => {
     const { params } = input;
     try {
       if (c.env.ARES_STORAGE) {
@@ -341,10 +338,10 @@ export const mediaHandlers = {
       return { status: 500, body: { error: "Delete failed" } };
     }
   },
-  syndicate: async (input: any, c: HonoContext) => {
+  syndicate: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { body } = input;
-      const { key, caption } = body;
+      const { key, caption } = body as { key: string; caption?: string };
       const config = await getDbSettings(c);
       const baseUrl = new URL(c.req.url).origin;
       const imageUrl = `${baseUrl}/api/media/${key}`;
@@ -358,3 +355,4 @@ export const mediaHandlers = {
     }
   },
 };
+

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -8,12 +9,10 @@ import type { HonoContext } from "@shared/types/api";
 
 import { sendZulipMessage } from "../../utils/zulipSync";
 import { siteConfig } from "../../utils/site.config";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ts-rest handler input parameters are typed by the contract library
-
 export const tasksRouter = new Hono<AppEnv>();
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
-const tasksTsRestRouter = s.router(taskContract, {
+
+const tasksHandlers: any = {
   list: async (input: any, c: HonoContext) => {
     try {
       const db = c.get("db") as Kysely<DB>;
@@ -51,7 +50,7 @@ const tasksTsRestRouter = s.router(taskContract, {
       const results = await q.execute();
 
       const tasks = results.map(r => {
-        let assignees = [];
+        let assignees: Array<{ id: string; nickname: string | null }> = [];
         try {
           assignees = r.assignees_json ? JSON.parse(r.assignees_json) : [];
           // Filter out null results from left join if any
@@ -220,8 +219,9 @@ const tasksTsRestRouter = s.router(taskContract, {
 
       const now = new Date().toISOString();
       
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await Promise.all(input.body.items.map((item: any) =>
+ 
+      const items = input.body.items as Array<{ id: string; status: string; sort_order: number }>;
+      await Promise.all(items.map((item) =>
         db.updateTable("tasks")
           .set({ status: item.status, sort_order: item.sort_order, updated_at: now })
           .where("id", "=", item.id)
@@ -390,7 +390,9 @@ const tasksTsRestRouter = s.router(taskContract, {
       return { status: 500, body: { error: "Failed to delete task" } };
     }
   },
-} );
+};
+const tasksTsRestRouter = s.router(taskContract, tasksHandlers as any);
+
 
 tasksRouter.use("*", ensureAuth);
 tasksRouter.use("*", rateLimitMiddleware(30, 60));
@@ -409,5 +411,6 @@ createHonoEndpoints(
     }
   }
 );
-/* eslint-enable @typescript-eslint/no-explicit-any */
 export default tasksRouter;
+
+

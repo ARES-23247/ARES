@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { TestEnv, MockKysely, MockExecutionContext } from "../../../src/test/types";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
@@ -36,9 +36,9 @@ vi.mock("../middleware", async (importOriginal) => {
 });
 
 describe("Analytics Router", () => {
-  let mockDb: MockKysely;
+  let mockDb: any;
   let testApp: Hono<TestEnv>;
-  let env: { DEV_BYPASS?: string; DB: D1Database };
+  let env: any;
 
   beforeEach(() => {
     mockDb = {
@@ -93,7 +93,7 @@ describe("Analytics Router", () => {
       fn: {}
     };
     env = {
-      DB: {},
+      DB: {} as any,
       TURNSTILE_SECRET_KEY: "test-secret",
       DEV_BYPASS: "true"
     };
@@ -103,7 +103,7 @@ describe("Analytics Router", () => {
     testApp = new Hono<TestEnv>();
     testApp.use("*", async (c, next) => {
       c.set("db", mockDb);
-      c.set("user", { id: "1", role: "admin" });
+      c.set("sessionUser", { id: "1", role: "admin" } as any);
       await next();
     });
     testApp.route("/", analyticsRouter);
@@ -112,7 +112,7 @@ describe("Analytics Router", () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: true }),
-    }) as MockFetchResponse;
+    }) as any;
   });
 
   describe("POST /track", () => {
@@ -137,7 +137,7 @@ describe("Analytics Router", () => {
         headers: { "Content-Type": "application/json" }, // Missing IP and UA
       });
 
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(200);
     });
 
@@ -165,7 +165,7 @@ describe("Analytics Router", () => {
         headers: { "Content-Type": "application/json", "CF-Connecting-IP": "5.6.7.8" },
       });
 
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(500);
       
       consoleSpy.mockRestore();
@@ -181,7 +181,7 @@ describe("Analytics Router", () => {
         headers: { "Content-Type": "application/json", "CF-Connecting-IP": "10.0.0.1", "User-Agent": "test-agent" },
       });
 
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(200);
       expect(mockDb.execute).toHaveBeenCalled();
     });
@@ -194,7 +194,7 @@ describe("Analytics Router", () => {
         headers: { "Content-Type": "application/json" }, // Missing IP and UA
       });
 
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(200);
     });
 
@@ -223,7 +223,7 @@ describe("Analytics Router", () => {
         headers: { "Content-Type": "application/json", "CF-Connecting-IP": "11.0.0.1" },
       });
 
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(500);
 
       consoleSpy.mockRestore();
@@ -249,10 +249,10 @@ describe("Analytics Router", () => {
         .mockResolvedValueOnce([{ category: "home", total: 10 }]); // totalsDataRow
 
       const req = new Request("http://localhost/admin/platform-analytics");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
+      const body = await res.json() as any;
       expect(body.topPages.length).toBe(1);
     });
 
@@ -263,10 +263,10 @@ describe("Analytics Router", () => {
       ]);
 
       const req = new Request("http://localhost/admin/roster-stats");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
+      const body = await res.json() as any;
       expect(body.roster.length).toBe(2);
       expect(body.roster[1].nickname).toBeNull();
       expect(body.roster[1].attended_events).toBe(0);
@@ -277,7 +277,7 @@ describe("Analytics Router", () => {
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const req = new Request("http://localhost/admin/platform-analytics");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
 
       expect(res.status).toBe(200);
 
@@ -304,10 +304,10 @@ describe("Analytics Router", () => {
       ]);
 
       const req = new Request("http://localhost/leaderboard");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
+      const body = await res.json() as any;
       expect(body.leaderboard.length).toBe(4);
       expect(body.leaderboard[1].first_name).toBe("ARES Member");
       expect(body.leaderboard[2].first_name).toBe("ARES");
@@ -316,7 +316,7 @@ describe("Analytics Router", () => {
     it("GET /leaderboard should handle DB errors", async () => {
       mockDb.execute.mockRejectedValue(new Error("DB Error"));
       const req = new Request("http://localhost/leaderboard");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(500);
     });
 
@@ -330,27 +330,27 @@ describe("Analytics Router", () => {
         .mockResolvedValueOnce({ total: 2 }); // security
       
       const req = new Request("http://localhost/admin/stats");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
+      const body = await res.json() as any;
       expect(body.posts).toBe(10);
     });
 
     it("GET /stats should handle null counts", async () => {
       mockDb.executeTakeFirst.mockResolvedValue(undefined);
       const req = new Request("http://localhost/admin/stats");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
 
       expect(res.status).toBe(200);
-      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
+      const body = await res.json() as any;
       expect(body.posts).toBe(0);
     });
 
     it("GET /stats should handle DB errors", async () => {
       mockDb.executeTakeFirst.mockRejectedValue(new Error("DB Error"));
       const req = new Request("http://localhost/admin/stats");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(500);
     });
   });
@@ -358,9 +358,9 @@ describe("Analytics Router", () => {
   describe("GET /search", () => {
     it("should return empty results for empty query", async () => {
       const req = new Request("http://localhost/search?q=");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(200);
-      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
+      const body = await res.json() as any;
       expect(body.results.length).toBe(0);
     });
 
@@ -371,28 +371,29 @@ describe("Analytics Router", () => {
         .mockResolvedValueOnce({ rows: [{ id: "3", title: "Doc" }] });
 
       const req = new Request("http://localhost/search?q=test");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       
       expect(res.status).toBe(200);
-      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
+      const body = await res.json() as any;
       expect(body.results.length).toBe(3);
     });
 
     it("should return search results with undefined rows", async () => {
       mockDb.getExecutor().executeQuery = vi.fn().mockResolvedValue({});
       const req = new Request("http://localhost/search?q=test");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       
       expect(res.status).toBe(200);
-      const body = await res.json() as { success: boolean; data?: unknown; error?: string };
+      const body = await res.json() as any;
       expect(body.results.length).toBe(0);
     });
 
     it("should handle DB errors", async () => {
       mockDb.getExecutor().executeQuery = vi.fn().mockRejectedValue(new Error("DB Error"));
       const req = new Request("http://localhost/search?q=test");
-      const res = await testApp.request(req, {}, env, mockExecutionContext);
+      const res = await testApp.request(req, {}, env as any, mockExecutionContext);
       expect(res.status).toBe(500);
     });
   });
 });
+

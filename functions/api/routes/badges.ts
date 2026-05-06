@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -11,7 +12,7 @@ import type { HonoContext } from "@shared/types/api";
 
 
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
 const badgesTsRestRouterObj = {
   list: async (_input: any, c: HonoContext) => {
     try {
@@ -175,8 +176,8 @@ const badgesTsRestRouterObj = {
   },
 };
 
-/* eslint-enable @typescript-eslint/no-explicit-any */
-const badgesTsRestRouter = s.router(badgeContract, badgesTsRestRouterObj);
+
+const badgesTsRestRouter = s.router(badgeContract, badgesTsRestRouterObj as any);
 export const badgesRouter = new Hono<AppEnv>();
 
 // Middlewares

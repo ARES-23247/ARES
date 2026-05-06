@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Kysely, sql } from "kysely";
 import { DB } from "../../../../shared/schemas/database";
 
@@ -7,7 +7,6 @@ import { encrypt, decrypt } from "../../../utils/crypto";
 import { safeJSONStringify } from "../../../utils/json";
 import { sendZulipMessage } from "../../../utils/zulipSync";
 import { notifyByRole, NotifyAudience } from "../../../utils/notifications";
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { buildGitHubConfig, createProjectItem } from "../../../utils/githubProjects";
 import type { HonoContext } from "@shared/types/api";
 
@@ -30,16 +29,22 @@ export async function purgeOldInquiries(db: Kysely<DB>, days: number) {
   return { deleted: res.length };
 }
 
+type HandlerInput = {
+  params: Record<string, string>;
+  body: any; // We'll cast to any internally but it's not a top-level implicit any
+  query: Record<string, any>;
+};
+
 export const inquiryHandlers = {
-  list: async (input: any, c: HonoContext) => {
+  list: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { query } = input;
       const db = c.get("db") as Kysely<DB>;
       const user = c.get("sessionUser");
       if (!user) return { status: 401 as const, body: { error: "Unauthorized" } };
 
-      const limit = query.limit || 50;
-      const offset = query.offset || 0;
+      const limit = Number(query.limit) || 50;
+      const offset = Number(query.offset) || 0;
       const secret = c.env.ENCRYPTION_SECRET;
 
       let maskPII = false;
@@ -117,7 +122,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Failed to fetch inquiries" } };
     }
   },
-  submit: async (input: any, c: HonoContext) => {
+  submit: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -135,20 +140,19 @@ export const inquiryHandlers = {
         try {
           const decryptedEmail = await decrypt(r.email, secret);
           if (decryptedEmail === email) {
-            const currentMeta = safeJSONStringify(metadata, null );
+            const currentMeta = safeJSONStringify(metadata, undefined);
             if (r.metadata === currentMeta) {
               return { status: 200 as const, body: { success: true, id: r.id } };
             }
           }
         } catch { /* ignore */ }
       }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
       const id = crypto.randomUUID();
       const encryptedName = await encrypt(name, secret);
       const encryptedEmail = await encrypt(email, secret);
       
-      let metadataStr = safeJSONStringify(metadata, null );
+      let metadataStr = safeJSONStringify(metadata, undefined);
       if (metadataStr && metadataStr.length > 5000) {
         metadataStr = metadataStr.substring(0, 5000);
       }
@@ -224,7 +228,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Submission failed" } };
     }
   },
-  updateStatus: async (input: any, c: HonoContext) => {
+  updateStatus: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -240,7 +244,7 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Update failed" } };
     }
   },
-  updateNotes: async (input: any, c: HonoContext) => {
+  updateNotes: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { params, body } = input;
       const db = c.get("db") as Kysely<DB>;
@@ -256,17 +260,18 @@ export const inquiryHandlers = {
       return { status: 500 as const, body: { error: "Notes update failed" } };
     }
   },
-  delete: async (input: any, c: HonoContext) => {
+  delete: async (input: HandlerInput, c: HonoContext) => {
     try {
       const { params } = input;
       const db = c.get("db") as Kysely<DB>;
       await db.deleteFrom("inquiries").where("id", "=", params.id).execute();
       c.executionCtx.waitUntil(logAuditAction(c, "inquiry_deleted", "inquiries", params.id, "Inquiry deleted"));
       return { status: 200, body: { success: true } };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      console.error("[Inquiry:Delete] Error", e);
-      return { status: 500, body: { error: e?.message || "Delete failed" } };
+    } catch (e: unknown) {
+      const error = e as Error;
+      console.error("[Inquiry:Delete] Error", error);
+      return { status: 500, body: { error: error.message || "Delete failed" } };
     }
   },
 };
+

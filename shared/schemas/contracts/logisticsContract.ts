@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -15,6 +16,7 @@ export const logisticsContract = c.router({
     method: "GET",
     path: "/admin/summary",
     responses: {
+      ...standardErrors,
       200: logisticsSummarySchema,
       401: z.object({ error: z.string() }),
       403: z.object({ error: z.string() }),
@@ -26,6 +28,7 @@ export const logisticsContract = c.router({
     method: "GET",
     path: "/admin/export-emails",
     responses: {
+      ...standardErrors,
       200: z.object({
         users: z.array(z.object({
           name: z.string(),

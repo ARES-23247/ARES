@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import type { MockKysely, TestEnv } from "../../../src/test/types";
@@ -52,7 +53,9 @@ describe("Hono Backend - /store Router", () => {
       insertInto: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis(),
       updateTable: vi.fn().mockReturnThis(),
-      set: vi.fn().mockReturnThis()
+      set: vi.fn().mockReturnThis(),
+      deleteFrom: vi.fn().mockReturnThis(), // Added missing required method
+      select: vi.fn().mockReturnThis(), // Added missing required method
     };
 
     app = new Hono<TestEnv>();
@@ -62,12 +65,10 @@ describe("Hono Backend - /store Router", () => {
       c.env = {
         STRIPE_SECRET_KEY: "sk_test_123",
         STRIPE_WEBHOOK_SECRET: "whsec_123",
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        DB: {} as any,
+        DB: {} as unknown as D1Database,
         ENVIRONMENT: "test",
         DEV_BYPASS: "true",
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      } as TestEnv["Bindings"];
       await next();
     });
     app.route("/", storeRouter);
@@ -126,7 +127,7 @@ describe("Hono Backend - /store Router", () => {
       expect(mockDb.values).toHaveBeenCalled();
       expect(mockDb.execute).toHaveBeenCalled();
       
-      const valuesArg = (mockDb.values ).mock.calls[0][0];
+      const valuesArg = (mockDb.values as any).mock.calls[0][0];
       expect(valuesArg.stripe_session_id).toBe("cs_test_123");
       expect(valuesArg.customer_email).toBe("test@example.com");
       expect(valuesArg.total_cents).toBe(1500);
@@ -171,3 +172,4 @@ describe("Hono Backend - /store Router", () => {
     });
   });
 });
+

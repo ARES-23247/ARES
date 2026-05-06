@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { Kysely } from "kysely";
 import { DB } from "../../../shared/schemas/database";
@@ -15,7 +16,7 @@ export const commentsRouter = new Hono<AppEnv>();
 
 
 const commentHandlers = {
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+
   list: async (input: any, c: HonoContext) => {
     const { targetType, targetId } = input.params;
     const user = await getSessionUser(c);
@@ -232,9 +233,9 @@ const commentHandlers = {
     }
   },
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
-const commentTsRestRouter = s.router(commentContract, commentHandlers);
+
+const commentTsRestRouter = s.router(commentContract, commentHandlers as any);
 
 commentsRouter.use("/:targetType/:targetId", ensureAuth);
 
@@ -276,3 +277,4 @@ createHonoEndpoints(
 );
 
 export default commentsRouter;
+

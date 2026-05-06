@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { seasonContract } from "../../../shared/schemas/contracts/seasonContract";
@@ -9,8 +10,8 @@ import type { HonoContext } from "@shared/types/api";
 
 
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
+ 
+
 const seasonsTsRestRouterObj: any = {
   list: async (_input: any, c: HonoContext) => {
     try {
@@ -183,7 +184,7 @@ const seasonsTsRestRouterObj: any = {
           .execute();
         c.executionCtx.waitUntil(logAuditAction(c, "season_created", "seasons", body.start_year.toString(), `Season "${body.start_year}" created`));
       }
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI, c.env.VECTORIZE_DB);
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any , c.env.VECTORIZE_DB);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Seasons:Save] Error", e);
@@ -200,8 +201,8 @@ const seasonsTsRestRouterObj: any = {
         .where("start_year", "=", year)
         .execute();
       c.executionCtx.waitUntil(logAuditAction(c, "season_deleted", "seasons", id, `Season "${id}" soft-deleted`));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any, c.env.VECTORIZE_DB);
+ 
+      triggerBackgroundReindex(c.executionCtx, c.get("db"), c.env.AI as any , c.env.VECTORIZE_DB);
       return { status: 200 as const, body: { success: true } };
     } catch (e) {
       console.error("[Seasons:Delete] Error", e);
@@ -241,8 +242,8 @@ const seasonsTsRestRouterObj: any = {
   },
 };
 
-const seasonsTsRestRouter = s.router(seasonContract, seasonsTsRestRouterObj);
-/* eslint-enable @typescript-eslint/no-explicit-any */
+const seasonsTsRestRouter = s.router(seasonContract, seasonsTsRestRouterObj as any);
+
 export const seasonsRouter = new Hono<AppEnv>();
 
 import { edgeCacheMiddleware } from "../middleware/cache";
@@ -268,3 +269,5 @@ createHonoEndpoints(
 );
 
 export default seasonsRouter;
+
+

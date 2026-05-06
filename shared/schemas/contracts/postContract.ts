@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 import { postSchema } from "../postSchema";
 
 const c = initContract();
@@ -47,6 +48,7 @@ export const postContract = c.router({
       offset: z.coerce.number().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         posts: z.array(postResponseSchema),
       }),
@@ -61,6 +63,7 @@ export const postContract = c.router({
       offset: z.coerce.number().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         posts: z.array(postResponseSchema),
       }),
@@ -71,6 +74,7 @@ export const postContract = c.router({
     method: "GET",
     path: "/admin/:slug",
     responses: {
+      ...standardErrors,
       200: z.object({
         post: postDetailSchema,
       }),
@@ -82,6 +86,7 @@ export const postContract = c.router({
     method: "GET",
     path: "/:slug",
     responses: {
+      ...standardErrors,
       200: z.object({
         post: postDetailSchema,
         is_editor: z.boolean(),
@@ -103,6 +108,7 @@ export const postContract = c.router({
     path: "/admin/save",
     body: postSchema,
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         slug: z.string().optional(),
@@ -118,6 +124,7 @@ export const postContract = c.router({
     path: "/admin/:slug",
     body: postSchema,
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         slug: z.string().optional(),
@@ -131,6 +138,7 @@ export const postContract = c.router({
     path: "/admin/:slug",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
     summary: "Soft-delete a post",
@@ -140,6 +148,7 @@ export const postContract = c.router({
     path: "/admin/:slug/undelete",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
     summary: "Restore a soft-deleted post",
@@ -149,6 +158,7 @@ export const postContract = c.router({
     path: "/admin/:slug/purge",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
     summary: "Permanently delete a post",
@@ -158,6 +168,7 @@ export const postContract = c.router({
     path: "/admin/:slug/approve",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         warnings: z.array(z.string()).optional(),
@@ -173,6 +184,7 @@ export const postContract = c.router({
       reason: z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       404: z.object({ error: z.string() }),
     },
@@ -182,6 +194,7 @@ export const postContract = c.router({
     method: "GET",
     path: "/admin/:slug/history",
     responses: {
+      ...standardErrors,
       200: z.object({ history: z.array(postHistorySchema) }),
     },
     summary: "Get revision history for a post",
@@ -191,6 +204,7 @@ export const postContract = c.router({
     path: "/admin/:slug/history/:id/restore",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       404: z.object({ error: z.string() }),
     },
@@ -203,6 +217,7 @@ export const postContract = c.router({
       socials: z.array(z.string()).optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
       404: z.object({ error: z.string() }),
       502: z.object({ error: z.string() }),

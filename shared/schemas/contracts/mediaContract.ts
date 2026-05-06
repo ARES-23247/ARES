@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -27,6 +28,7 @@ export const mediaContract = c.router({
     method: "GET",
     path: "/",
     responses: {
+      ...standardErrors,
       200: z.object({
         media: z.array(assetSchema),
       }),
@@ -44,6 +46,7 @@ export const mediaContract = c.router({
     method: "GET",
     path: "/admin",
     responses: {
+      ...standardErrors,
       200: z.object({
         media: z.array(assetSchema),
       }),
@@ -60,6 +63,7 @@ export const mediaContract = c.router({
     contentType: "multipart/form-data",
     body: c.type<FormData>(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         key: z.string(),
@@ -81,6 +85,7 @@ export const mediaContract = c.router({
       folder: z.string(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         newKey: z.string().optional(),
@@ -99,6 +104,7 @@ export const mediaContract = c.router({
     }),
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
       }),
@@ -116,6 +122,7 @@ export const mediaContract = c.router({
       caption: z.string().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         success: z.boolean(),
         message: z.string(),

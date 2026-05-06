@@ -1,15 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
 import { Hono } from "hono";
-import { sql } from "kysely";
+import { sql, Kysely } from "kysely";
 import { createHonoEndpoints } from "ts-rest-hono";
 import { sponsorContract } from "../../../shared/schemas/contracts/sponsorContract";
 import { AppEnv, ensureAdmin, logAuditAction, rateLimitMiddleware, s } from "../middleware";
 import { sendZulipAlert } from "../../utils/zulipSync";
 import type { HonoContext } from "@shared/types/api";
+import { DB } from "../../../shared/schemas/database";
+
 export const sponsorsRouter = new Hono<AppEnv>();
 
 type SponsorSelectedRow = {
   id: string | null;
-/* eslint-disable @typescript-eslint/no-explicit-any -- ts-rest handler input validated by contract library */
   name: string;
   tier: string;
   logo_url: string | null;
@@ -17,36 +19,40 @@ type SponsorSelectedRow = {
   is_active: number | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sponsorHandlers: any = {
-  getSponsors: async (_input: any, c: HonoContext) => {
+type HandlerInput = {
+  params: Record<string, string>;
+  body: unknown;
+  query: Record<string, string>;
+};
+
+const sponsorHandlers = {
+  getSponsors: async (_input: HandlerInput, c: HonoContext) => {
     try {
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("sponsors")
         .select(["id", "name", "tier", "logo_url", "website_url", "is_active"])
         .where("is_active", "=", 1)
         .orderBy(sql<number>`CASE tier WHEN 'Titanium' THEN 1 WHEN 'Gold' THEN 2 WHEN 'Silver' THEN 3 ELSE 4 END`)
         .execute();
 
-      const sponsors = results.map((s: SponsorSelectedRow) => ({
+      const sponsors = (results as SponsorSelectedRow[]).map((s) => ({
         ...s,
         id: s.id ?? "",
         is_active: s.is_active ? 1 : 0,
         tier: s.tier || "In-Kind"
       }));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200, body: { sponsors: sponsors as any } };
+      return { status: 200, body: { sponsors } };
     } catch (e) {
       console.error("[Sponsors:List] Error", e);
       return { status: 500, body: { error: "Failed to fetch sponsors" } };
     }
   },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getRoi: async ({ params }: any, c: HonoContext) => {
+
+  getRoi: async (input: HandlerInput, c: HonoContext) => {
     try {
-      const db = c.get("db");
-      const { token } = params;
+      const db = c.get("db") as Kysely<DB>;
+      const { token } = input.params;
       const tokens = await db.selectFrom("sponsor_tokens")
         .select("sponsor_id")
         .where("token", "=", token)
@@ -74,8 +80,8 @@ const sponsorHandlers: any = {
         is_active: sponsorRow.is_active ? 1 : 0,
         tier: sponsorRow.tier || "In-Kind"
       };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const metrics = metricsRow.map((m: any) => ({
+
+      const metrics = metricsRow.map((m) => ({
         id: m.id ?? "",
         sponsor_id: m.sponsor_id,
         clicks: m.clicks ?? 0,
@@ -83,30 +89,41 @@ const sponsorHandlers: any = {
         year_month: m.year_month
       }));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200, body: { sponsor: sponsor as any, metrics } };
+      return { status: 200, body: { sponsor, metrics } };
     } catch (e) {
       console.error("[Sponsors:Roi] Error", e);
       return { status: 500, body: { error: "Failed to fetch ROI" } };
     }
   },
-  adminList: async (_input: any, c: HonoContext) => {
+
+  adminList: async (_input: HandlerInput, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const sponsors = await db.selectFrom("sponsors").selectAll().execute();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { status: 200, body: { sponsors: sponsors as any } };
+      
+      return { 
+        status: 200, 
+        body: { 
+          sponsors: sponsors.map(s => ({
+            ...s,
+            logo_url: s.logo_url || null,
+            website_url: s.website_url || null,
+            is_active: s.is_active ? 1 : 0
+          })) 
+        } 
+      };
     } catch (e) {
       console.error("[Sponsors:AdminList] Error", e);
       return { status: 500, body: { error: "Admin access required" } };
     }
   },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  saveSponsor: async ({ body }: any, c: HonoContext) => {
+
+  saveSponsor: async (input: HandlerInput, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
+      const body = input.body as any; // Safe cast for body properties
       const id = body.id || crypto.randomUUID();
       
       if (body.id) {
@@ -120,7 +137,7 @@ const sponsorHandlers: any = {
           })
           .where("id", "=", body.id)
           .execute();
-        await (logAuditAction )(c, "update_sponsor", { id });
+        c.executionCtx.waitUntil(logAuditAction(c, "update_sponsor", "sponsors", id));
       } else {
         await db.insertInto("sponsors")
           .values({
@@ -132,7 +149,7 @@ const sponsorHandlers: any = {
             is_active: body.is_active ? 1 : 0,
           })
           .execute();
-        await (logAuditAction )(c, "create_sponsor", { id, name: body.name });
+        c.executionCtx.waitUntil(logAuditAction(c, "create_sponsor", "sponsors", id, `Created sponsor ${body.name}`));
       }
 
       return { status: 200, body: { success: true, id } };
@@ -141,33 +158,33 @@ const sponsorHandlers: any = {
       return { status: 500, body: { error: "Failed to save sponsor" } };
     }
   },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deleteSponsor: async ({ params }: any, c: HonoContext) => {
+
+  deleteSponsor: async (input: HandlerInput, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
-      const db = c.get("db");
-      const { id } = params;
+      const db = c.get("db") as Kysely<DB>;
+      const { id } = input.params;
 
       await db.deleteFrom("sponsors").where("id", "=", id).execute();
-      await (logAuditAction )(c, "delete_sponsor", { id });
+      c.executionCtx.waitUntil(logAuditAction(c, "delete_sponsor", "sponsors", id));
       return { status: 200, body: { success: true } };
     } catch (e) {
       console.error("[Sponsors:Delete] Error", e);
       return { status: 500, body: { error: "Failed to delete sponsor" } };
     }
   },
-  getAdminTokens: async (_input: any, c: HonoContext) => {
+
+  getAdminTokens: async (_input: HandlerInput, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
-      const db = c.get("db");
+      const db = c.get("db") as Kysely<DB>;
       const results = await db.selectFrom("sponsor_tokens as t")
         .innerJoin("sponsors as s", "t.sponsor_id", "s.id")
         .select(["t.token", "t.sponsor_id", "t.created_at"])
         .orderBy("t.created_at", "desc")
         .execute();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const tokens = results.map((t: any) => ({
+      const tokens = results.map((t) => ({
         token: t.token ?? "",
         sponsor_id: t.sponsor_id,
         created_at: t.created_at ?? "",
@@ -180,17 +197,17 @@ const sponsorHandlers: any = {
       return { status: 500, body: { error: "Failed to fetch tokens" } };
     }
   },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  generateToken: async ({ body }: any, c: HonoContext) => {
+
+  generateToken: async (input: HandlerInput, c: HonoContext) => {
     try {
       await ensureAdmin(c, async () => {});
-      const db = c.get("db");
-      const { sponsor_id } = body;
+      const db = c.get("db") as Kysely<DB>;
+      const { sponsor_id } = input.body as { sponsor_id: string };
 
       const token = crypto.randomUUID();
       await db.insertInto("sponsor_tokens").values({ token, sponsor_id }).execute();
 
-      await (logAuditAction )(c, "generate_token", { sponsor_id });
+      c.executionCtx.waitUntil(logAuditAction(c, "generate_token", "sponsor_tokens", sponsor_id));
       
       const sRes = await db.selectFrom("sponsors").select("name").where("id", "=", sponsor_id).executeTakeFirst();
       if (sRes) await sendZulipAlert(c.env, "Sponsor", "ROI Token Generated", `ROI token for **${sRes.name}**.`);
@@ -203,7 +220,7 @@ const sponsorHandlers: any = {
   },
 };
 
-const sponsorTsRestRouter = s.router(sponsorContract, sponsorHandlers);
+const sponsorTsRestRouter = s.router(sponsorContract, sponsorHandlers as any);
 
 // WR-12: Add rate limiting to public sponsor endpoint to prevent scraping
 sponsorsRouter.use("*", rateLimitMiddleware(15, 60));
@@ -223,6 +240,6 @@ createHonoEndpoints(
     }
   }
 );
+
 export default sponsorsRouter;
 
-/* eslint-enable @typescript-eslint/no-explicit-any */

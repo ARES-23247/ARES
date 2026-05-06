@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
+import { standardErrors } from "./common";
 
 const c = initContract();
 
@@ -24,6 +25,7 @@ export const awardContract = c.router({
       offset: z.coerce.number().optional(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({
         awards: z.array(awardSchema),
       }),
@@ -43,6 +45,7 @@ export const awardContract = c.router({
       season_id: z.coerce.number().optional().nullable(),
     }),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean(), id: z.string().optional() }),
     },
     summary: "Create or update an award",
@@ -52,6 +55,7 @@ export const awardContract = c.router({
     path: "/admin/:id",
     body: c.noBody(),
     responses: {
+      ...standardErrors,
       200: z.object({ success: z.boolean() }),
     },
     summary: "Soft-delete an award",
